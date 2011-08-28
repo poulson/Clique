@@ -23,8 +23,8 @@
 template<typename T>
 clique::DistDenseSymmMatrix<T>::DistDenseSymmMatrix
 ( int height, int blockSize, MPI_Comm comm, int gridHeight, int gridWidth )
-: height_(height), blockSize_(blockSize), comm_(comm), 
-  gridHeight_(gridHeight), gridWidth_(gridWidth)
+: height_(height), blockSize_(blockSize), 
+  comm_(comm), gridHeight_(gridHeight), gridWidth_(gridWidth)
 {
 #ifndef RELEASE
     PushCallStack("DistDenseSymmMatrix::DistDenseSymmMatrix");
@@ -36,11 +36,53 @@ clique::DistDenseSymmMatrix<T>::DistDenseSymmMatrix
     if( commSize != gridHeight*gridWidth )
         throw std::logic_error
         ("Comm size was not compatible with specified grid dimensions");
-
     gridRow_ = commRank % gridHeight_;
     gridCol_ = commRank / gridHeight_;
 
-    // HERE: Need to find way to quickly compute local offsets and sizes.
+    // Determine the local height information
+    const int offsetHeight = std::max(0,height-gridRow_*blockSize);
+    const int remainderHeight = offsetHeight % (gridHeight*blockSize);
+    const int localHeight = (offsetHeight/(gridHeight*blockSize))*blockSize +
+        std::min(blockSize,remainderHeight);
+    const int localBlockHeight = 
+        ( remainderHeight==0 ? 
+          localHeight/blockSize : localHeight/blockSize+1 );
+
+    // Determine the local width information
+    const int offsetWidth = std::max(0,height-gridCol_*blockSize);
+    const int remainderWidth = offsetWidth % (gridWidth*blockSize);
+    const int localWidth = (offsetWidth/(gridWidth*blockSize))*blockSize +
+        std::min(blockSize,remainderWidth);
+    const int localBlockWidth =
+        ( remainderWidth==0 ?
+          localWidth/blockSize : localWidth/blockSize+1 );
+
+    // Compute the offsets for block column-major packed storage
+    int totalLocalSize = 0;
+    blockColumnHeights_.resize( localBlockWidth );
+    blockColumnWidths_.resize( localBlockWidth );
+    for( int jLocalBlock=0; jLocalBlock<localBlockWidth; ++jLocalBlock )
+    {
+        const int jBlock = gridCol_ + jLocalBlock*gridWidth;
+        const int iLocalBlock = (jBlock-gridRow_+gridHeight-1)/gridHeight;
+        const int thisLocalHeight = localHeight-iLocalBlock*blockSize;
+        const int thisLocalWidth = localWidth-jLocalBlock*blockSize;
+
+        blockColumnHeights_[jLocalBlock] = thisLocalHeight;
+        blockColumnWidths_[jLocalBlock] = thisLocalWidth;
+        totalLocalSize += thisLocalHeight*thisLocalWidth;
+    }
+
+    // Create space for the storage and fill in pointers to the block columns
+    buffer_.resize( totalLocalSize );
+    blockColumnBuffers_.resize( localBlockWidth );
+    totalLocalSize = 0;
+    for( int jLocalBlock=0; jLocalBlock<localBlockWidth; ++jLocalBlock )
+    {
+        blockColumnBuffers_[jLocalBlock] = &buffer_[totalLocalSize];
+        totalLocalSize += 
+            blockColumnHeights_[jLocalBlock]*blockColumnWidths_[jLocalBlock];
+    }
 #ifndef RELEASE
     PopCallStack();
 #endif
