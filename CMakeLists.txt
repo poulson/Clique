@@ -27,6 +27,8 @@ set(Clique_VERSION_MINOR 1)
 if(CMAKE_BUILD_TYPE MATCHES Release)
   option(RELEASE "Build high-performance version of library" ON)
 endif(CMAKE_BUILD_TYPE MATCHES Release)
+
+option(BUILD_TESTS "Build a collection of test executables" OFF)
 option(AVOID_COMPLEX_MPI "Avoid complex MPI routines for robustness" ON)
 
 find_package(MPI)
@@ -264,3 +266,23 @@ add_library(clique STATIC ${CLIQUE_SRC})
 set(MPI_LINK_FLAGS "${MPI_CXX_LINK_FLAGS}")
 install(TARGETS clique DESTINATION lib)
 
+# Build the test drivers if necessary
+if(BUILD_TESTS)
+  set(TEST_DIR ${PROJECT_SOURCE_DIR}/tests)
+  set(CORE_TESTS DistDenseSymmMatrix)
+
+  # Build the core tests
+  set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/tests/core")
+  foreach(TEST ${CORE_TESTS})
+    add_executable(tests-core-${TEST} ${TEST_DIR}/${TEST}.cpp)
+    target_link_libraries(tests-core-${TEST} clique cmake-dummy-lib)
+    set_target_properties(tests-core-${TEST} PROPERTIES
+                          OUTPUT_NAME ${TEST}
+                          RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
+    if(MPI_LINK_FLAGS)
+      set_target_properties(tests-core-${TEST} PROPERTIES
+                            LINK_FLAGS ${MPI_LINK_FLAGS})
+    endif(MPI_LINK_FLAGS)
+    install(TARGETS tests-core-${TEST} DESTINATION bin/tests/core)
+  endforeach(TEST)
+endif(BUILD_TESTS)

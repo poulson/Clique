@@ -44,7 +44,9 @@ private:
     std::vector<T> buffer_;
     std::vector<T*> blockColumnBuffers_;
     std::vector<int> blockColumnHeights_, 
-                     blockColumnWidths_;
+                     blockColumnWidths_,
+                     blockColumnRowOffsets_,
+                     blockColumnColumnOffsets_;
 
 public:
     DistDenseSymmMatrix( MPI_Comm comm, int gridHeight, int gridWidth );
@@ -67,6 +69,8 @@ public:
 
     int BlockColumnHeight( int jLocalBlock ) const;
     int BlockColumnWidth( int jLocalBlock ) const;
+
+    void Print( std::string s="" ) const;
 };
 
 } // namespace clique

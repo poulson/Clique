@@ -24,23 +24,19 @@ namespace { bool cliqueInitializedMpi; }
 
 void clique::Initialize( int& argc, char**& argv )
 {
-    int mpiInitialized;
-    MPI_Initialized( &mpiInitialized );
-    if( !mpiInitialized )
+    if( !mpi::Initialized() )
     {
-        int mpiFinalized;    
-        MPI_Finalized( &mpiFinalized );
-        if( mpiFinalized )
+        if( mpi::Finalized() )
             throw std::logic_error
             ("Cannot initialize Clique after finalizing MPI");
 #ifndef _OPENMP
-        int provided;
-        MPI_Init_thread( &argc, &argv, MPI_THREAD_MULTIPLE, &provided );
-        if( provided != MPI_THREAD_MULTIPLE )
+        const int provided = 
+            mpi::InitThread( argc, argv, mpi::THREAD_MULTIPLE );
+        if( provided != mpi::THREAD_MULTIPLE )
             std::cerr << "WARNING: Could not achieve THREAD_MULTIPLE support."
                       << std::endl;
 #else
-        MPI_Init( &argc, &argv );
+        mpi::Init( argc, argv );
 #endif // ifndef _OPENMP
         ::cliqueInitializedMpi = true;
     }
@@ -52,12 +48,10 @@ void clique::Initialize( int& argc, char**& argv )
 
 void clique::Finalize()
 {
-    int mpiFinalized;
-    MPI_Finalized( &mpiFinalized );
-    if( mpiFinalized )
+    if( mpi::Finalized() )
         std::cerr << "WARNING: MPI was finalized before Clique." << std::endl;
     else if( ::cliqueInitializedMpi )
-        MPI_Finalize();
+        mpi::Finalize();
 }
 
 #ifndef RELEASE

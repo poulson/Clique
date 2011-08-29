@@ -22,16 +22,15 @@
 
 template<typename T>
 clique::DistDenseSymmMatrix<T>::DistDenseSymmMatrix
-( MPI_Comm comm, int gridHeight, int gridWidth )
+( mpi::Comm comm, int gridHeight, int gridWidth )
 : height_(0), blockSize_(1), 
   comm_(comm), gridHeight_(gridHeight), gridWidth_(gridWidth)
 {
 #ifndef RELEASE
     PushCallStack("DistDenseSymmMatrix::DistDenseSymmMatrix");
 #endif
-    int commSize, commRank;
-    MPI_Comm_size( comm, &commSize );
-    MPI_Comm_rank( comm, &commRank );
+    const int commSize = mpi::CommSize( comm );
+    const int commRank = mpi::CommRank( comm );
 
     if( commSize != gridHeight*gridWidth )
         throw std::logic_error
@@ -45,16 +44,15 @@ clique::DistDenseSymmMatrix<T>::DistDenseSymmMatrix
 
 template<typename T>
 clique::DistDenseSymmMatrix<T>::DistDenseSymmMatrix
-( int height, int blockSize, MPI_Comm comm, int gridHeight, int gridWidth )
+( int height, int blockSize, mpi::Comm comm, int gridHeight, int gridWidth )
 : height_(height), blockSize_(blockSize), 
   comm_(comm), gridHeight_(gridHeight), gridWidth_(gridWidth)
 {
 #ifndef RELEASE
     PushCallStack("DistDenseSymmMatrix::DistDenseSymmMatrix");
 #endif
-    int commSize, commRank;
-    MPI_Comm_size( comm, &commSize );
-    MPI_Comm_rank( comm, &commRank );
+    const int commSize = mpi::CommSize( comm );
+    const int commRank = mpi::CommRank( comm );
 
     if( commSize != gridHeight*gridWidth )
         throw std::logic_error
@@ -84,6 +82,8 @@ clique::DistDenseSymmMatrix<T>::DistDenseSymmMatrix
     int totalLocalSize = 0;
     blockColumnHeights_.resize( localBlockWidth );
     blockColumnWidths_.resize( localBlockWidth );
+    blockColumnRowOffsets_.resize( localBlockWidth );
+    blockColumnColumnOffsets_.resize( localBlockWidth );
     for( int jLocalBlock=0; jLocalBlock<localBlockWidth; ++jLocalBlock )
     {
         const int jBlock = gridCol_ + jLocalBlock*gridWidth;
@@ -93,6 +93,9 @@ clique::DistDenseSymmMatrix<T>::DistDenseSymmMatrix
 
         blockColumnHeights_[jLocalBlock] = thisLocalHeight;
         blockColumnWidths_[jLocalBlock] = thisLocalWidth;
+        blockColumnRowOffsets_[jLocalBlock] = 
+            (gridRow_+iLocalBlock*gridHeight)*blockSize_;
+        blockColumnColumnOffsets_[jLocalBlock] = jBlock*blockSize_;
         totalLocalSize += thisLocalHeight*thisLocalWidth;
     }
 
@@ -149,6 +152,8 @@ clique::DistDenseSymmMatrix<T>::Reconfigure( int height, int blockSize )
     int totalLocalSize = 0;
     blockColumnHeights_.resize( localBlockWidth );
     blockColumnWidths_.resize( localBlockWidth );
+    blockColumnRowOffsets_.resize( localBlockWidth );
+    blockColumnColumnOffsets_.resize( localBlockWidth );
     for( int jLocalBlock=0; jLocalBlock<localBlockWidth; ++jLocalBlock )
     {
         const int jBlock = gridCol_ + jLocalBlock*gridWidth_;
@@ -158,6 +163,9 @@ clique::DistDenseSymmMatrix<T>::Reconfigure( int height, int blockSize )
 
         blockColumnHeights_[jLocalBlock] = thisLocalHeight;
         blockColumnWidths_[jLocalBlock] = thisLocalWidth;
+        blockColumnRowOffsets_[jLocalBlock] = 
+            (gridRow_+iLocalBlock*gridHeight_)*blockSize_;
+        blockColumnColumnOffsets_[jLocalBlock] = jBlock*blockSize_;
         totalLocalSize += thisLocalHeight*thisLocalWidth;
     }
 
@@ -176,3 +184,87 @@ clique::DistDenseSymmMatrix<T>::Reconfigure( int height, int blockSize )
 #endif
 }
 
+template<typename T>
+void
+clique::DistDenseSymmMatrix<T>::Print( std::string s ) const
+{
+#ifndef RELEASE
+    PushCallStack("DistDenseSymmMatrix::Print");
+#endif
+    const int commSize = mpi::CommSize( comm_ );
+    const int commRank = mpi::CommRank( comm_ );
+
+    std::vector<T> sendBuf( height_*height_, 0 );
+
+    // Pack our local matrix
+    const int numLocalBlockColumns = blockColumnHeights_.size();
+    for( int jLocalBlock=0; jLocalBlock<numLocalBlockColumns; ++jLocalBlock )
+    {
+        const T* blockColumn = blockColumnBuffers_[jLocalBlock];
+        const int iOffset = blockColumnRowOffsets_[jLocalBlock];
+        const int jOffset = blockColumnColumnOffsets_[jLocalBlock];
+        const int blockColumnHeight = blockColumnHeights_[jLocalBlock];
+        const int blockColumnWidth = blockColumnWidths_[jLocalBlock];
+        const int numLocalBlocks = (blockColumnHeight+blockSize_-1)/blockSize_;
+
+        const int remainder = blockColumnHeight % blockSize_;
+        const int lastBlockHeight = ( remainder==0 ? blockSize_ : remainder );
+
+        for( int y=0; y<blockColumnWidth; ++y )
+        {
+            int block = 0;
+            int blockOffset = iOffset;
+            for( ; block<numLocalBlocks-1; ++block )
+            {
+                const T* column = 
+                    &blockColumn[block*blockSize_+y*blockColumnHeight];
+                T* sendColumn = 
+                    &sendBuf[blockOffset+(jOffset+y)*height_];
+                std::memcpy( sendColumn, column, blockSize_*sizeof(T) );
+                blockOffset += blockSize_;
+            }
+
+            if( numLocalBlocks != 0 )
+            {
+                const T* column = 
+                    &blockColumn[block*blockSize_+y*blockColumnHeight];
+                T* sendColumn = 
+                    &sendBuf[blockOffset+(jOffset+y)*height_];
+                std::memcpy( sendColumn, column, lastBlockHeight*sizeof(T) );
+            }
+        }
+    }
+
+    // if we are the root, allocate a receive buffer
+    std::vector<T> recvBuf;
+    if( commRank == 0 )
+        recvBuf.resize( height_*height_ );
+
+    // Sum the contributions and send to the root
+    mpi::Reduce
+    ( &sendBuf[0], &recvBuf[0], height_*height_, mpi::SUM, 0, comm_ );
+
+    // Print the data from the root
+    if( commRank == 0 )
+    {
+        if( s != "" )
+            std::cout << s << "\n";
+        for( int i=0; i<height_; ++i )
+        {
+            for( int j=0; j<height_; ++j )
+                std::cout << recvBuf[i+j*height_] << " ";
+            std::cout << "\n";
+        }
+        std::cout << std::endl;
+    }
+    mpi::Barrier( comm_ );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template class clique::DistDenseSymmMatrix<int>;
+template class clique::DistDenseSymmMatrix<float>;
+template class clique::DistDenseSymmMatrix<double>;
+template class clique::DistDenseSymmMatrix<std::complex<float> >;
+template class clique::DistDenseSymmMatrix<std::complex<double> >;

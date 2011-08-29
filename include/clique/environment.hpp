@@ -32,8 +32,10 @@
 
 #include "clique/config.h"
 
-
 namespace clique {
+
+typedef std::complex<float> scomplex;
+typedef std::complex<double> dcomplex;
 
 void Initialize( int& argc, char**& argv );
 void Finalize();
@@ -46,7 +48,7 @@ void DumpCallStack();
 
 }
 
-//#include "clique/imports.hpp"
+#include "clique/imports/mpi.hpp"
 
 namespace clique {
 
