@@ -22,6 +22,29 @@
 
 template<typename T>
 clique::DistDenseSymmMatrix<T>::DistDenseSymmMatrix
+( MPI_Comm comm, int gridHeight, int gridWidth )
+: height_(0), blockSize_(1), 
+  comm_(comm), gridHeight_(gridHeight), gridWidth_(gridWidth)
+{
+#ifndef RELEASE
+    PushCallStack("DistDenseSymmMatrix::DistDenseSymmMatrix");
+#endif
+    int commSize, commRank;
+    MPI_Comm_size( comm, &commSize );
+    MPI_Comm_rank( comm, &commRank );
+
+    if( commSize != gridHeight*gridWidth )
+        throw std::logic_error
+        ("Comm size was not compatible with specified grid dimensions");
+    gridRow_ = commRank % gridHeight_;
+    gridCol_ = commRank / gridHeight_;
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename T>
+clique::DistDenseSymmMatrix<T>::DistDenseSymmMatrix
 ( int height, int blockSize, MPI_Comm comm, int gridHeight, int gridWidth )
 : height_(height), blockSize_(blockSize), 
   comm_(comm), gridHeight_(gridHeight), gridWidth_(gridWidth)
@@ -87,3 +110,69 @@ clique::DistDenseSymmMatrix<T>::DistDenseSymmMatrix
     PopCallStack();
 #endif
 }
+
+template<typename T>
+void
+clique::DistDenseSymmMatrix<T>::Reconfigure( int height, int blockSize )
+{
+#ifndef RELEASE
+    PushCallStack("DistDenseSymmMatrix::Reconfigure");
+#endif
+    height_ = height;
+    blockSize_ = blockSize;
+
+    // Clear the old storage
+    buffer_.clear();
+    blockColumnBuffers_.clear();
+    blockColumnHeights_.clear();
+    blockColumnWidths_.clear();
+
+    // Determine the local height information
+    const int offsetHeight = std::max(0,height-gridRow_*blockSize);
+    const int remainderHeight = offsetHeight % (gridHeight_*blockSize);
+    const int localHeight = (offsetHeight/(gridHeight_*blockSize))*blockSize +
+        std::min(blockSize,remainderHeight);
+    const int localBlockHeight = 
+        ( remainderHeight==0 ? 
+          localHeight/blockSize : localHeight/blockSize+1 );
+
+    // Determine the local width information
+    const int offsetWidth = std::max(0,height-gridCol_*blockSize);
+    const int remainderWidth = offsetWidth % (gridWidth_*blockSize);
+    const int localWidth = (offsetWidth/(gridWidth_*blockSize))*blockSize +
+        std::min(blockSize,remainderWidth);
+    const int localBlockWidth =
+        ( remainderWidth==0 ?
+          localWidth/blockSize : localWidth/blockSize+1 );
+
+    // Compute the offsets for block column-major packed storage
+    int totalLocalSize = 0;
+    blockColumnHeights_.resize( localBlockWidth );
+    blockColumnWidths_.resize( localBlockWidth );
+    for( int jLocalBlock=0; jLocalBlock<localBlockWidth; ++jLocalBlock )
+    {
+        const int jBlock = gridCol_ + jLocalBlock*gridWidth_;
+        const int iLocalBlock = (jBlock-gridRow_+gridHeight_-1)/gridHeight_;
+        const int thisLocalHeight = localHeight-iLocalBlock*blockSize;
+        const int thisLocalWidth = localWidth-jLocalBlock*blockSize;
+
+        blockColumnHeights_[jLocalBlock] = thisLocalHeight;
+        blockColumnWidths_[jLocalBlock] = thisLocalWidth;
+        totalLocalSize += thisLocalHeight*thisLocalWidth;
+    }
+
+    // Create space for the storage and fill in pointers to the block columns
+    buffer_.resize( totalLocalSize );
+    blockColumnBuffers_.resize( localBlockWidth );
+    totalLocalSize = 0;
+    for( int jLocalBlock=0; jLocalBlock<localBlockWidth; ++jLocalBlock )
+    {
+        blockColumnBuffers_[jLocalBlock] = &buffer_[totalLocalSize];
+        totalLocalSize += 
+            blockColumnHeights_[jLocalBlock]*blockColumnWidths_[jLocalBlock];
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+

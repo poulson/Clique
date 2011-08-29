@@ -47,9 +47,12 @@ private:
                      blockColumnWidths_;
 
 public:
+    DistDenseSymmMatrix( MPI_Comm comm, int gridHeight, int gridWidth );
     DistDenseSymmMatrix
     ( int height, int blockSize, MPI_Comm comm, int gridHeight, int gridWidth );
     ~DistDenseSymmMatrix();
+
+    void Reconfigure( int height, int blockSize );
 
     int Height() const;
     int BlockSize() const;
