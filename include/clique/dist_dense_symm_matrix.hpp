@@ -71,6 +71,8 @@ public:
     int BlockColumnWidth( int jLocalBlock ) const;
 
     void Print( std::string s="" ) const;
+    void MakeZero();
+    void MakeIdentity();
 };
 
 } // namespace clique

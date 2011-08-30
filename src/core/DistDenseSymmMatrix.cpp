@@ -62,18 +62,18 @@ clique::DistDenseSymmMatrix<T>::DistDenseSymmMatrix
 
     // Determine the local height information
     const int offsetHeight = std::max(0,height-gridRow_*blockSize);
-    const int remainderHeight = offsetHeight % (gridHeight*blockSize);
+    const int remainderHeight = offsetHeight % blockSize;
     const int localHeight = (offsetHeight/(gridHeight*blockSize))*blockSize +
-        std::min(blockSize,remainderHeight);
+        std::min(blockSize,offsetHeight%(gridHeight*blockSize));
     const int localBlockHeight = 
         ( remainderHeight==0 ? 
           localHeight/blockSize : localHeight/blockSize+1 );
 
     // Determine the local width information
     const int offsetWidth = std::max(0,height-gridCol_*blockSize);
-    const int remainderWidth = offsetWidth % (gridWidth*blockSize);
+    const int remainderWidth = offsetWidth % blockSize;
     const int localWidth = (offsetWidth/(gridWidth*blockSize))*blockSize +
-        std::min(blockSize,remainderWidth);
+        std::min(blockSize,offsetWidth%(gridWidth*blockSize));
     const int localBlockWidth =
         ( remainderWidth==0 ?
           localWidth/blockSize : localWidth/blockSize+1 );
@@ -88,14 +88,16 @@ clique::DistDenseSymmMatrix<T>::DistDenseSymmMatrix
     {
         const int jBlock = gridCol_ + jLocalBlock*gridWidth;
         const int iLocalBlock = (jBlock-gridRow_+gridHeight-1)/gridHeight;
-        const int thisLocalHeight = localHeight-iLocalBlock*blockSize;
-        const int thisLocalWidth = localWidth-jLocalBlock*blockSize;
+        const int iBlock = gridRow_ + iLocalBlock*gridHeight;
+        blockColumnRowOffsets_[jLocalBlock] = iBlock*blockSize_;
+        blockColumnColumnOffsets_[jLocalBlock] = jBlock*blockSize_;
 
+        const int remainingLocalHeight = localHeight - iLocalBlock*blockSize;
+        const int remainingLocalWidth = localWidth - jLocalBlock*blockSize;
+        const int thisLocalHeight = remainingLocalHeight;
+        const int thisLocalWidth = std::min(remainingLocalWidth,blockSize);
         blockColumnHeights_[jLocalBlock] = thisLocalHeight;
         blockColumnWidths_[jLocalBlock] = thisLocalWidth;
-        blockColumnRowOffsets_[jLocalBlock] = 
-            (gridRow_+iLocalBlock*gridHeight)*blockSize_;
-        blockColumnColumnOffsets_[jLocalBlock] = jBlock*blockSize_;
         totalLocalSize += thisLocalHeight*thisLocalWidth;
     }
 
@@ -132,18 +134,18 @@ clique::DistDenseSymmMatrix<T>::Reconfigure( int height, int blockSize )
 
     // Determine the local height information
     const int offsetHeight = std::max(0,height-gridRow_*blockSize);
-    const int remainderHeight = offsetHeight % (gridHeight_*blockSize);
+    const int remainderHeight = offsetHeight % blockSize;
     const int localHeight = (offsetHeight/(gridHeight_*blockSize))*blockSize +
-        std::min(blockSize,remainderHeight);
+        std::min(blockSize,offsetHeight%(gridHeight_*blockSize));
     const int localBlockHeight = 
         ( remainderHeight==0 ? 
           localHeight/blockSize : localHeight/blockSize+1 );
 
     // Determine the local width information
     const int offsetWidth = std::max(0,height-gridCol_*blockSize);
-    const int remainderWidth = offsetWidth % (gridWidth_*blockSize);
+    const int remainderWidth = offsetWidth % blockSize;
     const int localWidth = (offsetWidth/(gridWidth_*blockSize))*blockSize +
-        std::min(blockSize,remainderWidth);
+        std::min(blockSize,offsetWidth%(gridWidth_*blockSize));
     const int localBlockWidth =
         ( remainderWidth==0 ?
           localWidth/blockSize : localWidth/blockSize+1 );
@@ -158,14 +160,16 @@ clique::DistDenseSymmMatrix<T>::Reconfigure( int height, int blockSize )
     {
         const int jBlock = gridCol_ + jLocalBlock*gridWidth_;
         const int iLocalBlock = (jBlock-gridRow_+gridHeight_-1)/gridHeight_;
-        const int thisLocalHeight = localHeight-iLocalBlock*blockSize;
-        const int thisLocalWidth = localWidth-jLocalBlock*blockSize;
+        const int iBlock = gridRow_ + iLocalBlock*gridHeight_;
+        blockColumnRowOffsets_[jLocalBlock] = iBlock*blockSize_;
+        blockColumnColumnOffsets_[jLocalBlock] = jBlock*blockSize_;
 
+        const int remainingLocalHeight = localHeight - iLocalBlock*blockSize;
+        const int remainingLocalWidth = localWidth - jLocalBlock*blockSize;
+        const int thisLocalHeight = remainingLocalHeight;
+        const int thisLocalWidth = std::min(remainingLocalWidth,blockSize);
         blockColumnHeights_[jLocalBlock] = thisLocalHeight;
         blockColumnWidths_[jLocalBlock] = thisLocalWidth;
-        blockColumnRowOffsets_[jLocalBlock] = 
-            (gridRow_+iLocalBlock*gridHeight_)*blockSize_;
-        blockColumnColumnOffsets_[jLocalBlock] = jBlock*blockSize_;
         totalLocalSize += thisLocalHeight*thisLocalWidth;
     }
 
@@ -258,6 +262,47 @@ clique::DistDenseSymmMatrix<T>::Print( std::string s ) const
         std::cout << std::endl;
     }
     mpi::Barrier( comm_ );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename T>
+void
+clique::DistDenseSymmMatrix<T>::MakeZero()
+{
+#ifndef RELEASE
+    PushCallStack("DistDenseSymmMatrix::MakeZero");
+#endif
+    std::memset( &buffer_[0], 0, buffer_.size() );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename T>
+void
+clique::DistDenseSymmMatrix<T>::MakeIdentity()
+{
+#ifndef RELEASE
+    PushCallStack("DistDenseSymmMatrix::MakeIdentity");
+#endif
+    std::memset( &buffer_[0], 0, buffer_.size() );
+    const int localBlockWidth = blockColumnBuffers_.size();
+    for( int jLocalBlock=0; jLocalBlock<localBlockWidth; ++jLocalBlock )
+    {
+        // Check if we own the diagonal block, if so, set to identity
+        const int rowOffset = blockColumnRowOffsets_[jLocalBlock];
+        const int colOffset = blockColumnColumnOffsets_[jLocalBlock];
+        if( rowOffset == colOffset )
+        {
+            const int blockColumnHeight = blockColumnHeights_[jLocalBlock];
+            const int blockColumnWidth = blockColumnWidths_[jLocalBlock];
+            T* blockColumn = blockColumnBuffers_[jLocalBlock];
+            for( int j=0; j<std::min(blockColumnHeight,blockColumnWidth); ++j )
+                blockColumn[j+j*blockColumnHeight] = (T)1; 
+        }
+    }
 #ifndef RELEASE
     PopCallStack();
 #endif

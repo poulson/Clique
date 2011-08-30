@@ -61,6 +61,8 @@ main( int argc, char* argv[] )
     A.Print("Empty A");
     A.Reconfigure( height, blockSize );
     A.Print("Default reconfigured A");
+    A.MakeIdentity();
+    A.Print("A := I");
 
     clique::Finalize();
     return 0;
