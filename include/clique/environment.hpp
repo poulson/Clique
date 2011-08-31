@@ -48,7 +48,7 @@ void DumpCallStack();
 
 }
 
-#include "clique/imports/mpi.hpp"
+#include "clique/imports.hpp"
 
 namespace clique {
 

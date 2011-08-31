@@ -227,6 +227,39 @@ else(HAVE_DPOTRF)
   endif(HAVE_DPOTRF_POST)
 endif(HAVE_DPOTRF)
 
+# Look for restrict support
+include(CheckCXXSourceCompiles)
+set(RESTRICT_CODE
+    "int main(void)
+     {
+         int* RESTRICT a;
+         return 0;
+     }
+    ")
+set(CMAKE_REQUIRED_DEFINITIONS "-DRESTRICT=__restrict__")
+check_cxx_source_compiles("${RESTRICT_CODE}" HAVE___restrict__)
+if(HAVE___restrict__)
+  set(RESTRICT "__restrict__")
+  message(STATUS "Using __restrict__ keyword.")
+else(HAVE___restrict__)
+  set(CMAKE_REQUIRED_DEFINITIONS "-DRESTRICT=__restrict")
+  check_cxx_source_compiles("${RESTRICT_CODE}" HAVE___restrict)
+  if(HAVE___restrict)
+    set(RESTRICT "__restrict")
+    message(STATUS "Using __restrict keyword.")
+  else(HAVE___restrict)
+    set(CMAKE_REQUIRED_DEFINITIONS "-DRESTRICT=restrict")
+    check_cxx_source_compiles("${RESTRICT_CODE}" HAVE_restrict)
+    if(HAVE_restrict)
+      set(RESTRICT "restrict")
+      message(STATUS "Using restrict keyword.")
+    else(HAVE_restrict)
+      set(RESTRICT "")
+      message(STATUS "Could not find a restrict keyword.")
+    endif(HAVE_restrict)
+  endif(HAVE___restrict)
+endif(HAVE___restrict__)
+
 # Create the Clique configuration header
 configure_file( 
   ${CMAKE_SOURCE_DIR}/include/clique/config.h.cmake

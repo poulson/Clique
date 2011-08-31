@@ -37,16 +37,19 @@ private:
     int height_;
     int blockSize_;
 
-    MPI_Comm comm_;
+    MPI_Comm comm_, cartComm_, colComm_, rowComm_;
     int gridHeight_, gridWidth_;
     int gridRow_, gridCol_;
 
     std::vector<T> buffer_;
-    std::vector<T*> blockColumnBuffers_;
-    std::vector<int> blockColumnHeights_, 
-                     blockColumnWidths_,
-                     blockColumnRowOffsets_,
-                     blockColumnColumnOffsets_;
+    std::vector<T*> blockColBuffers_;
+    std::vector<int> blockColHeights_, 
+                     blockColWidths_,
+                     blockColRowOffsets_,
+                     blockColColOffsets_;
+
+    static void BlockLDL( bool conjugate, int n, T* A, int lda );
+    void LDL( bool conjugate );
 
 public:
     DistDenseSymmMatrix( MPI_Comm comm, int gridHeight, int gridWidth );
@@ -63,16 +66,22 @@ public:
     int GridRow() const;
     int GridCol() const;
     MPI_Comm Comm() const;
+    MPI_Comm CartComm() const;
+    MPI_Comm ColComm() const;
+    MPI_Comm RowComm() const;
 
-    T* BlockColumnBuffer( int jLocalBlock );
-    const T* BlockColumnBuffer( int jLocalBlock ) const;
+    T* BlockColBuffer( int jLocalBlock );
+    const T* BlockColBuffer( int jLocalBlock ) const;
 
-    int BlockColumnHeight( int jLocalBlock ) const;
-    int BlockColumnWidth( int jLocalBlock ) const;
+    int BlockColHeight( int jLocalBlock ) const;
+    int BlockColWidth( int jLocalBlock ) const;
 
     void Print( std::string s="" ) const;
     void MakeZero();
     void MakeIdentity();
+
+    void LDLT();
+    void LDLH();
 };
 
 } // namespace clique
@@ -124,17 +133,32 @@ DistDenseSymmMatrix<T>::Comm() const
 { return comm_; }
 
 template<typename T>
+inline MPI_Comm
+DistDenseSymmMatrix<T>::CartComm() const
+{ return cartComm_; }
+
+template<typename T>
+inline MPI_Comm
+DistDenseSymmMatrix<T>::RowComm() const
+{ return rowComm_; }
+
+template<typename T>
+inline MPI_Comm
+DistDenseSymmMatrix<T>::ColComm() const
+{ return colComm_; }
+
+template<typename T>
 inline T*
-DistDenseSymmMatrix<T>::BlockColumnBuffer( int jLocalBlock )
+DistDenseSymmMatrix<T>::BlockColBuffer( int jLocalBlock )
 {
 #ifndef RELEASE
-    PushCallStack("DistDenseSymmMatrix::BlockColumnBuffer");
+    PushCallStack("DistDenseSymmMatrix::BlockColBuffer");
     if( jLocalBlock < 0 )
         throw std::logic_error("jLocalBlock was less than 0");
-    if( jLocalBlock > blockColumnBuffers_.size() )
+    if( jLocalBlock > blockColBuffers_.size() )
         throw std::logic_error("jLocalBlock was too large");
 #endif
-    T* pointer = blockColumnBuffers_[jLocalBlock];
+    T* pointer = blockColBuffers_[jLocalBlock];
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -143,16 +167,16 @@ DistDenseSymmMatrix<T>::BlockColumnBuffer( int jLocalBlock )
 
 template<typename T>
 inline const T*
-DistDenseSymmMatrix<T>::BlockColumnBuffer( int jLocalBlock ) const
+DistDenseSymmMatrix<T>::BlockColBuffer( int jLocalBlock ) const
 {
 #ifndef RELEASE
-    PushCallStack("DistDenseSymmMatrix::BlockColumnBuffer");
+    PushCallStack("DistDenseSymmMatrix::BlockColBuffer");
     if( jLocalBlock < 0 )
         throw std::logic_error("jLocalBlock was less than 0");
-    if( jLocalBlock > blockColumnBuffers_.size() )
+    if( jLocalBlock > blockColBuffers_.size() )
         throw std::logic_error("jLocalBlock was too large");
 #endif
-    const T* pointer = blockColumnBuffers_[jLocalBlock];
+    const T* pointer = blockColBuffers_[jLocalBlock];
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -161,16 +185,16 @@ DistDenseSymmMatrix<T>::BlockColumnBuffer( int jLocalBlock ) const
 
 template<typename T>
 inline int
-DistDenseSymmMatrix<T>::BlockColumnHeight( int jLocalBlock ) const
+DistDenseSymmMatrix<T>::BlockColHeight( int jLocalBlock ) const
 {
 #ifndef RELEASE
-    PushCallStack("DistDenseSymmMatrix::BlockColumnHeight");
+    PushCallStack("DistDenseSymmMatrix::BlockColHeight");
     if( jLocalBlock < 0 )
         throw std::logic_error("jLocalBlock was less than 0");
-    if( jLocalBlock > blockColumnHeights_.size() )
+    if( jLocalBlock > blockColHeights_.size() )
         throw std::logic_error("jLocalBlock was too large");
 #endif
-    const int localHeight = blockColumnHeights_[jLocalBlock];
+    const int localHeight = blockColHeights_[jLocalBlock];
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -179,16 +203,16 @@ DistDenseSymmMatrix<T>::BlockColumnHeight( int jLocalBlock ) const
 
 template<typename T>
 inline int
-DistDenseSymmMatrix<T>::BlockColumnWidth( int jLocalBlock ) const
+DistDenseSymmMatrix<T>::BlockColWidth( int jLocalBlock ) const
 {
 #ifndef RELEASE
-    PushCallStack("DistDenseSymmMatrix::BlockColumnWidth");
+    PushCallStack("DistDenseSymmMatrix::BlockColWidth");
     if( jLocalBlock < 0 )
         throw std::logic_error("jLocalBlock was less than 0");
-    if( jLocalBlock > blockColumnWidths_.size() )
+    if( jLocalBlock > blockColWidths_.size() )
         throw std::logic_error("jLocalBlock was too large");
 #endif
-    const int localWidth = blockColumnWidths_[jLocalBlock];
+    const int localWidth = blockColWidths_[jLocalBlock];
 #ifndef RELEASE
     PopCallStack();
 #endif
