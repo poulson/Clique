@@ -29,7 +29,7 @@ void clique::Initialize( int& argc, char**& argv )
         if( mpi::Finalized() )
             throw std::logic_error
             ("Cannot initialize Clique after finalizing MPI");
-#ifndef _OPENMP
+#ifdef _OPENMP
         const int provided = 
             mpi::InitThread( argc, argv, mpi::THREAD_MULTIPLE );
         if( provided != mpi::THREAD_MULTIPLE )
@@ -37,7 +37,7 @@ void clique::Initialize( int& argc, char**& argv )
                       << std::endl;
 #else
         mpi::Init( argc, argv );
-#endif // ifndef _OPENMP
+#endif // ifdef _OPENMP
         ::cliqueInitializedMpi = true;
     }
     else
