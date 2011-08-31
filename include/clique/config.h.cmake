@@ -28,5 +28,6 @@
 #cmakedefine BLAS_POST
 #cmakedefine LAPACK_POST
 #cmakedefine AVOID_COMPLEX_MPI
+#cmakedefine USE_BYTE_ALLGATHERS
 
 #endif /* CLIQUE_CONFIG_HPP */

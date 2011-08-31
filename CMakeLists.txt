@@ -30,6 +30,7 @@ endif(CMAKE_BUILD_TYPE MATCHES Release)
 
 option(BUILD_TESTS "Build a collection of test executables" OFF)
 option(AVOID_COMPLEX_MPI "Avoid complex MPI routines for robustness" ON)
+option(USE_BYTE_ALLGATHERS "Avoid a known MPI-performance bug on BG/P" ON)
 
 find_package(MPI)
 if(NOT MPI_CXX_FOUND)

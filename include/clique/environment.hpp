@@ -34,6 +34,8 @@
 
 namespace clique {
 
+typedef unsigned char byte;
+ 
 typedef std::complex<float> scomplex;
 typedef std::complex<double> dcomplex;
 
