@@ -101,6 +101,9 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
     const int maxPackedA11Size = (blockSize_*blockSize_+blockSize_)/2;
     std::vector<F> A11(maxA11Size), packedA11(maxPackedA11Size);
 
+    const int maxA21LocalHeight = height_/(gridHeight_*blockSize_) + blockSize_;
+    std::vector<F> diagAndA21( (maxA21LocalHeight+1)*blockSize_ );
+
     int jLocalBlock = 0;
     for( int blockCol=0; blockCol<numBlockCols; ++blockCol )
     {
@@ -109,11 +112,19 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
         const int ownerRow = blockCol % gridHeight_;
         const int ownerCol = blockCol % gridWidth_;
 
+        // Compute the local height of the owning process column's data
+        // TODO
+        // const int blockColHeight = ? 
+        // const int A21LocalHeight = ? 
+        //
+        // For now, just make it compile
+        const int blockColHeight = 0; 
+        const int A21LocalHeight = 0;
+
         if( ownerCol == gridCol_ )
         {
             F* blockCol = blockColBuffers_[jLocalBlock];
-            const int blockColHeight = blockColHeights_[jLocalBlock];
-            const int blockColWidth = blockColWidths_[jLocalBlock];
+            F* A21 = ( ownerRow==gridRow_ ? &blockCol[b] : blockCol );
             const int blockColLDim = blockColHeight;
 
             if( ownerRow == gridRow_ )
@@ -139,16 +150,22 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
             // A21 := A21 trilu(A11)^-[T/H] 
             const char option = ( conjugate ? 'C' : 'T' );
             blas::Trsm
-            ( 'R', 'L', option, 'U', blockColHeight-b, blockColWidth, 
-              (F)1, &A11[0], b, &blockCol[b], blockColLDim );
+            ( 'R', 'L', option, 'U', A21LocalHeight, b, 
+              (F)1, &A11[0], b, A21, blockColLDim );
 
             // Copy D11[* ,MR] and A21[MC,MR] into a buffer
-            // TODO
+            for( int j=0; j<b; ++j )
+                diagAndA21[j] = A11[j+j*b];
+            for( int j=0; j<b; ++j )
+                std::memcpy
+                ( &diagAndA21[b+j*A21LocalHeight], &A21[j*blockColLDim], 
+                  A21LocalHeight*sizeof(F) );
         }
 
         // Broadcast D11[* ,MR] and A21[MC,MR] within rows to form 
         // D11[* ,* ] and A21[MC,* ]
-        // TODO
+        mpi::Broadcast
+        ( &diagAndA21[0], (A21LocalHeight+1)*b, ownerCol, rowComm_ );
 
         if( gridHeight_ == gridWidth_ )
         {
