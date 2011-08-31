@@ -48,8 +48,8 @@ private:
                      blockColRowOffsets_,
                      blockColColOffsets_;
 
-    static void BlockChol( int n, F* A, int lda );
-    static void BlockLDL( bool conjugate, int n, F* A, int lda );
+    static void LocalChol( int n, F* A, int lda );
+    static void LocalLDL( bool conjugate, int n, F* A, int lda );
     void LDL( bool conjugate );
 
 public:

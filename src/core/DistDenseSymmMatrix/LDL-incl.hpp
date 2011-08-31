@@ -21,11 +21,11 @@
 
 template<typename F>
 void
-clique::DistDenseSymmMatrix<F>::BlockLDL
+clique::DistDenseSymmMatrix<F>::LocalLDL
 ( bool conjugate, int n, F* A, int lda )
 {
 #ifndef RELEASE
-    PushCallStack("DistDenseSymmMatrix::BlockLDL");
+    PushCallStack("DistDenseSymmMatrix::LocalLDL");
     if( lda < n )
         throw std::logic_error
         ("Leading dimension cannot be smaller than height");
@@ -119,7 +119,7 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
             if( ownerRow == gridRow_ )
             {
                 // Perform the in-place LDL^[T/H] factorization
-                BlockLDL( conjugate, b, blockCol, blockColLDim );
+                LocalLDL( conjugate, b, blockCol, blockColLDim );
 
                 // Pack the lower-triangle
                 for( int k=0,offset=0; k<b; offset+=b-k,++k )

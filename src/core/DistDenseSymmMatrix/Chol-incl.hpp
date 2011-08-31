@@ -21,10 +21,10 @@
 
 template<typename F>
 void
-clique::DistDenseSymmMatrix<F>::BlockChol( int n, F* A, int lda )
+clique::DistDenseSymmMatrix<F>::LocalChol( int n, F* A, int lda )
 {
 #ifndef RELEASE
-    PushCallStack("DistDenseSymmMatrix::BlockChol");
+    PushCallStack("DistDenseSymmMatrix::LocalChol");
     if( lda < n )
         throw std::logic_error
         ("Leading dimension cannot be smaller than height");
