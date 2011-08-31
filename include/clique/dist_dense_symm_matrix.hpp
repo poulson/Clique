@@ -30,7 +30,7 @@ namespace clique {
 // owned by the top-left process in the grid. We can also restrict access to 
 // blocks and column panels of the lower triangle in order to facilitate packed 
 // storage (which will be implemented later).
-template<typename T>
+template<typename F>
 class DistDenseSymmMatrix
 {
 private:
@@ -41,14 +41,15 @@ private:
     int gridHeight_, gridWidth_;
     int gridRow_, gridCol_;
 
-    std::vector<T> buffer_;
-    std::vector<T*> blockColBuffers_;
+    std::vector<F> buffer_;
+    std::vector<F*> blockColBuffers_;
     std::vector<int> blockColHeights_, 
                      blockColWidths_,
                      blockColRowOffsets_,
                      blockColColOffsets_;
 
-    static void BlockLDL( bool conjugate, int n, T* A, int lda );
+    static void BlockChol( int n, F* A, int lda );
+    static void BlockLDL( bool conjugate, int n, F* A, int lda );
     void LDL( bool conjugate );
 
 public:
@@ -70,8 +71,8 @@ public:
     MPI_Comm ColComm() const;
     MPI_Comm RowComm() const;
 
-    T* BlockColBuffer( int jLocalBlock );
-    const T* BlockColBuffer( int jLocalBlock ) const;
+    F* BlockColBuffer( int jLocalBlock );
+    const F* BlockColBuffer( int jLocalBlock ) const;
 
     int BlockColHeight( int jLocalBlock ) const;
     int BlockColWidth( int jLocalBlock ) const;
@@ -80,6 +81,7 @@ public:
     void MakeZero();
     void MakeIdentity();
 
+    //void Chol();
     void LDLT();
     void LDLH();
 };

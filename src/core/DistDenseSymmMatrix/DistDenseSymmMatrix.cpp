@@ -20,10 +20,11 @@
 */
 #include "clique.hpp"
 
+#include "./Chol-incl.hpp"
 #include "./LDL-incl.hpp"
 
-template<typename T>
-clique::DistDenseSymmMatrix<T>::DistDenseSymmMatrix
+template<typename F>
+clique::DistDenseSymmMatrix<F>::DistDenseSymmMatrix
 ( mpi::Comm comm, int gridHeight, int gridWidth )
 : height_(0), blockSize_(1), 
   comm_(comm), gridHeight_(gridHeight), gridWidth_(gridWidth)
@@ -58,8 +59,8 @@ clique::DistDenseSymmMatrix<T>::DistDenseSymmMatrix
 #endif
 }
 
-template<typename T>
-clique::DistDenseSymmMatrix<T>::DistDenseSymmMatrix
+template<typename F>
+clique::DistDenseSymmMatrix<F>::DistDenseSymmMatrix
 ( int height, int blockSize, mpi::Comm comm, int gridHeight, int gridWidth )
 : height_(height), blockSize_(blockSize), 
   comm_(comm), gridHeight_(gridHeight), gridWidth_(gridWidth)
@@ -147,9 +148,9 @@ clique::DistDenseSymmMatrix<T>::DistDenseSymmMatrix
 #endif
 }
 
-template<typename T>
+template<typename F>
 void
-clique::DistDenseSymmMatrix<T>::Reconfigure( int height, int blockSize )
+clique::DistDenseSymmMatrix<F>::Reconfigure( int height, int blockSize )
 {
 #ifndef RELEASE
     PushCallStack("DistDenseSymmMatrix::Reconfigure");
@@ -219,9 +220,9 @@ clique::DistDenseSymmMatrix<T>::Reconfigure( int height, int blockSize )
 #endif
 }
 
-template<typename T>
+template<typename F>
 void
-clique::DistDenseSymmMatrix<T>::Print( std::string s ) const
+clique::DistDenseSymmMatrix<F>::Print( std::string s ) const
 {
 #ifndef RELEASE
     PushCallStack("DistDenseSymmMatrix::Print");
@@ -229,13 +230,13 @@ clique::DistDenseSymmMatrix<T>::Print( std::string s ) const
     const int commSize = mpi::CommSize( comm_ );
     const int commRank = mpi::CommRank( comm_ );
 
-    std::vector<T> sendBuf( height_*height_, 0 );
+    std::vector<F> sendBuf( height_*height_, 0 );
 
     // Pack our local matrix
     const int numLocalBlockCols = blockColHeights_.size();
     for( int jLocalBlock=0; jLocalBlock<numLocalBlockCols; ++jLocalBlock )
     {
-        const T* blockCol = blockColBuffers_[jLocalBlock];
+        const F* blockCol = blockColBuffers_[jLocalBlock];
         const int iOffset = blockColRowOffsets_[jLocalBlock];
         const int jOffset = blockColColOffsets_[jLocalBlock];
         const int blockColHeight = blockColHeights_[jLocalBlock];
@@ -251,23 +252,23 @@ clique::DistDenseSymmMatrix<T>::Print( std::string s ) const
             int blockOffset = iOffset;
             for( ; block<numLocalBlocks-1; ++block )
             {
-                const T* col = &blockCol[block*blockSize_+y*blockColHeight];
-                T* sendCol = &sendBuf[blockOffset+(jOffset+y)*height_];
-                std::memcpy( sendCol, col, blockSize_*sizeof(T) );
+                const F* col = &blockCol[block*blockSize_+y*blockColHeight];
+                F* sendCol = &sendBuf[blockOffset+(jOffset+y)*height_];
+                std::memcpy( sendCol, col, blockSize_*sizeof(F) );
                 blockOffset += blockSize_;
             }
 
             if( numLocalBlocks != 0 )
             {
-                const T* col = &blockCol[block*blockSize_+y*blockColHeight];
-                T* sendCol = &sendBuf[blockOffset+(jOffset+y)*height_];
-                std::memcpy( sendCol, col, lastBlockHeight*sizeof(T) );
+                const F* col = &blockCol[block*blockSize_+y*blockColHeight];
+                F* sendCol = &sendBuf[blockOffset+(jOffset+y)*height_];
+                std::memcpy( sendCol, col, lastBlockHeight*sizeof(F) );
             }
         }
     }
 
     // if we are the root, allocate a receive buffer
-    std::vector<T> recvBuf;
+    std::vector<F> recvBuf;
     if( commRank == 0 )
         recvBuf.resize( height_*height_ );
 
@@ -294,9 +295,9 @@ clique::DistDenseSymmMatrix<T>::Print( std::string s ) const
 #endif
 }
 
-template<typename T>
+template<typename F>
 void
-clique::DistDenseSymmMatrix<T>::MakeZero()
+clique::DistDenseSymmMatrix<F>::MakeZero()
 {
 #ifndef RELEASE
     PushCallStack("DistDenseSymmMatrix::MakeZero");
@@ -307,9 +308,9 @@ clique::DistDenseSymmMatrix<T>::MakeZero()
 #endif
 }
 
-template<typename T>
+template<typename F>
 void
-clique::DistDenseSymmMatrix<T>::MakeIdentity()
+clique::DistDenseSymmMatrix<F>::MakeIdentity()
 {
 #ifndef RELEASE
     PushCallStack("DistDenseSymmMatrix::MakeIdentity");
@@ -325,9 +326,9 @@ clique::DistDenseSymmMatrix<T>::MakeIdentity()
         {
             const int blockColHeight = blockColHeights_[jLocalBlock];
             const int blockColWidth = blockColWidths_[jLocalBlock];
-            T* blockCol = blockColBuffers_[jLocalBlock];
+            F* blockCol = blockColBuffers_[jLocalBlock];
             for( int j=0; j<std::min(blockColHeight,blockColWidth); ++j )
-                blockCol[j+j*blockColHeight] = (T)1; 
+                blockCol[j+j*blockColHeight] = (F)1; 
         }
     }
 #ifndef RELEASE
@@ -335,7 +336,6 @@ clique::DistDenseSymmMatrix<T>::MakeIdentity()
 #endif
 }
 
-template class clique::DistDenseSymmMatrix<int>;
 template class clique::DistDenseSymmMatrix<float>;
 template class clique::DistDenseSymmMatrix<double>;
 template class clique::DistDenseSymmMatrix<std::complex<float> >;
