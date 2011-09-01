@@ -93,44 +93,48 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
 #ifndef RELEASE
     PushCallStack("DistDenseSymmMatrix::LDL");
 #endif
-    const int remainder = height_ % blockSize_;
-    const int numBlockCols = 
-        ( remainder==0 ? height_/blockSize_ : height_/blockSize_+1 );
+    // We will frequently use these parameters, so let's use shorter names
+    const int r = gridHeight_;
+    const int c = gridWidth_;
+    const int p = r*c;
+    const int n = height_;
+    const int nb = blockSize_;
 
-    const int maxA11Size = blockSize_*blockSize_;
-    const int maxPackedA11Size = (blockSize_*blockSize_+blockSize_)/2;
+    const int remainder = n % nb;
+    const int numBlockCols = ( remainder==0 ? n/nb : n/nb+1 );
+
+    const int maxA11Size = nb*nb;
+    const int maxPackedA11Size = (nb*nb+nb)/2;
     std::vector<F> A11(maxA11Size), packedA11(maxPackedA11Size);
 
-    const int maxA21LocalHeight = height_/(gridHeight_*blockSize_) + blockSize_;
-    std::vector<F> diagAndA21( (maxA21LocalHeight+1)*blockSize_ );
+    const int maxA21LocalHeight = n/(r*nb) + nb;
+    std::vector<F> diagAndA21( (maxA21LocalHeight+1)*nb );
+
+    const int maxA21_VC_STAR_LocalHeight = n/(p*nb) + nb;
+    std::vector<F> A21_VC_STAR( maxA21_VC_STAR_LocalHeight*nb );
 
     int jLocalBlock = 0;
     for( int jBlock=0; jBlock<numBlockCols; ++jBlock )
     {
-        const int j = jBlock*blockSize_;
-        const int b = std::min(blockSize_,height_-j);
-        const int ownerRow = jBlock % gridHeight_;
-        const int ownerCol = jBlock % gridWidth_;
+        const int j = jBlock*nb;
+        const int b = std::min(nb,n-j);
+        const int ownerRow = jBlock % r;
+        const int ownerCol = jBlock % c;
+        const bool myRow = (ownerRow == gridRow_);
+        const bool myCol = (ownerCol == gridCol_);
 
-        // Compute the local height of the owning process column's data
-        // TODO
-        // const int blockColHeight = ? 
-        // const int A21LocalHeight = ? 
-        //
-        // For now, just make it compile
-        const int iLocalBlock = (jBlock-gridRow_+gridHeight_-1)/gridHeight_;
-        const int iBlock = gridRow_ + iLocalBlock*gridHeight_;
-        const int blockColHeight = localHeight_ - iLocalBlock*blockSize_;
+        const int iLocalBlock = (jBlock-gridRow_+r-1)/r;
+        const int blockColHeight = localHeight_ - iLocalBlock*nb;
         const int A21LocalHeight = 
-            ( ownerRow==gridRow_ ? blockColHeight-b : blockColHeight );
+            ( myRow ? blockColHeight-b : blockColHeight );
 
-        if( ownerCol == gridCol_ )
+        if( myCol )
         {
             F* blockCol = blockColBuffers_[jLocalBlock];
-            F* A21 = ( ownerRow==gridRow_ ? &blockCol[b] : blockCol );
+            F* A21 = ( myRow ? &blockCol[b] : blockCol );
             const int blockColLDim = blockColHeight;
 
-            if( ownerRow == gridRow_ )
+            if( myRow )
             {
                 // Perform the in-place LDL^[T/H] factorization
                 LocalLDL( conjugate, b, blockCol, blockColLDim );
@@ -186,6 +190,9 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
         else
         {
             // Locally copy A21[VC,* ] out of A21[MC,* ]
+            const int A21_VC_STAR_Align = (jBlock+1) % p;
+            //const int myFirstA21Block = ?
+
             // TODO
 
             // SendRecv permutation to form A21[VR,* ] from A21[VC,* ]
@@ -201,7 +208,7 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
         // A22[MC,MR] -= S21[MC,* ] A21[MR,* ]^[T/H]
         // TODO
 
-        if( ownerCol == gridCol_ )
+        if( myCol )
             ++jLocalBlock;
     }
 #ifndef RELEASE
