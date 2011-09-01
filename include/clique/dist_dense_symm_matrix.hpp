@@ -40,6 +40,7 @@ private:
     MPI_Comm comm_, cartComm_, colComm_, rowComm_;
     int gridHeight_, gridWidth_;
     int gridRow_, gridCol_;
+    int localHeight_, localWidth_;
 
     std::vector<F> buffer_;
     std::vector<F*> blockColBuffers_;

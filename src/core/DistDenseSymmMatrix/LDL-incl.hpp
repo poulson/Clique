@@ -105,12 +105,12 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
     std::vector<F> diagAndA21( (maxA21LocalHeight+1)*blockSize_ );
 
     int jLocalBlock = 0;
-    for( int blockCol=0; blockCol<numBlockCols; ++blockCol )
+    for( int jBlock=0; jBlock<numBlockCols; ++jBlock )
     {
-        const int j = blockCol*blockSize_;
+        const int j = jBlock*blockSize_;
         const int b = std::min(blockSize_,height_-j);
-        const int ownerRow = blockCol % gridHeight_;
-        const int ownerCol = blockCol % gridWidth_;
+        const int ownerRow = jBlock % gridHeight_;
+        const int ownerCol = jBlock % gridWidth_;
 
         // Compute the local height of the owning process column's data
         // TODO
@@ -118,8 +118,11 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
         // const int A21LocalHeight = ? 
         //
         // For now, just make it compile
-        const int blockColHeight = 0; 
-        const int A21LocalHeight = 0;
+        const int iLocalBlock = (jBlock-gridRow_+gridHeight_-1)/gridHeight_;
+        const int iBlock = gridRow_ + iLocalBlock*gridHeight_;
+        const int blockColHeight = localHeight_ - iLocalBlock*blockSize_;
+        const int A21LocalHeight = 
+            ( ownerRow==gridRow_ ? blockColHeight-b : blockColHeight );
 
         if( ownerCol == gridCol_ )
         {
