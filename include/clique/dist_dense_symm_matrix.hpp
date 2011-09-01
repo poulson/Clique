@@ -57,6 +57,9 @@ private:
 
     static void LocalChol( int n, F* A, int lda );
     static void LocalLDL( bool conjugate, int n, F* A, int lda );
+
+    int RelabelVCToVR( int VCRank );
+    int RelabelVRToVC( int VRRank );
     void LDL( bool conjugate );
 
 public:
@@ -135,6 +138,26 @@ DistDenseSymmMatrix<F>::LastBlockSize( int length, int blockSize )
         return 0;
     else
         return ( length%blockSize==0 ? blockSize : length%blockSize );
+}
+
+template<typename F>
+inline int
+DistDenseSymmMatrix<F>::RelabelVCToVR( int VCRank )
+{
+    const int MCRank = VCRank % gridHeight_;
+    const int MRRank = VCRank / gridHeight_;
+    const int VRRank = MRRank + MCRank*gridWidth_;
+    return VRRank;
+}
+
+template<typename F>
+inline int
+DistDenseSymmMatrix<F>::RelabelVRToVC( int VRRank )
+{
+    const int MCRank = VRRank / gridWidth_;
+    const int MRRank = VRRank % gridWidth_;
+    const int VCRank = MCRank + MRRank*gridHeight_;
+    return VCRank;
 }
 
 template<typename F>

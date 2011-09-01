@@ -115,8 +115,13 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
     const int maxA21LocalHeight = n/(r*nb) + nb;
     std::vector<F> diagAndA21( (maxA21LocalHeight+1)*nb );
 
-    const int maxA21_VC_STAR_LocalHeight = n/(p*nb) + nb;
-    std::vector<F> A21_VC_STAR( maxA21_VC_STAR_LocalHeight*nb );
+    const int maxA21VectorLocalHeight = n/(p*nb) + nb;
+    std::vector<F> A21_VC_STAR, A21_VR_STAR;
+    if( r != c )
+    {
+        A21_VC_STAR.resize( maxA21VectorLocalHeight*nb );
+        A21_VR_STAR.resize( maxA21VectorLocalHeight*nb );
+    }
 
     int jLocalBlock = 0;
     for( int jBlock=0; jBlock<numBlockCols; ++jBlock )
@@ -179,9 +184,9 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
         mpi::Broadcast
         ( &diagAndA21[0], (A21LocalHeight+1)*b, ownerCol, rowComm_ );
 
-        if( gridHeight_ == gridWidth_ )
+        if( r == c )
         {
-            if( gridCol_ == gridRow_ )
+            if( MCRank == MRRank )
             {
                 // Just perform a memcpy
                 // TODO
@@ -201,19 +206,41 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
                 BlockShift( n-j-b, b, A21_VC_STAR_Align, VCRank, p );
             const int A21_MC_STAR_Shift =
                 BlockShift( n-j-b, b, A21_MC_STAR_Align, MCRank, r );
+            const int A21_VC_STAR_RelativeShift = 
+                (A21_VC_STAR_Shift-A21_MC_STAR_Shift)/r;
             const int A21_VC_STAR_LocalHeight = 
                 LocalLength( n-(j+b), b, A21_VC_STAR_Align, VCRank, p );
-            // HERE
+            const int A21_VC_STAR_LocalBlockHeight = 
+                BlockLength( A21_VC_STAR_LocalHeight, b );
+            for( int s=0; s<A21_VC_STAR_LocalBlockHeight; ++s )
+            {
+                const int iLocalBlock = A21_VC_STAR_RelativeShift + s*c;
+                const F* origBlock = &diagAndA21[1+iLocalBlock*b];
+                F* copiedBlock = &A21_VC_STAR[s*b];
+                const int blockHeight = std::min(b,A21LocalHeight-iLocalBlock*b);
+                for( int j=0; j<b; ++j )
+                    std::memcpy
+                    ( &copiedBlock[j*A21_VC_STAR_LocalHeight], 
+                      &origBlock[j*(A21LocalHeight+1)], blockHeight*sizeof(F) );
+            }
 
             // SendRecv permutation to form A21[VR,* ] from A21[VC,* ]
-            // TODO
+            const int sendVCRank = RelabelVRToVC( VCRank );
+            const int recvVCRank = RelabelVCToVR( VCRank );
+            const int A21_VR_STAR_Align = (jBlock+1) % p;
+            const int A21_VR_STAR_LocalHeight = 
+                LocalLength( n-(j+b), b, A21_VR_STAR_Align, VRRank, p );
+            mpi::SendRecv
+            ( &A21_VC_STAR[0], A21_VC_STAR_LocalHeight*b, sendVCRank, 0,
+              &A21_VR_STAR[0], A21_VR_STAR_LocalHeight*b, recvVCRank, 0, 
+              cartComm_ );
 
-            // Gather A21[VR,* ] within rows to form S21[MR,* ]
+            // AllGather A21[VR,* ] within columns to form S21[MR,* ]
             // TODO
         }
 
         // S21[MC,* ] := A21[MC,* ] D11^-1
-        // TODO
+        // TODO (Trivial)
 
         // A22[MC,MR] -= S21[MC,* ] A21[MR,* ]^[T/H]
         // TODO
