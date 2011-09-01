@@ -97,11 +97,16 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
     const int r = gridHeight_;
     const int c = gridWidth_;
     const int p = r*c;
+    const int MCRank = gridRow_;
+    const int MRRank = gridCol_;
+    const int VCRank = MCRank + r*MRRank;
+    const int VRRank = MRRank + c*MCRank;
+
     const int n = height_;
     const int nb = blockSize_;
-
-    const int remainder = n % nb;
-    const int numBlockCols = ( remainder==0 ? n/nb : n/nb+1 );
+    const int numBlockCols = BlockLength( n, nb );
+    const int mLocal = LocalLength( n, nb, 0, MCRank, r );
+    const int nLocal = LocalLength( n, nb, 0, MRRank, c );
 
     const int maxA11Size = nb*nb;
     const int maxPackedA11Size = (nb*nb+nb)/2;
@@ -120,19 +125,19 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
         const int b = std::min(nb,n-j);
         const int ownerRow = jBlock % r;
         const int ownerCol = jBlock % c;
-        const bool myRow = (ownerRow == gridRow_);
-        const bool myCol = (ownerCol == gridCol_);
+        const bool myRow = (ownerRow == MCRank);
+        const bool myCol = (ownerCol == MRRank);
 
-        const int iLocalBlock = (jBlock-gridRow_+r-1)/r;
-        const int blockColHeight = localHeight_ - iLocalBlock*nb;
+        const int blockColLocalHeight = 
+            LocalLength( n-j, b, ownerRow, MCRank, r );
         const int A21LocalHeight = 
-            ( myRow ? blockColHeight-b : blockColHeight );
+            LocalLength( n-j-b, b, (ownerRow+1)%r, MCRank, r );
 
         if( myCol )
         {
             F* blockCol = blockColBuffers_[jLocalBlock];
             F* A21 = ( myRow ? &blockCol[b] : blockCol );
-            const int blockColLDim = blockColHeight;
+            const int blockColLDim = blockColLocalHeight;
 
             if( myRow )
             {
@@ -190,10 +195,15 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
         else
         {
             // Locally copy A21[VC,* ] out of A21[MC,* ]
+            const int A21_MC_STAR_Align = (jBlock+1) % r;
             const int A21_VC_STAR_Align = (jBlock+1) % p;
-            //const int myFirstA21Block = ?
-
-            // TODO
+            const int A21_VC_STAR_Shift = 
+                BlockShift( n-j-b, b, A21_VC_STAR_Align, VCRank, p );
+            const int A21_MC_STAR_Shift =
+                BlockShift( n-j-b, b, A21_MC_STAR_Align, MCRank, r );
+            const int A21_VC_STAR_LocalHeight = 
+                LocalLength( n-(j+b), b, A21_VC_STAR_Align, VCRank, p );
+            // HERE
 
             // SendRecv permutation to form A21[VR,* ] from A21[VC,* ]
             // TODO

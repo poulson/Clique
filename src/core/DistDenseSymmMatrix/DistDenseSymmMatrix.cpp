@@ -27,8 +27,7 @@ template<typename F>
 clique::DistDenseSymmMatrix<F>::DistDenseSymmMatrix
 ( mpi::Comm comm, int gridHeight, int gridWidth )
 : height_(0), blockSize_(1), 
-  comm_(comm), gridHeight_(gridHeight), gridWidth_(gridWidth),
-  localHeight_(0), localWidth_(0)
+  comm_(comm), gridHeight_(gridHeight), gridWidth_(gridWidth)
 {
 #ifndef RELEASE
     PushCallStack("DistDenseSymmMatrix::DistDenseSymmMatrix");
@@ -93,22 +92,14 @@ clique::DistDenseSymmMatrix<F>::DistDenseSymmMatrix
     gridCol_ = mpi::CommRank( rowComm_ );
 
     // Determine the local height information
-    const int offsetHeight = std::max(0,height-gridRow_*blockSize);
-    const int remainderHeight = offsetHeight % blockSize;
-    const int localHeight_ = (offsetHeight/(gridHeight*blockSize))*blockSize +
-        std::min(blockSize,offsetHeight%(gridHeight*blockSize));
-    const int localBlockHeight = 
-        ( remainderHeight==0 ? 
-          localHeight_/blockSize : localHeight_/blockSize+1 );
+    const int localHeight = 
+        LocalLength( height, blockSize, 0, gridRow_, gridHeight_ );
+    const int localBlockHeight = BlockLength( localHeight, blockSize );
 
     // Determine the local width information
-    const int offsetWidth = std::max(0,height-gridCol_*blockSize);
-    const int remainderWidth = offsetWidth % blockSize;
-    const int localWidth_ = (offsetWidth/(gridWidth*blockSize))*blockSize +
-        std::min(blockSize,offsetWidth%(gridWidth*blockSize));
-    const int localBlockWidth =
-        ( remainderWidth==0 ?
-          localWidth_/blockSize : localWidth_/blockSize+1 );
+    const int localWidth = 
+        LocalLength( height, blockSize, 0, gridCol_, gridWidth_ );
+    const int localBlockWidth = BlockLength( localWidth, blockSize );
 
     // Compute the offsets for block column-major packed storage
     int totalLocalSize = 0;
@@ -124,8 +115,8 @@ clique::DistDenseSymmMatrix<F>::DistDenseSymmMatrix
         blockColRowOffsets_[jLocalBlock] = iBlock*blockSize_;
         blockColColOffsets_[jLocalBlock] = jBlock*blockSize_;
 
-        const int remainingLocalHeight = localHeight_ - iLocalBlock*blockSize;
-        const int remainingLocalWidth = localWidth_ - jLocalBlock*blockSize;
+        const int remainingLocalHeight = localHeight - iLocalBlock*blockSize;
+        const int remainingLocalWidth = localWidth - jLocalBlock*blockSize;
         const int thisLocalHeight = remainingLocalHeight;
         const int thisLocalWidth = std::min(remainingLocalWidth,blockSize);
         blockColHeights_[jLocalBlock] = thisLocalHeight;
@@ -165,22 +156,14 @@ clique::DistDenseSymmMatrix<F>::Reconfigure( int height, int blockSize )
     blockColWidths_.clear();
 
     // Determine the local height information
-    const int offsetHeight = std::max(0,height-gridRow_*blockSize);
-    const int remainderHeight = offsetHeight % blockSize;
-    const int localHeight_ = (offsetHeight/(gridHeight_*blockSize))*blockSize +
-        std::min(blockSize,offsetHeight%(gridHeight_*blockSize));
-    const int localBlockHeight = 
-        ( remainderHeight==0 ? 
-          localHeight_/blockSize : localHeight_/blockSize+1 );
+    const int localHeight = 
+        LocalLength( height, blockSize, 0, gridRow_, gridHeight_ );
+    const int localBlockHeight = BlockLength( localHeight, blockSize );
 
     // Determine the local width information
-    const int offsetWidth = std::max(0,height-gridCol_*blockSize);
-    const int remainderWidth = offsetWidth % blockSize;
-    const int localWidth_ = (offsetWidth/(gridWidth_*blockSize))*blockSize +
-        std::min(blockSize,offsetWidth%(gridWidth_*blockSize));
-    const int localBlockWidth =
-        ( remainderWidth==0 ?
-          localWidth_/blockSize : localWidth_/blockSize+1 );
+    const int localWidth = 
+        LocalLength( height, blockSize, 0, gridCol_, gridWidth_ );
+    const int localBlockWidth = BlockLength( localWidth, blockSize );
 
     // Compute the offsets for block column-major packed storage
     int totalLocalSize = 0;
@@ -196,8 +179,8 @@ clique::DistDenseSymmMatrix<F>::Reconfigure( int height, int blockSize )
         blockColRowOffsets_[jLocalBlock] = iBlock*blockSize_;
         blockColColOffsets_[jLocalBlock] = jBlock*blockSize_;
 
-        const int remainingLocalHeight = localHeight_ - iLocalBlock*blockSize;
-        const int remainingLocalWidth = localWidth_ - jLocalBlock*blockSize;
+        const int remainingLocalHeight = localHeight - iLocalBlock*blockSize;
+        const int remainingLocalWidth = localWidth - jLocalBlock*blockSize;
         const int thisLocalHeight = remainingLocalHeight;
         const int thisLocalWidth = std::min(remainingLocalWidth,blockSize);
         blockColHeights_[jLocalBlock] = thisLocalHeight;
@@ -243,8 +226,7 @@ clique::DistDenseSymmMatrix<F>::Print( std::string s ) const
         const int blockColWidth = blockColWidths_[jLocalBlock];
         const int numLocalBlocks = (blockColHeight+blockSize_-1)/blockSize_;
 
-        const int remainder = blockColHeight % blockSize_;
-        const int lastBlockHeight = ( remainder==0 ? blockSize_ : remainder );
+        const int lastBlockHeight = LastBlockSize( blockColHeight, blockSize_ );
 
         for( int y=0; y<blockColWidth; ++y )
         {
@@ -258,12 +240,9 @@ clique::DistDenseSymmMatrix<F>::Print( std::string s ) const
                 blockOffset += blockSize_;
             }
 
-            if( numLocalBlocks != 0 )
-            {
-                const F* col = &blockCol[block*blockSize_+y*blockColHeight];
-                F* sendCol = &sendBuf[blockOffset+(jOffset+y)*height_];
-                std::memcpy( sendCol, col, lastBlockHeight*sizeof(F) );
-            }
+            const F* col = &blockCol[block*blockSize_+y*blockColHeight];
+            F* sendCol = &sendBuf[blockOffset+(jOffset+y)*height_];
+            std::memcpy( sendCol, col, lastBlockHeight*sizeof(F) );
         }
     }
 
