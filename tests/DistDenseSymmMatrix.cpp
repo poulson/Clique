@@ -63,6 +63,8 @@ main( int argc, char* argv[] )
     A.Print("Default reconfigured A");
     A.MakeIdentity();
     A.Print("A := I");
+    A.LDLT( height );
+    A.Print("LDL^T of A=I");
 
     clique::Finalize();
     return 0;

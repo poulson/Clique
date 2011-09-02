@@ -88,12 +88,16 @@ clique::DistDenseSymmMatrix<F>::LocalLDL
 
 template<typename F>
 void
-clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
+clique::DistDenseSymmMatrix<F>::LDL( bool conjugate, int q )
 {
 #ifndef RELEASE
     PushCallStack("DistDenseSymmMatrix::LDL");
+    if( q > height_ )
+        throw std::logic_error("Short-circuit parameter was too large");
 #endif
-    // We will frequently use these parameters, so let's use shorter names
+    // TODO: Add in logic for short-circuiting. The difficult part will be 
+    // handling q's that are not an integer multiple of the block size.
+
     const int r = gridHeight_;
     const int c = gridWidth_;
     const int p = r*c;
@@ -186,6 +190,8 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
                 std::memcpy
                 ( &diagAndA21_MC_STAR[b+t*A21_MC_STAR_LocalHeight], 
                   &A21[t*blockColLDim], A21_MC_STAR_LocalHeight*sizeof(F) );
+
+            ++jLocalBlock;
         }
 
         // Broadcast D11[* ,MR] and A21[MC,MR] within rows to form 
@@ -193,6 +199,7 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
         mpi::Broadcast
         ( &diagAndA21_MC_STAR[0], (A21_MC_STAR_LocalHeight+1)*b, 
           ownerCol, rowComm_ );
+        F* A21_MC_STAR = &diagAndA21_MC_STAR[b];
 
         if( r == c )
         {
@@ -221,7 +228,7 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
             for( int s=0; s<A21_VC_STAR_LocalBlockHeight; ++s )
             {
                 const int iLocalBlock = A21_VC_STAR_RelativeShift + s*c;
-                const F* origBlock = &diagAndA21_MC_STAR[b+iLocalBlock*b];
+                const F* origBlock = &A21_MC_STAR[iLocalBlock*b];
                 F* copiedBlock = &A21_VC_STAR[s*b];
                 const int blockHeight = 
                     std::min(b,A21_MC_STAR_LocalHeight-iLocalBlock*b);
@@ -280,16 +287,38 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
         for( int t=0; t<b; ++t )
         {
             const F invDelta = static_cast<F>(1)/diagAndA21_MC_STAR[t];
-            F* A21Col = &diagAndA21_MC_STAR[b+t*A21_MC_STAR_LocalHeight];
+            F* A21Col = &A21_MC_STAR[t*A21_MC_STAR_LocalHeight];
             for( int s=0; s<A21_MC_STAR_LocalHeight; ++s )
                 A21Col[s] *= invDelta;
         }
 
         // A22[MC,MR] -= S21[MC,* ] A21[MR,* ]^[T/H]
-        // TODO
+        // TODO: Increase widths of gemms for better performance
+        const int A21_MR_STAR_LocalBlockHeight = 
+            BlockLength( A21_MR_STAR_LocalHeight, b );
+        for( int t=0; t<A21_MR_STAR_LocalBlockHeight; ++t )
+        {
+            const int blockWidth = std::min(b,A21_MR_STAR_LocalHeight-t*b);
+            const int blockColLocalHeight = 
+                blockColLocalHeights_[jLocalBlock+t];
+            std::ostringstream os;
+            os << VCRank << ": jBlock=" << jBlock << ", t=" << t 
+               << ", jLocalBlock=" << jLocalBlock << ", blockColLocalHeight=" 
+               << blockColLocalHeight << std::endl;
+            std::cout << os.str();
 
-        if( myCol )
-            ++jLocalBlock;
+            const F* A21_MC_STAR_Sub = 
+                &A21_MC_STAR[A21_MC_STAR_LocalHeight-blockColLocalHeight];
+            const F* A21_MR_STAR_Sub = &A21_MR_STAR[t*b];
+            F* blockCol = blockColBuffers_[jLocalBlock+t];
+
+            const char option = ( conjugate ? 'C' : 'T' );
+            blas::Gemm
+            ( 'N', option, blockColLocalHeight, blockWidth, b,
+              (F)-1, A21_MC_STAR_Sub, A21_MC_STAR_LocalHeight,
+                     A21_MR_STAR_Sub, A21_MR_STAR_LocalHeight,
+              (F)1,  blockCol,        blockColLocalHeight );
+        }
     }
 #ifndef RELEASE
     PopCallStack();
@@ -298,12 +327,12 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
 
 template<typename F>
 void
-clique::DistDenseSymmMatrix<F>::LDLT()
+clique::DistDenseSymmMatrix<F>::LDLT( int q )
 {
 #ifndef RELEASE
     PushCallStack("DistDenseSymmMatrix::LDLT");
 #endif
-    LDL( false );
+    LDL( false, q );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -311,12 +340,12 @@ clique::DistDenseSymmMatrix<F>::LDLT()
 
 template<typename F>
 void
-clique::DistDenseSymmMatrix<F>::LDLH()
+clique::DistDenseSymmMatrix<F>::LDLH( int q )
 {
 #ifndef RELEASE
     PushCallStack("DistDenseSymmMatrix::LDLH");
 #endif
-    LDL( true );
+    LDL( true, q );
 #ifndef RELEASE
     PopCallStack();
 #endif

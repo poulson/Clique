@@ -43,7 +43,7 @@ private:
 
     std::vector<F> buffer_;
     std::vector<F*> blockColBuffers_;
-    std::vector<int> blockColHeights_, 
+    std::vector<int> blockColLocalHeights_, 
                      blockColWidths_,
                      blockColRowOffsets_,
                      blockColColOffsets_;
@@ -60,7 +60,7 @@ private:
 
     int RelabelVCToVR( int VCRank );
     int RelabelVRToVC( int VRRank );
-    void LDL( bool conjugate );
+    void LDL( bool conjugate, int q );
 
 public:
     DistDenseSymmMatrix( MPI_Comm comm, int gridHeight, int gridWidth );
@@ -84,7 +84,7 @@ public:
     F* BlockColBuffer( int jLocalBlock );
     const F* BlockColBuffer( int jLocalBlock ) const;
 
-    int BlockColHeight( int jLocalBlock ) const;
+    int BlockColLocalHeight( int jLocalBlock ) const;
     int BlockColWidth( int jLocalBlock ) const;
 
     void Print( std::string s="" ) const;
@@ -92,8 +92,8 @@ public:
     void MakeIdentity();
 
     //void Chol();
-    void LDLT();
-    void LDLH();
+    void LDLT( int q );
+    void LDLH( int q );
 };
 
 } // namespace clique
@@ -253,16 +253,16 @@ DistDenseSymmMatrix<F>::BlockColBuffer( int jLocalBlock ) const
 
 template<typename F>
 inline int
-DistDenseSymmMatrix<F>::BlockColHeight( int jLocalBlock ) const
+DistDenseSymmMatrix<F>::BlockColLocalHeight( int jLocalBlock ) const
 {
 #ifndef RELEASE
-    PushCallStack("DistDenseSymmMatrix::BlockColHeight");
+    PushCallStack("DistDenseSymmMatrix::BlockColLocalHeight");
     if( jLocalBlock < 0 )
         throw std::logic_error("jLocalBlock was less than 0");
-    if( jLocalBlock > blockColHeights_.size() )
+    if( jLocalBlock > blockColLocalHeights_.size() )
         throw std::logic_error("jLocalBlock was too large");
 #endif
-    const int localHeight = blockColHeights_[jLocalBlock];
+    const int localHeight = blockColLocalHeights_[jLocalBlock];
 #ifndef RELEASE
     PopCallStack();
 #endif

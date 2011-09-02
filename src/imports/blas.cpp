@@ -559,10 +559,58 @@ clique::blas::Gemm
   float alpha, const float* A, int lda, const float* B, int ldb,
   float beta,        float* C, int ldc )
 {
-    const char fixedTransA = ( transA == 'C' ? 'T' : transA );
-    const char fixedTransB = ( transB == 'C' ? 'T' : transB );
-    BLAS(sgemm)( &fixedTransA, &fixedTransB, &m, &n, &k,
-                 &alpha, A, &lda, B, &ldb, &beta, C, &ldc );
+#ifndef RELEASE
+    PushCallStack("blas::Gemm");
+    if( transA == 'N' )
+    {
+        if( lda < m )
+            throw std::logic_error("lda was too small");
+    }
+    else
+    {
+        if( lda < k )
+            throw std::logic_error("lda was too small");
+    }
+    if( transB == 'N' )
+    {
+        if( ldb < k )
+            throw std::logic_error("ldb was too small");
+    }
+    else
+    {
+        if( ldb < n )
+            throw std::logic_error("ldb was too small");
+    }
+    if( ldc < m )
+        throw std::logic_error("ldc was too small");
+#endif
+    if( k == 0 && m != 0 && n != 0 )
+    {
+        if( beta == (float)0 )
+        {
+            for( int j=0; j<n; ++j )
+                std::memset( &C[j*ldc], 0, m*sizeof(float) );
+        }
+        else
+        {
+            for( int j=0; j<n; ++j )
+                for( int i=0; i<m; ++i )
+                    C[i+j*ldc] *= beta;
+        }
+    }
+    else
+    {
+        lda = std::max(1,lda);
+        ldb = std::max(1,ldb);
+        ldc = std::max(1,ldc);
+        const char fixedTransA = ( transA == 'C' ? 'T' : transA );
+        const char fixedTransB = ( transB == 'C' ? 'T' : transB );
+        BLAS(sgemm)( &fixedTransA, &fixedTransB, &m, &n, &k,
+                     &alpha, A, &lda, B, &ldb, &beta, C, &ldc );
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
 }
 
 void
@@ -572,10 +620,58 @@ clique::blas::Gemm
   double alpha, const double* A, int lda, const double* B, int ldb,
   double beta,        double* C, int ldc )
 {
-    const char fixedTransA = ( transA == 'C' ? 'T' : transA );
-    const char fixedTransB = ( transB == 'C' ? 'T' : transB );
-    BLAS(dgemm)( &fixedTransA, &fixedTransB, &m, &n, &k,
-                 &alpha, A, &lda, B, &ldb, &beta, C, &ldc );
+#ifndef RELEASE
+    PushCallStack("blas::Gemm");
+    if( transA == 'N' )
+    {
+        if( lda < m )
+            throw std::logic_error("lda was too small");
+    }
+    else
+    {
+        if( lda < k )
+            throw std::logic_error("lda was too small");
+    }
+    if( transB == 'N' )
+    {
+        if( ldb < k )
+            throw std::logic_error("ldb was too small");
+    }
+    else
+    {
+        if( ldb < n )
+            throw std::logic_error("ldb was too small");
+    }
+    if( ldc < m )
+        throw std::logic_error("ldc was too small");
+#endif
+    if( k == 0 && m != 0 && n != 0 )
+    {
+        if( beta == (double)0 )
+        {
+            for( int j=0; j<n; ++j )
+                std::memset( &C[j*ldc], 0, m*sizeof(double) );
+        }
+        else
+        {
+            for( int j=0; j<n; ++j )
+                for( int i=0; i<m; ++i )
+                    C[i+j*ldc] *= beta;
+        }
+    }
+    else
+    {
+        lda = std::max(1,lda);
+        ldb = std::max(1,ldb);
+        ldc = std::max(1,ldc);
+        const char fixedTransA = ( transA == 'C' ? 'T' : transA );
+        const char fixedTransB = ( transB == 'C' ? 'T' : transB );
+        BLAS(dgemm)( &fixedTransA, &fixedTransB, &m, &n, &k,
+                     &alpha, A, &lda, B, &ldb, &beta, C, &ldc );
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
 }
 
 void
@@ -584,8 +680,56 @@ clique::blas::Gemm
   scomplex alpha, const scomplex* A, int lda, const scomplex* B, int ldb,
   scomplex beta,        scomplex* C, int ldc )
 {
-    BLAS(cgemm)( &transA, &transB, &m, &n, &k,
-                 &alpha, A, &lda, B, &ldb, &beta, C, &ldc );
+#ifndef RELEASE
+    PushCallStack("blas::Gemm");
+    if( transA == 'N' )
+    {
+        if( lda < m )
+            throw std::logic_error("lda was too small");
+    }
+    else
+    {
+        if( lda < k )
+            throw std::logic_error("lda was too small");
+    }
+    if( transB == 'N' )
+    {
+        if( ldb < k )
+            throw std::logic_error("ldb was too small");
+    }
+    else
+    {
+        if( ldb < n )
+            throw std::logic_error("ldb was too small");
+    }
+    if( ldc < m )
+        throw std::logic_error("ldc was too small");
+#endif
+    if( k == 0 && m != 0 && n != 0 )
+    {
+        if( beta == (scomplex)0 )
+        {
+            for( int j=0; j<n; ++j )
+                std::memset( &C[j*ldc], 0, m*sizeof(scomplex) );
+        }
+        else
+        {
+            for( int j=0; j<n; ++j )
+                for( int i=0; i<m; ++i )
+                    C[i+j*ldc] *= beta;
+        }
+    }
+    else
+    {
+        lda = std::max(1,lda);
+        ldb = std::max(1,ldb);
+        ldc = std::max(1,ldc);
+        BLAS(cgemm)( &transA, &transB, &m, &n, &k,
+                     &alpha, A, &lda, B, &ldb, &beta, C, &ldc );
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
 }
 
 void
@@ -594,8 +738,56 @@ clique::blas::Gemm
   dcomplex alpha, const dcomplex* A, int lda, const dcomplex* B, int ldb,
   dcomplex beta,        dcomplex* C, int ldc )
 {
-    BLAS(zgemm)( &transA, &transB, &m, &n, &k,
-                 &alpha, A, &lda, B, &ldb, &beta, C, &ldc );
+#ifndef RELEASE
+    PushCallStack("blas::Gemm");
+    if( transA == 'N' )
+    {
+        if( lda < m )
+            throw std::logic_error("lda was too small");
+    }
+    else
+    {
+        if( lda < k )
+            throw std::logic_error("lda was too small");
+    }
+    if( transB == 'N' )
+    {
+        if( ldb < k )
+            throw std::logic_error("ldb was too small");
+    }
+    else
+    {
+        if( ldb < n )
+            throw std::logic_error("ldb was too small");
+    }
+    if( ldc < m )
+        throw std::logic_error("ldc was too small");
+#endif
+    if( k == 0 && m != 0 && n != 0 )
+    {
+        if( beta == (dcomplex)0 )
+        {
+            for( int j=0; j<n; ++j )
+                std::memset( &C[j*ldc], 0, m*sizeof(dcomplex) );
+        }
+        else
+        {
+            for( int j=0; j<n; ++j )
+                for( int i=0; i<m; ++i )
+                    C[i+j*ldc] *= beta;
+        }
+    }
+    else
+    {
+        lda = std::max(1,lda);
+        ldb = std::max(1,ldb);
+        ldc = std::max(1,ldc);
+        BLAS(zgemm)( &transA, &transB, &m, &n, &k,
+                     &alpha, A, &lda, B, &ldb, &beta, C, &ldc );
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
 }
 
 void
@@ -941,9 +1133,29 @@ clique::blas::Trsm
 ( char side, char uplo, char trans, char unit, int m, int n,
   float alpha, const float* A, int lda, float* B, int ldb )
 {
+#ifndef RELEASE
+    PushCallStack("blas::Trsm");
+    if( side == 'L' )
+    {
+        if( lda < m )   
+            throw std::logic_error("lda was too small");
+    }
+    else
+    {
+        if( lda < n )
+            throw std::logic_error("lda was too small");
+    }
+    if( ldb < m )
+        throw std::logic_error("ldb was too small");
+#endif
+    lda = std::max(1,lda);
+    ldb = std::max(1,ldb);
     const char fixedTrans = ( trans == 'C' ? 'T' : trans );
     BLAS(strsm)( &side, &uplo, &fixedTrans, &unit, &m, &n,
                  &alpha, A, &lda, B, &ldb );
+#ifndef RELEASE
+    PopCallStack();
+#endif
 } 
 
 void
@@ -951,9 +1163,29 @@ clique::blas::Trsm
 ( char side, char uplo, char trans, char unit, int m, int n,
   double alpha, const double* A, int lda, double* B, int ldb )
 {
+#ifndef RELEASE
+    PushCallStack("blas::Trsm");
+    if( side == 'L' )
+    {
+        if( lda < m )   
+            throw std::logic_error("lda was too small");
+    }
+    else
+    {
+        if( lda < n )
+            throw std::logic_error("lda was too small");
+    }
+    if( ldb < m )
+        throw std::logic_error("ldb was too small");
+#endif
+    lda = std::max(1,lda);
+    ldb = std::max(1,ldb);
     const char fixedTrans = ( trans == 'C' ? 'T' : trans );
     BLAS(dtrsm)( &side, &uplo, &fixedTrans, &unit, &m, &n,
                  &alpha, A, &lda, B, &ldb );
+#ifndef RELEASE
+    PopCallStack();
+#endif
 } 
 
 void
@@ -961,8 +1193,28 @@ clique::blas::Trsm
 ( char side, char uplo, char trans, char unit, int m, int n,
   scomplex alpha, const scomplex* A, int lda, scomplex* B, int ldb )
 {
+#ifndef RELEASE
+    PushCallStack("blas::Trsm");
+    if( side == 'L' )
+    {
+        if( lda < m )   
+            throw std::logic_error("lda was too small");
+    }
+    else
+    {
+        if( lda < n )
+            throw std::logic_error("lda was too small");
+    }
+    if( ldb < m )
+        throw std::logic_error("ldb was too small");
+#endif
+    lda = std::max(1,lda);
+    ldb = std::max(1,ldb);
     BLAS(ctrsm)( &side, &uplo, &trans, &unit, &m, &n,
                  &alpha, A, &lda, B, &ldb );
+#ifndef RELEASE
+    PopCallStack();
+#endif
 } 
 
 void
@@ -970,7 +1222,27 @@ clique::blas::Trsm
 ( char side, char uplo, char trans, char unit, int m, int n,
   dcomplex alpha, const dcomplex* A, int lda, dcomplex* B, int ldb )
 {
+#ifndef RELEASE
+    PushCallStack("blas::Trsm");
+    if( side == 'L' )
+    {
+        if( lda < m )   
+            throw std::logic_error("lda was too small");
+    }
+    else
+    {
+        if( lda < n )
+            throw std::logic_error("lda was too small");
+    }
+    if( ldb < m )
+        throw std::logic_error("ldb was too small");
+#endif
+    lda = std::max(1,lda);
+    ldb = std::max(1,ldb);
     BLAS(ztrsm)( &side, &uplo, &trans, &unit, &m, &n,
                  &alpha, A, &lda, B, &ldb );
+#ifndef RELEASE
+    PopCallStack();
+#endif
 } 
 
