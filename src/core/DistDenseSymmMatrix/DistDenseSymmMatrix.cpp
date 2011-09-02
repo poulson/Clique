@@ -238,7 +238,7 @@ clique::DistDenseSymmMatrix<F>::Print( std::string s ) const
                 const F* col = &blockCol[block*nb+y*blockColLocalHeight];
                 F* sendCol = &sendBuf[blockOffset+(jOffset+y)*height_];
                 std::memcpy( sendCol, col, nb*sizeof(F) );
-                blockOffset += nb;
+                blockOffset += nb*gridHeight_;
             }
 
             const F* col = &blockCol[block*nb+y*blockColLocalHeight];
@@ -257,6 +257,7 @@ clique::DistDenseSymmMatrix<F>::Print( std::string s ) const
     ( &sendBuf[0], &recvBuf[0], height_*height_, mpi::SUM, 0, comm_ );
 
     // Print the data from the root
+    std::cout.precision(8);
     if( commRank == 0 )
     {
         if( s != "" )

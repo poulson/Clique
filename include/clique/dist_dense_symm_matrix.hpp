@@ -84,8 +84,11 @@ public:
     F* BlockColBuffer( int jLocalBlock );
     const F* BlockColBuffer( int jLocalBlock ) const;
 
+    int NumLocalBlockCols() const;
     int BlockColLocalHeight( int jLocalBlock ) const;
     int BlockColWidth( int jLocalBlock ) const;
+    int BlockColColOffset( int jLocalBlock ) const;
+    int BlockColRowOffset( int jLocalBlock ) const;
 
     void Print( std::string s="" ) const;
     void MakeZero();
@@ -253,6 +256,11 @@ DistDenseSymmMatrix<F>::BlockColBuffer( int jLocalBlock ) const
 
 template<typename F>
 inline int
+DistDenseSymmMatrix<F>::NumLocalBlockCols() const
+{ return blockColBuffers_.size(); }
+
+template<typename F>
+inline int
 DistDenseSymmMatrix<F>::BlockColLocalHeight( int jLocalBlock ) const
 {
 #ifndef RELEASE
@@ -285,6 +293,42 @@ DistDenseSymmMatrix<F>::BlockColWidth( int jLocalBlock ) const
     PopCallStack();
 #endif
     return localWidth;
+}
+
+template<typename F>
+inline int
+DistDenseSymmMatrix<F>::BlockColColOffset( int jLocalBlock ) const
+{
+#ifndef RELEASE
+    PushCallStack("DistDenseSymmMatrix::BlockColColOffset");
+    if( jLocalBlock < 0 )
+        throw std::logic_error("jLocalBlock was less than 0");
+    if( jLocalBlock > blockColLocalHeights_.size() )
+        throw std::logic_error("jLocalBlock was too large");
+#endif
+    const int colOffset = blockColColOffsets_[jLocalBlock];
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return colOffset;
+}
+
+template<typename F>
+inline int
+DistDenseSymmMatrix<F>::BlockColRowOffset( int jLocalBlock ) const
+{
+#ifndef RELEASE
+    PushCallStack("DistDenseSymmMatrix::BlockColRowOffset");
+    if( jLocalBlock < 0 )
+        throw std::logic_error("jLocalBlock was less than 0");
+    if( jLocalBlock > blockColLocalHeights_.size() )
+        throw std::logic_error("jLocalBlock was too large");
+#endif
+    const int rowOffset = blockColRowOffsets_[jLocalBlock];
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return rowOffset;
 }
 
 } // namespace clique

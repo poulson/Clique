@@ -63,8 +63,32 @@ main( int argc, char* argv[] )
     A.Print("Default reconfigured A");
     A.MakeIdentity();
     A.Print("A := I");
+
+    const int numLocalBlockCols = A.NumLocalBlockCols();
+    for( int jLocalBlock=0; jLocalBlock<numLocalBlockCols; ++jLocalBlock )
+    {
+        const int colOffset = A.BlockColColOffset( jLocalBlock );
+        const int rowOffset = A.BlockColRowOffset( jLocalBlock );
+        const int localHeight = A.BlockColLocalHeight( jLocalBlock );
+        const int width = A.BlockColWidth( jLocalBlock );
+        double* blockCol = A.BlockColBuffer( jLocalBlock );
+
+        for( int t=0; t<width; ++t )
+        {
+
+            const int j = colOffset + t;
+
+            for( int s=0; s<localHeight; ++s )
+            {
+                const int i = rowOffset + 
+                    (s/blockSize)*gridHeight*blockSize+(s%blockSize);
+                blockCol[s+t*localHeight] = 10 + i - j;
+            }
+        }
+    }
+    A.Print("Arbitrary A");
     A.LDLT( height );
-    A.Print("LDL^T of A=I");
+    A.Print("LDL^T of arbitrary A");
 
     clique::Finalize();
     return 0;

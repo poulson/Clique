@@ -95,9 +95,7 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate, int q )
     if( q > height_ )
         throw std::logic_error("Short-circuit parameter was too large");
 #endif
-    // TODO: Add in logic for short-circuiting. The difficult part will be 
-    // handling q's that are not an integer multiple of the block size.
-
+    // TODO: Add in a short-circuit mechanism
     const int r = gridHeight_;
     const int c = gridWidth_;
     const int p = r*c;
@@ -190,6 +188,15 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate, int q )
                 std::memcpy
                 ( &diagAndA21_MC_STAR[b+t*A21_MC_STAR_LocalHeight], 
                   &A21[t*blockColLDim], A21_MC_STAR_LocalHeight*sizeof(F) );
+
+            // Locally solve against D11 to finish forming this block column
+            for( int t=0; t<b; ++t )
+            {
+                const F invDelta = static_cast<F>(1)/A11[t+t*b];
+                F* A21Col = &A21[t*blockColLDim];
+                for( int s=0; s<A21_MC_STAR_LocalHeight; ++s )
+                    A21Col[s] *= invDelta;
+            }
 
             ++jLocalBlock;
         }
@@ -301,11 +308,6 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate, int q )
             const int blockWidth = std::min(b,A21_MR_STAR_LocalHeight-t*b);
             const int blockColLocalHeight = 
                 blockColLocalHeights_[jLocalBlock+t];
-            std::ostringstream os;
-            os << VCRank << ": jBlock=" << jBlock << ", t=" << t 
-               << ", jLocalBlock=" << jLocalBlock << ", blockColLocalHeight=" 
-               << blockColLocalHeight << std::endl;
-            std::cout << os.str();
 
             const F* A21_MC_STAR_Sub = 
                 &A21_MC_STAR[A21_MC_STAR_LocalHeight-blockColLocalHeight];
