@@ -112,15 +112,18 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
     const int maxPackedA11Size = (nb*nb+nb)/2;
     std::vector<F> A11(maxA11Size), packedA11(maxPackedA11Size);
 
-    const int maxA21LocalHeight = n/(r*nb) + nb;
-    std::vector<F> diagAndA21( (maxA21LocalHeight+1)*nb );
+    const int maxA21_MC_STAR_LocalHeight = (n/(r*nb)+1)*nb;
+    const int maxA21_MR_STAR_LocalHeight = (n/(c*nb)+1)*nb;
+    std::vector<F> diagAndA21_MC_STAR( (maxA21_MC_STAR_LocalHeight+1)*nb );
+    std::vector<F> A21_MR_STAR( maxA21_MR_STAR_LocalHeight*nb );
 
-    const int maxA21VectorLocalHeight = n/(p*nb) + nb;
-    std::vector<F> A21_VC_STAR, A21_VR_STAR;
+    const int maxA21VectorLocalHeight = (n/(p*nb)+1)*nb;
+    std::vector<F> A21_VC_STAR, A21_VR_STAR, A21_MR_STAR_Temp;
     if( r != c )
     {
         A21_VC_STAR.resize( maxA21VectorLocalHeight*nb );
         A21_VR_STAR.resize( maxA21VectorLocalHeight*nb );
+        A21_MR_STAR_Temp.resize( maxA21VectorLocalHeight*r*nb );
     }
 
     int jLocalBlock = 0;
@@ -135,8 +138,14 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
 
         const int blockColLocalHeight = 
             LocalLength( n-j, b, ownerRow, MCRank, r );
-        const int A21LocalHeight = 
-            LocalLength( n-j-b, b, (ownerRow+1)%r, MCRank, r );
+        const int A21_MC_STAR_LocalHeight = 
+            LocalLength( n-j-b, b, (jBlock+1)%r, MCRank, r );
+        const int A21_MR_STAR_LocalHeight = 
+            LocalLength( n-j-b, b, (jBlock+1)%c, MRRank, c );
+        const int A21_VC_STAR_LocalHeight = 
+            LocalLength( n-j-b, b, (jBlock+1)%p, VCRank, p );
+        const int A21_VR_STAR_LocalHeight = 
+            LocalLength( n-j-b, b, (jBlock+1)%p, VRRank, p );
 
         if( myCol )
         {
@@ -167,22 +176,23 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
             // A21 := A21 trilu(A11)^-[T/H] 
             const char option = ( conjugate ? 'C' : 'T' );
             blas::Trsm
-            ( 'R', 'L', option, 'U', A21LocalHeight, b, 
+            ( 'R', 'L', option, 'U', A21_MC_STAR_LocalHeight, b, 
               (F)1, &A11[0], b, A21, blockColLDim );
 
             // Copy D11[* ,MR] and A21[MC,MR] into a buffer
-            for( int j=0; j<b; ++j )
-                diagAndA21[j] = A11[j+j*b];
-            for( int j=0; j<b; ++j )
+            for( int t=0; t<b; ++t )
+                diagAndA21_MC_STAR[t] = A11[t+t*b];
+            for( int t=0; t<b; ++t )
                 std::memcpy
-                ( &diagAndA21[b+j*A21LocalHeight], &A21[j*blockColLDim], 
-                  A21LocalHeight*sizeof(F) );
+                ( &diagAndA21_MC_STAR[b+t*A21_MC_STAR_LocalHeight], 
+                  &A21[t*blockColLDim], A21_MC_STAR_LocalHeight*sizeof(F) );
         }
 
         // Broadcast D11[* ,MR] and A21[MC,MR] within rows to form 
         // D11[* ,* ] and A21[MC,* ]
         mpi::Broadcast
-        ( &diagAndA21[0], (A21LocalHeight+1)*b, ownerCol, rowComm_ );
+        ( &diagAndA21_MC_STAR[0], (A21_MC_STAR_LocalHeight+1)*b, 
+          ownerCol, rowComm_ );
 
         if( r == c )
         {
@@ -200,47 +210,80 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate )
         else
         {
             // Locally copy A21[VC,* ] out of A21[MC,* ]
-            const int A21_MC_STAR_Align = (jBlock+1) % r;
-            const int A21_VC_STAR_Align = (jBlock+1) % p;
             const int A21_VC_STAR_Shift = 
-                BlockShift( n-j-b, b, A21_VC_STAR_Align, VCRank, p );
+                BlockShift( n-j-b, b, (jBlock+1)%p, VCRank, p );
             const int A21_MC_STAR_Shift =
-                BlockShift( n-j-b, b, A21_MC_STAR_Align, MCRank, r );
+                BlockShift( n-j-b, b, (jBlock+1)%r, MCRank, r );
             const int A21_VC_STAR_RelativeShift = 
                 (A21_VC_STAR_Shift-A21_MC_STAR_Shift)/r;
-            const int A21_VC_STAR_LocalHeight = 
-                LocalLength( n-(j+b), b, A21_VC_STAR_Align, VCRank, p );
             const int A21_VC_STAR_LocalBlockHeight = 
                 BlockLength( A21_VC_STAR_LocalHeight, b );
             for( int s=0; s<A21_VC_STAR_LocalBlockHeight; ++s )
             {
                 const int iLocalBlock = A21_VC_STAR_RelativeShift + s*c;
-                const F* origBlock = &diagAndA21[1+iLocalBlock*b];
+                const F* origBlock = &diagAndA21_MC_STAR[b+iLocalBlock*b];
                 F* copiedBlock = &A21_VC_STAR[s*b];
-                const int blockHeight = std::min(b,A21LocalHeight-iLocalBlock*b);
-                for( int j=0; j<b; ++j )
+                const int blockHeight = 
+                    std::min(b,A21_MC_STAR_LocalHeight-iLocalBlock*b);
+                for( int t=0; t<b; ++t )
                     std::memcpy
-                    ( &copiedBlock[j*A21_VC_STAR_LocalHeight], 
-                      &origBlock[j*(A21LocalHeight+1)], blockHeight*sizeof(F) );
+                    ( &copiedBlock[t*A21_VC_STAR_LocalHeight], 
+                      &origBlock[t*A21_MC_STAR_LocalHeight], 
+                      blockHeight*sizeof(F) );
             }
 
             // SendRecv permutation to form A21[VR,* ] from A21[VC,* ]
             const int sendVCRank = RelabelVRToVC( VCRank );
             const int recvVCRank = RelabelVCToVR( VCRank );
-            const int A21_VR_STAR_Align = (jBlock+1) % p;
             const int A21_VR_STAR_LocalHeight = 
-                LocalLength( n-(j+b), b, A21_VR_STAR_Align, VRRank, p );
+                LocalLength( n-(j+b), b, (jBlock+1)%p, VRRank, p );
             mpi::SendRecv
             ( &A21_VC_STAR[0], A21_VC_STAR_LocalHeight*b, sendVCRank, 0,
               &A21_VR_STAR[0], A21_VR_STAR_LocalHeight*b, recvVCRank, 0, 
               cartComm_ );
 
-            // AllGather A21[VR,* ] within columns to form S21[MR,* ]
-            // TODO
+            // AllGather A21[VR,* ] within columns to form A21[MR,* ]
+            const int portionSize = ((n-j-b)/(p*b)+1)*b*b;
+            mpi::AllGather
+            ( &A21_VR_STAR[0],      portionSize, 
+              &A21_MR_STAR_Temp[0], portionSize, colComm_ );
+            const int A21_MR_STAR_Shift = 
+                BlockShift( n-j-b, b, (jBlock+1)%c, MRRank, c );
+            for( int k=0; k<r; ++k )
+            {
+                const int thisVRRank = MRRank + k*c;
+                const int thisVRShift = 
+                    BlockShift( n-j-b, b, (jBlock+1)%p, thisVRRank, p );
+                const int thisVRLocalLength = 
+                    LocalLength( n-j-b, b, (jBlock+1)%p, thisVRRank, p );
+                const int thisVRLocalBlockLength = 
+                    BlockLength( thisVRLocalLength, b );
+                const int thisVRRelativeShift = 
+                    (thisVRShift-A21_MR_STAR_Shift)/c;
+                const F* thisData = &A21_MR_STAR_Temp[k*portionSize];
+
+                for( int s=0; s<thisVRLocalBlockLength; ++s )
+                {
+                    const int blockHeight = std::min(b,thisVRLocalLength-s*b);
+                    const F* tempBuf = &thisData[s*b];
+                    F* finalBuf = &A21_MR_STAR[(thisVRRelativeShift+s*r)*b];
+                    for( int t=0; t<b; ++t )
+                        std::memcpy
+                        ( &finalBuf[t*A21_MR_STAR_LocalHeight], 
+                          &tempBuf[t*thisVRLocalLength], 
+                          blockHeight*sizeof(F) );
+                }
+            }
         }
 
         // S21[MC,* ] := A21[MC,* ] D11^-1
-        // TODO (Trivial)
+        for( int t=0; t<b; ++t )
+        {
+            const F invDelta = static_cast<F>(1)/diagAndA21_MC_STAR[t];
+            F* A21Col = &diagAndA21_MC_STAR[b+t*A21_MC_STAR_LocalHeight];
+            for( int s=0; s<A21_MC_STAR_LocalHeight; ++s )
+                A21Col[s] *= invDelta;
+        }
 
         // A22[MC,MR] -= S21[MC,* ] A21[MR,* ]^[T/H]
         // TODO
