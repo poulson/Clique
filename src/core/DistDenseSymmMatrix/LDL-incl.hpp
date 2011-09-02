@@ -95,7 +95,8 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate, int q )
     if( q > height_ )
         throw std::logic_error("Short-circuit parameter was too large");
 #endif
-    // TODO: Add in a short-circuit mechanism
+    const char option = ( conjugate ? 'C' : 'T' );
+
     const int r = gridHeight_;
     const int c = gridWidth_;
     const int p = r*c;
@@ -129,26 +130,33 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate, int q )
     }
 
     int jLocalBlock = 0;
-    for( int jBlock=0; jBlock<numBlockCols; ++jBlock )
+    const int numFactorBlockCols = BlockLength( q, nb );
+    for( int jBlock=0; jBlock<numFactorBlockCols; ++jBlock )
     {
         const int j = jBlock*nb;
         const int b = std::min(nb,n-j);
+        const int bf = std::min(nb,q-j);
+        const int bRem = b - bf;
+
         const int ownerRow = jBlock % r;
         const int ownerCol = jBlock % c;
         const bool myRow = (ownerRow == MCRank);
         const bool myCol = (ownerCol == MRRank);
 
         const int blockColLocalHeight = 
-            LocalLength( n-j, b, ownerRow, MCRank, r );
+            LocalLength( n-j, nb, ownerRow, MCRank, r );
         const int A21_MC_STAR_LocalHeight = 
-            LocalLength( n-j-b, b, (jBlock+1)%r, MCRank, r );
+            LocalLength( n-j-b, nb, (jBlock+1)%r, MCRank, r );
         const int A21_MR_STAR_LocalHeight = 
-            LocalLength( n-j-b, b, (jBlock+1)%c, MRRank, c );
+            LocalLength( n-j-b, nb, (jBlock+1)%c, MRRank, c );
         const int A21_VC_STAR_LocalHeight = 
-            LocalLength( n-j-b, b, (jBlock+1)%p, VCRank, p );
+            LocalLength( n-j-b, nb, (jBlock+1)%p, VCRank, p );
         const int A21_VR_STAR_LocalHeight = 
-            LocalLength( n-j-b, b, (jBlock+1)%p, VRRank, p );
+            LocalLength( n-j-b, nb, (jBlock+1)%p, VRRank, p );
 
+        // If we are in the owning process column, then we first factor/update 
+        // it within our process column and then begin distributing it to other
+        // process columns.
         if( myCol )
         {
             F* blockCol = blockColBuffers_[jLocalBlock];
@@ -157,46 +165,74 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate, int q )
 
             if( myRow )
             {
-                // Perform the in-place LDL^[T/H] factorization
-                LocalLDL( conjugate, b, blockCol, blockColLDim );
+                // Perform the in-place LDL^[T/H] factorization on the top-left
+                // bf x bf block
+                LocalLDL( conjugate, bf, blockCol, blockColLDim );
 
-                // Pack the lower-triangle
-                for( int k=0,offset=0; k<b; offset+=b-k,++k )
+                // Solve against the bottom portion of the diagonal block
+                // Technically this is in A21.
+                blas::Trsm
+                ( 'R', 'L', option, 'U', bRem, bf,
+                  (F)1, &blockCol[0], blockColLDim, 
+                        &blockCol[bf], blockColLDim );
+
+                // Pack the first bf columns of the lower triangle
+                for( int t=0,offset=0; t<bf; offset+=b-t,++t )
                     std::memcpy
-                    ( &packedA11[offset], &blockCol[k+k*blockColLDim], 
-                      (b-k)*sizeof(F) );
-            }
+                    ( &packedA11[offset], &blockCol[t+t*blockColLDim], 
+                      (b-t)*sizeof(F) );
+           }
 
             // Broadcast A11[MC,MR] from the owning row to form A11[* ,MR]
-            const int packedSize = (b*b+b)/2;
+            const int packedSize = (b*b+b-bRem*bRem-bRem)/2;
             mpi::Broadcast( &packedA11[0], packedSize, ownerRow, colComm_ );
 
             // Unpack A11
-            for( int k=0,offset=0; k<b; offset+=b-k,++k )
-                std::memcpy( &A11[k+k*b], &packedA11[offset], (b-k)*sizeof(F) );
+            for( int k=0,offset=0; k<bf; offset+=b-k,++k )
+                std::memcpy
+                ( &A11[k+k*b], &packedA11[offset], (b-k)*sizeof(F) );
 
-            // A21 := A21 trilu(A11)^-[T/H] 
-            const char option = ( conjugate ? 'C' : 'T' );
+            // Finish A21 := A21 trilu(A11)^-[T/H] 
+            // (if bf != b, we already did this solve on the diag block)
             blas::Trsm
-            ( 'R', 'L', option, 'U', A21_MC_STAR_LocalHeight, b, 
+            ( 'R', 'L', option, 'U', A21_MC_STAR_LocalHeight, bf, 
               (F)1, &A11[0], b, A21, blockColLDim );
 
             // Copy D11[* ,MR] and A21[MC,MR] into a buffer
-            for( int t=0; t<b; ++t )
+            for( int t=0; t<bf; ++t )
                 diagAndA21_MC_STAR[t] = A11[t+t*b];
-            for( int t=0; t<b; ++t )
+            for( int t=0; t<bf; ++t )
                 std::memcpy
-                ( &diagAndA21_MC_STAR[b+t*A21_MC_STAR_LocalHeight], 
+                ( &diagAndA21_MC_STAR[bf+t*A21_MC_STAR_LocalHeight], 
                   &A21[t*blockColLDim], A21_MC_STAR_LocalHeight*sizeof(F) );
 
-            // Locally solve against D11 to finish forming this block column
-            for( int t=0; t<b; ++t )
+            // Locally solve against D11 to finish forming the first bf columns
+            // of this block column
+            for( int t=0; t<bf; ++t )
             {
                 const F invDelta = static_cast<F>(1)/A11[t+t*b];
+                if( myRow )
+                    for( int s=0; s<bRem; ++s )
+                        blockCol[(bf+s)+t*blockColLDim] *= invDelta;
                 F* A21Col = &A21[t*blockColLDim];
                 for( int s=0; s<A21_MC_STAR_LocalHeight; ++s )
                     A21Col[s] *= invDelta;
             }
+
+            // Update the last b-bf=bRem columns of the block column
+            if( myRow )
+            {
+                // Update the diagonal block
+                blas::Gemm
+                ( 'N', option, bRem, bRem, bf,
+                  (F)-1, &blockCol[bf], blockColLDim, &A11[bf], b,
+                  (F)1,  &blockCol[bf+bf*blockColLDim], blockColLDim );
+            }
+            // Update the rest of the block column
+            blas::Gemm
+            ( 'N', option, A21_MC_STAR_LocalHeight, bRem, bf,
+              (F)-1, A21, blockColLDim, &A11[bf], b,
+              (F)1,  &A21[bf*blockColLDim], blockColLDim );
 
             ++jLocalBlock;
         }
@@ -204,12 +240,13 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate, int q )
         // Broadcast D11[* ,MR] and A21[MC,MR] within rows to form 
         // D11[* ,* ] and A21[MC,* ]
         mpi::Broadcast
-        ( &diagAndA21_MC_STAR[0], (A21_MC_STAR_LocalHeight+1)*b, 
+        ( &diagAndA21_MC_STAR[0], (A21_MC_STAR_LocalHeight+1)*bf, 
           ownerCol, rowComm_ );
-        F* A21_MC_STAR = &diagAndA21_MC_STAR[b];
+        F* A21_MC_STAR = &diagAndA21_MC_STAR[bf];
 
         if( r == c )
         {
+            throw std::logic_error("Fast transpose not yet written");
             if( MCRank == MRRank )
             {
                 // Just perform a memcpy
@@ -239,7 +276,7 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate, int q )
                 F* copiedBlock = &A21_VC_STAR[s*b];
                 const int blockHeight = 
                     std::min(b,A21_MC_STAR_LocalHeight-iLocalBlock*b);
-                for( int t=0; t<b; ++t )
+                for( int t=0; t<bf; ++t )
                     std::memcpy
                     ( &copiedBlock[t*A21_VC_STAR_LocalHeight], 
                       &origBlock[t*A21_MC_STAR_LocalHeight], 
@@ -252,12 +289,12 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate, int q )
             const int A21_VR_STAR_LocalHeight = 
                 LocalLength( n-(j+b), b, (jBlock+1)%p, VRRank, p );
             mpi::SendRecv
-            ( &A21_VC_STAR[0], A21_VC_STAR_LocalHeight*b, sendVCRank, 0,
-              &A21_VR_STAR[0], A21_VR_STAR_LocalHeight*b, recvVCRank, 0, 
+            ( &A21_VC_STAR[0], A21_VC_STAR_LocalHeight*bf, sendVCRank, 0,
+              &A21_VR_STAR[0], A21_VR_STAR_LocalHeight*bf, recvVCRank, 0, 
               cartComm_ );
 
             // AllGather A21[VR,* ] within columns to form A21[MR,* ]
-            const int portionSize = ((n-j-b)/(p*b)+1)*b*b;
+            const int portionSize = ((n-j-b)/(p*b)+1)*b*bf;
             mpi::AllGather
             ( &A21_VR_STAR[0],      portionSize, 
               &A21_MR_STAR_Temp[0], portionSize, colComm_ );
@@ -281,7 +318,7 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate, int q )
                     const int blockHeight = std::min(b,thisVRLocalLength-s*b);
                     const F* tempBuf = &thisData[s*b];
                     F* finalBuf = &A21_MR_STAR[(thisVRRelativeShift+s*r)*b];
-                    for( int t=0; t<b; ++t )
+                    for( int t=0; t<bf; ++t )
                         std::memcpy
                         ( &finalBuf[t*A21_MR_STAR_LocalHeight], 
                           &tempBuf[t*thisVRLocalLength], 
@@ -291,7 +328,7 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate, int q )
         }
 
         // S21[MC,* ] := A21[MC,* ] D11^-1
-        for( int t=0; t<b; ++t )
+        for( int t=0; t<bf; ++t )
         {
             const F invDelta = static_cast<F>(1)/diagAndA21_MC_STAR[t];
             F* A21Col = &A21_MC_STAR[t*A21_MC_STAR_LocalHeight];
@@ -314,9 +351,8 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate, int q )
             const F* A21_MR_STAR_Sub = &A21_MR_STAR[t*b];
             F* blockCol = blockColBuffers_[jLocalBlock+t];
 
-            const char option = ( conjugate ? 'C' : 'T' );
             blas::Gemm
-            ( 'N', option, blockColLocalHeight, blockWidth, b,
+            ( 'N', option, blockColLocalHeight, blockWidth, bf,
               (F)-1, A21_MC_STAR_Sub, A21_MC_STAR_LocalHeight,
                      A21_MR_STAR_Sub, A21_MR_STAR_LocalHeight,
               (F)1,  blockCol,        blockColLocalHeight );
