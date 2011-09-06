@@ -94,6 +94,8 @@ clique::DistDenseSymmMatrix<F>::LDL( bool conjugate, int q )
     PushCallStack("DistDenseSymmMatrix::LDL");
     if( q > height_ )
         throw std::logic_error("Short-circuit parameter was too large");
+    if( !twoDimensionalDist_ )
+        throw std::logic_error("Cannot factor in one-dimensional distribution");
 #endif
     const char option = ( conjugate ? 'C' : 'T' );
 

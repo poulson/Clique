@@ -25,11 +25,15 @@
 
 namespace clique {
 
-// A simple symmetric 2d block-cyclic dense distributed matrix. Since it is for 
+// A simple symmetric block-cyclic dense distributed matrix. Since it is for 
 // internal usage only, we can require that the upper-left block is full and 
 // owned by the top-left process in the grid. We can also restrict access to 
 // blocks and column panels of the lower triangle in order to facilitate packed 
 // storage (which will be implemented later).
+//
+// We make use of two-dimensional block-cyclic storage for the factorization and
+// one-dimensional for the triangle solves.
+//
 template<typename F>
 class DistDenseSymmMatrix
 {
@@ -40,6 +44,8 @@ private:
     MPI_Comm comm_, cartComm_, colComm_, rowComm_;
     int gridHeight_, gridWidth_;
     int gridRow_, gridCol_;
+
+    bool twoDimensionalDist_;
 
     std::vector<F> buffer_;
     std::vector<F*> blockColBuffers_;
@@ -60,7 +66,16 @@ private:
 
     int RelabelVCToVR( int VCRank );
     int RelabelVRToVC( int VRRank );
+
+    void Print1d( std::string s ) const;
+    void Print2d( std::string s ) const;
+
     void LDL( bool conjugate, int q );
+
+    void ForwardSolve1dColTree( F* xLocal ) const;
+    void ForwardSolve1dColP2P( F* xLocal ) const;
+    void BackwardSolve1dRowTree( F* xLocal ) const;
+    void BackwardSolve1dRowP2P( F* xLocal ) const;
 
 public:
     DistDenseSymmMatrix( MPI_Comm comm, int gridHeight, int gridWidth );
@@ -97,6 +112,11 @@ public:
     //void Chol();
     void LDLT( int q );
     void LDLH( int q );
+
+    void ConvertTo1d();
+
+    void ForwardSolve( F* xLocal ) const;
+    void BackwardSolve( F* xLocal ) const;
 };
 
 } // namespace clique

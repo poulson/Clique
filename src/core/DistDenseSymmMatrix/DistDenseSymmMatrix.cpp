@@ -21,13 +21,15 @@
 #include "clique.hpp"
 
 #include "./Chol-incl.hpp"
+#include "./ConvertTo1d-incl.hpp"
 #include "./LDL-incl.hpp"
 
 template<typename F>
 clique::DistDenseSymmMatrix<F>::DistDenseSymmMatrix
 ( mpi::Comm comm, int gridHeight, int gridWidth )
 : height_(0), blockSize_(1), 
-  comm_(comm), gridHeight_(gridHeight), gridWidth_(gridWidth)
+  comm_(comm), gridHeight_(gridHeight), gridWidth_(gridWidth),
+  twoDimensionalDist_(true)
 {
 #ifndef RELEASE
     PushCallStack("DistDenseSymmMatrix::DistDenseSymmMatrix");
@@ -63,7 +65,8 @@ template<typename F>
 clique::DistDenseSymmMatrix<F>::DistDenseSymmMatrix
 ( int height, int blockSize, mpi::Comm comm, int gridHeight, int gridWidth )
 : height_(height), blockSize_(blockSize), 
-  comm_(comm), gridHeight_(gridHeight), gridWidth_(gridWidth)
+  comm_(comm), gridHeight_(gridHeight), gridWidth_(gridWidth),
+  twoDimensionalDist_(true)
 {
 #ifndef RELEASE
     PushCallStack("DistDenseSymmMatrix::DistDenseSymmMatrix");
@@ -148,6 +151,7 @@ clique::DistDenseSymmMatrix<F>::Reconfigure( int height, int blockSize )
 #endif
     height_ = height;
     blockSize_ = blockSize;
+    twoDimensionalDist_ = true;
 
     // Clear the old storage
     buffer_.clear();
@@ -209,6 +213,40 @@ clique::DistDenseSymmMatrix<F>::Print( std::string s ) const
 {
 #ifndef RELEASE
     PushCallStack("DistDenseSymmMatrix::Print");
+#endif
+    if( twoDimensionalDist_ )
+        Print2d( s );
+    else
+        Print1d( s );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename F>
+void
+clique::DistDenseSymmMatrix<F>::Print1d( std::string s ) const
+{
+#ifndef RELEASE
+    PushCallStack("DistDenseSymmMatrix::Print1d");
+#endif
+    const int commSize = mpi::CommSize( comm_ );
+    const int commRank = mpi::CommRank( comm_ );
+
+    std::vector<F> sendBuf( height_*height_, 0 );
+
+    throw std::logic_error("This routine is not yet written");
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename F>
+void
+clique::DistDenseSymmMatrix<F>::Print2d( std::string s ) const
+{
+#ifndef RELEASE
+    PushCallStack("DistDenseSymmMatrix::Print2d");
 #endif
     const int commSize = mpi::CommSize( comm_ );
     const int commRank = mpi::CommRank( comm_ );
@@ -296,7 +334,7 @@ clique::DistDenseSymmMatrix<F>::MakeIdentity()
 #ifndef RELEASE
     PushCallStack("DistDenseSymmMatrix::MakeIdentity");
 #endif
-    std::memset( &buffer_[0], 0, buffer_.size() );
+    MakeZero();
     const int localBlockWidth = blockColBuffers_.size();
     for( int jLocalBlock=0; jLocalBlock<localBlockWidth; ++jLocalBlock )
     {
