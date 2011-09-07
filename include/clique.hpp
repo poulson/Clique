@@ -22,6 +22,5 @@
 #define CLIQUE_HPP 1
 
 #include "clique/environment.hpp"
-#include "clique/dist_dense_symm_matrix.hpp"
 
 #endif /* CLIQUE_HPP */

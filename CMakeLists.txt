@@ -303,7 +303,7 @@ install(TARGETS clique DESTINATION lib)
 # Build the test drivers if necessary
 if(BUILD_TESTS)
   set(TEST_DIR ${PROJECT_SOURCE_DIR}/tests)
-  set(CORE_TESTS DistDenseSymmMatrix)
+  set(CORE_TESTS )
 
   # Build the core tests
   set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/tests/core")
