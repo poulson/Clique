@@ -18,10 +18,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_ENVIRONMENT_HPP
-#define CLIQUEL_ENVIRONMENT_HPP 1
+#ifndef CLIQUE_CORE_ENVIRONMENT_HPP
+#define CLIQUE_CORE_ENVIRONMENT_HPP 1
 
 #include "mpi.h"
+#include <algorithm>
 #include <complex>
 #include <fstream>
 #include <iostream>
@@ -48,23 +49,11 @@ void PopCallStack();
 void DumpCallStack();
 #endif
 
-}
+} // namespace clique
 
 #include "clique/imports.hpp"
 
 namespace clique {
-
-// Template conventions:
-//   G: general datatype
-//
-//   T: any ring, e.g., the (Gaussian) integers and the real/complex numbers
-//   Z: representation of a real ring, e.g., the integers or real numbers
-//   std::complex<Z>: representation of a complex ring, e.g. Gaussian integers
-//                    or complex numbers
-//
-//   F: representation of real or complex number
-//   R: representation of real number
-//   std::complex<R>: representation of complex number
 
 template<typename Z> Z Abs( Z alpha );
 template<typename Z> Z Abs( std::complex<Z> alpha );
@@ -86,7 +75,7 @@ struct NullStream : std::ostream
     { }
 };
 
-} // clique
+} // namespace clique
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -112,5 +101,5 @@ inline std::complex<Z>
 clique::Conj( std::complex<Z> alpha )
 { return std::conj( alpha ); }
 
-#endif /* CLIQUE_ENVIRONMENT_HPP */
+#endif /* CLIQUE_CORE_ENVIRONMENT_HPP */
 

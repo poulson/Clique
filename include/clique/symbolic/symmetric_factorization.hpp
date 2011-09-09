@@ -18,10 +18,32 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_HPP
-#define CLIQUE_HPP 1
+#ifndef CLIQUE_SYMBOLIC_SYMM_FACT_HPP
+#define CLIQUE_SYMBOLIC_SYMM_FACT_HPP 1
 
-#include "clique/core/environment.hpp"
-#include "clique/symbolic/symmetric_factorization.hpp"
+namespace clique {
+namespace symbolic {
 
-#endif /* CLIQUE_HPP */
+struct LocalSymmStructure
+{
+    mpi::Comm comm;
+    std::vector<int> sizes, offsets;
+    std::vector<std::vector<int> > lowerStructs;
+};
+
+struct LocalSymmFact
+{
+    mpi::Comm comm;
+    std::vector<int> sizes, offsets;
+    std::vector<std::vector<int> > lowerStructs;
+    std::vector<std::vector<int> > leftChildMaps, rightChildMaps;
+};
+
+void DistSymmetricFactorization
+( const LocalSymmStructure& symmStruct, LocalSymmFact& symmFact );
+
+} // namespace symbolic
+} // namespace clique
+
+#endif /* CLIQUE_SYMBOLIC_SYMM_FACT_HPP */
+
