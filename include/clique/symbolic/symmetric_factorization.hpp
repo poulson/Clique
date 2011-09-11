@@ -24,23 +24,44 @@
 namespace clique {
 namespace symbolic {
 
-struct LocalSymmStructure
+struct BottomOrigStruct
+{
+    std::vector<int> sizes, offsets;
+    std::vector<std::vector<int> > lowerStructs;
+    std::vector<std::vector<int> > children;
+};
+
+struct BottomFactStruct
+{
+    std::vector<int> sizes, offsets;
+    std::vector<std::vector<int> > lowerStructs;
+    std::vector<std::vector<int> > children;
+    std::vector<std::vector<int> > leftChildRelIndices, rightChildRelIndices;
+};
+
+struct TopOrigStruct
 {
     mpi::Comm comm;
     std::vector<int> sizes, offsets;
     std::vector<std::vector<int> > lowerStructs;
 };
 
-struct LocalSymmFact
+struct TopFactStruct
 {
     mpi::Comm comm;
     std::vector<int> sizes, offsets;
     std::vector<std::vector<int> > lowerStructs;
-    std::vector<std::vector<int> > leftChildMaps, rightChildMaps;
+    std::vector<std::vector<int> > leftChildRelIndices, rightChildRelIndices;
 };
 
-void DistSymmetricFactorization
-( const LocalSymmStructure& symmStruct, LocalSymmFact& symmFact );
+void BottomSymmetricFactorization
+( const BottomOrigStruct& bottomOrig,
+        BottomFactStruct& bottomFact );
+
+void TopSymmetricFactorization
+( const TopOrigStruct& topOrig, 
+  const BottomFactStruct& bottomFact, 
+        TopFactStruct& topFact );
 
 } // namespace symbolic
 } // namespace clique
