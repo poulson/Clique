@@ -18,11 +18,27 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_HPP
-#define CLIQUE_HPP 1
+#ifndef CLIQUE_FACTOR_LDL_HPP
+#define CLIQUE_FACTOR_LDL_HPP 1
 
-#include "clique/core/environment.hpp"
-#include "clique/factor/ldl.hpp"
-#include "clique/symbolic/symmetric_factorization.hpp"
+namespace clique {
+namespace factor {
 
-#endif /* CLIQUE_HPP */
+template<typename F>
+void LDLT
+( elemental::DistMatrix<F,elemental::MC,elemental::MR>& A, int supernodeSize );
+
+template<typename F>
+void LDLH
+( elemental::DistMatrix<F,elemental::MC,elemental::MR>& A, int supernodeSize );
+
+template<typename F>
+void LDL
+( elemental::Orientation orientation, 
+  elemental::DistMatrix<F,elemental::MC,elemental::MR>& A, int supernodeSize );
+
+} // namespace factor
+} // namespace clique
+
+#endif /* CLIQUE_FACTOR_LDL_HPP */
+
