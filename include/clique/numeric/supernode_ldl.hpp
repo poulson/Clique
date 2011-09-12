@@ -18,27 +18,27 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_FACTOR_LDL_HPP
-#define CLIQUE_FACTOR_LDL_HPP 1
+#ifndef CLIQUE_NUMERIC_SUPERNODE_LDL_HPP
+#define CLIQUE_NUMERIC_SUPERNODE_LDL_HPP 1
 
 namespace clique {
-namespace factor {
+namespace numeric {
 
 template<typename F>
-void LDLT
+void SupernodeLDLT
 ( elemental::DistMatrix<F,elemental::MC,elemental::MR>& A, int supernodeSize );
 
 template<typename F>
-void LDLH
+void SupernodeLDLH
 ( elemental::DistMatrix<F,elemental::MC,elemental::MR>& A, int supernodeSize );
 
 template<typename F>
-void LDL
+void SupernodeLDL
 ( elemental::Orientation orientation, 
   elemental::DistMatrix<F,elemental::MC,elemental::MR>& A, int supernodeSize );
 
-} // namespace factor
+} // namespace numeric
 } // namespace clique
 
-#endif /* CLIQUE_FACTOR_LDL_HPP */
+#endif /* CLIQUE_NUMERIC_SUPERNODE_LDL_HPP */
 

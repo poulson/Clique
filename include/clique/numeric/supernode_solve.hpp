@@ -18,12 +18,32 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_HPP
-#define CLIQUE_HPP 1
+#ifndef CLIQUE_NUMERIC_SUPERNODE_SOLVE_HPP
+#define CLIQUE_NUMERIC_SUPERNODE_SOLVE_HPP 1
 
-#include "clique/core/environment.hpp"
-#include "clique/symbolic/symmetric_factorization.hpp"
-#include "clique/numeric/supernode_ldl.hpp"
-#include "clique/numeric/supernode_solve.hpp"
+namespace clique {
+namespace numeric {
 
-#endif /* CLIQUE_HPP */
+template<typename F>
+void SupernodeSolve
+( elemental::Shape shape, elemental::Diagonal diagonal,
+  elemental::DistMatrix<F,elemental::VC,elemental::STAR>& A, 
+  int supernodeSize );
+
+template<typename F>
+void SupernodeLowerSolve
+( elemental::Diagonal diagonal,  
+  elemental::DistMatrix<F,elemental::VC,elemental::STAR>& A, 
+  int supernodeSize );
+
+template<typename F>
+void SupernodeUpperSolve
+( elemental::Diagonal diagonal,
+  elemental::DistMatrix<F,elemental::VC,elemental::STAR>& A, 
+  int supernodeSize );
+
+} // namespace numeric
+} // namespace clique
+
+#endif /* CLIQUE_NUMERIC_SUPERNODE_SOLVE_HPP */
+

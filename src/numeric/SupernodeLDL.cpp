@@ -25,39 +25,39 @@
 using namespace elemental;
 
 template<typename F>
-void clique::factor::LDLT( DistMatrix<F,MC,MR>& A, int supernodeSize )
+void clique::numeric::SupernodeLDLT( DistMatrix<F,MC,MR>& A, int supernodeSize )
 {
 #ifndef RELEASE
-    clique::PushCallStack("factor::LDLT");
+    clique::PushCallStack("numeric::SupernodeLDLT");
 #endif
-    clique::factor::LDL( TRANSPOSE, A, supernodeSize );
+    clique::numeric::SupernodeLDL( TRANSPOSE, A, supernodeSize );
 #ifndef RELEASE
     clique::PopCallStack();
 #endif
 }
 
 template<typename F>
-void clique::factor::LDLH( DistMatrix<F,MC,MR>& A, int supernodeSize )
+void clique::numeric::SupernodeLDLH( DistMatrix<F,MC,MR>& A, int supernodeSize )
 {
 #ifndef RELEASE
-    clique::PushCallStack("factor::LDLH");
+    clique::PushCallStack("numeric::SupernodeLDLH");
 #endif
-    clique::factor::LDL( ADJOINT, A, supernodeSize );
+    clique::numeric::SupernodeLDL( ADJOINT, A, supernodeSize );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
 template<typename F> // F represents a real or complex field
-void clique::factor::LDL
+void clique::numeric::SupernodeLDL
 ( Orientation orientation, DistMatrix<F,MC,MR>& A, int supernodeSize )
 {
 #ifndef RELEASE
-    clique::PushCallStack("factor::LDL");
+    clique::PushCallStack("numeric::SupernodeLDL");
     if( A.Height() != A.Width() )
         throw std::logic_error("A must be square");
     if( orientation == NORMAL )
-        throw std::logic_error("LDL must be (conjugate-)transposed.");
+        throw std::logic_error("SupernodeLDL must be (conjugate-)transposed.");
     if( supernodeSize > A.Height() )
         throw std::logic_error("Supernode is too big");
 #endif
@@ -137,3 +137,35 @@ void clique::factor::LDL
     clique::PopCallStack();
 #endif
 }
+
+template void clique::numeric::SupernodeLDL
+( Orientation orientation, 
+  DistMatrix<float,MC,MR>& A, int supernodeSize );
+template void clique::numeric::SupernodeLDLT
+( DistMatrix<float,MC,MR>& A, int supernodeSize );
+template void clique::numeric::SupernodeLDLH
+( DistMatrix<float,MC,MR>& A, int supernodeSize );
+
+template void clique::numeric::SupernodeLDL
+( Orientation orientation, 
+  DistMatrix<double,MC,MR>& A, int supernodeSize );
+template void clique::numeric::SupernodeLDLT
+( DistMatrix<double,MC,MR>& A, int supernodeSize );
+template void clique::numeric::SupernodeLDLH
+( DistMatrix<double,MC,MR>& A, int supernodeSize );
+
+template void clique::numeric::SupernodeLDL
+( Orientation orientation, 
+  DistMatrix<std::complex<float>,MC,MR>& A, int supernodeSize );
+template void clique::numeric::SupernodeLDLT
+( DistMatrix<std::complex<float>,MC,MR>& A, int supernodeSize );
+template void clique::numeric::SupernodeLDLH
+( DistMatrix<std::complex<float>,MC,MR>& A, int supernodeSize );
+
+template void clique::numeric::SupernodeLDL
+( Orientation orientation, 
+  DistMatrix<std::complex<double>,MC,MR>& A, int supernodeSize );
+template void clique::numeric::SupernodeLDLT
+( DistMatrix<std::complex<double>,MC,MR>& A, int supernodeSize );
+template void clique::numeric::SupernodeLDLH
+( DistMatrix<std::complex<double>,MC,MR>& A, int supernodeSize );
