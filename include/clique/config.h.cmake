@@ -23,11 +23,5 @@
 
 #define Clique_VERSION_MAJOR @Clique_VERSION_MAJOR@
 #define Clique_VERSION_MINOR @Clique_VERSION_MINOR@
-#define RESTRICT @RESTRICT@
-#cmakedefine RELEASE
-#cmakedefine BLAS_POST
-#cmakedefine LAPACK_POST
-#cmakedefine AVOID_COMPLEX_MPI
-#cmakedefine USE_BYTE_ALLGATHERS
 
 #endif /* CLIQUE_CONFIG_HPP */

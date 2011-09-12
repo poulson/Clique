@@ -56,6 +56,7 @@ set(MPI_LINK_FLAGS "${MPI_CXX_LINK_FLAGS}")
 install(TARGETS clique DESTINATION lib)
 
 # Define the header-file preparation rules
+set(PREPARED_HEADERS)
 foreach(HEADER ${CLIQUE_HEADERS})
   add_custom_command(
     OUTPUT ${PROJECT_BINARY_DIR}/${HEADER}
@@ -63,13 +64,13 @@ foreach(HEADER ${CLIQUE_HEADERS})
             ${PROJECT_BINARY_DIR}/${HEADER}
     DEPENDS "${PROJECT_SOURCE_DIR}/${HEADER}"
   )
-  string(REGEX REPLACE "/" "-" SAFE_NAME "${HEADER}")
-  add_custom_target(COPY-${SAFE_NAME} DEPENDS "${PROJECT_BINARY_DIR}/${HEADER}")
-  add_dependencies(clique COPY-${SAFE_NAME})
+  list(APPEND PREPARED_HEADERS ${PROJECT_BINARY_DIR}/${HEADER})
 
   get_filename_component(HEADER_PATH ${HEADER} PATH)
   install(FILES ${PROJECT_BINARY_DIR}/${HEADER} DESTINATION ${HEADER_PATH})
 endforeach(HEADER)
+add_custom_target(prepare_clique_headers DEPENDS ${PREPARED_HEADERS})
+add_dependencies(clique prepare_clique_headers)
 
 # Make sure the Clique headers can be found
 include_directories("${PROJECT_BINARY_DIR}/include")
