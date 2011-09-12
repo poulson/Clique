@@ -21,15 +21,8 @@
 #ifndef CLIQUE_CORE_ENVIRONMENT_HPP
 #define CLIQUE_CORE_ENVIRONMENT_HPP 1
 
-#include "mpi.h"
+#include "elemental.hpp"
 #include <algorithm>
-#include <complex>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <stack>
-#include <stdexcept>
-#include <vector>
 
 #include "clique/config.h"
 
@@ -49,57 +42,9 @@ void PopCallStack();
 void DumpCallStack();
 #endif
 
-} // namespace clique
-
-#include "clique/imports.hpp"
-
-namespace clique {
-
-template<typename Z> Z Abs( Z alpha );
-template<typename Z> Z Abs( std::complex<Z> alpha );
-template<typename Z> Z Conj( Z alpha );
-template<typename Z> std::complex<Z> Conj( std::complex<Z> alpha );
-
-// We define an output stream that does nothing. This is done so that the 
-// root process can be used to print data to a file's ostream while all other 
-// processes use a null ostream. 
-struct NullStream : std::ostream
-{
-    struct NullStreamBuffer : std::streambuf
-    {
-        int overflow( int c ) { return traits_type::not_eof(c); }
-    } _nullStreamBuffer;
-
-    NullStream() 
-    : std::ios(&_nullStreamBuffer), std::ostream(&_nullStreamBuffer) 
-    { }
-};
+namespace mpi = elemental::imports::mpi;
 
 } // namespace clique
-
-//----------------------------------------------------------------------------//
-// Implementation begins here                                                 //
-//----------------------------------------------------------------------------//
-
-template<typename Z>
-inline Z 
-clique::Abs( Z alpha )
-{ return std::abs(alpha); }
-
-template<typename Z>
-inline Z
-clique::Abs( std::complex<Z> alpha )
-{ return std::abs( alpha ); }
-
-template<typename Z>
-inline Z
-clique::Conj( Z alpha )
-{ return alpha; }
-
-template<typename Z>
-inline std::complex<Z>
-clique::Conj( std::complex<Z> alpha )
-{ return std::conj( alpha ); }
 
 #endif /* CLIQUE_CORE_ENVIRONMENT_HPP */
 
