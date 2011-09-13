@@ -208,9 +208,7 @@ void clique::numeric::SupernodeLDLBackwardSolve
         ZT.ResizeTo( XT.Height(), XT.Width() );
         basic::internal::LocalGemm
         ( orientation, NORMAL, (F)-1, UBL, XB, (F)0, ZT );
-        // Need SumScatter for [* ,* ] -> [VC,* ]
-        // XT.SumScatterUpdate( (F)-1, ZT );
-        throw std::logic_error("This update type is not yet finished");
+        XT.SumScatterUpdate( (F)-1, ZT );
     }
 
     // Solve the remaining triangular system
