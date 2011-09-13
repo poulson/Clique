@@ -28,8 +28,8 @@ option(BUILD_TESTS "Build a collection of test executables" OFF)
 
 # We don't need a Hermitian eigensolver
 option(BUILD_PMRRR "Build the parallel tridiagonal eigensolver" OFF)
-add_subdirectory(contrib/elemental)
-include_directories("${PROJECT_BINARY_DIR}/contrib/elemental/include")
+add_subdirectory(external/elemental)
+include_directories("${PROJECT_BINARY_DIR}/external/elemental/include")
 include_directories(${MPI_CXX_INCLUDE_PATH})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")

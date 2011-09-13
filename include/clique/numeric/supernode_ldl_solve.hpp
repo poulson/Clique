@@ -25,22 +25,23 @@ namespace clique {
 namespace numeric {
 
 template<typename F>
-void SupernodeSolve
-( elemental::Shape shape, elemental::Diagonal diagonal,
-  elemental::DistMatrix<F,elemental::VC,elemental::STAR>& A, 
-  int supernodeSize );
+void SupernodeLDLForwardSolve
+( int supernodeSize,
+  F alpha, const elemental::DistMatrix<F,elemental::VC,elemental::STAR>& L, 
+                 elemental::DistMatrix<F,elemental::VC,elemental::STAR>& X );
 
 template<typename F>
-void SupernodeLowerSolve
-( elemental::Diagonal diagonal,  
-  elemental::DistMatrix<F,elemental::VC,elemental::STAR>& A, 
-  int supernodeSize );
+void SupernodeLDLDiagonalSolve
+( int supernodeSize,
+  F alpha, const elemental::DistMatrix<F,elemental::VC,elemental::STAR>& d,
+                 elemental::DistMatrix<F,elemental::VC,elemental::STAR>& X,
+  bool checkIfSingular=false );
 
 template<typename F>
-void SupernodeUpperSolve
-( elemental::Diagonal diagonal,
-  elemental::DistMatrix<F,elemental::VC,elemental::STAR>& A, 
-  int supernodeSize );
+void SupernodeLDLBackwardSolve
+( elemental::Orientation orientation, int supernodeSize,
+  F alpha, const elemental::DistMatrix<F,elemental::VC,elemental::STAR>& U, 
+                 elemental::DistMatrix<F,elemental::VC,elemental::STAR>& X );
 
 } // namespace numeric
 } // namespace clique
