@@ -32,6 +32,7 @@ void clique::symbolic::BottomSymmetricFactorization
     bottomFact.offsets = bottomOrig.sizes;
     bottomFact.lowerStructs.resize( numSupernodes );
     bottomFact.children.resize( numSupernodes );
+    bottomFact.origLowerRelIndices.resize( numSupernodes );
     bottomFact.leftChildRelIndices.resize( numSupernodes );
     bottomFact.rightChildRelIndices.resize( numSupernodes );
 
@@ -88,10 +89,21 @@ void clique::symbolic::BottomSymmetricFactorization
               supernodeIndices.begin(), supernodeIndices.end(),
               fullStruct.begin() );
 
+            // Construct the relative indices of the original lower structure
+            const int numOrigLowerIndices = origLowerStruct.size();
+            bottomFact.origLowerRelIndices[k].resize( numOrigLowerIndices );
+            std::vector<int>::iterator it = fullStruct.begin();
+            for( int i=0; i<numOrigLowerIndices; ++i )
+            {
+                it = std::lower_bound 
+                     ( it, fullStruct.end(), origLowerStruct[i] );
+                bottomFact.origLowerRelIndices[k][i] = *it;
+            }
+
             // Construct the relative indices of the children
             bottomFact.leftChildRelIndices[k].resize( numLeftIndices );
             bottomFact.rightChildRelIndices[k].resize( numRightIndices );
-            std::vector<int>::iterator it = fullStruct.begin();
+            it = fullStruct.begin();
             for( int i=0; i<numLeftIndices; ++i )
             {
                 it = std::lower_bound

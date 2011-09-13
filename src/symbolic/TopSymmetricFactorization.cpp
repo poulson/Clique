@@ -43,6 +43,7 @@ void clique::symbolic::TopSymmetricFactorization
     topFact.sizes = topOrig.sizes;
     topFact.offsets = topOrig.offsets;
     topFact.lowerStructs.resize( numSupernodes );
+    topFact.origLowerRelIndices.resize( numSupernodes );
     topFact.leftChildRelIndices.resize( numSupernodes );
     topFact.rightChildRelIndices.resize( numSupernodes );
     if( numSupernodes == 0 )
@@ -67,6 +68,7 @@ void clique::symbolic::TopSymmetricFactorization
 
     // The bottom node is already computed, so just copy it over
     topFact.lowerStructs[0] = bottomFact.lowerStructs.back();
+    topFact.origLowerRelIndices[0] = bottomFact.origLowerRelIndices.back();
     topFact.leftChildRelIndices[0] = bottomFact.leftChildRelIndices.back();
     topFact.rightChildRelIndices[0] = bottomFact.rightChildRelIndices.back();
 
@@ -126,6 +128,16 @@ void clique::symbolic::TopSymmetricFactorization
           partialStruct.begin(), partialStruct.end(), 
           fullStruct.begin() );
 
+        // Construct the relative indices of the original lower structure
+        const int numOrigLowerIndices = origLowerStruct.size();
+        topFact.origLowerRelIndices[k].resize( numOrigLowerIndices );
+        std::vector<int>::iterator it = fullStruct.begin();
+        for( int i=0; i<numOrigLowerIndices; ++i )
+        {
+            it = std::lower_bound( it, fullStruct.end(), origLowerStruct[i] );
+            topFact.origLowerRelIndices[k][i] = *it;
+        }
+
         // Construct the relative indices of the children
         int numLeftIndices, numRightIndices;
         const int *leftIndices, *rightIndices;
@@ -145,7 +157,7 @@ void clique::symbolic::TopSymmetricFactorization
         }
         topFact.leftChildRelIndices[k].resize( numLeftIndices );
         topFact.rightChildRelIndices[k].resize( numRightIndices );
-        std::vector<int>::iterator it = fullStruct.begin();
+        it = fullStruct.begin();
         for( int i=0; i<numLeftIndices; ++i )
         {
             it = std::lower_bound( it, fullStruct.end(), leftIndices[i] );

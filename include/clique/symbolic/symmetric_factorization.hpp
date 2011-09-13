@@ -36,6 +36,7 @@ struct BottomFactStruct
     std::vector<int> sizes, offsets;
     std::vector<std::vector<int> > lowerStructs;
     std::vector<std::vector<int> > children;
+    std::vector<std::vector<int> > origLowerRelIndices;
     std::vector<std::vector<int> > leftChildRelIndices, rightChildRelIndices;
 };
 
@@ -51,17 +52,44 @@ struct TopFactStruct
     mpi::Comm comm;
     std::vector<int> sizes, offsets;
     std::vector<std::vector<int> > lowerStructs;
+    std::vector<std::vector<int> > origLowerRelIndices;
     std::vector<std::vector<int> > leftChildRelIndices, rightChildRelIndices;
 };
+
+void SymmetricFactorization
+( const BottomOrigStruct& bottomOrig,
+  const TopOrigStruct&    topOrig,
+        BottomFactStruct& bottomFact,
+        TopFactStruct&    topFact );
 
 void BottomSymmetricFactorization
 ( const BottomOrigStruct& bottomOrig,
         BottomFactStruct& bottomFact );
 
 void TopSymmetricFactorization
-( const TopOrigStruct& topOrig, 
+( const TopOrigStruct&    topOrig, 
   const BottomFactStruct& bottomFact, 
-        TopFactStruct& topFact );
+        TopFactStruct&    topFact );
+
+//----------------------------------------------------------------------------//
+// Implementation begins here                                                 //
+//----------------------------------------------------------------------------//
+
+inline void SymmetricFactorization
+( const BottomOrigStruct& bottomOrig,
+  const TopOrigStruct&    topOrig,
+        BottomFactStruct& bottomFact,
+        TopFactStruct&    topFact )
+{
+#ifndef RELEASE
+    PushCallStack("symbolic::SymmetricFactorization");
+#endif
+    BottomSymmetricFactorization( bottomOrig, bottomFact );
+    TopSymmetricFactorization( topOrig, bottomFact, topFact );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
 
 } // namespace symbolic
 } // namespace clique
