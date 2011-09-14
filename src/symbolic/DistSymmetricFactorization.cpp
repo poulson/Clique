@@ -30,27 +30,26 @@
 //
 // TODO: Generalize to support more than just a power-of-two number of 
 //       processes. This should be relatively straightforward.
-void clique::symbolic::TopSymmetricFactorization
-( const TopOrigStruct& topOrig,
-  const BottomFactStruct& bottomFact,
-        TopFactStruct& topFact )
+void clique::symbolic::DistSymmetricFactorization
+( const DistOrigStruct&  distOrig,
+  const LocalFactStruct& localFact,
+        DistFactStruct&  distFact )
 {
 #ifndef RELEASE
-    PushCallStack("symbolic::TopSymmetricFactorization");
+    PushCallStack("symbolic::DistSymmetricFactorization");
 #endif
-    const unsigned numSupernodes = topOrig.lowerStructs.size();
-    topFact.comm = topOrig.comm;
-    topFact.sizes = topOrig.sizes;
-    topFact.offsets = topOrig.offsets;
-    topFact.lowerStructs.resize( numSupernodes );
-    topFact.origLowerRelIndices.resize( numSupernodes );
-    topFact.leftChildRelIndices.resize( numSupernodes );
-    topFact.rightChildRelIndices.resize( numSupernodes );
+    const unsigned numSupernodes = distOrig.lowerStructs.size();
+    distFact.sizes = distOrig.sizes;
+    distFact.offsets = distOrig.offsets;
+    distFact.lowerStructs.resize( numSupernodes );
+    distFact.origLowerRelIndices.resize( numSupernodes );
+    distFact.leftChildRelIndices.resize( numSupernodes );
+    distFact.rightChildRelIndices.resize( numSupernodes );
     if( numSupernodes == 0 )
         return;
 
-    const unsigned commRank = mpi::CommRank( topOrig.comm );
-    const unsigned commSize = mpi::CommSize( topOrig.comm );
+    const unsigned commRank = mpi::CommRank( distOrig.comm );
+    const unsigned commSize = mpi::CommSize( distOrig.comm );
 #ifndef RELEASE
     // Use the naive algorithm for finding floor(log2(commSize)) since it
     // will be an ignorable portion of the overhead and will be more easily
@@ -67,10 +66,11 @@ void clique::symbolic::TopSymmetricFactorization
 #endif
 
     // The bottom node is already computed, so just copy it over
-    topFact.lowerStructs[0] = bottomFact.lowerStructs.back();
-    topFact.origLowerRelIndices[0] = bottomFact.origLowerRelIndices.back();
-    topFact.leftChildRelIndices[0] = bottomFact.leftChildRelIndices.back();
-    topFact.rightChildRelIndices[0] = bottomFact.rightChildRelIndices.back();
+    distFact.lowerStructs[0] = localFact.lowerStructs.back();
+    distFact.origLowerRelIndices[0] = localFact.origLowerRelIndices.back();
+    distFact.leftChildRelIndices[0] = localFact.leftChildRelIndices.back();
+    distFact.rightChildRelIndices[0] = localFact.rightChildRelIndices.back();
+    mpi::CommSplit( distOrig.comm, commRank, 0, distFact.comms[0] );
 
     // Perform the parallel symbolic factorization
     std::vector<int> sendBuffer, recvBuffer;
@@ -78,22 +78,26 @@ void clique::symbolic::TopSymmetricFactorization
                     supernodeIndices;
     for( unsigned k=1; k<numSupernodes; ++k )
     {
-        const int supernodeSize = topOrig.sizes[k];
-        const int supernodeOffset = topOrig.offsets[k];
-        const std::vector<int>& origLowerStruct = topOrig.lowerStructs[k];
-        const std::vector<int>& myChildLowerStruct = topFact.lowerStructs[k-1];
-        std::vector<int>& lowerStruct = topFact.lowerStructs[k];
+        const int supernodeSize = distOrig.sizes[k];
+        const int supernodeOffset = distOrig.offsets[k];
+        const std::vector<int>& origLowerStruct = distOrig.lowerStructs[k];
+        const std::vector<int>& myChildLowerStruct = distFact.lowerStructs[k-1];
+        std::vector<int>& lowerStruct = distFact.lowerStructs[k];
 
         // Determine our partner based upon the bits of 'commRank'
         const unsigned partner = commRank ^ (1u << (k-1));
         const bool onLeft = ( (commRank & (1u << (k-1))) == 0 ); 
+
+        // Create this level's communicator
+        const int myTeam = (commRank & !((1u << (k-1))-1));
+        mpi::CommSplit( distOrig.comm, myTeam, 0, distFact.comms[k] );
 
         // SendRecv the message lengths
         const int myChildLowerStructSize = myChildLowerStruct.size();
         int theirChildLowerStructSize;
         mpi::SendRecv
         ( &myChildLowerStructSize, 1, partner, 0,
-          &theirChildLowerStructSize, 1, partner, 0, topOrig.comm );
+          &theirChildLowerStructSize, 1, partner, 0, distOrig.comm );
         // Perform the exchange
         sendBuffer.resize( myChildLowerStructSize );
         recvBuffer.resize( theirChildLowerStructSize );
@@ -102,7 +106,8 @@ void clique::symbolic::TopSymmetricFactorization
           myChildLowerStructSize*sizeof(int) );
         mpi::SendRecv
         ( &sendBuffer[0], myChildLowerStructSize, partner, 0,
-          &recvBuffer[0], theirChildLowerStructSize, partner, 0, topOrig.comm );
+          &recvBuffer[0], theirChildLowerStructSize, partner, 0, 
+          distOrig.comm );
         
         // Union the two child lower structures
         childrenStruct.resize
@@ -130,12 +135,12 @@ void clique::symbolic::TopSymmetricFactorization
 
         // Construct the relative indices of the original lower structure
         const int numOrigLowerIndices = origLowerStruct.size();
-        topFact.origLowerRelIndices[k].resize( numOrigLowerIndices );
+        distFact.origLowerRelIndices[k].resize( numOrigLowerIndices );
         std::vector<int>::iterator it = fullStruct.begin();
         for( int i=0; i<numOrigLowerIndices; ++i )
         {
             it = std::lower_bound( it, fullStruct.end(), origLowerStruct[i] );
-            topFact.origLowerRelIndices[k][i] = *it;
+            distFact.origLowerRelIndices[k][i] = *it;
         }
 
         // Construct the relative indices of the children
@@ -155,19 +160,19 @@ void clique::symbolic::TopSymmetricFactorization
             numLeftIndices = recvBuffer.size();
             numRightIndices = sendBuffer.size();
         }
-        topFact.leftChildRelIndices[k].resize( numLeftIndices );
-        topFact.rightChildRelIndices[k].resize( numRightIndices );
+        distFact.leftChildRelIndices[k].resize( numLeftIndices );
+        distFact.rightChildRelIndices[k].resize( numRightIndices );
         it = fullStruct.begin();
         for( int i=0; i<numLeftIndices; ++i )
         {
             it = std::lower_bound( it, fullStruct.end(), leftIndices[i] );
-            topFact.leftChildRelIndices[k][i] = *it;
+            distFact.leftChildRelIndices[k][i] = *it;
         }
         it = fullStruct.begin();
         for( int i=0; i<numRightIndices; ++i )
         {
             it = std::lower_bound( it, fullStruct.end(), rightIndices[i] );
-            topFact.rightChildRelIndices[k][i] = *it;
+            distFact.rightChildRelIndices[k][i] = *it;
         }
 
         // Form lower structure of this node by removing the supernode indices

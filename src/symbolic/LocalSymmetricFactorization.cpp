@@ -20,34 +20,34 @@
 */
 #include "clique.hpp"
 
-void clique::symbolic::BottomSymmetricFactorization
-( const BottomOrigStruct& bottomOrig,
-        BottomFactStruct& bottomFact )
+void clique::symbolic::LocalSymmetricFactorization
+( const LocalOrigStruct& localOrig,
+        LocalFactStruct& localFact )
 {
 #ifndef RELEASE
-    PushCallStack("symbolic::BottomSymmetricFactorization");
+    PushCallStack("symbolic::LocalSymmetricFactorization");
 #endif
-    const int numSupernodes = bottomOrig.sizes.size();
-    bottomFact.sizes = bottomOrig.sizes;
-    bottomFact.offsets = bottomOrig.sizes;
-    bottomFact.lowerStructs.resize( numSupernodes );
-    bottomFact.children.resize( numSupernodes );
-    bottomFact.origLowerRelIndices.resize( numSupernodes );
-    bottomFact.leftChildRelIndices.resize( numSupernodes );
-    bottomFact.rightChildRelIndices.resize( numSupernodes );
+    const int numSupernodes = localOrig.sizes.size();
+    localFact.sizes = localOrig.sizes;
+    localFact.offsets = localOrig.sizes;
+    localFact.lowerStructs.resize( numSupernodes );
+    localFact.children.resize( numSupernodes );
+    localFact.origLowerRelIndices.resize( numSupernodes );
+    localFact.leftChildRelIndices.resize( numSupernodes );
+    localFact.rightChildRelIndices.resize( numSupernodes );
 
     // Perform the local symbolic factorization
     std::vector<int> childrenStruct, partialStruct, fullStruct,
                      supernodeIndices;
     for( int k=0; k<numSupernodes; ++k )
     {
-        const int supernodeSize = bottomOrig.sizes[k];
-        const int supernodeOffset = bottomOrig.offsets[k];
-        const int numChildren = bottomOrig.children[k].size();
-        const std::vector<int>& origLowerStruct = bottomOrig.lowerStructs[k];
-        std::vector<int>& lowerStruct = bottomFact.lowerStructs[k];
+        const int supernodeSize = localOrig.sizes[k];
+        const int supernodeOffset = localOrig.offsets[k];
+        const int numChildren = localOrig.children[k].size();
+        const std::vector<int>& origLowerStruct = localOrig.lowerStructs[k];
+        std::vector<int>& lowerStruct = localFact.lowerStructs[k];
 
-        bottomFact.children[k] = bottomOrig.children[k];
+        localFact.children[k] = localOrig.children[k];
 #ifndef RELEASE
         if( numChildren != 0 && numChildren != 2 )
             throw std::logic_error("Tree must be built from bisections");
@@ -56,9 +56,9 @@ void clique::symbolic::BottomSymmetricFactorization
         if( numChildren == 2 )
         {
             const std::vector<int>& leftChildLowerStruct = 
-                bottomFact.lowerStructs[bottomOrig.children[k][0]];
+                localFact.lowerStructs[localOrig.children[k][0]];
             const std::vector<int>& rightChildLowerStruct = 
-                bottomFact.lowerStructs[bottomOrig.children[k][1]];
+                localFact.lowerStructs[localOrig.children[k][1]];
             const int numLeftIndices = leftChildLowerStruct.size();
             const int numRightIndices = rightChildLowerStruct.size();
 
@@ -91,31 +91,31 @@ void clique::symbolic::BottomSymmetricFactorization
 
             // Construct the relative indices of the original lower structure
             const int numOrigLowerIndices = origLowerStruct.size();
-            bottomFact.origLowerRelIndices[k].resize( numOrigLowerIndices );
+            localFact.origLowerRelIndices[k].resize( numOrigLowerIndices );
             std::vector<int>::iterator it = fullStruct.begin();
             for( int i=0; i<numOrigLowerIndices; ++i )
             {
                 it = std::lower_bound 
                      ( it, fullStruct.end(), origLowerStruct[i] );
-                bottomFact.origLowerRelIndices[k][i] = *it;
+                localFact.origLowerRelIndices[k][i] = *it;
             }
 
             // Construct the relative indices of the children
-            bottomFact.leftChildRelIndices[k].resize( numLeftIndices );
-            bottomFact.rightChildRelIndices[k].resize( numRightIndices );
+            localFact.leftChildRelIndices[k].resize( numLeftIndices );
+            localFact.rightChildRelIndices[k].resize( numRightIndices );
             it = fullStruct.begin();
             for( int i=0; i<numLeftIndices; ++i )
             {
                 it = std::lower_bound
                      ( it, fullStruct.end(), leftChildLowerStruct[i] );
-                bottomFact.leftChildRelIndices[k][i] = *it;
+                localFact.leftChildRelIndices[k][i] = *it;
             }
             it = fullStruct.begin();
             for( int i=0; i<numRightIndices; ++it )
             {
                 it = std::lower_bound
                      ( it, fullStruct.end(), rightChildLowerStruct[i] );
-                bottomFact.rightChildRelIndices[k][i] = *it;
+                localFact.rightChildRelIndices[k][i] = *it;
             }
 
             // Form lower struct of this supernode by removing supernode indices
@@ -127,7 +127,7 @@ void clique::symbolic::BottomSymmetricFactorization
         }
         else // numChildren == 0, so this is a leaf supernode 
         {
-            bottomFact.lowerStructs[k] = bottomOrig.lowerStructs[k];        
+            localFact.lowerStructs[k] = localOrig.lowerStructs[k];        
         }
     }
 #ifndef RELEASE

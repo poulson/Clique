@@ -24,14 +24,14 @@
 namespace clique {
 namespace symbolic {
 
-struct BottomOrigStruct
+struct LocalOrigStruct
 {
     std::vector<int> sizes, offsets;
     std::vector<std::vector<int> > lowerStructs;
     std::vector<std::vector<int> > children;
 };
 
-struct BottomFactStruct
+struct LocalFactStruct
 {
     std::vector<int> sizes, offsets;
     std::vector<std::vector<int> > lowerStructs;
@@ -40,16 +40,17 @@ struct BottomFactStruct
     std::vector<std::vector<int> > leftChildRelIndices, rightChildRelIndices;
 };
 
-struct TopOrigStruct
+struct DistOrigStruct
 {
     mpi::Comm comm;
     std::vector<int> sizes, offsets;
     std::vector<std::vector<int> > lowerStructs;
 };
 
-struct TopFactStruct
+struct DistFactStruct
 {
-    mpi::Comm comm;
+    std::vector<mpi::Comm> comms;
+
     std::vector<int> sizes, offsets;
     std::vector<std::vector<int> > lowerStructs;
     std::vector<std::vector<int> > origLowerRelIndices;
@@ -57,35 +58,35 @@ struct TopFactStruct
 };
 
 void SymmetricFactorization
-( const BottomOrigStruct& bottomOrig,
-  const TopOrigStruct&    topOrig,
-        BottomFactStruct& bottomFact,
-        TopFactStruct&    topFact );
+( const LocalOrigStruct& localOrig,
+  const DistOrigStruct&  distOrig,
+        LocalFactStruct& localFact,
+        DistFactStruct&  distFact );
 
-void BottomSymmetricFactorization
-( const BottomOrigStruct& bottomOrig,
-        BottomFactStruct& bottomFact );
+void LocalSymmetricFactorization
+( const LocalOrigStruct& localOrig,
+        LocalFactStruct& localFact );
 
-void TopSymmetricFactorization
-( const TopOrigStruct&    topOrig, 
-  const BottomFactStruct& bottomFact, 
-        TopFactStruct&    topFact );
+void DistSymmetricFactorization
+( const DistOrigStruct&  distOrig, 
+  const LocalFactStruct& localFact, 
+        DistFactStruct&  distFact );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
 inline void SymmetricFactorization
-( const BottomOrigStruct& bottomOrig,
-  const TopOrigStruct&    topOrig,
-        BottomFactStruct& bottomFact,
-        TopFactStruct&    topFact )
+( const LocalOrigStruct& localOrig,
+  const DistOrigStruct&  distOrig,
+        LocalFactStruct& localFact,
+        DistFactStruct&  distFact )
 {
 #ifndef RELEASE
     PushCallStack("symbolic::SymmetricFactorization");
 #endif
-    BottomSymmetricFactorization( bottomOrig, bottomFact );
-    TopSymmetricFactorization( topOrig, bottomFact, topFact );
+    LocalSymmetricFactorization( localOrig, localFact );
+    DistSymmetricFactorization( distOrig, localFact, distFact );
 #ifndef RELEASE
     PopCallStack();
 #endif
