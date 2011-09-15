@@ -22,7 +22,7 @@ using namespace elemental;
 
 template<typename F> // F represents a real or complex field
 void clique::numeric::LocalLDLForwardSolve
-(       symbolic::LocalFactStruct& S, // can't be const due to map...
+( const symbolic::LocalFactStruct& S,
   const numeric::LocalFactMatrix<F>& L,
   F alpha, Matrix<F>& X )
 {
@@ -107,9 +107,38 @@ void clique::numeric::LocalLDLForwardSolve
 }
 
 template<typename F> // F represents a real or complex field
+void clique::numeric::LocalLDLDiagonalSolve
+( const symbolic::LocalFactStruct& S,
+  const numeric::LocalFactMatrix<F>& L,
+  Matrix<F>& X, bool checkIfSingular )
+{
+#ifndef RELEASE
+    PushCallStack("numeric::LocalLDLDiagonalSolve");
+#endif
+    const int numSupernodes = S.lowerStructs.size();
+    const int width = X.Width();
+
+    Matrix<F> XSub;
+    for( int k=0; k<numSupernodes; ++k )
+    {
+        const int supernodeSize = S.sizes[k];
+        const int supernodeOffset = S.offsets[k];
+        XSub.View( X, supernodeOffset, 0, supernodeSize, width );
+
+        // Matrix<F> d;
+        // L.fronts[k].GetDiagonal( d );
+        // LocalSupernodeLDLDiagonalSolve
+        // ( supernodeSize, d, XSub, checkIfSingular );
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename F> // F represents a real or complex field
 void clique::numeric::LocalLDLBackwardSolve
 ( Orientation orientation,
-  symbolic::LocalFactStruct& S, // can't be const due to map...
+  const symbolic::LocalFactStruct& S, 
   const numeric::LocalFactMatrix<F>& L,
   F alpha, Matrix<F>& X )
 {
@@ -182,41 +211,57 @@ void clique::numeric::LocalLDLBackwardSolve
 }
 
 template void clique::numeric::LocalLDLForwardSolve
-( symbolic::LocalFactStruct& S,
+( const symbolic::LocalFactStruct& S,
   const numeric::LocalFactMatrix<float>& L,
   float alpha, Matrix<float>& X );
+template void clique::numeric::LocalLDLDiagonalSolve
+( const symbolic::LocalFactStruct& S,
+  const numeric::LocalFactMatrix<float>& L,
+  Matrix<float>& X, bool checkIfSingular );
 template void clique::numeric::LocalLDLBackwardSolve
 ( Orientation orientation,
-  symbolic::LocalFactStruct& S,
+  const symbolic::LocalFactStruct& S,
   const numeric::LocalFactMatrix<float>& L,
   float alpha, Matrix<float>& X );
 
 template void clique::numeric::LocalLDLForwardSolve
-( symbolic::LocalFactStruct& S,
+( const symbolic::LocalFactStruct& S,
   const numeric::LocalFactMatrix<double>& L,
   double alpha, Matrix<double>& X );
+template void clique::numeric::LocalLDLDiagonalSolve
+( const symbolic::LocalFactStruct& S,
+  const numeric::LocalFactMatrix<double>& L,
+  Matrix<double>& X, bool checkIfSingular );
 template void clique::numeric::LocalLDLBackwardSolve
 ( Orientation orientation,
-  symbolic::LocalFactStruct& S,
+  const symbolic::LocalFactStruct& S,
   const numeric::LocalFactMatrix<double>& L,
   double alpha, Matrix<double>& X );
 
 template void clique::numeric::LocalLDLForwardSolve
-( symbolic::LocalFactStruct& S,
+( const symbolic::LocalFactStruct& S,
   const numeric::LocalFactMatrix<std::complex<float> >& L,
   std::complex<float> alpha, Matrix<std::complex<float> >& X );
+template void clique::numeric::LocalLDLDiagonalSolve
+( const symbolic::LocalFactStruct& S,
+  const numeric::LocalFactMatrix<std::complex<float> >& L,
+  Matrix<std::complex<float> >& X, bool checkIfSingular );
 template void clique::numeric::LocalLDLBackwardSolve
 ( Orientation orientation,
-  symbolic::LocalFactStruct& S,
+  const symbolic::LocalFactStruct& S,
   const numeric::LocalFactMatrix<std::complex<float> >& L,
   std::complex<float> alpha, Matrix<std::complex<float> >& X );
 
 template void clique::numeric::LocalLDLForwardSolve
-( symbolic::LocalFactStruct& S,
+( const symbolic::LocalFactStruct& S,
   const numeric::LocalFactMatrix<std::complex<double> >& L,
   std::complex<double> alpha, Matrix<std::complex<double> >& X );
+template void clique::numeric::LocalLDLDiagonalSolve
+( const symbolic::LocalFactStruct& S,
+  const numeric::LocalFactMatrix<std::complex<double> >& L,
+  Matrix<std::complex<double> >& X, bool checkIfSingular );
 template void clique::numeric::LocalLDLBackwardSolve
 ( Orientation orientation,
-  symbolic::LocalFactStruct& S,
+  const symbolic::LocalFactStruct& S,
   const numeric::LocalFactMatrix<std::complex<double> >& L,
   std::complex<double> alpha, Matrix<std::complex<double> >& X );

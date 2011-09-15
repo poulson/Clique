@@ -32,7 +32,7 @@ void LocalSupernodeLDLForwardSolve
 template<typename F>
 void LocalSupernodeLDLDiagonalSolve
 ( int supernodeSize,
-  F alpha, const elemental::Matrix<F>& d, elemental::Matrix<F>& X,
+  const elemental::Matrix<F>& d, elemental::Matrix<F>& X,
   bool checkIfSingular=false );
 
 template<typename F>
@@ -49,8 +49,8 @@ void DistSupernodeLDLForwardSolve
 template<typename F>
 void DistSupernodeLDLDiagonalSolve
 ( int supernodeSize,
-  F alpha, const elemental::DistMatrix<F,elemental::VC,elemental::STAR>& d,
-                 elemental::DistMatrix<F,elemental::VC,elemental::STAR>& X,
+  const elemental::DistMatrix<F,elemental::VC,elemental::STAR>& d,
+        elemental::DistMatrix<F,elemental::VC,elemental::STAR>& X,
   bool checkIfSingular=false );
 
 template<typename F>

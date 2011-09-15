@@ -26,15 +26,19 @@ namespace numeric {
 
 template<typename F>
 void LocalLDLForwardSolve
-(       symbolic::LocalFactStruct& S, // can't be const due to map...
+( const symbolic::LocalFactStruct& S, 
   const LocalFactMatrix<F>& L, F alpha, Matrix<F>& X );
 
-// TODO
+template<typename F>
+void LocalLDLDiagonalSolve
+( const symbolic::LocalFactStruct& S,
+  const LocalFactMatrix<F>& L, Matrix<F>& X,
+  bool checkIfSingular=false );
 
 template<typename F>
 void LocalLDLBackwardSolve
 ( Orientation orientation,
-  symbolic::LocalFactStruct& S, // can't be const due to map...
+  const symbolic::LocalFactStruct& S, 
   const LocalFactMatrix<F>& L, F alpha, Matrix<F>& X );
 
 } // namespace numeric

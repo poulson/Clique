@@ -28,7 +28,7 @@ using namespace elemental;
 template<typename F>
 void clique::numeric::LocalSupernodeLDLDiagonalSolve
 ( int supernodeSize,
-  F alpha, const Matrix<F>& d, Matrix<F>& X,
+  const Matrix<F>& d, Matrix<F>& X,
   bool checkIfSingular )
 {
 #ifndef RELEASE
@@ -210,8 +210,8 @@ template void clique::numeric::LocalSupernodeLDLForwardSolve
                      Matrix<float>& X );
 template void clique::numeric::LocalSupernodeLDLDiagonalSolve
 ( int supernodeSize,
-  float alpha, const Matrix<float>& d, 
-                     Matrix<float>& X,
+  const Matrix<float>& d, 
+        Matrix<float>& X,
   bool checkIfSingular );
 template void clique::numeric::LocalSupernodeLDLBackwardSolve
 ( Orientation orientation, int supernodeSize,
@@ -224,8 +224,8 @@ template void clique::numeric::LocalSupernodeLDLForwardSolve
                       Matrix<double>& X );
 template void clique::numeric::LocalSupernodeLDLDiagonalSolve
 ( int supernodeSize,
-  double alpha, const Matrix<double>& d, 
-                      Matrix<double>& X,
+  const Matrix<double>& d, 
+        Matrix<double>& X,
   bool checkIfSingular );
 template void clique::numeric::LocalSupernodeLDLBackwardSolve
 ( Orientation orientation, int supernodeSize,
@@ -238,8 +238,8 @@ template void clique::numeric::LocalSupernodeLDLForwardSolve
                                    Matrix<std::complex<float> >& X );
 template void clique::numeric::LocalSupernodeLDLDiagonalSolve
 ( int supernodeSize,
-  std::complex<float> alpha, const Matrix<std::complex<float> >& d, 
-                                   Matrix<std::complex<float> >& X,
+  const Matrix<std::complex<float> >& d, 
+        Matrix<std::complex<float> >& X,
   bool checkIfSingular );
 template void clique::numeric::LocalSupernodeLDLBackwardSolve
 ( Orientation orientation, int supernodeSize,
@@ -252,8 +252,8 @@ template void clique::numeric::LocalSupernodeLDLForwardSolve
                                     Matrix<std::complex<double> >& X );
 template void clique::numeric::LocalSupernodeLDLDiagonalSolve
 ( int supernodeSize,
-  std::complex<double> alpha, const Matrix<std::complex<double> >& d, 
-                                    Matrix<std::complex<double> >& X,
+  const Matrix<std::complex<double> >& d, 
+        Matrix<std::complex<double> >& X,
   bool checkIfSingular );
 template void clique::numeric::LocalSupernodeLDLBackwardSolve
 ( Orientation orientation, int supernodeSize,
