@@ -36,8 +36,8 @@ struct LocalFactStruct
     std::vector<int> sizes, offsets;
     std::vector<std::vector<int> > lowerStructs;
     std::vector<std::vector<int> > children;
-    std::vector<std::vector<int> > origLowerRelIndices;
-    std::vector<std::vector<int> > leftChildRelIndices, rightChildRelIndices;
+    std::vector<std::map<int,int> > origLowerRelIndices;
+    std::vector<std::map<int,int> > leftChildRelIndices, rightChildRelIndices;
 };
 
 struct DistOrigStruct
@@ -53,8 +53,8 @@ struct DistFactStruct
 
     std::vector<int> sizes, offsets;
     std::vector<std::vector<int> > lowerStructs;
-    std::vector<std::vector<int> > origLowerRelIndices;
-    std::vector<std::vector<int> > leftChildRelIndices, rightChildRelIndices;
+    std::vector<std::map<int,int> > origLowerRelIndices;
+    std::vector<std::map<int,int> > leftChildRelIndices, rightChildRelIndices;
 };
 
 void SymmetricFactorization

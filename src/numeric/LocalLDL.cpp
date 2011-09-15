@@ -1,8 +1,4 @@
 /*
-   Modification of include/elemental/advanced/LDL.hpp from Elemental.
-   Copyright (c) 2009-2011, Jack Poulson
-   All rights reserved.
-
    Clique: a scalable implementation of the multifrontal algorithm
 
    Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
@@ -41,9 +37,34 @@ void clique::numeric::LocalLDL
     // Perform the local factorization
     for( int k=0; k<numSupernodes; ++k )
     {
-        
+        // Expand the original sparse matrix into the frontal matrix.
+        const int supernodeOffset = SLocal.offsets[k];
+        const int supernodeSize = SLocal.sizes[k];
+        const int lowerStructSize = SLocal.lowerStructs[k].size();
+        LLocal.fronts[k].ResizeTo( supernodeSize + lowerStructSize );
+        LLocal.fronts[k].SetToZero();
+        const int numColumns = ALocal.colOffsets[k].size()-1;
+        for( int jPacked=0; jPacked<numColumns; ++jPacked )
+        {
+            const int colOffset = ALocal.colOffsets[k][jPacked];
+            const int numRowIndices = ALocal.colOffsets[k][jPacked+1]-colOffset;
+            const int* rowIndices = &ALocal.rowIndices[k][colOffset];
+
+            // HERE
+
+            for( int iPacked=0; iPacked<numRowIndices; ++iPacked )
+            {
+                // HERE
+            }
+        }
+
+        // Add updates from children (if they exist)
+        const int numChildren = SLocal.children[k].size();
+
+        // Call the custom partial LDL
     }
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
+

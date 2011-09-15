@@ -91,31 +91,28 @@ void clique::symbolic::LocalSymmetricFactorization
 
             // Construct the relative indices of the original lower structure
             const int numOrigLowerIndices = origLowerStruct.size();
-            localFact.origLowerRelIndices[k].resize( numOrigLowerIndices );
             std::vector<int>::iterator it = fullStruct.begin();
             for( int i=0; i<numOrigLowerIndices; ++i )
             {
-                it = std::lower_bound 
-                     ( it, fullStruct.end(), origLowerStruct[i] );
-                localFact.origLowerRelIndices[k][i] = *it;
+                const int index = origLowerStruct[i];
+                it = std::lower_bound ( it, fullStruct.end(), index );
+                localFact.origLowerRelIndices[k][index] = *it;
             }
 
             // Construct the relative indices of the children
-            localFact.leftChildRelIndices[k].resize( numLeftIndices );
-            localFact.rightChildRelIndices[k].resize( numRightIndices );
             it = fullStruct.begin();
             for( int i=0; i<numLeftIndices; ++i )
             {
-                it = std::lower_bound
-                     ( it, fullStruct.end(), leftChildLowerStruct[i] );
-                localFact.leftChildRelIndices[k][i] = *it;
+                const int index = leftChildLowerStruct[i];
+                it = std::lower_bound( it, fullStruct.end(), index );
+                localFact.leftChildRelIndices[k][index] = *it;
             }
             it = fullStruct.begin();
             for( int i=0; i<numRightIndices; ++it )
             {
-                it = std::lower_bound
-                     ( it, fullStruct.end(), rightChildLowerStruct[i] );
-                localFact.rightChildRelIndices[k][i] = *it;
+                const int index = rightChildLowerStruct[i];
+                it = std::lower_bound( it, fullStruct.end(), index );
+                localFact.rightChildRelIndices[k][index] = *it;
             }
 
             // Form lower struct of this supernode by removing supernode indices

@@ -135,12 +135,12 @@ void clique::symbolic::DistSymmetricFactorization
 
         // Construct the relative indices of the original lower structure
         const int numOrigLowerIndices = origLowerStruct.size();
-        distFact.origLowerRelIndices[k].resize( numOrigLowerIndices );
         std::vector<int>::iterator it = fullStruct.begin();
         for( int i=0; i<numOrigLowerIndices; ++i )
         {
-            it = std::lower_bound( it, fullStruct.end(), origLowerStruct[i] );
-            distFact.origLowerRelIndices[k][i] = *it;
+            const int index = origLowerStruct[i];
+            it = std::lower_bound( it, fullStruct.end(), index );
+            distFact.origLowerRelIndices[k][index] = *it;
         }
 
         // Construct the relative indices of the children
@@ -160,19 +160,19 @@ void clique::symbolic::DistSymmetricFactorization
             numLeftIndices = recvBuffer.size();
             numRightIndices = sendBuffer.size();
         }
-        distFact.leftChildRelIndices[k].resize( numLeftIndices );
-        distFact.rightChildRelIndices[k].resize( numRightIndices );
         it = fullStruct.begin();
         for( int i=0; i<numLeftIndices; ++i )
         {
-            it = std::lower_bound( it, fullStruct.end(), leftIndices[i] );
-            distFact.leftChildRelIndices[k][i] = *it;
+            const int index = leftIndices[i];
+            it = std::lower_bound( it, fullStruct.end(), index );
+            distFact.leftChildRelIndices[k][index] = *it;
         }
         it = fullStruct.begin();
         for( int i=0; i<numRightIndices; ++i )
         {
-            it = std::lower_bound( it, fullStruct.end(), rightIndices[i] );
-            distFact.rightChildRelIndices[k][i] = *it;
+            const int index = rightIndices[i];
+            it = std::lower_bound( it, fullStruct.end(), index );
+            distFact.rightChildRelIndices[k][index] = *it;
         }
 
         // Form lower structure of this node by removing the supernode indices
