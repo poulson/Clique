@@ -29,6 +29,7 @@ struct LocalOrigStruct
     std::vector<int> sizes, offsets;
     std::vector<std::vector<int> > lowerStructs;
     std::vector<std::vector<int> > children;
+    std::vector<int> parents; // -1 if root separator
 };
 
 struct LocalFactStruct
@@ -36,6 +37,8 @@ struct LocalFactStruct
     std::vector<int> sizes, offsets;
     std::vector<std::vector<int> > lowerStructs;
     std::vector<std::vector<int> > children;
+    std::vector<int> parents; // -1 if root separator
+
     std::vector<std::map<int,int> > origLowerRelIndices;
     std::vector<std::vector<int> > leftChildRelIndices, rightChildRelIndices;
 };

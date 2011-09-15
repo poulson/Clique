@@ -18,14 +18,22 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_HPP
-#define CLIQUE_HPP 1
+#ifndef CLIQUE_NUMERIC_LDL_SOLVE_HPP
+#define CLIQUE_NUMERIC_LDL_SOLVE_HPP 1
 
-#include "clique/core/environment.hpp"
-#include "clique/symbolic/symmetric_factorization.hpp"
-#include "clique/numeric/ldl.hpp"
-#include "clique/numeric/ldl_solve.hpp"
-#include "clique/numeric/supernode_ldl.hpp"
-#include "clique/numeric/supernode_ldl_solve.hpp"
+namespace clique {
+namespace numeric {
 
-#endif /* CLIQUE_HPP */
+template<typename F>
+void LocalLDLForwardSolve
+(       symbolic::LocalFactStruct& SLocal, // can't be const due to map...
+  const LocalFactMatrix<F>& LLocal,
+  F alpha, Matrix<F>& XLocal );
+
+// TODO
+
+} // namespace numeric
+} // namespace clique
+
+#endif /* CLIQUE_NUMERIC_LDL_SOLVE_HPP */
+

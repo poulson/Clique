@@ -30,8 +30,10 @@ void clique::symbolic::LocalSymmetricFactorization
     const int numSupernodes = localOrig.sizes.size();
     localFact.sizes = localOrig.sizes;
     localFact.offsets = localOrig.sizes;
+    localFact.children = localOrig.children;
+    localFact.parents = localOrig.parents;
+
     localFact.lowerStructs.resize( numSupernodes );
-    localFact.children.resize( numSupernodes );
     localFact.origLowerRelIndices.resize( numSupernodes );
     localFact.leftChildRelIndices.resize( numSupernodes );
     localFact.rightChildRelIndices.resize( numSupernodes );
@@ -47,7 +49,6 @@ void clique::symbolic::LocalSymmetricFactorization
         const std::vector<int>& origLowerStruct = localOrig.lowerStructs[k];
         std::vector<int>& lowerStruct = localFact.lowerStructs[k];
 
-        localFact.children[k] = localOrig.children[k];
 #ifndef RELEASE
         if( numChildren != 0 && numChildren != 2 )
             throw std::logic_error("Tree must be built from bisections");

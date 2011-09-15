@@ -1,7 +1,6 @@
 /*
    Clique: a scalable implementation of the multifrontal algorithm
 
-   Copyright (C) 2010-2011 Jack Poulson <jack.poulson@gmail.com>
    Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
    The University of Texas at Austin
  
@@ -18,14 +17,30 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_HPP
-#define CLIQUE_HPP 1
+#include "clique.hpp"
+using namespace elemental;
 
-#include "clique/core/environment.hpp"
-#include "clique/symbolic/symmetric_factorization.hpp"
-#include "clique/numeric/ldl.hpp"
-#include "clique/numeric/ldl_solve.hpp"
-#include "clique/numeric/supernode_ldl.hpp"
-#include "clique/numeric/supernode_ldl_solve.hpp"
+template<typename F> // F represents a real or complex field
+void clique::numeric::LocalLDLForwardSolve
+(       symbolic::LocalFactStruct& SLocal, // can't be const due to map...
+  const numeric::LocalFactMatrix<F>& LLocal,
+  F alpha, Matrix<F>& XLocal )
+{
+#ifndef RELEASE
+    PushCallStack("numeric::LocalLDLForwardSolve");
+#endif
+    const int numSupernodes = SLocal.lowerStructs.size();
 
-#endif /* CLIQUE_HPP */
+    for( int k=0; k<numSupernodes; ++k )
+    {
+        // ???
+
+        // Call the custom supernode forward solve
+        // LocalSupernodeLDLForwardSolve
+        // ( supernodeSize, alpha, front, XSub );
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
