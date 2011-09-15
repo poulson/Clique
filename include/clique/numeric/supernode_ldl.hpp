@@ -25,15 +25,26 @@ namespace clique {
 namespace numeric {
 
 template<typename F>
-void SupernodeLDLT
+void LocalSupernodeLDLT( elemental::Matrix<F>& A, int supernodeSize );
+
+template<typename F>
+void LocalSupernodeLDLH( elemental::Matrix<F>& A, int supernodeSize );
+
+template<typename F>
+void LocalSupernodeLDL
+( elemental::Orientation orientation, 
+  elemental::Matrix<F>& A, int supernodeSize );
+
+template<typename F>
+void DistSupernodeLDLT
 ( elemental::DistMatrix<F,elemental::MC,elemental::MR>& A, int supernodeSize );
 
 template<typename F>
-void SupernodeLDLH
+void DistSupernodeLDLH
 ( elemental::DistMatrix<F,elemental::MC,elemental::MR>& A, int supernodeSize );
 
 template<typename F>
-void SupernodeLDL
+void DistSupernodeLDL
 ( elemental::Orientation orientation, 
   elemental::DistMatrix<F,elemental::MC,elemental::MR>& A, int supernodeSize );
 

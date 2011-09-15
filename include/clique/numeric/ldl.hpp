@@ -55,6 +55,13 @@ struct DistFactMatrix
     std::vector<elemental::DistMatrix<F,elemental::MC,elemental::MR> > fronts;
 };
 
+template<typename F>
+void LocalLDL
+( elemental::Orientation orientation, 
+  const symbolic::LocalFactStruct& SLocal,
+  const LocalOrigMatrix<F>& ALocal,
+        LocalFactMatrix<F>& LLocal );
+
 } // namespace numeric
 } // namespace clique
 
