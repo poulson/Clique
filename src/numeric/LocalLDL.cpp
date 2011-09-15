@@ -23,35 +23,31 @@ using namespace elemental;
 template<typename F> // F represents a real or complex field
 void clique::numeric::LocalLDL
 ( Orientation orientation,
-        symbolic::LocalFactStruct& SLocal, // can't be const due to map...
-  const numeric::LocalOrigMatrix<F>& ALocal,
-        numeric::LocalFactMatrix<F>& LLocal )
+        symbolic::LocalFactStruct& S, // can't be const due to map...
+  const numeric::LocalOrigMatrix<F>& A,
+        numeric::LocalFactMatrix<F>& L )
 {
 #ifndef RELEASE
     PushCallStack("numeric::LocalLDL");
     if( orientation == NORMAL )
         throw std::logic_error("LDL must be (conjugate-)transposed");
 #endif
-    const int numSupernodes = SLocal.lowerStructs.size();
+    const int numSupernodes = S.lowerStructs.size();
 
     // Perform the local factorization
     for( int k=0; k<numSupernodes; ++k )
     {
-        const int supernodeOffset = SLocal.offsets[k];
-        const int supernodeSize = SLocal.sizes[k];
-        const int lowerStructSize = SLocal.lowerStructs[k].size();
+        const int supernodeOffset = S.offsets[k];
+        const int supernodeSize = S.sizes[k];
+        const int lowerStructSize = S.lowerStructs[k].size();
 
-        const std::vector<F>& nonzeros = ALocal.nonzeros[k];
-        const std::vector<int>& colOffsets = ALocal.colOffsets[k];
-        const std::vector<int>& rowIndices = ALocal.rowIndices[k];
-        std::map<int,int>& origLowerRelIndices = SLocal.origLowerRelIndices[k];
-        const std::vector<int>& leftChildRelIndices = 
-            SLocal.leftChildRelIndices[k];
-        const std::vector<int>& rightChildRelIndices = 
-            SLocal.rightChildRelIndices[k];
+        const std::vector<F>& nonzeros = A.nonzeros[k];
+        const std::vector<int>& colOffsets = A.colOffsets[k];
+        const std::vector<int>& rowIndices = A.rowIndices[k];
+        std::map<int,int>& origLowerRelIndices = S.origLowerRelIndices[k];
 
         // Expand the original sparse matrix into the frontal matrix.
-        Matrix<F>& front = LLocal.fronts[k];
+        Matrix<F>& front = L.fronts[k];
         front.ResizeTo
         ( supernodeSize+lowerStructSize, supernodeSize+lowerStructSize );
         front.SetToZero();
@@ -75,50 +71,51 @@ void clique::numeric::LocalLDL
         }
 
         // Add updates from children (if they exist)
-        const int numChildren = SLocal.children[k].size();
+        const int numChildren = S.children[k].size();
         if( numChildren == 2 )
         {
-            const int leftChildIndex = SLocal.children[k][0];
-            const int rightChildIndex = SLocal.children[k][1];
-            const Matrix<F>& leftChildFront = LLocal.fronts[leftChildIndex];
-            const Matrix<F>& rightChildFront = LLocal.fronts[rightChildIndex];
-            const int leftChildSupernodeSize = SLocal.sizes[leftChildIndex];
-            const int rightChildSupernodeSize = SLocal.sizes[rightChildIndex];
-            const int leftChildUpdateSize = 
-                leftChildFront.Height()-leftChildSupernodeSize;
-            const int rightChildUpdateSize = 
-                rightChildFront.Height()-rightChildSupernodeSize;
+            const int leftIndex = S.children[k][0];
+            const int rightIndex = S.children[k][1];
+            const Matrix<F>& leftFront = L.fronts[leftIndex];
+            const Matrix<F>& rightFront = L.fronts[rightIndex];
+            const int leftSupernodeSize = S.sizes[leftIndex];
+            const int rightSupernodeSize = S.sizes[rightIndex];
+            const int leftUpdateSize = leftFront.Height()-leftSupernodeSize;
+            const int rightUpdateSize = rightFront.Height()-rightSupernodeSize;
+            
+            const std::vector<int>& leftRelIndices = S.leftChildRelIndices[k];
+            const std::vector<int>& rightRelIndices = S.rightChildRelIndices[k];
 
-            Matrix<F> leftChildUpdate;
-            leftChildUpdate.LockedView
-            ( leftChildFront, leftChildSupernodeSize, leftChildSupernodeSize,
-              leftChildUpdateSize, leftChildUpdateSize );
+            Matrix<F> leftUpdate;
+            leftUpdate.LockedView
+            ( leftFront, leftSupernodeSize, leftSupernodeSize,
+              leftUpdateSize, leftUpdateSize );
 
-            Matrix<F> rightChildUpdate;
-            rightChildUpdate.LockedView
-            ( rightChildFront, rightChildSupernodeSize, rightChildSupernodeSize,
-              rightChildUpdateSize, rightChildUpdateSize );
+            Matrix<F> rightUpdate;
+            rightUpdate.LockedView
+            ( rightFront, rightSupernodeSize, rightSupernodeSize,
+              rightUpdateSize, rightUpdateSize );
 
             // Add the left child's update matrix
-            for( int jChild=0; jChild<leftChildUpdateSize; ++jChild )
+            for( int jChild=0; jChild<leftUpdateSize; ++jChild )
             {
-                const int jFront = leftChildRelIndices[jChild];
-                for( int iChild=0; iChild<leftChildUpdateSize; ++iChild )
+                const int jFront = leftRelIndices[jChild];
+                for( int iChild=0; iChild<leftUpdateSize; ++iChild )
                 {
-                    const int iFront = leftChildRelIndices[iChild];
-                    const F value = leftChildUpdate.Get(iChild,jChild);
+                    const int iFront = leftRelIndices[iChild];
+                    const F value = leftUpdate.Get(iChild,jChild);
                     front.Update( iFront, jFront, -value );
                 }
             }
 
             // Add the right child's update matrix
-            for( int jChild=0; jChild<rightChildUpdateSize; ++jChild )
+            for( int jChild=0; jChild<rightUpdateSize; ++jChild )
             {
-                const int jFront = rightChildRelIndices[jChild];
-                for( int iChild=0; iChild<rightChildUpdateSize; ++iChild )
+                const int jFront = rightRelIndices[jChild];
+                for( int iChild=0; iChild<rightUpdateSize; ++iChild )
                 {
-                    const int iFront = rightChildRelIndices[iChild];
-                    const F value = rightChildUpdate.Get(iChild,jChild);
+                    const int iFront = rightRelIndices[iChild];
+                    const F value = rightUpdate.Get(iChild,jChild);
                     front.Update( iFront, jFront, -value );
                 }
             }
@@ -134,25 +131,25 @@ void clique::numeric::LocalLDL
 
 template void clique::numeric::LocalLDL
 ( Orientation orientation,
-        symbolic::LocalFactStruct& SLocal,
-  const numeric::LocalOrigMatrix<float>& ALocal,
-        numeric::LocalFactMatrix<float>& LLocal );
+        symbolic::LocalFactStruct& S,
+  const numeric::LocalOrigMatrix<float>& A,
+        numeric::LocalFactMatrix<float>& L );
 
 template void clique::numeric::LocalLDL
 ( Orientation orientation,
-        symbolic::LocalFactStruct& SLocal,
-  const numeric::LocalOrigMatrix<double>& ALocal,
-        numeric::LocalFactMatrix<double>& LLocal );
+        symbolic::LocalFactStruct& S,
+  const numeric::LocalOrigMatrix<double>& A,
+        numeric::LocalFactMatrix<double>& L );
 
 template void clique::numeric::LocalLDL
 ( Orientation orientation,
-        symbolic::LocalFactStruct& SLocal,
-  const numeric::LocalOrigMatrix<std::complex<float> >& ALocal,
-        numeric::LocalFactMatrix<std::complex<float> >& LLocal );
+        symbolic::LocalFactStruct& S,
+  const numeric::LocalOrigMatrix<std::complex<float> >& A,
+        numeric::LocalFactMatrix<std::complex<float> >& L );
 
 template void clique::numeric::LocalLDL
 ( Orientation orientation,
-        symbolic::LocalFactStruct& SLocal,
-  const numeric::LocalOrigMatrix<std::complex<double> >& ALocal,
-        numeric::LocalFactMatrix<std::complex<double> >& LLocal );
+        symbolic::LocalFactStruct& S,
+  const numeric::LocalOrigMatrix<std::complex<double> >& A,
+        numeric::LocalFactMatrix<std::complex<double> >& L );
 

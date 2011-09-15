@@ -26,9 +26,8 @@ namespace numeric {
 
 template<typename F>
 void LocalLDLForwardSolve
-(       symbolic::LocalFactStruct& SLocal, // can't be const due to map...
-  const LocalFactMatrix<F>& LLocal,
-  F alpha, Matrix<F>& XLocal );
+(       symbolic::LocalFactStruct& S, // can't be const due to map...
+  const LocalFactMatrix<F>& L, F alpha, Matrix<F>& X );
 
 // TODO
 

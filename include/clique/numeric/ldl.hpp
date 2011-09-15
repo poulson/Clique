@@ -38,6 +38,7 @@ template<typename F>
 struct LocalFactMatrix
 {
     std::vector<elemental::Matrix<F> > fronts;
+    mutable std::vector<elemental::Matrix<F> > solutions;
 };
 
 template<typename F>
@@ -58,9 +59,9 @@ struct DistFactMatrix
 template<typename F>
 void LocalLDL
 ( elemental::Orientation orientation, 
-        symbolic::LocalFactStruct& SLocal, // can't be const due to map...
-  const LocalOrigMatrix<F>& ALocal,
-        LocalFactMatrix<F>& LLocal );
+        symbolic::LocalFactStruct& S, // can't be const due to map...
+  const LocalOrigMatrix<F>& A,
+        LocalFactMatrix<F>& L );
 
 } // namespace numeric
 } // namespace clique
