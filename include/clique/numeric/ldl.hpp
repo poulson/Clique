@@ -58,7 +58,7 @@ struct DistFactMatrix
 template<typename F>
 void LocalLDL
 ( elemental::Orientation orientation, 
-  const symbolic::LocalFactStruct& SLocal,
+        symbolic::LocalFactStruct& SLocal, // can't be const due to map...
   const LocalOrigMatrix<F>& ALocal,
         LocalFactMatrix<F>& LLocal );
 

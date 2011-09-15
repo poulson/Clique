@@ -160,19 +160,21 @@ void clique::symbolic::DistSymmetricFactorization
             numLeftIndices = recvBuffer.size();
             numRightIndices = sendBuffer.size();
         }
+        distFact.leftChildRelIndices[k].resize( numLeftIndices );
         it = fullStruct.begin();
         for( int i=0; i<numLeftIndices; ++i )
         {
             const int index = leftIndices[i];
             it = std::lower_bound( it, fullStruct.end(), index );
-            distFact.leftChildRelIndices[k][index] = *it;
+            distFact.leftChildRelIndices[k][i] = *it;
         }
+        distFact.rightChildRelIndices[k].resize( numRightIndices );
         it = fullStruct.begin();
         for( int i=0; i<numRightIndices; ++i )
         {
             const int index = rightIndices[i];
             it = std::lower_bound( it, fullStruct.end(), index );
-            distFact.rightChildRelIndices[k][index] = *it;
+            distFact.rightChildRelIndices[k][i] = *it;
         }
 
         // Form lower structure of this node by removing the supernode indices

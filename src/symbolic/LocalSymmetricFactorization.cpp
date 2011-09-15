@@ -100,19 +100,21 @@ void clique::symbolic::LocalSymmetricFactorization
             }
 
             // Construct the relative indices of the children
+            localFact.leftChildRelIndices[k].resize( numLeftIndices );
             it = fullStruct.begin();
             for( int i=0; i<numLeftIndices; ++i )
             {
                 const int index = leftChildLowerStruct[i];
                 it = std::lower_bound( it, fullStruct.end(), index );
-                localFact.leftChildRelIndices[k][index] = *it;
+                localFact.leftChildRelIndices[k][i] = *it;
             }
+            localFact.rightChildRelIndices[k].resize( numRightIndices );
             it = fullStruct.begin();
             for( int i=0; i<numRightIndices; ++it )
             {
                 const int index = rightChildLowerStruct[i];
                 it = std::lower_bound( it, fullStruct.end(), index );
-                localFact.rightChildRelIndices[k][index] = *it;
+                localFact.rightChildRelIndices[k][i] = *it;
             }
 
             // Form lower struct of this supernode by removing supernode indices
