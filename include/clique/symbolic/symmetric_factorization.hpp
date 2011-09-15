@@ -38,6 +38,7 @@ struct LocalFactStruct
     std::vector<std::vector<int> > lowerStructs;
     std::vector<std::vector<int> > children;
     std::vector<int> parents; // -1 if root separator
+    std::vector<bool> isLeftChild;
 
     std::vector<std::map<int,int> > origLowerRelIndices;
     std::vector<std::vector<int> > leftChildRelIndices, rightChildRelIndices;

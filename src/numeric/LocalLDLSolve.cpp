@@ -106,22 +106,117 @@ void clique::numeric::LocalLDLForwardSolve
 #endif
 }
 
+template<typename F> // F represents a real or complex field
+void clique::numeric::LocalLDLBackwardSolve
+( Orientation orientation,
+  symbolic::LocalFactStruct& S, // can't be const due to map...
+  const numeric::LocalFactMatrix<F>& L,
+  F alpha, Matrix<F>& X )
+{
+#ifndef RELEASE
+    PushCallStack("numeric::LocalLDLBackwardSolve");
+#endif
+    const int numSupernodes = S.lowerStructs.size();
+    const int width = X.Width();
+
+    L.solutions.resize( numSupernodes );
+    for( int k=numSupernodes-1; k>=0; --k )
+    {
+        const int numChildren = S.children[k].size();
+        const int supernodeSize = S.sizes[k];
+        const int supernodeOffset = S.offsets[k];
+        const Matrix<F>& front = L.fronts[k];
+        Matrix<F>& Y = L.solutions[k];
+
+        Matrix<F> XT;
+        XT.LockedView( X, supernodeOffset, 0, supernodeSize, X.Width() );
+        
+        Y.ResizeTo( front.Height(), width );
+        Matrix<F> YT, YB;
+        YT.View( Y, 0, 0, supernodeSize, width );
+        YB.View( Y, supernodeSize, 0, Y.Height()-supernodeSize, width );
+
+        // Pull in the relevant information from the RHS
+        YT = XT;
+
+        // Update using the parent (if it exists)
+        const int parentIndex = S.parents[k];
+        if( parentIndex != -1 )
+        {
+            Matrix<F>& parentSol = L.solutions[parentIndex];
+            const bool isLeftChild = S.isLeftChild[k];
+            const int parentSupernodeSize = S.sizes[parentIndex];
+            const int parentUpdateSize = parentSol.Height()-parentSupernodeSize;
+            const int currentUpdateSize = YB.Height();
+
+            const std::vector<int>& parentRelIndices = 
+              ( isLeftChild ? 
+                S.leftChildRelIndices[parentIndex] :
+                S.rightChildRelIndices[parentIndex] );
+
+            for( int iCurrent=0; iCurrent<currentUpdateSize; ++iCurrent )
+            {
+                const int iParent = parentRelIndices[iCurrent];
+                for( int j=0; j<width; ++j )
+                    YB.Set( iCurrent, j, parentSol.Get(iParent,j) );
+            }
+
+            // The left child is numbered lower than the right child, so 
+            // we can safely free the parent's solution if we are the left child
+            if( isLeftChild )
+                parentSol.Empty();
+        }
+        // else we are the root node
+
+        // Call the custom supernode forward solve
+        LocalSupernodeLDLBackwardSolve
+        ( orientation, supernodeSize, alpha, front, Y );
+
+        // Store the supernode portion of the result
+        XT = YT;
+    }
+    L.solutions.clear();
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
 template void clique::numeric::LocalLDLForwardSolve
-(       symbolic::LocalFactStruct& S,
+( symbolic::LocalFactStruct& S,
+  const numeric::LocalFactMatrix<float>& L,
+  float alpha, Matrix<float>& X );
+template void clique::numeric::LocalLDLBackwardSolve
+( Orientation orientation,
+  symbolic::LocalFactStruct& S,
   const numeric::LocalFactMatrix<float>& L,
   float alpha, Matrix<float>& X );
 
 template void clique::numeric::LocalLDLForwardSolve
-(       symbolic::LocalFactStruct& S,
+( symbolic::LocalFactStruct& S,
+  const numeric::LocalFactMatrix<double>& L,
+  double alpha, Matrix<double>& X );
+template void clique::numeric::LocalLDLBackwardSolve
+( Orientation orientation,
+  symbolic::LocalFactStruct& S,
   const numeric::LocalFactMatrix<double>& L,
   double alpha, Matrix<double>& X );
 
 template void clique::numeric::LocalLDLForwardSolve
-(       symbolic::LocalFactStruct& S,
+( symbolic::LocalFactStruct& S,
+  const numeric::LocalFactMatrix<std::complex<float> >& L,
+  std::complex<float> alpha, Matrix<std::complex<float> >& X );
+template void clique::numeric::LocalLDLBackwardSolve
+( Orientation orientation,
+  symbolic::LocalFactStruct& S,
   const numeric::LocalFactMatrix<std::complex<float> >& L,
   std::complex<float> alpha, Matrix<std::complex<float> >& X );
 
 template void clique::numeric::LocalLDLForwardSolve
-(       symbolic::LocalFactStruct& S,
+( symbolic::LocalFactStruct& S,
+  const numeric::LocalFactMatrix<std::complex<double> >& L,
+  std::complex<double> alpha, Matrix<std::complex<double> >& X );
+template void clique::numeric::LocalLDLBackwardSolve
+( Orientation orientation,
+  symbolic::LocalFactStruct& S,
   const numeric::LocalFactMatrix<std::complex<double> >& L,
   std::complex<double> alpha, Matrix<std::complex<double> >& X );

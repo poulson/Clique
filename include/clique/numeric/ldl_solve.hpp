@@ -31,6 +31,12 @@ void LocalLDLForwardSolve
 
 // TODO
 
+template<typename F>
+void LocalLDLBackwardSolve
+( Orientation orientation,
+  symbolic::LocalFactStruct& S, // can't be const due to map...
+  const LocalFactMatrix<F>& L, F alpha, Matrix<F>& X );
+
 } // namespace numeric
 } // namespace clique
 

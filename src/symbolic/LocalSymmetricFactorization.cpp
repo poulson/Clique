@@ -37,6 +37,7 @@ void clique::symbolic::LocalSymmetricFactorization
     localFact.origLowerRelIndices.resize( numSupernodes );
     localFact.leftChildRelIndices.resize( numSupernodes );
     localFact.rightChildRelIndices.resize( numSupernodes );
+    localFact.isLeftChild.resize( numSupernodes );
 
     // Perform the local symbolic factorization
     std::vector<int>::iterator it;
@@ -57,10 +58,15 @@ void clique::symbolic::LocalSymmetricFactorization
 
         if( numChildren == 2 )
         {
+            const int leftIndex = localOrig.children[k][0];
+            const int rightIndex = localOrig.children[k][1];
+            localFact.isLeftChild[leftIndex] = true;
+            localFact.isLeftChild[rightIndex] = false;
+
             const std::vector<int>& leftChildLowerStruct = 
-                localFact.lowerStructs[localOrig.children[k][0]];
+                localFact.lowerStructs[leftIndex];
             const std::vector<int>& rightChildLowerStruct = 
-                localFact.lowerStructs[localOrig.children[k][1]];
+                localFact.lowerStructs[rightIndex];
             const int numLeftIndices = leftChildLowerStruct.size();
             const int numRightIndices = rightChildLowerStruct.size();
 
