@@ -73,6 +73,7 @@ void clique::symbolic::DistSymmetricFactorization
     mpi::CommSplit( distOrig.comm, commRank, 0, distFact.comms[0] );
 
     // Perform the parallel symbolic factorization
+    std::vector<int>::iterator it;
     std::vector<int> sendBuffer, recvBuffer;
     std::vector<int> childrenStruct, partialStruct, fullStruct,
                     supernodeIndices;
@@ -112,30 +113,33 @@ void clique::symbolic::DistSymmetricFactorization
         // Union the two child lower structures
         childrenStruct.resize
         ( myChildLowerStructSize+theirChildLowerStructSize );
-        std::set_union
+        it = std::set_union
         ( sendBuffer.begin(), sendBuffer.end(),
           recvBuffer.begin(), recvBuffer.end(), childrenStruct.begin() );
+        childrenStruct.resize( int(it-childrenStruct.begin()) );
 
         // Union the lower structure of this supernode
         partialStruct.resize( childrenStruct.size() + origLowerStruct.size() );
-        std::set_union
+        it = std::set_union
         ( childrenStruct.begin(), childrenStruct.end(),
           origLowerStruct.begin(), origLowerStruct.end(), 
           partialStruct.begin() );
+        partialStruct.resize( int(it-partialStruct.begin()) );
 
         // Union again with the supernode indices
         supernodeIndices.resize( supernodeSize );
         for( int i=0; i<supernodeSize; ++i )
             supernodeIndices[i] = supernodeOffset + i;
         fullStruct.resize( supernodeSize + partialStruct.size() );
-        std::set_union
+        it = std::set_union
         ( supernodeIndices.begin(), supernodeIndices.end(),
           partialStruct.begin(), partialStruct.end(), 
           fullStruct.begin() );
+        fullStruct.resize( int(it-fullStruct.begin()) );
 
         // Construct the relative indices of the original lower structure
         const int numOrigLowerIndices = origLowerStruct.size();
-        std::vector<int>::iterator it = fullStruct.begin();
+        it = fullStruct.begin();
         for( int i=0; i<numOrigLowerIndices; ++i )
         {
             const int index = origLowerStruct[i];
@@ -179,10 +183,11 @@ void clique::symbolic::DistSymmetricFactorization
 
         // Form lower structure of this node by removing the supernode indices
         lowerStruct.resize( fullStruct.size() );
-        std::set_difference
+        it = std::set_difference
         ( fullStruct.begin(), fullStruct.end(),
           supernodeIndices.begin(), supernodeIndices.end(),
           lowerStruct.begin() );
+        lowerStruct.resize( int(it-lowerStruct.begin()) );
     }
 #ifndef RELEASE
     PopCallStack();

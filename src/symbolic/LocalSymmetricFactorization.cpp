@@ -39,6 +39,7 @@ void clique::symbolic::LocalSymmetricFactorization
     localFact.rightChildRelIndices.resize( numSupernodes );
 
     // Perform the local symbolic factorization
+    std::vector<int>::iterator it;
     std::vector<int> childrenStruct, partialStruct, fullStruct,
                      supernodeIndices;
     for( int k=0; k<numSupernodes; ++k )
@@ -66,33 +67,36 @@ void clique::symbolic::LocalSymmetricFactorization
             // Union the child lower structs
             const int childrenStructMaxSize = numLeftIndices + numRightIndices;
             childrenStruct.resize( childrenStructMaxSize );
-            std::set_union
+            it = std::set_union
             ( leftChildLowerStruct.begin(), leftChildLowerStruct.end(),
               rightChildLowerStruct.begin(), rightChildLowerStruct.end(),
               childrenStruct.begin() );
+            childrenStruct.resize( int(it-childrenStruct.begin()) );
 
             // Union the lower structure of this supernode
             const int partialStructMaxSize = 
                 childrenStruct.size() + origLowerStruct.size();
             partialStruct.resize( partialStructMaxSize );
-            std::set_union
+            it = std::set_union
             ( origLowerStruct.begin(), origLowerStruct.end(),
               childrenStruct.begin(), childrenStruct.end(),
               partialStruct.begin() );
+            partialStruct.resize( int(it-partialStruct.begin()) );
 
             // Union again with the supernode indices
             supernodeIndices.resize( supernodeSize );
             for( int i=0; i<supernodeSize; ++i )
                 supernodeIndices[i] = supernodeOffset + i;
             fullStruct.resize( supernodeSize + partialStruct.size() );
-            std::set_union
+            it = std::set_union
             ( partialStruct.begin(), partialStruct.end(),
               supernodeIndices.begin(), supernodeIndices.end(),
               fullStruct.begin() );
+            fullStruct.resize( int(it-fullStruct.begin()) );
 
             // Construct the relative indices of the original lower structure
             const int numOrigLowerIndices = origLowerStruct.size();
-            std::vector<int>::iterator it = fullStruct.begin();
+            it = fullStruct.begin();
             for( int i=0; i<numOrigLowerIndices; ++i )
             {
                 const int index = origLowerStruct[i];
@@ -120,10 +124,11 @@ void clique::symbolic::LocalSymmetricFactorization
 
             // Form lower struct of this supernode by removing supernode indices
             lowerStruct.resize( fullStruct.size() );
-            std::set_difference
+            it = std::set_difference
             ( fullStruct.begin(), fullStruct.end(),
               supernodeIndices.begin(), supernodeIndices.end(),
               lowerStruct.begin() );
+            lowerStruct.resize( int(it-lowerStruct.begin()) );
         }
         else // numChildren == 0, so this is a leaf supernode 
         {
