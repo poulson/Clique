@@ -43,7 +43,9 @@ void PopCallStack();
 void DumpCallStack();
 #endif
 
-namespace mpi = elemental::imports::mpi;
+namespace blas = elemental::blas;
+namespace lapack = elemental::lapack;
+namespace mpi = elemental::mpi;
 
 } // namespace clique
 

@@ -167,10 +167,10 @@ Elemental builds a copy of PMRRR by default whenever possible: if an up-to-date
 non-MKL version of LAPACK is used, then PMRRR only requires a working MPI C 
 compiler, otherwise, a Fortran 90 compiler is needed in order to build several
 recent LAPACK functions. If these LAPACK routines cannot be made available, 
-then PMRRR is not built and Elemental's eigensolver are automatically disabled.
+then PMRRR is not built and Elemental's eigensolvers are automatically disabled.
 
-Using Elemental
-===============
+Testing the installation
+========================
 Once the library has been built, it is a good idea to verify that it is 
 functioning properly. The following is a simple example that constructs of a 
 distributed matrix, sets it to the identity matrix, then prints it:
@@ -179,7 +179,6 @@ distributed matrix, sets it to the identity matrix, then prints it:
 
       #include "elemental.hpp"
       using namespace elemental;
-      using namespace elemental::imports;
 
       int
       main( int argc, char* argv[] )
@@ -220,7 +219,8 @@ the file ``Simple.cpp`` is in the current folder, a typical build would be ::
 Of course, ``/usr/local/elemental`` should be replaced with your installation
 prefix and ``-llapack -lblas -lm`` should be replaced with the ``MATH_LIBS`` 
 set during configuration (it is written into the file 
-``include/elemental/config.h`` in the build directory).
+``include/elemental/config.h`` in the build directory). A slightly modified 
+version of the above driver is available in ``tests/core/Simple.cpp``.
 
 The executable can then typically be run with a single process using ::
 
@@ -251,4 +251,8 @@ a single process.
 
 Troubleshooting
 ===============
-If you run into build problems, please email `elemental-framework@googlegroups.com <mailto:elemental-framework@googlegroups.com>`_ and make sure to attach the file ``include/elemental/config.h`` that should be generated within your build directory.
+If you run into build problems, please email 
+`jack.poulson@gmail.com <mailto:jack.poulson@gmail.com>`_ and make sure to 
+attach the file ``include/elemental/config.h`` that should be generated within 
+your build directory. Please only direct general usage questions to 
+`elemental-framework@googlegroups.com <mailto:elemental-framework@googlegroups.com>`_.
