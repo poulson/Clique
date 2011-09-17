@@ -25,29 +25,10 @@ namespace clique {
 namespace numeric {
 
 template<typename F>
-struct LocalOrigMatrix
-{
-    // Each unexpanded contribution of the original matrix to a frontal matrix
-    // is stored in packed column-major storage.
-    std::vector<std::vector<F> > nonzeros;
-    std::vector<std::vector<int> > rowIndices;
-    std::vector<std::vector<int> > colOffsets;
-};
-
-template<typename F>
 struct LocalFactMatrix
 {
     std::vector<elemental::Matrix<F> > fronts;
     mutable std::vector<elemental::Matrix<F> > solutions;
-};
-
-template<typename F>
-struct DistOrigMatrix
-{
-    std::vector<int> localColOffsets, numLocalCols;
-    std::vector<std::vector<F> > nonzeros;
-    std::vector<std::vector<int> > rowIndices;
-    std::vector<std::vector<int> > colOffsets;
 };
 
 template<typename F>
@@ -56,12 +37,13 @@ struct DistFactMatrix
     std::vector<elemental::DistMatrix<F,elemental::MC,elemental::MR> > fronts;
 };
 
+// When this is called, all of the fronts in L should by equal to the expansions
+// of the original sparse matrix.
 template<typename F>
 void LocalLDL
 ( elemental::Orientation orientation, 
-        symbolic::LocalFactStruct& S, // can't be const due to map...
-  const LocalOrigMatrix<F>& A,
-        LocalFactMatrix<F>& L );
+  symbolic::LocalFactStruct& S, // can't be const due to map...
+  numeric::LocalFactMatrix<F>& L );
 
 } // namespace numeric
 } // namespace clique

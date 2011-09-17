@@ -23,9 +23,8 @@ using namespace elemental;
 template<typename F> // F represents a real or complex field
 void clique::numeric::LocalLDL
 ( Orientation orientation,
-        symbolic::LocalFactStruct& S, // can't be const due to map...
-  const numeric::LocalOrigMatrix<F>& A,
-        numeric::LocalFactMatrix<F>& L )
+  symbolic::LocalFactStruct& S, // can't be const due to map...
+  numeric::LocalFactMatrix<F>& L )
 {
 #ifndef RELEASE
     PushCallStack("numeric::LocalLDL");
@@ -41,34 +40,12 @@ void clique::numeric::LocalLDL
         const int supernodeSize = S.sizes[k];
         const int lowerStructSize = S.lowerStructs[k].size();
 
-        const std::vector<F>& nonzeros = A.nonzeros[k];
-        const std::vector<int>& colOffsets = A.colOffsets[k];
-        const std::vector<int>& rowIndices = A.rowIndices[k];
-        std::map<int,int>& origLowerRelIndices = S.origLowerRelIndices[k];
-
-        // Expand the original sparse matrix into the frontal matrix.
         Matrix<F>& front = L.fronts[k];
-        front.ResizeTo
-        ( supernodeSize+lowerStructSize, supernodeSize+lowerStructSize );
-        front.SetToZero();
-        const int numColumns = colOffsets.size()-1;
-        for( int jFront=0; jFront<numColumns; ++jFront )
-        {
-            const int thisColOffset = colOffsets[jFront];
-            const int thisColSize = colOffsets[jFront+1]-thisColOffset;
-            const int* theseRowIndices = &rowIndices[thisColOffset];
-            const F* theseNonzeros = &nonzeros[k];
-
-            for( int iPacked=0; iPacked<thisColSize; ++iPacked )
-            {
-                const int iGlobal = theseRowIndices[iPacked];
-                const int iFront = 
-                    ( iGlobal < supernodeOffset+supernodeSize ? 
-                      iGlobal : origLowerRelIndices[iGlobal] );
-
-                front.Set( iFront, jFront, theseNonzeros[iPacked] );
-            }
-        }
+#ifndef RELEASE
+        if( front.Height() != supernodeSize+lowerStructSize ||
+            front.Width()  != supernodeSize+lowerStructSize )
+            throw std::logic_error("Front was not the proper size");
+#endif
 
         // Add updates from children (if they exist)
         const int numChildren = S.children[k].size();
@@ -131,25 +108,21 @@ void clique::numeric::LocalLDL
 
 template void clique::numeric::LocalLDL
 ( Orientation orientation,
-        symbolic::LocalFactStruct& S,
-  const numeric::LocalOrigMatrix<float>& A,
-        numeric::LocalFactMatrix<float>& L );
+  symbolic::LocalFactStruct& S,
+  numeric::LocalFactMatrix<float>& L );
 
 template void clique::numeric::LocalLDL
 ( Orientation orientation,
-        symbolic::LocalFactStruct& S,
-  const numeric::LocalOrigMatrix<double>& A,
-        numeric::LocalFactMatrix<double>& L );
+  symbolic::LocalFactStruct& S,
+  numeric::LocalFactMatrix<double>& L );
 
 template void clique::numeric::LocalLDL
 ( Orientation orientation,
-        symbolic::LocalFactStruct& S,
-  const numeric::LocalOrigMatrix<std::complex<float> >& A,
-        numeric::LocalFactMatrix<std::complex<float> >& L );
+  symbolic::LocalFactStruct& S,
+  numeric::LocalFactMatrix<std::complex<float> >& L );
 
 template void clique::numeric::LocalLDL
 ( Orientation orientation,
-        symbolic::LocalFactStruct& S,
-  const numeric::LocalOrigMatrix<std::complex<double> >& A,
-        numeric::LocalFactMatrix<std::complex<double> >& L );
+  symbolic::LocalFactStruct& S,
+  numeric::LocalFactMatrix<std::complex<double> >& L );
 
