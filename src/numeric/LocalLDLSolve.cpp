@@ -125,10 +125,10 @@ void clique::numeric::LocalLDLDiagonalSolve
         const int supernodeOffset = S.offsets[k];
         XSub.View( X, supernodeOffset, 0, supernodeSize, width );
 
-        // Matrix<F> d;
-        // L.fronts[k].GetDiagonal( d );
-        // LocalSupernodeLDLDiagonalSolve
-        // ( supernodeSize, d, XSub, checkIfSingular );
+        Matrix<F> d;
+        L.fronts[k].GetDiagonal( d );
+        LocalSupernodeLDLDiagonalSolve
+        ( supernodeSize, d, XSub, checkIfSingular );
     }
 #ifndef RELEASE
     PopCallStack();

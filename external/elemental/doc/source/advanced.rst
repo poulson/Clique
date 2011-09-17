@@ -22,7 +22,7 @@ Factorizations
 
 Cholesky factorization
 ----------------------
-Describe ``advanced::Chol`` here.
+Describe ``advanced::Cholesky`` here.
 
 :math:`LDL^H` factorization
 ---------------------------
@@ -47,27 +47,33 @@ Describe ``advanced::QR`` here.
 Linear Solvers
 ==============
 
+Cholesky solve
+--------------
+Describe ``advanced::CholeskySolve`` here.
+
 Gaussian Elimination
 --------------------
-Describe ``advanced::GaussElim`` here.
+Describe ``advanced::GaussianElimination`` here.
 
-:math:`QR` Solver
+Householder solve
 -----------------
-Not yet written but trivial.
+Solves a general overdetermined or underdetermined linear systems using 
+a :math:`QR` or :math:`LQ` factorization, respectively. The routine is named
+``advanced::HouseholderSolve``.
 
 Reduction to Condensed Form
 ===========================
 
-Reduction of a Hermitian matrix to tridiagonal form
----------------------------------------------------
+Hermitian to tridiagonal
+------------------------
 Describe ``advanced::HermitianTridiag`` here.
 
-Reduction of a general matrix to Hessenberg form
-------------------------------------------------
+General to Hessenberg
+---------------------
 Not yet written.
 
-Reduction of a general matrix to bidiagonal form
-------------------------------------------------
+General to bidiagonal
+---------------------
 Not yet written.
 
 Eigensolvers and SVD
@@ -75,16 +81,16 @@ Eigensolvers and SVD
 
 Hermitian eigensolver
 ---------------------
-Describe :math:`Ax-\lambda x` and ``advanced::HermitianEig`` here.
+Describe :math:`Ax=\lambda x` and ``advanced::HermitianEig`` here.
 
 Skew-Hermitian eigensolver
 --------------------------
-Describe :math:`Gx-\lambda x` and ``advanced::SkewHermitianEig`` here.
+Describe :math:`Gx=\lambda x` and ``advanced::SkewHermitianEig`` here.
 
 Hermitian generalized-definite eigensolvers
 -------------------------------------------
-Describe :math:`ABx-\lambda x`, :math:`BAx-\lambda x`, and 
-:math:`Ax-\lambda Bx` cases and ``advanced::HermitianGenDefiniteEig``.
+Describe :math:`ABx=\lambda x`, :math:`BAx=\lambda x`, and 
+:math:`Ax=\lambda Bx` cases and ``advanced::HermitianGenDefiniteEig``.
 
 Non-Hermitian eigensolver
 -------------------------
@@ -104,11 +110,11 @@ the identity matrix as a Householder transform since it requires the
 :math:`u` in :math:`H-I^2uu'` to have norm zero rather than one). Describe 
 ``advanced::Reflector`` here.
 
-Reduction of the Generalized Hermitian-Definite EVP
----------------------------------------------------
-Describe the reduction steps of :math:`ABx-\lambda x`, :math:`BAx-\lambda x`, 
-and :math:`Ax-\lambda Bx` using the operations :math:`A :- L^H A L` and 
-:math:`A :- L^{^1} A L^{^H}`.
+Reduction of Hermitian generalized-definite EVPs
+------------------------------------------------
+Describe the reduction steps of :math:`ABx=\lambda x`, :math:`BAx=\lambda x`, 
+and :math:`Ax=\lambda Bx` using the operations :math:`A := L^H A L` and 
+:math:`A := L^{-1} A L^{-H}`.
 
 Applying packed Householder transforms
 --------------------------------------
