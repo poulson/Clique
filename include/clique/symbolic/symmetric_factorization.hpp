@@ -54,6 +54,8 @@ struct DistOrigStruct
 struct DistFactStruct
 {
     std::vector<mpi::Comm> comms;
+    std::vector<int> gridHeights;
+    std::vector<std::vector<int> > sendCounts, recvCounts;
 
     std::vector<int> sizes, offsets;
     std::vector<std::vector<int> > lowerStructs;

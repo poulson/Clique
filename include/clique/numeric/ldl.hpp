@@ -37,13 +37,21 @@ struct DistFactMatrix
     std::vector<elemental::DistMatrix<F,elemental::MC,elemental::MR> > fronts;
 };
 
-// When this is called, all of the fronts in L should by equal to the expansions
-// of the original sparse matrix.
+// All fronts of L are required to be initialized to the expansions of the 
+// original sparse matrix before calling the following factorizations.
+
 template<typename F>
 void LocalLDL
 ( elemental::Orientation orientation, 
   symbolic::LocalFactStruct& S, // can't be const due to map...
   numeric::LocalFactMatrix<F>& L );
+
+template<typename F>
+void DistLDL
+( elemental::Orientation orientation,
+        symbolic::DistFactStruct& S, // can't be const due to map...
+  const numeric::LocalFactMatrix<F>& localL,
+        numeric::DistFactMatrix<F>&  distL );
 
 } // namespace numeric
 } // namespace clique

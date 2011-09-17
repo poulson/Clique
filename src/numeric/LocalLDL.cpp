@@ -36,12 +36,10 @@ void clique::numeric::LocalLDL
     // Perform the local factorization
     for( int k=0; k<numSupernodes; ++k )
     {
-        const int supernodeOffset = S.offsets[k];
-        const int supernodeSize = S.sizes[k];
-        const int lowerStructSize = S.lowerStructs[k].size();
-
         Matrix<F>& front = L.fronts[k];
+        const int supernodeSize = S.sizes[k];
 #ifndef RELEASE
+        const int lowerStructSize = S.lowerStructs[k].size();
         if( front.Height() != supernodeSize+lowerStructSize ||
             front.Width()  != supernodeSize+lowerStructSize )
             throw std::logic_error("Front was not the proper size");

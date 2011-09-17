@@ -39,12 +39,17 @@ void clique::symbolic::DistSymmetricFactorization
     PushCallStack("symbolic::DistSymmetricFactorization");
 #endif
     const unsigned numSupernodes = distOrig.lowerStructs.size();
+    distFact.comms.resize( numSupernodes );
+    distFact.gridHeights.resize( numSupernodes );
+    distFact.sendCounts.resize( numSupernodes );
+    distFact.recvCounts.resize( numSupernodes );
     distFact.sizes = distOrig.sizes;
     distFact.offsets = distOrig.offsets;
     distFact.lowerStructs.resize( numSupernodes );
     distFact.origLowerRelIndices.resize( numSupernodes );
     distFact.leftChildRelIndices.resize( numSupernodes );
     distFact.rightChildRelIndices.resize( numSupernodes );
+
     if( numSupernodes == 0 )
         return;
 
@@ -72,7 +77,7 @@ void clique::symbolic::DistSymmetricFactorization
     distFact.rightChildRelIndices[0] = localFact.rightChildRelIndices.back();
     mpi::CommSplit( distOrig.comm, commRank, 0, distFact.comms[0] );
 
-    // Perform the parallel symbolic factorization
+    // Perform the distributed part of the symbolic factorization
     std::vector<int>::iterator it;
     std::vector<int> sendBuffer, recvBuffer;
     std::vector<int> childrenStruct, partialStruct, fullStruct,
@@ -90,8 +95,15 @@ void clique::symbolic::DistSymmetricFactorization
         const bool onLeft = ( (commRank & (1u << (k-1))) == 0 ); 
 
         // Create this level's communicator
-        const int myTeam = (commRank & !((1u << (k-1))-1));
-        mpi::CommSplit( distOrig.comm, myTeam, 0, distFact.comms[k] );
+        const int teamColor = (commRank & !((1u << (k-1))-1));
+        mpi::CommSplit( distOrig.comm, teamColor, 0, distFact.comms[k] );
+        const unsigned teamSize = mpi::CommSize( distFact.comms[k] );
+        unsigned gridHeight = 
+            static_cast<unsigned>(sqrt(static_cast<double>(teamSize)));
+        while( teamSize % gridHeight != 0 )
+            ++gridHeight;
+        distFact.gridHeights[k] = gridHeight;
+        const unsigned gridWidth = teamSize / gridHeight;
 
         // SendRecv the message lengths
         const int myChildLowerStructSize = myChildLowerStruct.size();
@@ -180,6 +192,14 @@ void clique::symbolic::DistSymmetricFactorization
             it = std::lower_bound( it, fullStruct.end(), index );
             distFact.rightChildRelIndices[k][i] = *it;
         }
+
+        // Construct our send counts to the other processes
+        std::vector<int>& sendCounts = distFact.sendCounts[k];
+        sendCounts.resize( k );
+        std::memset( &sendCounts[0], 0, teamSize*sizeof(int) );
+        // HERE
+        // TODO: Loop over our local matrix, incrementing the send counts,
+        //       using the gridHeight and gridWidth variables
 
         // Form lower structure of this node by removing the supernode indices
         lowerStruct.resize( fullStruct.size() );
