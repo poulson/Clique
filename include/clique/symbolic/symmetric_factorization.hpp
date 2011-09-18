@@ -81,8 +81,9 @@ struct DistSymmFactSupernode
     std::vector<int> numChildSendIndices;
 
     // This information does not necessarily have to be kept and can be
-    // computed from the above information
-    std::vector<std::deque<int> > leftChildRecvIndices, rightChildRecvIndices;
+    // computed from the above information.
+    mutable std::vector<std::deque<int> > 
+        leftChildRecvIndices, rightChildRecvIndices;
 };
 
 struct DistSymmFact
@@ -106,6 +107,8 @@ void DistSymmetricFactorization
   const LocalSymmFact& localFact, 
         DistSymmFact&  distFact, 
         bool storeRecvIndices=true );
+
+void ComputeRecvIndices( const DistSymmFactSupernode& supernode );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //

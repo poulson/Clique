@@ -203,11 +203,6 @@ void clique::symbolic::DistSymmetricFactorization
             factSN.rightChildRelIndices[i] = *it;
         }
 
-        // Construct the send and recv information
-        // HERE
-        // TODO: Loop over our local matrix, incrementing the send counts,
-        //       using the gridHeight and gridWidth variables
-
         // Form lower structure of this node by removing the supernode indices
         factSN.lowerStruct.resize( fullStructSize );
         it = std::set_difference
@@ -215,7 +210,29 @@ void clique::symbolic::DistSymmetricFactorization
           supernodeIndices.begin(), supernodeIndices.end(),
           factSN.lowerStruct.begin() );
         factSN.lowerStruct.resize( int(it-factSN.lowerStruct.begin()) );
+
+        // TODO: Fill {left,right}Child{Col,Row}Indices and numChildSendIndices
+
+        if( storeRecvIndices )
+            ComputeRecvIndices( factSN );
+        else
+        {
+            factSN.leftChildRecvIndices.clear();
+            factSN.rightChildRecvIndices.clear();
+        }
     }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+void clique::symbolic::ComputeRecvIndices
+( const DistSymmFactSupernode& supernode )
+{
+#ifndef RELEASE
+    PushCallStack("symbolic::ComputeRecvIndices");
+#endif
+    // TODO: Compute {left,right}ChildRecvIndices
 #ifndef RELEASE
     PopCallStack();
 #endif
