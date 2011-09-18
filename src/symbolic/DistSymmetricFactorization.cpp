@@ -113,6 +113,14 @@ void clique::symbolic::DistSymmetricFactorization
         const unsigned gridRow = teamRank % gridHeight;
         const unsigned gridCol = teamRank / gridHeight;
 
+        // Retrieve the child grid information
+        const unsigned childTeamRank = mpi::CommRank( factChildSN.comm );
+        const unsigned childTeamSize = mpi::CommSize( factChildSN.comm );
+        const unsigned childGridHeight = factChildSN.gridHeight;
+        const unsigned childGridWidth = childTeamSize / childGridHeight;
+        const unsigned childGridRow = childTeamRank % childGridHeight;
+        const unsigned childGridCol = childTeamRank / childGridHeight;
+
         // SendRecv the message lengths
         const int myChildLowerStructSize = factChildSN.lowerStruct.size();
         int theirChildLowerStructSize;
@@ -218,14 +226,19 @@ void clique::symbolic::DistSymmetricFactorization
         const std::vector<int>& myChildRelIndices = 
             ( onLeft ? factSN.leftChildRelIndices 
                      : factSN.rightChildRelIndices );
-        for( int j=gridCol; j<myChildLowerStructSize; j+=gridWidth )
+        // HERE: Must rethink the fact that the child's update matrix does not
+        //       have trivial alignments. Must compute shifts.
+        for( int jChild=childGridCol; 
+                 jChild<myChildLowerStructSize; jChild+=childGridWidth )
         {
-            const int destGridCol = myChildRelIndices[j] % gridWidth;
-            const int align = j % gridHeight;
-            const int shift = (gridRow+gridHeight-align) % gridHeight;
-            for( int i=j+shift; i<myChildLowerStructSize; i+=gridHeight )
+            const int destGridCol = myChildRelIndices[jChild] % gridWidth;
+            const int align = jChild % childGridHeight;
+            const int shift = 
+                (childGridRow+childGridHeight-align) % childGridHeight;
+            for( int iChild=jChild+shift; 
+                     iChild<myChildLowerStructSize; iChild+=childGridHeight )
             {
-                const int destGridRow = myChildRelIndices[i] % gridHeight;
+                const int destGridRow = myChildRelIndices[iChild] % gridHeight;
                 const int destRank = destGridRow + destGridCol*gridHeight;
                 ++factSN.numChildSendIndices[destRank];
             }
@@ -291,6 +304,9 @@ void clique::symbolic::ComputeRecvIndices
     sn.childRecvIndices.clear();
     sn.childRecvIndices.resize( commSize );
     std::deque<int>::const_iterator it;
+
+    // HERE: Must rethink the fact that the child update matrices do not have
+    //       trivial alignments.
 
     // Compute the recv indices of the left child from each process 
     for( int jPre=0; jPre<sn.leftChildRowIndices.size(); ++jPre )
