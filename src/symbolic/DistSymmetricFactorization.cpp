@@ -75,6 +75,8 @@ void clique::symbolic::DistSymmetricFactorization
     bottomDistSN.origLowerRelIndices = topLocalSN.origLowerRelIndices;
     bottomDistSN.leftChildRelIndices = topLocalSN.leftChildRelIndices;
     bottomDistSN.rightChildRelIndices = topLocalSN.rightChildRelIndices;
+    bottomDistSN.leftChildSize = -1; // not needed, could compute though
+    bottomDistSN.rightChildSize = -1; // not needed, could compute though
     bottomDistSN.leftChildColIndices.clear();
     bottomDistSN.leftChildRowIndices.clear();
     bottomDistSN.rightChildColIndices.clear();
@@ -122,11 +124,15 @@ void clique::symbolic::DistSymmetricFactorization
         const unsigned childGridCol = childTeamRank / childGridHeight;
 
         // SendRecv the message lengths
+        const int myChildSize = factChildSN.size;
         const int myChildLowerStructSize = factChildSN.lowerStruct.size();
-        int theirChildLowerStructSize;
+        const int initialSends[2] = { myChildSize, myChildLowerStructSize };
+        int initialRecvs[2];
         mpi::SendRecv
-        ( &myChildLowerStructSize, 1, partner, 0,
-          &theirChildLowerStructSize, 1, partner, 0, distOrig.comm );
+        ( initialSends, 2, partner, 0,
+          initialRecvs, 2, partner, 0, distOrig.comm );
+        const int theirChildSize = initialRecvs[0];
+        const int theirChildLowerStructSize = initialRecvs[1];
         // Perform the exchange
         sendBuffer.resize( myChildLowerStructSize );
         recvBuffer.resize( theirChildLowerStructSize );
@@ -183,6 +189,8 @@ void clique::symbolic::DistSymmetricFactorization
         const int *leftIndices, *rightIndices;
         if( onLeft )
         {
+            factSN.leftChildSize = myChildSize;
+            factSN.rightChildSize = theirChildSize;
             leftIndices = &sendBuffer[0];
             rightIndices = &recvBuffer[0];
             numLeftIndices = sendBuffer.size();
@@ -190,6 +198,8 @@ void clique::symbolic::DistSymmetricFactorization
         }
         else
         {
+            factSN.leftChildSize = theirChildSize;
+            factSN.rightChildSize = myChildSize;
             leftIndices = &recvBuffer[0];
             rightIndices = &sendBuffer[0];
             numLeftIndices = recvBuffer.size();
@@ -226,19 +236,37 @@ void clique::symbolic::DistSymmetricFactorization
         const std::vector<int>& myChildRelIndices = 
             ( onLeft ? factSN.leftChildRelIndices 
                      : factSN.rightChildRelIndices );
-        // HERE: Must rethink the fact that the child's update matrix does not
-        //       have trivial alignments. Must compute shifts.
-        for( int jChild=childGridCol; 
-                 jChild<myChildLowerStructSize; jChild+=childGridWidth )
+        const int updateSize = factSN.lowerStruct.size();
+        const int updateColAlignment = origSN.size % childGridHeight;
+        const int updateRowAlignment = origSN.size % childGridWidth;
+        const int updateColShift = 
+            elemental::Shift
+            ( childGridRow, updateColAlignment, childGridHeight );
+        const int updateRowShift = 
+            elemental::Shift
+            ( childGridCol, updateRowAlignment, childGridWidth );
+        const int updateLocalHeight = 
+            elemental::LocalLength
+            ( updateSize, updateColShift, childGridHeight );
+        const int updateLocalWidth = 
+            elemental::LocalLength
+            ( updateSize, updateRowShift, childGridWidth );
+        for( int jChildLocal=0; jChildLocal<updateLocalWidth; ++jChildLocal )
         {
+            const int jChild = updateRowShift + jChildLocal*childGridWidth;
             const int destGridCol = myChildRelIndices[jChild] % gridWidth;
-            const int align = jChild % childGridHeight;
+
+            const int align = (jChild+updateRowAlignment) % childGridHeight;
             const int shift = 
                 (childGridRow+childGridHeight-align) % childGridHeight;
-            for( int iChild=jChild+shift; 
-                     iChild<myChildLowerStructSize; iChild+=childGridHeight )
+            const int localColShift = 
+                (jChild+shift-updateColShift) / childGridHeight;
+            for( int iChildLocal=localColShift; 
+                     iChildLocal<updateLocalHeight; ++iChildLocal )
             {
+                const int iChild = updateColShift + iChildLocal*childGridHeight;
                 const int destGridRow = myChildRelIndices[iChild] % gridHeight;
+
                 const int destRank = destGridRow + destGridCol*gridHeight;
                 ++factSN.numChildSendIndices[destRank];
             }
@@ -272,8 +300,7 @@ void clique::symbolic::DistSymmetricFactorization
 #endif
 }
 
-void clique::symbolic::ComputeRecvIndices
-( const DistSymmFactSupernode& sn )
+void clique::symbolic::ComputeRecvIndices( const DistSymmFactSupernode& sn )
 {
 #ifndef RELEASE
     PushCallStack("symbolic::ComputeRecvIndices");
@@ -305,17 +332,17 @@ void clique::symbolic::ComputeRecvIndices
     sn.childRecvIndices.resize( commSize );
     std::deque<int>::const_iterator it;
 
-    // HERE: Must rethink the fact that the child update matrices do not have
-    //       trivial alignments.
-
     // Compute the recv indices of the left child from each process 
+    const int leftUpdateColAlignment = sn.leftChildSize % leftChildGridHeight;
+    const int leftUpdateRowAlignment = sn.leftChildSize % leftChildGridWidth;
     for( int jPre=0; jPre<sn.leftChildRowIndices.size(); ++jPre )
     {
         const int jChild = sn.leftChildRowIndices[jPre];
         const int jFront = sn.leftChildRelIndices[jChild];
         const int jFrontLocal = (jFront-gridCol) / gridWidth;
 
-        const int childCol = jChild % leftChildGridWidth;
+        const int childCol = 
+            (jChild+leftUpdateRowAlignment) % leftChildGridWidth;
 
         // Find the first iPre that maps to the lower triangle
         it = std::lower_bound
@@ -328,7 +355,8 @@ void clique::symbolic::ComputeRecvIndices
             const int iFront = sn.leftChildRelIndices[iChild];
             const int iFrontLocal = (iFront-gridRow) / gridHeight;
 
-            const int childRow = iChild % leftChildGridHeight;
+            const int childRow = 
+                (iChild+leftUpdateColAlignment) % leftChildGridHeight;
             const int childRank = childRow + childCol*leftChildGridHeight;
 
             const int frontRank = childRank;
@@ -338,13 +366,17 @@ void clique::symbolic::ComputeRecvIndices
     }
     
     // Compute the recv indices of the right child from each process 
+    const int rightUpdateColAlignment = 
+        sn.rightChildSize % rightChildGridHeight;
+    const int rightUpdateRowAlignment = sn.rightChildSize % rightChildGridWidth;
     for( int jPre=0; jPre<sn.rightChildRowIndices.size(); ++jPre )
     {
         const int jChild = sn.rightChildRowIndices[jPre];
         const int jFront = sn.rightChildRelIndices[jChild];
         const int jFrontLocal = (jFront-gridCol) / gridWidth;
 
-        const int childCol = jChild % rightChildGridWidth;
+        const int childCol = 
+            (jChild+rightUpdateRowAlignment) % rightChildGridWidth;
 
         // Find the first iPre that maps to the lower triangle
         it = std::lower_bound
@@ -357,7 +389,8 @@ void clique::symbolic::ComputeRecvIndices
             const int iFront = sn.rightChildRelIndices[iChild];
             const int iFrontLocal = (iFront-gridRow) / gridHeight;
 
-            const int childRow = iChild % rightChildGridHeight;
+            const int childRow = 
+                (iChild+rightUpdateColAlignment) % rightChildGridHeight;
             const int childRank = childRow + childCol*rightChildGridHeight;
 
             const int frontRank = rightChildOffset + childRank;

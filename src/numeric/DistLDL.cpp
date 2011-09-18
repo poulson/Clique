@@ -74,33 +74,45 @@ void clique::numeric::DistLDL
 #endif
 
         // Pack our child's updates
+        DistMatrix<F,MC,MR> childUpdate(childGrid);
+        const int updateSize = childFront.Height()-childSymbSN.size;
+        childUpdate.LockedView
+        ( childFront, 
+          childSymbSN.size, childSymbSN.size, updateSize, updateSize );
         const bool isLeftChild = ( commRank < commSize/2 );
         it = std::max_element
              ( symbSN.numChildSendIndices.begin(), 
                symbSN.numChildSendIndices.end() );
         const int sendPortionSize = std::max(*it,mpi::MIN_COLL_MSG);
-        std::vector<int> sendBuffer( sendPortionSize*commSize );
+        std::vector<F> sendBuffer( sendPortionSize*commSize );
         std::vector<int> sendOffsets( commSize, 0 );
         const std::vector<int>& myChildRelIndices = 
             ( isLeftChild ? symbSN.leftChildRelIndices
                           : symbSN.rightChildRelIndices );
-        // HERE: Must rethink the fact that the child's update matrix does not
-        //       have trivial alignments. Must compute shifts.
-        for( int jChild=childGridCol; 
-                 jChild<childSymbSN.lowerStruct.size(); jChild+=childGridWidth )
+        const int updateRowAlignment = childUpdate.RowAlignment();
+        const int updateColShift = childUpdate.ColShift();
+        const int updateRowShift = childUpdate.RowShift();
+        const int updateLocalHeight = childUpdate.LocalHeight();
+        const int updateLocalWidth = childUpdate.LocalWidth();
+        for( int jChildLocal=0; jChildLocal<updateLocalWidth; ++jChildLocal )
         {
+            const int jChild = updateRowShift + jChildLocal*childGridWidth;
             const int destGridCol = myChildRelIndices[jChild] % gridWidth;
-            const int align = jChild % childGridHeight;
+
+            const int align = (jChild+updateRowAlignment) % childGridHeight;
             const int shift = 
                 (childGridRow+childGridHeight-align) % childGridHeight;
-            for( int iChild=jChild+shift; 
-                     iChild<childSymbSN.lowerStruct.size(); 
-                     iChild+=childGridHeight )
+            const int localColShift = 
+                (jChild+shift-updateColShift) / childGridHeight;
+            for( int iChildLocal=localColShift; 
+                     iChildLocal<updateLocalHeight; ++iChildLocal )
             {
+                const int iChild = updateColShift + iChildLocal*childGridHeight;
                 const int destGridRow = myChildRelIndices[iChild] % gridHeight;
+
                 const int destRank = destGridRow + destGridCol*gridHeight;
-                //sendBuffer[sendOffsets[destRank]++] = 
-                //    childFront.GetLocalEntry(iChildLocal,jChildLocal);
+                sendBuffer[sendOffsets[destRank]++] = 
+                    childUpdate.GetLocalEntry(iChildLocal,jChildLocal);
             }
         }
 
@@ -113,7 +125,7 @@ void clique::numeric::DistLDL
             const int thisPortion = symbSN.childRecvIndices[i].size();
             recvPortionSize = std::max(thisPortion,recvPortionSize);
         }
-        std::vector<int> recvBuffer( recvPortionSize*commSize );
+        std::vector<F> recvBuffer( recvPortionSize*commSize );
         // TODO
 
         // Unpack the child udpates (with an Axpy)

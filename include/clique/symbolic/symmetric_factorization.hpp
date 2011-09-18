@@ -76,6 +76,7 @@ struct DistSymmFactSupernode
     std::map<int,int> origLowerRelIndices;
     std::vector<int> leftChildRelIndices, rightChildRelIndices;
 
+    int leftChildSize, rightChildSize;
     std::deque<int> leftChildColIndices, leftChildRowIndices,
                     rightChildColIndices, rightChildRowIndices;
     std::vector<int> numChildSendIndices;
