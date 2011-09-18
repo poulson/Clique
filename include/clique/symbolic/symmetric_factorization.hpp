@@ -74,16 +74,15 @@ struct DistSymmFactSupernode
     int size, offset;
     std::vector<int> lowerStruct;
     std::map<int,int> origLowerRelIndices;
-
     std::vector<int> leftChildRelIndices, rightChildRelIndices;
-    std::vector<int> leftChildColIndices, leftChildRowIndices,
-                     rightChildColIndices, rightChildRowIndices;
+
+    std::deque<int> leftChildColIndices, leftChildRowIndices,
+                    rightChildColIndices, rightChildRowIndices;
     std::vector<int> numChildSendIndices;
 
     // This information does not necessarily have to be kept and can be
-    // computed from the above information.
-    mutable std::vector<std::deque<int> > 
-        leftChildRecvIndices, rightChildRecvIndices;
+    // computed from the above information (albeit somewhat expensively).
+    mutable std::vector<std::deque<int> > childRecvIndices;
 };
 
 struct DistSymmFact

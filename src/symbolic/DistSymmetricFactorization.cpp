@@ -80,8 +80,7 @@ void clique::symbolic::DistSymmetricFactorization
     bottomDistSN.rightChildColIndices.clear();
     bottomDistSN.rightChildRowIndices.clear();
     bottomDistSN.numChildSendIndices.clear();
-    bottomDistSN.leftChildRecvIndices.clear();
-    bottomDistSN.rightChildRecvIndices.clear();
+    bottomDistSN.childRecvIndices.clear();
 
     // Perform the distributed part of the symbolic factorization
     std::vector<int>::iterator it;
@@ -111,6 +110,8 @@ void clique::symbolic::DistSymmetricFactorization
             ++gridHeight;
         factSN.gridHeight = gridHeight;
         const unsigned gridWidth = teamSize / gridHeight;
+        const unsigned gridRow = teamRank % gridHeight;
+        const unsigned gridCol = teamRank / gridHeight;
 
         // SendRecv the message lengths
         const int myChildLowerStructSize = factChildSN.lowerStruct.size();
@@ -211,15 +212,47 @@ void clique::symbolic::DistSymmetricFactorization
           factSN.lowerStruct.begin() );
         factSN.lowerStruct.resize( int(it-factSN.lowerStruct.begin()) );
 
-        // TODO: Fill {left,right}Child{Col,Row}Indices and numChildSendIndices
+        // Fill numChildSendIndices so that we can reuse it for many sends
+        factSN.numChildSendIndices.resize( teamSize );
+        std::memset( &factSN.numChildSendIndices[0], 0, teamSize*sizeof(int) );
+        const std::vector<int>& myChildRelIndices = 
+            ( onLeft ? factSN.leftChildRelIndices 
+                     : factSN.rightChildRelIndices );
+        for( int j=gridCol; j<myChildLowerStructSize; j+=gridWidth )
+        {
+            const int destGridCol = myChildRelIndices[j] % gridWidth;
+            const int align = j % gridHeight;
+            const int shift = (gridRow+gridHeight-align) % gridHeight;
+            for( int i=j+shift; i<myChildLowerStructSize; i+=gridHeight )
+            {
+                const int destGridRow = myChildRelIndices[i] % gridHeight;
+                const int destRank = destGridRow + destGridCol*gridHeight;
+                ++factSN.numChildSendIndices[destRank];
+            }
+        }
+
+        // Fill {left,right}Child{Col,Row}Indices so that we can reuse them
+        // to compute our recv information
+        factSN.leftChildColIndices.clear();
+        for( int i=0; i<numLeftIndices; ++i )
+            if( factSN.leftChildRelIndices[i] % gridHeight == gridRow )
+                factSN.leftChildColIndices.push_back( i );
+        factSN.leftChildRowIndices.clear();
+        for( int i=0; i<numLeftIndices; ++i )
+            if( factSN.leftChildRelIndices[i] % gridWidth == gridCol )
+                factSN.leftChildRowIndices.push_back( i );
+        factSN.rightChildColIndices.clear();
+        for( int i=0; i<numRightIndices; ++i )
+            if( factSN.rightChildRelIndices[i] % gridHeight == gridRow )
+                factSN.rightChildColIndices.push_back( i );
+        for( int i=0; i<numRightIndices; ++i )
+            if( factSN.rightChildRelIndices[i] % gridWidth == gridCol )
+                factSN.rightChildRowIndices.push_back( i );
 
         if( storeRecvIndices )
             ComputeRecvIndices( factSN );
         else
-        {
-            factSN.leftChildRecvIndices.clear();
-            factSN.rightChildRecvIndices.clear();
-        }
+            factSN.childRecvIndices.clear();
     }
 #ifndef RELEASE
     PopCallStack();
@@ -227,12 +260,95 @@ void clique::symbolic::DistSymmetricFactorization
 }
 
 void clique::symbolic::ComputeRecvIndices
-( const DistSymmFactSupernode& supernode )
+( const DistSymmFactSupernode& sn )
 {
 #ifndef RELEASE
     PushCallStack("symbolic::ComputeRecvIndices");
 #endif
-    // TODO: Compute {left,right}ChildRecvIndices
+    const int commRank = mpi::CommRank( sn.comm );
+    const int commSize = mpi::CommSize( sn.comm );
+    const int gridHeight = sn.gridHeight;
+    const int gridWidth = commSize / gridHeight;
+    const int gridRow = commRank % gridHeight;
+    const int gridCol = commRank / gridHeight;
+
+    // Compute the child grid dimensions (this could be stored in the supernode
+    // if we generalize from powers of two).
+    const int rightChildOffset = commSize / 2;
+    int leftChildGridHeight, leftChildGridWidth,
+        rightChildGridHeight, rightChildGridWidth;
+    if( gridHeight >= gridWidth )
+    {
+        leftChildGridHeight = rightChildGridHeight = gridHeight / 2;
+        leftChildGridWidth = rightChildGridWidth = gridWidth;
+    }
+    else
+    {
+        leftChildGridHeight = rightChildGridHeight = gridHeight;
+        leftChildGridWidth = rightChildGridWidth = gridWidth / 2;
+    }
+
+    sn.childRecvIndices.clear();
+    sn.childRecvIndices.resize( commSize );
+    std::deque<int>::const_iterator it;
+
+    // Compute the recv indices of the left child from each process 
+    for( int jPre=0; jPre<sn.leftChildRowIndices.size(); ++jPre )
+    {
+        const int jChild = sn.leftChildRowIndices[jPre];
+        const int jFront = sn.leftChildRelIndices[jChild];
+        const int jFrontLocal = (jFront-gridCol) / gridWidth;
+
+        const int childCol = jChild % leftChildGridWidth;
+
+        // Find the first iPre that maps to the lower triangle
+        it = std::lower_bound
+             ( sn.leftChildColIndices.begin(),
+               sn.leftChildColIndices.end(), jChild );
+        const int iPreStart = int(it-sn.leftChildColIndices.begin());
+        for( int iPre=iPreStart; iPre<sn.leftChildColIndices.size(); ++iPre )
+        {
+            const int iChild = sn.leftChildColIndices[iPre];
+            const int iFront = sn.leftChildRelIndices[iChild];
+            const int iFrontLocal = (iFront-gridRow) / gridHeight;
+
+            const int childRow = iChild % leftChildGridHeight;
+            const int childRank = childRow + childCol*leftChildGridHeight;
+
+            const int frontRank = childRank;
+            sn.childRecvIndices[frontRank].push_back(iFrontLocal);
+            sn.childRecvIndices[frontRank].push_back(jFrontLocal);
+        }
+    }
+    
+    // Compute the recv indices of the right child from each process 
+    for( int jPre=0; jPre<sn.rightChildRowIndices.size(); ++jPre )
+    {
+        const int jChild = sn.rightChildRowIndices[jPre];
+        const int jFront = sn.rightChildRelIndices[jChild];
+        const int jFrontLocal = (jFront-gridCol) / gridWidth;
+
+        const int childCol = jChild % rightChildGridWidth;
+
+        // Find the first iPre that maps to the lower triangle
+        it = std::lower_bound
+             ( sn.rightChildColIndices.begin(),
+               sn.rightChildColIndices.end(), jChild );
+        const int iPreStart = int(it-sn.rightChildColIndices.begin());
+        for( int iPre=iPreStart; iPre<sn.rightChildColIndices.size(); ++iPre )
+        {
+            const int iChild = sn.rightChildColIndices[iPre];
+            const int iFront = sn.rightChildRelIndices[iChild];
+            const int iFrontLocal = (iFront-gridRow) / gridHeight;
+
+            const int childRow = iChild % rightChildGridHeight;
+            const int childRank = childRow + childCol*rightChildGridHeight;
+
+            const int frontRank = rightChildOffset + childRank;
+            sn.childRecvIndices[frontRank].push_back(iFrontLocal);
+            sn.childRecvIndices[frontRank].push_back(jFrontLocal);
+        }
+    }
 #ifndef RELEASE
     PopCallStack();
 #endif
