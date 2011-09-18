@@ -23,44 +23,38 @@ using namespace elemental;
 template<typename F> // F represents a real or complex field
 void clique::numeric::LocalLDL
 ( Orientation orientation,
-  symbolic::LocalFactStruct& S, // can't be const due to map...
-  numeric::LocalFactMatrix<F>& L )
+  symbolic::LocalSymmFact& S, // can't be const due to map...
+  numeric::LocalSymmFact<F>& L )
 {
 #ifndef RELEASE
     PushCallStack("numeric::LocalLDL");
     if( orientation == NORMAL )
         throw std::logic_error("LDL must be (conjugate-)transposed");
 #endif
-    const int numSupernodes = S.lowerStructs.size();
-
-    // Perform the local factorization
+    const int numSupernodes = S.supernodes.size();
     for( int k=0; k<numSupernodes; ++k )
     {
+        symbolic::LocalSymmFactSupernode& symbSN = S.supernodes[k];
         Matrix<F>& front = L.fronts[k];
-        const int supernodeSize = S.sizes[k];
 #ifndef RELEASE
-        const int lowerStructSize = S.lowerStructs[k].size();
-        if( front.Height() != supernodeSize+lowerStructSize ||
-            front.Width()  != supernodeSize+lowerStructSize )
+        if( front.Height() != symbSN.size+symbSN.lowerStruct.size() ||
+            front.Width()  != symbSN.size+symbSN.lowerStruct.size() )
             throw std::logic_error("Front was not the proper size");
 #endif
 
         // Add updates from children (if they exist)
-        const int numChildren = S.children[k].size();
+        const int numChildren = symbSN.children.size();
         if( numChildren == 2 )
         {
-            const int leftIndex = S.children[k][0];
-            const int rightIndex = S.children[k][1];
+            const int leftIndex = symbSN.children[0];
+            const int rightIndex = symbSN.children[1];
             const Matrix<F>& leftFront = L.fronts[leftIndex];
             const Matrix<F>& rightFront = L.fronts[rightIndex];
-            const int leftSupernodeSize = S.sizes[leftIndex];
-            const int rightSupernodeSize = S.sizes[rightIndex];
+            const int leftSupernodeSize = S.supernodes[leftIndex].size;
+            const int rightSupernodeSize = S.supernodes[rightIndex].size;
             const int leftUpdateSize = leftFront.Height()-leftSupernodeSize;
             const int rightUpdateSize = rightFront.Height()-rightSupernodeSize;
             
-            const std::vector<int>& leftRelIndices = S.leftChildRelIndices[k];
-            const std::vector<int>& rightRelIndices = S.rightChildRelIndices[k];
-
             Matrix<F> leftUpdate;
             leftUpdate.LockedView
             ( leftFront, leftSupernodeSize, leftSupernodeSize,
@@ -74,10 +68,10 @@ void clique::numeric::LocalLDL
             // Add the left child's update matrix
             for( int jChild=0; jChild<leftUpdateSize; ++jChild )
             {
-                const int jFront = leftRelIndices[jChild];
+                const int jFront = symbSN.leftChildRelIndices[jChild];
                 for( int iChild=0; iChild<leftUpdateSize; ++iChild )
                 {
-                    const int iFront = leftRelIndices[iChild];
+                    const int iFront = symbSN.leftChildRelIndices[iChild];
                     const F value = leftUpdate.Get(iChild,jChild);
                     front.Update( iFront, jFront, -value );
                 }
@@ -86,10 +80,10 @@ void clique::numeric::LocalLDL
             // Add the right child's update matrix
             for( int jChild=0; jChild<rightUpdateSize; ++jChild )
             {
-                const int jFront = rightRelIndices[jChild];
+                const int jFront = symbSN.rightChildRelIndices[jChild];
                 for( int iChild=0; iChild<rightUpdateSize; ++iChild )
                 {
-                    const int iFront = rightRelIndices[iChild];
+                    const int iFront = symbSN.rightChildRelIndices[iChild];
                     const F value = rightUpdate.Get(iChild,jChild);
                     front.Update( iFront, jFront, -value );
                 }
@@ -97,7 +91,7 @@ void clique::numeric::LocalLDL
         }
 
         // Call the custom partial LDL
-        LocalSupernodeLDL( orientation, front, supernodeSize );
+        LocalSupernodeLDL( orientation, front, symbSN.size );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -106,21 +100,21 @@ void clique::numeric::LocalLDL
 
 template void clique::numeric::LocalLDL
 ( Orientation orientation,
-  symbolic::LocalFactStruct& S,
-  numeric::LocalFactMatrix<float>& L );
+  symbolic::LocalSymmFact& S,
+  numeric::LocalSymmFact<float>& L );
 
 template void clique::numeric::LocalLDL
 ( Orientation orientation,
-  symbolic::LocalFactStruct& S,
-  numeric::LocalFactMatrix<double>& L );
+  symbolic::LocalSymmFact& S,
+  numeric::LocalSymmFact<double>& L );
 
 template void clique::numeric::LocalLDL
 ( Orientation orientation,
-  symbolic::LocalFactStruct& S,
-  numeric::LocalFactMatrix<std::complex<float> >& L );
+  symbolic::LocalSymmFact& S,
+  numeric::LocalSymmFact<std::complex<float> >& L );
 
 template void clique::numeric::LocalLDL
 ( Orientation orientation,
-  symbolic::LocalFactStruct& S,
-  numeric::LocalFactMatrix<std::complex<double> >& L );
+  symbolic::LocalSymmFact& S,
+  numeric::LocalSymmFact<std::complex<double> >& L );
 

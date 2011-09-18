@@ -22,32 +22,30 @@ using namespace elemental;
 
 template<typename F> // F represents a real or complex field
 void clique::numeric::LocalLDLForwardSolve
-( const symbolic::LocalFactStruct& S,
-  const numeric::LocalFactMatrix<F>& L,
+( const symbolic::LocalSymmFact& S,
+  const numeric::LocalSymmFact<F>& L,
   F alpha, Matrix<F>& X )
 {
 #ifndef RELEASE
     PushCallStack("numeric::LocalLDLForwardSolve");
 #endif
-    const int numSupernodes = S.lowerStructs.size();
+    const int numSupernodes = S.supernodes.size();
     const int width = X.Width();
-
     L.solutions.resize( numSupernodes );
     for( int k=0; k<numSupernodes; ++k )
     {
-        const int numChildren = S.children[k].size();
-        const int supernodeSize = S.sizes[k];
-        const int supernodeOffset = S.offsets[k];
+        const symbolic::LocalSymmFactSupernode& symbSN = S.supernodes[k];
+        const int numChildren = symbSN.children.size();
         const Matrix<F>& front = L.fronts[k];
         Matrix<F>& Y = L.solutions[k];
 
         Matrix<F> XT;
-        XT.LockedView( X, supernodeOffset, 0, supernodeSize, X.Width() );
+        XT.LockedView( X, symbSN.offset, 0, symbSN.size, X.Width() );
         
         Y.ResizeTo( front.Height(), width );
         Matrix<F> YT, YB;
-        YT.View( Y, 0, 0, supernodeSize, width );
-        YB.View( Y, supernodeSize, 0, Y.Height()-supernodeSize, width );
+        YT.View( Y, 0, 0, symbSN.size, width );
+        YB.View( Y, symbSN.size, 0, Y.Height()-symbSN.size, width );
 
         // Pull in the relevant information from the RHS
         YT = XT;
@@ -56,17 +54,14 @@ void clique::numeric::LocalLDLForwardSolve
         // Update using the children (if they exist)
         if( numChildren == 2 )
         {
-            const int leftIndex = S.children[k][0];
-            const int rightIndex = S.children[k][1];
+            const int leftIndex = symbSN.children[0];
+            const int rightIndex = symbSN.children[1];
             Matrix<F>& leftSol = L.solutions[leftIndex];
             Matrix<F>& rightSol = L.solutions[rightIndex];
-            const int leftSupernodeSize = S.sizes[leftIndex];
-            const int rightSupernodeSize = S.sizes[rightIndex];
+            const int leftSupernodeSize = S.supernodes[leftIndex].size;
+            const int rightSupernodeSize = S.supernodes[rightIndex].size;
             const int leftUpdateSize = leftSol.Height()-leftSupernodeSize;
             const int rightUpdateSize = rightSol.Height()-rightSupernodeSize;
-
-            const std::vector<int>& leftRelIndices = S.leftChildRelIndices[k];
-            const std::vector<int>& rightRelIndices = S.rightChildRelIndices[k];
 
             // Add the left child's portion of the solution onto ours
             Matrix<F> leftUpdate;
@@ -74,7 +69,7 @@ void clique::numeric::LocalLDLForwardSolve
             ( leftSol, leftSupernodeSize, 0, leftUpdateSize, width );
             for( int iChild=0; iChild<leftUpdateSize; ++iChild )
             {
-                const int iFront = leftRelIndices[iChild]; 
+                const int iFront = symbSN.leftChildRelIndices[iChild]; 
                 for( int j=0; j<width; ++j )
                     Y.Update( iFront, j, -leftUpdate.Get(iFront,j) );
             }
@@ -86,7 +81,7 @@ void clique::numeric::LocalLDLForwardSolve
             ( rightSol, rightSupernodeSize, 0, rightUpdateSize, width );
             for( int iChild=0; iChild<rightUpdateSize; ++iChild )
             {
-                const int iFront = rightRelIndices[iChild];
+                const int iFront = symbSN.rightChildRelIndices[iChild];
                 for( int j=0; j<width; ++j )
                     Y.Update( iFront, j, -rightUpdate.Get(iFront,j) );
             }
@@ -95,7 +90,7 @@ void clique::numeric::LocalLDLForwardSolve
         // else numChildren == 0
 
         // Call the custom supernode forward solve
-        LocalSupernodeLDLForwardSolve( supernodeSize, alpha, front, Y );
+        LocalSupernodeLDLForwardSolve( symbSN.size, alpha, front, Y );
 
         // Store the supernode portion of the result
         XT = YT;
@@ -108,27 +103,24 @@ void clique::numeric::LocalLDLForwardSolve
 
 template<typename F> // F represents a real or complex field
 void clique::numeric::LocalLDLDiagonalSolve
-( const symbolic::LocalFactStruct& S,
-  const numeric::LocalFactMatrix<F>& L,
+( const symbolic::LocalSymmFact& S,
+  const numeric::LocalSymmFact<F>& L,
   Matrix<F>& X, bool checkIfSingular )
 {
 #ifndef RELEASE
     PushCallStack("numeric::LocalLDLDiagonalSolve");
 #endif
-    const int numSupernodes = S.lowerStructs.size();
+    const int numSupernodes = S.supernodes.size();
     const int width = X.Width();
-
     Matrix<F> XSub;
     for( int k=0; k<numSupernodes; ++k )
     {
-        const int supernodeSize = S.sizes[k];
-        const int supernodeOffset = S.offsets[k];
-        XSub.View( X, supernodeOffset, 0, supernodeSize, width );
+        const symbolic::LocalSymmFactSupernode& symbSN = S.supernodes[k];
+        XSub.View( X, symbSN.offset, 0, symbSN.size, width );
 
         Matrix<F> d;
         L.fronts[k].GetDiagonal( d );
-        LocalSupernodeLDLDiagonalSolve
-        ( supernodeSize, d, XSub, checkIfSingular );
+        LocalSupernodeLDLDiagonalSolve( symbSN.size, d, XSub, checkIfSingular );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -138,51 +130,47 @@ void clique::numeric::LocalLDLDiagonalSolve
 template<typename F> // F represents a real or complex field
 void clique::numeric::LocalLDLBackwardSolve
 ( Orientation orientation,
-  const symbolic::LocalFactStruct& S, 
-  const numeric::LocalFactMatrix<F>& L,
+  const symbolic::LocalSymmFact& S, 
+  const numeric::LocalSymmFact<F>& L,
   F alpha, Matrix<F>& X )
 {
 #ifndef RELEASE
     PushCallStack("numeric::LocalLDLBackwardSolve");
 #endif
-    const int numSupernodes = S.lowerStructs.size();
+    const int numSupernodes = S.supernodes.size();
     const int width = X.Width();
-
     L.solutions.resize( numSupernodes );
     for( int k=numSupernodes-1; k>=0; --k )
     {
-        const int numChildren = S.children[k].size();
-        const int supernodeSize = S.sizes[k];
-        const int supernodeOffset = S.offsets[k];
+        const symbolic::LocalSymmFactSupernode& symbSN = S.supernodes[k];
+        const int numChildren = symbSN.children.size();
         const Matrix<F>& front = L.fronts[k];
         Matrix<F>& Y = L.solutions[k];
 
         Matrix<F> XT;
-        XT.LockedView( X, supernodeOffset, 0, supernodeSize, X.Width() );
+        XT.LockedView( X, symbSN.offset, 0, symbSN.size, X.Width() );
         
         Y.ResizeTo( front.Height(), width );
         Matrix<F> YT, YB;
-        YT.View( Y, 0, 0, supernodeSize, width );
-        YB.View( Y, supernodeSize, 0, Y.Height()-supernodeSize, width );
+        YT.View( Y, 0, 0, symbSN.size, width );
+        YB.View( Y, symbSN.size, 0, Y.Height()-symbSN.size, width );
 
         // Pull in the relevant information from the RHS
         YT = XT;
 
         // Update using the parent (if it exists)
-        const int parentIndex = S.parents[k];
+        const int parentIndex = symbSN.parent;
         if( parentIndex != -1 )
         {
             Matrix<F>& parentSol = L.solutions[parentIndex];
-            const bool isLeftChild = S.isLeftChild[k];
-            const int parentSupernodeSize = S.sizes[parentIndex];
-            const int parentUpdateSize = parentSol.Height()-parentSupernodeSize;
+            const symbolic::LocalSymmFactSupernode& parentSymbSN = 
+                S.supernodes[parentIndex];
             const int currentUpdateSize = YB.Height();
 
             const std::vector<int>& parentRelIndices = 
-              ( isLeftChild ? 
-                S.leftChildRelIndices[parentIndex] :
-                S.rightChildRelIndices[parentIndex] );
-
+              ( symbSN.isLeftChild ? 
+                parentSymbSN.leftChildRelIndices :
+                parentSymbSN.rightChildRelIndices );
             for( int iCurrent=0; iCurrent<currentUpdateSize; ++iCurrent )
             {
                 const int iParent = parentRelIndices[iCurrent];
@@ -192,14 +180,14 @@ void clique::numeric::LocalLDLBackwardSolve
 
             // The left child is numbered lower than the right child, so 
             // we can safely free the parent's solution if we are the left child
-            if( isLeftChild )
+            if( symbSN.isLeftChild )
                 parentSol.Empty();
         }
         // else we are the root node
 
         // Call the custom supernode forward solve
         LocalSupernodeLDLBackwardSolve
-        ( orientation, supernodeSize, alpha, front, Y );
+        ( orientation, symbSN.size, alpha, front, Y );
 
         // Store the supernode portion of the result
         XT = YT;
@@ -211,57 +199,57 @@ void clique::numeric::LocalLDLBackwardSolve
 }
 
 template void clique::numeric::LocalLDLForwardSolve
-( const symbolic::LocalFactStruct& S,
-  const numeric::LocalFactMatrix<float>& L,
+( const symbolic::LocalSymmFact& S,
+  const numeric::LocalSymmFact<float>& L,
   float alpha, Matrix<float>& X );
 template void clique::numeric::LocalLDLDiagonalSolve
-( const symbolic::LocalFactStruct& S,
-  const numeric::LocalFactMatrix<float>& L,
+( const symbolic::LocalSymmFact& S,
+  const numeric::LocalSymmFact<float>& L,
   Matrix<float>& X, bool checkIfSingular );
 template void clique::numeric::LocalLDLBackwardSolve
 ( Orientation orientation,
-  const symbolic::LocalFactStruct& S,
-  const numeric::LocalFactMatrix<float>& L,
+  const symbolic::LocalSymmFact& S,
+  const numeric::LocalSymmFact<float>& L,
   float alpha, Matrix<float>& X );
 
 template void clique::numeric::LocalLDLForwardSolve
-( const symbolic::LocalFactStruct& S,
-  const numeric::LocalFactMatrix<double>& L,
+( const symbolic::LocalSymmFact& S,
+  const numeric::LocalSymmFact<double>& L,
   double alpha, Matrix<double>& X );
 template void clique::numeric::LocalLDLDiagonalSolve
-( const symbolic::LocalFactStruct& S,
-  const numeric::LocalFactMatrix<double>& L,
+( const symbolic::LocalSymmFact& S,
+  const numeric::LocalSymmFact<double>& L,
   Matrix<double>& X, bool checkIfSingular );
 template void clique::numeric::LocalLDLBackwardSolve
 ( Orientation orientation,
-  const symbolic::LocalFactStruct& S,
-  const numeric::LocalFactMatrix<double>& L,
+  const symbolic::LocalSymmFact& S,
+  const numeric::LocalSymmFact<double>& L,
   double alpha, Matrix<double>& X );
 
 template void clique::numeric::LocalLDLForwardSolve
-( const symbolic::LocalFactStruct& S,
-  const numeric::LocalFactMatrix<std::complex<float> >& L,
+( const symbolic::LocalSymmFact& S,
+  const numeric::LocalSymmFact<std::complex<float> >& L,
   std::complex<float> alpha, Matrix<std::complex<float> >& X );
 template void clique::numeric::LocalLDLDiagonalSolve
-( const symbolic::LocalFactStruct& S,
-  const numeric::LocalFactMatrix<std::complex<float> >& L,
+( const symbolic::LocalSymmFact& S,
+  const numeric::LocalSymmFact<std::complex<float> >& L,
   Matrix<std::complex<float> >& X, bool checkIfSingular );
 template void clique::numeric::LocalLDLBackwardSolve
 ( Orientation orientation,
-  const symbolic::LocalFactStruct& S,
-  const numeric::LocalFactMatrix<std::complex<float> >& L,
+  const symbolic::LocalSymmFact& S,
+  const numeric::LocalSymmFact<std::complex<float> >& L,
   std::complex<float> alpha, Matrix<std::complex<float> >& X );
 
 template void clique::numeric::LocalLDLForwardSolve
-( const symbolic::LocalFactStruct& S,
-  const numeric::LocalFactMatrix<std::complex<double> >& L,
+( const symbolic::LocalSymmFact& S,
+  const numeric::LocalSymmFact<std::complex<double> >& L,
   std::complex<double> alpha, Matrix<std::complex<double> >& X );
 template void clique::numeric::LocalLDLDiagonalSolve
-( const symbolic::LocalFactStruct& S,
-  const numeric::LocalFactMatrix<std::complex<double> >& L,
+( const symbolic::LocalSymmFact& S,
+  const numeric::LocalSymmFact<std::complex<double> >& L,
   Matrix<std::complex<double> >& X, bool checkIfSingular );
 template void clique::numeric::LocalLDLBackwardSolve
 ( Orientation orientation,
-  const symbolic::LocalFactStruct& S,
-  const numeric::LocalFactMatrix<std::complex<double> >& L,
+  const symbolic::LocalSymmFact& S,
+  const numeric::LocalSymmFact<std::complex<double> >& L,
   std::complex<double> alpha, Matrix<std::complex<double> >& X );

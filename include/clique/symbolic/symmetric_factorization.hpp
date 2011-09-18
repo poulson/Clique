@@ -24,75 +24,106 @@
 namespace clique {
 namespace symbolic {
 
-struct LocalOrigStruct
+struct LocalSymmOrigSupernode
 {
-    std::vector<int> sizes, offsets;
-    std::vector<std::vector<int> > lowerStructs;
-    std::vector<std::vector<int> > children;
-    std::vector<int> parents; // -1 if root separator
+    int size, offset;
+    int parent; // -1 if root separator
+    std::vector<int> children;
+    std::vector<int> lowerStruct;
 };
 
-struct LocalFactStruct
+struct LocalSymmOrig
 {
-    std::vector<int> sizes, offsets;
-    std::vector<std::vector<int> > lowerStructs;
-    std::vector<std::vector<int> > children;
-    std::vector<int> parents; // -1 if root separator
-    std::vector<bool> isLeftChild;
-
-    std::vector<std::map<int,int> > origLowerRelIndices;
-    std::vector<std::vector<int> > leftChildRelIndices, rightChildRelIndices;
+    std::vector<LocalSymmOrigSupernode> supernodes;
 };
 
-struct DistOrigStruct
+struct LocalSymmFactSupernode
+{
+    bool isLeftChild;
+    int size, offset;
+    int parent; // -1 if root separator
+    std::vector<int> children;
+
+    std::vector<int> lowerStruct;
+    std::vector<int> leftChildRelIndices, rightChildRelIndices;
+    std::map<int,int> origLowerRelIndices;
+};
+
+struct LocalSymmFact
+{
+    std::vector<LocalSymmFactSupernode> supernodes;
+};
+
+struct DistSymmOrigSupernode
+{
+    int size, offset;
+    std::vector<int> lowerStruct;
+};
+
+struct DistSymmOrig
 {
     mpi::Comm comm;
-    std::vector<int> sizes, offsets;
-    std::vector<std::vector<int> > lowerStructs;
+    std::vector<DistSymmOrigSupernode> supernodes;
 };
 
-struct DistFactStruct
+struct DistSymmFactSupernode
 {
-    std::vector<mpi::Comm> comms;
-    std::vector<int> gridHeights;
-    std::vector<std::vector<int> > sendCounts, recvCounts;
+    mpi::Comm comm;
+    int gridHeight;
 
-    std::vector<int> sizes, offsets;
-    std::vector<std::vector<int> > lowerStructs;
-    std::vector<std::map<int,int> > origLowerRelIndices;
-    std::vector<std::vector<int> > leftChildRelIndices, rightChildRelIndices;
+    int size, offset;
+    std::vector<int> lowerStruct;
+    std::map<int,int> origLowerRelIndices;
+
+    std::vector<int> leftChildRelIndices, rightChildRelIndices;
+    std::vector<int> leftChildColIndices, leftChildRowIndices,
+                     rightChildColIndices, rightChildRowIndices;
+    std::vector<int> numChildSendIndices;
+
+    // This information does not necessarily have to be kept and can be
+    // computed from the above information
+    std::vector<std::deque<int> > leftChildRecvIndices, rightChildRecvIndices;
+};
+
+struct DistSymmFact
+{
+    std::vector<DistSymmFactSupernode> supernodes;
 };
 
 void SymmetricFactorization
-( const LocalOrigStruct& localOrig,
-  const DistOrigStruct&  distOrig,
-        LocalFactStruct& localFact,
-        DistFactStruct&  distFact );
+( const LocalSymmOrig&   localOrig,
+  const DistSymmOrig&    distOrig,
+        LocalSymmFact&   localFact,
+        DistSymmFact&    distFact, 
+        bool storeRecvIndices=true );
 
 void LocalSymmetricFactorization
-( const LocalOrigStruct& localOrig,
-        LocalFactStruct& localFact );
+( const LocalSymmOrig& localOrig,
+        LocalSymmFact& localFact );
 
 void DistSymmetricFactorization
-( const DistOrigStruct&  distOrig, 
-  const LocalFactStruct& localFact, 
-        DistFactStruct&  distFact );
+( const DistSymmOrig&  distOrig, 
+  const LocalSymmFact& localFact, 
+        DistSymmFact&  distFact, 
+        bool storeRecvIndices=true );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
 inline void SymmetricFactorization
-( const LocalOrigStruct& localOrig,
-  const DistOrigStruct&  distOrig,
-        LocalFactStruct& localFact,
-        DistFactStruct&  distFact )
+( const LocalSymmOrig& localOrig,
+  const DistSymmOrig&  distOrig,
+        LocalSymmFact& localFact,
+        DistSymmFact&  distFact,
+        bool storeRecvIndices )
 {
 #ifndef RELEASE
     PushCallStack("symbolic::SymmetricFactorization");
 #endif
     LocalSymmetricFactorization( localOrig, localFact );
-    DistSymmetricFactorization( distOrig, localFact, distFact );
+    DistSymmetricFactorization
+    ( distOrig, localFact, distFact, storeRecvIndices );
 #ifndef RELEASE
     PopCallStack();
 #endif

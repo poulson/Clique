@@ -21,79 +21,70 @@
 #include "clique.hpp"
 
 void clique::symbolic::LocalSymmetricFactorization
-( const LocalOrigStruct& localOrig,
-        LocalFactStruct& localFact )
+( const LocalSymmOrig& orig, LocalSymmFact& fact )
 {
 #ifndef RELEASE
     PushCallStack("symbolic::LocalSymmetricFactorization");
 #endif
-    const int numSupernodes = localOrig.sizes.size();
-    localFact.sizes = localOrig.sizes;
-    localFact.offsets = localOrig.sizes;
-    localFact.children = localOrig.children;
-    localFact.parents = localOrig.parents;
+    const int numSupernodes = orig.supernodes.size();
+    fact.supernodes.resize( numSupernodes );
 
-    localFact.lowerStructs.resize( numSupernodes );
-    localFact.origLowerRelIndices.resize( numSupernodes );
-    localFact.leftChildRelIndices.resize( numSupernodes );
-    localFact.rightChildRelIndices.resize( numSupernodes );
-    localFact.isLeftChild.resize( numSupernodes );
-
-    // Perform the local symbolic factorization
+    // Perform the symbolic factorization
     std::vector<int>::iterator it;
     std::vector<int> childrenStruct, partialStruct, fullStruct,
                      supernodeIndices;
     for( int k=0; k<numSupernodes; ++k )
     {
-        const int supernodeSize = localOrig.sizes[k];
-        const int supernodeOffset = localOrig.offsets[k];
-        const int numChildren = localOrig.children[k].size();
-        const std::vector<int>& origLowerStruct = localOrig.lowerStructs[k];
-        std::vector<int>& lowerStruct = localFact.lowerStructs[k];
+        const LocalSymmOrigSupernode& origSN = orig.supernodes[k];
+        LocalSymmFactSupernode& factSN = fact.supernodes[k];
+        factSN.size = origSN.size;
+        factSN.offset = origSN.offset;
+        factSN.parent = origSN.parent;
+        factSN.children = origSN.children;
 
+        const int numChildren = origSN.children.size();
 #ifndef RELEASE
         if( numChildren != 0 && numChildren != 2 )
             throw std::logic_error("Tree must be built from bisections");
 #endif
-
         if( numChildren == 2 )
         {
-            const int leftIndex = localOrig.children[k][0];
-            const int rightIndex = localOrig.children[k][1];
-            localFact.isLeftChild[leftIndex] = true;
-            localFact.isLeftChild[rightIndex] = false;
-
-            const std::vector<int>& leftChildLowerStruct = 
-                localFact.lowerStructs[leftIndex];
-            const std::vector<int>& rightChildLowerStruct = 
-                localFact.lowerStructs[rightIndex];
-            const int numLeftIndices = leftChildLowerStruct.size();
-            const int numRightIndices = rightChildLowerStruct.size();
+            const int leftIndex = origSN.children[0];
+            const int rightIndex = origSN.children[1];
+            LocalSymmFactSupernode& leftChild = fact.supernodes[leftIndex];
+            LocalSymmFactSupernode& rightChild = fact.supernodes[rightIndex];
+            leftChild.isLeftChild = true;
+            rightChild.isLeftChild = false;
 
             // Union the child lower structs
+            const int numLeftIndices = leftChild.lowerStruct.size();
+            const int numRightIndices = rightChild.lowerStruct.size();
             const int childrenStructMaxSize = numLeftIndices + numRightIndices;
             childrenStruct.resize( childrenStructMaxSize );
             it = std::set_union
-            ( leftChildLowerStruct.begin(), leftChildLowerStruct.end(),
-              rightChildLowerStruct.begin(), rightChildLowerStruct.end(),
+            ( leftChild.lowerStruct.begin(), leftChild.lowerStruct.end(),
+              rightChild.lowerStruct.begin(), rightChild.lowerStruct.end(),
               childrenStruct.begin() );
-            childrenStruct.resize( int(it-childrenStruct.begin()) );
+            const int childrenStructSize = int(it-childrenStruct.begin());
+            childrenStruct.resize( childrenStructSize );
 
             // Union the lower structure of this supernode
+            const int numOrigLowerIndices = origSN.lowerStruct.size();
             const int partialStructMaxSize = 
-                childrenStruct.size() + origLowerStruct.size();
+                childrenStructSize + numOrigLowerIndices;
             partialStruct.resize( partialStructMaxSize );
             it = std::set_union
-            ( origLowerStruct.begin(), origLowerStruct.end(),
+            ( origSN.lowerStruct.begin(), origSN.lowerStruct.end(),
               childrenStruct.begin(), childrenStruct.end(),
               partialStruct.begin() );
-            partialStruct.resize( int(it-partialStruct.begin()) );
+            const int partialStructSize = int(it-partialStruct.begin());
+            partialStruct.resize( partialStructSize );
 
             // Union again with the supernode indices
-            supernodeIndices.resize( supernodeSize );
-            for( int i=0; i<supernodeSize; ++i )
-                supernodeIndices[i] = supernodeOffset + i;
-            fullStruct.resize( supernodeSize + partialStruct.size() );
+            supernodeIndices.resize( origSN.size );
+            for( int i=0; i<origSN.size; ++i )
+                supernodeIndices[i] = origSN.offset + i;
+            fullStruct.resize( origSN.size + partialStructSize );
             it = std::set_union
             ( partialStruct.begin(), partialStruct.end(),
               supernodeIndices.begin(), supernodeIndices.end(),
@@ -101,44 +92,43 @@ void clique::symbolic::LocalSymmetricFactorization
             fullStruct.resize( int(it-fullStruct.begin()) );
 
             // Construct the relative indices of the original lower structure
-            const int numOrigLowerIndices = origLowerStruct.size();
             it = fullStruct.begin();
             for( int i=0; i<numOrigLowerIndices; ++i )
             {
-                const int index = origLowerStruct[i];
+                const int index = origSN.lowerStruct[i];
                 it = std::lower_bound ( it, fullStruct.end(), index );
-                localFact.origLowerRelIndices[k][index] = *it;
+                factSN.origLowerRelIndices[index] = *it;
             }
 
             // Construct the relative indices of the children
-            localFact.leftChildRelIndices[k].resize( numLeftIndices );
+            factSN.leftChildRelIndices.resize( numLeftIndices );
             it = fullStruct.begin();
             for( int i=0; i<numLeftIndices; ++i )
             {
-                const int index = leftChildLowerStruct[i];
+                const int index = leftChild.lowerStruct[i];
                 it = std::lower_bound( it, fullStruct.end(), index );
-                localFact.leftChildRelIndices[k][i] = *it;
+                factSN.leftChildRelIndices[i] = *it;
             }
-            localFact.rightChildRelIndices[k].resize( numRightIndices );
+            factSN.rightChildRelIndices.resize( numRightIndices );
             it = fullStruct.begin();
             for( int i=0; i<numRightIndices; ++it )
             {
-                const int index = rightChildLowerStruct[i];
+                const int index = rightChild.lowerStruct[i];
                 it = std::lower_bound( it, fullStruct.end(), index );
-                localFact.rightChildRelIndices[k][i] = *it;
+                factSN.rightChildRelIndices[i] = *it;
             }
 
             // Form lower struct of this supernode by removing supernode indices
-            lowerStruct.resize( fullStruct.size() );
+            factSN.lowerStruct.resize( fullStruct.size() );
             it = std::set_difference
             ( fullStruct.begin(), fullStruct.end(),
               supernodeIndices.begin(), supernodeIndices.end(),
-              lowerStruct.begin() );
-            lowerStruct.resize( int(it-lowerStruct.begin()) );
+              factSN.lowerStruct.begin() );
+            factSN.lowerStruct.resize( int(it-factSN.lowerStruct.begin()) );
         }
         else // numChildren == 0, so this is a leaf supernode 
         {
-            localFact.lowerStructs[k] = localOrig.lowerStructs[k];        
+            factSN.lowerStruct = origSN.lowerStruct;
         }
     }
 #ifndef RELEASE

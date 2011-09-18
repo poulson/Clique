@@ -25,14 +25,14 @@ namespace clique {
 namespace numeric {
 
 template<typename F>
-struct LocalFactMatrix
+struct LocalSymmFact
 {
     std::vector<elemental::Matrix<F> > fronts;
     mutable std::vector<elemental::Matrix<F> > solutions;
 };
 
 template<typename F>
-struct DistFactMatrix
+struct DistSymmFact
 {
     std::vector<elemental::DistMatrix<F,elemental::MC,elemental::MR> > fronts;
 };
@@ -43,15 +43,15 @@ struct DistFactMatrix
 template<typename F>
 void LocalLDL
 ( elemental::Orientation orientation, 
-  symbolic::LocalFactStruct& S, // can't be const due to map...
-  numeric::LocalFactMatrix<F>& L );
+  symbolic::LocalSymmFact& S, // can't be const due to map...
+  numeric::LocalSymmFact<F>& L );
 
 template<typename F>
 void DistLDL
 ( elemental::Orientation orientation,
-        symbolic::DistFactStruct& S, // can't be const due to map...
-  const numeric::LocalFactMatrix<F>& localL,
-        numeric::DistFactMatrix<F>&  distL );
+        symbolic::DistSymmFact& S, // can't be const due to map...
+  const numeric::LocalSymmFact<F>& localL,
+        numeric::DistSymmFact<F>&  distL );
 
 } // namespace numeric
 } // namespace clique

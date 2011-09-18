@@ -31,25 +31,15 @@
 // TODO: Generalize to support more than just a power-of-two number of 
 //       processes. This should be relatively straightforward.
 void clique::symbolic::DistSymmetricFactorization
-( const DistOrigStruct&  distOrig,
-  const LocalFactStruct& localFact,
-        DistFactStruct&  distFact )
+( const DistSymmOrig&  distOrig,
+  const LocalSymmFact& localFact, DistSymmFact&  distFact, 
+        bool storeRecvIndices )
 {
 #ifndef RELEASE
     PushCallStack("symbolic::DistSymmetricFactorization");
 #endif
-    const unsigned numSupernodes = distOrig.lowerStructs.size();
-    distFact.comms.resize( numSupernodes );
-    distFact.gridHeights.resize( numSupernodes );
-    distFact.sendCounts.resize( numSupernodes );
-    distFact.recvCounts.resize( numSupernodes );
-    distFact.sizes = distOrig.sizes;
-    distFact.offsets = distOrig.offsets;
-    distFact.lowerStructs.resize( numSupernodes );
-    distFact.origLowerRelIndices.resize( numSupernodes );
-    distFact.leftChildRelIndices.resize( numSupernodes );
-    distFact.rightChildRelIndices.resize( numSupernodes );
-
+    const unsigned numSupernodes = distOrig.supernodes.size();
+    distFact.supernodes.resize( numSupernodes );
     if( numSupernodes == 0 )
         return;
 
@@ -71,11 +61,27 @@ void clique::symbolic::DistSymmetricFactorization
 #endif
 
     // The bottom node is already computed, so just copy it over
-    distFact.lowerStructs[0] = localFact.lowerStructs.back();
-    distFact.origLowerRelIndices[0] = localFact.origLowerRelIndices.back();
-    distFact.leftChildRelIndices[0] = localFact.leftChildRelIndices.back();
-    distFact.rightChildRelIndices[0] = localFact.rightChildRelIndices.back();
-    mpi::CommSplit( distOrig.comm, commRank, 0, distFact.comms[0] );
+    const LocalSymmFactSupernode& topLocalSN = localFact.supernodes.back();
+    DistSymmFactSupernode& bottomDistSN = distFact.supernodes[0];
+    mpi::CommSplit( distOrig.comm, commRank, 0, bottomDistSN.comm );
+    unsigned gridHeight = 
+        static_cast<unsigned>(sqrt(static_cast<double>(commSize)));
+    while( commSize % gridHeight != 0 )
+        ++gridHeight;
+    bottomDistSN.gridHeight = gridHeight;
+    bottomDistSN.size = topLocalSN.size;
+    bottomDistSN.offset = topLocalSN.offset;
+    bottomDistSN.lowerStruct = topLocalSN.lowerStruct;
+    bottomDistSN.origLowerRelIndices = topLocalSN.origLowerRelIndices;
+    bottomDistSN.leftChildRelIndices = topLocalSN.leftChildRelIndices;
+    bottomDistSN.rightChildRelIndices = topLocalSN.rightChildRelIndices;
+    bottomDistSN.leftChildColIndices.clear();
+    bottomDistSN.leftChildRowIndices.clear();
+    bottomDistSN.rightChildColIndices.clear();
+    bottomDistSN.rightChildRowIndices.clear();
+    bottomDistSN.numChildSendIndices.clear();
+    bottomDistSN.leftChildRecvIndices.clear();
+    bottomDistSN.rightChildRecvIndices.clear();
 
     // Perform the distributed part of the symbolic factorization
     std::vector<int>::iterator it;
@@ -84,29 +90,30 @@ void clique::symbolic::DistSymmetricFactorization
                     supernodeIndices;
     for( unsigned k=1; k<numSupernodes; ++k )
     {
-        const int supernodeSize = distOrig.sizes[k];
-        const int supernodeOffset = distOrig.offsets[k];
-        const std::vector<int>& origLowerStruct = distOrig.lowerStructs[k];
-        const std::vector<int>& myChildLowerStruct = distFact.lowerStructs[k-1];
-        std::vector<int>& lowerStruct = distFact.lowerStructs[k];
+        const DistSymmOrigSupernode& origSN = distOrig.supernodes[k];
+        const DistSymmFactSupernode& factChildSN = distFact.supernodes[k-1];
+        DistSymmFactSupernode& factSN = distFact.supernodes[k];
+        factSN.size = origSN.size;
+        factSN.offset = origSN.offset;
 
         // Determine our partner based upon the bits of 'commRank'
-        const unsigned partner = commRank ^ (1u << (k-1));
-        const bool onLeft = ( (commRank & (1u << (k-1))) == 0 ); 
+        const unsigned powerOfTwo = 1u << (k-1);
+        const unsigned partner = commRank ^ powerOfTwo; // flip the k-1'th bit
+        const bool onLeft = (commRank & powerOfTwo) == 0; // check k-1'th bit 
 
         // Create this level's communicator
-        const int teamColor = (commRank & !((1u << (k-1))-1));
-        mpi::CommSplit( distOrig.comm, teamColor, 0, distFact.comms[k] );
-        const unsigned teamSize = mpi::CommSize( distFact.comms[k] );
-        unsigned gridHeight = 
-            static_cast<unsigned>(sqrt(static_cast<double>(teamSize)));
+        const unsigned teamSize  = powerOfTwo;
+        const int teamColor = commRank & !(powerOfTwo-1);
+        const int teamRank  = commRank &  (powerOfTwo-1);
+        mpi::CommSplit( distOrig.comm, teamColor, teamRank, factSN.comm );
+        gridHeight = static_cast<unsigned>(sqrt(static_cast<double>(teamSize)));
         while( teamSize % gridHeight != 0 )
             ++gridHeight;
-        distFact.gridHeights[k] = gridHeight;
+        factSN.gridHeight = gridHeight;
         const unsigned gridWidth = teamSize / gridHeight;
 
         // SendRecv the message lengths
-        const int myChildLowerStructSize = myChildLowerStruct.size();
+        const int myChildLowerStructSize = factChildSN.lowerStruct.size();
         int theirChildLowerStructSize;
         mpi::SendRecv
         ( &myChildLowerStructSize, 1, partner, 0,
@@ -115,7 +122,7 @@ void clique::symbolic::DistSymmetricFactorization
         sendBuffer.resize( myChildLowerStructSize );
         recvBuffer.resize( theirChildLowerStructSize );
         std::memcpy
-        ( &sendBuffer[0], &myChildLowerStruct[0], 
+        ( &sendBuffer[0], &factChildSN.lowerStruct[0], 
           myChildLowerStructSize*sizeof(int) );
         mpi::SendRecv
         ( &sendBuffer[0], myChildLowerStructSize, partner, 0,
@@ -128,35 +135,38 @@ void clique::symbolic::DistSymmetricFactorization
         it = std::set_union
         ( sendBuffer.begin(), sendBuffer.end(),
           recvBuffer.begin(), recvBuffer.end(), childrenStruct.begin() );
-        childrenStruct.resize( int(it-childrenStruct.begin()) );
+        const int childrenStructSize = int(it-childrenStruct.begin());
+        childrenStruct.resize( childrenStructSize );
 
         // Union the lower structure of this supernode
-        partialStruct.resize( childrenStruct.size() + origLowerStruct.size() );
+        partialStruct.resize( childrenStructSize + origSN.lowerStruct.size() );
         it = std::set_union
         ( childrenStruct.begin(), childrenStruct.end(),
-          origLowerStruct.begin(), origLowerStruct.end(), 
+          origSN.lowerStruct.begin(), origSN.lowerStruct.end(),
           partialStruct.begin() );
-        partialStruct.resize( int(it-partialStruct.begin()) );
+        const int partialStructSize = int(it-partialStruct.begin());
+        partialStruct.resize( partialStructSize );
 
         // Union again with the supernode indices
-        supernodeIndices.resize( supernodeSize );
-        for( int i=0; i<supernodeSize; ++i )
-            supernodeIndices[i] = supernodeOffset + i;
-        fullStruct.resize( supernodeSize + partialStruct.size() );
+        supernodeIndices.resize( origSN.size );
+        for( int i=0; i<origSN.size; ++i )
+            supernodeIndices[i] = origSN.offset + i;
+        fullStruct.resize( origSN.size + partialStructSize );
         it = std::set_union
         ( supernodeIndices.begin(), supernodeIndices.end(),
           partialStruct.begin(), partialStruct.end(), 
           fullStruct.begin() );
-        fullStruct.resize( int(it-fullStruct.begin()) );
+        const int fullStructSize = int(it-fullStruct.begin());
+        fullStruct.resize( fullStructSize );
 
         // Construct the relative indices of the original lower structure
-        const int numOrigLowerIndices = origLowerStruct.size();
+        const int numOrigLowerIndices = origSN.lowerStruct.size();
         it = fullStruct.begin();
         for( int i=0; i<numOrigLowerIndices; ++i )
         {
-            const int index = origLowerStruct[i];
+            const int index = origSN.lowerStruct[i];
             it = std::lower_bound( it, fullStruct.end(), index );
-            distFact.origLowerRelIndices[k][index] = *it;
+            factSN.origLowerRelIndices[index] = *it;
         }
 
         // Construct the relative indices of the children
@@ -176,38 +186,35 @@ void clique::symbolic::DistSymmetricFactorization
             numLeftIndices = recvBuffer.size();
             numRightIndices = sendBuffer.size();
         }
-        distFact.leftChildRelIndices[k].resize( numLeftIndices );
+        factSN.leftChildRelIndices.resize( numLeftIndices );
         it = fullStruct.begin();
         for( int i=0; i<numLeftIndices; ++i )
         {
             const int index = leftIndices[i];
             it = std::lower_bound( it, fullStruct.end(), index );
-            distFact.leftChildRelIndices[k][i] = *it;
+            factSN.leftChildRelIndices[i] = *it;
         }
-        distFact.rightChildRelIndices[k].resize( numRightIndices );
+        factSN.rightChildRelIndices.resize( numRightIndices );
         it = fullStruct.begin();
         for( int i=0; i<numRightIndices; ++i )
         {
             const int index = rightIndices[i];
             it = std::lower_bound( it, fullStruct.end(), index );
-            distFact.rightChildRelIndices[k][i] = *it;
+            factSN.rightChildRelIndices[i] = *it;
         }
 
-        // Construct our send counts to the other processes
-        std::vector<int>& sendCounts = distFact.sendCounts[k];
-        sendCounts.resize( k );
-        std::memset( &sendCounts[0], 0, teamSize*sizeof(int) );
+        // Construct the send and recv information
         // HERE
         // TODO: Loop over our local matrix, incrementing the send counts,
         //       using the gridHeight and gridWidth variables
 
         // Form lower structure of this node by removing the supernode indices
-        lowerStruct.resize( fullStruct.size() );
+        factSN.lowerStruct.resize( fullStructSize );
         it = std::set_difference
         ( fullStruct.begin(), fullStruct.end(),
           supernodeIndices.begin(), supernodeIndices.end(),
-          lowerStruct.begin() );
-        lowerStruct.resize( int(it-lowerStruct.begin()) );
+          factSN.lowerStruct.begin() );
+        factSN.lowerStruct.resize( int(it-factSN.lowerStruct.begin()) );
     }
 #ifndef RELEASE
     PopCallStack();

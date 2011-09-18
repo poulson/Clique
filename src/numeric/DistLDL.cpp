@@ -23,16 +23,16 @@ using namespace elemental;
 template<typename F> // F represents a real or complex field
 void clique::numeric::DistLDL
 ( Orientation orientation,
-  symbolic::DistFactStruct& S, // can't be const due to map...
-  const numeric::LocalFactMatrix<F>& localL,
-        numeric::DistFactMatrix<F>&  distL )
+        symbolic::DistSymmFact& S, // can't be const due to map...
+  const numeric::LocalSymmFact<F>& localL,
+        numeric::DistSymmFact<F>& distL )
 {
 #ifndef RELEASE
     PushCallStack("numeric::DistLDL");
     if( orientation == NORMAL )
         throw std::logic_error("LDL must be (conjugate-)transposed");
 #endif
-    const int numSupernodes = S.lowerStructs.size();
+    const int numSupernodes = S.supernodes.size();
     if( numSupernodes == 0 )
         return;
 
@@ -42,17 +42,17 @@ void clique::numeric::DistLDL
     // Perform the distributed portion of the factorization
     for( unsigned k=1; k<numSupernodes; ++k )
     {
+        const symbolic::DistSymmFactSupernode& symbSN = S.supernodes[k];
         DistMatrix<F,MC,MR>& front = distL.fronts[k];
+
         const Grid& g = front.Grid();
         mpi::Comm comm = g.VCComm();
         const unsigned commRank = mpi::CommRank( comm );
         const unsigned commSize = mpi::CommSize( comm );
 
-        const int supernodeSize = S.sizes[k];
 #ifndef RELEASE
-        const int lowerStructSize = S.lowerStructs[k].size();
-        if( front.Height() != supernodeSize+lowerStructSize ||
-            front.Width()  != supernodeSize+lowerStructSize )
+        if( front.Height() != symbSN.size+symbSN.lowerStruct.size() ||
+            front.Width()  != symbSN.size+symbSN.lowerStruct.size() )
             throw std::logic_error("Front was not the proper size");
 #endif
 
@@ -69,7 +69,7 @@ void clique::numeric::DistLDL
         // Unpack the child udpates (with an Axpy)
         // TODO
 
-        DistSupernodeLDL( orientation, front, supernodeSize );
+        DistSupernodeLDL( orientation, front, symbSN.size );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -78,25 +78,25 @@ void clique::numeric::DistLDL
 
 template void clique::numeric::DistLDL
 ( Orientation orientation,
-        symbolic::DistFactStruct& S,
-  const numeric::LocalFactMatrix<float>& localL,
-        numeric::DistFactMatrix<float>& distL );
+        symbolic::DistSymmFact& S,
+  const numeric::LocalSymmFact<float>& localL,
+        numeric::DistSymmFact<float>& distL );
 
 template void clique::numeric::DistLDL
 ( Orientation orientation,
-        symbolic::DistFactStruct& S,
-  const numeric::LocalFactMatrix<double>& localL,
-        numeric::DistFactMatrix<double>& distL );
+        symbolic::DistSymmFact& S,
+  const numeric::LocalSymmFact<double>& localL,
+        numeric::DistSymmFact<double>& distL );
 
 template void clique::numeric::DistLDL
 ( Orientation orientation,
-        symbolic::DistFactStruct& S,
-  const numeric::LocalFactMatrix<std::complex<float> >& localL,
-        numeric::DistFactMatrix<std::complex<float> >& distL );
+        symbolic::DistSymmFact& S,
+  const numeric::LocalSymmFact<std::complex<float> >& localL,
+        numeric::DistSymmFact<std::complex<float> >& distL );
 
 template void clique::numeric::DistLDL
 ( Orientation orientation,
-        symbolic::DistFactStruct& S,
-  const numeric::LocalFactMatrix<std::complex<double> >& localL,
-        numeric::DistFactMatrix<std::complex<double> >& distL );
+        symbolic::DistSymmFact& S,
+  const numeric::LocalSymmFact<std::complex<double> >& localL,
+        numeric::DistSymmFact<std::complex<double> >& distL );
 
