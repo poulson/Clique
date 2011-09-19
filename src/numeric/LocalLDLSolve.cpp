@@ -31,33 +31,32 @@ void clique::numeric::LocalLDLForwardSolve
 #endif
     const int numSupernodes = S.supernodes.size();
     const int width = X.Width();
-    L.solutions.resize( numSupernodes );
     for( int k=0; k<numSupernodes; ++k )
     {
         const symbolic::LocalSymmFactSupernode& symbSN = S.supernodes[k];
-        const int numChildren = symbSN.children.size();
-        const Matrix<F>& front = L.fronts[k];
-        Matrix<F>& Y = L.solutions[k];
+        const numeric::LocalSymmFactSupernode<F>& numSN = L.supernodes[k];
 
-        Matrix<F> XT;
-        XT.LockedView( X, symbSN.offset, 0, symbSN.size, X.Width() );
-        
-        Y.ResizeTo( front.Height(), width );
+        // Set up a workspace
+        Matrix<F>& Y = numSN.solution;
+        Y.ResizeTo( numSN.front.Height(), width );
         Matrix<F> YT, YB;
         YT.View( Y, 0, 0, symbSN.size, width );
         YB.View( Y, symbSN.size, 0, Y.Height()-symbSN.size, width );
 
         // Pull in the relevant information from the RHS
+        Matrix<F> XT;
+        XT.LockedView( X, symbSN.offset, 0, symbSN.size, X.Width() );
         YT = XT;
         YB.SetToZero();
 
         // Update using the children (if they exist)
+        const int numChildren = symbSN.children.size();
         if( numChildren == 2 )
         {
             const int leftIndex = symbSN.children[0];
             const int rightIndex = symbSN.children[1];
-            Matrix<F>& leftSol = L.solutions[leftIndex];
-            Matrix<F>& rightSol = L.solutions[rightIndex];
+            Matrix<F>& leftSol = L.supernodes[leftIndex].solution;
+            Matrix<F>& rightSol = L.supernodes[rightIndex].solution;
             const int leftSupernodeSize = S.supernodes[leftIndex].size;
             const int rightSupernodeSize = S.supernodes[rightIndex].size;
             const int leftUpdateSize = leftSol.Height()-leftSupernodeSize;
@@ -90,12 +89,15 @@ void clique::numeric::LocalLDLForwardSolve
         // else numChildren == 0
 
         // Call the custom supernode forward solve
-        LocalSupernodeLDLForwardSolve( symbSN.size, alpha, front, Y );
+        LocalSupernodeLDLForwardSolve( symbSN.size, alpha, numSN.front, Y );
 
         // Store the supernode portion of the result
         XT = YT;
     }
-    L.solutions.clear();
+
+    // Ensure that all of the temporary buffers are freed
+    for( int k=0; k<numSupernodes; ++k )
+        L.supernodes[k].solution.Empty();
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -119,7 +121,7 @@ void clique::numeric::LocalLDLDiagonalSolve
         XSub.View( X, symbSN.offset, 0, symbSN.size, width );
 
         Matrix<F> d;
-        L.fronts[k].GetDiagonal( d );
+        L.supernodes[k].front.GetDiagonal( d );
         LocalSupernodeLDLDiagonalSolve( symbSN.size, d, XSub, checkIfSingular );
     }
 #ifndef RELEASE
@@ -139,30 +141,28 @@ void clique::numeric::LocalLDLBackwardSolve
 #endif
     const int numSupernodes = S.supernodes.size();
     const int width = X.Width();
-    L.solutions.resize( numSupernodes );
     for( int k=numSupernodes-1; k>=0; --k )
     {
         const symbolic::LocalSymmFactSupernode& symbSN = S.supernodes[k];
-        const int numChildren = symbSN.children.size();
-        const Matrix<F>& front = L.fronts[k];
-        Matrix<F>& Y = L.solutions[k];
+        const numeric::LocalSymmFactSupernode<F>& numSN = L.supernodes[k];
 
-        Matrix<F> XT;
-        XT.LockedView( X, symbSN.offset, 0, symbSN.size, X.Width() );
-        
-        Y.ResizeTo( front.Height(), width );
+        // Set up a workspace
+        Matrix<F>& Y = numSN.solution;
+        Y.ResizeTo( numSN.front.Height(), width );
         Matrix<F> YT, YB;
         YT.View( Y, 0, 0, symbSN.size, width );
         YB.View( Y, symbSN.size, 0, Y.Height()-symbSN.size, width );
 
         // Pull in the relevant information from the RHS
+        Matrix<F> XT;
+        XT.LockedView( X, symbSN.offset, 0, symbSN.size, X.Width() );
         YT = XT;
 
         // Update using the parent (if it exists)
         const int parentIndex = symbSN.parent;
         if( parentIndex != -1 )
         {
-            Matrix<F>& parentSol = L.solutions[parentIndex];
+            Matrix<F>& parentSol = L.supernodes[parentIndex].solution;
             const symbolic::LocalSymmFactSupernode& parentSymbSN = 
                 S.supernodes[parentIndex];
             const int currentUpdateSize = YB.Height();
@@ -187,12 +187,15 @@ void clique::numeric::LocalLDLBackwardSolve
 
         // Call the custom supernode forward solve
         LocalSupernodeLDLBackwardSolve
-        ( orientation, symbSN.size, alpha, front, Y );
+        ( orientation, symbSN.size, alpha, numSN.front, Y );
 
         // Store the supernode portion of the result
         XT = YT;
     }
-    L.solutions.clear();
+
+    // Ensure that all of the temporary buffers are freed
+    for( int k=0; k<numSupernodes; ++k )
+        L.supernodes[k].solution.Empty();
 #ifndef RELEASE
     PopCallStack();
 #endif

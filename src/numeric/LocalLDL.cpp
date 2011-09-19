@@ -35,10 +35,10 @@ void clique::numeric::LocalLDL
     for( int k=0; k<numSupernodes; ++k )
     {
         symbolic::LocalSymmFactSupernode& symbSN = S.supernodes[k];
-        Matrix<F>& front = L.fronts[k];
+        numeric::LocalSymmFactSupernode<F>& numSN = L.supernodes[k];
 #ifndef RELEASE
-        if( front.Height() != symbSN.size+symbSN.lowerStruct.size() ||
-            front.Width()  != symbSN.size+symbSN.lowerStruct.size() )
+        if( numSN.front.Height() != symbSN.size+symbSN.lowerStruct.size() ||
+            numSN.front.Width()  != symbSN.size+symbSN.lowerStruct.size() )
             throw std::logic_error("Front was not the proper size");
 #endif
 
@@ -48,8 +48,8 @@ void clique::numeric::LocalLDL
         {
             const int leftIndex = symbSN.children[0];
             const int rightIndex = symbSN.children[1];
-            const Matrix<F>& leftFront = L.fronts[leftIndex];
-            const Matrix<F>& rightFront = L.fronts[rightIndex];
+            const Matrix<F>& leftFront = L.supernodes[leftIndex].front;
+            const Matrix<F>& rightFront = L.supernodes[rightIndex].front;
             const int leftSupernodeSize = S.supernodes[leftIndex].size;
             const int rightSupernodeSize = S.supernodes[rightIndex].size;
             const int leftUpdateSize = leftFront.Height()-leftSupernodeSize;
@@ -73,7 +73,7 @@ void clique::numeric::LocalLDL
                 {
                     const int iFront = symbSN.leftChildRelIndices[iChild];
                     const F value = leftUpdate.Get(iChild,jChild);
-                    front.Update( iFront, jFront, -value );
+                    numSN.front.Update( iFront, jFront, -value );
                 }
             }
 
@@ -85,13 +85,13 @@ void clique::numeric::LocalLDL
                 {
                     const int iFront = symbSN.rightChildRelIndices[iChild];
                     const F value = rightUpdate.Get(iChild,jChild);
-                    front.Update( iFront, jFront, -value );
+                    numSN.front.Update( iFront, jFront, -value );
                 }
             }
         }
 
         // Call the custom partial LDL
-        LocalSupernodeLDL( orientation, front, symbSN.size );
+        LocalSupernodeLDL( orientation, numSN.front, symbSN.size );
     }
 #ifndef RELEASE
     PopCallStack();

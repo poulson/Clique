@@ -22,33 +22,54 @@
 #define CLIQUE_NUMERIC_LDL_HPP 1
 
 namespace clique {
+
+enum SolveMode { FEW_RHS, MANY_RHS };
+
 namespace numeric {
+using namespace elemental;
+
+template<typename F>
+struct LocalSymmFactSupernode
+{
+    Matrix<F> front;
+    mutable Matrix<F> solution;
+};
 
 template<typename F>
 struct LocalSymmFact
 {
-    std::vector<elemental::Matrix<F> > fronts;
-    mutable std::vector<elemental::Matrix<F> > solutions;
+    std::vector<LocalSymmFactSupernode<F> > supernodes;
+};
+
+template<typename F>
+struct DistSymmFactSupernode
+{
+    DistMatrix<F,MC,MR> front2d;
+    DistMatrix<F,VC,STAR> front1d;
 };
 
 template<typename F>
 struct DistSymmFact
 {
-    std::vector<elemental::DistMatrix<F,elemental::MC,elemental::MR> > fronts;
+    SolveMode mode;
+    std::vector<DistSymmFactSupernode<F> > supernodes;
 };
+
+template<typename F>
+void SetSolveMode( DistSymmFact<F>& distL, SolveMode solveMode );
 
 // All fronts of L are required to be initialized to the expansions of the 
 // original sparse matrix before calling the following factorizations.
 
 template<typename F>
 void LocalLDL
-( elemental::Orientation orientation, 
+( Orientation orientation, 
   symbolic::LocalSymmFact& S, // can't be const due to map...
   numeric::LocalSymmFact<F>& L );
 
 template<typename F>
 void DistLDL
-( elemental::Orientation orientation,
+( Orientation orientation,
         symbolic::DistSymmFact& S, // can't be const due to map...
   const numeric::LocalSymmFact<F>& localL,
         numeric::DistSymmFact<F>&  distL );
