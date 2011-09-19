@@ -19,6 +19,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "clique.hpp"
+using namespace elemental;
 
 // This is the part of the symbolic factorization that requires fine-grain 
 // parallelism: we assume that the upper floor(log2(commSize)) levels of the
@@ -71,6 +72,7 @@ void clique::symbolic::DistSymmetricFactorization
     bottomDistSN.gridHeight = gridHeight;
     bottomDistSN.size = topLocalSN.size;
     bottomDistSN.offset = topLocalSN.offset;
+    bottomDistSN.myOffset = topLocalSN.myOffset;
     bottomDistSN.lowerStruct = topLocalSN.lowerStruct;
     bottomDistSN.origLowerRelIndices = topLocalSN.origLowerRelIndices;
     bottomDistSN.leftChildRelIndices = topLocalSN.leftChildRelIndices;
@@ -83,8 +85,14 @@ void clique::symbolic::DistSymmetricFactorization
     bottomDistSN.rightChildFactRowIndices.clear();
     bottomDistSN.numChildFactSendIndices.clear();
     bottomDistSN.childFactRecvIndices.clear();
+    bottomDistSN.localOffset1d = topLocalSN.myOffset;
+    bottomDistSN.leftChildSolveIndices.clear();
+    bottomDistSN.rightChildSolveIndices.clear();
+    bottomDistSN.childSolveRecvIndices.clear();
 
     // Perform the distributed part of the symbolic factorization
+    int myOffset = bottomDistSN.myOffset;
+    int localOffset1d = bottomDistSN.localOffset1d;
     std::vector<int>::iterator it;
     std::vector<int> sendBuffer, recvBuffer;
     std::vector<int> childrenStruct, partialStruct, fullStruct,
@@ -96,6 +104,7 @@ void clique::symbolic::DistSymmetricFactorization
         DistSymmFactSupernode& factSN = distFact.supernodes[k];
         factSN.size = origSN.size;
         factSN.offset = origSN.offset;
+        factSN.myOffset = myOffset;
 
         // Determine our partner based upon the bits of 'commRank'
         const unsigned powerOfTwo = 1u << (k-1);
@@ -114,6 +123,10 @@ void clique::symbolic::DistSymmetricFactorization
         const unsigned gridWidth = teamSize / gridHeight;
         const unsigned gridRow = teamRank % gridHeight;
         const unsigned gridCol = teamRank / gridHeight;
+
+        // Set some offset and size information for this supernode
+        factSN.localSize1d = LocalLength( origSN.size, teamRank, teamSize );
+        factSN.localOffset1d = localOffset1d;
 
         // Retrieve the child grid information
         const unsigned childTeamRank = mpi::CommRank( factChildSN.comm );
@@ -237,22 +250,18 @@ void clique::symbolic::DistSymmetricFactorization
         const std::vector<int>& myChildRelIndices = 
             ( onLeft ? factSN.leftChildRelIndices 
                      : factSN.rightChildRelIndices );
-        const int updateSize = factSN.lowerStruct.size();
+        const int updateSize = myChildLowerStructSize;
         {
-            const int updateColAlignment = origSN.size % childGridHeight;
-            const int updateRowAlignment = origSN.size % childGridWidth;
+            const int updateColAlignment = myChildSize % childGridHeight;
+            const int updateRowAlignment = myChildSize % childGridWidth;
             const int updateColShift = 
-                elemental::Shift
-                ( childGridRow, updateColAlignment, childGridHeight );
+                Shift( childGridRow, updateColAlignment, childGridHeight );
             const int updateRowShift = 
-                elemental::Shift
-                ( childGridCol, updateRowAlignment, childGridWidth );
+                Shift( childGridCol, updateRowAlignment, childGridWidth );
             const int updateLocalHeight = 
-                elemental::LocalLength
-                ( updateSize, updateColShift, childGridHeight );
+                LocalLength( updateSize, updateColShift, childGridHeight );
             const int updateLocalWidth = 
-                elemental::LocalLength
-                ( updateSize, updateRowShift, childGridWidth );
+                LocalLength( updateSize, updateRowShift, childGridWidth );
             for( int jChildLocal=0; 
                      jChildLocal<updateLocalWidth; ++jChildLocal )
             {
@@ -283,13 +292,11 @@ void clique::symbolic::DistSymmetricFactorization
         std::memset
         ( &factSN.numChildSolveSendIndices[0], 0, teamSize*sizeof(int) );
         {
-            const int updateAlignment = origSN.size % childTeamSize;
+            const int updateAlignment = myChildSize % childTeamSize;
             const int updateShift = 
-                elemental::Shift
-                ( childTeamRank, updateAlignment, childTeamSize );
+                Shift( childTeamRank, updateAlignment, childTeamSize );
             const int updateLocalHeight = 
-                elemental::LocalLength
-                ( updateSize, updateShift, childTeamSize );
+                LocalLength( updateSize, updateShift, childTeamSize );
             for( int iChildLocal=updateShift; 
                      iChildLocal<updateLocalHeight; ++iChildLocal )
             {
@@ -372,6 +379,9 @@ void clique::symbolic::DistSymmetricFactorization
             ComputeFactRecvIndices( factSN );
         else
             factSN.childFactRecvIndices.clear();
+
+        myOffset += factSN.size;
+        localOffset1d += factSN.localSize1d;
     }
 #ifndef RELEASE
     PopCallStack();

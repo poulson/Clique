@@ -45,7 +45,7 @@ void clique::numeric::LocalLDLForwardSolve
 
         // Pull in the relevant information from the RHS
         Matrix<F> XT;
-        XT.LockedView( X, symbSN.offset, 0, symbSN.size, X.Width() );
+        XT.LockedView( X, symbSN.myOffset, 0, symbSN.size, width );
         WT = XT;
         WB.SetToZero();
 
@@ -118,7 +118,7 @@ void clique::numeric::LocalLDLDiagonalSolve
     for( int k=0; k<numSupernodes; ++k )
     {
         const symbolic::LocalSymmFactSupernode& symbSN = S.supernodes[k];
-        XSub.View( X, symbSN.offset, 0, symbSN.size, width );
+        XSub.View( X, symbSN.myOffset, 0, symbSN.size, width );
 
         Matrix<F> d;
         L.supernodes[k].front.GetDiagonal( d );
@@ -155,7 +155,7 @@ void clique::numeric::LocalLDLBackwardSolve
 
         // Pull in the relevant information from the RHS
         Matrix<F> XT;
-        XT.LockedView( X, symbSN.offset, 0, symbSN.size, X.Width() );
+        XT.LockedView( X, symbSN.myOffset, 0, symbSN.size, width );
         WT = XT;
 
         // Update using the parent (if it exists)

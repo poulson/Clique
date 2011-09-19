@@ -40,7 +40,7 @@ struct LocalSymmOrig
 struct LocalSymmFactSupernode
 {
     bool isLeftChild;
-    int size, offset;
+    int size, offset, myOffset;
     int parent; // -1 if root separator
     std::vector<int> children;
 
@@ -71,7 +71,7 @@ struct DistSymmFactSupernode
     mpi::Comm comm;
     int gridHeight;
 
-    int size, offset, leftChildSize, rightChildSize;
+    int size, offset, myOffset, leftChildSize, rightChildSize;
     std::vector<int> lowerStruct;
 
     // Useful for expanding sparse matrices into this frontal matrix
@@ -96,6 +96,7 @@ struct DistSymmFactSupernode
     //
     // Helpers for 1d solves (few right-hand sides)
     //
+    int localSize1d, localOffset1d;
     std::vector<int> numChildSolveSendIndices;
     std::deque<int> leftChildSolveIndices, rightChildSolveIndices;
     std::vector<std::deque<int> > childSolveRecvIndices;

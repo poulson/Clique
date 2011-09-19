@@ -30,6 +30,7 @@ void clique::symbolic::LocalSymmetricFactorization
     fact.supernodes.resize( numSupernodes );
 
     // Perform the symbolic factorization
+    int myOffset = 0;
     std::vector<int>::iterator it;
     std::vector<int> childrenStruct, partialStruct, fullStruct,
                      supernodeIndices;
@@ -39,6 +40,7 @@ void clique::symbolic::LocalSymmetricFactorization
         LocalSymmFactSupernode& factSN = fact.supernodes[k];
         factSN.size = origSN.size;
         factSN.offset = origSN.offset;
+        factSN.myOffset = myOffset;
         factSN.parent = origSN.parent;
         factSN.children = origSN.children;
 
@@ -130,6 +132,8 @@ void clique::symbolic::LocalSymmetricFactorization
         {
             factSN.lowerStruct = origSN.lowerStruct;
         }
+
+        myOffset += factSN.size;
     }
 #ifndef RELEASE
     PopCallStack();
