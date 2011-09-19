@@ -205,27 +205,34 @@ void clique::numeric::DistLDL
 #endif
 }
 
+template void clique::numeric::SetSolveMode
+( DistSymmFact<float>& distL, SolveMode mode );
 template void clique::numeric::DistLDL
 ( Orientation orientation,
         symbolic::DistSymmFact& S,
   const numeric::LocalSymmFact<float>& localL,
         numeric::DistSymmFact<float>& distL );
 
+template void clique::numeric::SetSolveMode
+( DistSymmFact<double>& distL, SolveMode mode );
 template void clique::numeric::DistLDL
 ( Orientation orientation,
         symbolic::DistSymmFact& S,
   const numeric::LocalSymmFact<double>& localL,
         numeric::DistSymmFact<double>& distL );
 
+template void clique::numeric::SetSolveMode
+( DistSymmFact<std::complex<float> >& distL, SolveMode mode );
 template void clique::numeric::DistLDL
 ( Orientation orientation,
         symbolic::DistSymmFact& S,
   const numeric::LocalSymmFact<std::complex<float> >& localL,
         numeric::DistSymmFact<std::complex<float> >& distL );
 
+template void clique::numeric::SetSolveMode
+( DistSymmFact<std::complex<double> >& distL, SolveMode mode );
 template void clique::numeric::DistLDL
 ( Orientation orientation,
         symbolic::DistSymmFact& S,
   const numeric::LocalSymmFact<std::complex<double> >& localL,
         numeric::DistSymmFact<std::complex<double> >& distL );
-
