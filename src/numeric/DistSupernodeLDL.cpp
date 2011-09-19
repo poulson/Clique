@@ -24,32 +24,6 @@
 #include "clique.hpp"
 using namespace elemental;
 
-template<typename F>
-void clique::numeric::DistSupernodeLDLT
-( DistMatrix<F,MC,MR>& A, int supernodeSize )
-{
-#ifndef RELEASE
-    clique::PushCallStack("numeric::DistSupernodeLDLT");
-#endif
-    clique::numeric::DistSupernodeLDL( TRANSPOSE, A, supernodeSize );
-#ifndef RELEASE
-    clique::PopCallStack();
-#endif
-}
-
-template<typename F>
-void clique::numeric::DistSupernodeLDLH
-( DistMatrix<F,MC,MR>& A, int supernodeSize )
-{
-#ifndef RELEASE
-    clique::PushCallStack("numeric::DistSupernodeLDLH");
-#endif
-    clique::numeric::DistSupernodeLDL( ADJOINT, A, supernodeSize );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
 template<typename F> // F represents a real or complex field
 void clique::numeric::DistSupernodeLDL
 ( Orientation orientation, DistMatrix<F,MC,MR>& A, int supernodeSize )
@@ -144,31 +118,15 @@ void clique::numeric::DistSupernodeLDL
 template void clique::numeric::DistSupernodeLDL
 ( Orientation orientation, 
   DistMatrix<float,MC,MR>& A, int supernodeSize );
-template void clique::numeric::DistSupernodeLDLT
-( DistMatrix<float,MC,MR>& A, int supernodeSize );
-template void clique::numeric::DistSupernodeLDLH
-( DistMatrix<float,MC,MR>& A, int supernodeSize );
 
 template void clique::numeric::DistSupernodeLDL
 ( Orientation orientation, 
   DistMatrix<double,MC,MR>& A, int supernodeSize );
-template void clique::numeric::DistSupernodeLDLT
-( DistMatrix<double,MC,MR>& A, int supernodeSize );
-template void clique::numeric::DistSupernodeLDLH
-( DistMatrix<double,MC,MR>& A, int supernodeSize );
 
 template void clique::numeric::DistSupernodeLDL
 ( Orientation orientation, 
   DistMatrix<std::complex<float>,MC,MR>& A, int supernodeSize );
-template void clique::numeric::DistSupernodeLDLT
-( DistMatrix<std::complex<float>,MC,MR>& A, int supernodeSize );
-template void clique::numeric::DistSupernodeLDLH
-( DistMatrix<std::complex<float>,MC,MR>& A, int supernodeSize );
 
 template void clique::numeric::DistSupernodeLDL
 ( Orientation orientation, 
   DistMatrix<std::complex<double>,MC,MR>& A, int supernodeSize );
-template void clique::numeric::DistSupernodeLDLT
-( DistMatrix<std::complex<double>,MC,MR>& A, int supernodeSize );
-template void clique::numeric::DistSupernodeLDLH
-( DistMatrix<std::complex<double>,MC,MR>& A, int supernodeSize );

@@ -152,8 +152,10 @@ void clique::numeric::DistLDL
             }
         }
         recvBuffer.clear();
-        symbSN.childRecvIndices.clear();
+        if( computeRecvIndices )
+            symbSN.childRecvIndices.clear();
 
+        // Now that the frontal matrix is set up, perform the factorization
         DistSupernodeLDL( orientation, front, symbSN.size );
     }
 #ifndef RELEASE

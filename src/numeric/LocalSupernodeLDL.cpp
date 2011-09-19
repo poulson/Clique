@@ -24,32 +24,6 @@
 #include "clique.hpp"
 using namespace elemental;
 
-template<typename F>
-void clique::numeric::LocalSupernodeLDLT
-( Matrix<F>& A, int supernodeSize )
-{
-#ifndef RELEASE
-    clique::PushCallStack("numeric::LocalSupernodeLDLT");
-#endif
-    clique::numeric::LocalSupernodeLDL( TRANSPOSE, A, supernodeSize );
-#ifndef RELEASE
-    clique::PopCallStack();
-#endif
-}
-
-template<typename F>
-void clique::numeric::LocalSupernodeLDLH
-( Matrix<F>& A, int supernodeSize )
-{
-#ifndef RELEASE
-    clique::PushCallStack("numeric::LocalSupernodeLDLH");
-#endif
-    clique::numeric::LocalSupernodeLDL( ADJOINT, A, supernodeSize );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
 template<typename F> // F represents a real or complex field
 void clique::numeric::LocalSupernodeLDL
 ( Orientation orientation, Matrix<F>& A, int supernodeSize )
@@ -114,30 +88,14 @@ void clique::numeric::LocalSupernodeLDL
 
 template void clique::numeric::LocalSupernodeLDL
 ( Orientation orientation, Matrix<float>& A, int supernodeSize );
-template void clique::numeric::LocalSupernodeLDLT
-( Matrix<float>& A, int supernodeSize );
-template void clique::numeric::LocalSupernodeLDLH
-( Matrix<float>& A, int supernodeSize );
 
 template void clique::numeric::LocalSupernodeLDL
 ( Orientation orientation, Matrix<double>& A, int supernodeSize );
-template void clique::numeric::LocalSupernodeLDLT
-( Matrix<double>& A, int supernodeSize );
-template void clique::numeric::LocalSupernodeLDLH
-( Matrix<double>& A, int supernodeSize );
 
 template void clique::numeric::LocalSupernodeLDL
 ( Orientation orientation, 
   Matrix<std::complex<float> >& A, int supernodeSize );
-template void clique::numeric::LocalSupernodeLDLT
-( Matrix<std::complex<float> >& A, int supernodeSize );
-template void clique::numeric::LocalSupernodeLDLH
-( Matrix<std::complex<float> >& A, int supernodeSize );
 
 template void clique::numeric::LocalSupernodeLDL
 ( Orientation orientation, 
   Matrix<std::complex<double> >& A, int supernodeSize );
-template void clique::numeric::LocalSupernodeLDLT
-( Matrix<std::complex<double> >& A, int supernodeSize );
-template void clique::numeric::LocalSupernodeLDLH
-( Matrix<std::complex<double> >& A, int supernodeSize );
