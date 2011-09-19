@@ -85,7 +85,7 @@ void clique::numeric::DistLDL
                symbSN.numChildSendIndices.end() );
         const int sendPortionSize = std::max(*it,mpi::MIN_COLL_MSG);
         std::vector<F> sendBuffer( sendPortionSize*commSize );
-        std::vector<int> sendOffsets( commSize, 0 );
+
         const std::vector<int>& myChildRelIndices = 
             ( isLeftChild ? symbSN.leftChildRelIndices
                           : symbSN.rightChildRelIndices );
@@ -94,6 +94,10 @@ void clique::numeric::DistLDL
         const int updateRowShift = childUpdate.RowShift();
         const int updateLocalHeight = childUpdate.LocalHeight();
         const int updateLocalWidth = childUpdate.LocalWidth();
+        // Initialize the offsets to each process's chunk
+        std::vector<int> sendOffsets( commSize );
+        for( int proc=0; proc<commSize; ++proc )
+            sendOffsets[proc] = proc*sendPortionSize;
         for( int jChildLocal=0; jChildLocal<updateLocalWidth; ++jChildLocal )
         {
             const int jChild = updateRowShift + jChildLocal*childGridWidth;
@@ -115,6 +119,9 @@ void clique::numeric::DistLDL
                     childUpdate.GetLocalEntry(iChildLocal,jChildLocal);
             }
         }
+        // Reset the offsets to their original values
+        for( int proc=0; proc<commSize; ++proc )
+            sendOffsets[proc] = proc*sendPortionSize;
 
         // AllToAll to send and receive the child updates
         if( computeRecvIndices )
@@ -126,10 +133,25 @@ void clique::numeric::DistLDL
             recvPortionSize = std::max(thisPortion,recvPortionSize);
         }
         std::vector<F> recvBuffer( recvPortionSize*commSize );
-        // TODO
+        mpi::AllToAll
+        ( &sendBuffer[0], sendPortionSize, 
+          &recvBuffer[0], recvPortionSize, comm );
+        sendBuffer.clear();
 
         // Unpack the child udpates (with an Axpy)
-        // TODO
+        for( int proc=0; proc<commSize; ++proc )
+        {
+            const F* recvValues = &recvBuffer[proc*recvPortionSize];
+            const std::deque<int>& recvIndices = symbSN.childRecvIndices[proc];
+            for( int k=0; k<recvIndices.size(); ++k )
+            {
+                const int iFrontLocal = recvIndices[2*k+0];
+                const int jFrontLocal = recvIndices[2*k+1];
+                const F value = recvValues[k];
+                front.UpdateLocalEntry( iFrontLocal, jFrontLocal, value );
+            }
+        }
+        recvBuffer.clear();
         symbSN.childRecvIndices.clear();
 
         DistSupernodeLDL( orientation, front, symbSN.size );
