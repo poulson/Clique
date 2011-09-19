@@ -25,14 +25,27 @@ using namespace elemental;
 template<typename F>
 void clique::numeric::SetSolveMode( DistSymmFact<F>& distL, SolveMode mode )
 {
+#ifndef RELEASE
+    PushCallStack("numeric::SetSolveMode");
+#endif
     // Check if this call can be a no-op
     if( mode == distL.mode ) 
+    {
+#ifndef RELEASE
+        PopCallStack();
+#endif
         return;
+    }
 
     distL.mode = mode;
     const int numSupernodes = distL.supernodes.size();    
     if( numSupernodes == 0 )
+    {
+#ifndef RELEASE
+        PopCallStack();
+#endif
         return;
+    }
 
     DistSymmFactSupernode<F>& leafSN = distL.supernodes[0];
     if( mode == FEW_RHS )
@@ -55,6 +68,9 @@ void clique::numeric::SetSolveMode( DistSymmFact<F>& distL, SolveMode mode )
             sn.front1d.Empty();
         }
     }
+#ifndef RELEASE
+    PopCallStack();
+#endif
 }
 
 template<typename F> // F represents a real or complex field
