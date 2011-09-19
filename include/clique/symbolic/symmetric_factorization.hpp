@@ -86,15 +86,22 @@ struct DistSymmFactSupernode
     //
     // Helpers for the factorization
     //
+    std::vector<int> numChildFactSendIndices;
     std::deque<int> leftChildFactColIndices, leftChildFactRowIndices,
                     rightChildFactColIndices, rightChildFactRowIndices;
-    std::vector<int> numChildFactSendIndices;
     // This information does not necessarily have to be kept and can be
     // computed from the above information (albeit somewhat expensively).
     mutable std::vector<std::deque<int> > childFactRecvIndices;
 
     //
     // Helpers for 1d solves (few right-hand sides)
+    //
+    std::vector<int> numChildSolveSendIndices;
+    std::deque<int> leftChildSolveIndices, rightChildSolveIndices;
+    std::vector<std::deque<int> > childSolveRecvIndices;
+
+    //
+    // Helpers for 2d solves (many right-hand sides)
     //
     // TODO
 };
@@ -109,7 +116,7 @@ void SymmetricFactorization
   const DistSymmOrig&    distOrig,
         LocalSymmFact&   localFact,
         DistSymmFact&    distFact, 
-        bool storeRecvIndices=true );
+        bool storeFactRecvIndices=true );
 
 void LocalSymmetricFactorization
 ( const LocalSymmOrig& localOrig,
@@ -119,9 +126,9 @@ void DistSymmetricFactorization
 ( const DistSymmOrig&  distOrig, 
   const LocalSymmFact& localFact, 
         DistSymmFact&  distFact, 
-        bool storeRecvIndices=true );
+        bool storeFactRecvIndices=true );
 
-void ComputeRecvIndices( const DistSymmFactSupernode& supernode );
+void ComputeFactRecvIndices( const DistSymmFactSupernode& supernode );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -132,14 +139,14 @@ inline void SymmetricFactorization
   const DistSymmOrig&  distOrig,
         LocalSymmFact& localFact,
         DistSymmFact&  distFact,
-        bool storeRecvIndices )
+        bool storeFactRecvIndices )
 {
 #ifndef RELEASE
     PushCallStack("symbolic::SymmetricFactorization");
 #endif
     LocalSymmetricFactorization( localOrig, localFact );
     DistSymmetricFactorization
-    ( distOrig, localFact, distFact, storeRecvIndices );
+    ( distOrig, localFact, distFact, storeFactRecvIndices );
 #ifndef RELEASE
     PopCallStack();
 #endif

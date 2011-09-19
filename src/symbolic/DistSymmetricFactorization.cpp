@@ -33,7 +33,7 @@
 void clique::symbolic::DistSymmetricFactorization
 ( const DistSymmOrig&  distOrig,
   const LocalSymmFact& localFact, DistSymmFact&  distFact, 
-        bool storeRecvIndices )
+        bool storeFactRecvIndices )
 {
 #ifndef RELEASE
     PushCallStack("symbolic::DistSymmetricFactorization");
@@ -230,7 +230,7 @@ void clique::symbolic::DistSymmetricFactorization
           factSN.lowerStruct.begin() );
         factSN.lowerStruct.resize( int(it-factSN.lowerStruct.begin()) );
 
-        // Fill numChildSendIndices so that we can reuse it for many sends
+        // Fill numChildFactSendIndices so that we can reuse it for many facts.
         factSN.numChildFactSendIndices.resize( teamSize );
         std::memset
         ( &factSN.numChildFactSendIndices[0], 0, teamSize*sizeof(int) );
@@ -238,43 +238,69 @@ void clique::symbolic::DistSymmetricFactorization
             ( onLeft ? factSN.leftChildRelIndices 
                      : factSN.rightChildRelIndices );
         const int updateSize = factSN.lowerStruct.size();
-        const int updateColAlignment = origSN.size % childGridHeight;
-        const int updateRowAlignment = origSN.size % childGridWidth;
-        const int updateColShift = 
-            elemental::Shift
-            ( childGridRow, updateColAlignment, childGridHeight );
-        const int updateRowShift = 
-            elemental::Shift
-            ( childGridCol, updateRowAlignment, childGridWidth );
-        const int updateLocalHeight = 
-            elemental::LocalLength
-            ( updateSize, updateColShift, childGridHeight );
-        const int updateLocalWidth = 
-            elemental::LocalLength
-            ( updateSize, updateRowShift, childGridWidth );
-        for( int jChildLocal=0; jChildLocal<updateLocalWidth; ++jChildLocal )
         {
-            const int jChild = updateRowShift + jChildLocal*childGridWidth;
-            const int destGridCol = myChildRelIndices[jChild] % gridWidth;
-
-            const int align = (jChild+updateRowAlignment) % childGridHeight;
-            const int shift = 
-                (childGridRow+childGridHeight-align) % childGridHeight;
-            const int localColShift = 
-                (jChild+shift-updateColShift) / childGridHeight;
-            for( int iChildLocal=localColShift; 
-                     iChildLocal<updateLocalHeight; ++iChildLocal )
+            const int updateColAlignment = origSN.size % childGridHeight;
+            const int updateRowAlignment = origSN.size % childGridWidth;
+            const int updateColShift = 
+                elemental::Shift
+                ( childGridRow, updateColAlignment, childGridHeight );
+            const int updateRowShift = 
+                elemental::Shift
+                ( childGridCol, updateRowAlignment, childGridWidth );
+            const int updateLocalHeight = 
+                elemental::LocalLength
+                ( updateSize, updateColShift, childGridHeight );
+            const int updateLocalWidth = 
+                elemental::LocalLength
+                ( updateSize, updateRowShift, childGridWidth );
+            for( int jChildLocal=0; 
+                     jChildLocal<updateLocalWidth; ++jChildLocal )
             {
-                const int iChild = updateColShift + iChildLocal*childGridHeight;
-                const int destGridRow = myChildRelIndices[iChild] % gridHeight;
+                const int jChild = updateRowShift + jChildLocal*childGridWidth;
+                const int destGridCol = myChildRelIndices[jChild] % gridWidth;
 
-                const int destRank = destGridRow + destGridCol*gridHeight;
-                ++factSN.numChildFactSendIndices[destRank];
+                const int align = (jChild+updateRowAlignment) % childGridHeight;
+                const int shift = 
+                    (childGridRow+childGridHeight-align) % childGridHeight;
+                const int localColShift = 
+                    (jChild+shift-updateColShift) / childGridHeight;
+                for( int iChildLocal=localColShift; 
+                         iChildLocal<updateLocalHeight; ++iChildLocal )
+                {
+                    const int iChild = 
+                        updateColShift + iChildLocal*childGridHeight;
+                    const int destGridRow = 
+                        myChildRelIndices[iChild] % gridHeight;
+
+                    const int destRank = destGridRow + destGridCol*gridHeight;
+                    ++factSN.numChildFactSendIndices[destRank];
+                }
             }
         }
 
-        // Fill {left,right}Child{Col,Row}Indices so that we can reuse them
-        // to compute our recv information
+        // Fill numChildSolveSendIndices to use for many solves
+        factSN.numChildSolveSendIndices.resize( teamSize );
+        std::memset
+        ( &factSN.numChildSolveSendIndices[0], 0, teamSize*sizeof(int) );
+        {
+            const int updateColAlignment = origSN.size % childTeamSize;
+            const int updateColShift = 
+                elemental::Shift
+                ( childTeamRank, updateColAlignment, childTeamSize );
+            const int updateLocalHeight = 
+                elemental::LocalLength
+                ( updateSize, updateColShift, childTeamSize );
+            for( int iChildLocal=updateColShift; 
+                     iChildLocal<updateLocalHeight; ++iChildLocal )
+            {
+                const int iChild = updateColShift + iChildLocal*childTeamSize;
+                const int destRank = myChildRelIndices[iChild] % teamSize;
+                ++factSN.numChildSolveSendIndices[destRank];
+            }
+        }
+
+        // Fill {left,right}ChildFact{Col,Row}Indices so that we can reuse them
+        // to compute our recv information for use in many factorizations
         factSN.leftChildFactColIndices.clear();
         for( int i=0; i<numLeftIndices; ++i )
             if( factSN.leftChildRelIndices[i] % gridHeight == gridRow )
@@ -287,12 +313,26 @@ void clique::symbolic::DistSymmetricFactorization
         for( int i=0; i<numRightIndices; ++i )
             if( factSN.rightChildRelIndices[i] % gridHeight == gridRow )
                 factSN.rightChildFactColIndices.push_back( i );
+        factSN.rightChildFactRowIndices.clear();
         for( int i=0; i<numRightIndices; ++i )
             if( factSN.rightChildRelIndices[i] % gridWidth == gridCol )
                 factSN.rightChildFactRowIndices.push_back( i );
 
-        if( storeRecvIndices )
-            ComputeRecvIndices( factSN );
+        // Fill {left,right}ChildSolveIndices for use in many solves
+        factSN.leftChildSolveIndices.clear();
+        for( int i=0; i<numLeftIndices; ++i )
+            if( factSN.leftChildRelIndices[i] % teamSize == teamRank )
+                factSN.leftChildSolveIndices.push_back( i );
+        factSN.rightChildSolveIndices.clear();
+        for( int i=0; i<numRightIndices; ++i )
+            if( factSN.rightChildRelIndices[i] % teamSize == teamRank )
+                factSN.rightChildSolveIndices.push_back( i );
+
+        // TODO: Compute the solve recv indices
+        // HERE
+
+        if( storeFactRecvIndices )
+            ComputeFactRecvIndices( factSN );
         else
             factSN.childFactRecvIndices.clear();
     }
@@ -301,10 +341,10 @@ void clique::symbolic::DistSymmetricFactorization
 #endif
 }
 
-void clique::symbolic::ComputeRecvIndices( const DistSymmFactSupernode& sn )
+void clique::symbolic::ComputeFactRecvIndices( const DistSymmFactSupernode& sn )
 {
 #ifndef RELEASE
-    PushCallStack("symbolic::ComputeRecvIndices");
+    PushCallStack("symbolic::ComputeFactRecvIndices");
 #endif
     const int commRank = mpi::CommRank( sn.comm );
     const int commSize = mpi::CommSize( sn.comm );

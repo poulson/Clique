@@ -30,6 +30,14 @@ void LocalLDLForwardSolve
   const numeric::LocalSymmFact<F>& L, F alpha, Matrix<F>& X );
 
 template<typename F>
+void DistLDLForwardSolve
+( const symbolic::LocalSymmFact& localS,
+  const symbolic::DistSymmFact& distS,
+  const numeric::LocalSymmFact<F>& localL,
+  const numeric::DistSymmFact<F>& distL,
+        Matrix<F>& localX );
+
+template<typename F>
 void LocalLDLDiagonalSolve
 ( const symbolic::LocalSymmFact& S,
   const numeric::LocalSymmFact<F>& L, Matrix<F>& X,

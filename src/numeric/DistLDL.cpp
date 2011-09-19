@@ -104,7 +104,7 @@ void clique::numeric::DistLDL
         const DistSymmFactSupernode<F>& childNumSN = distL.supernodes[k-1];
         DistSymmFactSupernode<F>& numSN = distL.supernodes[k];
 
-        const bool computeRecvIndices = 
+        const bool computeFactRecvIndices = 
             ( symbSN.childFactRecvIndices.size() == 0 );
 
         // Grab this front's grid information
@@ -182,8 +182,8 @@ void clique::numeric::DistLDL
             sendOffsets[proc] = proc*sendPortionSize;
 
         // AllToAll to send and receive the child updates
-        if( computeRecvIndices )
-            symbolic::ComputeRecvIndices( symbSN );
+        if( computeFactRecvIndices )
+            symbolic::ComputeFactRecvIndices( symbSN );
         int recvPortionSize = mpi::MIN_COLL_MSG;
         for( int i=0; i<commSize; ++i )
         {
@@ -212,7 +212,7 @@ void clique::numeric::DistLDL
             }
         }
         recvBuffer.clear();
-        if( computeRecvIndices )
+        if( computeFactRecvIndices )
             symbSN.childFactRecvIndices.clear();
 
         // Now that the frontal matrix is set up, perform the factorization
