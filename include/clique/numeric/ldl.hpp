@@ -32,7 +32,7 @@ template<typename F>
 struct LocalSymmFactSupernode
 {
     Matrix<F> front;
-    mutable Matrix<F> solution;
+    mutable Matrix<F> workspace;
 };
 
 template<typename F>
