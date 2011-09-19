@@ -283,17 +283,17 @@ void clique::symbolic::DistSymmetricFactorization
         std::memset
         ( &factSN.numChildSolveSendIndices[0], 0, teamSize*sizeof(int) );
         {
-            const int updateColAlignment = origSN.size % childTeamSize;
-            const int updateColShift = 
+            const int updateAlignment = origSN.size % childTeamSize;
+            const int updateShift = 
                 elemental::Shift
-                ( childTeamRank, updateColAlignment, childTeamSize );
+                ( childTeamRank, updateAlignment, childTeamSize );
             const int updateLocalHeight = 
                 elemental::LocalLength
-                ( updateSize, updateColShift, childTeamSize );
-            for( int iChildLocal=updateColShift; 
+                ( updateSize, updateShift, childTeamSize );
+            for( int iChildLocal=updateShift; 
                      iChildLocal<updateLocalHeight; ++iChildLocal )
             {
-                const int iChild = updateColShift + iChildLocal*childTeamSize;
+                const int iChild = updateShift + iChildLocal*childTeamSize;
                 const int destRank = myChildRelIndices[iChild] % teamSize;
                 ++factSN.numChildSolveSendIndices[destRank];
             }
@@ -328,9 +328,46 @@ void clique::symbolic::DistSymmetricFactorization
             if( factSN.rightChildRelIndices[i] % teamSize == teamRank )
                 factSN.rightChildSolveIndices.push_back( i );
 
-        // TODO: Compute the solve recv indices
-        // HERE
+        //
+        // Compute the solve recv indices
+        //
+        const int leftChildTeamSize = teamSize / 2;
+        const int rightChildTeamSize = teamSize / 2;
+        factSN.childSolveRecvIndices.clear();
+        factSN.childSolveRecvIndices.resize( teamSize );
 
+        // Compute the recv indices for the left child 
+        const int leftUpdateAlignment = 
+            factSN.leftChildSize % leftChildTeamSize;
+        for( int iPre=0; iPre<factSN.leftChildSolveIndices.size(); ++iPre )
+        {
+            const int iChild = factSN.leftChildSolveIndices[iPre];
+            const int iFront = factSN.leftChildRelIndices[iChild];
+            const int iFrontLocal = (iFront-teamRank) / teamSize;
+
+            const int childRank = 
+                (iChild+leftUpdateAlignment) % leftChildTeamSize;
+            const int frontRank = childRank;
+            factSN.childSolveRecvIndices[frontRank].push_back(iFrontLocal);
+        }
+
+        // Compute the recv indices for the right child
+        const int rightUpdateAlignment = 
+            factSN.rightChildSize % rightChildTeamSize;
+        for( int iPre=0; iPre<factSN.rightChildSolveIndices.size(); ++iPre )
+        {
+            const int iChild = factSN.rightChildSolveIndices[iPre];
+            const int iFront = factSN.rightChildRelIndices[iChild];
+            const int iFrontLocal = (iFront-teamRank) / teamSize;
+
+            const int childRank = 
+                (iChild+rightUpdateAlignment) % rightChildTeamSize;
+            const int frontRank = leftChildTeamSize + childRank;
+            factSN.childSolveRecvIndices[frontRank].push_back(iFrontLocal);
+        }
+
+        // Optionally compute the recv indices for the factorization. 
+        // This is optional since it requires a nontrivial amount of storage.
         if( storeFactRecvIndices )
             ComputeFactRecvIndices( factSN );
         else
