@@ -71,19 +71,32 @@ struct DistSymmFactSupernode
     mpi::Comm comm;
     int gridHeight;
 
-    int size, offset;
+    int size, offset, leftChildSize, rightChildSize;
     std::vector<int> lowerStruct;
+
+    // Useful for expanding sparse matrices into this frontal matrix
     std::map<int,int> origLowerRelIndices;
+
+    // The relative indices of the left and right children
+    // (maps from the child update indices to our frontal indices).
+    // These could be replaced with just the relative indices of our local 
+    // submatrices of the child updates.
     std::vector<int> leftChildRelIndices, rightChildRelIndices;
 
-    int leftChildSize, rightChildSize;
-    std::deque<int> leftChildColIndices, leftChildRowIndices,
-                    rightChildColIndices, rightChildRowIndices;
-    std::vector<int> numChildSendIndices;
-
+    //
+    // Helpers for the factorization
+    //
+    std::deque<int> leftChildFactColIndices, leftChildFactRowIndices,
+                    rightChildFactColIndices, rightChildFactRowIndices;
+    std::vector<int> numChildFactSendIndices;
     // This information does not necessarily have to be kept and can be
     // computed from the above information (albeit somewhat expensively).
-    mutable std::vector<std::deque<int> > childRecvIndices;
+    mutable std::vector<std::deque<int> > childFactRecvIndices;
+
+    //
+    // Helpers for 1d solves (few right-hand sides)
+    //
+    // TODO
 };
 
 struct DistSymmFact

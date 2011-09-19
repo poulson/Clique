@@ -104,7 +104,8 @@ void clique::numeric::DistLDL
         const DistSymmFactSupernode<F>& childNumSN = distL.supernodes[k-1];
         DistSymmFactSupernode<F>& numSN = distL.supernodes[k];
 
-        const bool computeRecvIndices = ( symbSN.childRecvIndices.size() == 0 );
+        const bool computeRecvIndices = 
+            ( symbSN.childFactRecvIndices.size() == 0 );
 
         // Grab this front's grid information
         const Grid& grid = numSN.front2d.Grid();
@@ -138,8 +139,8 @@ void clique::numeric::DistLDL
           childSymbSN.size, childSymbSN.size, updateSize, updateSize );
         const bool isLeftChild = ( commRank < commSize/2 );
         it = std::max_element
-             ( symbSN.numChildSendIndices.begin(), 
-               symbSN.numChildSendIndices.end() );
+             ( symbSN.numChildFactSendIndices.begin(), 
+               symbSN.numChildFactSendIndices.end() );
         const int sendPortionSize = std::max(*it,mpi::MIN_COLL_MSG);
         std::vector<F> sendBuffer( sendPortionSize*commSize );
 
@@ -186,7 +187,7 @@ void clique::numeric::DistLDL
         int recvPortionSize = mpi::MIN_COLL_MSG;
         for( int i=0; i<commSize; ++i )
         {
-            const int thisPortion = symbSN.childRecvIndices[i].size();
+            const int thisPortion = symbSN.childFactRecvIndices[i].size();
             recvPortionSize = std::max(thisPortion,recvPortionSize);
         }
         std::vector<F> recvBuffer( recvPortionSize*commSize );
@@ -199,7 +200,8 @@ void clique::numeric::DistLDL
         for( int proc=0; proc<commSize; ++proc )
         {
             const F* recvValues = &recvBuffer[proc*recvPortionSize];
-            const std::deque<int>& recvIndices = symbSN.childRecvIndices[proc];
+            const std::deque<int>& recvIndices = 
+                symbSN.childFactRecvIndices[proc];
             for( int k=0; k<recvIndices.size(); ++k )
             {
                 const int iFrontLocal = recvIndices[2*k+0];
@@ -211,7 +213,7 @@ void clique::numeric::DistLDL
         }
         recvBuffer.clear();
         if( computeRecvIndices )
-            symbSN.childRecvIndices.clear();
+            symbSN.childFactRecvIndices.clear();
 
         // Now that the frontal matrix is set up, perform the factorization
         DistSupernodeLDL( orientation, numSN.front2d, symbSN.size );

@@ -77,12 +77,12 @@ void clique::symbolic::DistSymmetricFactorization
     bottomDistSN.rightChildRelIndices = topLocalSN.rightChildRelIndices;
     bottomDistSN.leftChildSize = -1; // not needed, could compute though
     bottomDistSN.rightChildSize = -1; // not needed, could compute though
-    bottomDistSN.leftChildColIndices.clear();
-    bottomDistSN.leftChildRowIndices.clear();
-    bottomDistSN.rightChildColIndices.clear();
-    bottomDistSN.rightChildRowIndices.clear();
-    bottomDistSN.numChildSendIndices.clear();
-    bottomDistSN.childRecvIndices.clear();
+    bottomDistSN.leftChildFactColIndices.clear();
+    bottomDistSN.leftChildFactRowIndices.clear();
+    bottomDistSN.rightChildFactColIndices.clear();
+    bottomDistSN.rightChildFactRowIndices.clear();
+    bottomDistSN.numChildFactSendIndices.clear();
+    bottomDistSN.childFactRecvIndices.clear();
 
     // Perform the distributed part of the symbolic factorization
     std::vector<int>::iterator it;
@@ -231,8 +231,9 @@ void clique::symbolic::DistSymmetricFactorization
         factSN.lowerStruct.resize( int(it-factSN.lowerStruct.begin()) );
 
         // Fill numChildSendIndices so that we can reuse it for many sends
-        factSN.numChildSendIndices.resize( teamSize );
-        std::memset( &factSN.numChildSendIndices[0], 0, teamSize*sizeof(int) );
+        factSN.numChildFactSendIndices.resize( teamSize );
+        std::memset
+        ( &factSN.numChildFactSendIndices[0], 0, teamSize*sizeof(int) );
         const std::vector<int>& myChildRelIndices = 
             ( onLeft ? factSN.leftChildRelIndices 
                      : factSN.rightChildRelIndices );
@@ -268,32 +269,32 @@ void clique::symbolic::DistSymmetricFactorization
                 const int destGridRow = myChildRelIndices[iChild] % gridHeight;
 
                 const int destRank = destGridRow + destGridCol*gridHeight;
-                ++factSN.numChildSendIndices[destRank];
+                ++factSN.numChildFactSendIndices[destRank];
             }
         }
 
         // Fill {left,right}Child{Col,Row}Indices so that we can reuse them
         // to compute our recv information
-        factSN.leftChildColIndices.clear();
+        factSN.leftChildFactColIndices.clear();
         for( int i=0; i<numLeftIndices; ++i )
             if( factSN.leftChildRelIndices[i] % gridHeight == gridRow )
-                factSN.leftChildColIndices.push_back( i );
-        factSN.leftChildRowIndices.clear();
+                factSN.leftChildFactColIndices.push_back( i );
+        factSN.leftChildFactRowIndices.clear();
         for( int i=0; i<numLeftIndices; ++i )
             if( factSN.leftChildRelIndices[i] % gridWidth == gridCol )
-                factSN.leftChildRowIndices.push_back( i );
-        factSN.rightChildColIndices.clear();
+                factSN.leftChildFactRowIndices.push_back( i );
+        factSN.rightChildFactColIndices.clear();
         for( int i=0; i<numRightIndices; ++i )
             if( factSN.rightChildRelIndices[i] % gridHeight == gridRow )
-                factSN.rightChildColIndices.push_back( i );
+                factSN.rightChildFactColIndices.push_back( i );
         for( int i=0; i<numRightIndices; ++i )
             if( factSN.rightChildRelIndices[i] % gridWidth == gridCol )
-                factSN.rightChildRowIndices.push_back( i );
+                factSN.rightChildFactRowIndices.push_back( i );
 
         if( storeRecvIndices )
             ComputeRecvIndices( factSN );
         else
-            factSN.childRecvIndices.clear();
+            factSN.childFactRecvIndices.clear();
     }
 #ifndef RELEASE
     PopCallStack();
@@ -328,16 +329,16 @@ void clique::symbolic::ComputeRecvIndices( const DistSymmFactSupernode& sn )
         leftChildGridWidth = rightChildGridWidth = gridWidth / 2;
     }
 
-    sn.childRecvIndices.clear();
-    sn.childRecvIndices.resize( commSize );
+    sn.childFactRecvIndices.clear();
+    sn.childFactRecvIndices.resize( commSize );
     std::deque<int>::const_iterator it;
 
     // Compute the recv indices of the left child from each process 
     const int leftUpdateColAlignment = sn.leftChildSize % leftChildGridHeight;
     const int leftUpdateRowAlignment = sn.leftChildSize % leftChildGridWidth;
-    for( int jPre=0; jPre<sn.leftChildRowIndices.size(); ++jPre )
+    for( int jPre=0; jPre<sn.leftChildFactRowIndices.size(); ++jPre )
     {
-        const int jChild = sn.leftChildRowIndices[jPre];
+        const int jChild = sn.leftChildFactRowIndices[jPre];
         const int jFront = sn.leftChildRelIndices[jChild];
         const int jFrontLocal = (jFront-gridCol) / gridWidth;
 
@@ -346,12 +347,13 @@ void clique::symbolic::ComputeRecvIndices( const DistSymmFactSupernode& sn )
 
         // Find the first iPre that maps to the lower triangle
         it = std::lower_bound
-             ( sn.leftChildColIndices.begin(),
-               sn.leftChildColIndices.end(), jChild );
-        const int iPreStart = int(it-sn.leftChildColIndices.begin());
-        for( int iPre=iPreStart; iPre<sn.leftChildColIndices.size(); ++iPre )
+             ( sn.leftChildFactColIndices.begin(),
+               sn.leftChildFactColIndices.end(), jChild );
+        const int iPreStart = int(it-sn.leftChildFactColIndices.begin());
+        for( int iPre=iPreStart; 
+                 iPre<sn.leftChildFactColIndices.size(); ++iPre )
         {
-            const int iChild = sn.leftChildColIndices[iPre];
+            const int iChild = sn.leftChildFactColIndices[iPre];
             const int iFront = sn.leftChildRelIndices[iChild];
             const int iFrontLocal = (iFront-gridRow) / gridHeight;
 
@@ -360,8 +362,8 @@ void clique::symbolic::ComputeRecvIndices( const DistSymmFactSupernode& sn )
             const int childRank = childRow + childCol*leftChildGridHeight;
 
             const int frontRank = childRank;
-            sn.childRecvIndices[frontRank].push_back(iFrontLocal);
-            sn.childRecvIndices[frontRank].push_back(jFrontLocal);
+            sn.childFactRecvIndices[frontRank].push_back(iFrontLocal);
+            sn.childFactRecvIndices[frontRank].push_back(jFrontLocal);
         }
     }
     
@@ -369,9 +371,9 @@ void clique::symbolic::ComputeRecvIndices( const DistSymmFactSupernode& sn )
     const int rightUpdateColAlignment = 
         sn.rightChildSize % rightChildGridHeight;
     const int rightUpdateRowAlignment = sn.rightChildSize % rightChildGridWidth;
-    for( int jPre=0; jPre<sn.rightChildRowIndices.size(); ++jPre )
+    for( int jPre=0; jPre<sn.rightChildFactRowIndices.size(); ++jPre )
     {
-        const int jChild = sn.rightChildRowIndices[jPre];
+        const int jChild = sn.rightChildFactRowIndices[jPre];
         const int jFront = sn.rightChildRelIndices[jChild];
         const int jFrontLocal = (jFront-gridCol) / gridWidth;
 
@@ -380,12 +382,13 @@ void clique::symbolic::ComputeRecvIndices( const DistSymmFactSupernode& sn )
 
         // Find the first iPre that maps to the lower triangle
         it = std::lower_bound
-             ( sn.rightChildColIndices.begin(),
-               sn.rightChildColIndices.end(), jChild );
-        const int iPreStart = int(it-sn.rightChildColIndices.begin());
-        for( int iPre=iPreStart; iPre<sn.rightChildColIndices.size(); ++iPre )
+             ( sn.rightChildFactColIndices.begin(),
+               sn.rightChildFactColIndices.end(), jChild );
+        const int iPreStart = int(it-sn.rightChildFactColIndices.begin());
+        for( int iPre=iPreStart; 
+                 iPre<sn.rightChildFactColIndices.size(); ++iPre )
         {
-            const int iChild = sn.rightChildColIndices[iPre];
+            const int iChild = sn.rightChildFactColIndices[iPre];
             const int iFront = sn.rightChildRelIndices[iChild];
             const int iFrontLocal = (iFront-gridRow) / gridHeight;
 
@@ -394,8 +397,8 @@ void clique::symbolic::ComputeRecvIndices( const DistSymmFactSupernode& sn )
             const int childRank = childRow + childCol*rightChildGridHeight;
 
             const int frontRank = rightChildOffset + childRank;
-            sn.childRecvIndices[frontRank].push_back(iFrontLocal);
-            sn.childRecvIndices[frontRank].push_back(jFrontLocal);
+            sn.childFactRecvIndices[frontRank].push_back(iFrontLocal);
+            sn.childFactRecvIndices[frontRank].push_back(jFrontLocal);
         }
     }
 #ifndef RELEASE

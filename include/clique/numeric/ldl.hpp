@@ -44,8 +44,16 @@ struct LocalSymmFact
 template<typename F>
 struct DistSymmFactSupernode
 {
-    DistMatrix<F,MC,MR> front2d;
+    // The 'SolveMode' member variable of the parent 'DistSymmFact' determines
+    // which of the following fronts is active.
+    //   FEW_RHS  -> front1d
+    //   MANY_RHS -> front2d
+
     DistMatrix<F,VC,STAR> front1d;
+    mutable DistMatrix<F,VC,STAR> workspace1d;
+
+    DistMatrix<F,MC,MR> front2d;
+    mutable DistMatrix<F,MC,MR> workspace2d;
 };
 
 template<typename F>
