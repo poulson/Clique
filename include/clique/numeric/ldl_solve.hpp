@@ -44,6 +44,13 @@ void LocalLDLDiagonalSolve
         bool checkIfSingular=false );
 
 template<typename F>
+void DistLDLDiagonalSolve
+( const symbolic::DistSymmFact& S,
+  const numeric::DistSymmFact<F>& L,
+        Matrix<F>& localX,
+        bool checkIfSingular=true );
+
+template<typename F>
 void LocalLDLBackwardSolve
 ( Orientation orientation,
   const symbolic::LocalSymmFact& S, 

@@ -157,6 +157,38 @@ void clique::numeric::DistLDLForwardSolve
 #endif
 }
 
+template<typename F> // F representa a real or complex field
+void clique::numeric::DistLDLDiagonalSolve
+( const symbolic::DistSymmFact& S,
+  const numeric::DistSymmFact<F>& L,
+        Matrix<F>& localX, bool checkIfSingular )
+{
+#ifndef RELEASE
+    PushCallStack("numeric::DistLDLDiagonalSolve");
+#endif
+    const int numSupernodes = S.supernodes.size();
+    const int width = localX.Width();
+
+    for( int k=0; k<numSupernodes; ++k )
+    {
+        const symbolic::DistSymmFactSupernode& symbSN = S.supernodes[k];
+        const numeric::DistSymmFactSupernode<F>& numSN = L.supernodes[k];
+
+        Matrix<F> localXT;
+        localXT.LockedView
+        ( localX, symbSN.localOffset1d, 0, symbSN.localSize1d, width );
+
+        // Solve against the k'th supernode using the front
+        DistMatrix<F,VC,STAR> FTL;
+        FTL.LockedView( numSN.front1d, 0, 0, symbSN.size, symbSN.size );
+        // TODO: Extract the diagonal of FTL and solve against localXT
+        // HERE
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
 template<typename F> // F represents a real or complex field
 void clique::numeric::DistLDLBackwardSolve
 ( Orientation orientation,
@@ -303,6 +335,11 @@ template void clique::numeric::DistLDLForwardSolve
   const numeric::LocalSymmFact<float>& localL,
   const numeric::DistSymmFact<float>& distL,
         Matrix<float>& localX );
+template void clique::numeric::DistLDLDiagonalSolve
+( const symbolic::DistSymmFact& S,
+  const numeric::DistSymmFact<float>& L,
+        Matrix<float>& localX,
+        bool checkIfSingular );
 template void clique::numeric::DistLDLBackwardSolve
 ( Orientation orientation,
   const symbolic::DistSymmFact& S,
@@ -314,6 +351,11 @@ template void clique::numeric::DistLDLForwardSolve
   const numeric::LocalSymmFact<double>& localL,
   const numeric::DistSymmFact<double>& distL,
         Matrix<double>& localX );
+template void clique::numeric::DistLDLDiagonalSolve
+( const symbolic::DistSymmFact& S,
+  const numeric::DistSymmFact<double>& L,
+        Matrix<double>& localX,
+        bool checkIfSingular );
 template void clique::numeric::DistLDLBackwardSolve
 ( Orientation orientation,
   const symbolic::DistSymmFact& S,
@@ -325,6 +367,11 @@ template void clique::numeric::DistLDLForwardSolve
   const numeric::LocalSymmFact<std::complex<float> >& localL,
   const numeric::DistSymmFact<std::complex<float> >& distL,
         Matrix<std::complex<float> >& localX );
+template void clique::numeric::DistLDLDiagonalSolve
+( const symbolic::DistSymmFact& S,
+  const numeric::DistSymmFact<std::complex<float> >& L,
+        Matrix<std::complex<float> >& localX,
+        bool checkIfSingular );
 template void clique::numeric::DistLDLBackwardSolve
 ( Orientation orientation,
   const symbolic::DistSymmFact& S,
@@ -336,6 +383,11 @@ template void clique::numeric::DistLDLForwardSolve
   const numeric::LocalSymmFact<std::complex<double> >& localL,
   const numeric::DistSymmFact<std::complex<double> >& distL,
         Matrix<std::complex<double> >& localX );
+template void clique::numeric::DistLDLDiagonalSolve
+( const symbolic::DistSymmFact& S,
+  const numeric::DistSymmFact<std::complex<double> >& L,
+        Matrix<std::complex<double> >& localX,
+        bool checkIfSingular );
 template void clique::numeric::DistLDLBackwardSolve
 ( Orientation orientation,
   const symbolic::DistSymmFact& S,
