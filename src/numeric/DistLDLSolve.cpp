@@ -160,10 +160,59 @@ void clique::numeric::DistLDLForwardSolve
 #endif
 }
 
+template<typename F> // F represents a real or complex field
+void clique::numeric::DistLDLBackwardSolve
+( Orientation orientation,
+  const symbolic::DistSymmFact& S,
+  const numeric::DistSymmFact<F>& L,
+        Matrix<F>& localX )
+{
+#ifndef RELEASE
+    PushCallStack("numeric::DistLDLBackwardSolve");
+#endif
+    const int numSupernodes = S.supernodes.size();
+    const int width = localX.Width();
+    if( L.mode == MANY_RHS )
+        throw std::logic_error("This solve mode is not yet implemented");
+    if( numSupernodes == 0 || width == 0 )
+    {
+#ifndef RELEASE
+        PopCallStack();
+#endif
+        return;
+    }
+
+    // Directly operate on the root separator's portion of the right-hand sides
+    const symbolic::DistSymmFactSupernode& rootSymbSN = S.supernodes.back();
+    const DistSymmFactSupernode<F>& rootNumSN = L.supernodes.back();
+    const Grid& rootGrid = rootNumSN.front1d.Grid();
+    /*
+    DistMatrix<F,VC,STAR> 
+        XRoot
+        ( rootSymbSN.size, width, 0, 
+          localX.Buffer(rootSymbSN.localOffset1d,0), localX.LDim(), rootGrid );
+    DistSupernodeLDLBackwardSolve
+    ( orientation, topSymbSN.size, topNumSN.front1d, XRoot );
+    */
+
+    for( int k=numSupernodes-2; k>=0; --k )
+    {
+        // HERE
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
 template void clique::numeric::DistLDLForwardSolve
 ( const symbolic::DistSymmFact& S,
   const numeric::LocalSymmFact<float>& localL,
   const numeric::DistSymmFact<float>& distL,
+        Matrix<float>& localX );
+template void clique::numeric::DistLDLBackwardSolve
+( Orientation orientation,
+  const symbolic::DistSymmFact& S,
+  const numeric::DistSymmFact<float>& L,
         Matrix<float>& localX );
 
 template void clique::numeric::DistLDLForwardSolve
@@ -171,15 +220,30 @@ template void clique::numeric::DistLDLForwardSolve
   const numeric::LocalSymmFact<double>& localL,
   const numeric::DistSymmFact<double>& distL,
         Matrix<double>& localX );
+template void clique::numeric::DistLDLBackwardSolve
+( Orientation orientation,
+  const symbolic::DistSymmFact& S,
+  const numeric::DistSymmFact<double>& L,
+        Matrix<double>& localX );
 
 template void clique::numeric::DistLDLForwardSolve
 ( const symbolic::DistSymmFact& S,
   const numeric::LocalSymmFact<std::complex<float> >& localL,
   const numeric::DistSymmFact<std::complex<float> >& distL,
         Matrix<std::complex<float> >& localX );
+template void clique::numeric::DistLDLBackwardSolve
+( Orientation orientation,
+  const symbolic::DistSymmFact& S,
+  const numeric::DistSymmFact<std::complex<float> >& L,
+        Matrix<std::complex<float> >& localX );
 
 template void clique::numeric::DistLDLForwardSolve
 ( const symbolic::DistSymmFact& S,
   const numeric::LocalSymmFact<std::complex<double> >& localL,
   const numeric::DistSymmFact<std::complex<double> >& distL,
+        Matrix<std::complex<double> >& localX );
+template void clique::numeric::DistLDLBackwardSolve
+( Orientation orientation,
+  const symbolic::DistSymmFact& S,
+  const numeric::DistSymmFact<std::complex<double> >& L,
         Matrix<std::complex<double> >& localX );

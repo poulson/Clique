@@ -39,14 +39,24 @@ void DistLDLForwardSolve
 template<typename F>
 void LocalLDLDiagonalSolve
 ( const symbolic::LocalSymmFact& S,
-  const numeric::LocalSymmFact<F>& L, Matrix<F>& X,
-  bool checkIfSingular=false );
+  const numeric::LocalSymmFact<F>& L, 
+        Matrix<F>& X,
+        bool checkIfSingular=false );
 
 template<typename F>
 void LocalLDLBackwardSolve
 ( Orientation orientation,
   const symbolic::LocalSymmFact& S, 
-  const numeric::LocalSymmFact<F>& L, Matrix<F>& X );
+  const numeric::LocalSymmFact<F>& localL, 
+  const numeric::DistSymmFact<F>& distL,
+        Matrix<F>& X );
+
+template<typename F>
+void DistLDLBackwardSolve
+( Orientation orientation,
+  const symbolic::DistSymmFact& S,
+  const numeric::DistSymmFact<F>& L,
+        Matrix<F>& localX );
 
 } // namespace numeric
 } // namespace clique
