@@ -188,8 +188,8 @@ DistMatrix<T,MR,MC>::View( DistMatrix<T,MR,MC>& A )
     this->AssertFreeColAlignment();
     this->AssertFreeRowAlignment();
     this->AssertNotStoringData();
-    this->AssertSameGrid( A );
 #endif
+    this->_grid = A._grid;
     this->_height = A.Height();
     this->_width  = A.Width();
     this->_colAlignment = A.ColAlignment();
@@ -206,6 +206,35 @@ DistMatrix<T,MR,MC>::View( DistMatrix<T,MR,MC>& A )
 
 template<typename T>
 inline void
+DistMatrix<T,MR,MC>::View
+( int height, int width, int colAlignment, int rowAlignment,
+  T* buffer, int ldim, const elemental::Grid& grid )
+{
+#ifndef RELEASE
+    PushCallStack("[MR,MC]::View");
+    this->AssertFreeColAlignment();
+    this->AssertFreeRowAlignment();
+    this->AssertNotStoringData();
+#endif
+    this->_grid = grid;
+    this->_height = height;
+    this->_width = width;
+    this->_colAlignment = colAlignment;
+    this->_rowAlignment = rowAlignment;
+    this->_colShift = Shift(grid.MRRank(),colAlignment,grid.Width());
+    this->_rowShift = Shift(grid.MCRank(),rowAlignment,grid.Height());
+    const int localHeight = LocalLength(height,this->_colShift,grid.Width());
+    const int localWidth = LocalLength(width,this->_rowShift,grid.Height());
+    this->_localMatrix.View( localHeight, localWidth, buffer, ldim );
+    this->_viewing = true;
+    this->_lockedView = false;
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename T>
+inline void
 DistMatrix<T,MR,MC>::LockedView( const DistMatrix<T,MR,MC>& A )
 {
 #ifndef RELEASE
@@ -213,8 +242,8 @@ DistMatrix<T,MR,MC>::LockedView( const DistMatrix<T,MR,MC>& A )
     this->AssertFreeColAlignment();
     this->AssertFreeRowAlignment();
     this->AssertNotStoringData();
-    this->AssertSameGrid( A );
 #endif
+    this->_grid = A._grid;
     this->_height = A.Height();
     this->_width  = A.Width();
     this->_colAlignment = A.ColAlignment();
@@ -222,6 +251,35 @@ DistMatrix<T,MR,MC>::LockedView( const DistMatrix<T,MR,MC>& A )
     this->_colShift     = A.ColShift();
     this->_rowShift     = A.RowShift();
     this->_localMatrix.LockedView( A.LockedLocalMatrix() );
+    this->_viewing = true;
+    this->_lockedView = true;
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename T>
+inline void
+DistMatrix<T,MR,MC>::LockedView
+( int height, int width, int colAlignment, int rowAlignment,
+  const T* buffer, int ldim, const elemental::Grid& grid )
+{
+#ifndef RELEASE
+    PushCallStack("[MR,MC]::LockedView");
+    this->AssertFreeColAlignment();
+    this->AssertFreeRowAlignment();
+    this->AssertNotStoringData();
+#endif
+    this->_grid = grid;
+    this->_height = height;
+    this->_width = width;
+    this->_colAlignment = colAlignment;
+    this->_rowAlignment = rowAlignment;
+    this->_colShift = Shift(grid.MRRank(),colAlignment,grid.Width());
+    this->_rowShift = Shift(grid.MCRank(),rowAlignment,grid.Height());
+    const int localHeight = LocalLength(height,this->_colShift,grid.Width());
+    const int localWidth = LocalLength(width,this->_rowShift,grid.Height());
+    this->_localMatrix.LockedView( localHeight, localWidth, buffer, ldim );
     this->_viewing = true;
     this->_lockedView = true;
 #ifndef RELEASE
@@ -239,9 +297,9 @@ DistMatrix<T,MR,MC>::View
     this->AssertFreeColAlignment();
     this->AssertFreeRowAlignment();
     this->AssertNotStoringData();
-    this->AssertSameGrid( A );
     this->AssertValidSubmatrix( A, i, j, height, width );
 #endif
+    this->_grid = A._grid;
     this->_height = height;
     this->_width = width;
     {
@@ -284,9 +342,9 @@ DistMatrix<T,MR,MC>::LockedView
     this->AssertFreeColAlignment();
     this->AssertFreeRowAlignment();
     this->AssertNotStoringData();
-    this->AssertSameGrid( A );
     this->AssertValidSubmatrix( A, i, j, height, width );
 #endif
+    this->_grid = A._grid;
     this->_height = height;
     this->_width = width;
     {
@@ -329,10 +387,10 @@ DistMatrix<T,MR,MC>::View1x2
     this->AssertFreeColAlignment();
     this->AssertFreeRowAlignment();
     this->AssertNotStoringData();
-    this->AssertSameGrid( AL );
-    this->AssertSameGrid( AR );
     this->AssertConforming1x2( AL, AR );
+    AL.AssertSameGrid( AR );
 #endif
+    this->_grid = AL._grid;
     this->_height = AL.Height();
     this->_width  = AL.Width() + AR.Width();
     this->_colAlignment = AL.ColAlignment();
@@ -357,10 +415,10 @@ DistMatrix<T,MR,MC>::LockedView1x2
     this->AssertFreeColAlignment();
     this->AssertFreeRowAlignment();
     this->AssertNotStoringData();
-    this->AssertSameGrid( AL );
-    this->AssertSameGrid( AR );
     this->AssertConforming1x2( AL, AR );
+    AL.AssertSameGrid( AR );
 #endif
+    this->_grid = AL._grid;
     this->_height = AL.Height();
     this->_width  = AL.Width() + AR.Width();
     this->_colAlignment = AL.ColAlignment();
@@ -387,10 +445,10 @@ DistMatrix<T,MR,MC>::View2x1
     this->AssertFreeColAlignment();
     this->AssertFreeRowAlignment();
     this->AssertNotStoringData();
-    this->AssertSameGrid( AT );
-    this->AssertSameGrid( AB );
     this->AssertConforming2x1( AT, AB );
+    AT.AssertSameGrid( AB );
 #endif
+    this->_grid = AT._grid;
     this->_height = AT.Height() + AB.Height();
     this->_width  = AT.Width();
     this->_colAlignment = AT.ColAlignment();
@@ -418,10 +476,10 @@ DistMatrix<T,MR,MC>::LockedView2x1
     this->AssertFreeColAlignment();
     this->AssertFreeRowAlignment();
     this->AssertNotStoringData();
-    this->AssertSameGrid( AT );
-    this->AssertSameGrid( AB );
     this->AssertConforming2x1( AT, AB );
+    AT.AssertSameGrid( AB );
 #endif
+    this->_grid = AT._grid;
     this->_height = AT.Height() + AB.Height();
     this->_width  = AT.Width();
     this->_colAlignment = AT.ColAlignment();
@@ -449,12 +507,12 @@ DistMatrix<T,MR,MC>::View2x2
     this->AssertFreeColAlignment();
     this->AssertFreeRowAlignment();
     this->AssertNotStoringData();
-    this->AssertSameGrid( ATL );
-    this->AssertSameGrid( ATR );
-    this->AssertSameGrid( ABL );
-    this->AssertSameGrid( ABR );
     this->AssertConforming2x2( ATL, ATR, ABL, ABR );
+    ATL.AssertSameGrid( ATR );
+    ATL.AssertSameGrid( ABL );
+    ATL.AssertSameGrid( ABR );
 #endif
+    this->_grid = ATL._grid;
     this->_height = ATL.Height() + ABL.Height();
     this->_width  = ATL.Width() + ATR.Width();
     this->_colAlignment = ATL.ColAlignment();
@@ -482,12 +540,12 @@ DistMatrix<T,MR,MC>::LockedView2x2
     this->AssertFreeColAlignment();
     this->AssertFreeRowAlignment();
     this->AssertNotStoringData();
-    this->AssertSameGrid( ATL );
-    this->AssertSameGrid( ATR );
-    this->AssertSameGrid( ABL );
-    this->AssertSameGrid( ABR );
     this->AssertConforming2x2( ATL, ATR, ABL, ABR );
+    ATL.AssertSameGrid( ATR );
+    ATL.AssertSameGrid( ABL );
+    ATL.AssertSameGrid( ABR );
 #endif
+    this->_grid = ATL._grid;
     this->_height = ATL.Height() + ABL.Height();
     this->_width  = ATL.Width() + ATR.Width();
     this->_colAlignment = ATL.ColAlignment();
@@ -614,7 +672,7 @@ DistMatrix<T,MR,MC>::GetDiagonal
 #endif
     const int height = this->Height();
     const int width = this->Width();
-    const int diagLength = DiagonalLength(height,width,offset);
+    const int diagLength = this->DiagonalLength(offset);
 #ifndef RELEASE
     if( d.Viewing() && diagLength != d.Height() )
         throw logic_error( "d is not of the correct length." );
@@ -685,7 +743,7 @@ DistMatrix<T,MR,MC>::GetDiagonal
 #endif
     const int height = this->Height();
     const int width = this->Width();
-    const int diagLength = DiagonalLength(height,width,offset);
+    const int diagLength = this->DiagonalLength(offset);
 #ifndef RELEASE
     if( d.Viewing() && diagLength != d.Width() )
         throw logic_error( "d is not of the correct length." );
@@ -758,7 +816,7 @@ DistMatrix<T,MR,MC>::SetDiagonal
     {
         const int height = this->Height();
         const int width = this->Width();
-        const int diagLength = DiagonalLength(height,width,offset);
+        const int diagLength = this->DiagonalLength(offset);
         if( diagLength != d.Height() )
         {
             ostringstream msg;
@@ -829,7 +887,7 @@ DistMatrix<T,MR,MC>::SetDiagonal
     {
         const int height = this->Height();
         const int width = this->Width();
-        const int diagLength = DiagonalLength(height,width,offset);
+        const int diagLength = this->DiagonalLength(offset);
         if( diagLength != d.Width() )
         {
             ostringstream msg;

@@ -92,10 +92,12 @@ public:
 
     int Height() const;
     int Width() const;
+    int DiagonalLength( int offset=0 ) const;
     int LocalHeight() const;
     int LocalWidth() const;
     int LocalLDim() const;
     size_t AllocatedMemory() const;
+    void SetGrid( const elemental::Grid& grid );
     const elemental::Grid& Grid() const;
 
           T* LocalBuffer( int iLocal=0, int jLocal=0 );
@@ -212,7 +214,7 @@ protected:
     int _rowAlignment;
     int _colShift;
     int _rowShift;
-    const elemental::Grid* _g;
+    const elemental::Grid* _grid;
 
     // Initialize with particular local dimensions
     AbstractDistMatrix
@@ -291,7 +293,7 @@ AbstractDistMatrix<T>::AbstractDistMatrix
   int rowShift, 
   int localHeight,
   int localWidth,
-  const elemental::Grid& g )
+  const elemental::Grid& grid )
 : _viewing(false), 
   _lockedView(false), 
   _height(height), 
@@ -304,7 +306,7 @@ AbstractDistMatrix<T>::AbstractDistMatrix
   _rowAlignment(rowAlignment),
   _colShift(colShift),
   _rowShift(rowShift),
-  _g(&g)
+  _grid(&grid)
 { } 
 
 template<typename T>
@@ -321,7 +323,7 @@ AbstractDistMatrix<T>::AbstractDistMatrix
   int localHeight,
   int localWidth,
   int ldim,
-  const elemental::Grid& g )
+  const elemental::Grid& grid )
 : _viewing(false), 
   _lockedView(false), 
   _height(height), 
@@ -334,7 +336,7 @@ AbstractDistMatrix<T>::AbstractDistMatrix
   _rowAlignment(rowAlignment),
   _colShift(colShift),
   _rowShift(rowShift),
-  _g(&g)
+  _grid(&grid)
 { } 
 
 template<typename T>
@@ -350,7 +352,7 @@ AbstractDistMatrix<T>::AbstractDistMatrix
   int localWidth,
   const T* buffer,
   int ldim,
-  const elemental::Grid& g )
+  const elemental::Grid& grid )
 : _viewing(true), 
   _lockedView(true), 
   _height(height), 
@@ -363,7 +365,7 @@ AbstractDistMatrix<T>::AbstractDistMatrix
   _rowAlignment(rowAlignment),
   _colShift(colShift),
   _rowShift(rowShift),
-  _g(&g)
+  _grid(&grid)
 { } 
 
 template<typename T>
@@ -379,7 +381,7 @@ AbstractDistMatrix<T>::AbstractDistMatrix
   int localWidth,
   T* buffer,
   int ldim,
-  const elemental::Grid& g )
+  const elemental::Grid& grid )
 : _viewing(true), 
   _lockedView(false), 
   _height(height), 
@@ -392,7 +394,7 @@ AbstractDistMatrix<T>::AbstractDistMatrix
   _rowAlignment(rowAlignment),
   _colShift(colShift),
   _rowShift(rowShift),
-  _g(&g)
+  _grid(&grid)
 { } 
 
 template<typename T>
@@ -578,6 +580,11 @@ AbstractDistMatrix<T>::Height() const
 
 template<typename T>
 inline int
+AbstractDistMatrix<T>::DiagonalLength( int offset ) const
+{ return elemental::DiagonalLength(_height,_width,offset); }
+
+template<typename T>
+inline int
 AbstractDistMatrix<T>::Width() const
 { return _width; }
 
@@ -620,9 +627,17 @@ AbstractDistMatrix<T>::RowShift() const
 { return _rowShift; }
 
 template<typename T>
+inline void
+AbstractDistMatrix<T>::SetGrid( const elemental::Grid& grid )
+{
+    Empty();
+    _grid = &grid;
+}
+
+template<typename T>
 inline const elemental::Grid&
 AbstractDistMatrix<T>::Grid() const
-{ return *_g; }
+{ return *_grid; }
 
 template<typename T>
 inline size_t

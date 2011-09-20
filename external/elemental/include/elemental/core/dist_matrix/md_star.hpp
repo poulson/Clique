@@ -47,10 +47,10 @@ class DistMatrix<T,MD,STAR> : public AbstractDistMatrix<T>
 {
 public:
     // Create a 0 x 0 distributed matrix
-    DistMatrix( const elemental::Grid& g );
+    DistMatrix( const elemental::Grid& g=DefaultGrid() );
 
     // Create a height x width distributed matrix
-    DistMatrix( int height, int width, const elemental::Grid& g );
+    DistMatrix( int height, int width, const elemental::Grid& g=DefaultGrid() );
 
     // Create a 0 x 0 distributed matrix with specified alignments
     DistMatrix
@@ -218,6 +218,15 @@ public:
     // (Immutable) view of a distributed matrix
     void View( DistMatrix<T,MD,STAR>& A );
     void LockedView( const DistMatrix<T,MD,STAR>& A );
+
+    // (Immutable) view of a distributed matrix's buffer
+    // Create a 0 x 0 distributed matrix using the default grid
+    void View
+    ( int height, int width, int colAlignment,
+      T* buffer, int ldim, const elemental::Grid& grid );
+    void LockedView
+    ( int height, int width, int colAlignment, 
+      const T* buffer, int ldim, const elemental::Grid& grid );
 
     // (Immutable) view of a portion of a distributed matrix
     void View( DistMatrix<T,MD,STAR>& A, int i, int j, int height, int width );
