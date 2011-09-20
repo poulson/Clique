@@ -83,13 +83,13 @@ void clique::numeric::DistLDLForwardSolve
         const int updateSize = childNumSN.work1d.Height()-childSymbSN.size;
         childUpdate.LockedView
         ( childNumSN.work1d, childSymbSN.size, 0, updateSize, width );
-        const bool isLeftChild = ( commRank < commSize/2 );
         it = std::max_element
              ( symbSN.numChildSolveSendIndices.begin(), 
                symbSN.numChildSolveSendIndices.end() );
         const int sendPortionSize = std::max((*it)*width,mpi::MIN_COLL_MSG);
         std::vector<F> sendBuffer( sendPortionSize*commSize );
 
+        const bool isLeftChild = ( commRank < commSize/2 );
         const std::vector<int>& myChildRelIndices = 
             ( isLeftChild ? symbSN.leftChildRelIndices
                           : symbSN.rightChildRelIndices );
@@ -110,9 +110,6 @@ void clique::numeric::DistLDLForwardSolve
         }
         // Free the child work buffer
         childNumSN.work1d.Empty();
-        // Reset the offsets to their original values
-        for( int proc=0; proc<commSize; ++proc )
-            sendOffsets[proc] = proc*sendPortionSize;
 
         // AllToAll to send and receive the child updates
         int recvPortionSize = mpi::MIN_COLL_MSG;
@@ -192,10 +189,21 @@ void clique::numeric::DistLDLBackwardSolve
     DistSupernodeLDLBackwardSolve
     ( orientation, rootSymbSN.size, rootNumSN.front1d, rootNumSN.work1d );
 
+    std::vector<int>::const_iterator it;
     for( int k=numSupernodes-2; k>=0; --k )
     {
+        const symbolic::DistSymmFactSupernode& parentSymbSN = S.supernodes[k+1];
         const symbolic::DistSymmFactSupernode& symbSN = S.supernodes[k];
-        const numeric::DistSymmFactSupernode<F>& numSN = L.supernodes[k];
+        const DistSymmFactSupernode<F>& parentNumSN = L.supernodes[k+1];
+        const DistSymmFactSupernode<F>& numSN = L.supernodes[k];
+        const Grid& grid = numSN.front1d.Grid();
+        const Grid& parentGrid = parentNumSN.front1d.Grid();
+        mpi::Comm comm = grid.VCComm(); 
+        mpi::Comm parentComm = parentGrid.VCComm();
+        const int commSize = mpi::CommSize( comm );
+        const int commRank = mpi::CommRank( comm );
+        const int parentCommSize = mpi::CommSize( parentComm );
+        const int parentCommRank = mpi::CommRank( parentComm );
 
         // Set up a workspace
         DistMatrix<F,VC,STAR>& W = numSN.work1d;
@@ -212,12 +220,68 @@ void clique::numeric::DistLDLBackwardSolve
         ( localX, symbSN.localOffset1d, 0, symbSN.localSize1d, width );
         WT.LocalMatrix() = localXT;
 
+        //
         // Set the bottom from the parent
-        DistMatrix<F,VC,STAR>& parentWork = L.supernodes[k+1].work1d;
-        // HERE: 
+        //
+        DistMatrix<F,VC,STAR>& parentWork = parentNumSN.work1d;
+
         // Pack the updates using the recv approach from the forward solve
+        int sendPortionSize = mpi::MIN_COLL_MSG;
+        for( int proc=0; proc<parentCommSize; ++proc )
+        {
+            const int thisColumn = 
+                parentSymbSN.childSolveRecvIndices[proc].size();
+            sendPortionSize = std::max(thisColumn*width,sendPortionSize);
+        }
+        std::vector<F> sendBuffer( sendPortionSize*parentCommSize );
+        for( int proc=0; proc<parentCommSize; ++proc )
+        {
+            F* sendValues = &sendBuffer[proc*sendPortionSize];
+            const std::deque<int>& recvIndices = 
+                parentSymbSN.childSolveRecvIndices[proc];
+            for( int k=0; k<recvIndices.size(); ++k )
+            {
+                const int iFrontLocal = recvIndices[k];
+                F* sendRow = &sendValues[k*width];
+                const F* workRow = parentWork.LocalBuffer( iFrontLocal, 0 );
+                const int workLDim = parentWork.LocalLDim();
+                for( int jFront=0; jFront<width; ++jFront )
+                    sendRow[jFront] = workRow[jFront*workLDim];
+            }
+        }
+
         // AllToAll
+        it = std::max_element
+             ( parentSymbSN.numChildSolveSendIndices.begin(),
+               parentSymbSN.numChildSolveSendIndices.end() );
+        const int recvPortionSize = std::max((*it)*width,mpi::MIN_COLL_MSG);
+        std::vector<F> recvBuffer( recvPortionSize*parentCommSize );
+        mpi::AllToAll
+        ( &sendBuffer[0], sendPortionSize,
+          &recvBuffer[0], recvPortionSize, comm );
+        sendBuffer.clear();
+
         // Unpack the updates using the send approach from the forward solve
+        const bool isLeftChild = ( parentCommRank < parentCommSize/2 );
+        const std::vector<int>& myRelIndices = 
+            ( isLeftChild ? parentSymbSN.leftChildRelIndices
+                          : parentSymbSN.rightChildRelIndices );
+        const int updateColShift = WB.ColShift();
+        const int updateLocalHeight = WB.LocalHeight();
+        std::vector<int> recvOffsets( parentCommSize );
+        for( int proc=0; proc<parentCommSize; ++proc )
+            recvOffsets[proc] = proc*recvPortionSize;
+        for( int iUpdateLocal=0; 
+                 iUpdateLocal<updateLocalHeight; ++iUpdateLocal )
+        {
+            const int iUpdate = updateColShift + iUpdateLocal*commSize;
+            const int startRank = myRelIndices[iUpdate] % parentCommSize;
+            const F* recvBuf = &recvBuffer[recvOffsets[startRank]];
+            for( int jUpdate=0; jUpdate<width; ++jUpdate )
+                WB.SetLocalEntry(iUpdateLocal,jUpdate,recvBuf[jUpdate]);
+            recvOffsets[startRank] += width;
+        }
+        recvBuffer.clear();
 
         // Free the parent's workspace
         parentWork.Empty();
