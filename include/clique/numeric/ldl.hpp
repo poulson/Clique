@@ -32,7 +32,7 @@ template<typename F>
 struct LocalSymmFactSupernode
 {
     Matrix<F> front;
-    mutable Matrix<F> workspace;
+    mutable Matrix<F> work;
 };
 
 template<typename F>
@@ -50,10 +50,10 @@ struct DistSymmFactSupernode
     //   MANY_RHS -> front2d
 
     DistMatrix<F,VC,STAR> front1d;
-    mutable DistMatrix<F,VC,STAR> workspace1d;
+    mutable DistMatrix<F,VC,STAR> work1d;
 
     DistMatrix<F,MC,MR> front2d;
-    mutable DistMatrix<F,MC,MR> workspace2d;
+    mutable DistMatrix<F,MC,MR> work2d;
 };
 
 template<typename F>

@@ -22,15 +22,15 @@ using namespace elemental;
 
 template<typename F> // F represents a real or complex field
 void clique::numeric::DistLDLForwardSolve
-( const symbolic::DistSymmFact& distS,
+( const symbolic::DistSymmFact& S,
   const numeric::LocalSymmFact<F>& localL,
   const numeric::DistSymmFact<F>& distL,
         Matrix<F>& localX )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::LocalLDLForwardSolve");
+    PushCallStack("numeric::DistLDLForwardSolve");
 #endif
-    const int numSupernodes = distS.supernodes.size();
+    const int numSupernodes = S.supernodes.size();
     const int width = localX.Width();
     if( distL.mode == MANY_RHS )
         throw std::logic_error("This solve mode is not yet implemented");
@@ -45,17 +45,27 @@ void clique::numeric::DistLDLForwardSolve
     // Copy the information from the local portion into the distributed root
     const LocalSymmFactSupernode<F>& topLocalSN = localL.supernodes.back();
     const DistSymmFactSupernode<F>& bottomDistSN = distL.supernodes[0];
-    bottomDistSN.workspace2d.LocalMatrix().LockedView( topLocalSN.workspace );
+    bottomDistSN.work2d.LocalMatrix().LockedView( topLocalSN.work );
     
     // Perform the distributed portion of the forward solve
+    std::vector<int>::const_iterator it;
     for( int k=1; k<numSupernodes; ++k )
     {
-        const symbolic::DistSymmFactSupernode& symbSN = distS.supernodes[k];
-        const numeric::DistSymmFactSupernode<F>& numSN = distL.supernodes[k];
+        const symbolic::DistSymmFactSupernode& childSymbSN = S.supernodes[k-1];
+        const symbolic::DistSymmFactSupernode& symbSN = S.supernodes[k];
+        const DistSymmFactSupernode<F>& childNumSN = distL.supernodes[k-1];
+        const DistSymmFactSupernode<F>& numSN = distL.supernodes[k];
+        const Grid& childGrid = childNumSN.front1d.Grid();
         const Grid& grid = numSN.front1d.Grid();
+        mpi::Comm comm = grid.VCComm();
+        mpi::Comm childComm = childGrid.VCComm();
+        const int commSize = mpi::CommSize( comm );
+        const int commRank = mpi::CommRank( comm );
+        const int childCommSize = mpi::CommSize( childComm );
+        const int childCommRank = mpi::CommRank( childComm );
 
         // Set up a workspace
-        DistMatrix<F,VC,STAR>& W = numSN.workspace1d;
+        DistMatrix<F,VC,STAR>& W = numSN.work1d;
         W.ResizeTo( numSN.front1d.Height(), width );
         DistMatrix<F,VC,STAR> WT(grid), WB(grid);
         WT.View( W, 0, 0, symbSN.size, width );
@@ -68,34 +78,108 @@ void clique::numeric::DistLDLForwardSolve
         WT.LocalMatrix() = XT;
         WB.SetToZero();
 
-        // Update using the children 
-        // HERE
+        // Pack our child's update
+        DistMatrix<F,VC,STAR> childUpdate(childGrid);
+        const int updateSize = childNumSN.work1d.Height()-childSymbSN.size;
+        childUpdate.LockedView
+        ( childNumSN.work1d, childSymbSN.size, 0, updateSize, width );
+        const bool isLeftChild = ( commRank < commSize/2 );
+        it = std::max_element
+             ( symbSN.numChildSolveSendIndices.begin(), 
+               symbSN.numChildSolveSendIndices.end() );
+        const int sendPortionSize = std::max((*it)*width,mpi::MIN_COLL_MSG);
+        std::vector<F> sendBuffer( sendPortionSize*commSize );
+
+        const std::vector<int>& myChildRelIndices = 
+            ( isLeftChild ? symbSN.leftChildRelIndices
+                          : symbSN.rightChildRelIndices );
+        const int updateColShift = childUpdate.ColShift();
+        const int updateLocalHeight = childUpdate.LocalHeight();
+        // Initialize the offsets to each process's chunk
+        std::vector<int> sendOffsets( commSize );
+        for( int proc=0; proc<commSize; ++proc )
+            sendOffsets[proc] = proc*sendPortionSize;
+        for( int iChildLocal=0; iChildLocal<updateLocalHeight; ++iChildLocal )
+        {
+            const int iChild = updateColShift + iChildLocal*childCommSize;
+            const int destRank = myChildRelIndices[iChild] % commSize;
+            F* sendBuf = &sendBuffer[sendOffsets[destRank]];
+            for( int jChild=0; jChild<width; ++jChild )
+                sendBuf[jChild] = childUpdate.GetLocalEntry(iChildLocal,jChild);
+            sendOffsets[destRank] += width;
+        }
+        // Free the child work buffer
+        childNumSN.work1d.Empty();
+        // Reset the offsets to their original values
+        for( int proc=0; proc<commSize; ++proc )
+            sendOffsets[proc] = proc*sendPortionSize;
+
+        // AllToAll to send and receive the child updates
+        int recvPortionSize = mpi::MIN_COLL_MSG;
+        for( int proc=0; proc<commSize; ++proc )
+        {
+            const int thisColumn = symbSN.childSolveRecvIndices[proc].size();
+            recvPortionSize = std::max(thisColumn*width,recvPortionSize); 
+        }
+        std::vector<F> recvBuffer( recvPortionSize*commSize );
+        mpi::AllToAll
+        ( &sendBuffer[0], sendPortionSize,
+          &recvBuffer[0], recvPortionSize, comm );
+        sendBuffer.clear();
+
+        // Unpack the child updates (with an Axpy)
+        for( int proc=0; proc<commSize; ++proc )
+        {
+            const F* recvValues = &recvBuffer[proc*recvPortionSize];
+            const std::deque<int>& recvIndices = 
+                symbSN.childSolveRecvIndices[proc];
+            for( int k=0; k<recvIndices.size(); ++k )
+            {
+                const int iFrontLocal = recvIndices[k];
+                const F* recvRow = &recvValues[k*width];
+                F* workRow = numSN.work1d.LocalBuffer( iFrontLocal, 0 );
+                const int workLDim = numSN.work1d.LocalLDim();
+                for( int jFront=0; jFront<width; ++jFront )
+                    workRow[jFront*workLDim] = recvRow[jFront];
+            }
+        }
+        recvBuffer.clear();
+
+        // Now that the RHS is set up, perform this supernode's solve
+        DistSupernodeLDLForwardSolve( symbSN.size, numSN.front1d, W );
+
+        // Store the supernode portion of the result
+        XT = WT.LocalMatrix();
     }
+
+    // Free the distributed and local root work buffers
+    localL.supernodes.back().work.Empty();
+    distL.supernodes.back().work1d.Empty();
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
 template void clique::numeric::DistLDLForwardSolve
-( const symbolic::DistSymmFact& distS,
+( const symbolic::DistSymmFact& S,
   const numeric::LocalSymmFact<float>& localL,
   const numeric::DistSymmFact<float>& distL,
         Matrix<float>& localX );
 
 template void clique::numeric::DistLDLForwardSolve
-( const symbolic::DistSymmFact& distS,
+( const symbolic::DistSymmFact& S,
   const numeric::LocalSymmFact<double>& localL,
   const numeric::DistSymmFact<double>& distL,
         Matrix<double>& localX );
 
 template void clique::numeric::DistLDLForwardSolve
-( const symbolic::DistSymmFact& distS,
+( const symbolic::DistSymmFact& S,
   const numeric::LocalSymmFact<std::complex<float> >& localL,
   const numeric::DistSymmFact<std::complex<float> >& distL,
         Matrix<std::complex<float> >& localX );
 
 template void clique::numeric::DistLDLForwardSolve
-( const symbolic::DistSymmFact& distS,
+( const symbolic::DistSymmFact& S,
   const numeric::LocalSymmFact<std::complex<double> >& localL,
   const numeric::DistSymmFact<std::complex<double> >& distL,
         Matrix<std::complex<double> >& localX );

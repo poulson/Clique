@@ -23,41 +23,42 @@
 
 namespace clique {
 namespace numeric {
+using namespace elemental;
 
 template<typename F>
 void LocalSupernodeLDLForwardSolve
 ( int supernodeSize,
-  F alpha, const elemental::Matrix<F>& L, elemental::Matrix<F>& X );
+  const Matrix<F>& L, Matrix<F>& X );
 
 template<typename F>
 void LocalSupernodeLDLDiagonalSolve
 ( int supernodeSize,
-  const elemental::Matrix<F>& d, elemental::Matrix<F>& X,
+  const Matrix<F>& d, Matrix<F>& X,
   bool checkIfSingular=false );
 
 template<typename F>
 void LocalSupernodeLDLBackwardSolve
-( elemental::Orientation orientation, int supernodeSize,
-  F alpha, const elemental::Matrix<F>& U, elemental::Matrix<F>& X );
+( Orientation orientation, int supernodeSize,
+  const Matrix<F>& U, Matrix<F>& X );
 
 template<typename F>
 void DistSupernodeLDLForwardSolve
 ( int supernodeSize,
-  F alpha, const elemental::DistMatrix<F,elemental::VC,elemental::STAR>& L, 
-                 elemental::DistMatrix<F,elemental::VC,elemental::STAR>& X );
+  const DistMatrix<F,VC,STAR>& L, 
+        DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
 void DistSupernodeLDLDiagonalSolve
 ( int supernodeSize,
-  const elemental::DistMatrix<F,elemental::VC,elemental::STAR>& d,
-        elemental::DistMatrix<F,elemental::VC,elemental::STAR>& X,
+  const DistMatrix<F,VC,STAR>& d,
+        DistMatrix<F,VC,STAR>& X,
   bool checkIfSingular=false );
 
 template<typename F>
 void DistSupernodeLDLBackwardSolve
-( elemental::Orientation orientation, int supernodeSize,
-  F alpha, const elemental::DistMatrix<F,elemental::VC,elemental::STAR>& U, 
-                 elemental::DistMatrix<F,elemental::VC,elemental::STAR>& X );
+( Orientation orientation, int supernodeSize,
+  const DistMatrix<F,VC,STAR>& U, 
+        DistMatrix<F,VC,STAR>& X );
 
 } // namespace numeric
 } // namespace clique

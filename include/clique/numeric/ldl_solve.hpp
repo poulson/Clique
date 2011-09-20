@@ -27,11 +27,11 @@ namespace numeric {
 template<typename F>
 void LocalLDLForwardSolve
 ( const symbolic::LocalSymmFact& S, 
-  const numeric::LocalSymmFact<F>& L, F alpha, Matrix<F>& X );
+  const numeric::LocalSymmFact<F>& L, Matrix<F>& X );
 
 template<typename F>
 void DistLDLForwardSolve
-( const symbolic::DistSymmFact& distS,
+( const symbolic::DistSymmFact& S,
   const numeric::LocalSymmFact<F>& localL,
   const numeric::DistSymmFact<F>& distL,
         Matrix<F>& localX );
@@ -46,7 +46,7 @@ template<typename F>
 void LocalLDLBackwardSolve
 ( Orientation orientation,
   const symbolic::LocalSymmFact& S, 
-  const numeric::LocalSymmFact<F>& L, F alpha, Matrix<F>& X );
+  const numeric::LocalSymmFact<F>& L, Matrix<F>& X );
 
 } // namespace numeric
 } // namespace clique

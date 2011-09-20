@@ -24,7 +24,7 @@ template<typename F> // F represents a real or complex field
 void clique::numeric::LocalLDLForwardSolve
 ( const symbolic::LocalSymmFact& S,
   const numeric::LocalSymmFact<F>& L,
-  F alpha, Matrix<F>& X )
+        Matrix<F>& X )
 {
 #ifndef RELEASE
     PushCallStack("numeric::LocalLDLForwardSolve");
@@ -37,7 +37,7 @@ void clique::numeric::LocalLDLForwardSolve
         const numeric::LocalSymmFactSupernode<F>& numSN = L.supernodes[k];
 
         // Set up a workspace
-        Matrix<F>& W = numSN.workspace;
+        Matrix<F>& W = numSN.work;
         W.ResizeTo( numSN.front.Height(), width );
         Matrix<F> WT, WB;
         WT.View( W, 0, 0, symbSN.size, width );
@@ -55,8 +55,8 @@ void clique::numeric::LocalLDLForwardSolve
         {
             const int leftIndex = symbSN.children[0];
             const int rightIndex = symbSN.children[1];
-            Matrix<F>& leftWork = L.supernodes[leftIndex].workspace;
-            Matrix<F>& rightWork = L.supernodes[rightIndex].workspace;
+            Matrix<F>& leftWork = L.supernodes[leftIndex].work;
+            Matrix<F>& rightWork = L.supernodes[rightIndex].work;
             const int leftSupernodeSize = S.supernodes[leftIndex].size;
             const int rightSupernodeSize = S.supernodes[rightIndex].size;
             const int leftUpdateSize = leftWork.Height()-leftSupernodeSize;
@@ -89,15 +89,15 @@ void clique::numeric::LocalLDLForwardSolve
         // else numChildren == 0
 
         // Call the custom supernode forward solve
-        LocalSupernodeLDLForwardSolve( symbSN.size, alpha, numSN.front, W );
+        LocalSupernodeLDLForwardSolve( symbSN.size, numSN.front, W );
 
         // Store the supernode portion of the result
         XT = WT;
     }
 
-    // Ensure that all of the temporary buffers are freed
-    for( int k=0; k<numSupernodes; ++k )
-        L.supernodes[k].workspace.Empty();
+    // Ensure that all of the temporary buffers are freed (except the root)
+    for( int k=0; k<numSupernodes-1; ++k )
+        L.supernodes[k].work.Empty();
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -134,7 +134,7 @@ void clique::numeric::LocalLDLBackwardSolve
 ( Orientation orientation,
   const symbolic::LocalSymmFact& S, 
   const numeric::LocalSymmFact<F>& L,
-  F alpha, Matrix<F>& X )
+        Matrix<F>& X )
 {
 #ifndef RELEASE
     PushCallStack("numeric::LocalLDLBackwardSolve");
@@ -147,7 +147,7 @@ void clique::numeric::LocalLDLBackwardSolve
         const numeric::LocalSymmFactSupernode<F>& numSN = L.supernodes[k];
 
         // Set up a workspace
-        Matrix<F>& W = numSN.workspace;
+        Matrix<F>& W = numSN.work;
         W.ResizeTo( numSN.front.Height(), width );
         Matrix<F> WT, WB;
         WT.View( W, 0, 0, symbSN.size, width );
@@ -162,7 +162,7 @@ void clique::numeric::LocalLDLBackwardSolve
         const int parentIndex = symbSN.parent;
         if( parentIndex != -1 )
         {
-            Matrix<F>& parentWork = L.supernodes[parentIndex].workspace;
+            Matrix<F>& parentWork = L.supernodes[parentIndex].work;
             const symbolic::LocalSymmFactSupernode& parentSymbSN = 
                 S.supernodes[parentIndex];
             const int currentUpdateSize = WB.Height();
@@ -187,7 +187,7 @@ void clique::numeric::LocalLDLBackwardSolve
 
         // Call the custom supernode forward solve
         LocalSupernodeLDLBackwardSolve
-        ( orientation, symbSN.size, alpha, numSN.front, W );
+        ( orientation, symbSN.size, numSN.front, W );
 
         // Store the supernode portion of the result
         XT = WT;
@@ -195,7 +195,7 @@ void clique::numeric::LocalLDLBackwardSolve
 
     // Ensure that all of the temporary buffers are freed
     for( int k=0; k<numSupernodes; ++k )
-        L.supernodes[k].workspace.Empty();
+        L.supernodes[k].work.Empty();
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -204,7 +204,7 @@ void clique::numeric::LocalLDLBackwardSolve
 template void clique::numeric::LocalLDLForwardSolve
 ( const symbolic::LocalSymmFact& S,
   const numeric::LocalSymmFact<float>& L,
-  float alpha, Matrix<float>& X );
+        Matrix<float>& X );
 template void clique::numeric::LocalLDLDiagonalSolve
 ( const symbolic::LocalSymmFact& S,
   const numeric::LocalSymmFact<float>& L,
@@ -213,12 +213,12 @@ template void clique::numeric::LocalLDLBackwardSolve
 ( Orientation orientation,
   const symbolic::LocalSymmFact& S,
   const numeric::LocalSymmFact<float>& L,
-  float alpha, Matrix<float>& X );
+        Matrix<float>& X );
 
 template void clique::numeric::LocalLDLForwardSolve
 ( const symbolic::LocalSymmFact& S,
   const numeric::LocalSymmFact<double>& L,
-  double alpha, Matrix<double>& X );
+        Matrix<double>& X );
 template void clique::numeric::LocalLDLDiagonalSolve
 ( const symbolic::LocalSymmFact& S,
   const numeric::LocalSymmFact<double>& L,
@@ -227,12 +227,12 @@ template void clique::numeric::LocalLDLBackwardSolve
 ( Orientation orientation,
   const symbolic::LocalSymmFact& S,
   const numeric::LocalSymmFact<double>& L,
-  double alpha, Matrix<double>& X );
+        Matrix<double>& X );
 
 template void clique::numeric::LocalLDLForwardSolve
 ( const symbolic::LocalSymmFact& S,
   const numeric::LocalSymmFact<std::complex<float> >& L,
-  std::complex<float> alpha, Matrix<std::complex<float> >& X );
+        Matrix<std::complex<float> >& X );
 template void clique::numeric::LocalLDLDiagonalSolve
 ( const symbolic::LocalSymmFact& S,
   const numeric::LocalSymmFact<std::complex<float> >& L,
@@ -241,18 +241,18 @@ template void clique::numeric::LocalLDLBackwardSolve
 ( Orientation orientation,
   const symbolic::LocalSymmFact& S,
   const numeric::LocalSymmFact<std::complex<float> >& L,
-  std::complex<float> alpha, Matrix<std::complex<float> >& X );
+        Matrix<std::complex<float> >& X );
 
 template void clique::numeric::LocalLDLForwardSolve
 ( const symbolic::LocalSymmFact& S,
   const numeric::LocalSymmFact<std::complex<double> >& L,
-  std::complex<double> alpha, Matrix<std::complex<double> >& X );
+        Matrix<std::complex<double> >& X );
 template void clique::numeric::LocalLDLDiagonalSolve
 ( const symbolic::LocalSymmFact& S,
   const numeric::LocalSymmFact<std::complex<double> >& L,
-  Matrix<std::complex<double> >& X, bool checkIfSingular );
+        Matrix<std::complex<double> >& X, bool checkIfSingular );
 template void clique::numeric::LocalLDLBackwardSolve
 ( Orientation orientation,
   const symbolic::LocalSymmFact& S,
   const numeric::LocalSymmFact<std::complex<double> >& L,
-  std::complex<double> alpha, Matrix<std::complex<double> >& X );
+        Matrix<std::complex<double> >& X );

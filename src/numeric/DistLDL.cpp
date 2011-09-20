@@ -131,7 +131,7 @@ void clique::numeric::DistLDL
             throw std::logic_error("Front was not the proper size");
 #endif
 
-        // Pack our child's updates
+        // Pack our child's update
         DistMatrix<F,MC,MR> childUpdate(childGrid);
         const int updateSize = childNumSN.front2d.Height()-childSymbSN.size;
         childUpdate.LockedView
@@ -185,9 +185,9 @@ void clique::numeric::DistLDL
         if( computeFactRecvIndices )
             symbolic::ComputeFactRecvIndices( symbSN );
         int recvPortionSize = mpi::MIN_COLL_MSG;
-        for( int i=0; i<commSize; ++i )
+        for( int proc=0; proc<commSize; ++proc )
         {
-            const int thisPortion = symbSN.childFactRecvIndices[i].size();
+            const int thisPortion = symbSN.childFactRecvIndices[proc].size();
             recvPortionSize = std::max(thisPortion,recvPortionSize);
         }
         std::vector<F> recvBuffer( recvPortionSize*commSize );
