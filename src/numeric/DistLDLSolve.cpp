@@ -72,10 +72,10 @@ void clique::numeric::DistLDLForwardSolve
         WB.View( W, symbSN.size, 0, W.Height()-symbSN.size, width );
 
         // Pull in the relevant information from the RHS
-        Matrix<F> XT;
-        XT.LockedView
+        Matrix<F> localXT;
+        localXT.LockedView
         ( localX, symbSN.localOffset1d, 0, symbSN.localSize1d, width );
-        WT.LocalMatrix() = XT;
+        WT.LocalMatrix() = localXT;
         WB.SetToZero();
 
         // Pack our child's update
@@ -149,7 +149,7 @@ void clique::numeric::DistLDLForwardSolve
         DistSupernodeLDLForwardSolve( symbSN.size, numSN.front1d, W );
 
         // Store the supernode portion of the result
-        XT = WT.LocalMatrix();
+        localXT = WT.LocalMatrix();
     }
 
     // Free the distributed and local root work buffers
@@ -186,18 +186,48 @@ void clique::numeric::DistLDLBackwardSolve
     const symbolic::DistSymmFactSupernode& rootSymbSN = S.supernodes.back();
     const DistSymmFactSupernode<F>& rootNumSN = L.supernodes.back();
     const Grid& rootGrid = rootNumSN.front1d.Grid();
-    /*
-    DistMatrix<F,VC,STAR> 
-        XRoot
-        ( rootSymbSN.size, width, 0, 
-          localX.Buffer(rootSymbSN.localOffset1d,0), localX.LDim(), rootGrid );
+    rootNumSN.work1d.View
+    ( rootSymbSN.size, width, 0,
+      localX.Buffer(rootSymbSN.localOffset1d,0), localX.LDim(), rootGrid );
     DistSupernodeLDLBackwardSolve
-    ( orientation, topSymbSN.size, topNumSN.front1d, XRoot );
-    */
+    ( orientation, rootSymbSN.size, rootNumSN.front1d, rootNumSN.work1d );
 
     for( int k=numSupernodes-2; k>=0; --k )
     {
-        // HERE
+        const symbolic::DistSymmFactSupernode& symbSN = S.supernodes[k];
+        const numeric::DistSymmFactSupernode<F>& numSN = L.supernodes[k];
+
+        // Set up a workspace
+        DistMatrix<F,VC,STAR>& W = numSN.work1d;
+        W.SetGrid( numSN.front1d.Grid() );
+        W.ResizeTo( numSN.front1d.Height(), width );
+        DistMatrix<F,VC,STAR> WT, WB;
+        PartitionDown
+        ( W, WT,
+             WB, symbSN.size );
+
+        // Pull in the relevant information from the RHS
+        Matrix<F> localXT;
+        localXT.LockedView
+        ( localX, symbSN.localOffset1d, 0, symbSN.localSize1d, width );
+        WT.LocalMatrix() = localXT;
+
+        // Set the bottom from the parent
+        DistMatrix<F,VC,STAR>& parentWork = L.supernodes[k+1].work1d;
+        // HERE: 
+        // Pack the updates using the recv approach from the forward solve
+        // AllToAll
+        // Unpack the updates using the send approach from the forward solve
+
+        // Free the parent's workspace
+        parentWork.Empty();
+
+        // Call the custom supernode backward solve
+        DistSupernodeLDLBackwardSolve
+        ( orientation, symbSN.size, numSN.front1d, W );
+
+        // Store the supernode portion of the result
+        localXT = WT.LocalMatrix();
     }
 #ifndef RELEASE
     PopCallStack();

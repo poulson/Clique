@@ -40,8 +40,9 @@ void clique::numeric::LocalLDLForwardSolve
         Matrix<F>& W = numSN.work;
         W.ResizeTo( numSN.front.Height(), width );
         Matrix<F> WT, WB;
-        WT.View( W, 0, 0, symbSN.size, width );
-        WB.View( W, symbSN.size, 0, W.Height()-symbSN.size, width );
+        PartitionDown
+        ( W, WT,
+             WB, symbSN.size );
 
         // Pull in the relevant information from the RHS
         Matrix<F> XT;
@@ -164,15 +165,16 @@ void clique::numeric::LocalLDLBackwardSolve
         Matrix<F>& W = numSN.work;
         W.ResizeTo( numSN.front.Height(), width );
         Matrix<F> WT, WB;
-        WT.View( W, 0, 0, symbSN.size, width );
-        WB.View( W, symbSN.size, 0, W.Height()-symbSN.size, width );
+        PartitionDown
+        ( W, WT,
+             WB, symbSN.size );
 
         // Pull in the relevant information from the RHS
         Matrix<F> XT;
         XT.LockedView( X, symbSN.myOffset, 0, symbSN.size, width );
         WT = XT;
 
-        // Update using the parent (if it exists)
+        // Update using the parent
         const int parentIndex = symbSN.parent;
         Matrix<F>& parentWork = localL.supernodes[parentIndex].work;
         const symbolic::LocalSymmFactSupernode& parentSymbSN = 
@@ -195,7 +197,7 @@ void clique::numeric::LocalLDLBackwardSolve
         if( symbSN.isLeftChild )
             parentWork.Empty();
 
-        // Call the custom supernode forward solve
+        // Call the custom supernode backward solve
         LocalSupernodeLDLBackwardSolve
         ( orientation, symbSN.size, numSN.front, W );
 
@@ -203,7 +205,7 @@ void clique::numeric::LocalLDLBackwardSolve
         XT = WT;
     }
 
-    // Ensure that all of the temporary buffers are freed
+    // Ensure that all of the temporary buffers are freed (this is overkill)
     for( int k=0; k<numSupernodes; ++k )
         localL.supernodes[k].work.Empty();
 #ifndef RELEASE
