@@ -28,11 +28,77 @@ void Usage()
               << "<nz>: size of panel in z direction\n" << std::endl;
 }
 
-int ReorderedIndex
-( int nx, int ny, int nz, int x, int y, int z, 
-  int minBalancedDepth, int maxLeafSize )
+int ReorderedIndexRecursion
+( int x, int y, int z, int nx, int ny, int nz,
+  int stepsLeft, int cutoff, int offset )
 {
-    // HERE: Call a different recursive routine?
+    const int size = nx*ny*nz;
+#ifndef RELEASE
+    if( stepsLeft != 0 && size == 0 )
+        throw std::logic_error("Null supernode in the upper tree");
+#endif
+    if( stepsLeft == 0 && size <= cutoff )
+    {
+        // We have satisfied the nested dissection constraints
+        return offset + (x+y*nx+z*nx*ny);
+    }
+    else if( nx >= ny )
+    {
+        // Partition the x dimension
+        const int middle = (nx-1)/2;
+        if( x < middle )
+        {
+            return ReorderedIndexRecursion
+            ( x, y, z, middle, ny, nz, 
+              std::max(stepsLeft-1,0), cutoff, offset );
+        }
+        else if( x == middle )
+        {
+            return offset + std::max(nx-1,0)*ny*nz + (y+z*ny);
+        }
+        else // x > middle
+        {
+            return ReorderedIndexRecursion
+            ( x-middle-1, y, z, std::max(nx-middle-1,0), ny, nz,
+              std::max(stepsLeft-1,0), cutoff, offset+middle*ny*nz );
+        }
+    }
+    else
+    {
+        // Partition the y dimension
+        const int middle = (ny-1)/2;
+        if( y < middle )
+        {
+            return ReorderedIndexRecursion
+            ( x, y, z, nx, middle, nz,
+              std::max(stepsLeft-1,0), cutoff, offset );
+        }
+        else if( y == middle )
+        {
+            return offset + nx*std::max(ny-1,0)*nz + (x+z*nx);
+        }
+        else // y > middle 
+        {
+            return ReorderedIndexRecursion
+            ( x, y-middle-1, z, nx, std::max(ny-middle-1,0), nz,
+              std::max(stepsLeft-1,0), cutoff, offset+nx*middle*nz );
+        }
+    }
+}
+
+int ReorderedIndex
+( int x, int y, int z, int nx, int ny, int nz,
+  int minBalancedDepth, int cutoff )
+{
+#ifndef RELEASE    
+    PushCallStack("ReorderedIndex");
+#endif
+    int index = ReorderedIndexRecursion
+    ( x, y, z, nx, ny, nz, minBalancedDepth, cutoff, 0 );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return index;
 }
 
 int
