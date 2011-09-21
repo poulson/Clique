@@ -1,7 +1,6 @@
 /*
    Clique: a scalable implementation of the multifrontal algorithm
 
-   Copyright (C) 2010-2011 Jack Poulson <jack.poulson@gmail.com>
    Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
    The University of Texas at Austin
  
@@ -20,38 +19,43 @@
 */
 #include "clique.hpp"
 
-namespace { bool cliqueInitializedMpi; }
+namespace { 
+bool cliqueInitializedElemental; 
+bool initializedClique = false;
+}
+
+bool clique::Initialized()
+{ return ::initializedClique; }
 
 void clique::Initialize( int& argc, char**& argv )
 {
-    if( !mpi::Initialized() )
+    // If Clique has already been initialized, this is a no-op
+    if( ::initializedClique )
+        return;
+
+    const bool mustInitElemental = !elemental::Initialized();
+    if( mustInitElemental )
     {
-        if( mpi::Finalized() )
-            throw std::logic_error
-            ("Cannot initialize Clique after finalizing MPI");
-#ifdef _OPENMP
-        const int provided = 
-            mpi::InitThread( argc, argv, mpi::THREAD_MULTIPLE );
-        if( provided != mpi::THREAD_MULTIPLE )
-            std::cerr << "WARNING: Could not achieve THREAD_MULTIPLE support."
-                      << std::endl;
-#else
-        mpi::Init( argc, argv );
-#endif // ifdef _OPENMP
-        ::cliqueInitializedMpi = true;
+        elemental::Initialize( argc, argv );
+        ::cliqueInitializedElemental = true;
     }
     else
     {
-        ::cliqueInitializedMpi = false;
+        ::cliqueInitializedElemental = false;
     }
+    ::initializedClique = true;
 }
 
 void clique::Finalize()
 {
-    if( mpi::Finalized() )
-        std::cerr << "WARNING: MPI was finalized before Clique." << std::endl;
-    else if( ::cliqueInitializedMpi )
-        mpi::Finalize();
+    // If Clique is not currently initialized, then this is a no-op
+    if( !::initializedClique )
+        return;
+    
+    if( ::cliqueInitializedElemental )
+        elemental::Finalize();
+
+    ::initializedClique = false;
 }
 
 #ifndef RELEASE

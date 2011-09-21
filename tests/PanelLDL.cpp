@@ -1,7 +1,6 @@
 /*
    Clique: a scalable implementation of the multifrontal algorithm
 
-   Copyright (C) 2010-2011 Jack Poulson <jack.poulson@gmail.com>
    Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
    The University of Texas at Austin
  
@@ -18,37 +17,17 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_CORE_ENVIRONMENT_HPP
-#define CLIQUE_CORE_ENVIRONMENT_HPP 1
+#include "clique.hpp"
+using namespace elemental;
 
-#include "elemental.hpp"
-#include <algorithm>
-#include <map>
+int
+main( int argc, char* argv[] )
+{
+    clique::Initialize( argc, argv );
 
-#include "clique/config.h"
+    // TODO
 
-namespace clique {
-
-typedef unsigned char byte;
- 
-typedef std::complex<float> scomplex;
-typedef std::complex<double> dcomplex;
-
-bool Initialized();
-void Initialize( int& argc, char**& argv );
-void Finalize();
-
-#ifndef RELEASE
-void PushCallStack( std::string s );
-void PopCallStack();
-void DumpCallStack();
-#endif
-
-namespace blas = elemental::blas;
-namespace lapack = elemental::lapack;
-namespace mpi = elemental::mpi;
-
-} // namespace clique
-
-#endif /* CLIQUE_CORE_ENVIRONMENT_HPP */
+    clique::Finalize();
+    return 0;
+}
 

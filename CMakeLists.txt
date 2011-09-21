@@ -78,20 +78,20 @@ include_directories("${PROJECT_BINARY_DIR}/include")
 # Build the test drivers if necessary
 if(BUILD_TESTS)
   set(TEST_DIR ${PROJECT_SOURCE_DIR}/tests)
-  set(CORE_TESTS )
+  set(TESTS PanelLDL)
 
-  # Build the core tests
-  set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/tests/core")
-  foreach(TEST ${CORE_TESTS})
-    add_executable(tests-core-${TEST} ${TEST_DIR}/${TEST}.cpp)
-    target_link_libraries(tests-core-${TEST} clique cmake-dummy-lib)
-    set_target_properties(tests-core-${TEST} PROPERTIES
+  # Build the tests
+  set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/tests")
+  foreach(TEST ${TESTS})
+    add_executable(tests-${TEST} ${TEST_DIR}/${TEST}.cpp)
+    target_link_libraries(tests-${TEST} clique cmake-dummy-lib)
+    set_target_properties(tests-${TEST} PROPERTIES
                           OUTPUT_NAME ${TEST}
                           RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
     if(MPI_LINK_FLAGS)
-      set_target_properties(tests-core-${TEST} PROPERTIES
+      set_target_properties(tests-${TEST} PROPERTIES
                             LINK_FLAGS ${MPI_LINK_FLAGS})
     endif(MPI_LINK_FLAGS)
-    install(TARGETS tests-core-${TEST} DESTINATION bin/tests/core)
+    install(TARGETS tests-${TEST} DESTINATION bin/tests)
   endforeach(TEST)
 endif(BUILD_TESTS)
