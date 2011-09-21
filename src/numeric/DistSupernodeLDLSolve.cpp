@@ -148,7 +148,7 @@ void clique::numeric::DistSupernodeLDLBackwardSolve
     if( U.Grid() != X.Grid() )
         throw std::logic_error
         ("U and X must be distributed over the same grid");
-    if( U.Height() != L.Width() || U.Height() != X.Height() || 
+    if( U.Height() != U.Width() || U.Height() != X.Height() || 
         U.Height() < supernodeSize )
     {
         std::ostringstream msg;

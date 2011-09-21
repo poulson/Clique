@@ -126,7 +126,7 @@ void clique::numeric::LocalSupernodeLDLBackwardSolve
 {
 #ifndef RELEASE
     clique::PushCallStack("numeric::LocalSupernodeLDLBackwardSolve");
-    if( U.Height() != L.Width() || U.Height() != X.Height() || 
+    if( U.Height() != U.Width() || U.Height() != X.Height() || 
         U.Height() < supernodeSize )
     {
         std::ostringstream msg;

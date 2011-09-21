@@ -181,8 +181,10 @@ void clique::numeric::DistLDLDiagonalSolve
         // Solve against the k'th supernode using the front
         DistMatrix<F,VC,STAR> FTL;
         FTL.LockedView( numSN.front1d, 0, 0, symbSN.size, symbSN.size );
-        // TODO: Extract the diagonal of FTL and solve against localXT
-        // HERE
+        DistMatrix<F,VC,STAR> dTL;
+        FTL.GetDiagonal( dTL );
+        basic::DiagonalSolve
+        ( LEFT, NORMAL, dTL.LockedLocalMatrix(), localXT, checkIfSingular );
     }
 #ifndef RELEASE
     PopCallStack();

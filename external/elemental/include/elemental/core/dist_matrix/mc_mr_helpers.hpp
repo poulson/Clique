@@ -44,7 +44,7 @@ DistMatrix<T,MC,MR>::SetToRandomHermitianHelper<Z>::Func
     PushCallStack("[MC,MR]::SetToRandomHermitian");
     parent.AssertNotLockedView();
     if( parent._height != parent._width )
-        throw logic_error( "Hermitian matrices must be square." );
+        throw logic_error("Hermitian matrices must be square");
 #endif
     parent.SetToRandom();
 #ifndef RELEASE
@@ -63,7 +63,7 @@ DistMatrix<T,MC,MR>::SetToRandomHermitianHelper<complex<Z> >::Func
     PushCallStack("[MC,MR]::SetToRandomHermitian");
     parent.AssertNotLockedView();
     if( parent._height != parent._width )
-        throw logic_error( "Hermitian matrices must be square." );
+        throw logic_error("Hermitian matrices must be square");
 #endif
     const int r = parent.Grid().Height();
     const int c = parent.Grid().Width();
@@ -109,7 +109,7 @@ DistMatrix<T,MC,MR>::SetToRandomHPDHelper<Z>::Func
     PushCallStack("[MC,MR]::SetToRandomHPD");
     parent.AssertNotLockedView();
     if( parent._height != parent._width )
-        throw logic_error( "Positive-definite matrices must be square." );
+        throw logic_error("Positive-definite matrices must be square");
 #endif
     const int r = parent.Grid().Height();
     const int c = parent.Grid().Width();
@@ -153,7 +153,7 @@ DistMatrix<T,MC,MR>::SetToRandomHPDHelper<complex<Z> >::Func
     PushCallStack("[MC,MR]::SetToRandomHPD");
     parent.AssertNotLockedView();
     if( parent.Height() != parent.Width() )
-        throw logic_error( "Positive-definite matrices must be square." );
+        throw logic_error("Positive-definite matrices must be square");
 #endif
     const int r = parent.Grid().Height();
     const int c = parent.Grid().Width();
@@ -366,43 +366,32 @@ DistMatrix<T,MC,MR>::GetRealDiagonalHelper<complex<Z> >::Func
 {
 #ifndef RELEASE
     PushCallStack("[MC,MR]::GetRealDiagonal");
-    parent.AssertNotLockedView();
+    if( d.Viewing() )
+        parent.AssertSameGrid( d );
 #endif
-    int width = parent.Width();
-    int height = parent.Height();
-    int length;
-    if( offset > 0 )
-    {
-        const int remainingWidth = max(width-offset,0);
-        length = min(height,remainingWidth);
-    }
-    else
-    {
-        const int remainingHeight = max(height+offset,0);
-        length = min(remainingHeight,width);
-    }
+    const int length = parent.DiagonalLength(offset);
 #ifndef RELEASE
     if( d.Viewing() && length != d.Height() )
     {
         ostringstream msg;
-        msg << "d is not of the same length as the diagonal:" << endl
-            << "  A ~ " << parent.Height() << " x " << parent.Width() << endl
-            << "  d ~ " << d.Height() << " x " << d.Width() << endl
-            << "  A diag length: " << length << endl;
-        throw logic_error( msg.str() );
+        msg << "d is not of the same length as the diagonal:\n"
+            << "  A ~ " << parent.Height() << " x " << parent.Width() << "\n"
+            << "  d ~ " << d.Height() << " x " << d.Width() << "\n"
+            << "  A diag length: " << length << "\n";
+        throw logic_error( msg.str().c_str() );
     }
 #endif
-
+    const elemental::Grid& g = parent.Grid();
     if( !d.Viewing() )
     {
+        d.SetGrid( g );
         if( !d.ConstrainedColAlignment() )
-            d.AlignWithDiag( parent, offset );
+            d.AlignWithDiagonal( parent, offset );
         d.ResizeTo( length, 1 );
     }
 
     if( d.InDiagonal() )
     {
-        const elemental::Grid& g = parent.Grid();
         const int r = g.Height();
         const int c = g.Width();
         const int lcm = g.LCM();
@@ -454,7 +443,8 @@ DistMatrix<T,MC,MR>::GetImagDiagonalHelper<complex<Z> >::Func
 {
 #ifndef RELEASE
     PushCallStack("[MC,MR]::GetImagDiagonal");
-    parent.AssertNotLockedView();
+    if( d.Viewing() )
+        parent.AssertSameGrid( d );
 #endif
     int width = parent.Width();
     int height = parent.Height();
@@ -473,24 +463,25 @@ DistMatrix<T,MC,MR>::GetImagDiagonalHelper<complex<Z> >::Func
     if( d.Viewing() && length != d.Height() )
     {
         ostringstream msg;
-        msg << "d is not of the same length as the diagonal:" << endl
-            << "  A ~ " << parent.Height() << " x " << parent.Width() << endl
-            << "  d ~ " << d.Height() << " x " << d.Width() << endl
-            << "  A diag length: " << length << endl;
-        throw logic_error( msg.str() );
+        msg << "d is not of the same length as the diagonal:\n"
+            << "  A ~ " << parent.Height() << " x " << parent.Width() << "\n"
+            << "  d ~ " << d.Height() << " x " << d.Width() << "\n"
+            << "  A diag length: " << length << "\n";
+        throw logic_error( msg.str().c_str() );
     }
 #endif
 
+    const elemental::Grid& g = parent.Grid();
     if( !d.Viewing() )
     {
+        d.SetGrid( g );
         if( !d.ConstrainedColAlignment() )
-            d.AlignWithDiag( parent, offset );
+            d.AlignWithDiagonal( parent, offset );
         d.ResizeTo( length, 1 );
     }
 
     if( d.InDiagonal() )
     {
-        const elemental::Grid& g = parent.Grid();
         const int r = g.Height();
         const int c = g.Width();
         const int lcm = g.LCM();
@@ -542,7 +533,8 @@ DistMatrix<T,MC,MR>::GetRealDiagonalHelper<complex<Z> >::Func
 {
 #ifndef RELEASE
     PushCallStack("[MC,MR]::GetRealDiagonal");
-    parent.AssertNotLockedView();
+    if( d.Viewing() )
+        parent.AssertSameGrid( d );
 #endif
     int height = parent.Height();
     int width = parent.Width();
@@ -561,24 +553,25 @@ DistMatrix<T,MC,MR>::GetRealDiagonalHelper<complex<Z> >::Func
     if( d.Viewing() && length != d.Width() )
     {
         ostringstream msg;
-        msg << "d is not of the same length as the diagonal:" << endl
-            << "  A ~ " << parent.Height() << " x " << parent.Width() << endl
-            << "  d ~ " << d.Height() << " x " << d.Width() << endl
-            << "  A diag length: " << length << endl;
-        throw logic_error( msg.str() );
+        msg << "d is not of the same length as the diagonal:\n"
+            << "  A ~ " << parent.Height() << " x " << parent.Width() << "\n"
+            << "  d ~ " << d.Height() << " x " << d.Width() << "\n"
+            << "  A diag length: " << length << "\n";
+        throw logic_error( msg.str().c_str() );
     }
 #endif
 
+    const elemental::Grid& g = parent.Grid();
     if( !d.Viewing() )
     {
+        d.SetGrid( g );
         if( !d.ConstrainedRowAlignment() )
-            d.AlignWithDiag( parent, offset );
+            d.AlignWithDiagonal( parent, offset );
         d.ResizeTo( 1, length );
     }
 
     if( d.InDiagonal() )
     {
-        const elemental::Grid& g = parent.Grid();
         const int r = g.Height();
         const int c = g.Width();
         const int lcm = g.LCM();
@@ -632,7 +625,8 @@ DistMatrix<T,MC,MR>::GetImagDiagonalHelper<complex<Z> >::Func
 {
 #ifndef RELEASE
     PushCallStack("[MC,MR]::GetImagDiagonal");
-    parent.AssertNotLockedView();
+    if( d.Viewing() )
+        parent.AssertSameGrid( d );
 #endif
     int height = parent.Height();
     int width = parent.Width();
@@ -651,24 +645,25 @@ DistMatrix<T,MC,MR>::GetImagDiagonalHelper<complex<Z> >::Func
     if( d.Viewing() && length != d.Width() )
     {
         ostringstream msg;
-        msg << "d is not of the same length as the diagonal:" << endl
-            << "  A ~ " << parent.Height() << " x " << parent.Width() << endl
-            << "  d ~ " << d.Height() << " x " << d.Width() << endl
-            << "  A diag length: " << length << endl;
-        throw logic_error( msg.str() );
+        msg << "d is not of the same length as the diagonal:\n"
+            << "  A ~ " << parent.Height() << " x " << parent.Width() << "\n"
+            << "  d ~ " << d.Height() << " x " << d.Width() << "\n"
+            << "  A diag length: " << length << "\n";
+        throw logic_error( msg.str().c_str() );
     }
 #endif
 
+    const elemental::Grid& g = parent.Grid();
     if( !d.Viewing() )
     {
+        d.SetGrid( g );
         if( !d.ConstrainedRowAlignment() )
-            d.AlignWithDiag( parent, offset );
+            d.AlignWithDiagonal( parent, offset );
         d.ResizeTo( 1, length );
     }
 
     if( d.InDiagonal() )
     {
-        const elemental::Grid& g = parent.Grid();
         const int r = g.Height();
         const int c = g.Width();
         const int lcm = g.LCM();
@@ -722,31 +717,18 @@ DistMatrix<T,MC,MR>::SetRealDiagonalHelper<complex<Z> >::Func
 {
 #ifndef RELEASE
     PushCallStack("[MC,MR]::SetRealDiagonal");
+    parent.AssertSameGrid( d );
     if( d.Width() != 1 )
-        throw logic_error( "d must be a column vector." );
+        throw logic_error("d must be a column vector");
+    const int length = parent.DiagonalLength(offset);
+    if( length != d.Height() )
     {
-        int height = parent.Height();
-        int width = parent.Width();
-        int length;
-        if( offset >= 0 )
-        {
-            const int remainingWidth = max(width-offset,0);
-            length = min(remainingWidth,height);
-        }
-        else
-        {
-            const int remainingHeight = max(height+offset,0);
-            length = min(remainingHeight,width);
-        }
-        if( length != d.Height() )
-        {
-            ostringstream msg;
-            msg << "d is not of the same length as the diagonal:" << endl
-                << "  A ~ " << parent.Height() << " x " << parent.Width() << endl
-                << "  d ~ " << d.Height() << " x " << d.Width() << endl
-                << "  A diag length: " << length << endl;
-            throw logic_error( msg.str() );
-        }
+        ostringstream msg;
+        msg << "d is not of the same length as the diagonal:\n"
+            << "  A ~ " << parent.Height() << " x " << parent.Width() << "\n"
+            << "  d ~ " << d.Height() << " x " << d.Width() << "\n"
+            << "  A diag length: " << length << "\n";
+        throw logic_error( msg.str().c_str() );
     }
 #endif
     if( d.InDiagonal() )
@@ -805,31 +787,18 @@ DistMatrix<T,MC,MR>::SetImagDiagonalHelper<complex<Z> >::Func
 {
 #ifndef RELEASE
     PushCallStack("[MC,MR]::SetImagDiagonal");
+    parent.AssertSameGrid( d );
     if( d.Width() != 1 )
-        throw logic_error( "d must be a column vector." );
+        throw logic_error("d must be a column vector");
+    const int length = parent.DiagonalLength(offset);
+    if( length != d.Height() )
     {
-        int height = parent.Height();
-        int width = parent.Width();
-        int length;
-        if( offset >= 0 )
-        {
-            const int remainingWidth = max(width-offset,0);
-            length = min(remainingWidth,height);
-        }
-        else
-        {
-            const int remainingHeight = max(height+offset,0);
-            length = min(remainingHeight,width);
-        }
-        if( length != d.Height() )
-        {
-            ostringstream msg;
-            msg << "d is not of the same length as the diagonal:" << endl
-                << "  A ~ " << parent.Height() << " x " << parent.Width() << endl
-                << "  d ~ " << d.Height() << " x " << d.Width() << endl
-                << "  A diag length: " << length << endl;
-            throw logic_error( msg.str() );
-        }
+        ostringstream msg;
+        msg << "d is not of the same length as the diagonal:\n"
+            << "  A ~ " << parent.Height() << " x " << parent.Width() << "\n"
+            << "  d ~ " << d.Height() << " x " << d.Width() << "\n"
+            << "  A diag length: " << length << "\n";
+        throw logic_error( msg.str().c_str() );
     }
 #endif
     if( d.InDiagonal() )
@@ -888,32 +857,18 @@ DistMatrix<T,MC,MR>::SetRealDiagonalHelper<complex<Z> >::Func
 {
 #ifndef RELEASE
     PushCallStack("[MC,MR]::SetRealDiagonal");
+    parent.AssertSameGrid( d );
     if( d.Height() != 1 )
-        throw logic_error( "d must be a row vector." );
+        throw logic_error("d must be a row vector");
+    const int length = parent.DiagonalLength(offset);
+    if( length != d.Width() )
     {
-        const int height = parent.Height();
-        const int width = parent.Width();
-
-        int length;
-        if( offset >= 0 )
-        {
-            const int remainingWidth = max(width-offset,0);
-            length = min(remainingWidth,height);
-        }
-        else
-        {
-            const int remainingHeight = max(height+offset,0);
-            length = min(remainingHeight,width);
-        }
-        if( length != d.Width() )
-        {
-            ostringstream msg;
-            msg << "d is not of the same length as the diagonal:" << endl
-                << "  A ~ " << parent.Height() << " x " << parent.Width() << endl
-                << "  d ~ " << d.Height() << " x " << d.Width() << endl
-                << "  A diag length: " << length << endl;
-            throw logic_error( msg.str() );
-        }
+        ostringstream msg;
+        msg << "d is not of the same length as the diagonal:\n"
+            << "  A ~ " << parent.Height() << " x " << parent.Width() << "\n"
+            << "  d ~ " << d.Height() << " x " << d.Width() << "\n"
+            << "  A diag length: " << length << "\n";
+        throw logic_error( msg.str().c_str() );
     }
 #endif
     if( d.InDiagonal() )
@@ -973,32 +928,18 @@ DistMatrix<T,MC,MR>::SetImagDiagonalHelper<complex<Z> >::Func
 {
 #ifndef RELEASE
     PushCallStack("[MC,MR]::SetImagDiagonal");
+    parent.AssertSameGrid( d );
     if( d.Height() != 1 )
-        throw logic_error( "d must be a row vector." );
+        throw logic_error("d must be a row vector");
+    const int length = parent.DiagonalLength(offset);
+    if( length != d.Width() )
     {
-        const int height = parent.Height();
-        const int width = parent.Width();
-
-        int length;
-        if( offset >= 0 )
-        {
-            const int remainingWidth = max(width-offset,0);
-            length = min(remainingWidth,height);
-        }
-        else
-        {
-            const int remainingHeight = max(height+offset,0);
-            length = min(remainingHeight,width);
-        }
-        if( length != d.Width() )
-        {
-            ostringstream msg;
-            msg << "d is not of the same length as the diagonal:" << endl
-                << "  A ~ " << parent.Height() << " x " << parent.Width() << endl
-                << "  d ~ " << d.Height() << " x " << d.Width() << endl
-                << "  A diag length: " << length << endl;
-            throw logic_error( msg.str() );
-        }
+        ostringstream msg;
+        msg << "d is not of the same length as the diagonal:\n"
+            << "  A ~ " << parent.Height() << " x " << parent.Width() << "\n"
+            << "  d ~ " << d.Height() << " x " << d.Width() << "\n"
+            << "  A diag length: " << length << "\n";
+        throw logic_error( msg.str().c_str() );
     }
 #endif
     if( d.InDiagonal() )
