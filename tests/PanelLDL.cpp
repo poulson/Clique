@@ -56,7 +56,7 @@ FillDistOrigStruct
 void
 FillLocalOrigStruct
 ( int nx, int ny, int nz, int nxSub, int nySub, int xOffset, int yOffset, 
-  int cutoff,
+  int cutoff, int log2CommSize,
   clique::symbolic::LocalSymmOrig& SOrig );
 
 int
@@ -213,7 +213,8 @@ FillOrigStruct
     ( nx, ny, nz, nxSub, nySub, xOffset, yOffset, 
       cutoff, commRank, log2CommSize, distSOrig );
     FillLocalOrigStruct
-    ( nx, ny, nz, nxSub, nySub, xOffset, yOffset, cutoff, localSOrig );
+    ( nx, ny, nz, nxSub, nySub, xOffset, yOffset, cutoff, 
+      log2CommSize, localSOrig );
 }
   
 void
@@ -390,38 +391,210 @@ FillDistOrigStruct
     }
 }
 
+// Even though this is only used within the following function, it must be
+// declared outside of the function in order to be used as a template argument
+// (for std::stack) since template arguments must have external linkage.
+//
+// This data holds the bounding box information.
+struct Box
+{
+    int parentIndex, nx, ny, xOffset, yOffset;
+    bool marked;
+};
+
 void
 FillLocalOrigStruct
 ( int nx, int ny, int nz, int nxSub, int nySub, int xOffset, int yOffset, 
-  int cutoff,
-  clique::symbolic::LocalSymmOrig& SOrig )
+  int cutoff, int log2CommSize, clique::symbolic::LocalSymmOrig& S )
 {
     // First count the depth, resize, and then run the actual fill
     int numSupernodes = 0;
     CountLocalTreeSize
     ( nxSub, nySub, nz, xOffset, yOffset, cutoff, numSupernodes );
+    S.supernodes.resize( numSupernodes );
+    std::stack<Box> boxStack;
 
-    SOrig.supernodes.resize( numSupernodes );
-    // HERE: FillLocalTree
+    // Initialize the root's box
+    {
+        Box box;
+        box.parentIndex = -1;
+        box.nx = nxSub;
+        box.ny = nySub;
+        box.xOffset = xOffset;
+        box.yOffset = yOffset;
+        box.marked = false;
+        boxStack.push(box);
+    }
+
+    for( int s=numSupernodes-1; s>=0; --s )
+    {
+        Box box = boxStack.top();
+
+        clique::symbolic::LocalSymmOrigSupernode& sn = S.supernodes[s];
+        sn.parent = box.parentIndex;
+        if( sn.parent != -1 )
+        {
+            if( box.marked )
+                S.supernodes[sn.parent].children[1] = s;
+            else
+                S.supernodes[sn.parent].children[0] = s;
+        }
+
+        if( box.nx*box.ny*nz <= cutoff )
+        {
+            sn.size = box.nx*box.ny*nz;
+            sn.offset = ReorderedIndex
+                ( box.xOffset, box.yOffset, 0, nx, ny, nz, 
+                  log2CommSize, cutoff );
+            sn.children.clear();
+
+            // Count, allocate, and fill the lower struct
+            // Essentially, we need to check all four quasi2d borders
+            // TODO
+            
+            boxStack.pop();
+            if( !boxStack.empty() )
+                boxStack.top().marked = true;
+        }
+        else
+        {
+            sn.children.resize(2);
+            if( box.nx >= box.ny )
+            {
+                // Partition the X dimension (this is the separator)
+                const int middle = (box.nx-1)/2;
+                sn.size = box.ny*nz;
+                sn.offset = ReorderedIndex
+                    ( box.xOffset+middle, box.yOffset, 0, nx, ny, nz,
+                      log2CommSize, cutoff );
+
+                // Count, allocate, and fill the lower struct
+                int numJoins = 0;
+                if( box.yOffset-1 >= 0 )
+                    ++numJoins;
+                if( box.yOffset+box.ny < ny )
+                    ++numJoins;
+                sn.lowerStruct.resize( numJoins*nz );
+
+                int joinOffset = 0;
+                if( box.yOffset-1 >= 0 )
+                {
+                    for( int i=0; i<nz; ++i )
+                        sn.lowerStruct[i] = ReorderedIndex
+                        ( box.xOffset+middle, box.yOffset-1, 0, nx, ny, nz,
+                          log2CommSize, cutoff );
+                    joinOffset += nz;
+                }
+                if( box.yOffset+box.ny < ny )
+                {
+                    for( int i=0; i<nz; ++i )
+                        sn.lowerStruct[joinOffset+i] = ReorderedIndex
+                        ( box.xOffset+middle, box.yOffset+box.ny, 0, nx, ny, nz,
+                          log2CommSize, cutoff );
+                }
+
+                if( box.marked )
+                {
+                    // Set up for the right child
+                    Box rightBox;
+                    rightBox.parentIndex = s;
+                    rightBox.nx = std::max(box.nx-middle-1,0);
+                    rightBox.ny = box.ny;
+                    rightBox.xOffset = box.xOffset+middle+1;
+                    rightBox.yOffset = box.yOffset;
+                    rightBox.marked = false;
+                    boxStack.push( rightBox );
+                }
+                else
+                {
+                    // Set up for the left child
+                    Box leftBox;
+                    leftBox.parentIndex = s;
+                    leftBox.nx = middle;
+                    leftBox.ny = box.ny;
+                    leftBox.xOffset = box.xOffset;
+                    leftBox.yOffset = box.yOffset;
+                    leftBox.marked = false;
+                    boxStack.push( leftBox );
+                }
+            }
+            else 
+            {
+                // Partition the Y dimension (this is the separator)
+                const int middle = (box.ny-1)/2;
+                sn.size = box.nx*nz;
+                sn.offset = ReorderedIndex
+                    ( box.xOffset, box.yOffset+middle, 0, nx, ny, nz,
+                      log2CommSize, cutoff );
+
+                // Count, allocate, and fill the lower struct
+                int numJoins = 0;
+                if( box.xOffset-1 >= 0 )
+                    ++numJoins;
+                if( box.xOffset+box.nx < nx )
+                    ++numJoins;
+                sn.lowerStruct.resize( numJoins*nz );
+
+                int joinOffset = 0;
+                if( box.xOffset-1 >= 0 )
+                {
+                    for( int i=0; i<nz; ++i )
+                        sn.lowerStruct[i] = ReorderedIndex
+                        ( box.xOffset-1, box.yOffset+middle, 0, nx, ny, nz,
+                          log2CommSize, cutoff );
+                    joinOffset += nz;
+                }
+                if( box.xOffset+box.nx < nx )
+                {
+                    for( int i=0; i<nz; ++i )
+                        sn.lowerStruct[joinOffset+i] = ReorderedIndex
+                        ( box.xOffset+box.nx, box.yOffset+middle, 0, nx, ny, nz,
+                          log2CommSize, cutoff );
+                }
+
+                if( box.marked )
+                {
+                    // Set up for the right child
+                    Box rightBox;
+                    rightBox.parentIndex = s;
+                    rightBox.nx = box.nx;
+                    rightBox.ny = std::max(box.ny-middle-1,0);
+                    rightBox.xOffset = box.xOffset;
+                    rightBox.yOffset = box.yOffset+middle+1;
+                    rightBox.marked = false;
+                    boxStack.push( rightBox );
+                }
+                else
+                {
+                    // Set up for the left child
+                    Box leftBox;
+                    leftBox.parentIndex = s;
+                    leftBox.nx = box.nx;
+                    leftBox.ny = middle;
+                    leftBox.xOffset = box.xOffset;
+                    leftBox.yOffset = box.yOffset;
+                    leftBox.marked = false;
+                    boxStack.push( leftBox );
+                }
+            }
+        }
+    }
 }
 
 void CountLocalTreeSize
 ( int nx, int ny, int nz, int xOffset, int yOffset, int cutoff, 
   int& numSupernodes )
 {
-
+    ++numSupernodes;
     const int size = nx*ny*nz;
     if( size <= cutoff )
     {
-        ++numSupernodes;
+        // no-op
     }
     else if( nx >= ny )
     {
         // Partition the X dimension
         const int middle = (nx-1)/2;
-
-        // Count the left partition, the right partition, and the separator
-        numSupernodes += 3;
 
         // Recurse on the left partition
         CountLocalTreeSize
@@ -436,9 +609,6 @@ void CountLocalTreeSize
     {
         // Partition the Y dimension
         const int middle = (ny-1)/2;
-
-        // Count the top partition, the bottom partition, and the separator
-        numSupernodes += 3;
 
         // Recurse on the top partition
         CountLocalTreeSize
