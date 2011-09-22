@@ -22,10 +22,11 @@ using namespace elemental;
 
 void Usage()
 {
-    std::cout << "PanelLDL <nx> <ny> <nz>\n"
+    std::cout << "PanelLDL <nx> <ny> <nz> <cutoff>\n"
               << "<nx>: size of panel in x direction\n"
               << "<ny>: size of panel in y direction\n"
-              << "<nz>: size of panel in z direction\n" << std::endl;
+              << "<nz>: size of panel in z direction\n"
+              << "<cutoff>: minimum required leaf size\n" << std::endl;
 }
 
 int ReorderedIndexRecursion
@@ -44,7 +45,7 @@ int ReorderedIndexRecursion
     }
     else if( nx >= ny )
     {
-        // Partition the x dimension
+        // Partition the X dimension
         const int middle = (nx-1)/2;
         if( x < middle )
         {
@@ -65,7 +66,7 @@ int ReorderedIndexRecursion
     }
     else
     {
-        // Partition the y dimension
+        // Partition the Y dimension
         const int middle = (ny-1)/2;
         if( y < middle )
         {
@@ -125,7 +126,7 @@ main( int argc, char* argv[] )
         return 0;
     }
 
-    if( argc < 4 )
+    if( argc < 5 )
     {
         if( commRank == 0 )        
             Usage();
@@ -137,18 +138,92 @@ main( int argc, char* argv[] )
     const int nx = atoi( argv[argNum++] );
     const int ny = atoi( argv[argNum++] );
     const int nz = atoi( argv[argNum++] );
+    const int cutoff = atoi( argv[argNum++] );
     if( commRank == 0 )
-        std::cout << "(nx,ny,nz)=(" << nx << "," << ny << "," << nz << ")"
-                  << std::endl;
+        std::cout << "(nx,ny,nz)=(" << nx << "," << ny << "," << nz << ")\n"
+                  << "cutoff=" << cutoff << std::endl;
 
-    // TODO: Perform the analytical nested dissection and fill the distributed
-    //       then local original structures.
-    clique::symbolic::DistSymmOrig distSymmOrig;
-    clique::symbolic::LocalSymmOrig localSymmOrig;
+    // Fill the distributed portion of the structure
+    int nxSub=nx, nySub=ny, xOffset=0, yOffset=0;
+    clique::symbolic::DistSymmOrig distOrig;
+    distOrig.supernodes.resize( log2CommSize );
     for( int s=0; s<log2CommSize; ++s )
     {
-        // HERE
+        clique::symbolic::DistSymmOrigSupernode& sn = 
+            distOrig.supernodes[log2CommSize-(s+1)];
+        if( nxSub >= nySub )
+        {
+            // Form the structure of a partition of the X dimension
+            sn.size = nySub*nz;
+            sn.offset = 
+                ReorderedIndex
+                ( xOffset, yOffset, 0, nx, ny, nz, log2CommSize, cutoff );
+
+            int numJoins = 0;
+            if( yOffset-1 >= 0 )
+                ++numJoins;
+            if( yOffset+nySub < ny )
+                ++numJoins;
+            sn.lowerStruct.resize( numJoins*nz );
+
+            int joinOffset = 0;
+            if( yOffset-1 >= 0 )
+            {
+                for( int i=0; i<nz; ++i )
+                    sn.lowerStruct[i] = ReorderedIndex
+                    ( xOffset, yOffset-1, 0, nx, ny, nz, log2CommSize, cutoff );
+                joinOffset += nz;
+            }
+            if( yOffset+nySub < ny )
+            {
+                for( int i=0; i<nz; ++i )
+                    sn.lowerStruct[joinOffset+i] = ReorderedIndex
+                    ( xOffset, yOffset+nySub, 0, nx, ny, nz, 
+                      log2CommSize, cutoff );
+            }
+            
+            // Pick the new offsets and sizes based upon whether or not the
+            // (log2CommSize-s)'th bit of our rank is nonzero.
+            // HERE
+        }
+        else
+        {
+            // Form the structure of a partition of the Y dimension
+            sn.size = nxSub*nz;
+            sn.offset = 
+                ReorderedIndex
+                ( xOffset, yOffset, 0, nx, ny, nz, log2CommSize, cutoff );
+
+            int numJoins = 0;
+            if( xOffset-1 >= 0 )
+                ++numJoins;
+            if( xOffset+nxSub < nx )
+                ++numJoins;
+            sn.lowerStruct.resize( numJoins*nz );
+
+            int joinOffset = 0;
+            if( xOffset-1 >= 0 )
+            {
+                for( int i=0; i<nz; ++i )
+                    sn.lowerStruct[i] = ReorderedIndex
+                    ( xOffset-1, yOffset, 0, nx, ny, nz, log2CommSize, cutoff );
+                joinOffset += nz;
+            }
+            if( xOffset+nxSub < nx )
+            {
+                for( int i=0; i<nz; ++i )
+                    sn.lowerStruct[joinOffset+i] = ReorderedIndex
+                    ( xOffset+nxSub, yOffset, 0, nx, ny, nz,
+                      log2CommSize, cutoff );
+            }
+
+            // Pick the new offsets and sizes based upon whether or not the
+            // (log2CommSize-s)'th bit of our rank is nonzero.
+            // HERE
+        }
     }
+    // TODO: Form the local portion of the structure.
+
     // TODO: Call the symbolic factorization routine
     // TODO: Call the numerical factorization routine
     // TODO: Call a solve routine
