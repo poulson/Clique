@@ -62,6 +62,7 @@ main( int argc, char* argv[] )
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
     const int commSize = mpi::CommSize( comm );
+    typedef std::complex<double> F;
 
     // Ensure that we have a power of two number of processes
     unsigned temp = commSize;
@@ -102,9 +103,23 @@ main( int argc, char* argv[] )
     FillOrigStruct
     ( nx, ny, nz, cutoff, commRank, log2CommSize, localSOrig, distSOrig );
 
-    // TODO: Call the symbolic factorization routine
-    // TODO: Call the numerical factorization routine
-    // TODO: Call a solve routine
+    // Call the symbolic factorization routine
+    clique::symbolic::DistSymmFact distS;
+    clique::symbolic::LocalSymmFact localS;
+    clique::symbolic::SymmetricFactorization
+    ( localSOrig, distSOrig, localS, distS, true );
+
+    // Directly initialize the frontal matrices with the original sparse matrix
+    clique::numeric::DistSymmFact<F> distL;
+    clique::numeric::LocalSymmFact<F> localL;
+    // TODO
+
+    // Call the numerical factorization routine
+    //clique::numeric::LDL( ADJOINT, localS, distS, localL, distL );
+
+    // Set up the properly ordered RHS and call a solve routine
+    //clique::numeric::LDLSolve
+    //( ADJOINT, localS, distS, localL, distL, localX, true );
 
     clique::Finalize();
     return 0;

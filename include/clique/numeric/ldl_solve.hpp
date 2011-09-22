@@ -25,6 +25,16 @@ namespace clique {
 namespace numeric {
 
 template<typename F>
+void LDLSolve
+( Orientation orientation,
+  const symbolic::LocalSymmFact& localS,
+  const symbolic::DistSymmFact& distS,
+  const numeric::LocalSymmFact<F>& localL,
+  const numeric::DistSymmFact<F>& distL,
+        Matrix<F>& localX, 
+        bool checkIfSingular=true );
+
+template<typename F>
 void LocalLDLForwardSolve
 ( const symbolic::LocalSymmFact& S, 
   const numeric::LocalSymmFact<F>& L, Matrix<F>& X );
@@ -64,6 +74,35 @@ void DistLDLBackwardSolve
   const symbolic::DistSymmFact& S,
   const numeric::DistSymmFact<F>& L,
         Matrix<F>& localX );
+
+//----------------------------------------------------------------------------//
+// Implementation begins here                                                 //
+//----------------------------------------------------------------------------//
+
+template<typename F>
+void LDLSolve
+( Orientation orientation,
+  const symbolic::LocalSymmFact& localS,
+  const symbolic::DistSymmFact& distS,
+  const numeric::LocalSymmFact<F>& localL,
+  const numeric::DistSymmFact<F>& distL,
+        Matrix<F>& localX, 
+        bool checkIfSingular=true )
+{
+#ifndef RELEASE
+    PushCallStack("numeric::LDLSolve");
+#endif
+    clique::numeric::LocalLDLForwardSolve( localS, localL, localX );
+    clique::numeric::DistLDLForwardSolve( distS, localL, distL, localX );
+    clique::numeric::LocalLDLDiagonalSolve( localS, localL, localX, true );
+    clique::numeric::DistLDLDiagonalSolve( distS, distL, localX, true );
+    clique::numeric::DistLDLBackwardSolve( ADJOINT, distS, distL, localX );
+    clique::numeric::LocalLDLBackwardSolve
+    ( ADJOINT, localS, localL, distL, localX );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
 
 } // namespace numeric
 } // namespace clique

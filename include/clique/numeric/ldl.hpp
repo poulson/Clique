@@ -70,6 +70,14 @@ void SetSolveMode( DistSymmFact<F>& distL, SolveMode solveMode );
 // original sparse matrix before calling the following factorizations.
 
 template<typename F>
+void LDL
+( Orientation orientation,
+  symbolic::LocalSymmFact& localS,
+  symbolic::DistSymmFact& distS,
+  numeric::LocalSymmFact<F>& localL,
+  numeric::DistSymmFact<F>& distL );
+
+template<typename F>
 void LocalLDL
 ( Orientation orientation, 
   symbolic::LocalSymmFact& S, // can't be const due to map...
@@ -81,6 +89,28 @@ void DistLDL
         symbolic::DistSymmFact& S, // can't be const due to map...
   const numeric::LocalSymmFact<F>& localL,
         numeric::DistSymmFact<F>&  distL );
+
+//----------------------------------------------------------------------------//
+// Implementation begins here                                                 //
+//----------------------------------------------------------------------------//
+
+template<typename F>
+void LDL
+( Orientation orientation,
+  symbolic::LocalSymmFact& localS,
+  symbolic::DistSymmFact& distS,
+  numeric::LocalSymmFact<F>& localL,
+  numeric::DistSymmFact<F>& distL )
+{
+#ifndef RELEASE
+    PushCallStack("numeric::LDL");
+#endif
+    LocalLDL( orientation, localS, localL );
+    DistLDL( orientation, distS, localL, distL );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
 
 } // namespace numeric
 } // namespace clique
