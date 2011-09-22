@@ -37,6 +37,10 @@ int ReorderedIndex
 ( int x, int y, int z, int nx, int ny, int nz,
   int minBalancedDepth, int cutoff );
 
+void CountLocalTreeSize
+( int nxSub, int nySub, int nz, int xOffset, int yOffset, int cutoff, 
+  int& numSupernodes );
+
 void
 FillOrigStruct
 ( int nx, int ny, int nz, int cutoff, int commRank, int log2CommSize,
@@ -392,7 +396,58 @@ FillLocalOrigStruct
   int cutoff,
   clique::symbolic::LocalSymmOrig& SOrig )
 {
-    // HERE
     // First count the depth, resize, and then run the actual fill
+    int numSupernodes = 0;
+    CountLocalTreeSize
+    ( nxSub, nySub, nz, xOffset, yOffset, cutoff, numSupernodes );
+
+    SOrig.supernodes.resize( numSupernodes );
+    // HERE: FillLocalTree
+}
+
+void CountLocalTreeSize
+( int nx, int ny, int nz, int xOffset, int yOffset, int cutoff, 
+  int& numSupernodes )
+{
+
+    const int size = nx*ny*nz;
+    if( size <= cutoff )
+    {
+        ++numSupernodes;
+    }
+    else if( nx >= ny )
+    {
+        // Partition the X dimension
+        const int middle = (nx-1)/2;
+
+        // Count the left partition, the right partition, and the separator
+        numSupernodes += 3;
+
+        // Recurse on the left partition
+        CountLocalTreeSize
+        ( middle, ny, nz, xOffset, yOffset, cutoff, numSupernodes );
+
+        // Recurse on the right partition
+        CountLocalTreeSize
+        ( std::max(nx-middle-1,0), ny, nz, xOffset+middle+1, yOffset, 
+          cutoff, numSupernodes );
+    }
+    else
+    {
+        // Partition the Y dimension
+        const int middle = (ny-1)/2;
+
+        // Count the top partition, the bottom partition, and the separator
+        numSupernodes += 3;
+
+        // Recurse on the top partition
+        CountLocalTreeSize
+        ( nx, middle, nz, xOffset, yOffset, cutoff, numSupernodes );
+
+        // Recurse on the bottom partition
+        CountLocalTreeSize
+        ( nx, std::max(ny-middle-1,0), nz, xOffset, yOffset+middle+1, 
+          cutoff, numSupernodes );
+    }
 }
 
