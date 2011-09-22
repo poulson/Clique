@@ -43,14 +43,14 @@ void CountLocalTreeSize
 
 void
 FillOrigStruct
-( int nx, int ny, int nz, int cutoff, int commRank, int log2CommSize,
+( int nx, int ny, int nz, int cutoff, mpi::Comm comm, int log2CommSize,
   clique::symbolic::LocalSymmOrig& localOrig, 
   clique::symbolic::DistSymmOrig& distOrig );
 
 void
 FillDistOrigStruct
 ( int nx, int ny, int nz, int& nxSub, int& nySub, int& xOffset, int& yOffset, 
-  int cutoff, int commRank, int log2CommSize,
+  int cutoff, mpi::Comm comm, int log2CommSize,
   clique::symbolic::DistSymmOrig& SOrig );
 
 void
@@ -101,29 +101,43 @@ main( int argc, char* argv[] )
         std::cout << "(nx,ny,nz)=(" << nx << "," << ny << "," << nz << ")\n"
                   << "cutoff=" << cutoff << std::endl;
 
-    // Fill the distributed portion of the original structure
-    clique::symbolic::DistSymmOrig distSOrig;
-    clique::symbolic::LocalSymmOrig localSOrig;
-    FillOrigStruct
-    ( nx, ny, nz, cutoff, commRank, log2CommSize, localSOrig, distSOrig );
+    try
+    {
+        // Fill the distributed portion of the original structure
+        clique::symbolic::LocalSymmOrig localSOrig;
+        clique::symbolic::DistSymmOrig distSOrig;
+        FillOrigStruct
+        ( nx, ny, nz, cutoff, comm, log2CommSize, localSOrig, distSOrig );
 
-    // Call the symbolic factorization routine
-    clique::symbolic::DistSymmFact distS;
-    clique::symbolic::LocalSymmFact localS;
-    clique::symbolic::SymmetricFactorization
-    ( localSOrig, distSOrig, localS, distS, true );
+        // Call the symbolic factorization routine
+        clique::symbolic::DistSymmFact distS;
+        clique::symbolic::LocalSymmFact localS;
+        clique::symbolic::SymmetricFactorization
+        ( localSOrig, distSOrig, localS, distS, true );
 
-    // Directly initialize the frontal matrices with the original sparse matrix
-    clique::numeric::DistSymmFact<F> distL;
-    clique::numeric::LocalSymmFact<F> localL;
-    // TODO
+        // Directly initialize the frontal matrices with the original 
+        // sparse matrix
+        clique::numeric::DistSymmFact<F> distL;
+        clique::numeric::LocalSymmFact<F> localL;
+        // TODO
 
-    // Call the numerical factorization routine
-    //clique::numeric::LDL( ADJOINT, localS, distS, localL, distL );
+        // Call the numerical factorization routine
+        //clique::numeric::LDL( ADJOINT, localS, distS, localL, distL );
 
-    // Set up the properly ordered RHS and call a solve routine
-    //clique::numeric::LDLSolve
-    //( ADJOINT, localS, distS, localL, distL, localX, true );
+        // Set up the properly ordered RHS and call a solve routine
+        //clique::numeric::LDLSolve
+        //( ADJOINT, localS, distS, localL, distL, localX, true );
+    }
+    catch( std::exception& e )
+    {
+#ifndef RELEASE
+        clique::DumpCallStack();
+#endif
+        std::ostringstream msg;
+        msg << "Process " << commRank << " caught message:\n"
+            << e.what() << "\n";
+        std::cerr << msg.str() << std::endl;
+    }
 
     clique::Finalize();
     return 0;
@@ -192,37 +206,48 @@ int ReorderedIndex
   int minBalancedDepth, int cutoff )
 {
 #ifndef RELEASE    
-    PushCallStack("ReorderedIndex");
+    clique::PushCallStack("ReorderedIndex");
 #endif
     int index = ReorderedIndexRecursion
     ( x, y, z, nx, ny, nz, minBalancedDepth, cutoff, 0 );
 #ifndef RELEASE
-    PopCallStack();
+    clique::PopCallStack();
 #endif
     return index;
 }
 
 void
 FillOrigStruct
-( int nx, int ny, int nz, int cutoff, int commRank, int log2CommSize,
+( int nx, int ny, int nz, int cutoff, mpi::Comm comm, int log2CommSize,
   clique::symbolic::LocalSymmOrig& localSOrig, 
   clique::symbolic::DistSymmOrig& distSOrig )
 {
+#ifndef RELEASE
+    clique::PushCallStack("FillOrigStruct");
+#endif
     int nxSub=nx, nySub=ny, xOffset=0, yOffset=0;
     FillDistOrigStruct
-    ( nx, ny, nz, nxSub, nySub, xOffset, yOffset, 
-      cutoff, commRank, log2CommSize, distSOrig );
+    ( nx, ny, nz, nxSub, nySub, xOffset, yOffset, cutoff, 
+      comm, log2CommSize, distSOrig );
     FillLocalOrigStruct
     ( nx, ny, nz, nxSub, nySub, xOffset, yOffset, cutoff, 
       log2CommSize, localSOrig );
+#ifndef RELEASE
+    clique::PopCallStack();
+#endif
 }
   
 void
 FillDistOrigStruct
 ( int nx, int ny, int nz, int& nxSub, int& nySub, int& xOffset, int& yOffset, 
-  int cutoff, int commRank, int log2CommSize, 
+  int cutoff, mpi::Comm comm, int log2CommSize, 
   clique::symbolic::DistSymmOrig& SOrig )
 {
+#ifndef RELEASE
+    clique::PushCallStack("FillDistOrigStruct");
+#endif
+    const int commRank = mpi::CommRank( comm );
+    SOrig.comm = comm;
     SOrig.supernodes.resize( log2CommSize );
     // Fill the distributed nodes
     for( int s=log2CommSize-1; s>0; --s )
@@ -410,6 +435,9 @@ FillDistOrigStruct
         // Sort the lower structure
         std::sort( sn.lowerStruct.begin(), sn.lowerStruct.end() );
     }
+#ifndef RELEASE
+    clique::PopCallStack();
+#endif
 }
 
 // Even though this is only used within the following function, it must be
@@ -428,6 +456,9 @@ FillLocalOrigStruct
 ( int nx, int ny, int nz, int nxSub, int nySub, int xOffset, int yOffset, 
   int cutoff, int log2CommSize, clique::symbolic::LocalSymmOrig& S )
 {
+#ifndef RELEASE
+    clique::PushCallStack("FillLocalOrigStruct");
+#endif
     // First count the depth, resize, and then run the actual fill
     int numSupernodes = 0;
     CountLocalTreeSize
@@ -651,6 +682,9 @@ FillLocalOrigStruct
             }
         }
     }
+#ifndef RELEASE
+    PopCallStack();
+#endif
 }
 
 void CountLocalTreeSize
