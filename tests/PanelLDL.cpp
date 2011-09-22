@@ -31,6 +31,87 @@ void Usage()
 
 int ReorderedIndexRecursion
 ( int x, int y, int z, int nx, int ny, int nz,
+  int stepsLeft, int cutoff, int offset );
+
+int ReorderedIndex
+( int x, int y, int z, int nx, int ny, int nz,
+  int minBalancedDepth, int cutoff );
+
+void
+FillOrigStruct
+( int nx, int ny, int nz, int cutoff, int commRank, int log2CommSize,
+  clique::symbolic::LocalSymmOrig& localOrig, 
+  clique::symbolic::DistSymmOrig& distOrig );
+
+void
+FillDistOrigStruct
+( int nx, int ny, int nz, int& nxSub, int& nySub, int& xOffset, int& yOffset, 
+  int cutoff, int commRank, int log2CommSize,
+  clique::symbolic::DistSymmOrig& SOrig );
+
+void
+FillLocalOrigStruct
+( int nx, int ny, int nz, int nxSub, int nySub, int xOffset, int yOffset, 
+  int cutoff,
+  clique::symbolic::LocalSymmOrig& SOrig );
+
+int
+main( int argc, char* argv[] )
+{
+    clique::Initialize( argc, argv );
+    mpi::Comm comm = mpi::COMM_WORLD;
+    const int commRank = mpi::CommRank( comm );
+    const int commSize = mpi::CommSize( comm );
+
+    // Ensure that we have a power of two number of processes
+    unsigned temp = commSize;
+    unsigned log2CommSize = 0;
+    while( temp >>= 1 )
+        ++log2CommSize;
+    if( 1u<<log2CommSize != commSize )
+    {
+        if( commRank == 0 )
+        {
+            std::cerr << "Must use a power of two number of processes" 
+                      << std::endl;
+        }
+        clique::Finalize();
+        return 0;
+    }
+
+    if( argc < 5 )
+    {
+        if( commRank == 0 )        
+            Usage();
+        clique::Finalize();
+        return 0;
+    }
+
+    int argNum = 1;
+    const int nx = atoi( argv[argNum++] );
+    const int ny = atoi( argv[argNum++] );
+    const int nz = atoi( argv[argNum++] );
+    const int cutoff = atoi( argv[argNum++] );
+    if( commRank == 0 )
+        std::cout << "(nx,ny,nz)=(" << nx << "," << ny << "," << nz << ")\n"
+                  << "cutoff=" << cutoff << std::endl;
+
+    // Fill the distributed portion of the original structure
+    clique::symbolic::DistSymmOrig distSOrig;
+    clique::symbolic::LocalSymmOrig localSOrig;
+    FillOrigStruct
+    ( nx, ny, nz, cutoff, commRank, log2CommSize, localSOrig, distSOrig );
+
+    // TODO: Call the symbolic factorization routine
+    // TODO: Call the numerical factorization routine
+    // TODO: Call a solve routine
+
+    clique::Finalize();
+    return 0;
+}
+ 
+int ReorderedIndexRecursion
+( int x, int y, int z, int nx, int ny, int nz,
   int stepsLeft, int cutoff, int offset )
 {
     const int size = nx*ny*nz;
@@ -102,55 +183,33 @@ int ReorderedIndex
     return index;
 }
 
-int
-main( int argc, char* argv[] )
+void
+FillOrigStruct
+( int nx, int ny, int nz, int cutoff, int commRank, int log2CommSize,
+  clique::symbolic::LocalSymmOrig& localSOrig, 
+  clique::symbolic::DistSymmOrig& distSOrig )
 {
-    clique::Initialize( argc, argv );
-    mpi::Comm comm = mpi::COMM_WORLD;
-    const int commRank = mpi::CommRank( comm );
-    const int commSize = mpi::CommSize( comm );
-
-    // Ensure that we have a power of two number of processes
-    unsigned temp = commSize;
-    unsigned log2CommSize = 0;
-    while( temp >>= 1 )
-        ++log2CommSize;
-    if( 1u<<log2CommSize != commSize )
-    {
-        if( commRank == 0 )
-        {
-            std::cerr << "Must use a power of two number of processes" 
-                      << std::endl;
-        }
-        clique::Finalize();
-        return 0;
-    }
-
-    if( argc < 5 )
-    {
-        if( commRank == 0 )        
-            Usage();
-        clique::Finalize();
-        return 0;
-    }
-
-    int argNum = 1;
-    const int nx = atoi( argv[argNum++] );
-    const int ny = atoi( argv[argNum++] );
-    const int nz = atoi( argv[argNum++] );
-    const int cutoff = atoi( argv[argNum++] );
-    if( commRank == 0 )
-        std::cout << "(nx,ny,nz)=(" << nx << "," << ny << "," << nz << ")\n"
-                  << "cutoff=" << cutoff << std::endl;
-
-    // Fill the distributed portion of the structure
     int nxSub=nx, nySub=ny, xOffset=0, yOffset=0;
-    clique::symbolic::DistSymmOrig distOrig;
-    distOrig.supernodes.resize( log2CommSize );
-    for( int s=0; s<log2CommSize; ++s )
+    FillDistOrigStruct
+    ( nx, ny, nz, nxSub, nySub, xOffset, yOffset, 
+      cutoff, commRank, log2CommSize, distSOrig );
+    FillLocalOrigStruct
+    ( nx, ny, nz, nxSub, nySub, xOffset, yOffset, cutoff, localSOrig );
+}
+  
+void
+FillDistOrigStruct
+( int nx, int ny, int nz, int& nxSub, int& nySub, int& xOffset, int& yOffset, 
+  int cutoff, int commRank, int log2CommSize, 
+  clique::symbolic::DistSymmOrig& SOrig )
+{
+    SOrig.supernodes.resize( log2CommSize );
+    // Fill the distributed nodes
+    for( int s=log2CommSize-1; s>0; --s )
     {
-        clique::symbolic::DistSymmOrigSupernode& sn = 
-            distOrig.supernodes[log2CommSize-(s+1)];
+        clique::symbolic::DistSymmOrigSupernode& sn = SOrig.supernodes[s];
+        const bool powerOfTwo = 1u<<(s-1);
+        const bool onLeft = (commRank&powerOfTwo) == 0;
         if( nxSub >= nySub )
         {
             // Form the structure of a partition of the X dimension
@@ -158,6 +217,7 @@ main( int argc, char* argv[] )
             sn.offset = 
                 ReorderedIndex
                 ( xOffset, yOffset, 0, nx, ny, nz, log2CommSize, cutoff );
+            const int middle = (nxSub-1)/2;
 
             int numJoins = 0;
             if( yOffset-1 >= 0 )
@@ -171,20 +231,29 @@ main( int argc, char* argv[] )
             {
                 for( int i=0; i<nz; ++i )
                     sn.lowerStruct[i] = ReorderedIndex
-                    ( xOffset, yOffset-1, 0, nx, ny, nz, log2CommSize, cutoff );
+                    ( xOffset+middle, yOffset-1, 0, nx, ny, nz, 
+                      log2CommSize, cutoff );
                 joinOffset += nz;
             }
             if( yOffset+nySub < ny )
             {
                 for( int i=0; i<nz; ++i )
                     sn.lowerStruct[joinOffset+i] = ReorderedIndex
-                    ( xOffset, yOffset+nySub, 0, nx, ny, nz, 
+                    ( xOffset+middle, yOffset+nySub, 0, nx, ny, nz, 
                       log2CommSize, cutoff );
             }
             
-            // Pick the new offsets and sizes based upon whether or not the
-            // (log2CommSize-s)'th bit of our rank is nonzero.
-            // HERE
+            // Pick the new offsets and sizes based upon our rank
+            if( onLeft )
+            {
+                xOffset = xOffset;
+                nxSub = middle;
+            }
+            else
+            {
+                xOffset = xOffset+middle+1;
+                nxSub = std::max(nxSub-middle-1,0);
+            }
         }
         else
         {
@@ -193,6 +262,7 @@ main( int argc, char* argv[] )
             sn.offset = 
                 ReorderedIndex
                 ( xOffset, yOffset, 0, nx, ny, nz, log2CommSize, cutoff );
+            const int middle = (nySub-1)/2;
 
             int numJoins = 0;
             if( xOffset-1 >= 0 )
@@ -206,29 +276,108 @@ main( int argc, char* argv[] )
             {
                 for( int i=0; i<nz; ++i )
                     sn.lowerStruct[i] = ReorderedIndex
-                    ( xOffset-1, yOffset, 0, nx, ny, nz, log2CommSize, cutoff );
+                    ( xOffset-1, yOffset+middle, 0, nx, ny, nz, 
+                      log2CommSize, cutoff );
                 joinOffset += nz;
             }
             if( xOffset+nxSub < nx )
             {
                 for( int i=0; i<nz; ++i )
                     sn.lowerStruct[joinOffset+i] = ReorderedIndex
-                    ( xOffset+nxSub, yOffset, 0, nx, ny, nz,
+                    ( xOffset+nxSub, yOffset+middle, 0, nx, ny, nz,
                       log2CommSize, cutoff );
             }
 
-            // Pick the new offsets and sizes based upon whether or not the
-            // (log2CommSize-s)'th bit of our rank is nonzero.
-            // HERE
+            // Pick the new offsets and sizes based upon our rank
+            if( onLeft )
+            {
+                yOffset = yOffset;
+                nySub = middle;
+            }
+            else
+            {
+                yOffset = yOffset+middle+1;
+                nySub = std::max(nySub-middle-1,0);
+            }
         }
     }
-    // TODO: Form the local portion of the structure.
+    // Fill the bottom node, which is only owned by a single process
+    clique::symbolic::DistSymmOrigSupernode& sn = SOrig.supernodes[0];
+    if( nxSub >= nySub )
+    {
+        // Form the structure of a partition of the X dimension
+        sn.size = nySub*nz;
+        sn.offset = 
+            ReorderedIndex
+            ( xOffset, yOffset, 0, nx, ny, nz, log2CommSize, cutoff );
+        const int middle = (nxSub-1)/2;
 
-    // TODO: Call the symbolic factorization routine
-    // TODO: Call the numerical factorization routine
-    // TODO: Call a solve routine
+        int numJoins = 0;
+        if( yOffset-1 >= 0 )
+            ++numJoins;
+        if( yOffset+nySub < ny )
+            ++numJoins;
+        sn.lowerStruct.resize( numJoins*nz );
 
-    clique::Finalize();
-    return 0;
+        int joinOffset = 0;
+        if( yOffset-1 >= 0 )
+        {
+            for( int i=0; i<nz; ++i )
+                sn.lowerStruct[i] = ReorderedIndex
+                ( xOffset+middle, yOffset-1, 0, nx, ny, nz, 
+                  log2CommSize, cutoff );
+            joinOffset += nz;
+        }
+        if( yOffset+nySub < ny )
+        {
+            for( int i=0; i<nz; ++i )
+                sn.lowerStruct[joinOffset+i] = ReorderedIndex
+                ( xOffset+middle, yOffset+nySub, 0, nx, ny, nz, 
+                  log2CommSize, cutoff );
+        }
+    }
+    else
+    {
+        // Form the structure of a partition of the Y dimension
+        sn.size = nxSub*nz;
+        sn.offset = 
+            ReorderedIndex
+            ( xOffset, yOffset, 0, nx, ny, nz, log2CommSize, cutoff );
+        const int middle = (nySub-1)/2;
+
+        int numJoins = 0;
+        if( xOffset-1 >= 0 )
+            ++numJoins;
+        if( xOffset+nxSub < nx )
+            ++numJoins;
+        sn.lowerStruct.resize( numJoins*nz );
+
+        int joinOffset = 0;
+        if( xOffset-1 >= 0 )
+        {
+            for( int i=0; i<nz; ++i )
+                sn.lowerStruct[i] = ReorderedIndex
+                ( xOffset-1, yOffset+middle, 0, nx, ny, nz, 
+                  log2CommSize, cutoff );
+            joinOffset += nz;
+        }
+        if( xOffset+nxSub < nx )
+        {
+            for( int i=0; i<nz; ++i )
+                sn.lowerStruct[joinOffset+i] = ReorderedIndex
+                ( xOffset+nxSub, yOffset+middle, 0, nx, ny, nz,
+                  log2CommSize, cutoff );
+        }
+    }
+}
+
+void
+FillLocalOrigStruct
+( int nx, int ny, int nz, int nxSub, int nySub, int xOffset, int yOffset, 
+  int cutoff,
+  clique::symbolic::LocalSymmOrig& SOrig )
+{
+    // HERE
+    // First count the depth, resize, and then run the actual fill
 }
 
