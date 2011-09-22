@@ -239,6 +239,7 @@ FillDistOrigStruct
                 ( xOffset, yOffset, 0, nx, ny, nz, log2CommSize, cutoff );
             const int middle = (nxSub-1)/2;
 
+            // Allocate space for the lower structure
             int numJoins = 0;
             if( yOffset-1 >= 0 )
                 ++numJoins;
@@ -246,12 +247,13 @@ FillDistOrigStruct
                 ++numJoins;
             sn.lowerStruct.resize( numJoins*nz );
 
+            // Fill the (unsorted) lower structure
             int joinOffset = 0;
             if( yOffset-1 >= 0 )
             {
                 for( int i=0; i<nz; ++i )
                     sn.lowerStruct[i] = ReorderedIndex
-                    ( xOffset+middle, yOffset-1, 0, nx, ny, nz, 
+                    ( xOffset+middle, yOffset-1, i, nx, ny, nz, 
                       log2CommSize, cutoff );
                 joinOffset += nz;
             }
@@ -259,9 +261,12 @@ FillDistOrigStruct
             {
                 for( int i=0; i<nz; ++i )
                     sn.lowerStruct[joinOffset+i] = ReorderedIndex
-                    ( xOffset+middle, yOffset+nySub, 0, nx, ny, nz, 
+                    ( xOffset+middle, yOffset+nySub, i, nx, ny, nz, 
                       log2CommSize, cutoff );
             }
+
+            // Sort the lower structure
+            std::sort( sn.lowerStruct.begin(), sn.lowerStruct.end() );
             
             // Pick the new offsets and sizes based upon our rank
             if( onLeft )
@@ -284,6 +289,7 @@ FillDistOrigStruct
                 ( xOffset, yOffset, 0, nx, ny, nz, log2CommSize, cutoff );
             const int middle = (nySub-1)/2;
 
+            // Allocate space for the lower structure
             int numJoins = 0;
             if( xOffset-1 >= 0 )
                 ++numJoins;
@@ -291,12 +297,13 @@ FillDistOrigStruct
                 ++numJoins;
             sn.lowerStruct.resize( numJoins*nz );
 
+            // Fill the (unsorted) lower structure
             int joinOffset = 0;
             if( xOffset-1 >= 0 )
             {
                 for( int i=0; i<nz; ++i )
                     sn.lowerStruct[i] = ReorderedIndex
-                    ( xOffset-1, yOffset+middle, 0, nx, ny, nz, 
+                    ( xOffset-1, yOffset+middle, i, nx, ny, nz, 
                       log2CommSize, cutoff );
                 joinOffset += nz;
             }
@@ -304,9 +311,12 @@ FillDistOrigStruct
             {
                 for( int i=0; i<nz; ++i )
                     sn.lowerStruct[joinOffset+i] = ReorderedIndex
-                    ( xOffset+nxSub, yOffset+middle, 0, nx, ny, nz,
+                    ( xOffset+nxSub, yOffset+middle, i, nx, ny, nz,
                       log2CommSize, cutoff );
             }
+
+            // Sort the lower structure
+            std::sort( sn.lowerStruct.begin(), sn.lowerStruct.end() );
 
             // Pick the new offsets and sizes based upon our rank
             if( onLeft )
@@ -321,6 +331,7 @@ FillDistOrigStruct
             }
         }
     }
+
     // Fill the bottom node, which is only owned by a single process
     clique::symbolic::DistSymmOrigSupernode& sn = SOrig.supernodes[0];
     if( nxSub >= nySub )
@@ -332,6 +343,7 @@ FillDistOrigStruct
             ( xOffset, yOffset, 0, nx, ny, nz, log2CommSize, cutoff );
         const int middle = (nxSub-1)/2;
 
+        // Allocate space for the lower structure
         int numJoins = 0;
         if( yOffset-1 >= 0 )
             ++numJoins;
@@ -339,12 +351,13 @@ FillDistOrigStruct
             ++numJoins;
         sn.lowerStruct.resize( numJoins*nz );
 
+        // Fill the (unsorted) lower structure
         int joinOffset = 0;
         if( yOffset-1 >= 0 )
         {
             for( int i=0; i<nz; ++i )
                 sn.lowerStruct[i] = ReorderedIndex
-                ( xOffset+middle, yOffset-1, 0, nx, ny, nz, 
+                ( xOffset+middle, yOffset-1, i, nx, ny, nz, 
                   log2CommSize, cutoff );
             joinOffset += nz;
         }
@@ -352,9 +365,12 @@ FillDistOrigStruct
         {
             for( int i=0; i<nz; ++i )
                 sn.lowerStruct[joinOffset+i] = ReorderedIndex
-                ( xOffset+middle, yOffset+nySub, 0, nx, ny, nz, 
+                ( xOffset+middle, yOffset+nySub, i, nx, ny, nz, 
                   log2CommSize, cutoff );
         }
+
+        // Sort the lower structure
+        std::sort( sn.lowerStruct.begin(), sn.lowerStruct.end() );
     }
     else
     {
@@ -365,6 +381,7 @@ FillDistOrigStruct
             ( xOffset, yOffset, 0, nx, ny, nz, log2CommSize, cutoff );
         const int middle = (nySub-1)/2;
 
+        // Allocate space for the lower structure
         int numJoins = 0;
         if( xOffset-1 >= 0 )
             ++numJoins;
@@ -372,12 +389,13 @@ FillDistOrigStruct
             ++numJoins;
         sn.lowerStruct.resize( numJoins*nz );
 
+        // Fill the (unsorted) lower structure
         int joinOffset = 0;
         if( xOffset-1 >= 0 )
         {
             for( int i=0; i<nz; ++i )
                 sn.lowerStruct[i] = ReorderedIndex
-                ( xOffset-1, yOffset+middle, 0, nx, ny, nz, 
+                ( xOffset-1, yOffset+middle, i, nx, ny, nz, 
                   log2CommSize, cutoff );
             joinOffset += nz;
         }
@@ -385,9 +403,12 @@ FillDistOrigStruct
         {
             for( int i=0; i<nz; ++i )
                 sn.lowerStruct[joinOffset+i] = ReorderedIndex
-                ( xOffset+nxSub, yOffset+middle, 0, nx, ny, nz,
+                ( xOffset+nxSub, yOffset+middle, i, nx, ny, nz,
                   log2CommSize, cutoff );
         }
+
+        // Sort the lower structure
+        std::sort( sn.lowerStruct.begin(), sn.lowerStruct.end() );
     }
 }
 
@@ -412,9 +433,9 @@ FillLocalOrigStruct
     CountLocalTreeSize
     ( nxSub, nySub, nz, xOffset, yOffset, cutoff, numSupernodes );
     S.supernodes.resize( numSupernodes );
-    std::stack<Box> boxStack;
 
-    // Initialize the root's box
+    // Initialize with the root's box
+    std::stack<Box> boxStack;
     {
         Box box;
         box.parentIndex = -1;
@@ -426,6 +447,7 @@ FillLocalOrigStruct
         boxStack.push(box);
     }
 
+    // Fill the local tree
     for( int s=numSupernodes-1; s>=0; --s )
     {
         Box box = boxStack.top();
@@ -449,8 +471,52 @@ FillLocalOrigStruct
             sn.children.clear();
 
             // Count, allocate, and fill the lower struct
-            // Essentially, we need to check all four quasi2d borders
-            // TODO
+            int numJoins = 0;
+            if( box.xOffset-1 >= 0 )
+                ++numJoins;
+            if( box.xOffset+box.nx < nx )
+                ++numJoins;
+            if( box.yOffset-1 >= 0 )
+                ++numJoins;
+            if( box.yOffset+box.ny < ny )
+                ++numJoins;
+            sn.lowerStruct.resize( numJoins*nz );
+
+            int joinOffset = 0;
+            if( box.xOffset-1 >= 0 )
+            {
+                for( int i=0; i<nz; ++i )
+                    sn.lowerStruct[i] = ReorderedIndex
+                    ( box.xOffset-1, box.yOffset, i, nx, ny, nz, 
+                      log2CommSize, cutoff );
+                joinOffset += nz;
+            }
+            if( box.xOffset+box.nx < nx )
+            {
+                for( int i=0; i<nz; ++i )
+                    sn.lowerStruct[joinOffset+i] = ReorderedIndex
+                    ( box.xOffset+box.nx, box.yOffset, i, nx, ny, nz,
+                      log2CommSize, cutoff );
+                joinOffset += nz;
+            }
+            if( box.yOffset-1 >= 0 )
+            {
+                for( int i=0; i<nz; ++i )
+                    sn.lowerStruct[joinOffset+i] = ReorderedIndex
+                    ( box.xOffset, box.yOffset-1, i, nx, ny, nz,
+                      log2CommSize, cutoff );
+                joinOffset += nz;
+            }
+            if( box.yOffset+box.ny < ny )
+            {
+                for( int i=0; i<nz; ++i )
+                    sn.lowerStruct[joinOffset+i] = ReorderedIndex
+                    ( box.xOffset, box.yOffset+box.ny, i, nx, ny, nz,
+                      log2CommSize, cutoff );
+            }
+
+            // Sort the lower structure
+            std::sort( sn.lowerStruct.begin(), sn.lowerStruct.end() );
             
             boxStack.pop();
             if( !boxStack.empty() )
@@ -492,6 +558,9 @@ FillLocalOrigStruct
                         ( box.xOffset+middle, box.yOffset+box.ny, 0, nx, ny, nz,
                           log2CommSize, cutoff );
                 }
+
+                // Sort the lower structure
+                std::sort( sn.lowerStruct.begin(), sn.lowerStruct.end() );
 
                 if( box.marked )
                 {
@@ -551,6 +620,9 @@ FillLocalOrigStruct
                         ( box.xOffset+box.nx, box.yOffset+middle, 0, nx, ny, nz,
                           log2CommSize, cutoff );
                 }
+
+                // Sort the lower structure
+                std::sort( sn.lowerStruct.begin(), sn.lowerStruct.end() );
 
                 if( box.marked )
                 {
