@@ -46,7 +46,7 @@ void clique::numeric::LocalLDLForwardSolve
 
         // Pull in the relevant information from the RHS
         Matrix<F> XT;
-        XT.LockedView( X, symbSN.myOffset, 0, symbSN.size, width );
+        XT.View( X, symbSN.myOffset, 0, symbSN.size, width );
         WT = XT;
         WB.SetToZero();
 
@@ -71,7 +71,7 @@ void clique::numeric::LocalLDLForwardSolve
             {
                 const int iFront = symbSN.leftChildRelIndices[iChild]; 
                 for( int j=0; j<width; ++j )
-                    W.Update( iFront, j, -leftUpdate.Get(iFront,j) );
+                    W.Update( iFront, j, -leftUpdate.Get(iChild,j) );
             }
             leftWork.Empty();
 
@@ -83,7 +83,7 @@ void clique::numeric::LocalLDLForwardSolve
             {
                 const int iFront = symbSN.rightChildRelIndices[iChild];
                 for( int j=0; j<width; ++j )
-                    W.Update( iFront, j, -rightUpdate.Get(iFront,j) );
+                    W.Update( iFront, j, -rightUpdate.Get(iChild,j) );
             }
             rightWork.Empty();
         }
@@ -171,7 +171,7 @@ void clique::numeric::LocalLDLBackwardSolve
 
         // Pull in the relevant information from the RHS
         Matrix<F> XT;
-        XT.LockedView( X, symbSN.myOffset, 0, symbSN.size, width );
+        XT.View( X, symbSN.myOffset, 0, symbSN.size, width );
         WT = XT;
 
         // Update using the parent

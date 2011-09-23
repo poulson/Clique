@@ -20,59 +20,6 @@
 #include "clique.hpp"
 using namespace elemental;
 
-// This routine could be modified later so that it uses much less memory
-// by replacing the '=' redistributions with piece-by-piece redistributions.
-template<typename F>
-void clique::numeric::SetSolveMode( DistSymmFact<F>& distL, SolveMode mode )
-{
-#ifndef RELEASE
-    PushCallStack("numeric::SetSolveMode");
-#endif
-    // Check if this call can be a no-op
-    if( mode == distL.mode ) 
-    {
-#ifndef RELEASE
-        PopCallStack();
-#endif
-        return;
-    }
-
-    distL.mode = mode;
-    const int numSupernodes = distL.supernodes.size();    
-    if( numSupernodes == 0 )
-    {
-#ifndef RELEASE
-        PopCallStack();
-#endif
-        return;
-    }
-
-    DistSymmFactSupernode<F>& leafSN = distL.supernodes[0];
-    if( mode == FEW_RHS )
-    {
-        leafSN.front1d.LocalMatrix().View( leafSN.front2d.LocalMatrix() );
-        for( int k=1; k<numSupernodes; ++k )
-        {
-            DistSymmFactSupernode<F>& sn = distL.supernodes[k];
-            sn.front1d = sn.front2d;
-            sn.front2d.Empty();
-        }
-    }
-    else
-    {
-        leafSN.front2d.LocalMatrix().View( leafSN.front1d.LocalMatrix() );
-        for( int k=1; k<numSupernodes; ++k )
-        {
-            DistSymmFactSupernode<F>& sn = distL.supernodes[k];
-            sn.front2d = sn.front1d;
-            sn.front1d.Empty();
-        }
-    }
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
 template<typename F> // F represents a real or complex field
 void clique::numeric::DistLDL
 ( Orientation orientation,
@@ -228,32 +175,24 @@ void clique::numeric::DistLDL
 #endif
 }
 
-template void clique::numeric::SetSolveMode
-( DistSymmFact<float>& distL, SolveMode mode );
 template void clique::numeric::DistLDL
 ( Orientation orientation,
         symbolic::DistSymmFact& S,
   const numeric::LocalSymmFact<float>& localL,
         numeric::DistSymmFact<float>& distL );
 
-template void clique::numeric::SetSolveMode
-( DistSymmFact<double>& distL, SolveMode mode );
 template void clique::numeric::DistLDL
 ( Orientation orientation,
         symbolic::DistSymmFact& S,
   const numeric::LocalSymmFact<double>& localL,
         numeric::DistSymmFact<double>& distL );
 
-template void clique::numeric::SetSolveMode
-( DistSymmFact<std::complex<float> >& distL, SolveMode mode );
 template void clique::numeric::DistLDL
 ( Orientation orientation,
         symbolic::DistSymmFact& S,
   const numeric::LocalSymmFact<std::complex<float> >& localL,
         numeric::DistSymmFact<std::complex<float> >& distL );
 
-template void clique::numeric::SetSolveMode
-( DistSymmFact<std::complex<double> >& distL, SolveMode mode );
 template void clique::numeric::DistLDL
 ( Orientation orientation,
         symbolic::DistSymmFact& S,

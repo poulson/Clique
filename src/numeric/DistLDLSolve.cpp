@@ -42,10 +42,13 @@ void clique::numeric::DistLDLForwardSolve
         return;
     }
 
-    // Copy the information from the local portion into the distributed root
-    const LocalSymmFactSupernode<F>& topLocalSN = localL.supernodes.back();
-    const DistSymmFactSupernode<F>& bottomDistSN = distL.supernodes[0];
-    bottomDistSN.work2d.LocalMatrix().LockedView( topLocalSN.work );
+    // Copy the information from the local portion into the distributed leaf
+    const LocalSymmFactSupernode<F>& localRootSN = localL.supernodes.back();
+    const DistSymmFactSupernode<F>& distLeafSN = distL.supernodes[0];
+    distLeafSN.work1d.LockedView
+    ( localRootSN.work.Height(), localRootSN.work.Width(), 0,
+      localRootSN.work.LockedBuffer(), localRootSN.work.LDim(), 
+      distLeafSN.front1d.Grid() );
     
     // Perform the distributed portion of the forward solve
     std::vector<int>::const_iterator it;
@@ -66,21 +69,22 @@ void clique::numeric::DistLDLForwardSolve
 
         // Set up a workspace
         DistMatrix<F,VC,STAR>& W = numSN.work1d;
+        W.SetGrid( grid );
         W.ResizeTo( numSN.front1d.Height(), width );
-        DistMatrix<F,VC,STAR> WT(grid), WB(grid);
+        DistMatrix<F,VC,STAR> WT, WB;
         WT.View( W, 0, 0, symbSN.size, width );
         WB.View( W, symbSN.size, 0, W.Height()-symbSN.size, width );
 
         // Pull in the relevant information from the RHS
         Matrix<F> localXT;
-        localXT.LockedView
+        localXT.View
         ( localX, symbSN.localOffset1d, 0, symbSN.localSize1d, width );
         WT.LocalMatrix() = localXT;
         WB.SetToZero();
 
         // Pack our child's update
-        DistMatrix<F,VC,STAR> childUpdate(childGrid);
         const int updateSize = childNumSN.work1d.Height()-childSymbSN.size;
+        DistMatrix<F,VC,STAR> childUpdate;
         childUpdate.LockedView
         ( childNumSN.work1d, childSymbSN.size, 0, updateSize, width );
         it = std::max_element
@@ -175,7 +179,7 @@ void clique::numeric::DistLDLDiagonalSolve
         const numeric::DistSymmFactSupernode<F>& numSN = L.supernodes[k];
 
         Matrix<F> localXT;
-        localXT.LockedView
+        localXT.View
         ( localX, symbSN.localOffset1d, 0, symbSN.localSize1d, width );
 
         // Solve against the k'th supernode using the front
@@ -250,7 +254,7 @@ void clique::numeric::DistLDLBackwardSolve
 
         // Pull in the relevant information from the RHS
         Matrix<F> localXT;
-        localXT.LockedView
+        localXT.View
         ( localX, symbSN.localOffset1d, 0, symbSN.localSize1d, width );
         WT.LocalMatrix() = localXT;
 

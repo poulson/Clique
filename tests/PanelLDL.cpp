@@ -148,13 +148,19 @@ main( int argc, char* argv[] )
         }
 
         // Call the numerical factorization routine
-        clique::numeric::LDL( ADJOINT, localS, distS, localL, distL );
+        clique::numeric::LDL( TRANSPOSE, localS, distS, localL, distL );
+
+        // Redistribute to 1d for fast solves with few right-hand sides
+        clique::numeric::SetSolveMode( distL, clique::FEW_RHS );
 
         // Set up the properly ordered RHS and call a solve routine
-        Matrix<F> localX;
-        // TODO
-        //clique::numeric::LDLSolve
-        //( ADJOINT, localS, distS, localL, distL, localX, true );
+        const int localHeight1d = 
+            distS.supernodes.back().localOffset1d + 
+            distS.supernodes.back().localSize1d;
+        Matrix<F> localX( localHeight1d, 5 );
+        localX.SetToRandom();
+        clique::numeric::LDLSolve
+        ( TRANSPOSE, localS, distS, localL, distL, localX, true );
     }
     catch( std::exception& e )
     {
