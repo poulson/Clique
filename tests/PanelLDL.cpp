@@ -658,7 +658,7 @@ void FillLocalOrigStruct
                 {
                     for( int i=0; i<nz; ++i )
                         sn.lowerStruct[i] = ReorderedIndex
-                        ( box.xOffset+middle, box.yOffset-1, 0, nx, ny, nz,
+                        ( box.xOffset+middle, box.yOffset-1, i, nx, ny, nz,
                           log2CommSize, cutoff );
                     joinOffset += nz;
                 }
@@ -666,7 +666,7 @@ void FillLocalOrigStruct
                 {
                     for( int i=0; i<nz; ++i )
                         sn.lowerStruct[joinOffset+i] = ReorderedIndex
-                        ( box.xOffset+middle, box.yOffset+box.ny, 0, nx, ny, nz,
+                        ( box.xOffset+middle, box.yOffset+box.ny, i, nx, ny, nz,
                           log2CommSize, cutoff );
                 }
 
@@ -715,7 +715,7 @@ void FillLocalOrigStruct
                 {
                     for( int i=0; i<nz; ++i )
                         sn.lowerStruct[i] = ReorderedIndex
-                        ( box.xOffset-1, box.yOffset+middle, 0, nx, ny, nz,
+                        ( box.xOffset-1, box.yOffset+middle, i, nx, ny, nz,
                           log2CommSize, cutoff );
                     joinOffset += nz;
                 }
@@ -723,7 +723,7 @@ void FillLocalOrigStruct
                 {
                     for( int i=0; i<nz; ++i )
                         sn.lowerStruct[joinOffset+i] = ReorderedIndex
-                        ( box.xOffset+box.nx, box.yOffset+middle, 0, nx, ny, nz,
+                        ( box.xOffset+box.nx, box.yOffset+middle, i, nx, ny, nz,
                           log2CommSize, cutoff );
                 }
 

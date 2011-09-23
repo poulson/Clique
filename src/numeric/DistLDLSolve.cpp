@@ -71,9 +71,10 @@ void clique::numeric::DistLDLForwardSolve
         DistMatrix<F,VC,STAR>& W = numSN.work1d;
         W.SetGrid( grid );
         W.ResizeTo( numSN.front1d.Height(), width );
-        DistMatrix<F,VC,STAR> WT, WB;
-        WT.View( W, 0, 0, symbSN.size, width );
-        WB.View( W, symbSN.size, 0, W.Height()-symbSN.size, width );
+        DistMatrix<F,VC,STAR> WT(grid), WB(grid);
+        PartitionDown
+        ( W, WT,
+             WB, symbSN.size );
 
         // Pull in the relevant information from the RHS
         Matrix<F> localXT;
@@ -245,9 +246,9 @@ void clique::numeric::DistLDLBackwardSolve
 
         // Set up a workspace
         DistMatrix<F,VC,STAR>& W = numSN.work1d;
-        W.SetGrid( numSN.front1d.Grid() );
+        W.SetGrid( grid );
         W.ResizeTo( numSN.front1d.Height(), width );
-        DistMatrix<F,VC,STAR> WT, WB;
+        DistMatrix<F,VC,STAR> WT(grid), WB(grid);
         PartitionDown
         ( W, WT,
              WB, symbSN.size );
