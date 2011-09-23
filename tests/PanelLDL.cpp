@@ -38,23 +38,19 @@ int ReorderedIndex
   int minBalancedDepth, int cutoff );
 
 void CountLocalTreeSize
-( int nxSub, int nySub, int nz, int xOffset, int yOffset, int cutoff, 
-  int& numSupernodes );
+( int nxSub, int nySub, int nz, int cutoff, int& numSupernodes );
 
-void
-FillOrigStruct
+void FillOrigStruct
 ( int nx, int ny, int nz, int cutoff, mpi::Comm comm, int log2CommSize,
   clique::symbolic::LocalSymmOrig& localOrig, 
   clique::symbolic::DistSymmOrig& distOrig );
 
-void
-FillDistOrigStruct
+void FillDistOrigStruct
 ( int nx, int ny, int nz, int& nxSub, int& nySub, int& xOffset, int& yOffset, 
   int cutoff, mpi::Comm comm, int log2CommSize,
   clique::symbolic::DistSymmOrig& SOrig );
 
-void
-FillLocalOrigStruct
+void FillLocalOrigStruct
 ( int nx, int ny, int nz, int nxSub, int nySub, int xOffset, int yOffset, 
   int cutoff, int log2CommSize,
   clique::symbolic::LocalSymmOrig& SOrig );
@@ -216,8 +212,7 @@ int ReorderedIndex
     return index;
 }
 
-void
-FillOrigStruct
+void FillOrigStruct
 ( int nx, int ny, int nz, int cutoff, mpi::Comm comm, int log2CommSize,
   clique::symbolic::LocalSymmOrig& localSOrig, 
   clique::symbolic::DistSymmOrig& distSOrig )
@@ -237,8 +232,7 @@ FillOrigStruct
 #endif
 }
   
-void
-FillDistOrigStruct
+void FillDistOrigStruct
 ( int nx, int ny, int nz, int& nxSub, int& nySub, int& xOffset, int& yOffset, 
   int cutoff, mpi::Comm comm, int log2CommSize, 
   clique::symbolic::DistSymmOrig& SOrig )
@@ -248,9 +242,9 @@ FillDistOrigStruct
 #endif
     const int commRank = mpi::CommRank( comm );
     SOrig.comm = comm;
-    SOrig.supernodes.resize( log2CommSize );
+    SOrig.supernodes.resize( log2CommSize+1 );
     // Fill the distributed nodes
-    for( int s=log2CommSize-1; s>0; --s )
+    for( int s=log2CommSize; s>0; --s )
     {
         clique::symbolic::DistSymmOrigSupernode& sn = SOrig.supernodes[s];
         const bool powerOfTwo = 1u<<(s-1);
@@ -448,23 +442,23 @@ FillDistOrigStruct
 struct Box
 {
     int parentIndex, nx, ny, xOffset, yOffset;
-    bool marked;
+    bool rightChild;
 };
 
-void
-FillLocalOrigStruct
+void FillLocalOrigStruct
 ( int nx, int ny, int nz, int nxSub, int nySub, int xOffset, int yOffset, 
   int cutoff, int log2CommSize, clique::symbolic::LocalSymmOrig& S )
 {
 #ifndef RELEASE
     clique::PushCallStack("FillLocalOrigStruct");
 #endif
+    const int rank = mpi::CommRank( mpi::COMM_WORLD );
+
     // First count the depth, resize, and then run the actual fill
     int numSupernodes = 0;
-    CountLocalTreeSize
-    ( nxSub, nySub, nz, xOffset, yOffset, cutoff, numSupernodes );
+    CountLocalTreeSize( nxSub, nySub, nz, cutoff, numSupernodes );
     S.supernodes.resize( numSupernodes );
-
+    
     // Initialize with the root's box
     std::stack<Box> boxStack;
     {
@@ -474,7 +468,7 @@ FillLocalOrigStruct
         box.ny = nySub;
         box.xOffset = xOffset;
         box.yOffset = yOffset;
-        box.marked = false;
+        box.rightChild = false;
         boxStack.push(box);
     }
 
@@ -482,12 +476,13 @@ FillLocalOrigStruct
     for( int s=numSupernodes-1; s>=0; --s )
     {
         Box box = boxStack.top();
+        boxStack.pop();
 
         clique::symbolic::LocalSymmOrigSupernode& sn = S.supernodes[s];
         sn.parent = box.parentIndex;
         if( sn.parent != -1 )
         {
-            if( box.marked )
+            if( box.rightChild )
                 S.supernodes[sn.parent].children[1] = s;
             else
                 S.supernodes[sn.parent].children[0] = s;
@@ -548,10 +543,6 @@ FillLocalOrigStruct
 
             // Sort the lower structure
             std::sort( sn.lowerStruct.begin(), sn.lowerStruct.end() );
-            
-            boxStack.pop();
-            if( !boxStack.empty() )
-                boxStack.top().marked = true;
         }
         else
         {
@@ -593,30 +584,25 @@ FillLocalOrigStruct
                 // Sort the lower structure
                 std::sort( sn.lowerStruct.begin(), sn.lowerStruct.end() );
 
-                if( box.marked )
-                {
-                    // Set up for the right child
-                    Box rightBox;
-                    rightBox.parentIndex = s;
-                    rightBox.nx = std::max(box.nx-middle-1,0);
-                    rightBox.ny = box.ny;
-                    rightBox.xOffset = box.xOffset+middle+1;
-                    rightBox.yOffset = box.yOffset;
-                    rightBox.marked = false;
-                    boxStack.push( rightBox );
-                }
-                else
-                {
-                    // Set up for the left child
-                    Box leftBox;
-                    leftBox.parentIndex = s;
-                    leftBox.nx = middle;
-                    leftBox.ny = box.ny;
-                    leftBox.xOffset = box.xOffset;
-                    leftBox.yOffset = box.yOffset;
-                    leftBox.marked = false;
-                    boxStack.push( leftBox );
-                }
+                // Set up for the right child
+                Box rightBox;
+                rightBox.parentIndex = s;
+                rightBox.nx = std::max(box.nx-middle-1,0);
+                rightBox.ny = box.ny;
+                rightBox.xOffset = box.xOffset+middle+1;
+                rightBox.yOffset = box.yOffset;
+                rightBox.rightChild = true;
+                boxStack.push( rightBox );
+
+                // Set up for the left child
+                Box leftBox;
+                leftBox.parentIndex = s;
+                leftBox.nx = middle;
+                leftBox.ny = box.ny;
+                leftBox.xOffset = box.xOffset;
+                leftBox.yOffset = box.yOffset;
+                leftBox.rightChild = false;
+                boxStack.push( leftBox );
             }
             else 
             {
@@ -655,41 +641,35 @@ FillLocalOrigStruct
                 // Sort the lower structure
                 std::sort( sn.lowerStruct.begin(), sn.lowerStruct.end() );
 
-                if( box.marked )
-                {
-                    // Set up for the right child
-                    Box rightBox;
-                    rightBox.parentIndex = s;
-                    rightBox.nx = box.nx;
-                    rightBox.ny = std::max(box.ny-middle-1,0);
-                    rightBox.xOffset = box.xOffset;
-                    rightBox.yOffset = box.yOffset+middle+1;
-                    rightBox.marked = false;
-                    boxStack.push( rightBox );
-                }
-                else
-                {
-                    // Set up for the left child
-                    Box leftBox;
-                    leftBox.parentIndex = s;
-                    leftBox.nx = box.nx;
-                    leftBox.ny = middle;
-                    leftBox.xOffset = box.xOffset;
-                    leftBox.yOffset = box.yOffset;
-                    leftBox.marked = false;
-                    boxStack.push( leftBox );
-                }
+                // Set up for the right child
+                Box rightBox;
+                rightBox.parentIndex = s;
+                rightBox.nx = box.nx;
+                rightBox.ny = std::max(box.ny-middle-1,0);
+                rightBox.xOffset = box.xOffset;
+                rightBox.yOffset = box.yOffset+middle+1;
+                rightBox.rightChild = true;
+                boxStack.push( rightBox );
+
+                // Set up for the left child
+                Box leftBox;
+                leftBox.parentIndex = s;
+                leftBox.nx = box.nx;
+                leftBox.ny = middle;
+                leftBox.xOffset = box.xOffset;
+                leftBox.yOffset = box.yOffset;
+                leftBox.rightChild = false;
+                boxStack.push( leftBox );
             }
         }
     }
 #ifndef RELEASE
-    PopCallStack();
+    clique::PopCallStack();
 #endif
 }
 
 void CountLocalTreeSize
-( int nx, int ny, int nz, int xOffset, int yOffset, int cutoff, 
-  int& numSupernodes )
+( int nx, int ny, int nz, int cutoff, int& numSupernodes )
 {
     ++numSupernodes;
     const int size = nx*ny*nz;
@@ -703,13 +683,11 @@ void CountLocalTreeSize
         const int middle = (nx-1)/2;
 
         // Recurse on the left partition
-        CountLocalTreeSize
-        ( middle, ny, nz, xOffset, yOffset, cutoff, numSupernodes );
+        CountLocalTreeSize( middle, ny, nz, cutoff, numSupernodes );
 
         // Recurse on the right partition
         CountLocalTreeSize
-        ( std::max(nx-middle-1,0), ny, nz, xOffset+middle+1, yOffset, 
-          cutoff, numSupernodes );
+        ( std::max(nx-middle-1,0), ny, nz, cutoff, numSupernodes );
     }
     else
     {
@@ -717,13 +695,11 @@ void CountLocalTreeSize
         const int middle = (ny-1)/2;
 
         // Recurse on the top partition
-        CountLocalTreeSize
-        ( nx, middle, nz, xOffset, yOffset, cutoff, numSupernodes );
+        CountLocalTreeSize( nx, middle, nz, cutoff, numSupernodes );
 
         // Recurse on the bottom partition
         CountLocalTreeSize
-        ( nx, std::max(ny-middle-1,0), nz, xOffset, yOffset+middle+1, 
-          cutoff, numSupernodes );
+        ( nx, std::max(ny-middle-1,0), nz, cutoff, numSupernodes );
     }
 }
 

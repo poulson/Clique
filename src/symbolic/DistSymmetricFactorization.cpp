@@ -54,7 +54,7 @@ void clique::symbolic::DistSymmetricFactorization
     unsigned log2CommSize = 0;
     while( temp >>= 1 )
         ++log2CommSize;
-    if( log2CommSize != numSupernodes )
+    if( log2CommSize+1 != numSupernodes )
         throw std::runtime_error("Invalid distributed tree depth");
     if( 1u<<log2CommSize != commSize )
         throw std::runtime_error
