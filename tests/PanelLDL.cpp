@@ -504,8 +504,6 @@ void FillLocalOrigStruct
 #ifndef RELEASE
     clique::PushCallStack("FillLocalOrigStruct");
 #endif
-    const int rank = mpi::CommRank( mpi::COMM_WORLD );
-
     // First count the depth, resize, and then run the actual fill
     int numSupernodes = 0;
     CountLocalTreeSize( nxSub, nySub, nz, cutoff, numSupernodes );

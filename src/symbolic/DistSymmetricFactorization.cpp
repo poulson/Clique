@@ -65,11 +65,7 @@ void clique::symbolic::DistSymmetricFactorization
     const LocalSymmFactSupernode& topLocalSN = localFact.supernodes.back();
     DistSymmFactSupernode& bottomDistSN = distFact.supernodes[0];
     mpi::CommSplit( distOrig.comm, commRank, 0, bottomDistSN.comm );
-    unsigned gridHeight = 
-        static_cast<unsigned>(sqrt(static_cast<double>(commSize)));
-    while( commSize % gridHeight != 0 )
-        ++gridHeight;
-    bottomDistSN.gridHeight = gridHeight;
+    bottomDistSN.gridHeight = 1;
     bottomDistSN.size = topLocalSN.size;
     bottomDistSN.offset = topLocalSN.offset;
     bottomDistSN.myOffset = topLocalSN.myOffset;
@@ -90,22 +86,9 @@ void clique::symbolic::DistSymmetricFactorization
     bottomDistSN.rightChildSolveIndices.clear();
     bottomDistSN.childSolveRecvIndices.clear();
 
-    if( commRank == 0 )
-    {
-        std::ostringstream msg;
-        msg << "DistSymmetricFactorization: \n"
-            << "  numSupernodes=        " << numSupernodes << "\n"
-            << "  commSize=             " << commSize << "\n"
-            << "  gridHeight=           " << gridHeight << "\n"
-            << "  bottomDistSN.size=    " << bottomDistSN.size << "\n"
-            << "  bottomDistSN.offset=  " << bottomDistSN.offset << "\n"
-            << "  bottomDistSN.myOffset=" << bottomDistSN.myOffset << "\n";
-        std::cout << msg.str() << std::endl;
-    }
-
     // Perform the distributed part of the symbolic factorization
-    int myOffset = bottomDistSN.myOffset;
-    int localOffset1d = bottomDistSN.localOffset1d;
+    int myOffset = bottomDistSN.myOffset + bottomDistSN.size;
+    int localOffset1d = bottomDistSN.localOffset1d + bottomDistSN.size;
     std::vector<int>::iterator it;
     std::vector<int> sendBuffer, recvBuffer;
     std::vector<int> childrenStruct, partialStruct, fullStruct,
@@ -125,37 +108,18 @@ void clique::symbolic::DistSymmetricFactorization
         const bool onLeft = (commRank & powerOfTwo) == 0; // check k-1'th bit 
 
         // Create this level's communicator
-        const unsigned teamSize  = powerOfTwo;
+        const unsigned teamSize  = powerOfTwo << 1;
         const int teamColor = commRank & !(powerOfTwo-1);
         const int teamRank  = commRank &  (powerOfTwo-1);
         mpi::CommSplit( distOrig.comm, teamColor, teamRank, factSN.comm );
-        gridHeight = static_cast<unsigned>(sqrt(static_cast<double>(teamSize)));
+        unsigned gridHeight = 
+            static_cast<unsigned>(sqrt(static_cast<double>(teamSize)));
         while( teamSize % gridHeight != 0 )
             ++gridHeight;
         factSN.gridHeight = gridHeight;
         const unsigned gridWidth = teamSize / gridHeight;
         const unsigned gridRow = teamRank % gridHeight;
         const unsigned gridCol = teamRank / gridHeight;
-
-        if( commRank == 0 )
-        {
-            std::ostringstream msg;
-            msg << "k=" << k << "\n"
-                << "  factSN.size=    " << factSN.size << "\n"
-                << "  factSN.offset=  " << factSN.offset << "\n"
-                << "  factSN.myOffset=" << factSN.myOffset << "\n"
-                << "  powerOfTwo=     " << powerOfTwo << "\n"
-                << "  partner=        " << partner << "\n"
-                << "  onLeft=         " << onLeft << "\n"
-                << "  teamSize=       " << teamSize << "\n"
-                << "  teamColor=      " << teamColor << "\n"
-                << "  teamRank=       " << teamRank << "\n"
-                << "  gridHeight=     " << gridHeight << "\n"
-                << "  gridWidth=      " << gridWidth << "\n"
-                << "  gridRow=        " << gridRow << "\n"
-                << "  gridCol=        " << gridCol << "\n";
-            std::cout << msg.str() << std::endl;
-        }
 
         // Set some offset and size information for this supernode
         factSN.localSize1d = LocalLength( origSN.size, teamRank, teamSize );
