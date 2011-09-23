@@ -90,6 +90,19 @@ void clique::symbolic::DistSymmetricFactorization
     bottomDistSN.rightChildSolveIndices.clear();
     bottomDistSN.childSolveRecvIndices.clear();
 
+    if( commRank == 0 )
+    {
+        std::ostringstream msg;
+        msg << "DistSymmetricFactorization: \n"
+            << "  numSupernodes=        " << numSupernodes << "\n"
+            << "  commSize=             " << commSize << "\n"
+            << "  gridHeight=           " << gridHeight << "\n"
+            << "  bottomDistSN.size=    " << bottomDistSN.size << "\n"
+            << "  bottomDistSN.offset=  " << bottomDistSN.offset << "\n"
+            << "  bottomDistSN.myOffset=" << bottomDistSN.myOffset << "\n";
+        std::cout << msg.str() << std::endl;
+    }
+
     // Perform the distributed part of the symbolic factorization
     int myOffset = bottomDistSN.myOffset;
     int localOffset1d = bottomDistSN.localOffset1d;
@@ -123,6 +136,26 @@ void clique::symbolic::DistSymmetricFactorization
         const unsigned gridWidth = teamSize / gridHeight;
         const unsigned gridRow = teamRank % gridHeight;
         const unsigned gridCol = teamRank / gridHeight;
+
+        if( commRank == 0 )
+        {
+            std::ostringstream msg;
+            msg << "k=" << k << "\n"
+                << "  factSN.size=    " << factSN.size << "\n"
+                << "  factSN.offset=  " << factSN.offset << "\n"
+                << "  factSN.myOffset=" << factSN.myOffset << "\n"
+                << "  powerOfTwo=     " << powerOfTwo << "\n"
+                << "  partner=        " << partner << "\n"
+                << "  onLeft=         " << onLeft << "\n"
+                << "  teamSize=       " << teamSize << "\n"
+                << "  teamColor=      " << teamColor << "\n"
+                << "  teamRank=       " << teamRank << "\n"
+                << "  gridHeight=     " << gridHeight << "\n"
+                << "  gridWidth=      " << gridWidth << "\n"
+                << "  gridRow=        " << gridRow << "\n"
+                << "  gridCol=        " << gridCol << "\n";
+            std::cout << msg.str() << std::endl;
+        }
 
         // Set some offset and size information for this supernode
         factSN.localSize1d = LocalLength( origSN.size, teamRank, teamSize );

@@ -29,6 +29,15 @@ void clique::symbolic::LocalSymmetricFactorization
     const int numSupernodes = orig.supernodes.size();
     fact.supernodes.resize( numSupernodes );
 
+    const int rank = mpi::CommRank( mpi::COMM_WORLD );
+    if( rank == 0 )
+    {
+        std::ostringstream msg;
+        msg << "LocalSymmetricFactorization: \n"
+            << "  numSupernodes=" << numSupernodes << "\n";
+        std::cout << msg.str() << std::endl;
+    }
+
     // Perform the symbolic factorization
     int myOffset = 0;
     std::vector<int>::iterator it;
@@ -43,6 +52,20 @@ void clique::symbolic::LocalSymmetricFactorization
         factSN.myOffset = myOffset;
         factSN.parent = origSN.parent;
         factSN.children = origSN.children;
+
+        if( rank == 0 )
+        {
+            std::ostringstream msg;
+            msg << "k=" << k << "\n"
+                << "  factSN.size=           " << factSN.size << "\n"
+                << "  factSN.offset=         " << factSN.offset << "\n"
+                << "  factSN.myOffset=       " << factSN.myOffset << "\n"
+                << "  factSN.parent=         " << factSN.parent << "\n"
+                << "  factSN.children.size()=" << factSN.children.size() << "\n";
+            for( int i=0; i<factSN.children.size(); ++i )
+                msg << "    " << factSN.children[i] << "\n";
+            std::cout << msg.str() << std::endl;
+        }
 
         const int numChildren = origSN.children.size();
 #ifndef RELEASE
@@ -59,6 +82,8 @@ void clique::symbolic::LocalSymmetricFactorization
             rightChild.isLeftChild = false;
 
             // Union the child lower structs
+            if( rank == 0 )
+                std::cout << "Union the child lower structs" << std::endl;
             const int numLeftIndices = leftChild.lowerStruct.size();
             const int numRightIndices = rightChild.lowerStruct.size();
             const int childrenStructMaxSize = numLeftIndices + numRightIndices;
@@ -71,6 +96,8 @@ void clique::symbolic::LocalSymmetricFactorization
             childrenStruct.resize( childrenStructSize );
 
             // Union the lower structure of this supernode
+            if( rank == 0 )
+                std::cout << "Union the lower struct of this sn" << std::endl;
             const int numOrigLowerIndices = origSN.lowerStruct.size();
             const int partialStructMaxSize = 
                 childrenStructSize + numOrigLowerIndices;
@@ -83,6 +110,8 @@ void clique::symbolic::LocalSymmetricFactorization
             partialStruct.resize( partialStructSize );
 
             // Union again with the supernode indices
+            if( rank == 0 )
+                std::cout << "Union again with the sn indices" << std::endl;
             supernodeIndices.resize( origSN.size );
             for( int i=0; i<origSN.size; ++i )
                 supernodeIndices[i] = origSN.offset + i;
@@ -94,6 +123,8 @@ void clique::symbolic::LocalSymmetricFactorization
             fullStruct.resize( int(it-fullStruct.begin()) );
 
             // Construct the relative indices of the original lower structure
+            if( rank == 0 )
+                std::cout << "Construct rel indices of orig lower" << std::endl;
             it = fullStruct.begin();
             for( int i=0; i<numOrigLowerIndices; ++i )
             {
@@ -113,7 +144,7 @@ void clique::symbolic::LocalSymmetricFactorization
             }
             factSN.rightChildRelIndices.resize( numRightIndices );
             it = fullStruct.begin();
-            for( int i=0; i<numRightIndices; ++it )
+            for( int i=0; i<numRightIndices; ++i )
             {
                 const int index = rightChild.lowerStruct[i];
                 it = std::lower_bound( it, fullStruct.end(), index );
@@ -121,6 +152,8 @@ void clique::symbolic::LocalSymmetricFactorization
             }
 
             // Form lower struct of this supernode by removing supernode indices
+            if( rank == 0 )
+                std::cout << "Form lower structure" << std::endl;
             factSN.lowerStruct.resize( fullStruct.size() );
             it = std::set_difference
             ( fullStruct.begin(), fullStruct.end(),
