@@ -99,7 +99,7 @@ void clique::symbolic::LocalSymmetricFactorization
             {
                 const int index = origSN.lowerStruct[i];
                 it = std::lower_bound ( it, fullStruct.end(), index );
-                factSN.origLowerRelIndices[index] = *it;
+                factSN.origLowerRelIndices[index] = int(it-fullStruct.begin());
             }
 
             // Construct the relative indices of the children
@@ -109,7 +109,7 @@ void clique::symbolic::LocalSymmetricFactorization
             {
                 const int index = leftChild.lowerStruct[i];
                 it = std::lower_bound( it, fullStruct.end(), index );
-                factSN.leftChildRelIndices[i] = *it;
+                factSN.leftChildRelIndices[i] = int(it-fullStruct.begin());
             }
             factSN.rightChildRelIndices.resize( numRightIndices );
             it = fullStruct.begin();
@@ -117,16 +117,15 @@ void clique::symbolic::LocalSymmetricFactorization
             {
                 const int index = rightChild.lowerStruct[i];
                 it = std::lower_bound( it, fullStruct.end(), index );
-                factSN.rightChildRelIndices[i] = *it;
+                factSN.rightChildRelIndices[i] = int(it-fullStruct.begin());
             }
 
             // Form lower struct of this supernode by removing supernode indices
-            factSN.lowerStruct.resize( fullStruct.size() );
-            it = std::set_difference
-            ( fullStruct.begin(), fullStruct.end(),
-              supernodeIndices.begin(), supernodeIndices.end(),
-              factSN.lowerStruct.begin() );
-            factSN.lowerStruct.resize( int(it-factSN.lowerStruct.begin()) );
+            // (which take up the first origSN.size indices of fullStruct)
+            const int lowerStructSize = fullStruct.size()-origSN.size;
+            factSN.lowerStruct.resize( lowerStructSize );
+            for( int i=0; i<lowerStructSize; ++i )
+                factSN.lowerStruct[i] = fullStruct[origSN.size+i];
         }
         else // numChildren == 0, so this is a leaf supernode 
         {

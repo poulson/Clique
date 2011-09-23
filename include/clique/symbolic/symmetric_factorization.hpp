@@ -69,7 +69,7 @@ struct DistSymmOrig
 struct DistSymmFactSupernode
 {
     mpi::Comm comm;
-    int gridHeight;
+    elemental::Grid* grid;
 
     int size, offset, myOffset, leftChildSize, rightChildSize;
     std::vector<int> lowerStruct;

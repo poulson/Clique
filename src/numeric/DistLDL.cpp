@@ -93,7 +93,11 @@ void clique::numeric::DistLDL
     // The bottom front is already computed, so just view it
     const LocalSymmFactSupernode<F>& topLocalSN = localL.supernodes.back();
     DistSymmFactSupernode<F>& bottomDistSN = distL.supernodes[0];
-    bottomDistSN.front2d.LocalMatrix().LockedView( topLocalSN.front );
+    const Grid& bottomGrid = bottomDistSN.front2d.Grid();
+    bottomDistSN.front2d.Empty(); // eventually this can be removed...
+    bottomDistSN.front2d.LockedView
+    ( topLocalSN.front.Height(), topLocalSN.front.Width(), 0, 0, 
+      topLocalSN.front.LockedBuffer(), topLocalSN.front.LDim(), bottomGrid );
 
     // Perform the distributed portion of the factorization
     std::vector<int>::const_iterator it;

@@ -65,7 +65,7 @@ void clique::symbolic::DistSymmetricFactorization
     const LocalSymmFactSupernode& topLocalSN = localFact.supernodes.back();
     DistSymmFactSupernode& bottomDistSN = distFact.supernodes[0];
     mpi::CommSplit( distOrig.comm, commRank, 0, bottomDistSN.comm );
-    bottomDistSN.gridHeight = 1;
+    bottomDistSN.grid = new elemental::Grid( bottomDistSN.comm, 1, 1 );
     bottomDistSN.size = topLocalSN.size;
     bottomDistSN.offset = topLocalSN.offset;
     bottomDistSN.myOffset = topLocalSN.myOffset;
@@ -109,17 +109,17 @@ void clique::symbolic::DistSymmetricFactorization
 
         // Create this level's communicator
         const unsigned teamSize  = powerOfTwo << 1;
-        const int teamColor = commRank & !(powerOfTwo-1);
-        const int teamRank  = commRank &  (powerOfTwo-1);
+        const int teamColor = commRank & ~(teamSize-1);
+        const int teamRank  = commRank &  (teamSize-1);
         mpi::CommSplit( distOrig.comm, teamColor, teamRank, factSN.comm );
         unsigned gridHeight = 
             static_cast<unsigned>(sqrt(static_cast<double>(teamSize)));
         while( teamSize % gridHeight != 0 )
             ++gridHeight;
-        factSN.gridHeight = gridHeight;
         const unsigned gridWidth = teamSize / gridHeight;
-        const unsigned gridRow = teamRank % gridHeight;
-        const unsigned gridCol = teamRank / gridHeight;
+        factSN.grid = new elemental::Grid( factSN.comm, gridHeight, gridWidth );
+        const unsigned gridRow = factSN.grid->MCRank();
+        const unsigned gridCol = factSN.grid->MRRank();
 
         // Set some offset and size information for this supernode
         factSN.localSize1d = LocalLength( origSN.size, teamRank, teamSize );
@@ -128,10 +128,10 @@ void clique::symbolic::DistSymmetricFactorization
         // Retrieve the child grid information
         const unsigned childTeamRank = mpi::CommRank( factChildSN.comm );
         const unsigned childTeamSize = mpi::CommSize( factChildSN.comm );
-        const unsigned childGridHeight = factChildSN.gridHeight;
-        const unsigned childGridWidth = childTeamSize / childGridHeight;
-        const unsigned childGridRow = childTeamRank % childGridHeight;
-        const unsigned childGridCol = childTeamRank / childGridHeight;
+        const unsigned childGridHeight = factChildSN.grid->Height();
+        const unsigned childGridWidth = factChildSN.grid->Width();
+        const unsigned childGridRow = factChildSN.grid->MCRank();
+        const unsigned childGridCol = factChildSN.grid->MRRank();
 
         // SendRecv the message lengths
         const int myChildSize = factChildSN.size;
@@ -191,7 +191,7 @@ void clique::symbolic::DistSymmetricFactorization
         {
             const int index = origSN.lowerStruct[i];
             it = std::lower_bound( it, fullStruct.end(), index );
-            factSN.origLowerRelIndices[index] = *it;
+            factSN.origLowerRelIndices[index] = int(it-fullStruct.begin());
         }
 
         // Construct the relative indices of the children
@@ -221,7 +221,7 @@ void clique::symbolic::DistSymmetricFactorization
         {
             const int index = leftIndices[i];
             it = std::lower_bound( it, fullStruct.end(), index );
-            factSN.leftChildRelIndices[i] = *it;
+            factSN.leftChildRelIndices[i] = int(it-fullStruct.begin());
         }
         factSN.rightChildRelIndices.resize( numRightIndices );
         it = fullStruct.begin();
@@ -229,16 +229,14 @@ void clique::symbolic::DistSymmetricFactorization
         {
             const int index = rightIndices[i];
             it = std::lower_bound( it, fullStruct.end(), index );
-            factSN.rightChildRelIndices[i] = *it;
+            factSN.rightChildRelIndices[i] = int(it-fullStruct.begin());
         }
 
         // Form lower structure of this node by removing the supernode indices
-        factSN.lowerStruct.resize( fullStructSize );
-        it = std::set_difference
-        ( fullStruct.begin(), fullStruct.end(),
-          supernodeIndices.begin(), supernodeIndices.end(),
-          factSN.lowerStruct.begin() );
-        factSN.lowerStruct.resize( int(it-factSN.lowerStruct.begin()) );
+        const int lowerStructSize = fullStructSize - origSN.size;
+        factSN.lowerStruct.resize( lowerStructSize );
+        for( int i=0; i<lowerStructSize; ++i )
+            factSN.lowerStruct[i] = fullStruct[origSN.size+i];
 
         // Fill numChildFactSendIndices so that we can reuse it for many facts.
         factSN.numChildFactSendIndices.resize( teamSize );
@@ -392,10 +390,10 @@ void clique::symbolic::ComputeFactRecvIndices( const DistSymmFactSupernode& sn )
 #endif
     const int commRank = mpi::CommRank( sn.comm );
     const int commSize = mpi::CommSize( sn.comm );
-    const int gridHeight = sn.gridHeight;
-    const int gridWidth = commSize / gridHeight;
-    const int gridRow = commRank % gridHeight;
-    const int gridCol = commRank / gridHeight;
+    const int gridHeight = sn.grid->Height();
+    const int gridWidth = sn.grid->Width();
+    const int gridRow = sn.grid->MCRank();
+    const int gridCol = sn.grid->MRRank();
 
     // Compute the child grid dimensions (this could be stored in the supernode
     // if we generalize from powers of two).

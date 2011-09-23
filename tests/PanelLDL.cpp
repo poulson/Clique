@@ -112,21 +112,54 @@ main( int argc, char* argv[] )
         ( localSOrig, distSOrig, localS, distS, true );
 
         // Directly initialize the frontal matrices with the original 
-        // sparse matrix
-        clique::numeric::DistSymmFact<F> distL;
+        // sparse matrix (for now, use an original matrix equal to identity)
         clique::numeric::LocalSymmFact<F> localL;
-        // TODO
+        localL.supernodes.resize( localS.supernodes.size() );
+        for( int s=0; s<localS.supernodes.size(); ++s )
+        {
+            const clique::symbolic::LocalSymmFactSupernode& symbSN  =
+                localS.supernodes[s];
+            clique::numeric::LocalSymmFactSupernode<F>& sn = 
+                localL.supernodes[s];
+
+            const int frontSize = symbSN.size+symbSN.lowerStruct.size();
+            sn.front.ResizeTo( frontSize, frontSize );
+            sn.front.SetToZero();
+            Matrix<F> frontTL;
+            frontTL.View( sn.front, 0, 0, symbSN.size, symbSN.size );
+            frontTL.SetToIdentity();
+        }
+        clique::numeric::DistSymmFact<F> distL;
+        distL.mode = clique::MANY_RHS;
+        distL.supernodes.resize( log2CommSize+1 );
+        for( int s=0; s<log2CommSize+1; ++s )
+        {
+            const clique::symbolic::DistSymmFactSupernode& symbSN = 
+                distS.supernodes[s];
+            clique::numeric::DistSymmFactSupernode<F>& sn = distL.supernodes[s];
+
+            sn.front2d.SetGrid( *symbSN.grid );
+            const int frontSize = symbSN.size+symbSN.lowerStruct.size();
+            sn.front2d.ResizeTo( frontSize, frontSize );
+            sn.front2d.SetToZero();
+            DistMatrix<F,MC,MR> frontTL;
+            frontTL.View( sn.front2d, 0, 0, symbSN.size, symbSN.size );
+            frontTL.SetToIdentity();
+        }
 
         // Call the numerical factorization routine
-        //clique::numeric::LDL( ADJOINT, localS, distS, localL, distL );
+        clique::numeric::LDL( ADJOINT, localS, distS, localL, distL );
 
         // Set up the properly ordered RHS and call a solve routine
+        Matrix<F> localX;
+        // TODO
         //clique::numeric::LDLSolve
         //( ADJOINT, localS, distS, localL, distL, localX, true );
     }
     catch( std::exception& e )
     {
 #ifndef RELEASE
+        elemental::DumpCallStack();
         clique::DumpCallStack();
 #endif
         std::ostringstream msg;
