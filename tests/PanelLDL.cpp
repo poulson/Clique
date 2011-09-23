@@ -280,7 +280,7 @@ void FillDistOrigStruct
     for( int s=log2CommSize; s>0; --s )
     {
         clique::symbolic::DistSymmOrigSupernode& sn = SOrig.supernodes[s];
-        const bool powerOfTwo = 1u<<(s-1);
+        const int powerOfTwo = 1u<<(s-1);
         const bool onLeft = (commRank&powerOfTwo) == 0;
         if( nxSub >= nySub )
         {
