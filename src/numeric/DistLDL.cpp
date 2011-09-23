@@ -136,7 +136,7 @@ void clique::numeric::DistLDL
 #endif
 
         // Pack our child's update
-        DistMatrix<F,MC,MR> childUpdate(childGrid);
+        DistMatrix<F,MC,MR> childUpdate;
         const int updateSize = childNumSN.front2d.Height()-childSymbSN.size;
         childUpdate.LockedView
         ( childNumSN.front2d, 
@@ -206,7 +206,8 @@ void clique::numeric::DistLDL
             const F* recvValues = &recvBuffer[proc*recvPortionSize];
             const std::deque<int>& recvIndices = 
                 symbSN.childFactRecvIndices[proc];
-            for( int k=0; k<recvIndices.size(); ++k )
+            const int numRecvIndexPairs = recvIndices.size()/2;
+            for( int k=0; k<numRecvIndexPairs; ++k )
             {
                 const int iFrontLocal = recvIndices[2*k+0];
                 const int jFrontLocal = recvIndices[2*k+1];
