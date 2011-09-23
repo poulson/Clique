@@ -31,10 +31,10 @@ void clique::numeric::LocalLDLForwardSolve
 #endif
     const int numSupernodes = S.supernodes.size();
     const int width = X.Width();
-    for( int k=0; k<numSupernodes; ++k )
+    for( int s=0; s<numSupernodes; ++s )
     {
-        const symbolic::LocalSymmFactSupernode& symbSN = S.supernodes[k];
-        const numeric::LocalSymmFactSupernode<F>& numSN = L.supernodes[k];
+        const symbolic::LocalSymmFactSupernode& symbSN = S.supernodes[s];
+        const numeric::LocalSymmFactSupernode<F>& numSN = L.supernodes[s];
 
         // Set up a workspace
         Matrix<F>& W = numSN.work;
@@ -97,8 +97,8 @@ void clique::numeric::LocalLDLForwardSolve
     }
 
     // Ensure that all of the temporary buffers are freed (except the root)
-    for( int k=0; k<numSupernodes-1; ++k )
-        L.supernodes[k].work.Empty();
+    for( int s=0; s<numSupernodes-1; ++s )
+        L.supernodes[s].work.Empty();
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -116,13 +116,16 @@ void clique::numeric::LocalLDLDiagonalSolve
     const int numSupernodes = S.supernodes.size();
     const int width = X.Width();
     Matrix<F> XSub;
-    for( int k=0; k<numSupernodes; ++k )
+    for( int s=0; s<numSupernodes; ++s )
     {
-        const symbolic::LocalSymmFactSupernode& symbSN = S.supernodes[k];
+        const symbolic::LocalSymmFactSupernode& symbSN = S.supernodes[s];
+        const LocalSymmFactSupernode<F>& numSN = L.supernodes[s];
         XSub.View( X, symbSN.myOffset, 0, symbSN.size, width );
 
+        Matrix<F> frontTL;
+        frontTL.LockedView( numSN.front, 0, 0, symbSN.size, symbSN.size );
         Matrix<F> d;
-        L.supernodes[k].front.GetDiagonal( d );
+        frontTL.GetDiagonal( d );
         LocalSupernodeLDLDiagonalSolve( symbSN.size, d, XSub, checkIfSingular );
     }
 #ifndef RELEASE
@@ -156,10 +159,10 @@ void clique::numeric::LocalLDLBackwardSolve
     const DistSymmFactSupernode<F>& bottomDistSN = distL.supernodes[0];
     topLocalSN.work.LockedView( bottomDistSN.work2d.LocalMatrix() );
 
-    for( int k=numSupernodes-2; k>=0; --k )
+    for( int s=numSupernodes-2; s>=0; --s )
     {
-        const symbolic::LocalSymmFactSupernode& symbSN = S.supernodes[k];
-        const numeric::LocalSymmFactSupernode<F>& numSN = localL.supernodes[k];
+        const symbolic::LocalSymmFactSupernode& symbSN = S.supernodes[s];
+        const numeric::LocalSymmFactSupernode<F>& numSN = localL.supernodes[s];
 
         // Set up a workspace
         Matrix<F>& W = numSN.work;
@@ -206,8 +209,8 @@ void clique::numeric::LocalLDLBackwardSolve
     }
 
     // Ensure that all of the temporary buffers are freed (this is overkill)
-    for( int k=0; k<numSupernodes; ++k )
-        localL.supernodes[k].work.Empty();
+    for( int s=0; s<numSupernodes; ++s )
+        localL.supernodes[s].work.Empty();
 #ifndef RELEASE
     PopCallStack();
 #endif

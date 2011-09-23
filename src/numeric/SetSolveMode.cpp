@@ -54,9 +54,9 @@ void clique::numeric::SetSolveMode( DistSymmFact<F>& distL, SolveMode mode )
         ( leafSN.front2d.Height(), leafSN.front2d.Width(), 0,
           leafSN.front2d.LockedLocalBuffer(), leafSN.front2d.LocalLDim(),
           leafSN.front2d.Grid() );
-        for( int k=1; k<numSupernodes; ++k )
+        for( int s=1; s<numSupernodes; ++s )
         {
-            DistSymmFactSupernode<F>& sn = distL.supernodes[k];
+            DistSymmFactSupernode<F>& sn = distL.supernodes[s];
             sn.front1d.Empty();
             sn.front1d.SetGrid( sn.front2d.Grid() );
             sn.front1d = sn.front2d;
@@ -69,9 +69,9 @@ void clique::numeric::SetSolveMode( DistSymmFact<F>& distL, SolveMode mode )
         ( leafSN.front1d.Height(), leafSN.front1d.Width(), 0, 0,
           leafSN.front1d.LockedLocalBuffer(), leafSN.front1d.LocalLDim(),
           leafSN.front1d.Grid() );
-        for( int k=1; k<numSupernodes; ++k )
+        for( int s=1; s<numSupernodes; ++s )
         {
-            DistSymmFactSupernode<F>& sn = distL.supernodes[k];
+            DistSymmFactSupernode<F>& sn = distL.supernodes[s];
             sn.front2d.Empty();
             sn.front2d.SetGrid( sn.front1d.Grid() );
             sn.front2d = sn.front1d;

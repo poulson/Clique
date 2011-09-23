@@ -93,19 +93,19 @@ void clique::symbolic::DistSymmetricFactorization
     std::vector<int> sendBuffer, recvBuffer;
     std::vector<int> childrenStruct, partialStruct, fullStruct,
                     supernodeIndices;
-    for( unsigned k=1; k<numSupernodes; ++k )
+    for( unsigned s=1; s<numSupernodes; ++s )
     {
-        const DistSymmOrigSupernode& origSN = distOrig.supernodes[k];
-        const DistSymmFactSupernode& factChildSN = distFact.supernodes[k-1];
-        DistSymmFactSupernode& factSN = distFact.supernodes[k];
+        const DistSymmOrigSupernode& origSN = distOrig.supernodes[s];
+        const DistSymmFactSupernode& factChildSN = distFact.supernodes[s-1];
+        DistSymmFactSupernode& factSN = distFact.supernodes[s];
         factSN.size = origSN.size;
         factSN.offset = origSN.offset;
         factSN.myOffset = myOffset;
 
         // Determine our partner based upon the bits of 'commRank'
-        const unsigned powerOfTwo = 1u << (k-1);
-        const unsigned partner = commRank ^ powerOfTwo; // flip the k-1'th bit
-        const bool onLeft = (commRank & powerOfTwo) == 0; // check k-1'th bit 
+        const unsigned powerOfTwo = 1u << (s-1);
+        const unsigned partner = commRank ^ powerOfTwo; // flip the s-1'th bit
+        const bool onLeft = (commRank & powerOfTwo) == 0; // check s-1'th bit 
 
         // Create this level's communicator
         const unsigned teamSize  = powerOfTwo << 1;

@@ -32,10 +32,10 @@ void clique::numeric::LocalLDL
         throw std::logic_error("LDL must be (conjugate-)transposed");
 #endif
     const int numSupernodes = S.supernodes.size();
-    for( int k=0; k<numSupernodes; ++k )
+    for( int s=0; s<numSupernodes; ++s )
     {
-        symbolic::LocalSymmFactSupernode& symbSN = S.supernodes[k];
-        numeric::LocalSymmFactSupernode<F>& numSN = L.supernodes[k];
+        symbolic::LocalSymmFactSupernode& symbSN = S.supernodes[s];
+        numeric::LocalSymmFactSupernode<F>& numSN = L.supernodes[s];
 #ifndef RELEASE
         if( numSN.front.Height() != symbSN.size+symbSN.lowerStruct.size() ||
             numSN.front.Width()  != symbSN.size+symbSN.lowerStruct.size() )

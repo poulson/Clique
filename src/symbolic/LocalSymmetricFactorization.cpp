@@ -34,10 +34,10 @@ void clique::symbolic::LocalSymmetricFactorization
     std::vector<int>::iterator it;
     std::vector<int> childrenStruct, partialStruct, fullStruct,
                      supernodeIndices;
-    for( int k=0; k<numSupernodes; ++k )
+    for( int s=0; s<numSupernodes; ++s )
     {
-        const LocalSymmOrigSupernode& origSN = orig.supernodes[k];
-        LocalSymmFactSupernode& factSN = fact.supernodes[k];
+        const LocalSymmOrigSupernode& origSN = orig.supernodes[s];
+        LocalSymmFactSupernode& factSN = fact.supernodes[s];
         factSN.size = origSN.size;
         factSN.offset = origSN.offset;
         factSN.myOffset = myOffset;

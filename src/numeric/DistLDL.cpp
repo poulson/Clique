@@ -48,12 +48,12 @@ void clique::numeric::DistLDL
 
     // Perform the distributed portion of the factorization
     std::vector<int>::const_iterator it;
-    for( unsigned k=1; k<numSupernodes; ++k )
+    for( unsigned s=1; s<numSupernodes; ++s )
     {
-        const symbolic::DistSymmFactSupernode& childSymbSN = S.supernodes[k-1];
-        const symbolic::DistSymmFactSupernode& symbSN = S.supernodes[k];
-        const DistSymmFactSupernode<F>& childNumSN = distL.supernodes[k-1];
-        DistSymmFactSupernode<F>& numSN = distL.supernodes[k];
+        const symbolic::DistSymmFactSupernode& childSymbSN = S.supernodes[s-1];
+        const symbolic::DistSymmFactSupernode& symbSN = S.supernodes[s];
+        const DistSymmFactSupernode<F>& childNumSN = distL.supernodes[s-1];
+        DistSymmFactSupernode<F>& numSN = distL.supernodes[s];
 
         const bool computeFactRecvIndices = 
             ( symbSN.childFactRecvIndices.size() == 0 );
@@ -89,11 +89,16 @@ void clique::numeric::DistLDL
         ( childNumSN.front2d, 
           childSymbSN.size, childSymbSN.size, updateSize, updateSize );
         const bool isLeftChild = ( commRank < commSize/2 );
-        it = std::max_element
-             ( symbSN.numChildFactSendIndices.begin(), 
-               symbSN.numChildFactSendIndices.end() );
-        const int sendPortionSize = std::max(*it,mpi::MIN_COLL_MSG);
-        std::vector<F> sendBuffer( sendPortionSize*commSize );
+        std::vector<int> sendCounts(commSize), sendDispls(commSize);
+        int sendBufferSize = 0;
+        for( int proc=0; proc<commSize; ++proc )
+        {
+            const int thisSend = symbSN.numChildFactSendIndices[proc];   
+            sendCounts[proc] = thisSend;
+            sendDispls[proc] = sendBufferSize;
+            sendBufferSize += thisSend;
+        }
+        std::vector<F> sendBuffer( sendBufferSize );
 
         const std::vector<int>& myChildRelIndices = 
             ( isLeftChild ? symbSN.leftChildRelIndices
@@ -103,10 +108,7 @@ void clique::numeric::DistLDL
         const int updateRowShift = childUpdate.RowShift();
         const int updateLocalHeight = childUpdate.LocalHeight();
         const int updateLocalWidth = childUpdate.LocalWidth();
-        // Initialize the offsets to each process's chunk
-        std::vector<int> sendOffsets( commSize );
-        for( int proc=0; proc<commSize; ++proc )
-            sendOffsets[proc] = proc*sendPortionSize;
+        std::vector<int> packOffsets = sendDispls;
         for( int jChildLocal=0; jChildLocal<updateLocalWidth; ++jChildLocal )
         {
             const int jChild = updateRowShift + jChildLocal*childGridWidth;
@@ -124,33 +126,36 @@ void clique::numeric::DistLDL
                 const int destGridRow = myChildRelIndices[iChild] % gridHeight;
 
                 const int destRank = destGridRow + destGridCol*gridHeight;
-                sendBuffer[sendOffsets[destRank]++] = 
+                sendBuffer[packOffsets[destRank]++] = 
                     childUpdate.GetLocalEntry(iChildLocal,jChildLocal);
             }
         }
-        // Reset the offsets to their original values
-        for( int proc=0; proc<commSize; ++proc )
-            sendOffsets[proc] = proc*sendPortionSize;
+        packOffsets.clear();
 
         // AllToAll to send and receive the child updates
         if( computeFactRecvIndices )
             symbolic::ComputeFactRecvIndices( symbSN );
-        int recvPortionSize = mpi::MIN_COLL_MSG;
+        std::vector<int> recvCounts(commSize), recvDispls(commSize);
+        int recvBufferSize = 0;
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int thisPortion = symbSN.childFactRecvIndices[proc].size();
-            recvPortionSize = std::max(thisPortion,recvPortionSize);
+            const int thisRecv = symbSN.childFactRecvIndices[proc].size();
+            recvCounts[proc] = thisRecv;
+            recvDispls[proc] = recvBufferSize;
+            recvBufferSize += thisRecv;
         }
-        std::vector<F> recvBuffer( recvPortionSize*commSize );
+        std::vector<F> recvBuffer( recvBufferSize );
         mpi::AllToAll
-        ( &sendBuffer[0], sendPortionSize, 
-          &recvBuffer[0], recvPortionSize, comm );
+        ( &sendBuffer[0], &sendCounts[0], &sendDispls[0],
+          &recvBuffer[0], &recvCounts[0], &recvDispls[0], comm );
         sendBuffer.clear();
+        sendCounts.clear();
+        sendDispls.clear();
 
         // Unpack the child udpates (with an Axpy)
         for( int proc=0; proc<commSize; ++proc )
         {
-            const F* recvValues = &recvBuffer[proc*recvPortionSize];
+            const F* recvValues = &recvBuffer[recvDispls[proc]];
             const std::deque<int>& recvIndices = 
                 symbSN.childFactRecvIndices[proc];
             const int numRecvIndexPairs = recvIndices.size()/2;
@@ -164,6 +169,8 @@ void clique::numeric::DistLDL
             }
         }
         recvBuffer.clear();
+        recvCounts.clear();
+        recvDispls.clear();
         if( computeFactRecvIndices )
             symbSN.childFactRecvIndices.clear();
 
