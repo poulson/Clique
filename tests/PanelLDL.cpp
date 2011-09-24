@@ -128,6 +128,7 @@ main( int argc, char* argv[] )
             Matrix<F> frontTL;
             frontTL.View( sn.front, 0, 0, symbSN.size, symbSN.size );
             frontTL.SetToIdentity();
+            basic::Scal( (F)2, frontTL );
         }
         clique::numeric::DistSymmFact<F> distL;
         distL.mode = clique::MANY_RHS;
@@ -145,6 +146,7 @@ main( int argc, char* argv[] )
             DistMatrix<F,MC,MR> frontTL;
             frontTL.View( sn.front2d, 0, 0, symbSN.size, symbSN.size );
             frontTL.SetToIdentity();
+            basic::Scal( (F)2, frontTL );
         }
 
         // Call the numerical factorization routine
@@ -159,8 +161,15 @@ main( int argc, char* argv[] )
             distS.supernodes.back().localSize1d;
         Matrix<F> localX( localHeight1d, 5 );
         localX.SetToRandom();
+        Matrix<F> localXCopy = localX;
         clique::numeric::LDLSolve
         ( TRANSPOSE, localS, distS, localL, distL, localX, true );
+        if( commRank == 0 )
+        {
+            basic::Axpy( (F)-0.5, localXCopy, localX );
+            std::cout << "Error norm: " << advanced::Norm( localX ) 
+                      << std::endl;
+        }
     }
     catch( std::exception& e )
     {

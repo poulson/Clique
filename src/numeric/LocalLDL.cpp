@@ -73,7 +73,7 @@ void clique::numeric::LocalLDL
                 {
                     const int iFront = symbSN.leftChildRelIndices[iChild];
                     const F value = leftUpdate.Get(iChild,jChild);
-                    numSN.front.Update( iFront, jFront, -value );
+                    numSN.front.Update( iFront, jFront, value );
                 }
             }
 
@@ -85,7 +85,7 @@ void clique::numeric::LocalLDL
                 {
                     const int iFront = symbSN.rightChildRelIndices[iChild];
                     const F value = rightUpdate.Get(iChild,jChild);
-                    numSN.front.Update( iFront, jFront, -value );
+                    numSN.front.Update( iFront, jFront, value );
                 }
             }
         }

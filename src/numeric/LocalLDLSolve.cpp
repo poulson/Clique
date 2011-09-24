@@ -71,7 +71,7 @@ void clique::numeric::LocalLDLForwardSolve
             {
                 const int iFront = symbSN.leftChildRelIndices[iChild]; 
                 for( int j=0; j<width; ++j )
-                    W.Update( iFront, j, -leftUpdate.Get(iChild,j) );
+                    W.Update( iFront, j, leftUpdate.Get(iChild,j) );
             }
             leftWork.Empty();
 
@@ -83,7 +83,7 @@ void clique::numeric::LocalLDLForwardSolve
             {
                 const int iFront = symbSN.rightChildRelIndices[iChild];
                 for( int j=0; j<width; ++j )
-                    W.Update( iFront, j, -rightUpdate.Get(iChild,j) );
+                    W.Update( iFront, j, rightUpdate.Get(iChild,j) );
             }
             rightWork.Empty();
         }

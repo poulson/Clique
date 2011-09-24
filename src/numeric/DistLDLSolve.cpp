@@ -150,7 +150,7 @@ void clique::numeric::DistLDLForwardSolve
                 F* WRow = W.LocalBuffer( iFrontLocal, 0 );
                 const int WLDim = W.LocalLDim();
                 for( int jFront=0; jFront<width; ++jFront )
-                    WRow[jFront*WLDim] = recvRow[jFront];
+                    WRow[jFront*WLDim] += recvRow[jFront];
             }
         }
         recvBuffer.clear();
@@ -184,7 +184,7 @@ void clique::numeric::DistLDLDiagonalSolve
     const int numSupernodes = S.supernodes.size();
     const int width = localX.Width();
 
-    for( int s=0; s<numSupernodes; ++s )
+    for( int s=1; s<numSupernodes; ++s )
     {
         const symbolic::DistSymmFactSupernode& symbSN = S.supernodes[s];
         const numeric::DistSymmFactSupernode<F>& numSN = L.supernodes[s];
