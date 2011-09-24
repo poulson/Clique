@@ -100,19 +100,34 @@ main( int argc, char* argv[] )
     try
     {
         // Fill the distributed portion of the original structure
+        mpi::Barrier( comm );
+        const double initStartTime = mpi::Time();
         clique::symbolic::LocalSymmOrig localSOrig;
         clique::symbolic::DistSymmOrig distSOrig;
         FillOrigStruct
         ( nx, ny, nz, cutoff, comm, log2CommSize, localSOrig, distSOrig );
+        mpi::Barrier( comm );
+        const double initStopTime = mpi::Time();
+        if( commRank == 0 )
+            std::cout << "Init time: " << initStopTime-initStartTime << " secs"
+                      << std::endl;
 
         // Call the symbolic factorization routine
+        const double symbFactStartTime = mpi::Time();
         clique::symbolic::DistSymmFact distS;
         clique::symbolic::LocalSymmFact localS;
         clique::symbolic::SymmetricFactorization
         ( localSOrig, distSOrig, localS, distS, true );
+        mpi::Barrier( comm );
+        const double symbFactStopTime = mpi::Time();
+        if( commRank == 0 )
+            std::cout << "Symbolic factorization time: " 
+                      << symbFactStopTime-symbFactStartTime << " secs"
+                      << std::endl;
 
         // Directly initialize the frontal matrices with the original 
         // sparse matrix (for now, use an original matrix equal to identity)
+        const double fillStartTime = mpi::Time();
         clique::numeric::LocalSymmFact<F> localL;
         localL.supernodes.resize( localS.supernodes.size() );
         for( int s=0; s<localS.supernodes.size(); ++s )
@@ -148,12 +163,29 @@ main( int argc, char* argv[] )
             frontTL.SetToIdentity();
             basic::Scal( (F)2, frontTL );
         }
+        mpi::Barrier( comm );
+        const double fillStopTime = mpi::Time();
+        if( commRank == 0 )
+            std::cout << "Fill time: " << fillStopTime-fillStartTime
+                      << " secs" << std::endl;
 
         // Call the numerical factorization routine
+        const double factStartTime = mpi::Time();
         clique::numeric::LDL( TRANSPOSE, localS, distS, localL, distL );
+        mpi::Barrier( comm );
+        const double factStopTime = mpi::Time();
+        if( commRank == 0 )
+            std::cout << "Factorization time: " << factStopTime-factStartTime
+                      << " secs" << std::endl;
 
         // Redistribute to 1d for fast solves with few right-hand sides
+        const double redistStartTime = mpi::Time();
         clique::numeric::SetSolveMode( distL, clique::FEW_RHS );
+        mpi::Barrier( comm );
+        const double redistStopTime = mpi::Time();
+        if( commRank == 0 )
+            std::cout << "Redistribution time: " 
+                      << redistStopTime-redistStartTime << " secs" << std::endl;
 
         // Set up the properly ordered RHS and call a solve routine
         const int localHeight1d = 
@@ -162,10 +194,18 @@ main( int argc, char* argv[] )
         Matrix<F> localX( localHeight1d, 5 );
         localX.SetToRandom();
         Matrix<F> localXCopy = localX;
+
+        mpi::Barrier( comm );
+        const double solveStartTime = mpi::Time();
         clique::numeric::LDLSolve
         ( TRANSPOSE, localS, distS, localL, distL, localX, true );
+        mpi::Barrier( comm );
+        const double solveStopTime = mpi::Time();
         if( commRank == 0 )
         {
+            std::cout << "Solve time: " << solveStopTime-solveStartTime
+                      << " secs" << std::endl;
+
             basic::Axpy( (F)-0.5, localXCopy, localX );
             std::cout << "Error norm: " << advanced::Norm( localX ) 
                       << std::endl;
