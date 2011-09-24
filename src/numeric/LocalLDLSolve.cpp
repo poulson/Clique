@@ -157,7 +157,7 @@ void clique::numeric::LocalLDLBackwardSolve
     // Pull in the top local information from the bottom distributed information
     const LocalSymmFactSupernode<F>& topLocalSN = localL.supernodes.back();
     const DistSymmFactSupernode<F>& bottomDistSN = distL.supernodes[0];
-    topLocalSN.work.LockedView( bottomDistSN.work2d.LocalMatrix() );
+    topLocalSN.work.LockedView( bottomDistSN.work1d.LocalMatrix() );
 
     for( int s=numSupernodes-2; s>=0; --s )
     {

@@ -67,8 +67,10 @@ void clique::symbolic::DistSymmetricFactorization
     mpi::CommSplit( distOrig.comm, commRank, 0, bottomDistSN.comm );
     bottomDistSN.grid = new elemental::Grid( bottomDistSN.comm, 1, 1 );
     bottomDistSN.size = topLocalSN.size;
+    bottomDistSN.localSize1d = topLocalSN.size;
     bottomDistSN.offset = topLocalSN.offset;
     bottomDistSN.myOffset = topLocalSN.myOffset;
+    bottomDistSN.localOffset1d = topLocalSN.myOffset;
     bottomDistSN.lowerStruct = topLocalSN.lowerStruct;
     bottomDistSN.origLowerRelIndices = topLocalSN.origLowerRelIndices;
     bottomDistSN.leftChildRelIndices = topLocalSN.leftChildRelIndices;
@@ -292,7 +294,7 @@ void clique::symbolic::DistSymmetricFactorization
                 Shift( childTeamRank, updateAlignment, childTeamSize );
             const int updateLocalHeight = 
                 LocalLength( updateSize, updateShift, childTeamSize );
-            for( int iChildLocal=updateShift; 
+            for( int iChildLocal=0; 
                      iChildLocal<updateLocalHeight; ++iChildLocal )
             {
                 const int iChild = updateShift + iChildLocal*childTeamSize;

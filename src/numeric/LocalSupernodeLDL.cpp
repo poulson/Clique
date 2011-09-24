@@ -52,7 +52,7 @@ void clique::numeric::LocalSupernodeLDL
          ABL, ABR, 0 );
     while( ATL.Height() < supernodeSize )
     {
-        const int blocksize = std::min(Blocksize(),supernodeSize-A00.Height());
+        const int blocksize = std::min(Blocksize(),supernodeSize-ATL.Height());
         RepartitionDownDiagonal
         ( ATL, /**/ ATR,  A00, /**/ A01, A02,
          /*************/ /******************/

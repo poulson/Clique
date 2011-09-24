@@ -93,7 +93,7 @@ void clique::numeric::DistSupernodeLDLForwardSolve
          XB, 0 );
     while( XT.Height() < supernodeSize )
     {
-        const int blocksize = std::min(Blocksize(),supernodeSize-X0.Height());
+        const int blocksize = std::min(Blocksize(),supernodeSize-XT.Height());
         LockedRepartitionDownDiagonal
         ( LTL, /**/ LTR,  L00, /**/ L01, L02,
          /*************/ /******************/

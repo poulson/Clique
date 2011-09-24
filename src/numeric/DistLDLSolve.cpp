@@ -254,13 +254,6 @@ void clique::numeric::DistLDLBackwardSolve
         const int parentCommSize = mpi::CommSize( parentComm );
         const int parentCommRank = mpi::CommRank( parentComm );
 
-        {
-            const int globalRank = mpi::CommRank( mpi::COMM_WORLD );
-            if( globalRank == 0 )
-                std::cout << "Iteration s=" << s << " of backwards solve"
-                          << std::endl;
-        }
-
         // Set up a workspace
         DistMatrix<F,VC,STAR>& W = numSN.work1d;
         W.SetGrid( grid );
@@ -281,7 +274,6 @@ void clique::numeric::DistLDLBackwardSolve
         //
 
         // Pack the updates using the recv approach from the forward solve
-        // HERE: RETHINK!!! Cannot use the recv info from forward solve
         int sendBufferSize = 0;
         std::vector<int> sendCounts(parentCommSize), sendDispls(parentCommSize);
         for( int proc=0; proc<parentCommSize; ++proc )
@@ -313,7 +305,6 @@ void clique::numeric::DistLDLBackwardSolve
         parentWork.Empty();
 
         // AllToAll to send and recv parent updates
-        // HERE: RETHINK!!! Cannot use the send info from forward solve
         int recvBufferSize = 0;
         std::vector<int> recvCounts(parentCommSize), recvDispls(parentCommSize);
         for( int proc=0; proc<parentCommSize; ++proc )
@@ -359,12 +350,6 @@ void clique::numeric::DistLDLBackwardSolve
 
         // Store the supernode portion of the result
         localXT = WT.LocalMatrix();
-    }
-    
-    {
-        const int globalRank = mpi::CommRank( mpi::COMM_WORLD );
-        if( globalRank == 0 )
-            std::cout << "Done with backwards solve" << std::endl;
     }
 #ifndef RELEASE
     PopCallStack();
