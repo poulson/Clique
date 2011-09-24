@@ -327,7 +327,7 @@ void clique::numeric::DistLDLBackwardSolve
         std::vector<F> recvBuffer( recvBufferSize );
         mpi::AllToAll
         ( &sendBuffer[0], &sendCounts[0], &sendDispls[0],
-          &recvBuffer[0], &recvCounts[0], &recvDispls[0], comm );
+          &recvBuffer[0], &recvCounts[0], &recvDispls[0], parentComm );
         sendBuffer.clear();
         sendCounts.clear();
         sendDispls.clear();
