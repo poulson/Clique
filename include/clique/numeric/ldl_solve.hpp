@@ -87,7 +87,7 @@ void LDLSolve
   const numeric::LocalSymmFact<F>& localL,
   const numeric::DistSymmFact<F>& distL,
         Matrix<F>& localX, 
-        bool checkIfSingular=true )
+        bool checkIfSingular )
 {
 #ifndef RELEASE
     PushCallStack("numeric::LDLSolve");
