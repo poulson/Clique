@@ -22,11 +22,13 @@ using namespace elemental;
 
 void Usage()
 {
-    std::cout << "PanelLDL <nx> <ny> <nz> <cutoff>\n"
+    std::cout << "PanelLDL <nx> <ny> <nz> <cutoff> <write info?>\n"
               << "<nx>: size of panel in x direction\n"
               << "<ny>: size of panel in y direction\n"
               << "<nz>: size of panel in z direction\n"
-              << "<cutoff>: minimum required leaf size\n" << std::endl;
+              << "<cutoff>: minimum required leaf size\n" 
+              << "<write info?>: write basic local info to file? [0/1]\n"
+              << std::endl;
 }
 
 int ReorderedIndexRecursion
@@ -80,7 +82,7 @@ main( int argc, char* argv[] )
         return 0;
     }
 
-    if( argc < 5 )
+    if( argc < 6 )
     {
         if( commRank == 0 )        
             Usage();
@@ -93,12 +95,21 @@ main( int argc, char* argv[] )
     const int ny = atoi( argv[argNum++] );
     const int nz = atoi( argv[argNum++] );
     const int cutoff = atoi( argv[argNum++] );
+    const bool writeInfo = atoi( argv[argNum++] );
     if( commRank == 0 )
         std::cout << "(nx,ny,nz)=(" << nx << "," << ny << "," << nz << ")\n"
                   << "cutoff=" << cutoff << std::endl;
 
     try
     {
+        std::ofstream infoFile;
+        if( writeInfo )
+        {
+            std::ostringstream filename;
+            filename << "info-" << commRank << ".dat";
+            infoFile.open( filename.str().c_str() );
+        }
+
         // Fill the distributed portion of the original structure
         mpi::Barrier( comm );
         const double initStartTime = mpi::Time();
@@ -112,6 +123,26 @@ main( int argc, char* argv[] )
             std::cout << "Init time: " << initStopTime-initStartTime << " secs"
                       << std::endl;
 
+        if( writeInfo )
+        {
+            const int numLocalSupernodes = localSOrig.supernodes.size();
+            const int numDistSupernodes = distSOrig.supernodes.size();
+            infoFile << "Local original structure sizes:\n";
+            for( int s=0; s<numLocalSupernodes; ++s )
+                infoFile << "  " << s << ": supernode=" 
+                         << localSOrig.supernodes[s].size << ", "
+                         << " lower=" 
+                         << localSOrig.supernodes[s].lowerStruct.size() << "\n";
+            infoFile << "\n"
+                     << "Dist original structure sizes:\n";
+            for( int s=0; s<numDistSupernodes; ++s )
+                infoFile << "  " << s << ": supernode="
+                         << distSOrig.supernodes[s].size << ", "
+                         << " lower="
+                         << distSOrig.supernodes[s].lowerStruct.size() << "\n";
+            infoFile << std::endl;
+        }
+
         // Call the symbolic factorization routine
         const double symbFactStartTime = mpi::Time();
         clique::symbolic::DistSymmFact distS;
@@ -124,6 +155,31 @@ main( int argc, char* argv[] )
             std::cout << "Symbolic factorization time: " 
                       << symbFactStopTime-symbFactStartTime << " secs"
                       << std::endl;
+
+        if( writeInfo )
+        {
+            const int numLocalSupernodes = localS.supernodes.size();
+            const int numDistSupernodes = distS.supernodes.size();
+            infoFile << "Local factor structure sizes:\n";
+            for( int s=0; s<numLocalSupernodes; ++s )
+                infoFile << "  " << s << ": supernode=" 
+                         << localS.supernodes[s].size << ", "
+                         << " lower=" 
+                         << localS.supernodes[s].lowerStruct.size() << "\n";
+            infoFile << "\n"
+                     << "Dist factor structure sizes:\n";
+            for( int s=0; s<numDistSupernodes; ++s )
+                infoFile << "  " << s << ": supernode="
+                         << distS.supernodes[s].size << ", "
+                         << " lower="
+                         << distS.supernodes[s].lowerStruct.size() << "\n";
+            infoFile << std::endl;
+
+            infoFile << "\n"
+                     << "Local height 1d: " 
+                     << distS.supernodes.back().localOffset1d + 
+                        distS.supernodes.back().localSize1d << std::endl;
+        }
 
         // Directly initialize the frontal matrices with the original 
         // sparse matrix (for now, use an original matrix equal to identity)
