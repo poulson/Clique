@@ -107,7 +107,7 @@ void clique::symbolic::DistSymmetricFactorization
         // Determine our partner based upon the bits of 'commRank'
         const unsigned powerOfTwo = 1u << (s-1);
         const unsigned partner = commRank ^ powerOfTwo; // flip the s-1'th bit
-        const bool onLeft = (commRank & powerOfTwo) == 0; // check s-1'th bit 
+        const bool onLeft = ( commRank < partner );
 
         // Create this level's communicator
         const unsigned teamSize  = powerOfTwo << 1;
@@ -472,7 +472,7 @@ void clique::symbolic::ComputeFactRecvIndices
 #ifndef RELEASE
     // Ensure that all processes in our communicator agree on the grid 
     // dimensions and supernode sizes
-    int basicData[7];
+    int basicData[10];
     if( commRank == 0 )
     {
         basicData[0] = gridHeight;
@@ -482,8 +482,11 @@ void clique::symbolic::ComputeFactRecvIndices
         basicData[4] = sn.size;
         basicData[5] = sn.leftChildSize;
         basicData[6] = sn.rightChildSize;
+        basicData[7] = sn.lowerStruct.size();
+        basicData[8] = sn.leftChildRelIndices.size();
+        basicData[9] = sn.rightChildRelIndices.size();
     }
-    mpi::Broadcast( basicData, 7, 0, sn.comm );
+    mpi::Broadcast( basicData, 10, 0, sn.comm );
     if( gridHeight != basicData[0] || gridWidth != basicData[1] )
         throw std::logic_error("Grid dimensions conflicted");
     if( childGridHeight != basicData[2] || childGridWidth != basicData[3] )
@@ -492,6 +495,11 @@ void clique::symbolic::ComputeFactRecvIndices
         throw std::logic_error("Supernode sizes conflicted");
     if( sn.leftChildSize != basicData[5] || sn.rightChildSize != basicData[6] )
         throw std::logic_error("Child supernode sizes conflicted");
+    if( sn.lowerStruct.size() != basicData[7] )
+        throw std::logic_error("Lower struct sizes conflicted");
+    if( sn.leftChildRelIndices.size() != basicData[8] ||
+        sn.rightChildRelIndices.size() != basicData[9] )
+        throw std::logic_error("Child lower struct sizes conflicted");
 #endif
 
     sn.childFactRecvIndices.clear();
