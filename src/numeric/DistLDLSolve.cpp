@@ -92,7 +92,8 @@ void clique::numeric::DistLDLForwardSolve
         std::vector<int> sendCounts(commSize), sendDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int thisSend = symbSN.numChildSolveSendIndices[proc]*width;
+            const int actualSend = symbSN.numChildSolveSendIndices[proc]*width;
+            const int thisSend = std::max(actualSend,1);
             sendCounts[proc] = thisSend;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += thisSend;
@@ -123,8 +124,9 @@ void clique::numeric::DistLDLForwardSolve
         std::vector<int> recvCounts(commSize), recvDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int thisRecv = 
+            const int actualRecv = 
                 symbSN.childSolveRecvIndices[proc].size()*width;
+            const int thisRecv = std::max(actualRecv,1);
             recvCounts[proc] = thisRecv;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += thisRecv;
@@ -278,8 +280,9 @@ void clique::numeric::DistLDLBackwardSolve
         std::vector<int> sendCounts(parentCommSize), sendDispls(parentCommSize);
         for( int proc=0; proc<parentCommSize; ++proc )
         {
-            const int thisSend = 
+            const int actualSend = 
                 parentSymbSN.childSolveRecvIndices[proc].size()*width;
+            const int thisSend = std::max(actualSend,1);
             sendCounts[proc] = thisSend;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += thisSend;
@@ -309,8 +312,9 @@ void clique::numeric::DistLDLBackwardSolve
         std::vector<int> recvCounts(parentCommSize), recvDispls(parentCommSize);
         for( int proc=0; proc<parentCommSize; ++proc )
         {
-            const int thisRecv = 
+            const int actualRecv = 
                 parentSymbSN.numChildSolveSendIndices[proc]*width;
+            const int thisRecv = std::max(actualRecv,1);
             recvCounts[proc] = thisRecv;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += thisRecv;

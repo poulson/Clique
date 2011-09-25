@@ -93,7 +93,8 @@ void clique::numeric::DistLDL
         int sendBufferSize = 0;
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int thisSend = symbSN.numChildFactSendIndices[proc];   
+            const int actualSend = symbSN.numChildFactSendIndices[proc];
+            const int thisSend = std::max(actualSend,1);
             sendCounts[proc] = thisSend;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += thisSend;
@@ -139,7 +140,8 @@ void clique::numeric::DistLDL
         int recvBufferSize = 0;
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int thisRecv = symbSN.childFactRecvIndices[proc].size();
+            const int actualRecv = symbSN.childFactRecvIndices[proc].size();
+            const int thisRecv = std::max(actualRecv,1);
             recvCounts[proc] = thisRecv;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += thisRecv;
