@@ -131,6 +131,14 @@ void clique::numeric::DistLDL
                     childUpdate.GetLocalEntry(iChildLocal,jChildLocal);
             }
         }
+#ifndef RELEASE
+        for( int proc=0; proc<commSize; ++proc )
+        {
+            if( packOffsets[proc]-sendDispls[proc] != 
+                symbSN.numChildFactSendIndices[proc] )
+                throw std::logic_error("Error in packing stage");
+        }
+#endif
         packOffsets.clear();
 
         // Set up the recv buffer for the AllToAll
@@ -165,6 +173,7 @@ void clique::numeric::DistLDL
                 throw std::logic_error( msg.str().c_str() );
             }
         }
+        actualRecvCounts.clear();
 #endif
 
         // AllToAll to send and receive the child updates

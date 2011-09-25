@@ -119,7 +119,7 @@ void clique::numeric::DistLDLForwardSolve
         packOffsets.clear();
         childW.Empty();
 
-        // AllToAll to send and receive the child updates
+        // Set up the receive buffer
         int recvBufferSize = 0;
         std::vector<int> recvCounts(commSize), recvDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
@@ -150,7 +150,10 @@ void clique::numeric::DistLDLForwardSolve
                 throw std::logic_error( msg.str().c_str() );
             }
         }
+        actualRecvCounts.clear();
 #endif
+
+        // AllToAll to send and receive the child updates
         mpi::AllToAll
         ( &sendBuffer[0], &sendCounts[0], &sendDispls[0],
           &recvBuffer[0], &recvCounts[0], &recvDispls[0], comm );
@@ -326,7 +329,7 @@ void clique::numeric::DistLDLBackwardSolve
         }
         parentWork.Empty();
 
-        // AllToAll to send and recv parent updates
+        // Set up the receive buffer
         int recvBufferSize = 0;
         std::vector<int> recvCounts(parentCommSize), recvDispls(parentCommSize);
         for( int proc=0; proc<parentCommSize; ++proc )
@@ -357,7 +360,10 @@ void clique::numeric::DistLDLBackwardSolve
                 throw std::logic_error( msg.str().c_str() );
             }
         }
+        actualRecvCounts.clear();
 #endif
+
+        // AllToAll to send and recv parent updates
         mpi::AllToAll
         ( &sendBuffer[0], &sendCounts[0], &sendDispls[0],
           &recvBuffer[0], &recvCounts[0], &recvDispls[0], parentComm );
