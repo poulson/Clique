@@ -335,6 +335,12 @@ void clique::symbolic::DistSymmetricFactorization
                 {
                     const int iChild = 
                         updateColShift + iChildLocal*childGridHeight;
+#ifndef RELEASE
+                    if( iChild < jChild )
+                        throw std::logic_error("localColShift too small");
+                    if( iChild >= jChild+childGridHeight )
+                        throw std::logic_error("localColShift too large");
+#endif
                     const int destGridRow = 
                         myChildRelIndices[iChild] % gridHeight;
 
@@ -511,6 +517,10 @@ void clique::symbolic::ComputeFactRecvIndices
     {
         const int jChild = sn.leftChildFactRowIndices[jPre];
         const int jFront = sn.leftChildRelIndices[jChild];
+#ifndef RELEASE
+        if( (jFront-gridCol) % gridWidth != 0 )
+            throw std::logic_error("Invalid left jFront");
+#endif
         const int jFrontLocal = (jFront-gridCol) / gridWidth;
         const int childCol = (jChild+sn.leftChildSize) % leftGridWidth;
 
@@ -524,6 +534,12 @@ void clique::symbolic::ComputeFactRecvIndices
         {
             const int iChild = sn.leftChildFactColIndices[iPre];
             const int iFront = sn.leftChildRelIndices[iChild];
+#ifndef RELEASE
+            if( iChild < jChild )
+                throw std::logic_error("Invalid left iChild");
+            if( (iFront-gridRow) % gridHeight != 0 )
+                throw std::logic_error("Invalid left iFront");
+#endif
             const int iFrontLocal = (iFront-gridRow) / gridHeight;
 
             const int childRow = (iChild+sn.leftChildSize) % leftGridHeight;
@@ -540,6 +556,10 @@ void clique::symbolic::ComputeFactRecvIndices
     {
         const int jChild = sn.rightChildFactRowIndices[jPre];
         const int jFront = sn.rightChildRelIndices[jChild];
+#ifndef RELEASE
+        if( (jFront-gridCol) % gridWidth != 0 )
+            throw std::logic_error("Invalid right jFront");
+#endif
         const int jFrontLocal = (jFront-gridCol) / gridWidth;
         const int childCol = (jChild+sn.rightChildSize) % rightGridWidth;
 
@@ -553,6 +573,12 @@ void clique::symbolic::ComputeFactRecvIndices
         {
             const int iChild = sn.rightChildFactColIndices[iPre];
             const int iFront = sn.rightChildRelIndices[iChild];
+#ifndef RELEASE
+            if( iChild < jChild )
+                throw std::logic_error("Invalid right iChild");
+            if( (iFront-gridRow) % gridHeight != 0 )
+                throw std::logic_error("Invalid right iFront");
+#endif
             const int iFrontLocal = (iFront-gridRow) / gridHeight;
 
             const int childRow = (iChild+sn.rightChildSize) % rightGridHeight;
