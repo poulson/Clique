@@ -325,11 +325,13 @@ void clique::symbolic::DistSymmetricFactorization
                 const int jChild = updateRowShift + jChildLocal*childGridWidth;
                 const int destGridCol = myChildRelIndices[jChild] % gridWidth;
 
-                const int align = (jChild+updateRowAlignment) % childGridHeight;
-                const int shift = 
-                    (childGridRow+childGridHeight-align) % childGridHeight;
-                const int localColShift = 
-                    (jChild+shift-updateColShift) / childGridHeight;
+                int localColShift;
+                if( updateColShift > jChild )
+                    localColShift = 0;
+                else if( (jChild-updateColShift) % childGridHeight == 0 )
+                    localColShift = (jChild-updateColShift)/childGridHeight;
+                else
+                    localColShift = (jChild-updateColShift)/childGridHeight + 1;
                 for( int iChildLocal=localColShift; 
                          iChildLocal<updateLocalHeight; ++iChildLocal )
                 {
