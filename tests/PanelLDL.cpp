@@ -28,6 +28,7 @@ void Usage()
               << "<nz>: size of panel in z direction\n"
               << "<cutoff>: minimum required leaf size\n" 
               << "<write info?>: write basic local info to file? [0/1]\n"
+              << "<prefix>: prefix for each process's info file\n"
               << std::endl;
 }
 
@@ -96,6 +97,14 @@ main( int argc, char* argv[] )
     const int nz = atoi( argv[argNum++] );
     const int cutoff = atoi( argv[argNum++] );
     const bool writeInfo = atoi( argv[argNum++] );
+    if( writeInfo && argc == 6 )
+    {
+        if( commRank == 0 )
+            Usage();
+        clique::Finalize();
+        return 0;
+    }
+    const char* basename = argv[argNum++];
     if( commRank == 0 )
         std::cout << "(nx,ny,nz)=(" << nx << "," << ny << "," << nz << ")\n"
                   << "cutoff=" << cutoff << std::endl;
@@ -106,7 +115,7 @@ main( int argc, char* argv[] )
         if( writeInfo )
         {
             std::ostringstream filename;
-            filename << "info-" << commRank << ".dat";
+            filename << basename << "-" << commRank << ".dat";
             infoFile.open( filename.str().c_str() );
         }
 
