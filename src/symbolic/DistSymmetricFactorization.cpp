@@ -463,27 +463,48 @@ void clique::symbolic::ComputeFactRecvIndices
 
     // Assuming that we have a power of two number of processes, the following
     // should be valid. It will eventually need to be improved.
-    const int rightChildOffset = commSize / 2;
-    const int leftChildGridHeight = childGridHeight;
-    const int leftChildGridWidth = childGridWidth;
-    const int rightChildGridHeight = childGridHeight;
-    const int rightChildGridWidth = childGridWidth;
+    const int rightOffset = commSize / 2;
+    const int leftGridHeight = childGridHeight;
+    const int leftGridWidth = childGridWidth;
+    const int rightGridHeight = childGridHeight;
+    const int rightGridWidth = childGridWidth;
+
+#ifndef RELEASE
+    // Ensure that all processes in our communicator agree on the grid 
+    // dimensions and supernode sizes
+    int basicData[7];
+    if( commRank == 0 )
+    {
+        basicData[0] = gridHeight;
+        basicData[1] = gridWidth;
+        basicData[2] = childGridHeight;
+        basicData[3] = childGridWidth;
+        basicData[4] = sn.size;
+        basicData[5] = sn.leftChildSize;
+        basicData[6] = sn.rightChildSize;
+    }
+    mpi::Broadcast( basicData, 7, 0, sn.comm );
+    if( gridHeight != basicData[0] || gridWidth != basicData[1] )
+        throw std::logic_error("Grid dimensions conflicted");
+    if( childGridHeight != basicData[2] || childGridWidth != basicData[3] )
+        throw std::logic_error("Child grid dimensions conflicted");
+    if( sn.size != basicData[4] )
+        throw std::logic_error("Supernode sizes conflicted");
+    if( sn.leftChildSize != basicData[5] || sn.rightChildSize != basicData[6] )
+        throw std::logic_error("Child supernode sizes conflicted");
+#endif
 
     sn.childFactRecvIndices.clear();
     sn.childFactRecvIndices.resize( commSize );
     std::deque<int>::const_iterator it;
 
     // Compute the recv indices of the left child from each process 
-    const int leftUpdateColAlignment = sn.leftChildSize % leftChildGridHeight;
-    const int leftUpdateRowAlignment = sn.leftChildSize % leftChildGridWidth;
     for( int jPre=0; jPre<sn.leftChildFactRowIndices.size(); ++jPre )
     {
         const int jChild = sn.leftChildFactRowIndices[jPre];
         const int jFront = sn.leftChildRelIndices[jChild];
         const int jFrontLocal = (jFront-gridCol) / gridWidth;
-
-        const int childCol = 
-            (jChild+leftUpdateRowAlignment) % leftChildGridWidth;
+        const int childCol = (jChild+sn.leftChildSize) % leftGridWidth;
 
         // Find the first iPre that maps to the lower triangle
         it = std::lower_bound
@@ -497,9 +518,8 @@ void clique::symbolic::ComputeFactRecvIndices
             const int iFront = sn.leftChildRelIndices[iChild];
             const int iFrontLocal = (iFront-gridRow) / gridHeight;
 
-            const int childRow = 
-                (iChild+leftUpdateColAlignment) % leftChildGridHeight;
-            const int childRank = childRow + childCol*leftChildGridHeight;
+            const int childRow = (iChild+sn.leftChildSize) % leftGridHeight;
+            const int childRank = childRow + childCol*leftGridHeight;
 
             const int frontRank = childRank;
             sn.childFactRecvIndices[frontRank].push_back(iFrontLocal);
@@ -508,17 +528,12 @@ void clique::symbolic::ComputeFactRecvIndices
     }
     
     // Compute the recv indices of the right child from each process 
-    const int rightUpdateColAlignment = 
-        sn.rightChildSize % rightChildGridHeight;
-    const int rightUpdateRowAlignment = sn.rightChildSize % rightChildGridWidth;
     for( int jPre=0; jPre<sn.rightChildFactRowIndices.size(); ++jPre )
     {
         const int jChild = sn.rightChildFactRowIndices[jPre];
         const int jFront = sn.rightChildRelIndices[jChild];
         const int jFrontLocal = (jFront-gridCol) / gridWidth;
-
-        const int childCol = 
-            (jChild+rightUpdateRowAlignment) % rightChildGridWidth;
+        const int childCol = (jChild+sn.rightChildSize) % rightGridWidth;
 
         // Find the first iPre that maps to the lower triangle
         it = std::lower_bound
@@ -532,11 +547,10 @@ void clique::symbolic::ComputeFactRecvIndices
             const int iFront = sn.rightChildRelIndices[iChild];
             const int iFrontLocal = (iFront-gridRow) / gridHeight;
 
-            const int childRow = 
-                (iChild+rightUpdateColAlignment) % rightChildGridHeight;
-            const int childRank = childRow + childCol*rightChildGridHeight;
+            const int childRow = (iChild+sn.rightChildSize) % rightGridHeight;
+            const int childRank = childRow + childCol*rightGridHeight;
 
-            const int frontRank = rightChildOffset + childRank;
+            const int frontRank = rightOffset + childRank;
             sn.childFactRecvIndices[frontRank].push_back(iFrontLocal);
             sn.childFactRecvIndices[frontRank].push_back(jFrontLocal);
         }
