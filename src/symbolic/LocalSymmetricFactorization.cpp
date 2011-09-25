@@ -61,6 +61,28 @@ void clique::symbolic::LocalSymmetricFactorization
             // Union the child lower structs
             const int numLeftIndices = leftChild.lowerStruct.size();
             const int numRightIndices = rightChild.lowerStruct.size();
+#ifndef RELEASE
+            for( int i=1; i<numLeftIndices; ++i )
+            {
+                if( leftChild.lowerStruct[i] <= leftChild.lowerStruct[i-1] )
+                {
+                    std::ostringstream msg;
+                    msg << "Left child struct was not sorted for s=" << s 
+                        << "\n";
+                    throw std::logic_error( msg.str().c_str() );
+                }
+            }
+            for( int i=1; i<numRightIndices; ++i )
+            {
+                if( rightChild.lowerStruct[i] <= rightChild.lowerStruct[i-1] )
+                {
+                    std::ostringstream msg;
+                    msg << "Right child struct was not sorted for s=" << s
+                        << "\n";
+                    throw std::logic_error( msg.str().c_str() );
+                }
+            }
+#endif
             const int childrenStructMaxSize = numLeftIndices + numRightIndices;
             childrenStruct.resize( childrenStructMaxSize );
             it = std::set_union
@@ -72,6 +94,18 @@ void clique::symbolic::LocalSymmetricFactorization
 
             // Union the lower structure of this supernode
             const int numOrigLowerIndices = origSN.lowerStruct.size();
+#ifndef RELEASE
+            for( int i=1; i<numOrigLowerIndices; ++i )
+            {
+                if( origSN.lowerStruct[i] <= origSN.lowerStruct[i-1] )
+                {
+                    std::ostringstream msg;
+                    msg << "Original struct was not sorted for s=" << s
+                        << "\n";
+                    throw std::logic_error( msg.str().c_str() );
+                }
+            }
+#endif
             const int partialStructMaxSize = 
                 childrenStructSize + numOrigLowerIndices;
             partialStruct.resize( partialStructMaxSize );

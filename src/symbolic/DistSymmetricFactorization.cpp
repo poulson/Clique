@@ -157,6 +157,28 @@ void clique::symbolic::DistSymmetricFactorization
           distOrig.comm );
         
         // Union the two child lower structures
+#ifndef RELEASE
+        for( int i=1; i<myChildLowerStructSize; ++i )
+        {
+            if( sendBuffer[i] <= sendBuffer[i-1] )    
+            {
+                std::ostringstream msg;
+                msg << "My child's lower struct was not sorted for s="
+                    << s << "\n";
+                throw std::logic_error( msg.str().c_str() );
+            }
+        }
+        for( int i=1; i<theirChildLowerStructSize; ++i )
+        {
+            if( recvBuffer[i] <= recvBuffer[i-1] )    
+            {
+                std::ostringstream msg;
+                msg << "Their child's lower struct was not sorted for s="
+                    << s << "\n";
+                throw std::logic_error( msg.str().c_str() );
+            }
+        }
+#endif
         childrenStruct.resize
         ( myChildLowerStructSize+theirChildLowerStructSize );
         it = std::set_union
@@ -166,6 +188,17 @@ void clique::symbolic::DistSymmetricFactorization
         childrenStruct.resize( childrenStructSize );
 
         // Union the lower structure of this supernode
+#ifndef RELEASE
+        for( int i=1; i<origSN.lowerStruct.size(); ++i )
+        {
+            if( origSN.lowerStruct[i] <= origSN.lowerStruct[i-1] )    
+            {
+                std::ostringstream msg;
+                msg << "Original struct was not sorted for s=" << s << "\n";
+                throw std::logic_error( msg.str().c_str() );
+            }
+        }
+#endif
         partialStruct.resize( childrenStructSize + origSN.lowerStruct.size() );
         it = std::set_union
         ( childrenStruct.begin(), childrenStruct.end(),
@@ -193,6 +226,10 @@ void clique::symbolic::DistSymmetricFactorization
         {
             const int index = origSN.lowerStruct[i];
             it = std::lower_bound( it, fullStruct.end(), index );
+#ifndef RELEASE
+            if( it == fullStruct.end() )
+                throw std::logic_error("Relative index failure");
+#endif
             factSN.origLowerRelIndices[index] = int(it-fullStruct.begin());
         }
 
@@ -223,6 +260,10 @@ void clique::symbolic::DistSymmetricFactorization
         {
             const int index = leftIndices[i];
             it = std::lower_bound( it, fullStruct.end(), index );
+#ifndef RELEASE
+            if( it == fullStruct.end() )
+                throw std::logic_error("Relative index failure");
+#endif
             factSN.leftChildRelIndices[i] = int(it-fullStruct.begin());
         }
         factSN.rightChildRelIndices.resize( numRightIndices );
@@ -231,6 +272,10 @@ void clique::symbolic::DistSymmetricFactorization
         {
             const int index = rightIndices[i];
             it = std::lower_bound( it, fullStruct.end(), index );
+#ifndef RELEASE
+            if( it == fullStruct.end() )
+                throw std::logic_error("Relative index failure");
+#endif
             factSN.rightChildRelIndices[i] = int(it-fullStruct.begin());
         }
 
