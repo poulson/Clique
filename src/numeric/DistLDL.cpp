@@ -133,20 +133,41 @@ void clique::numeric::DistLDL
         }
         packOffsets.clear();
 
-        // AllToAll to send and receive the child updates
+        // Set up the recv buffer for the AllToAll
         if( computeFactRecvIndices )
-            symbolic::ComputeFactRecvIndices( symbSN );
+            symbolic::ComputeFactRecvIndices( symbSN, childSymbSN );
         std::vector<int> recvCounts(commSize), recvDispls(commSize);
         int recvBufferSize = 0;
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int actualRecv = symbSN.childFactRecvIndices[proc].size();
+            const int actualRecv = symbSN.childFactRecvIndices[proc].size()/2;
             const int thisRecv = std::max(actualRecv,1);
             recvCounts[proc] = thisRecv;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += thisRecv;
         }
         std::vector<F> recvBuffer( recvBufferSize );
+#ifndef RELEASE
+        // Verify the send and recv counts match
+        std::vector<int> actualRecvCounts(commSize);
+        mpi::AllToAll
+        ( &sendCounts[0],       1, 
+          &actualRecvCounts[0], 1, comm );
+        for( int proc=0; proc<commSize; ++proc )
+        {
+            if( actualRecvCounts[proc] != recvCounts[proc] )
+            {
+                std::ostringstream msg;
+                msg << "Expected recv count of " << recvCounts[proc]
+                    << " but recv'd " << actualRecvCounts[proc] 
+                    << " from process " << proc << " for supernode "
+                    << s << "\n";
+                throw std::logic_error( msg.str().c_str() );
+            }
+        }
+#endif
+
+        // AllToAll to send and receive the child updates
         mpi::AllToAll
         ( &sendBuffer[0], &sendCounts[0], &sendDispls[0],
           &recvBuffer[0], &recvCounts[0], &recvDispls[0], comm );

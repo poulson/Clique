@@ -240,6 +240,21 @@ void clique::symbolic::DistSymmetricFactorization
         for( int i=0; i<lowerStructSize; ++i )
             factSN.lowerStruct[i] = fullStruct[origSN.size+i];
 
+#ifndef RELEASE
+        // Ensure that our partner computed a lowerStruct of the same size
+        int partnerLowerStructSize;
+        mpi::SendRecv
+        ( &lowerStructSize,        1, partner, 0,
+          &partnerLowerStructSize, 1, partner, 0, distOrig.comm );
+        if( partnerLowerStructSize != lowerStructSize )
+        {
+            std::ostringstream msg;
+            msg << "Partner's (" << partner << "'s) lower struct size was " 
+                << partnerLowerStructSize << " for supernode " << s << "\n";
+            throw std::logic_error( msg.str().c_str() );
+        }
+#endif
+
         // Fill numChildFactSendIndices so that we can reuse it for many facts.
         factSN.numChildFactSendIndices.resize( teamSize );
         std::memset
@@ -373,7 +388,7 @@ void clique::symbolic::DistSymmetricFactorization
         // Optionally compute the recv indices for the factorization. 
         // This is optional since it requires a nontrivial amount of storage.
         if( storeFactRecvIndices )
-            ComputeFactRecvIndices( factSN );
+            ComputeFactRecvIndices( factSN, factChildSN );
         else
             factSN.childFactRecvIndices.clear();
 
@@ -385,7 +400,9 @@ void clique::symbolic::DistSymmetricFactorization
 #endif
 }
 
-void clique::symbolic::ComputeFactRecvIndices( const DistSymmFactSupernode& sn )
+void clique::symbolic::ComputeFactRecvIndices
+( const DistSymmFactSupernode& sn, 
+  const DistSymmFactSupernode& childSN )
 {
 #ifndef RELEASE
     PushCallStack("symbolic::ComputeFactRecvIndices");
@@ -396,22 +413,16 @@ void clique::symbolic::ComputeFactRecvIndices( const DistSymmFactSupernode& sn )
     const int gridWidth = sn.grid->Width();
     const int gridRow = sn.grid->MCRank();
     const int gridCol = sn.grid->MRRank();
+    const int childGridHeight = childSN.grid->Height();
+    const int childGridWidth = childSN.grid->Width();
 
-    // Compute the child grid dimensions (this could be stored in the supernode
-    // if we generalize from powers of two).
+    // Assuming that we have a power of two number of processes, the following
+    // should be valid. It will eventually need to be improved.
     const int rightChildOffset = commSize / 2;
-    int leftChildGridHeight, leftChildGridWidth,
-        rightChildGridHeight, rightChildGridWidth;
-    if( gridHeight >= gridWidth )
-    {
-        leftChildGridHeight = rightChildGridHeight = gridHeight / 2;
-        leftChildGridWidth = rightChildGridWidth = gridWidth;
-    }
-    else
-    {
-        leftChildGridHeight = rightChildGridHeight = gridHeight;
-        leftChildGridWidth = rightChildGridWidth = gridWidth / 2;
-    }
+    const int leftChildGridHeight = childGridHeight;
+    const int leftChildGridWidth = childGridWidth;
+    const int rightChildGridHeight = childGridHeight;
+    const int rightChildGridWidth = childGridWidth;
 
     sn.childFactRecvIndices.clear();
     sn.childFactRecvIndices.resize( commSize );

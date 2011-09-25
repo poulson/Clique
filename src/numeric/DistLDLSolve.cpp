@@ -132,6 +132,25 @@ void clique::numeric::DistLDLForwardSolve
             recvBufferSize += thisRecv;
         }
         std::vector<F> recvBuffer( recvBufferSize );
+#ifndef RELEASE
+        // Verify the send and recv counts match
+        std::vector<int> actualRecvCounts(commSize);
+        mpi::AllToAll
+        ( &sendCounts[0],       1,
+          &actualRecvCounts[0], 1, comm );
+        for( int proc=0; proc<commSize; ++proc )
+        {
+            if( actualRecvCounts[proc] != recvCounts[proc] )
+            {
+                std::ostringstream msg;
+                msg << "Expected recv count of " << recvCounts[proc]
+                    << " but recv'd " << actualRecvCounts[proc]
+                    << " from process " << proc << " for supernode "
+                    << s << "\n";
+                throw std::logic_error( msg.str().c_str() );
+            }
+        }
+#endif
         mpi::AllToAll
         ( &sendBuffer[0], &sendCounts[0], &sendDispls[0],
           &recvBuffer[0], &recvCounts[0], &recvDispls[0], comm );
@@ -320,6 +339,25 @@ void clique::numeric::DistLDLBackwardSolve
             recvBufferSize += thisRecv;
         }
         std::vector<F> recvBuffer( recvBufferSize );
+#ifndef RELEASE
+        // Verify the send and recv counts match
+        std::vector<int> actualRecvCounts(parentCommSize);
+        mpi::AllToAll
+        ( &sendCounts[0],       1,
+          &actualRecvCounts[0], 1, parentComm );
+        for( int proc=0; proc<parentCommSize; ++proc )
+        {
+            if( actualRecvCounts[proc] != recvCounts[proc] )
+            {
+                std::ostringstream msg;
+                msg << "Expected recv count of " << recvCounts[proc]
+                    << " but recv'd " << actualRecvCounts[proc]
+                    << " from process " << proc << " for supernode "
+                    << s << "\n";
+                throw std::logic_error( msg.str().c_str() );
+            }
+        }
+#endif
         mpi::AllToAll
         ( &sendBuffer[0], &sendCounts[0], &sendDispls[0],
           &recvBuffer[0], &recvCounts[0], &recvDispls[0], parentComm );

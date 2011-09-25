@@ -129,7 +129,9 @@ void DistSymmetricFactorization
         DistSymmFact&  distFact, 
         bool storeFactRecvIndices=true );
 
-void ComputeFactRecvIndices( const DistSymmFactSupernode& supernode );
+void ComputeFactRecvIndices
+( const DistSymmFactSupernode& factSN,
+  const DistSymmFactSupernode& factChildSN );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
