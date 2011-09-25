@@ -515,44 +515,52 @@ void FillDistOrigStruct
             ( xOffset, yOffset, 0, nx, ny, nz, log2CommSize, cutoff );
 
         // Count, allocate, and fill the lower struct
-        int numJoins = 0;
+        int joinSize = 0;
         if( xOffset-1 >= 0 )
-            ++numJoins;
+            joinSize += nySub*nz;
         if( xOffset+nxSub < nx )
-            ++numJoins;
+            joinSize += nySub*nz;
         if( yOffset-1 >= 0 )
-            ++numJoins;
+            joinSize += nxSub*nz;
         if( yOffset+nySub < ny )
-            ++numJoins;
-        sn.lowerStruct.resize( numJoins*nz );
+            joinSize += nxSub*nz;
+        sn.lowerStruct.resize( joinSize );
 
         int joinOffset = 0;
         if( xOffset-1 >= 0 )
         {
             for( int i=0; i<nz; ++i )
-                sn.lowerStruct[i] = ReorderedIndex
-                ( xOffset-1, yOffset, i, nx, ny, nz, log2CommSize, cutoff );
-            joinOffset += nz;
+                for( int j=0; j<nySub; ++j )
+                    sn.lowerStruct[i*nySub+j] = ReorderedIndex
+                    ( xOffset-1, yOffset+j, i, 
+                      nx, ny, nz, log2CommSize, cutoff );
+            joinOffset += nySub*nz;
         }
         if( xOffset+nxSub < nx )
         {
             for( int i=0; i<nz; ++i )
-                sn.lowerStruct[joinOffset+i] = ReorderedIndex
-                ( xOffset+nxSub, yOffset, i, nx, ny, nz, log2CommSize, cutoff );
-            joinOffset += nz;
+                for( int j=0; j<nySub; ++j )
+                    sn.lowerStruct[joinOffset+i*nySub+j] = ReorderedIndex
+                    ( xOffset+nxSub, yOffset+j, i, 
+                      nx, ny, nz, log2CommSize, cutoff );
+            joinOffset += nySub*nz;
         }
         if( yOffset-1 >= 0 )
         {
             for( int i=0; i<nz; ++i )
-                sn.lowerStruct[joinOffset+i] = ReorderedIndex
-                ( xOffset, yOffset-1, i, nx, ny, nz, log2CommSize, cutoff );
-            joinOffset += nz;
+                for( int j=0; j<nxSub; ++j )
+                    sn.lowerStruct[joinOffset+i*nxSub+j] = ReorderedIndex
+                    ( xOffset+j, yOffset-1, i, 
+                      nx, ny, nz, log2CommSize, cutoff );
+            joinOffset += nxSub*nz;
         }
         if( yOffset+nySub < ny )
         {
             for( int i=0; i<nz; ++i )
-                sn.lowerStruct[joinOffset+i] = ReorderedIndex
-                ( xOffset, yOffset+nySub, i, nx, ny, nz, log2CommSize, cutoff );
+                for( int j=0; j<nxSub; ++j )
+                    sn.lowerStruct[joinOffset+i*nxSub+j] = ReorderedIndex
+                    ( xOffset+j, yOffset+nySub, i, 
+                      nx, ny, nz, log2CommSize, cutoff );
         }
 
         // Sort the lower structure
@@ -699,49 +707,53 @@ void FillLocalOrigStruct
                   log2CommSize, cutoff );
             sn.children.clear();
 
-            // Count, allocate, and fill the lower struct
-            int numJoins = 0;
+        // Count, allocate, and fill the lower struct
+            int joinSize = 0;
             if( box.xOffset-1 >= 0 )
-                ++numJoins;
+                joinSize += box.ny*nz;
             if( box.xOffset+box.nx < nx )
-                ++numJoins;
+                joinSize += box.ny*nz;
             if( box.yOffset-1 >= 0 )
-                ++numJoins;
+                joinSize += box.nx*nz;
             if( box.yOffset+box.ny < ny )
-                ++numJoins;
-            sn.lowerStruct.resize( numJoins*nz );
+                joinSize += box.nx*nz;
+            sn.lowerStruct.resize( joinSize );
 
             int joinOffset = 0;
             if( box.xOffset-1 >= 0 )
             {
                 for( int i=0; i<nz; ++i )
-                    sn.lowerStruct[i] = ReorderedIndex
-                    ( box.xOffset-1, box.yOffset, i, nx, ny, nz, 
-                      log2CommSize, cutoff );
-                joinOffset += nz;
+                    for( int j=0; j<box.ny; ++j )
+                        sn.lowerStruct[i*box.ny+j] = ReorderedIndex
+                        ( box.xOffset-1, box.yOffset+j, i, 
+                          nx, ny, nz, log2CommSize, cutoff );
+                joinOffset += box.ny*nz;
             }
             if( box.xOffset+box.nx < nx )
             {
                 for( int i=0; i<nz; ++i )
-                    sn.lowerStruct[joinOffset+i] = ReorderedIndex
-                    ( box.xOffset+box.nx, box.yOffset, i, nx, ny, nz,
-                      log2CommSize, cutoff );
-                joinOffset += nz;
+                    for( int j=0; j<box.ny; ++j )
+                        sn.lowerStruct[joinOffset+i*box.ny+j] = ReorderedIndex
+                        ( box.xOffset+box.nx, box.yOffset+j, i, 
+                          nx, ny, nz, log2CommSize, cutoff );
+                joinOffset += box.ny*nz;
             }
             if( box.yOffset-1 >= 0 )
             {
                 for( int i=0; i<nz; ++i )
-                    sn.lowerStruct[joinOffset+i] = ReorderedIndex
-                    ( box.xOffset, box.yOffset-1, i, nx, ny, nz,
-                      log2CommSize, cutoff );
-                joinOffset += nz;
+                    for( int j=0; j<box.nx; ++j )
+                        sn.lowerStruct[joinOffset+i*box.nx+j] = ReorderedIndex
+                        ( box.xOffset+j, box.yOffset-1, i, 
+                          nx, ny, nz, log2CommSize, cutoff );
+                joinOffset += box.nx*nz;
             }
             if( box.yOffset+box.ny < ny )
             {
                 for( int i=0; i<nz; ++i )
-                    sn.lowerStruct[joinOffset+i] = ReorderedIndex
-                    ( box.xOffset, box.yOffset+box.ny, i, nx, ny, nz,
-                      log2CommSize, cutoff );
+                    for( int j=0; j<box.nx; ++j )
+                        sn.lowerStruct[joinOffset+i*box.nx+j] = ReorderedIndex
+                        ( box.xOffset+j, box.yOffset+box.ny, i,
+                          nx, ny, nz, log2CommSize, cutoff );
             }
 
             // Sort the lower structure
