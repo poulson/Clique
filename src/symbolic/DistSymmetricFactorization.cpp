@@ -337,12 +337,6 @@ void clique::symbolic::DistSymmetricFactorization
                 {
                     const int iChild = 
                         updateColShift + iChildLocal*childGridHeight;
-#ifndef RELEASE
-                    if( iChild < jChild )
-                        throw std::logic_error("localColShift too small");
-                    if( iChild >= jChild+childGridHeight )
-                        throw std::logic_error("localColShift too large");
-#endif
                     const int destGridRow = 
                         myChildRelIndices[iChild] % gridHeight;
 
