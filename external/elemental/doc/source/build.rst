@@ -1,5 +1,5 @@
-Building Elemental
-******************
+Build system
+************
 Elemental's build system relies on `CMake <http://www.cmake.org>`_ 
 in order to manage a large number of configuration options in a 
 platform-independent manner; it can be easily configured to build on Linux and 
@@ -248,10 +248,15 @@ eight processes would be::
 Only the first line of the output should change with respect to when run on 
 a single process.
 
+Elemental as a subproject
+=========================
+**TODO:** Describe the convenient mechanism for building a project on top of 
+Elemental's ``CMakeLists.txt``.
+
 Troubleshooting
 ===============
 If you run into build problems, please email 
 `jack.poulson@gmail.com <mailto:jack.poulson@gmail.com>`_ and make sure to 
 attach the file ``include/elemental/config.h`` that should be generated within 
 your build directory. Please only direct general usage questions to 
-`elemental-framework@googlegroups.com <mailto:elemental-framework@googlegroups.com>`_.
+`elemental-dev@googlegroups.com <mailto:elemental-dev@googlegroups.com>`_.

@@ -11,6 +11,7 @@ Welcome to Elemental's documentation!
 
    intro
    build
+   imports
    core
    basic
    advanced 
@@ -19,6 +20,5 @@ Indices and tables
 ******************
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
 
