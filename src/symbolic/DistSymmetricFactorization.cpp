@@ -32,20 +32,18 @@ using namespace elemental;
 // TODO: Generalize to support more than just a power-of-two number of 
 //       processes. This should be relatively straightforward.
 void clique::symbolic::DistSymmetricFactorization
-( const DistSymmOrig&  distOrig,
-  const LocalSymmFact& localFact, DistSymmFact&  distFact, 
-        bool storeFactRecvIndices )
+( const SymmOrig& orig, SymmFact& fact, bool storeFactRecvIndices )
 {
 #ifndef RELEASE
     PushCallStack("symbolic::DistSymmetricFactorization");
 #endif
-    const unsigned numSupernodes = distOrig.supernodes.size();
-    distFact.supernodes.resize( numSupernodes );
+    const unsigned numSupernodes = orig.dist.supernodes.size();
+    fact.dist.supernodes.resize( numSupernodes );
     if( numSupernodes == 0 )
         return;
 
-    const unsigned commRank = mpi::CommRank( distOrig.comm );
-    const unsigned commSize = mpi::CommSize( distOrig.comm );
+    const unsigned commRank = mpi::CommRank( orig.dist.comm );
+    const unsigned commSize = mpi::CommSize( orig.dist.comm );
 #ifndef RELEASE
     // Use the naive algorithm for finding floor(log2(commSize)) since it
     // will be an ignorable portion of the overhead and will be more easily
@@ -62,9 +60,9 @@ void clique::symbolic::DistSymmetricFactorization
 #endif
 
     // The bottom node is already computed, so just copy it over
-    const LocalSymmFactSupernode& topLocalSN = localFact.supernodes.back();
-    DistSymmFactSupernode& bottomDistSN = distFact.supernodes[0];
-    mpi::CommSplit( distOrig.comm, commRank, 0, bottomDistSN.comm );
+    const LocalSymmFactSupernode& topLocalSN = fact.local.supernodes.back();
+    DistSymmFactSupernode& bottomDistSN = fact.dist.supernodes[0];
+    mpi::CommSplit( orig.dist.comm, commRank, 0, bottomDistSN.comm );
     bottomDistSN.grid = new elemental::Grid( bottomDistSN.comm, 1, 1 );
     bottomDistSN.size = topLocalSN.size;
     bottomDistSN.localSize1d = topLocalSN.size;
@@ -97,9 +95,9 @@ void clique::symbolic::DistSymmetricFactorization
                     supernodeIndices;
     for( unsigned s=1; s<numSupernodes; ++s )
     {
-        const DistSymmOrigSupernode& origSN = distOrig.supernodes[s];
-        const DistSymmFactSupernode& factChildSN = distFact.supernodes[s-1];
-        DistSymmFactSupernode& factSN = distFact.supernodes[s];
+        const DistSymmOrigSupernode& origSN = orig.dist.supernodes[s];
+        const DistSymmFactSupernode& factChildSN = fact.dist.supernodes[s-1];
+        DistSymmFactSupernode& factSN = fact.dist.supernodes[s];
         factSN.size = origSN.size;
         factSN.offset = origSN.offset;
         factSN.myOffset = myOffset;
@@ -113,7 +111,7 @@ void clique::symbolic::DistSymmetricFactorization
         const unsigned teamSize  = powerOfTwo << 1;
         const int teamColor = commRank & ~(teamSize-1);
         const int teamRank  = commRank &  (teamSize-1);
-        mpi::CommSplit( distOrig.comm, teamColor, teamRank, factSN.comm );
+        mpi::CommSplit( orig.dist.comm, teamColor, teamRank, factSN.comm );
         unsigned gridHeight = 
             static_cast<unsigned>(sqrt(static_cast<double>(teamSize)));
         while( teamSize % gridHeight != 0 )
@@ -142,7 +140,7 @@ void clique::symbolic::DistSymmetricFactorization
         int initialRecvs[2];
         mpi::SendRecv
         ( initialSends, 2, partner, 0,
-          initialRecvs, 2, partner, 0, distOrig.comm );
+          initialRecvs, 2, partner, 0, orig.dist.comm );
         const int theirChildSize = initialRecvs[0];
         const int theirChildLowerStructSize = initialRecvs[1];
         // Perform the exchange
@@ -154,7 +152,7 @@ void clique::symbolic::DistSymmetricFactorization
         mpi::SendRecv
         ( &sendBuffer[0], myChildLowerStructSize, partner, 0,
           &recvBuffer[0], theirChildLowerStructSize, partner, 0, 
-          distOrig.comm );
+          orig.dist.comm );
         
         // Union the two child lower structures
 #ifndef RELEASE
@@ -290,7 +288,7 @@ void clique::symbolic::DistSymmetricFactorization
         int partnerLowerStructSize;
         mpi::SendRecv
         ( &lowerStructSize,        1, partner, 0,
-          &partnerLowerStructSize, 1, partner, 0, distOrig.comm );
+          &partnerLowerStructSize, 1, partner, 0, orig.dist.comm );
         if( partnerLowerStructSize != lowerStructSize )
         {
             std::ostringstream msg;

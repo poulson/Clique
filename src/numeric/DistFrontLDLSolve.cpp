@@ -26,12 +26,12 @@
 using namespace elemental;
 
 template<typename F>
-void clique::numeric::DistSupernodeLDLDiagonalSolve
+void clique::numeric::DistFrontLDLDiagonalSolve
 ( int supernodeSize, const DistMatrix<F,VC,STAR>& d, DistMatrix<F,VC,STAR>& X,
   bool checkIfSingular )
 {
 #ifndef RELEASE
-    clique::PushCallStack("numeric::DistSupernodeLDLDiagonalSolve");
+    clique::PushCallStack("numeric::DistFrontLDLDiagonalSolve");
     if( d.ColAlignment() != X.ColAlignment() )
         throw std::logic_error("Incompatible alignments");
     if( d.Width() != 1 )
@@ -47,11 +47,11 @@ void clique::numeric::DistSupernodeLDLDiagonalSolve
 }
 
 template<typename F>
-void clique::numeric::DistSupernodeLDLForwardSolve
+void clique::numeric::DistFrontLDLForwardSolve
 ( int supernodeSize, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    clique::PushCallStack("numeric::DistSupernodeLDLForwardSolve");
+    clique::PushCallStack("numeric::DistFrontLDLForwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -139,12 +139,12 @@ void clique::numeric::DistSupernodeLDLForwardSolve
 // The unit upper triangle and its (conjugate-)transpose 
 // (with the exception of the diagonal) must be explicitly stored
 template<typename F>
-void clique::numeric::DistSupernodeLDLBackwardSolve
+void clique::numeric::DistFrontLDLBackwardSolve
 ( Orientation orientation, 
   int supernodeSize, const DistMatrix<F,VC,STAR>& U, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    clique::PushCallStack("numeric::DistSupernodeLDLBackwardSolve");
+    clique::PushCallStack("numeric::DistFrontLDLBackwardSolve");
     if( U.Grid() != X.Grid() )
         throw std::logic_error
         ("U and X must be distributed over the same grid");
@@ -249,58 +249,58 @@ void clique::numeric::DistSupernodeLDLBackwardSolve
 #endif
 }
 
-template void clique::numeric::DistSupernodeLDLForwardSolve
+template void clique::numeric::DistFrontLDLForwardSolve
 ( int supernodeSize,
   const DistMatrix<float,VC,STAR>& L,
         DistMatrix<float,VC,STAR>& X );
-template void clique::numeric::DistSupernodeLDLDiagonalSolve
+template void clique::numeric::DistFrontLDLDiagonalSolve
 ( int supernodeSize,
   const DistMatrix<float,VC,STAR>& d, 
         DistMatrix<float,VC,STAR>& X,
   bool checkIfSingular );
-template void clique::numeric::DistSupernodeLDLBackwardSolve
+template void clique::numeric::DistFrontLDLBackwardSolve
 ( Orientation orientation, int supernodeSize,
   const DistMatrix<float,VC,STAR>& U,
         DistMatrix<float,VC,STAR>& X );
 
-template void clique::numeric::DistSupernodeLDLForwardSolve
+template void clique::numeric::DistFrontLDLForwardSolve
 ( int supernodeSize,
   const DistMatrix<double,VC,STAR>& L, 
         DistMatrix<double,VC,STAR>& X );
-template void clique::numeric::DistSupernodeLDLDiagonalSolve
+template void clique::numeric::DistFrontLDLDiagonalSolve
 ( int supernodeSize,
   const DistMatrix<double,VC,STAR>& d, 
         DistMatrix<double,VC,STAR>& X,
   bool checkIfSingular );
-template void clique::numeric::DistSupernodeLDLBackwardSolve
+template void clique::numeric::DistFrontLDLBackwardSolve
 ( Orientation orientation, int supernodeSize,
   const DistMatrix<double,VC,STAR>& U,
         DistMatrix<double,VC,STAR>& X );
 
-template void clique::numeric::DistSupernodeLDLForwardSolve
+template void clique::numeric::DistFrontLDLForwardSolve
 ( int supernodeSize,
   const DistMatrix<std::complex<float>,VC,STAR>& L, 
         DistMatrix<std::complex<float>,VC,STAR>& X );
-template void clique::numeric::DistSupernodeLDLDiagonalSolve
+template void clique::numeric::DistFrontLDLDiagonalSolve
 ( int supernodeSize,
   const DistMatrix<std::complex<float>,VC,STAR>& d, 
         DistMatrix<std::complex<float>,VC,STAR>& X,
   bool checkIfSingular );
-template void clique::numeric::DistSupernodeLDLBackwardSolve
+template void clique::numeric::DistFrontLDLBackwardSolve
 ( Orientation orientation, int supernodeSize,
   const DistMatrix<std::complex<float>,VC,STAR>& U, 
         DistMatrix<std::complex<float>,VC,STAR>& X );
 
-template void clique::numeric::DistSupernodeLDLForwardSolve
+template void clique::numeric::DistFrontLDLForwardSolve
 ( int supernodeSize,
   const DistMatrix<std::complex<double>,VC,STAR>& L, 
         DistMatrix<std::complex<double>,VC,STAR>& X );
-template void clique::numeric::DistSupernodeLDLDiagonalSolve
+template void clique::numeric::DistFrontLDLDiagonalSolve
 ( int supernodeSize,
   const DistMatrix<std::complex<double>,VC,STAR>& d, 
         DistMatrix<std::complex<double>,VC,STAR>& X,
   bool checkIfSingular );
-template void clique::numeric::DistSupernodeLDLBackwardSolve
+template void clique::numeric::DistFrontLDLBackwardSolve
 ( Orientation orientation, int supernodeSize,
   const DistMatrix<std::complex<double>,VC,STAR>& U,
         DistMatrix<std::complex<double>,VC,STAR>& X );

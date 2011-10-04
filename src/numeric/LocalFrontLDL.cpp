@@ -25,16 +25,15 @@
 using namespace elemental;
 
 template<typename F> // F represents a real or complex field
-void clique::numeric::LocalSupernodeLDL
+void clique::numeric::LocalFrontLDL
 ( Orientation orientation, Matrix<F>& A, int supernodeSize )
 {
 #ifndef RELEASE
-    clique::PushCallStack("numeric::LocalSupernodeLDL");
+    clique::PushCallStack("numeric::LocalFrontLDL");
     if( A.Height() != A.Width() )
         throw std::logic_error("A must be square");
     if( orientation == NORMAL )
-        throw std::logic_error
-        ("LocalSupernodeLDL must be (conjugate-)transposed.");
+        throw std::logic_error("LocalFrontLDL must be (conjugate-)transposed.");
     if( supernodeSize > A.Height() )
         throw std::logic_error("Supernode is too big");
 #endif
@@ -86,16 +85,16 @@ void clique::numeric::LocalSupernodeLDL
 #endif
 }
 
-template void clique::numeric::LocalSupernodeLDL
+template void clique::numeric::LocalFrontLDL
 ( Orientation orientation, Matrix<float>& A, int supernodeSize );
 
-template void clique::numeric::LocalSupernodeLDL
+template void clique::numeric::LocalFrontLDL
 ( Orientation orientation, Matrix<double>& A, int supernodeSize );
 
-template void clique::numeric::LocalSupernodeLDL
+template void clique::numeric::LocalFrontLDL
 ( Orientation orientation, 
   Matrix<std::complex<float> >& A, int supernodeSize );
 
-template void clique::numeric::LocalSupernodeLDL
+template void clique::numeric::LocalFrontLDL
 ( Orientation orientation, 
   Matrix<std::complex<double> >& A, int supernodeSize );

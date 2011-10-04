@@ -45,18 +45,17 @@ void CountLocalTreeSize
 
 void FillOrigStruct
 ( int nx, int ny, int nz, int cutoff, mpi::Comm comm, int log2CommSize,
-  clique::symbolic::LocalSymmOrig& localOrig, 
-  clique::symbolic::DistSymmOrig& distOrig );
+  clique::symbolic::SymmOrig& S );
 
 void FillDistOrigStruct
 ( int nx, int ny, int nz, int& nxSub, int& nySub, int& xOffset, int& yOffset, 
   int cutoff, mpi::Comm comm, int log2CommSize,
-  clique::symbolic::DistSymmOrig& SOrig );
+  clique::symbolic::SymmOrig& S );
 
 void FillLocalOrigStruct
 ( int nx, int ny, int nz, int nxSub, int nySub, int xOffset, int yOffset, 
   int cutoff, int log2CommSize,
-  clique::symbolic::LocalSymmOrig& SOrig );
+  clique::symbolic::SymmOrig& S );
 
 int
 main( int argc, char* argv[] )
@@ -122,10 +121,9 @@ main( int argc, char* argv[] )
         // Fill the distributed portion of the original structure
         mpi::Barrier( comm );
         const double initStartTime = mpi::Time();
-        clique::symbolic::LocalSymmOrig localSOrig;
-        clique::symbolic::DistSymmOrig distSOrig;
+        clique::symbolic::SymmOrig SOrig;
         FillOrigStruct
-        ( nx, ny, nz, cutoff, comm, log2CommSize, localSOrig, distSOrig );
+        ( nx, ny, nz, cutoff, comm, log2CommSize, SOrig );
         mpi::Barrier( comm );
         const double initStopTime = mpi::Time();
         if( commRank == 0 )
@@ -134,30 +132,29 @@ main( int argc, char* argv[] )
 
         if( writeInfo )
         {
-            const int numLocalSupernodes = localSOrig.supernodes.size();
-            const int numDistSupernodes = distSOrig.supernodes.size();
+            const int numLocalSupernodes = SOrig.local.supernodes.size();
+            const int numDistSupernodes = SOrig.dist.supernodes.size();
             infoFile << "Local original structure sizes:\n";
             for( int s=0; s<numLocalSupernodes; ++s )
                 infoFile << "  " << s << ": supernode=" 
-                         << localSOrig.supernodes[s].size << ", "
+                         << SOrig.local.supernodes[s].size << ", "
                          << " lower=" 
-                         << localSOrig.supernodes[s].lowerStruct.size() << "\n";
+                         << SOrig.local.supernodes[s].lowerStruct.size() 
+                         << "\n";
             infoFile << "\n"
                      << "Dist original structure sizes:\n";
             for( int s=0; s<numDistSupernodes; ++s )
                 infoFile << "  " << s << ": supernode="
-                         << distSOrig.supernodes[s].size << ", "
+                         << SOrig.dist.supernodes[s].size << ", "
                          << " lower="
-                         << distSOrig.supernodes[s].lowerStruct.size() << "\n";
+                         << SOrig.dist.supernodes[s].lowerStruct.size() << "\n";
             infoFile << std::endl;
         }
 
         // Call the symbolic factorization routine
         const double symbFactStartTime = mpi::Time();
-        clique::symbolic::DistSymmFact distS;
-        clique::symbolic::LocalSymmFact localS;
-        clique::symbolic::SymmetricFactorization
-        ( localSOrig, distSOrig, localS, distS, true );
+        clique::symbolic::SymmFact S;
+        clique::symbolic::SymmetricFactorization( SOrig, S, true );
         mpi::Barrier( comm );
         const double symbFactStopTime = mpi::Time();
         if( commRank == 0 )
@@ -167,64 +164,62 @@ main( int argc, char* argv[] )
 
         if( writeInfo )
         {
-            const int numLocalSupernodes = localS.supernodes.size();
-            const int numDistSupernodes = distS.supernodes.size();
+            const int numLocalSupernodes = S.local.supernodes.size();
+            const int numDistSupernodes = S.dist.supernodes.size();
             infoFile << "Local factor structure sizes:\n";
             for( int s=0; s<numLocalSupernodes; ++s )
                 infoFile << "  " << s << ": supernode=" 
-                         << localS.supernodes[s].size << ", "
+                         << S.local.supernodes[s].size << ", "
                          << " lower=" 
-                         << localS.supernodes[s].lowerStruct.size() << "\n";
+                         << S.local.supernodes[s].lowerStruct.size() << "\n";
             infoFile << "\n"
                      << "Dist factor structure sizes:\n";
             for( int s=0; s<numDistSupernodes; ++s )
                 infoFile << "  " << s << ": supernode="
-                         << distS.supernodes[s].size << ", "
+                         << S.dist.supernodes[s].size << ", "
                          << " lower="
-                         << distS.supernodes[s].lowerStruct.size() << "\n";
+                         << S.dist.supernodes[s].lowerStruct.size() << "\n";
             infoFile << std::endl;
 
             infoFile << "\n"
                      << "Local height 1d: " 
-                     << distS.supernodes.back().localOffset1d + 
-                        distS.supernodes.back().localSize1d << std::endl;
+                     << S.dist.supernodes.back().localOffset1d + 
+                        S.dist.supernodes.back().localSize1d << std::endl;
         }
 
         // Directly initialize the frontal matrices with the original 
         // sparse matrix (for now, use an original matrix equal to identity)
         const double fillStartTime = mpi::Time();
-        clique::numeric::LocalSymmFact<F> localL;
-        localL.supernodes.resize( localS.supernodes.size() );
-        for( int s=0; s<localS.supernodes.size(); ++s )
+        clique::numeric::SymmFrontTree<F> L;
+        L.local.fronts.resize( S.local.supernodes.size() );
+        for( int s=0; s<S.local.supernodes.size(); ++s )
         {
-            const clique::symbolic::LocalSymmFactSupernode& symbSN  =
-                localS.supernodes[s];
-            clique::numeric::LocalSymmFactSupernode<F>& sn = 
-                localL.supernodes[s];
+            const clique::symbolic::LocalSymmFactSupernode& sn =
+                S.local.supernodes[s];
+            Matrix<F>& front = L.local.fronts[s].front;
 
-            const int frontSize = symbSN.size+symbSN.lowerStruct.size();
-            sn.front.ResizeTo( frontSize, frontSize );
-            sn.front.SetToZero();
+            const int frontSize = sn.size+sn.lowerStruct.size();
+            front.ResizeTo( frontSize, frontSize );
+            front.SetToZero();
             Matrix<F> frontTL;
-            frontTL.View( sn.front, 0, 0, symbSN.size, symbSN.size );
+            frontTL.View( front, 0, 0, sn.size, sn.size );
             frontTL.SetToIdentity();
             basic::Scal( (F)2, frontTL );
         }
-        clique::numeric::DistSymmFact<F> distL;
-        distL.mode = clique::MANY_RHS;
-        distL.supernodes.resize( log2CommSize+1 );
+        L.dist.mode = clique::MANY_RHS;
+        L.dist.fronts.resize( log2CommSize+1 );
         for( int s=0; s<log2CommSize+1; ++s )
         {
-            const clique::symbolic::DistSymmFactSupernode& symbSN = 
-                distS.supernodes[s];
-            clique::numeric::DistSymmFactSupernode<F>& sn = distL.supernodes[s];
+            const clique::symbolic::DistSymmFactSupernode& sn = 
+                S.dist.supernodes[s];
+            DistMatrix<F,MC,MR>& front2d = L.dist.fronts[s].front2d;
 
-            sn.front2d.SetGrid( *symbSN.grid );
-            const int frontSize = symbSN.size+symbSN.lowerStruct.size();
-            sn.front2d.ResizeTo( frontSize, frontSize );
-            sn.front2d.SetToZero();
+            front2d.SetGrid( *sn.grid );
+            const int frontSize = sn.size+sn.lowerStruct.size();
+            front2d.ResizeTo( frontSize, frontSize );
+            front2d.SetToZero();
             DistMatrix<F,MC,MR> frontTL;
-            frontTL.View( sn.front2d, 0, 0, symbSN.size, symbSN.size );
+            frontTL.View( front2d, 0, 0, sn.size, sn.size );
             frontTL.SetToIdentity();
             basic::Scal( (F)2, frontTL );
         }
@@ -236,7 +231,7 @@ main( int argc, char* argv[] )
 
         // Call the numerical factorization routine
         const double factStartTime = mpi::Time();
-        clique::numeric::LDL( TRANSPOSE, localS, distS, localL, distL );
+        clique::numeric::LDL( TRANSPOSE, S, L );
         mpi::Barrier( comm );
         const double factStopTime = mpi::Time();
         if( commRank == 0 )
@@ -245,7 +240,7 @@ main( int argc, char* argv[] )
 
         // Redistribute to 1d for fast solves with few right-hand sides
         const double redistStartTime = mpi::Time();
-        clique::numeric::SetSolveMode( distL, clique::FEW_RHS );
+        clique::numeric::SetSolveMode( L, clique::FEW_RHS );
         mpi::Barrier( comm );
         const double redistStopTime = mpi::Time();
         if( commRank == 0 )
@@ -254,16 +249,15 @@ main( int argc, char* argv[] )
 
         // Set up the properly ordered RHS and call a solve routine
         const int localHeight1d = 
-            distS.supernodes.back().localOffset1d + 
-            distS.supernodes.back().localSize1d;
+            S.dist.supernodes.back().localOffset1d + 
+            S.dist.supernodes.back().localSize1d;
         Matrix<F> localX( localHeight1d, 5 );
         localX.SetToRandom();
         Matrix<F> localXCopy = localX;
 
         mpi::Barrier( comm );
         const double solveStartTime = mpi::Time();
-        clique::numeric::LDLSolve
-        ( TRANSPOSE, localS, distS, localL, distL, localX, true );
+        clique::numeric::LDLSolve( TRANSPOSE, S, L, localX, true );
         mpi::Barrier( comm );
         const double solveStopTime = mpi::Time();
         if( commRank == 0 )
@@ -367,8 +361,7 @@ int ReorderedIndex
 
 void FillOrigStruct
 ( int nx, int ny, int nz, int cutoff, mpi::Comm comm, int log2CommSize,
-  clique::symbolic::LocalSymmOrig& localSOrig, 
-  clique::symbolic::DistSymmOrig& distSOrig )
+  clique::symbolic::SymmOrig& SOrig )
 {
 #ifndef RELEASE
     clique::PushCallStack("FillOrigStruct");
@@ -376,10 +369,10 @@ void FillOrigStruct
     int nxSub=nx, nySub=ny, xOffset=0, yOffset=0;
     FillDistOrigStruct
     ( nx, ny, nz, nxSub, nySub, xOffset, yOffset, cutoff, 
-      comm, log2CommSize, distSOrig );
+      comm, log2CommSize, SOrig );
     FillLocalOrigStruct
     ( nx, ny, nz, nxSub, nySub, xOffset, yOffset, cutoff, 
-      log2CommSize, localSOrig );
+      log2CommSize, SOrig );
 #ifndef RELEASE
     clique::PopCallStack();
 #endif
@@ -388,18 +381,18 @@ void FillOrigStruct
 void FillDistOrigStruct
 ( int nx, int ny, int nz, int& nxSub, int& nySub, int& xOffset, int& yOffset, 
   int cutoff, mpi::Comm comm, int log2CommSize, 
-  clique::symbolic::DistSymmOrig& SOrig )
+  clique::symbolic::SymmOrig& S )
 {
 #ifndef RELEASE
     clique::PushCallStack("FillDistOrigStruct");
 #endif
     const int commRank = mpi::CommRank( comm );
-    SOrig.comm = comm;
-    SOrig.supernodes.resize( log2CommSize+1 );
+    S.dist.comm = comm;
+    S.dist.supernodes.resize( log2CommSize+1 );
     // Fill the distributed nodes
     for( int s=log2CommSize; s>0; --s )
     {
-        clique::symbolic::DistSymmOrigSupernode& sn = SOrig.supernodes[s];
+        clique::symbolic::DistSymmOrigSupernode& sn = S.dist.supernodes[s];
         const int powerOfTwo = 1u<<(s-1);
         const bool onLeft = (commRank&powerOfTwo) == 0;
         if( nxSub >= nySub )
@@ -507,7 +500,7 @@ void FillDistOrigStruct
     }
 
     // Fill the bottom node, which is only owned by a single process
-    clique::symbolic::DistSymmOrigSupernode& sn = SOrig.supernodes[0];
+    clique::symbolic::DistSymmOrigSupernode& sn = S.dist.supernodes[0];
     if( nxSub*nySub*nz <= cutoff )
     {
         sn.size = nxSub*nySub*nz;
@@ -660,7 +653,7 @@ struct Box
 
 void FillLocalOrigStruct
 ( int nx, int ny, int nz, int nxSub, int nySub, int xOffset, int yOffset, 
-  int cutoff, int log2CommSize, clique::symbolic::LocalSymmOrig& S )
+  int cutoff, int log2CommSize, clique::symbolic::SymmOrig& S )
 {
 #ifndef RELEASE
     clique::PushCallStack("FillLocalOrigStruct");
@@ -668,7 +661,7 @@ void FillLocalOrigStruct
     // First count the depth, resize, and then run the actual fill
     int numSupernodes = 0;
     CountLocalTreeSize( nxSub, nySub, nz, cutoff, numSupernodes );
-    S.supernodes.resize( numSupernodes );
+    S.local.supernodes.resize( numSupernodes );
     
     // Initialize with the root's box
     std::stack<Box> boxStack;
@@ -689,14 +682,14 @@ void FillLocalOrigStruct
         Box box = boxStack.top();
         boxStack.pop();
 
-        clique::symbolic::LocalSymmOrigSupernode& sn = S.supernodes[s];
+        clique::symbolic::LocalSymmOrigSupernode& sn = S.local.supernodes[s];
         sn.parent = box.parentIndex;
         if( sn.parent != -1 )
         {
             if( box.leftChild )
-                S.supernodes[sn.parent].children[0] = s;
+                S.local.supernodes[sn.parent].children[0] = s;
             else
-                S.supernodes[sn.parent].children[1] = s;
+                S.local.supernodes[sn.parent].children[1] = s;
         }
 
         if( box.nx*box.ny*nz <= cutoff )

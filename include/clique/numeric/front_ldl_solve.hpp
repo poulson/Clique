@@ -18,23 +18,50 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_SUPERNODE_LDL_HPP
-#define CLIQUE_NUMERIC_SUPERNODE_LDL_HPP 1
+#ifndef CLIQUE_NUMERIC_FRONT_LDL_SOLVE_HPP
+#define CLIQUE_NUMERIC_FRONT_LDL_SOLVE_HPP 1
 
 namespace clique {
 namespace numeric {
 using namespace elemental;
 
 template<typename F>
-void LocalSupernodeLDL
-( Orientation orientation, Matrix<F>& A, int supernodeSize );
+void LocalFrontLDLForwardSolve
+( int supernodeSize,
+  const Matrix<F>& L, Matrix<F>& X );
 
 template<typename F>
-void DistSupernodeLDL
-( Orientation orientation, DistMatrix<F,MC,MR>& A, int supernodeSize );
+void LocalFrontLDLDiagonalSolve
+( int supernodeSize,
+  const Matrix<F>& d, Matrix<F>& X,
+  bool checkIfSingular=false );
+
+template<typename F>
+void LocalFrontLDLBackwardSolve
+( Orientation orientation, int supernodeSize,
+  const Matrix<F>& U, Matrix<F>& X );
+
+template<typename F>
+void DistFrontLDLForwardSolve
+( int supernodeSize,
+  const DistMatrix<F,VC,STAR>& L, 
+        DistMatrix<F,VC,STAR>& X );
+
+template<typename F>
+void DistFrontLDLDiagonalSolve
+( int supernodeSize,
+  const DistMatrix<F,VC,STAR>& d,
+        DistMatrix<F,VC,STAR>& X,
+  bool checkIfSingular=false );
+
+template<typename F>
+void DistFrontLDLBackwardSolve
+( Orientation orientation, int supernodeSize,
+  const DistMatrix<F,VC,STAR>& U, 
+        DistMatrix<F,VC,STAR>& X );
 
 } // namespace numeric
 } // namespace clique
 
-#endif /* CLIQUE_NUMERIC_SUPERNODE_LDL_HPP */
+#endif /* CLIQUE_NUMERIC_FRONT_LDL_SOLVE_HPP */
 

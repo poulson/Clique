@@ -23,13 +23,13 @@ using namespace elemental;
 // This routine could be modified later so that it uses much less memory
 // by replacing the '=' redistributions with piece-by-piece redistributions.
 template<typename F>
-void clique::numeric::SetSolveMode( DistSymmFact<F>& distL, SolveMode mode )
+void clique::numeric::SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
 {
 #ifndef RELEASE
     PushCallStack("numeric::SetSolveMode");
 #endif
     // Check if this call can be a no-op
-    if( mode == distL.mode ) 
+    if( mode == L.dist.mode ) 
     {
 #ifndef RELEASE
         PopCallStack();
@@ -37,8 +37,8 @@ void clique::numeric::SetSolveMode( DistSymmFact<F>& distL, SolveMode mode )
         return;
     }
 
-    distL.mode = mode;
-    const int numSupernodes = distL.supernodes.size();    
+    L.dist.mode = mode;
+    const int numSupernodes = L.dist.fronts.size();    
     if( numSupernodes == 0 )
     {
 #ifndef RELEASE
@@ -47,35 +47,35 @@ void clique::numeric::SetSolveMode( DistSymmFact<F>& distL, SolveMode mode )
         return;
     }
 
-    DistSymmFactSupernode<F>& leafSN = distL.supernodes[0];
+    DistSymmFront<F>& leafFront = L.dist.fronts[0];
     if( mode == FEW_RHS )
     {
-        leafSN.front1d.LockedView
-        ( leafSN.front2d.Height(), leafSN.front2d.Width(), 0,
-          leafSN.front2d.LockedLocalBuffer(), leafSN.front2d.LocalLDim(),
-          leafSN.front2d.Grid() );
+        leafFront.front1d.LockedView
+        ( leafFront.front2d.Height(), leafFront.front2d.Width(), 0,
+          leafFront.front2d.LockedLocalBuffer(), leafFront.front2d.LocalLDim(),
+          leafFront.front2d.Grid() );
         for( int s=1; s<numSupernodes; ++s )
         {
-            DistSymmFactSupernode<F>& sn = distL.supernodes[s];
-            sn.front1d.Empty();
-            sn.front1d.SetGrid( sn.front2d.Grid() );
-            sn.front1d = sn.front2d;
-            sn.front2d.Empty();
+            DistSymmFront<F>& front = L.dist.fronts[s];
+            front.front1d.Empty();
+            front.front1d.SetGrid( front.front2d.Grid() );
+            front.front1d = front.front2d;
+            front.front2d.Empty();
         }
     }
     else
     {
-        leafSN.front2d.LockedView
-        ( leafSN.front1d.Height(), leafSN.front1d.Width(), 0, 0,
-          leafSN.front1d.LockedLocalBuffer(), leafSN.front1d.LocalLDim(),
-          leafSN.front1d.Grid() );
+        leafFront.front2d.LockedView
+        ( leafFront.front1d.Height(), leafFront.front1d.Width(), 0, 0,
+          leafFront.front1d.LockedLocalBuffer(), leafFront.front1d.LocalLDim(),
+          leafFront.front1d.Grid() );
         for( int s=1; s<numSupernodes; ++s )
         {
-            DistSymmFactSupernode<F>& sn = distL.supernodes[s];
-            sn.front2d.Empty();
-            sn.front2d.SetGrid( sn.front1d.Grid() );
-            sn.front2d = sn.front1d;
-            sn.front1d.Empty();
+            DistSymmFront<F>& front = L.dist.fronts[s];
+            front.front2d.Empty();
+            front.front2d.SetGrid( front.front1d.Grid() );
+            front.front2d = front.front1d;
+            front.front1d.Empty();
         }
     }
 #ifndef RELEASE
@@ -84,13 +84,13 @@ void clique::numeric::SetSolveMode( DistSymmFact<F>& distL, SolveMode mode )
 }
 
 template void clique::numeric::SetSolveMode
-( DistSymmFact<float>& distL, SolveMode mode );
+( SymmFrontTree<float>& L, SolveMode mode );
 
 template void clique::numeric::SetSolveMode
-( DistSymmFact<double>& distL, SolveMode mode );
+( SymmFrontTree<double>& L, SolveMode mode );
 
 template void clique::numeric::SetSolveMode
-( DistSymmFact<std::complex<float> >& distL, SolveMode mode );
+( SymmFrontTree<std::complex<float> >& L, SolveMode mode );
 
 template void clique::numeric::SetSolveMode
-( DistSymmFact<std::complex<double> >& distL, SolveMode mode );
+( SymmFrontTree<std::complex<double> >& L, SolveMode mode );

@@ -22,44 +22,43 @@ using namespace elemental;
 
 template<typename F> // F represents a real or complex field
 void clique::numeric::DistLDL
-( Orientation orientation,
-        symbolic::DistSymmFact& S, // can't be const due to map...
-  const numeric::LocalSymmFact<F>& localL,
-        numeric::DistSymmFact<F>& distL )
+( Orientation orientation, symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L )
 {
+    using namespace clique::symbolic;
 #ifndef RELEASE
     PushCallStack("numeric::DistLDL");
     if( orientation == NORMAL )
         throw std::logic_error("LDL must be (conjugate-)transposed");
 #endif
-    const int numSupernodes = S.supernodes.size();
-    distL.mode = MANY_RHS;
+    const int numSupernodes = S.dist.supernodes.size();
+    L.dist.mode = MANY_RHS;
     if( numSupernodes == 0 )
         return;
 
     // The bottom front is already computed, so just view it
-    const LocalSymmFactSupernode<F>& topLocalSN = localL.supernodes.back();
-    DistSymmFactSupernode<F>& bottomDistSN = distL.supernodes[0];
-    const Grid& bottomGrid = bottomDistSN.front2d.Grid();
-    bottomDistSN.front2d.Empty(); // eventually this can be removed...
-    bottomDistSN.front2d.LockedView
-    ( topLocalSN.front.Height(), topLocalSN.front.Width(), 0, 0, 
-      topLocalSN.front.LockedBuffer(), topLocalSN.front.LDim(), bottomGrid );
+    const LocalSymmFront<F>& topLocalFront = L.local.fronts.back();
+    DistSymmFront<F>& bottomDistFront = L.dist.fronts[0];
+    const Grid& bottomGrid = bottomDistFront.front2d.Grid();
+    bottomDistFront.front2d.Empty(); // eventually this can be removed...
+    bottomDistFront.front2d.LockedView
+    ( topLocalFront.front.Height(), topLocalFront.front.Width(), 0, 0, 
+      topLocalFront.front.LockedBuffer(), topLocalFront.front.LDim(), 
+      bottomGrid );
 
     // Perform the distributed portion of the factorization
     std::vector<int>::const_iterator it;
     for( unsigned s=1; s<numSupernodes; ++s )
     {
-        const symbolic::DistSymmFactSupernode& childSymbSN = S.supernodes[s-1];
-        const symbolic::DistSymmFactSupernode& symbSN = S.supernodes[s];
-        const DistSymmFactSupernode<F>& childNumSN = distL.supernodes[s-1];
-        DistSymmFactSupernode<F>& numSN = distL.supernodes[s];
+        const DistSymmFactSupernode& childSN = S.dist.supernodes[s-1];
+        const DistSymmFactSupernode& sn = S.dist.supernodes[s];
+        const DistSymmFront<F>& childFront = L.dist.fronts[s-1];
+        DistSymmFront<F>& front = L.dist.fronts[s];
 
         const bool computeFactRecvIndices = 
-            ( symbSN.childFactRecvIndices.size() == 0 );
+            ( sn.childFactRecvIndices.size() == 0 );
 
         // Grab this front's grid information
-        const Grid& grid = numSN.front2d.Grid();
+        const Grid& grid = front.front2d.Grid();
         mpi::Comm comm = grid.VCComm();
         const unsigned commRank = mpi::CommRank( comm );
         const unsigned commSize = mpi::CommSize( comm );
@@ -67,7 +66,7 @@ void clique::numeric::DistLDL
         const unsigned gridWidth = grid.Width();
 
         // Grab the child's grid information
-        const Grid& childGrid = childNumSN.front2d.Grid();
+        const Grid& childGrid = childFront.front2d.Grid();
         mpi::Comm childComm = childGrid.VCComm();
         const unsigned childCommRank = mpi::CommRank( childComm );
         const unsigned childCommSize = mpi::CommSize( childComm );
@@ -77,23 +76,23 @@ void clique::numeric::DistLDL
         const unsigned childGridCol = childGrid.MRRank();
 
 #ifndef RELEASE
-        if( numSN.front2d.Height() != symbSN.size+symbSN.lowerStruct.size() ||
-            numSN.front2d.Width()  != symbSN.size+symbSN.lowerStruct.size() )
+        if( front.front2d.Height() != sn.size+sn.lowerStruct.size() ||
+            front.front2d.Width()  != sn.size+sn.lowerStruct.size() )
             throw std::logic_error("Front was not the proper size");
 #endif
 
         // Pack our child's update
         DistMatrix<F,MC,MR> childUpdate;
-        const int updateSize = childNumSN.front2d.Height()-childSymbSN.size;
+        const int updateSize = childFront.front2d.Height()-childSN.size;
         childUpdate.LockedView
-        ( childNumSN.front2d, 
-          childSymbSN.size, childSymbSN.size, updateSize, updateSize );
+        ( childFront.front2d, 
+          childSN.size, childSN.size, updateSize, updateSize );
         const bool isLeftChild = ( commRank < commSize/2 );
         std::vector<int> sendCounts(commSize), sendDispls(commSize);
         int sendBufferSize = 0;
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int actualSend = symbSN.numChildFactSendIndices[proc];
+            const int actualSend = sn.numChildFactSendIndices[proc];
             const int thisSend = std::max(actualSend,1);
             sendCounts[proc] = thisSend;
             sendDispls[proc] = sendBufferSize;
@@ -102,8 +101,8 @@ void clique::numeric::DistLDL
         std::vector<F> sendBuffer( sendBufferSize );
 
         const std::vector<int>& myChildRelIndices = 
-            ( isLeftChild ? symbSN.leftChildRelIndices
-                          : symbSN.rightChildRelIndices );
+            ( isLeftChild ? sn.leftChildRelIndices
+                          : sn.rightChildRelIndices );
         const int updateRowAlignment = childUpdate.RowAlignment();
         const int updateColShift = childUpdate.ColShift();
         const int updateRowShift = childUpdate.RowShift();
@@ -137,7 +136,7 @@ void clique::numeric::DistLDL
         for( int proc=0; proc<commSize; ++proc )
         {
             if( packOffsets[proc]-sendDispls[proc] != 
-                symbSN.numChildFactSendIndices[proc] )
+                sn.numChildFactSendIndices[proc] )
                 throw std::logic_error("Error in packing stage");
         }
 #endif
@@ -145,12 +144,12 @@ void clique::numeric::DistLDL
 
         // Set up the recv buffer for the AllToAll
         if( computeFactRecvIndices )
-            symbolic::ComputeFactRecvIndices( symbSN, childSymbSN );
+            ComputeFactRecvIndices( sn, childSN );
         std::vector<int> recvCounts(commSize), recvDispls(commSize);
         int recvBufferSize = 0;
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int actualRecv = symbSN.childFactRecvIndices[proc].size()/2;
+            const int actualRecv = sn.childFactRecvIndices[proc].size()/2;
             const int thisRecv = std::max(actualRecv,1);
             recvCounts[proc] = thisRecv;
             recvDispls[proc] = recvBufferSize;
@@ -190,15 +189,14 @@ void clique::numeric::DistLDL
         for( int proc=0; proc<commSize; ++proc )
         {
             const F* recvValues = &recvBuffer[recvDispls[proc]];
-            const std::deque<int>& recvIndices = 
-                symbSN.childFactRecvIndices[proc];
+            const std::deque<int>& recvIndices = sn.childFactRecvIndices[proc];
             const int numRecvIndexPairs = recvIndices.size()/2;
             for( int k=0; k<numRecvIndexPairs; ++k )
             {
                 const int iFrontLocal = recvIndices[2*k+0];
                 const int jFrontLocal = recvIndices[2*k+1];
                 const F value = recvValues[k];
-                numSN.front2d.UpdateLocalEntry
+                front.front2d.UpdateLocalEntry
                 ( iFrontLocal, jFrontLocal, value );
             }
         }
@@ -206,10 +204,10 @@ void clique::numeric::DistLDL
         recvCounts.clear();
         recvDispls.clear();
         if( computeFactRecvIndices )
-            symbSN.childFactRecvIndices.clear();
+            sn.childFactRecvIndices.clear();
 
         // Now that the frontal matrix is set up, perform the factorization
-        DistSupernodeLDL( orientation, numSN.front2d, symbSN.size );
+        DistFrontLDL( orientation, front.front2d, sn.size );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -218,24 +216,16 @@ void clique::numeric::DistLDL
 
 template void clique::numeric::DistLDL
 ( Orientation orientation,
-        symbolic::DistSymmFact& S,
-  const numeric::LocalSymmFact<float>& localL,
-        numeric::DistSymmFact<float>& distL );
+  symbolic::SymmFact& S, numeric::SymmFrontTree<float>& L );
 
 template void clique::numeric::DistLDL
 ( Orientation orientation,
-        symbolic::DistSymmFact& S,
-  const numeric::LocalSymmFact<double>& localL,
-        numeric::DistSymmFact<double>& distL );
+  symbolic::SymmFact& S, numeric::SymmFrontTree<double>& L );
 
 template void clique::numeric::DistLDL
 ( Orientation orientation,
-        symbolic::DistSymmFact& S,
-  const numeric::LocalSymmFact<std::complex<float> >& localL,
-        numeric::DistSymmFact<std::complex<float> >& distL );
+  symbolic::SymmFact& S, numeric::SymmFrontTree<std::complex<float> >& L );
 
 template void clique::numeric::DistLDL
 ( Orientation orientation,
-        symbolic::DistSymmFact& S,
-  const numeric::LocalSymmFact<std::complex<double> >& localL,
-        numeric::DistSymmFact<std::complex<double> >& distL );
+  symbolic::SymmFact& S, numeric::SymmFrontTree<std::complex<double> >& L );

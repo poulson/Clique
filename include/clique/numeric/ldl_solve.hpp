@@ -27,52 +27,49 @@ namespace numeric {
 template<typename F>
 void LDLSolve
 ( Orientation orientation,
-  const symbolic::LocalSymmFact& localS,
-  const symbolic::DistSymmFact& distS,
-  const numeric::LocalSymmFact<F>& localL,
-  const numeric::DistSymmFact<F>& distL,
+  const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX, 
         bool checkIfSingular=true );
 
 template<typename F>
 void LocalLDLForwardSolve
-( const symbolic::LocalSymmFact& S, 
-  const numeric::LocalSymmFact<F>& L, Matrix<F>& X );
+( const symbolic::SymmFact& S, 
+  const numeric::SymmFrontTree<F>& L, 
+        Matrix<F>& localX );
 
 template<typename F>
 void DistLDLForwardSolve
-( const symbolic::DistSymmFact& S,
-  const numeric::LocalSymmFact<F>& localL,
-  const numeric::DistSymmFact<F>& distL,
+( const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX );
 
 template<typename F>
 void LocalLDLDiagonalSolve
-( const symbolic::LocalSymmFact& S,
-  const numeric::LocalSymmFact<F>& L, 
-        Matrix<F>& X,
+( const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<F>& L, 
+        Matrix<F>& localX,
         bool checkIfSingular=false );
 
 template<typename F>
 void DistLDLDiagonalSolve
-( const symbolic::DistSymmFact& S,
-  const numeric::DistSymmFact<F>& L,
+( const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX,
         bool checkIfSingular=true );
 
 template<typename F>
 void LocalLDLBackwardSolve
 ( Orientation orientation,
-  const symbolic::LocalSymmFact& S, 
-  const numeric::LocalSymmFact<F>& localL, 
-  const numeric::DistSymmFact<F>& distL,
-        Matrix<F>& X );
+  const symbolic::SymmFact& S, 
+  const numeric::SymmFrontTree<F>& L, 
+        Matrix<F>& localX );
 
 template<typename F>
 void DistLDLBackwardSolve
 ( Orientation orientation,
-  const symbolic::DistSymmFact& S,
-  const numeric::DistSymmFact<F>& L,
+  const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX );
 
 //----------------------------------------------------------------------------//
@@ -82,23 +79,22 @@ void DistLDLBackwardSolve
 template<typename F>
 void LDLSolve
 ( Orientation orientation,
-  const symbolic::LocalSymmFact& localS,
-  const symbolic::DistSymmFact& distS,
-  const numeric::LocalSymmFact<F>& localL,
-  const numeric::DistSymmFact<F>& distL,
+  const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX, 
         bool checkIfSingular )
 {
 #ifndef RELEASE
     PushCallStack("numeric::LDLSolve");
+    if( orientation == NORMAL )
+        throw std::logic_error("Invalid orientation for LDL");
 #endif
-    clique::numeric::LocalLDLForwardSolve( localS, localL, localX );
-    clique::numeric::DistLDLForwardSolve( distS, localL, distL, localX );
-    clique::numeric::LocalLDLDiagonalSolve( localS, localL, localX, true );
-    clique::numeric::DistLDLDiagonalSolve( distS, distL, localX, true );
-    clique::numeric::DistLDLBackwardSolve( ADJOINT, distS, distL, localX );
-    clique::numeric::LocalLDLBackwardSolve
-    ( ADJOINT, localS, localL, distL, localX );
+    clique::numeric::LocalLDLForwardSolve( S, L, localX );
+    clique::numeric::DistLDLForwardSolve( S, L, localX );
+    clique::numeric::LocalLDLDiagonalSolve( S, L, localX, true );
+    clique::numeric::DistLDLDiagonalSolve( S, L, localX, true );
+    clique::numeric::DistLDLBackwardSolve( orientation, S, L, localX );
+    clique::numeric::LocalLDLBackwardSolve( orientation, S, L, localX );
 #ifndef RELEASE
     PopCallStack();
 #endif

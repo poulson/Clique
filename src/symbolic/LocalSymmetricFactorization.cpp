@@ -21,13 +21,13 @@
 #include "clique.hpp"
 
 void clique::symbolic::LocalSymmetricFactorization
-( const LocalSymmOrig& orig, LocalSymmFact& fact )
+( const SymmOrig& orig, SymmFact& fact )
 {
 #ifndef RELEASE
     PushCallStack("symbolic::LocalSymmetricFactorization");
 #endif
-    const int numSupernodes = orig.supernodes.size();
-    fact.supernodes.resize( numSupernodes );
+    const int numSupernodes = orig.local.supernodes.size();
+    fact.local.supernodes.resize( numSupernodes );
 
     // Perform the symbolic factorization
     int myOffset = 0;
@@ -36,8 +36,8 @@ void clique::symbolic::LocalSymmetricFactorization
                      supernodeIndices;
     for( int s=0; s<numSupernodes; ++s )
     {
-        const LocalSymmOrigSupernode& origSN = orig.supernodes[s];
-        LocalSymmFactSupernode& factSN = fact.supernodes[s];
+        const LocalSymmOrigSupernode& origSN = orig.local.supernodes[s];
+        LocalSymmFactSupernode& factSN = fact.local.supernodes[s];
         factSN.size = origSN.size;
         factSN.offset = origSN.offset;
         factSN.myOffset = myOffset;
@@ -51,10 +51,10 @@ void clique::symbolic::LocalSymmetricFactorization
 #endif
         if( numChildren == 2 )
         {
-            const int leftIndex = origSN.children[0];
-            const int rightIndex = origSN.children[1];
-            LocalSymmFactSupernode& leftChild = fact.supernodes[leftIndex];
-            LocalSymmFactSupernode& rightChild = fact.supernodes[rightIndex];
+            const int left = origSN.children[0];
+            const int right = origSN.children[1];
+            LocalSymmFactSupernode& leftChild = fact.local.supernodes[left];
+            LocalSymmFactSupernode& rightChild = fact.local.supernodes[right];
             leftChild.isLeftChild = true;
             rightChild.isLeftChild = false;
 

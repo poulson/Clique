@@ -22,44 +22,45 @@ using namespace elemental;
 
 template<typename F> // F represents a real or complex field
 void clique::numeric::LocalLDLForwardSolve
-( const symbolic::LocalSymmFact& S,
-  const numeric::LocalSymmFact<F>& L,
+( const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<F>& L,
         Matrix<F>& X )
 {
+    using namespace clique::symbolic;
 #ifndef RELEASE
     PushCallStack("numeric::LocalLDLForwardSolve");
 #endif
-    const int numSupernodes = S.supernodes.size();
+    const int numSupernodes = S.local.supernodes.size();
     const int width = X.Width();
     for( int s=0; s<numSupernodes; ++s )
     {
-        const symbolic::LocalSymmFactSupernode& symbSN = S.supernodes[s];
-        const numeric::LocalSymmFactSupernode<F>& numSN = L.supernodes[s];
+        const LocalSymmFactSupernode& sn = S.local.supernodes[s];
+        const Matrix<F>& front = L.local.fronts[s].front;
+        Matrix<F>& W = L.local.fronts[s].work;
 
         // Set up a workspace
-        Matrix<F>& W = numSN.work;
-        W.ResizeTo( numSN.front.Height(), width );
+        W.ResizeTo( front.Height(), width );
         Matrix<F> WT, WB;
         PartitionDown
         ( W, WT,
-             WB, symbSN.size );
+             WB, sn.size );
 
         // Pull in the relevant information from the RHS
         Matrix<F> XT;
-        XT.View( X, symbSN.myOffset, 0, symbSN.size, width );
+        XT.View( X, sn.myOffset, 0, sn.size, width );
         WT = XT;
         WB.SetToZero();
 
         // Update using the children (if they exist)
-        const int numChildren = symbSN.children.size();
+        const int numChildren = sn.children.size();
         if( numChildren == 2 )
         {
-            const int leftIndex = symbSN.children[0];
-            const int rightIndex = symbSN.children[1];
-            Matrix<F>& leftWork = L.supernodes[leftIndex].work;
-            Matrix<F>& rightWork = L.supernodes[rightIndex].work;
-            const int leftSupernodeSize = S.supernodes[leftIndex].size;
-            const int rightSupernodeSize = S.supernodes[rightIndex].size;
+            const int leftIndex = sn.children[0];
+            const int rightIndex = sn.children[1];
+            Matrix<F>& leftWork = L.local.fronts[leftIndex].work;
+            Matrix<F>& rightWork = L.local.fronts[rightIndex].work;
+            const int leftSupernodeSize = S.local.supernodes[leftIndex].size;
+            const int rightSupernodeSize = S.local.supernodes[rightIndex].size;
             const int leftUpdateSize = leftWork.Height()-leftSupernodeSize;
             const int rightUpdateSize = rightWork.Height()-rightSupernodeSize;
 
@@ -69,7 +70,7 @@ void clique::numeric::LocalLDLForwardSolve
             ( leftWork, leftSupernodeSize, 0, leftUpdateSize, width );
             for( int iChild=0; iChild<leftUpdateSize; ++iChild )
             {
-                const int iFront = symbSN.leftChildRelIndices[iChild]; 
+                const int iFront = sn.leftChildRelIndices[iChild]; 
                 for( int j=0; j<width; ++j )
                     W.Update( iFront, j, leftUpdate.Get(iChild,j) );
             }
@@ -81,7 +82,7 @@ void clique::numeric::LocalLDLForwardSolve
             ( rightWork, rightSupernodeSize, 0, rightUpdateSize, width );
             for( int iChild=0; iChild<rightUpdateSize; ++iChild )
             {
-                const int iFront = symbSN.rightChildRelIndices[iChild];
+                const int iFront = sn.rightChildRelIndices[iChild];
                 for( int j=0; j<width; ++j )
                     W.Update( iFront, j, rightUpdate.Get(iChild,j) );
             }
@@ -89,8 +90,8 @@ void clique::numeric::LocalLDLForwardSolve
         }
         // else numChildren == 0
 
-        // Call the custom supernode forward solve
-        LocalSupernodeLDLForwardSolve( symbSN.size, numSN.front, W );
+        // Solve against this front
+        LocalFrontLDLForwardSolve( sn.size, front, W );
 
         // Store the supernode portion of the result
         XT = WT;
@@ -98,7 +99,7 @@ void clique::numeric::LocalLDLForwardSolve
 
     // Ensure that all of the temporary buffers are freed (except the root)
     for( int s=0; s<numSupernodes-1; ++s )
-        L.supernodes[s].work.Empty();
+        L.local.fronts[s].work.Empty();
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -106,27 +107,28 @@ void clique::numeric::LocalLDLForwardSolve
 
 template<typename F> // F represents a real or complex field
 void clique::numeric::LocalLDLDiagonalSolve
-( const symbolic::LocalSymmFact& S,
-  const numeric::LocalSymmFact<F>& L,
-  Matrix<F>& X, bool checkIfSingular )
+( const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<F>& L,
+        Matrix<F>& X, bool checkIfSingular )
 {
+    using namespace clique::symbolic;
 #ifndef RELEASE
     PushCallStack("numeric::LocalLDLDiagonalSolve");
 #endif
-    const int numSupernodes = S.supernodes.size();
+    const int numSupernodes = S.local.supernodes.size();
     const int width = X.Width();
     Matrix<F> XSub;
     for( int s=0; s<numSupernodes; ++s )
     {
-        const symbolic::LocalSymmFactSupernode& symbSN = S.supernodes[s];
-        const LocalSymmFactSupernode<F>& numSN = L.supernodes[s];
-        XSub.View( X, symbSN.myOffset, 0, symbSN.size, width );
+        const LocalSymmFactSupernode& sn = S.local.supernodes[s];
+        const Matrix<F>& front = L.local.fronts[s].front;
+        XSub.View( X, sn.myOffset, 0, sn.size, width );
 
         Matrix<F> frontTL;
-        frontTL.LockedView( numSN.front, 0, 0, symbSN.size, symbSN.size );
+        frontTL.LockedView( front, 0, 0, sn.size, sn.size );
         Matrix<F> d;
         frontTL.GetDiagonal( d );
-        LocalSupernodeLDLDiagonalSolve( symbSN.size, d, XSub, checkIfSingular );
+        LocalFrontLDLDiagonalSolve( sn.size, d, XSub, checkIfSingular );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -136,15 +138,15 @@ void clique::numeric::LocalLDLDiagonalSolve
 template<typename F> // F represents a real or complex field
 void clique::numeric::LocalLDLBackwardSolve
 ( Orientation orientation,
-  const symbolic::LocalSymmFact& S, 
-  const numeric::LocalSymmFact<F>& localL,
-  const numeric::DistSymmFact<F>& distL,
+  const symbolic::SymmFact& S, 
+  const numeric::SymmFrontTree<F>& L,
         Matrix<F>& X )
 {
+    using namespace clique::symbolic;
 #ifndef RELEASE
     PushCallStack("numeric::LocalLDLBackwardSolve");
 #endif
-    const int numSupernodes = S.supernodes.size();
+    const int numSupernodes = S.local.supernodes.size();
     const int width = X.Width();
     if( numSupernodes == 0 || width == 0 )
     {
@@ -155,39 +157,37 @@ void clique::numeric::LocalLDLBackwardSolve
     }
 
     // Pull in the top local information from the bottom distributed information
-    const LocalSymmFactSupernode<F>& topLocalSN = localL.supernodes.back();
-    const DistSymmFactSupernode<F>& bottomDistSN = distL.supernodes[0];
-    topLocalSN.work.LockedView( bottomDistSN.work1d.LocalMatrix() );
+    L.local.fronts.back().work.LockedView
+    ( L.dist.fronts[0].work1d.LocalMatrix() );
 
     for( int s=numSupernodes-2; s>=0; --s )
     {
-        const symbolic::LocalSymmFactSupernode& symbSN = S.supernodes[s];
-        const numeric::LocalSymmFactSupernode<F>& numSN = localL.supernodes[s];
+        const LocalSymmFactSupernode& sn = S.local.supernodes[s];
+        const Matrix<F>& front = L.local.fronts[s].front;
+        Matrix<F>& W = L.local.fronts[s].work;
 
         // Set up a workspace
-        Matrix<F>& W = numSN.work;
-        W.ResizeTo( numSN.front.Height(), width );
+        W.ResizeTo( front.Height(), width );
         Matrix<F> WT, WB;
         PartitionDown
         ( W, WT,
-             WB, symbSN.size );
+             WB, sn.size );
 
         // Pull in the relevant information from the RHS
         Matrix<F> XT;
-        XT.View( X, symbSN.myOffset, 0, symbSN.size, width );
+        XT.View( X, sn.myOffset, 0, sn.size, width );
         WT = XT;
 
         // Update using the parent
-        const int parentIndex = symbSN.parent;
-        Matrix<F>& parentWork = localL.supernodes[parentIndex].work;
-        const symbolic::LocalSymmFactSupernode& parentSymbSN = 
-            S.supernodes[parentIndex];
+        const int parent = sn.parent;
+        Matrix<F>& parentWork = L.local.fronts[parent].work;
+        const LocalSymmFactSupernode& parentSN = S.local.supernodes[parent];
         const int currentUpdateSize = WB.Height();
 
         const std::vector<int>& parentRelIndices = 
-          ( symbSN.isLeftChild ? 
-            parentSymbSN.leftChildRelIndices :
-            parentSymbSN.rightChildRelIndices );
+          ( sn.isLeftChild ? 
+            parentSN.leftChildRelIndices :
+            parentSN.rightChildRelIndices );
         for( int iCurrent=0; iCurrent<currentUpdateSize; ++iCurrent )
         {
             const int iParent = parentRelIndices[iCurrent];
@@ -197,12 +197,11 @@ void clique::numeric::LocalLDLBackwardSolve
 
         // The left child is numbered lower than the right child, so 
         // we can safely free the parent's work if we are the left child
-        if( symbSN.isLeftChild )
+        if( sn.isLeftChild )
             parentWork.Empty();
 
-        // Call the custom supernode backward solve
-        LocalSupernodeLDLBackwardSolve
-        ( orientation, symbSN.size, numSN.front, W );
+        // Solve against this front
+        LocalFrontLDLBackwardSolve( orientation, sn.size, front, W );
 
         // Store the supernode portion of the result
         XT = WT;
@@ -210,68 +209,64 @@ void clique::numeric::LocalLDLBackwardSolve
 
     // Ensure that all of the temporary buffers are freed (this is overkill)
     for( int s=0; s<numSupernodes; ++s )
-        localL.supernodes[s].work.Empty();
+        L.local.fronts[s].work.Empty();
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
 template void clique::numeric::LocalLDLForwardSolve
-( const symbolic::LocalSymmFact& S,
-  const numeric::LocalSymmFact<float>& L,
+( const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<float>& L,
         Matrix<float>& X );
 template void clique::numeric::LocalLDLDiagonalSolve
-( const symbolic::LocalSymmFact& S,
-  const numeric::LocalSymmFact<float>& L,
-  Matrix<float>& X, bool checkIfSingular );
+( const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<float>& L,
+        Matrix<float>& X, bool checkIfSingular );
 template void clique::numeric::LocalLDLBackwardSolve
 ( Orientation orientation,
-  const symbolic::LocalSymmFact& S,
-  const numeric::LocalSymmFact<float>& localL,
-  const numeric::DistSymmFact<float>& distL,
+  const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<float>& L,
         Matrix<float>& X );
 
 template void clique::numeric::LocalLDLForwardSolve
-( const symbolic::LocalSymmFact& S,
-  const numeric::LocalSymmFact<double>& L,
+( const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<double>& L,
         Matrix<double>& X );
 template void clique::numeric::LocalLDLDiagonalSolve
-( const symbolic::LocalSymmFact& S,
-  const numeric::LocalSymmFact<double>& L,
-  Matrix<double>& X, bool checkIfSingular );
+( const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<double>& L,
+        Matrix<double>& X, bool checkIfSingular );
 template void clique::numeric::LocalLDLBackwardSolve
 ( Orientation orientation,
-  const symbolic::LocalSymmFact& S,
-  const numeric::LocalSymmFact<double>& localL,
-  const numeric::DistSymmFact<double>& distL,
+  const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<double>& L,
         Matrix<double>& X );
 
 template void clique::numeric::LocalLDLForwardSolve
-( const symbolic::LocalSymmFact& S,
-  const numeric::LocalSymmFact<std::complex<float> >& L,
+( const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<std::complex<float> >& L,
         Matrix<std::complex<float> >& X );
 template void clique::numeric::LocalLDLDiagonalSolve
-( const symbolic::LocalSymmFact& S,
-  const numeric::LocalSymmFact<std::complex<float> >& L,
-  Matrix<std::complex<float> >& X, bool checkIfSingular );
+( const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<std::complex<float> >& L,
+        Matrix<std::complex<float> >& X, bool checkIfSingular );
 template void clique::numeric::LocalLDLBackwardSolve
 ( Orientation orientation,
-  const symbolic::LocalSymmFact& S,
-  const numeric::LocalSymmFact<std::complex<float> >& localL,
-  const numeric::DistSymmFact<std::complex<float> >& distL,
+  const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<std::complex<float> >& L,
         Matrix<std::complex<float> >& X );
 
 template void clique::numeric::LocalLDLForwardSolve
-( const symbolic::LocalSymmFact& S,
-  const numeric::LocalSymmFact<std::complex<double> >& L,
+( const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<std::complex<double> >& L,
         Matrix<std::complex<double> >& X );
 template void clique::numeric::LocalLDLDiagonalSolve
-( const symbolic::LocalSymmFact& S,
-  const numeric::LocalSymmFact<std::complex<double> >& L,
+( const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<std::complex<double> >& L,
         Matrix<std::complex<double> >& X, bool checkIfSingular );
 template void clique::numeric::LocalLDLBackwardSolve
 ( Orientation orientation,
-  const symbolic::LocalSymmFact& S,
-  const numeric::LocalSymmFact<std::complex<double> >& localL,
-  const numeric::DistSymmFact<std::complex<double> >& distL,
+  const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<std::complex<double> >& L,
         Matrix<std::complex<double> >& X );

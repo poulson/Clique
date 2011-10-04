@@ -23,9 +23,9 @@
 
 #include "clique/core/environment.hpp"
 #include "clique/symbolic/symmetric_factorization.hpp"
+#include "clique/numeric/front_ldl.hpp"
+#include "clique/numeric/front_ldl_solve.hpp"
 #include "clique/numeric/ldl.hpp"
 #include "clique/numeric/ldl_solve.hpp"
-#include "clique/numeric/supernode_ldl.hpp"
-#include "clique/numeric/supernode_ldl_solve.hpp"
 
 #endif /* CLIQUE_HPP */

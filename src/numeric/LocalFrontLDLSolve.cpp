@@ -26,13 +26,13 @@
 using namespace elemental;
 
 template<typename F>
-void clique::numeric::LocalSupernodeLDLDiagonalSolve
+void clique::numeric::LocalFrontLDLDiagonalSolve
 ( int supernodeSize,
   const Matrix<F>& d, Matrix<F>& X,
   bool checkIfSingular )
 {
 #ifndef RELEASE
-    clique::PushCallStack("numeric::LocalSupernodeLDLDiagonalSolve");
+    clique::PushCallStack("numeric::LocalFrontLDLDiagonalSolve");
     if( d.Width() != 1 )
         throw std::logic_error("d must be a column vector");
     if( d.Height() != X.Height() )
@@ -45,11 +45,11 @@ void clique::numeric::LocalSupernodeLDLDiagonalSolve
 }
 
 template<typename F>
-void clique::numeric::LocalSupernodeLDLForwardSolve
+void clique::numeric::LocalFrontLDLForwardSolve
 ( int supernodeSize, const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    clique::PushCallStack("numeric::LocalSupernodeLDLForwardSolve");
+    clique::PushCallStack("numeric::LocalFrontLDLForwardSolve");
     if( L.Height() != L.Width() || L.Height() != X.Height() || 
         L.Height() < supernodeSize )
     {
@@ -121,11 +121,11 @@ void clique::numeric::LocalSupernodeLDLForwardSolve
 // The unit upper triangle and its (conjugate-)transpose 
 // (with the exception of the diagonal) must be explicitly stored
 template<typename F>
-void clique::numeric::LocalSupernodeLDLBackwardSolve
+void clique::numeric::LocalFrontLDLBackwardSolve
 ( Orientation orientation, int supernodeSize, const Matrix<F>& U, Matrix<F>& X )
 {
 #ifndef RELEASE
-    clique::PushCallStack("numeric::LocalSupernodeLDLBackwardSolve");
+    clique::PushCallStack("numeric::LocalFrontLDLBackwardSolve");
     if( U.Height() != U.Width() || U.Height() != X.Height() || 
         U.Height() < supernodeSize )
     {
@@ -199,46 +199,46 @@ void clique::numeric::LocalSupernodeLDLBackwardSolve
 #endif
 }
 
-template void clique::numeric::LocalSupernodeLDLForwardSolve
+template void clique::numeric::LocalFrontLDLForwardSolve
 ( int supernodeSize,
   const Matrix<float>& L, Matrix<float>& X );
-template void clique::numeric::LocalSupernodeLDLDiagonalSolve
+template void clique::numeric::LocalFrontLDLDiagonalSolve
 ( int supernodeSize,
   const Matrix<float>& d, Matrix<float>& X,
   bool checkIfSingular );
-template void clique::numeric::LocalSupernodeLDLBackwardSolve
+template void clique::numeric::LocalFrontLDLBackwardSolve
 ( Orientation orientation, int supernodeSize,
   const Matrix<float>& U, Matrix<float>& X );
 
-template void clique::numeric::LocalSupernodeLDLForwardSolve
+template void clique::numeric::LocalFrontLDLForwardSolve
 ( int supernodeSize,
   const Matrix<double>& L, Matrix<double>& X );
-template void clique::numeric::LocalSupernodeLDLDiagonalSolve
+template void clique::numeric::LocalFrontLDLDiagonalSolve
 ( int supernodeSize,
   const Matrix<double>& d, Matrix<double>& X,
   bool checkIfSingular );
-template void clique::numeric::LocalSupernodeLDLBackwardSolve
+template void clique::numeric::LocalFrontLDLBackwardSolve
 ( Orientation orientation, int supernodeSize,
   const Matrix<double>& U, Matrix<double>& X );
 
-template void clique::numeric::LocalSupernodeLDLForwardSolve
+template void clique::numeric::LocalFrontLDLForwardSolve
 ( int supernodeSize,
   const Matrix<std::complex<float> >& L, Matrix<std::complex<float> >& X );
-template void clique::numeric::LocalSupernodeLDLDiagonalSolve
+template void clique::numeric::LocalFrontLDLDiagonalSolve
 ( int supernodeSize,
   const Matrix<std::complex<float> >& d, Matrix<std::complex<float> >& X,
   bool checkIfSingular );
-template void clique::numeric::LocalSupernodeLDLBackwardSolve
+template void clique::numeric::LocalFrontLDLBackwardSolve
 ( Orientation orientation, int supernodeSize,
   const Matrix<std::complex<float> >& U, Matrix<std::complex<float> >& X );
 
-template void clique::numeric::LocalSupernodeLDLForwardSolve
+template void clique::numeric::LocalFrontLDLForwardSolve
 ( int supernodeSize,
   const Matrix<std::complex<double> >& L, Matrix<std::complex<double> >& X );
-template void clique::numeric::LocalSupernodeLDLDiagonalSolve
+template void clique::numeric::LocalFrontLDLDiagonalSolve
 ( int supernodeSize,
   const Matrix<std::complex<double> >& d, Matrix<std::complex<double> >& X,
   bool checkIfSingular );
-template void clique::numeric::LocalSupernodeLDLBackwardSolve
+template void clique::numeric::LocalFrontLDLBackwardSolve
 ( Orientation orientation, int supernodeSize,
   const Matrix<std::complex<double> >& U, Matrix<std::complex<double> >& X );

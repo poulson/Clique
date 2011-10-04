@@ -25,18 +25,17 @@
 using namespace elemental;
 
 template<typename F> // F represents a real or complex field
-void clique::numeric::DistSupernodeLDL
+void clique::numeric::DistFrontLDL
 ( Orientation orientation, DistMatrix<F,MC,MR>& A, int supernodeSize )
 {
 #ifndef RELEASE
-    clique::PushCallStack("numeric::DistSupernodeLDL");
+    clique::PushCallStack("numeric::DistFrontLDL");
     if( A.Height() != A.Width() )
         throw std::logic_error("A must be square");
     if( orientation == NORMAL )
-        throw std::logic_error
-        ("DistSupernodeLDL must be (conjugate-)transposed.");
+        throw std::logic_error("DistFrontLDL must be (conjugate-)transposed.");
     if( supernodeSize > A.Height() )
-        throw std::logic_error("DistSupernode is too big");
+        throw std::logic_error("Supernode is too big");
 #endif
     const Grid& g = A.Grid();
 
@@ -115,18 +114,18 @@ void clique::numeric::DistSupernodeLDL
 #endif
 }
 
-template void clique::numeric::DistSupernodeLDL
+template void clique::numeric::DistFrontLDL
 ( Orientation orientation, 
   DistMatrix<float,MC,MR>& A, int supernodeSize );
 
-template void clique::numeric::DistSupernodeLDL
+template void clique::numeric::DistFrontLDL
 ( Orientation orientation, 
   DistMatrix<double,MC,MR>& A, int supernodeSize );
 
-template void clique::numeric::DistSupernodeLDL
+template void clique::numeric::DistFrontLDL
 ( Orientation orientation, 
   DistMatrix<std::complex<float>,MC,MR>& A, int supernodeSize );
 
-template void clique::numeric::DistSupernodeLDL
+template void clique::numeric::DistFrontLDL
 ( Orientation orientation, 
   DistMatrix<std::complex<double>,MC,MR>& A, int supernodeSize );

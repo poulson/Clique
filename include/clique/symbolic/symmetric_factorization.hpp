@@ -37,6 +37,24 @@ struct LocalSymmOrig
     std::vector<LocalSymmOrigSupernode> supernodes;
 };
 
+struct DistSymmOrigSupernode
+{
+    int size, offset;
+    std::vector<int> lowerStruct;
+};
+
+struct DistSymmOrig
+{
+    mpi::Comm comm;
+    std::vector<DistSymmOrigSupernode> supernodes;
+};
+
+struct SymmOrig
+{
+    LocalSymmOrig local;
+    DistSymmOrig dist;
+};
+
 struct LocalSymmFactSupernode
 {
     bool isLeftChild;
@@ -52,18 +70,6 @@ struct LocalSymmFactSupernode
 struct LocalSymmFact
 {
     std::vector<LocalSymmFactSupernode> supernodes;
-};
-
-struct DistSymmOrigSupernode
-{
-    int size, offset;
-    std::vector<int> lowerStruct;
-};
-
-struct DistSymmOrig
-{
-    mpi::Comm comm;
-    std::vector<DistSymmOrigSupernode> supernodes;
 };
 
 struct DistSymmFactSupernode
@@ -112,22 +118,19 @@ struct DistSymmFact
     std::vector<DistSymmFactSupernode> supernodes;
 };
 
-void SymmetricFactorization
-( const LocalSymmOrig&   localOrig,
-  const DistSymmOrig&    distOrig,
-        LocalSymmFact&   localFact,
-        DistSymmFact&    distFact, 
-        bool storeFactRecvIndices=true );
+struct SymmFact
+{
+    LocalSymmFact local;
+    DistSymmFact dist;
+};
 
-void LocalSymmetricFactorization
-( const LocalSymmOrig& localOrig,
-        LocalSymmFact& localFact );
+void SymmetricFactorization
+( const SymmOrig& orig, SymmFact& fact, bool storeFactRecvIndices=true );
+
+void LocalSymmetricFactorization( const SymmOrig& orig, SymmFact& fact );
 
 void DistSymmetricFactorization
-( const DistSymmOrig&  distOrig, 
-  const LocalSymmFact& localFact, 
-        DistSymmFact&  distFact, 
-        bool storeFactRecvIndices=true );
+( const SymmOrig& orig, SymmFact& fact, bool storeFactRecvIndices=true );
 
 void ComputeFactRecvIndices
 ( const DistSymmFactSupernode& factSN,
@@ -138,18 +141,13 @@ void ComputeFactRecvIndices
 //----------------------------------------------------------------------------//
 
 inline void SymmetricFactorization
-( const LocalSymmOrig& localOrig,
-  const DistSymmOrig&  distOrig,
-        LocalSymmFact& localFact,
-        DistSymmFact&  distFact,
-        bool storeFactRecvIndices )
+( const SymmOrig& orig, SymmFact& fact, bool storeFactRecvIndices )
 {
 #ifndef RELEASE
     PushCallStack("symbolic::SymmetricFactorization");
 #endif
-    LocalSymmetricFactorization( localOrig, localFact );
-    DistSymmetricFactorization
-    ( distOrig, localFact, distFact, storeFactRecvIndices );
+    LocalSymmetricFactorization( orig, fact );
+    DistSymmetricFactorization( orig, fact, storeFactRecvIndices );
 #ifndef RELEASE
     PopCallStack();
 #endif

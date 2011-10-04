@@ -29,23 +29,23 @@ namespace numeric {
 using namespace elemental;
 
 template<typename F>
-struct LocalSymmFactSupernode
+struct LocalSymmFront
 {
     Matrix<F> front;
     mutable Matrix<F> work;
 };
 
 template<typename F>
-struct LocalSymmFact
+struct LocalSymmFrontTree
 {
-    std::vector<LocalSymmFactSupernode<F> > supernodes;
+    std::vector<LocalSymmFront<F> > fronts;
 };
 
 template<typename F>
-struct DistSymmFactSupernode
+struct DistSymmFront
 {
-    // The 'SolveMode' member variable of the parent 'DistSymmFact' determines
-    // which of the following fronts is active.
+    // The 'SolveMode' member variable of the parent 'DistSymmFrontTree' 
+    // determines which of the following fronts is active.
     //   FEW_RHS  -> front1d
     //   MANY_RHS -> front2d
 
@@ -57,38 +57,39 @@ struct DistSymmFactSupernode
 };
 
 template<typename F>
-struct DistSymmFact
+struct DistSymmFrontTree
 {
     SolveMode mode;
-    std::vector<DistSymmFactSupernode<F> > supernodes;
+    std::vector<DistSymmFront<F> > fronts;
 };
 
 template<typename F>
-void SetSolveMode( DistSymmFact<F>& distL, SolveMode solveMode );
+struct SymmFrontTree
+{
+    LocalSymmFrontTree<F> local;
+    DistSymmFrontTree<F> dist;
+};
+
+template<typename F>
+void SetSolveMode( SymmFrontTree<F>& L, SolveMode solveMode );
 
 // All fronts of L are required to be initialized to the expansions of the 
 // original sparse matrix before calling the following factorizations.
 
 template<typename F>
 void LDL
-( Orientation orientation,
-  symbolic::LocalSymmFact& localS,
-  symbolic::DistSymmFact& distS,
-  numeric::LocalSymmFact<F>& localL,
-  numeric::DistSymmFact<F>& distL );
+( Orientation orientation, 
+  symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L );
 
 template<typename F>
 void LocalLDL
 ( Orientation orientation, 
-  symbolic::LocalSymmFact& S, // can't be const due to map...
-  numeric::LocalSymmFact<F>& L );
+  symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L );
 
 template<typename F>
 void DistLDL
-( Orientation orientation,
-        symbolic::DistSymmFact& S, // can't be const due to map...
-  const numeric::LocalSymmFact<F>& localL,
-        numeric::DistSymmFact<F>&  distL );
+( Orientation orientation, 
+  symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -96,17 +97,14 @@ void DistLDL
 
 template<typename F>
 void LDL
-( Orientation orientation,
-  symbolic::LocalSymmFact& localS,
-  symbolic::DistSymmFact& distS,
-  numeric::LocalSymmFact<F>& localL,
-  numeric::DistSymmFact<F>& distL )
+( Orientation orientation, 
+  symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L )
 {
 #ifndef RELEASE
     PushCallStack("numeric::LDL");
 #endif
-    LocalLDL( orientation, localS, localL );
-    DistLDL( orientation, distS, localL, distL );
+    LocalLDL( orientation, S, L );
+    DistLDL( orientation, S, L );
 #ifndef RELEASE
     PopCallStack();
 #endif
