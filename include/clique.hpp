@@ -25,6 +25,7 @@
 #include "clique/symbolic/symmetric_factorization.hpp"
 #include "clique/numeric/front_ldl.hpp"
 #include "clique/numeric/front_ldl_solve.hpp"
+#include "clique/numeric/symm_front_tree.hpp"
 #include "clique/numeric/ldl.hpp"
 #include "clique/numeric/ldl_solve.hpp"
 

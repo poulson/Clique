@@ -22,56 +22,7 @@
 #define CLIQUE_NUMERIC_LDL_HPP 1
 
 namespace clique {
-
-enum SolveMode { FEW_RHS, MANY_RHS };
-
 namespace numeric {
-using namespace elemental;
-
-template<typename F>
-struct LocalSymmFront
-{
-    Matrix<F> front;
-    mutable Matrix<F> work;
-};
-
-template<typename F>
-struct LocalSymmFrontTree
-{
-    std::vector<LocalSymmFront<F> > fronts;
-};
-
-template<typename F>
-struct DistSymmFront
-{
-    // The 'SolveMode' member variable of the parent 'DistSymmFrontTree' 
-    // determines which of the following fronts is active.
-    //   FEW_RHS  -> front1d
-    //   MANY_RHS -> front2d
-
-    DistMatrix<F,VC,STAR> front1d;
-    mutable DistMatrix<F,VC,STAR> work1d;
-
-    DistMatrix<F,MC,MR> front2d;
-    mutable DistMatrix<F,MC,MR> work2d;
-};
-
-template<typename F>
-struct DistSymmFrontTree
-{
-    SolveMode mode;
-    std::vector<DistSymmFront<F> > fronts;
-};
-
-template<typename F>
-struct SymmFrontTree
-{
-    LocalSymmFrontTree<F> local;
-    DistSymmFrontTree<F> dist;
-};
-
-template<typename F>
-void SetSolveMode( SymmFrontTree<F>& L, SolveMode solveMode );
 
 // All fronts of L are required to be initialized to the expansions of the 
 // original sparse matrix before calling the following factorizations.
