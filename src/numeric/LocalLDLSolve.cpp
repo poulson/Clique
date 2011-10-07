@@ -183,7 +183,6 @@ void clique::numeric::LocalLDLBackwardSolve
         Matrix<F>& parentWork = L.local.fronts[parent].work;
         const LocalSymmFactSupernode& parentSN = S.local.supernodes[parent];
         const int currentUpdateSize = WB.Height();
-
         const std::vector<int>& parentRelIndices = 
           ( sn.isLeftChild ? 
             parentSN.leftChildRelIndices :

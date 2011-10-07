@@ -20,6 +20,27 @@
 #include "clique.hpp"
 using namespace elemental;
 
+namespace internal {
+template<typename F> // represents a real or complex ring
+void
+SetDiagonalToOne( Matrix<F>& D, int diagOffset )
+{
+#ifndef RELEASE
+    PushCallStack("SetDiagonalToOne");
+#endif
+    const int diagLength = D.DiagonalLength( diagOffset );
+    if( diagOffset >= 0 )
+        for( int j=0; j<diagLength; ++j )
+            D.Set( j, j+diagOffset, (F)1 );
+    else
+        for( int j=0; j<diagLength; ++j )
+            D.Set( j-diagOffset, j, (F)1 );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+}
+
 template<typename F>
 void clique::numeric::LocalFrontLowerMultiplyNormal
 ( Diagonal diag, int diagOffset, int supernodeSize, 
@@ -38,60 +59,41 @@ void clique::numeric::LocalFrontLowerMultiplyNormal
         throw std::logic_error( msg.str().c_str() );
     }
 #endif
-    // Matrix views
-    Matrix<F>
-        LTL, LTR,  L00, L01, L02,
-        LBL, LBR,  L10, L11, L12,
-                   L20, L21, L22;
+    Matrix<F>* LMod = const_cast<Matrix<F>*>(&L);
+    Matrix<F> LT, LB;
+    PartitionDown
+    ( *LMod, LT,
+             LB, supernodeSize );
 
-    Matrix<F> XT,  X0,
-              XB,  X1,
-                   X2;
-
-    // Start the algorithm
-    LockedPartitionDownDiagonal
-    ( L, LTL, LTR,
-         LBL, LBR, 0 );
+    Matrix<F> XT, XB;
     PartitionDown
     ( X, XT,
-         XB, 0 );
-    while( XT.Height() < supernodeSize )
+         XB, supernodeSize );
+
+    basic::Gemm( NORMAL, NORMAL, (F)1, LB, XT, (F)1, XB );
+
+    if( diagOffset == 0 )
     {
-        const int blocksize = std::min(Blocksize(),supernodeSize-XT.Height());
-        LockedRepartitionDownDiagonal
-        ( LTL, /**/ LTR,  L00, /**/ L01, L02,
-         /*************/ /******************/
-               /**/       L10, /**/ L11, L12,
-          LBL, /**/ LBR,  L20, /**/ L21, L22, blocksize );
-
-        RepartitionDown
-        ( XT,  X0,
-         /**/ /**/
-               X1,
-          XB,  X2, blocksize );
-
-        //--------------------------------------------------------------------//
-        // HERE
-        throw std::logic_error("This routine is not yet finished");
-        //--------------------------------------------------------------------//
-
-        SlideLockedPartitionDownDiagonal
-        ( LTL, /**/ LTR,  L00, L01, /**/ L02,
-               /**/       L10, L11, /**/ L12,
-         /*************/ /******************/
-          LBL, /**/ LBR,  L20, L21, /**/ L22 );
-
-        SlidePartitionDown
-        ( XT,  X0,
-               X1,
-         /**/ /**/
-          XB,  X2 );
+        basic::Trmm( LEFT, LOWER, NORMAL, diag, (F)1, LT, XT );
+    }
+    else
+    {
+        Matrix<F> d;
+        if( diag == UNIT )
+        {
+            LT.GetDiagonal( d, diagOffset );
+            internal::SetDiagonalToOne( LT, diagOffset );
+        }
+        basic::Trmm( LEFT, LOWER, NORMAL, diag, (F)1, LT, XT );
+        if( diag == UNIT )
+            LT.SetDiagonal( d, diagOffset );
     }
 #ifndef RELEASE
     clique::PopCallStack();
 #endif
 }
 
+// No const since we might modify the diagonal
 template<typename F>
 void clique::numeric::LocalFrontLowerMultiplyTranspose
 ( Orientation orientation, Diagonal diag, int diagOffset,
@@ -112,55 +114,35 @@ void clique::numeric::LocalFrontLowerMultiplyTranspose
     if( orientation == NORMAL )
         throw std::logic_error("Orientation must be (conjugate-)transposed");
 #endif
-    // Matrix views
-    Matrix<F>
-        LTL, LTR,  L00, L01, L02,
-        LBL, LBR,  L10, L11, L12,
-                   L20, L21, L22;
+    Matrix<F>* LMod = const_cast<Matrix<F>*>(&L);
+    Matrix<F> LT, LB;
+    PartitionDown
+    ( *LMod, LT,
+             LB, supernodeSize );
 
-    Matrix<F> XT,  X0,
-              XB,  X1,
-                   X2;
-
-    LockedPartitionUpDiagonal
-    ( L, LTL, LTR,
-         LBL, LBR, L.Height()-supernodeSize );
-    PartitionUp
+    Matrix<F> XT, XB;
+    PartitionDown
     ( X, XT,
-         XB, X.Height()-supernodeSize );
+         XB, supernodeSize );
 
-    throw std::logic_error("This routine is not yet finished");
-
-    while( XT.Height() > 0 )
+    if( diagOffset == 0 )
     {
-        LockedRepartitionUpDiagonal
-        ( LTL, /**/ LTR,   L00, L01, /**/ L02,
-               /**/        L10, L11, /**/ L12,
-         /*************/  /******************/
-          LBL, /**/ LBR,   L20, L21, /**/ L22 );
-
-        RepartitionUp
-        ( XT,  X0,
-               X1,
-         /**/ /**/
-          XB,  X2 );
-
-        //--------------------------------------------------------------------//
-        // HERE
-        //--------------------------------------------------------------------//
-
-        SlideLockedPartitionUpDiagonal
-        ( LTL, /**/ LTR,  L00, /**/ L01, L02,
-         /*************/ /******************/
-               /**/       L10, /**/ L11, L12,
-          LBL, /**/ LBR,  L20, /**/ L21, L22 );
-
-        SlidePartitionUp
-        ( XT,  X0,
-         /**/ /**/
-               X1,
-          XB,  X2 );
+        basic::Trmm( LEFT, LOWER, orientation, diag, (F)1, LT, XT );
     }
+    else
+    {
+        Matrix<F> d;
+        if( diag == UNIT )
+        {
+            LT.GetDiagonal( d, diagOffset );
+            internal::SetDiagonalToOne( LT, diagOffset );
+        }
+        basic::Trmm( LEFT, LOWER, orientation, diag, (F)1, LT, XT );
+        if( diag == UNIT )
+            LT.SetDiagonal( d, diagOffset );
+    }
+
+    basic::Gemm( orientation, NORMAL, (F)1, LB, XB, (F)1, XT );
 #ifndef RELEASE
     clique::PopCallStack();
 #endif

@@ -50,13 +50,51 @@ void clique::numeric::LocalLowerMultiplyNormal
         Matrix<F> XT;
         XT.View( X, sn.myOffset, 0, sn.size, width );
         WT = XT;
+        WB.SetToZero();
 
-        // Multiply with this front
-        //LocalFrontLowerMultiply
-        //( NORMAL, diag, diagOffset, sn.size, front, W );
+        // Multiply this block column of L against the supernode portion of the
+        // right-hand side and set W equal to the result
+        LocalFrontLowerMultiply
+        ( NORMAL, diag, diagOffset, sn.size, front, W );
 
-        // Add the updates from the children
-        throw std::logic_error("This routine is not finished");
+        // Update using the children (if they exist)
+        const int numChildren = sn.children.size();
+        if( numChildren == 2 )
+        {
+            const int leftIndex = sn.children[0];
+            const int rightIndex = sn.children[1];
+            Matrix<F>& leftWork = L.local.fronts[leftIndex].work;
+            Matrix<F>& rightWork = L.local.fronts[rightIndex].work;
+            const int leftSupernodeSize = S.local.supernodes[leftIndex].size;
+            const int rightSupernodeSize = S.local.supernodes[rightIndex].size;
+            const int leftUpdateSize = leftWork.Height()-leftSupernodeSize;
+            const int rightUpdateSize = rightWork.Height()-rightSupernodeSize;
+
+            // Add the left child's update onto ours
+            Matrix<F> leftUpdate;
+            leftUpdate.LockedView
+            ( leftWork, leftSupernodeSize, 0, leftUpdateSize, width );
+            for( int iChild=0; iChild<leftUpdateSize; ++iChild )
+            {
+                const int iFront = sn.leftChildRelIndices[iChild];
+                for( int j=0; j<width; ++j )
+                    W.Update( iFront, j, leftUpdate.Get(iChild,j) );
+            }
+            leftWork.Empty();
+
+            // Add the right child's update onto ours
+            Matrix<F> rightUpdate;
+            rightUpdate.LockedView
+            ( rightWork, rightSupernodeSize, 0, rightUpdateSize, width );
+            for( int iChild=0; iChild<rightUpdateSize; ++iChild )
+            {
+                const int iFront = sn.rightChildRelIndices[iChild];
+                for( int j=0; j<width; ++j )
+                    W.Update( iFront, j, rightUpdate.Get(iChild,j) );
+            }
+            rightWork.Empty();
+        }
+        // else numChildren == 0 
 
         // Store the supernode portion of the result
         XT = WT;
@@ -116,31 +154,28 @@ void clique::numeric::LocalLowerMultiplyTranspose
         // Update using the parent's portion of the RHS
         const int parent = sn.parent;
         Matrix<F>& parentWork = L.local.fronts[parent].work;
-        /*
         const LocalSymmFactSupernode& parentSN = S.local.supernodes[parent];
         const int currentUpdateSize = WB.Height();
-
         const std::vector<int>& parentRelIndices = 
-          ( sn.isLeftChild ? 
-            parentSN.leftChildRelIndices :
-            parentSN.rightChildRelIndices );
+            ( sn.isLeftChild ? 
+              parentSN.leftChildRelIndices :
+              parentSN.rightChildRelIndices );
         for( int iCurrent=0; iCurrent<currentUpdateSize; ++iCurrent )
         {
-            const int iParent = parentRelIndices[iCurrent];
+            const int iParent = parentRelIndices[iCurrent]; 
             for( int j=0; j<width; ++j )
                 WB.Set( iCurrent, j, parentWork.Get(iParent,j) );
         }
-        */
-        throw std::logic_error("This routine is not finished");
 
         // The left child is numbered lower than the right child, so 
         // we can safely free the parent's work if we are the left child
         if( sn.isLeftChild )
             parentWork.Empty();
 
-        // Multiply against this front
-        //LocalFrontLowerMultiply
-        //( orientation, diag, diagOffset, sn.size, front, W );
+        // Multiply the (conjugate-)transpose of this block column of L against
+        // the supernode portion of the right-hand side.
+        LocalFrontLowerMultiply
+        ( orientation, diag, diagOffset, sn.size, front, W );
 
         // Store the supernode portion of the result
         XT = WT;
