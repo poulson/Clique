@@ -91,6 +91,8 @@ void clique::numeric::LocalLDL
 
         // Call the custom partial LDL
         LocalFrontLDL( orientation, front, sn.size );
+
+        front.Print("front after LocalLDL");
     }
 #ifndef RELEASE
     PopCallStack();

@@ -44,8 +44,13 @@ void clique::numeric::DistLowerMultiplyNormal
     }
 
     // Copy the information from the local portion into the distributed leaf
-    // ?
-    throw std::logic_error("This routine is not yet finished");
+    // Copy the information from the local portion into the distributed leaf
+    const LocalSymmFront<F>& localRootFront = L.local.fronts.back();
+    const DistSymmFront<F>& distLeafFront = L.dist.fronts[0];
+    distLeafFront.work1d.LockedView
+    ( localRootFront.work.Height(), localRootFront.work.Width(), 0,
+      localRootFront.work.LockedBuffer(), localRootFront.work.LDim(),
+      distLeafFront.front1d.Grid() );
     
     // Perform the distributed portion of the forward multiply
     for( int s=1; s<numSupernodes; ++s )
@@ -76,10 +81,11 @@ void clique::numeric::DistLowerMultiplyNormal
         Matrix<F> localXT;
         localXT.View( localX, sn.localOffset1d, 0, sn.localSize1d, width );
         WT.LocalMatrix() = localXT;
+        WB.SetToZero();
 
         // Now that the right-hand side is set up, perform the multiply
-        //DistFrontLowerMultiply
-        //( NORMAL, diag, diagOffset, sn.size, front.front1d, W );
+        DistFrontLowerMultiply
+        ( NORMAL, diag, diagOffset, sn.size, front.front1d, W );
 
         // Pack our child's update
         DistMatrix<F,VC,STAR>& childW = childFront.work1d;
@@ -213,8 +219,15 @@ void clique::numeric::DistLowerMultiplyTranspose
     }
 
     // Directly operate on the root separator's portion of the right-hand sides
-    // ?
-    throw std::logic_error("This routine is not yet finished");
+    const DistSymmFactSupernode& rootSN = S.dist.supernodes.back();
+    const DistSymmFront<F>& rootFront = L.dist.fronts.back();
+    const Grid& rootGrid = rootFront.front1d.Grid();
+    rootFront.work1d.View
+    ( rootSN.size, width, 0,
+      localX.Buffer(rootSN.localOffset1d,0), localX.LDim(), rootGrid );
+    DistFrontLowerMultiply
+    ( orientation, diag, diagOffset, rootSN.size, 
+      rootFront.front1d, rootFront.work1d );
 
     std::vector<int>::const_iterator it;
     for( int s=numSupernodes-2; s>=0; --s )

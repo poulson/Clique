@@ -67,7 +67,6 @@ void clique::numeric::LocalFrontLDL
 
         S21 = A21;
         basic::DiagonalSolve( RIGHT, NORMAL, d1, A21 );
-        basic::Transpose( A21, A12 );
 
         // For now, just perform 2x as much work as necessary via a gemm.
         // Eventually, this should be replaced with a custom routine.

@@ -203,12 +203,24 @@ main( int argc, char* argv[] )
             front.SetToZero();
             Matrix<F> frontTL;
             frontTL.View( front, 0, 0, sn.size, sn.size );
-            frontTL.SetToIdentity();
-            basic::Scal( (F)2, frontTL );
+            frontTL.SetToRandom();
+            frontTL.Print( "frontTL local" );
         }
         L.dist.mode = clique::MANY_RHS;
         L.dist.fronts.resize( log2CommSize+1 );
-        for( int s=0; s<log2CommSize+1; ++s )
+        {
+            const clique::symbolic::DistSymmFactSupernode& sn = 
+                S.dist.supernodes[0];
+            Matrix<F>& topLocalFront = L.local.fronts.back().front;
+            DistMatrix<F,MC,MR>& front2d = L.dist.fronts[0].front2d;
+
+            const int frontSize = sn.size+sn.lowerStruct.size();
+            front2d.LockedView
+            ( topLocalFront.Height(), topLocalFront.Width(), 0, 0,
+              topLocalFront.LockedBuffer(), topLocalFront.LDim(),
+              *sn.grid );
+        }
+        for( int s=1; s<log2CommSize+1; ++s )
         {
             const clique::symbolic::DistSymmFactSupernode& sn = 
                 S.dist.supernodes[s];
@@ -220,14 +232,43 @@ main( int argc, char* argv[] )
             front2d.SetToZero();
             DistMatrix<F,MC,MR> frontTL;
             frontTL.View( front2d, 0, 0, sn.size, sn.size );
-            frontTL.SetToIdentity();
-            basic::Scal( (F)2, frontTL );
+            frontTL.SetToRandom();
+            frontTL.Print( "frontTL dist" );
         }
         mpi::Barrier( comm );
         const double fillStopTime = mpi::Time();
         if( commRank == 0 )
             std::cout << "Fill time: " << fillStopTime-fillStartTime
                       << " secs" << std::endl;
+
+        // Generate a random RHS, multiply it by our matrix, and then 
+        // compare the original RHS against the solution.
+        const double makeRhsStartTime = mpi::Time();
+        const int localHeight1d = 
+            S.dist.supernodes.back().localOffset1d + 
+            S.dist.supernodes.back().localSize1d;
+        Matrix<F> localX( localHeight1d, 5 );
+        localX.SetToRandom();
+        Matrix<F> localYLower = localX;
+        clique::numeric::SetSolveMode( L, clique::FEW_RHS );
+        clique::numeric::LowerMultiply
+        ( NORMAL, NON_UNIT, -1, S, L, localYLower );
+        Matrix<F> localY = localX;
+        clique::numeric::LowerMultiply
+        ( TRANSPOSE, NON_UNIT, 0, S, L, localY );
+        basic::Axpy( (F)1, localYLower, localY );
+        localYLower.Empty();
+        clique::numeric::SetSolveMode( L, clique::MANY_RHS );
+        mpi::Barrier( comm );
+        const double makeRhsStopTime = mpi::Time();
+        if( commRank == 0 )
+            std::cout << "Make RHS time: " << makeRhsStopTime-makeRhsStartTime
+                      << " secs" << std::endl;
+        if( commRank == 0 )
+        {
+            localX.Print( "localX" );
+            localY.Print( "localY" );
+        }
 
         // Call the numerical factorization routine
         const double factStartTime = mpi::Time();
@@ -247,17 +288,10 @@ main( int argc, char* argv[] )
             std::cout << "Redistribution time: " 
                       << redistStopTime-redistStartTime << " secs" << std::endl;
 
-        // Set up the properly ordered RHS and call a solve routine
-        const int localHeight1d = 
-            S.dist.supernodes.back().localOffset1d + 
-            S.dist.supernodes.back().localSize1d;
-        Matrix<F> localX( localHeight1d, 5 );
-        localX.SetToRandom();
-        Matrix<F> localXCopy = localX;
-
+        // Solve
         mpi::Barrier( comm );
         const double solveStartTime = mpi::Time();
-        clique::numeric::LDLSolve( TRANSPOSE, S, L, localX, true );
+        clique::numeric::LDLSolve( TRANSPOSE, S, L, localY, true );
         mpi::Barrier( comm );
         const double solveStopTime = mpi::Time();
         if( commRank == 0 )
@@ -265,8 +299,10 @@ main( int argc, char* argv[] )
             std::cout << "Solve time: " << solveStopTime-solveStartTime
                       << " secs" << std::endl;
 
-            basic::Axpy( (F)-0.5, localXCopy, localX );
-            std::cout << "Error norm: " << advanced::Norm( localX ) 
+            localY.Print( "localY final" );
+
+            basic::Axpy( (F)-1, localX, localY );
+            std::cout << "Error norm: " << advanced::Norm( localY ) 
                       << std::endl;
         }
     }

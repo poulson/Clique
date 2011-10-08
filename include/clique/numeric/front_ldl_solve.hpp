@@ -39,7 +39,7 @@ void LocalFrontLDLDiagonalSolve
 template<typename F>
 void LocalFrontLDLBackwardSolve
 ( Orientation orientation, int supernodeSize,
-  const Matrix<F>& U, Matrix<F>& X );
+  const Matrix<F>& L, Matrix<F>& X );
 
 template<typename F>
 void DistFrontLDLForwardSolve
@@ -57,7 +57,7 @@ void DistFrontLDLDiagonalSolve
 template<typename F>
 void DistFrontLDLBackwardSolve
 ( Orientation orientation, int supernodeSize,
-  const DistMatrix<F,VC,STAR>& U, 
+  const DistMatrix<F,VC,STAR>& L, 
         DistMatrix<F,VC,STAR>& X );
 
 } // namespace numeric

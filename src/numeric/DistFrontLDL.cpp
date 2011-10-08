@@ -88,7 +88,6 @@ void clique::numeric::DistFrontLDL
             A21AdjOrTrans_STAR_MR.AdjointFrom( A21_VR_STAR );
         else
             A21AdjOrTrans_STAR_MR.TransposeFrom( A21_VR_STAR );
-        A12 = A21AdjOrTrans_STAR_MR; // save the (conjugate-)transpose of A21
 
         basic::internal::LocalTriangularRankK
         ( LOWER, TRANSPOSE,

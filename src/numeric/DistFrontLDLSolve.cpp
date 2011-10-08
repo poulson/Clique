@@ -25,6 +25,31 @@
 #include "clique.hpp"
 using namespace elemental;
 
+namespace internal {
+template<typename F>
+void AddInLocalData
+( const DistMatrix<F,VC,STAR>& X1, DistMatrix<F,STAR,STAR>& Z )
+{
+#ifndef RELEASE
+    PushCallStack("internal::AddInLocalData");
+#endif
+    const int width = X1.Width();
+    const int localHeight = X1.LocalHeight();
+    const int stride = X1.Grid().Size();
+    const int offset = X1.ColAlignment();
+    for( int j=0; j<width; ++j )
+    {
+        F* ZColBuffer = Z.LocalBuffer(0,j);
+        const F* X1ColBuffer = X1.LockedLocalBuffer(0,j);
+        for( int iLocal=0; iLocal<localHeight; ++iLocal )
+            ZColBuffer[offset+stride*iLocal] += X1ColBuffer[iLocal];
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+}
+
 template<typename F>
 void clique::numeric::DistFrontLDLDiagonalSolve
 ( int supernodeSize, const DistMatrix<F,VC,STAR>& d, DistMatrix<F,VC,STAR>& X,
@@ -69,6 +94,12 @@ void clique::numeric::DistFrontLDLForwardSolve
         throw std::logic_error("L and X are assumed to be aligned");
 #endif
     const Grid& g = L.Grid();
+    if( g.Size() == 1 )
+    {
+        LocalFrontLDLForwardSolve
+        ( supernodeSize, L.LockedLocalMatrix(), X.LocalMatrix() );
+        return;
+    }
 
     // Matrix views
     DistMatrix<F,VC,STAR>
@@ -141,76 +172,71 @@ void clique::numeric::DistFrontLDLForwardSolve
 template<typename F>
 void clique::numeric::DistFrontLDLBackwardSolve
 ( Orientation orientation, 
-  int supernodeSize, const DistMatrix<F,VC,STAR>& U, DistMatrix<F,VC,STAR>& X )
+  int supernodeSize, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
     clique::PushCallStack("numeric::DistFrontLDLBackwardSolve");
-    if( U.Grid() != X.Grid() )
+    if( L.Grid() != X.Grid() )
         throw std::logic_error
-        ("U and X must be distributed over the same grid");
-    if( U.Height() != U.Width() || U.Height() != X.Height() || 
-        U.Height() < supernodeSize )
+        ("L and X must be distributed over the same grid");
+    if( L.Height() != L.Width() || L.Height() != X.Height() || 
+        L.Height() < supernodeSize )
     {
         std::ostringstream msg;
         msg << "Nonconformal solve:\n"
             << "  supernodeSize ~ " << supernodeSize << "\n"
-            << "  U ~ " << U.Height() << " x " << U.Width() << "\n"
+            << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
         throw std::logic_error( msg.str().c_str() );
     }
-    if( U.ColAlignment() != X.ColAlignment() )
-        throw std::logic_error("U and X are assumed to be aligned");
+    if( L.ColAlignment() != X.ColAlignment() )
+        throw std::logic_error("L and X are assumed to be aligned");
     if( orientation == NORMAL )
         throw std::logic_error("LDL must be (conjugate-)transposed");
 #endif
-    const Grid& g = U.Grid();
+    const Grid& g = L.Grid();
+    if( g.Size() == 1 )
+    {
+        LocalFrontLDLBackwardSolve
+        ( orientation, supernodeSize, L.LockedLocalMatrix(), X.LocalMatrix() );
+        return;
+    }
 
     // Matrix views
     DistMatrix<F,VC,STAR>
-        UTL(g), UTR(g),  U00(g), U01(g), U02(g),
-        UBL(g), UBR(g),  U10(g), U11(g), U12(g),
-                         U20(g), U21(g), U22(g);
+        LTL(g), LTR(g),  L00(g), L01(g), L02(g),
+        LBL(g), LBR(g),  L10(g), L11(g), L12(g),
+                         L20(g), L21(g), L22(g);
 
     DistMatrix<F,VC,STAR> XT(g),  X0(g),
                           XB(g),  X1(g),
                                   X2(g);
 
     // Temporary distributions
-    DistMatrix<F,STAR,STAR> U11_STAR_STAR(g);
-    DistMatrix<F,STAR,STAR> X1_STAR_STAR(g);
+    DistMatrix<F,STAR,STAR> L11_STAR_STAR(g);
+    DistMatrix<F,STAR,STAR> Z(g);
 
-    LockedPartitionUpDiagonal
-    ( U, UTL, UTR,
-         UBL, UBR, U.Height()-supernodeSize );
-    PartitionUp
+    LockedPartitionDownDiagonal
+    ( L, LTL, LTR,
+         LBL, LBR, supernodeSize );
+    PartitionDown
     ( X, XT,
-         XB, X.Height()-supernodeSize );
+         XB, supernodeSize );
 
     // Subtract off the parent updates
-    if( XT.Height() >= XB.Height() )
-    {
-        DistMatrix<F,STAR,STAR> XB_STAR_STAR(g);
-        XB_STAR_STAR = XB;
-        basic::internal::LocalGemm
-        ( NORMAL, NORMAL, (F)-1, UTR, XB_STAR_STAR, (F)1, XT );
-    }
-    else
-    {
-        DistMatrix<F,STAR,STAR> ZT(g);
-        ZT.ResizeTo( XT.Height(), XT.Width() );
-        basic::internal::LocalGemm
-        ( orientation, NORMAL, (F)-1, UBL, XB, (F)0, ZT );
-        XT.SumScatterUpdate( (F)-1, ZT );
-    }
+    Z.ResizeTo( XT.Height(), XT.Width() );
+    basic::internal::LocalGemm( orientation, NORMAL, (F)-1, LBL, XB, (F)0, Z );
+    XT.SumScatterUpdate( (F)1, Z );
+    Z.Empty();
 
     // Solve the remaining triangular system
     while( XT.Height() > 0 )
     {
         LockedRepartitionUpDiagonal
-        ( UTL, /**/ UTR,   U00, U01, /**/ U02,
-               /**/        U10, U11, /**/ U12,
+        ( LTL, /**/ LTR,   L00, L01, /**/ L02,
+               /**/        L10, L11, /**/ L12,
          /*************/  /******************/
-          UBL, /**/ UBR,   U20, U21, /**/ U22 );
+          LBL, /**/ LBR,   L20, L21, /**/ L22 );
 
         RepartitionUp
         ( XT,  X0,
@@ -219,24 +245,25 @@ void clique::numeric::DistFrontLDLBackwardSolve
           XB,  X2 );
 
         //--------------------------------------------------------------------//
-        U11_STAR_STAR = U11; // U11[* ,* ] <- U11[VC,* ]
-        X1_STAR_STAR = X1;   // X1[* ,* ] <- X1[VC,* ]
-
-        // X1[* ,* ] := U11^-1[* ,* ] X1[* ,* ]
-        basic::internal::LocalTrsm
-        ( LEFT, UPPER, NORMAL, UNIT, (F)1, U11_STAR_STAR, X1_STAR_STAR );
-        X1 = X1_STAR_STAR;
-
-        // X0[VC,* ] -= U01[VC,* ] X1[* ,* ]
+        // X1 -= L21' X2
+        Z.ResizeTo( X1.Height(), X1.Width() );
         basic::internal::LocalGemm
-        ( NORMAL, NORMAL, (F)-1, U01, X1_STAR_STAR, (F)1, X0 );
+        ( orientation, NORMAL, (F)-1, L21, X2, (F)0, Z );
+        internal::AddInLocalData( X1, Z );
+        Z.SumOverGrid();
+
+        // X1 := L11^-1 X1
+        L11_STAR_STAR = L11; 
+        basic::internal::LocalTrsm
+        ( LEFT, LOWER, orientation, UNIT, (F)1, L11_STAR_STAR, Z );
+        X1 = Z;
         //--------------------------------------------------------------------//
 
         SlideLockedPartitionUpDiagonal
-        ( UTL, /**/ UTR,  U00, /**/ U01, U02,
+        ( LTL, /**/ LTR,  L00, /**/ L01, L02,
          /*************/ /******************/
-               /**/       U10, /**/ U11, U12,
-          UBL, /**/ UBR,  U20, /**/ U21, U22 );
+               /**/       L10, /**/ L11, L12,
+          LBL, /**/ LBR,  L20, /**/ L21, L22 );
 
         SlidePartitionUp
         ( XT,  X0,
@@ -260,7 +287,7 @@ template void clique::numeric::DistFrontLDLDiagonalSolve
   bool checkIfSingular );
 template void clique::numeric::DistFrontLDLBackwardSolve
 ( Orientation orientation, int supernodeSize,
-  const DistMatrix<float,VC,STAR>& U,
+  const DistMatrix<float,VC,STAR>& L,
         DistMatrix<float,VC,STAR>& X );
 
 template void clique::numeric::DistFrontLDLForwardSolve
@@ -274,7 +301,7 @@ template void clique::numeric::DistFrontLDLDiagonalSolve
   bool checkIfSingular );
 template void clique::numeric::DistFrontLDLBackwardSolve
 ( Orientation orientation, int supernodeSize,
-  const DistMatrix<double,VC,STAR>& U,
+  const DistMatrix<double,VC,STAR>& L,
         DistMatrix<double,VC,STAR>& X );
 
 template void clique::numeric::DistFrontLDLForwardSolve
@@ -288,7 +315,7 @@ template void clique::numeric::DistFrontLDLDiagonalSolve
   bool checkIfSingular );
 template void clique::numeric::DistFrontLDLBackwardSolve
 ( Orientation orientation, int supernodeSize,
-  const DistMatrix<std::complex<float>,VC,STAR>& U, 
+  const DistMatrix<std::complex<float>,VC,STAR>& L, 
         DistMatrix<std::complex<float>,VC,STAR>& X );
 
 template void clique::numeric::DistFrontLDLForwardSolve
@@ -302,5 +329,5 @@ template void clique::numeric::DistFrontLDLDiagonalSolve
   bool checkIfSingular );
 template void clique::numeric::DistFrontLDLBackwardSolve
 ( Orientation orientation, int supernodeSize,
-  const DistMatrix<std::complex<double>,VC,STAR>& U,
+  const DistMatrix<std::complex<double>,VC,STAR>& L,
         DistMatrix<std::complex<double>,VC,STAR>& X );

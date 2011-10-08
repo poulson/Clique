@@ -91,10 +91,13 @@ void clique::numeric::LocalLDLForwardSolve
         // else numChildren == 0
 
         // Solve against this front
+        W.Print("W before forward solve");
         LocalFrontLDLForwardSolve( sn.size, front, W );
+        W.Print("W after forward solve");
 
         // Store the supernode portion of the result
         XT = WT;
+        XT.Print("XT after forward solve");
     }
 
     // Ensure that all of the temporary buffers are freed (except the root)
@@ -128,7 +131,9 @@ void clique::numeric::LocalLDLDiagonalSolve
         frontTL.LockedView( front, 0, 0, sn.size, sn.size );
         Matrix<F> d;
         frontTL.GetDiagonal( d );
+        XSub.Print("XSub before diagonal solve");
         LocalFrontLDLDiagonalSolve( sn.size, d, XSub, checkIfSingular );
+        XSub.Print("XSub after diagonal solve");
     }
 #ifndef RELEASE
     PopCallStack();
@@ -200,10 +205,13 @@ void clique::numeric::LocalLDLBackwardSolve
             parentWork.Empty();
 
         // Solve against this front
+        W.Print("W before backward solve");
         LocalFrontLDLBackwardSolve( orientation, sn.size, front, W );
+        W.Print("W after backward solve");
 
         // Store the supernode portion of the result
         XT = WT;
+        XT.Print("XT after backward solve");
     }
 
     // Ensure that all of the temporary buffers are freed (this is overkill)
