@@ -91,18 +91,17 @@ void clique::numeric::DistFrontLowerMultiplyNormal
          XB, supernodeSize );
     while( XT.Height() > 0 )
     {
-        const int blocksize = std::min(Blocksize(),XT.Height());
         LockedRepartitionUpDiagonal
         ( LTL, /**/ LTR,  L00, L01, /**/ L02,
                /**/       L10, L11, /**/ L12,
          /*************/ /******************/
-          LBL, /**/ LBR,  L20, L21, /**/ L22, blocksize );
+          LBL, /**/ LBR,  L20, L21, /**/ L22 );
 
         RepartitionUp
         ( XT,  X0,
                X1,
          /**/ /**/
-          XB,  X2, blocksize );
+          XB,  X2 );
 
         //--------------------------------------------------------------------//
         X1_STAR_STAR = X1;
@@ -193,9 +192,9 @@ void clique::numeric::DistFrontLowerMultiplyTranspose
     PartitionDown
     ( X, XT,
          XB, 0 );
-    while( LTL.Width() < L.Width() )
+    while( LTL.Height() < supernodeSize )
     {
-        const int blocksize = std::min(Blocksize(),L.Width()-LTL.Width());
+        const int blocksize = std::min(Blocksize(),supernodeSize-LTL.Height());
         LockedRepartitionDownDiagonal
         ( LTL, /**/ LTR,   L00, /**/ L01, L02,
          /*************/  /******************/
