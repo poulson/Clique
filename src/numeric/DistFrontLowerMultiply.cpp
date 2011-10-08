@@ -20,6 +20,27 @@
 #include "clique.hpp"
 using namespace elemental;
 
+namespace internal {
+template<typename F> // represents a real or complex ring
+void ModifyForTrmm( DistMatrix<F,STAR,STAR>& D, Diagonal diag, int diagOffset )
+{
+#ifndef RELEASE
+    PushCallStack("internal::ModifyForTrmm");
+#endif
+    const int height = D.Height();
+    for( int j=0; j<height; ++j )
+    {
+        const int length = std::min(-diagOffset,height-j);
+        std::memset( D.LocalBuffer(j,j), 0, length*sizeof(F) );
+        if( diag == UNIT && j-diagOffset < height )
+            D.SetLocalEntry( j-diagOffset, j, (F)1 );
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+}
+
 template<typename F>
 void clique::numeric::DistFrontLowerMultiplyNormal
 ( Diagonal diag, int diagOffset, int supernodeSize, 
@@ -42,6 +63,8 @@ void clique::numeric::DistFrontLowerMultiplyNormal
     }
     if( L.ColAlignment() != X.ColAlignment() )
         throw std::logic_error("L and X are assumed to be aligned");
+    if( diagOffset > 0 )
+        throw std::logic_error("Diagonal offsets cannot be positive");
 #endif
     const Grid& g = L.Grid();
 
@@ -62,40 +85,55 @@ void clique::numeric::DistFrontLowerMultiplyNormal
     // Start the algorithm
     LockedPartitionDownDiagonal
     ( L, LTL, LTR,
-         LBL, LBR, 0 );
+         LBL, LBR, supernodeSize );
     PartitionDown
     ( X, XT,
-         XB, 0 );
-    while( XT.Height() < supernodeSize )
+         XB, supernodeSize );
+    while( XT.Height() > 0 )
     {
-        const int blocksize = std::min(Blocksize(),supernodeSize-XT.Height());
-        LockedRepartitionDownDiagonal
-        ( LTL, /**/ LTR,  L00, /**/ L01, L02,
-         /*************/ /******************/
-               /**/       L10, /**/ L11, L12,
-          LBL, /**/ LBR,  L20, /**/ L21, L22, blocksize );
-
-        RepartitionDown
-        ( XT,  X0,
-         /**/ /**/
-               X1,
-          XB,  X2, blocksize );
-
-        //--------------------------------------------------------------------//
-        // HERE
-        throw std::logic_error("This routine is not yet finished");
-        //--------------------------------------------------------------------//
-
-        SlideLockedPartitionDownDiagonal
+        const int blocksize = std::min(Blocksize(),XT.Height());
+        LockedRepartitionUpDiagonal
         ( LTL, /**/ LTR,  L00, L01, /**/ L02,
                /**/       L10, L11, /**/ L12,
          /*************/ /******************/
-          LBL, /**/ LBR,  L20, L21, /**/ L22 );
+          LBL, /**/ LBR,  L20, L21, /**/ L22, blocksize );
 
-        SlidePartitionDown
+        RepartitionUp
         ( XT,  X0,
                X1,
          /**/ /**/
+          XB,  X2, blocksize );
+
+        //--------------------------------------------------------------------//
+        X1_STAR_STAR = X1;
+        basic::internal::LocalGemm
+        ( NORMAL, NORMAL, (F)1, L21, X1_STAR_STAR, (F)1, X2 );
+
+        if( diagOffset == 0 )
+        {
+            L11_STAR_STAR = L11;
+            basic::internal::LocalTrmm
+            ( LEFT, LOWER, NORMAL, diag, (F)1, L11_STAR_STAR, X1 );
+        }
+        else
+        {
+            L11_STAR_STAR = L11;
+            internal::ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
+            basic::internal::LocalTrmm
+            ( LEFT, LOWER, NORMAL, NON_UNIT, (F)1, L11_STAR_STAR, X1 );
+        }
+        //--------------------------------------------------------------------//
+
+        SlideLockedPartitionUpDiagonal
+        ( LTL, /**/ LTR,  L00, /**/ L01, L02,
+         /*************/ /******************/
+               /**/       L10, /**/ L11, L12,
+          LBL, /**/ LBR,  L20, /**/ L21, L22 );
+
+        SlidePartitionUp
+        ( XT,  X0,
+         /**/ /**/
+               X1,
           XB,  X2 );
     }
 #ifndef RELEASE
@@ -127,6 +165,8 @@ void clique::numeric::DistFrontLowerMultiplyTranspose
         throw std::logic_error("L and X are assumed to be aligned");
     if( orientation == NORMAL )
         throw std::logic_error("Orientation must be (conjugate-)transposed");
+    if( diagOffset > 0 )
+        throw std::logic_error("Diagonal offsets cannot be positive");
 #endif
     const Grid& g = L.Grid();
 
@@ -142,44 +182,60 @@ void clique::numeric::DistFrontLowerMultiplyTranspose
 
     // Temporary distributions
     DistMatrix<F,STAR,STAR> L11_STAR_STAR(g);
-    DistMatrix<F,STAR,STAR> X1_STAR_STAR(g);
+    DistMatrix<F,STAR,STAR> Z1_STAR_STAR(g);
 
-    LockedPartitionUpDiagonal
+    LockedPartitionDownDiagonal
     ( L, LTL, LTR,
-         LBL, LBR, L.Height()-supernodeSize );
-    PartitionUp
+         LBL, LBR, 0 );
+    PartitionDown
     ( X, XT,
-         XB, X.Height()-supernodeSize );
-
-    while( XT.Height() > 0 )
+         XB, 0 );
+    while( LTL.Width() < L.Width() )
     {
-        LockedRepartitionUpDiagonal
-        ( LTL, /**/ LTR,   L00, L01, /**/ L02,
-               /**/        L10, L11, /**/ L12,
+        const int blocksize = std::min(Blocksize(),L.Width()-LTL.Width());
+        LockedRepartitionDownDiagonal
+        ( LTL, /**/ LTR,   L00, /**/ L01, L02,
          /*************/  /******************/
-          LBL, /**/ LBR,   L20, L21, /**/ L22 );
+               /**/        L10, /**/ L11, L12,
+          LBL, /**/ LBR,   L20, /**/ L21, L22, blocksize );
 
-        RepartitionUp
+        RepartitionDown
         ( XT,  X0,
-               X1,
          /**/ /**/
-          XB,  X2 );
+               X1,
+          XB,  X2, blocksize );
 
         //--------------------------------------------------------------------//
-        // HERE
-        throw std::logic_error("This routine is not yet finished");
+        if( diagOffset == 0 )
+        {
+            L11_STAR_STAR = L11;
+            basic::internal::LocalTrmm
+            ( LEFT, LOWER, orientation, diag, (F)1, L11_STAR_STAR, X1 );
+        }
+        else
+        {
+            L11_STAR_STAR = L11;
+            internal::ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
+            basic::internal::LocalTrmm
+            ( LEFT, LOWER, orientation, NON_UNIT, (F)1, L11_STAR_STAR, X1 );
+        }
+
+        Z1_STAR_STAR.ResizeTo( blocksize, X1.Width() );
+        basic::internal::LocalGemm
+        ( orientation, NORMAL, (F)1, L21, X2, (F)0, Z1_STAR_STAR );
+        X1.SumScatterUpdate( (F)1, Z1_STAR_STAR );
         //--------------------------------------------------------------------//
 
-        SlideLockedPartitionUpDiagonal
-        ( LTL, /**/ LTR,  L00, /**/ L01, L02,
+        SlideLockedPartitionDownDiagonal
+        ( LTL, /**/ LTR,  L00, L01, /**/ L02,
+               /**/       L10, L11, /**/ L12,
          /*************/ /******************/
-               /**/       L10, /**/ L11, L12,
-          LBL, /**/ LBR,  L20, /**/ L21, L22 );
+          LBL, /**/ LBR,  L20, L21, /**/ L22 );
 
-        SlidePartitionUp
+        SlidePartitionDown
         ( XT,  X0,
-         /**/ /**/
                X1,
+         /**/ /**/
           XB,  X2 );
     }
 #ifndef RELEASE

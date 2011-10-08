@@ -22,24 +22,69 @@ using namespace elemental;
 
 namespace internal {
 template<typename F> // represents a real or complex ring
-void
-SetDiagonalToOne( Matrix<F>& D, int diagOffset )
+void ModifyForTrmm
+( Matrix<F>& D, Diagonal diag, int diagOffset, 
+  std::vector<Matrix<F> >& diagonals )
 {
 #ifndef RELEASE
-    PushCallStack("SetDiagonalToOne");
+    PushCallStack("internal::ModifyForTrmm");
 #endif
-    const int diagLength = D.DiagonalLength( diagOffset );
-    if( diagOffset >= 0 )
-        for( int j=0; j<diagLength; ++j )
-            D.Set( j, j+diagOffset, (F)1 );
+    if( diag == UNIT )
+    {
+        diagonals.resize( 1-diagOffset );
+        for( int i=0; i<-diagOffset; ++i )
+            diagonals[i].ResizeTo( D.DiagonalLength(-i), 1 );
+        diagonals[-diagOffset].ResizeTo( D.DiagonalLength(-diagOffset), 1 );
+    }
     else
-        for( int j=0; j<diagLength; ++j )
+    {
+        diagonals.resize( -diagOffset );
+        for( int i=0; i<-diagOffset; ++i )
+            diagonals[i].ResizeTo( D.DiagonalLength(-i), 1 );
+    }
+
+    const int height = D.Height();
+    for( int j=0; j<height; ++j )
+    {
+        const int length = std::min(-diagOffset,height-j);
+        for( int i=0; i<length; ++i )    
+        {
+            diagonals[i].Set( j, 0, D.Get(j+i,j) );
+            D.Set( j+i, j, (F)0 );
+        }
+        if( diag == UNIT && j-diagOffset < height )
+        {
+            diagonals[-diagOffset].Set( j, 0, D.Get(j-diagOffset,j) );
             D.Set( j-diagOffset, j, (F)1 );
+        }
+    }
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
+
+template<typename F> // represents a real or complex ring
+void ReplaceAfterTrmm
+( Matrix<F>& D, Diagonal diag, int diagOffset, 
+  const std::vector<Matrix<F> >& diagonals )
+{
+#ifndef RELEASE
+    PushCallStack("internal::ReplaceAfterTrmm");
+#endif
+    const int height = D.Height();
+    for( int j=0; j<height; ++j )
+    {
+        const int length = std::min(-diagOffset,height-j);
+        for( int i=0; i<length; ++i )    
+            D.Set( j+i, j, diagonals[i].Get(j,0) );
+        if( diag == UNIT && j-diagOffset < height )
+            D.Set( j-diagOffset, j, diagonals[-diagOffset].Get(j,0) );
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
 }
+} // internal
 
 template<typename F>
 void clique::numeric::LocalFrontLowerMultiplyNormal
@@ -58,6 +103,8 @@ void clique::numeric::LocalFrontLowerMultiplyNormal
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
         throw std::logic_error( msg.str().c_str() );
     }
+    if( diagOffset > 0 )
+        throw std::logic_error("Diagonal offsets cannot be positive");
 #endif
     Matrix<F>* LMod = const_cast<Matrix<F>*>(&L);
     Matrix<F> LT, LB;
@@ -78,22 +125,16 @@ void clique::numeric::LocalFrontLowerMultiplyNormal
     }
     else
     {
-        Matrix<F> d;
-        if( diag == UNIT )
-        {
-            LT.GetDiagonal( d, diagOffset );
-            internal::SetDiagonalToOne( LT, diagOffset );
-        }
-        basic::Trmm( LEFT, LOWER, NORMAL, diag, (F)1, LT, XT );
-        if( diag == UNIT )
-            LT.SetDiagonal( d, diagOffset );
+        std::vector<Matrix<F> > diagonals;
+        internal::ModifyForTrmm( LT, diag, diagOffset, diagonals );
+        basic::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, (F)1, LT, XT );
+        internal::ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
     }
 #ifndef RELEASE
     clique::PopCallStack();
 #endif
 }
 
-// No const since we might modify the diagonal
 template<typename F>
 void clique::numeric::LocalFrontLowerMultiplyTranspose
 ( Orientation orientation, Diagonal diag, int diagOffset,
@@ -113,6 +154,8 @@ void clique::numeric::LocalFrontLowerMultiplyTranspose
     }
     if( orientation == NORMAL )
         throw std::logic_error("Orientation must be (conjugate-)transposed");
+    if( diagOffset > 0 )
+        throw std::logic_error("Diagonal offsets cannot be positive");
 #endif
     Matrix<F>* LMod = const_cast<Matrix<F>*>(&L);
     Matrix<F> LT, LB;
@@ -131,15 +174,10 @@ void clique::numeric::LocalFrontLowerMultiplyTranspose
     }
     else
     {
-        Matrix<F> d;
-        if( diag == UNIT )
-        {
-            LT.GetDiagonal( d, diagOffset );
-            internal::SetDiagonalToOne( LT, diagOffset );
-        }
-        basic::Trmm( LEFT, LOWER, orientation, diag, (F)1, LT, XT );
-        if( diag == UNIT )
-            LT.SetDiagonal( d, diagOffset );
+        std::vector<Matrix<F> > diagonals;
+        internal::ModifyForTrmm( LT, diag, diagOffset, diagonals );
+        basic::Trmm( LEFT, LOWER, orientation, NON_UNIT, (F)1, LT, XT );
+        internal::ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
     }
 
     basic::Gemm( orientation, NORMAL, (F)1, LB, XB, (F)1, XT );
