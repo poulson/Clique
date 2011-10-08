@@ -256,11 +256,8 @@ void clique::numeric::DistLDLBackwardSolve
     rootFront.work1d.View
     ( rootSN.size, width, 0,
       localX.Buffer(rootSN.localOffset1d,0), localX.LDim(), rootGrid );
-    rootFront.work1d.Print("root work1d before backward solve");
     DistFrontLDLBackwardSolve
     ( orientation, rootSN.size, rootFront.front1d, rootFront.work1d );
-    rootFront.work1d.Print("root work1d after backward solve");
-    localX.Print("local X after root backward solve");
 
     std::vector<int>::const_iterator it;
     for( int s=numSupernodes-2; s>=0; --s )
@@ -392,13 +389,10 @@ void clique::numeric::DistLDLBackwardSolve
         recvDispls.clear();
 
         // Call the custom supernode backward solve
-        W.Print("W before backward solve");
         DistFrontLDLBackwardSolve( orientation, sn.size, front.front1d, W );
-        W.Print("W after backward solve");
 
         // Store the supernode portion of the result
         localXT = WT.LocalMatrix();
-        localXT.Print("localXT after backward solve");
     }
 #ifndef RELEASE
     PopCallStack();

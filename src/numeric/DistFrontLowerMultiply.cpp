@@ -113,15 +113,17 @@ void clique::numeric::DistFrontLowerMultiplyNormal
         {
             L11_STAR_STAR = L11;
             basic::internal::LocalTrmm
-            ( LEFT, LOWER, NORMAL, diag, (F)1, L11_STAR_STAR, X1 );
+            ( LEFT, LOWER, NORMAL, diag, (F)1, L11_STAR_STAR, X1_STAR_STAR );
         }
         else
         {
             L11_STAR_STAR = L11;
             internal::ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
             basic::internal::LocalTrmm
-            ( LEFT, LOWER, NORMAL, NON_UNIT, (F)1, L11_STAR_STAR, X1 );
+            ( LEFT, LOWER, NORMAL, NON_UNIT, 
+              (F)1, L11_STAR_STAR, X1_STAR_STAR );
         }
+        X1 = X1_STAR_STAR;
         //--------------------------------------------------------------------//
 
         SlideLockedPartitionUpDiagonal
@@ -181,6 +183,7 @@ void clique::numeric::DistFrontLowerMultiplyTranspose
                                   X2(g);
 
     // Temporary distributions
+    DistMatrix<F,STAR,STAR> X1_STAR_STAR(g);
     DistMatrix<F,STAR,STAR> L11_STAR_STAR(g);
     DistMatrix<F,STAR,STAR> Z1_STAR_STAR(g);
 
@@ -206,19 +209,22 @@ void clique::numeric::DistFrontLowerMultiplyTranspose
           XB,  X2, blocksize );
 
         //--------------------------------------------------------------------//
+        X1_STAR_STAR = X1; // Can this be avoided?
+        L11_STAR_STAR = L11;
         if( diagOffset == 0 )
         {
-            L11_STAR_STAR = L11;
             basic::internal::LocalTrmm
-            ( LEFT, LOWER, orientation, diag, (F)1, L11_STAR_STAR, X1 );
+            ( LEFT, LOWER, orientation, diag, 
+              (F)1, L11_STAR_STAR, X1_STAR_STAR );
         }
         else
         {
-            L11_STAR_STAR = L11;
             internal::ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
             basic::internal::LocalTrmm
-            ( LEFT, LOWER, orientation, NON_UNIT, (F)1, L11_STAR_STAR, X1 );
+            ( LEFT, LOWER, orientation, NON_UNIT, 
+              (F)1, L11_STAR_STAR, X1_STAR_STAR );
         }
+        X1 = X1_STAR_STAR;
 
         Z1_STAR_STAR.ResizeTo( blocksize, X1.Width() );
         basic::internal::LocalGemm

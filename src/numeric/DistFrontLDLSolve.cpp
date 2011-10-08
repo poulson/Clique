@@ -36,7 +36,7 @@ void AddInLocalData
     const int width = X1.Width();
     const int localHeight = X1.LocalHeight();
     const int stride = X1.Grid().Size();
-    const int offset = X1.ColAlignment();
+    const int offset = X1.ColShift();
     for( int j=0; j<width; ++j )
     {
         F* ZColBuffer = Z.LocalBuffer(0,j);
@@ -115,7 +115,6 @@ void clique::numeric::DistFrontLDLForwardSolve
     DistMatrix<F,STAR,STAR> L11_STAR_STAR(g);
     DistMatrix<F,STAR,STAR> X1_STAR_STAR(g);
 
-    // Start the algorithm
     LockedPartitionDownDiagonal
     ( L, LTL, LTR,
          LBL, LBR, 0 );
@@ -144,6 +143,7 @@ void clique::numeric::DistFrontLDLForwardSolve
         // X1[* ,* ] := (L11[* ,* ])^-1 X1[* ,* ]
         basic::internal::LocalTrsm
         ( LEFT, LOWER, NORMAL, UNIT, (F)1, L11_STAR_STAR, X1_STAR_STAR );
+        X1 = X1_STAR_STAR;
 
         // X2[VC,* ] -= L21[VC,* ] X1[* ,* ]
         basic::internal::LocalGemm

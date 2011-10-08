@@ -204,7 +204,8 @@ main( int argc, char* argv[] )
             Matrix<F> frontTL;
             frontTL.View( front, 0, 0, sn.size, sn.size );
             frontTL.SetToRandom();
-            frontTL.Print( "frontTL local" );
+            if( writeInfo )
+                frontTL.Print( infoFile, "frontTL local" );
         }
         L.dist.mode = clique::MANY_RHS;
         L.dist.fronts.resize( log2CommSize+1 );
@@ -233,7 +234,8 @@ main( int argc, char* argv[] )
             DistMatrix<F,MC,MR> frontTL;
             frontTL.View( front2d, 0, 0, sn.size, sn.size );
             frontTL.SetToRandom();
-            frontTL.Print( "frontTL dist" );
+            if( writeInfo )
+                frontTL.Print( infoFile, "frontTL dist" );
         }
         mpi::Barrier( comm );
         const double fillStopTime = mpi::Time();
@@ -243,11 +245,12 @@ main( int argc, char* argv[] )
 
         // Generate a random RHS, multiply it by our matrix, and then 
         // compare the original RHS against the solution.
+        const int NUM_RHS = 1;
         const double makeRhsStartTime = mpi::Time();
         const int localHeight1d = 
             S.dist.supernodes.back().localOffset1d + 
             S.dist.supernodes.back().localSize1d;
-        Matrix<F> localX( localHeight1d, 5 );
+        Matrix<F> localX( localHeight1d, NUM_RHS );
         localX.SetToRandom();
         Matrix<F> localYLower = localX;
         clique::numeric::SetSolveMode( L, clique::FEW_RHS );
@@ -264,10 +267,10 @@ main( int argc, char* argv[] )
         if( commRank == 0 )
             std::cout << "Make RHS time: " << makeRhsStopTime-makeRhsStartTime
                       << " secs" << std::endl;
-        if( commRank == 0 )
+        if( writeInfo )
         {
-            localX.Print( "localX" );
-            localY.Print( "localY" );
+            localX.Print( infoFile, "localX" );
+            localY.Print( infoFile, "localY" );
         }
 
         // Call the numerical factorization routine
@@ -295,16 +298,19 @@ main( int argc, char* argv[] )
         mpi::Barrier( comm );
         const double solveStopTime = mpi::Time();
         if( commRank == 0 )
-        {
             std::cout << "Solve time: " << solveStopTime-solveStartTime
                       << " secs" << std::endl;
 
-            localY.Print( "localY final" );
-
-            basic::Axpy( (F)-1, localX, localY );
-            std::cout << "Error norm: " << advanced::Norm( localY ) 
-                      << std::endl;
-        }
+        if( writeInfo )
+            localY.Print( infoFile, "localY final" );
+        basic::Axpy( (F)-1, localX, localY );
+        const double myNorm = advanced::Norm( localY );
+        double norm;
+        mpi::Reduce( &myNorm, &norm, 1, mpi::SUM, 0, comm );
+        if( commRank == 0 )
+            std::cout << "Error norm: " << norm << std::endl;
+        if( writeInfo )
+            localY.Print( infoFile, "error final" );
     }
     catch( std::exception& e )
     {
