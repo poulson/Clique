@@ -200,12 +200,20 @@ main( int argc, char* argv[] )
 
             const int frontSize = sn.size+sn.lowerStruct.size();
             front.ResizeTo( frontSize, frontSize );
-            front.SetToZero();
-            Matrix<F> frontTL;
-            frontTL.View( front, 0, 0, sn.size, sn.size );
+            Matrix<F> frontTL, frontTR,
+                      frontBL, frontBR;
+            PartitionDownDiagonal
+            ( front, frontTL, frontTR,
+                     frontBL, frontBR, sn.size );
             frontTL.SetToRandom();
+            frontBL.SetToRandom();
+            frontTR.SetToZero();
+            frontBR.SetToZero();
             if( writeInfo )
+            {
                 frontTL.Print( infoFile, "frontTL local" );
+                frontBL.Print( infoFile, "frontBL local" );
+            }
         }
         L.dist.mode = clique::MANY_RHS;
         L.dist.fronts.resize( log2CommSize+1 );
@@ -230,12 +238,20 @@ main( int argc, char* argv[] )
             front2d.SetGrid( *sn.grid );
             const int frontSize = sn.size+sn.lowerStruct.size();
             front2d.ResizeTo( frontSize, frontSize );
-            front2d.SetToZero();
-            DistMatrix<F,MC,MR> frontTL;
-            frontTL.View( front2d, 0, 0, sn.size, sn.size );
+            DistMatrix<F,MC,MR> frontTL(*sn.grid), frontTR(*sn.grid),
+                                frontBL(*sn.grid), frontBR(*sn.grid);
+            PartitionDownDiagonal
+            ( front2d, frontTL, frontTR,
+                       frontBL, frontBR, sn.size );
             frontTL.SetToRandom();
+            frontBL.SetToRandom();
+            frontTR.SetToZero();
+            frontBR.SetToZero();
             if( writeInfo )
+            {
                 frontTL.Print( infoFile, "frontTL dist" );
+                frontBL.Print( infoFile, "frontBL dist" );
+            }
         }
         mpi::Barrier( comm );
         const double fillStopTime = mpi::Time();
