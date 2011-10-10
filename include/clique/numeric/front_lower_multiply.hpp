@@ -27,30 +27,29 @@ using namespace elemental;
 
 template<typename F>
 void LocalFrontLowerMultiply
-( Orientation orientation, Diagonal diag, int diagOffset, int supernodeSize,
+( Orientation orientation, Diagonal diag, int diagOffset,
   const Matrix<F>& L, Matrix<F>& X );
 template<typename F>
 void DistFrontLowerMultiply
-( Orientation orientation, Diagonal diag, int diagOffset, int supernodeSize,
+( Orientation orientation, Diagonal diag, int diagOffset,
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
 void LocalFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset, int supernodeSize,
-  const Matrix<F>& L, Matrix<F>& X );
+( Diagonal diag, int diagOffset, const Matrix<F>& L, Matrix<F>& X );
 template<typename F>
 void DistFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset, int supernodeSize,
+( Diagonal diag, int diagOffset, 
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
 
 // Handles the TRANSPOSE and ADJOINT cases
 template<typename F>
 void LocalFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset, int supernodeSize,
+( Orientation orientation, Diagonal diag, int diagOffset, 
   const Matrix<F>& L, Matrix<F>& X );
 template<typename F>
 void DistFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset, int supernodeSize,
+( Orientation orientation, Diagonal diag, int diagOffset,
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
 
 //----------------------------------------------------------------------------//
@@ -59,18 +58,16 @@ void DistFrontLowerMultiplyTranspose
 
 template<typename F>
 void LocalFrontLowerMultiply
-( Orientation orientation, Diagonal diag, int diagOffset, int supernodeSize,
+( Orientation orientation, Diagonal diag, int diagOffset,
   const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
     PushCallStack("numeric::LocalFrontLowerMultiply");
 #endif
     if( orientation == NORMAL )
-        LocalFrontLowerMultiplyNormal
-        ( diag, diagOffset, supernodeSize, L, X );
+        LocalFrontLowerMultiplyNormal( diag, diagOffset, L, X );
     else
-        LocalFrontLowerMultiplyTranspose
-        ( orientation, diag, diagOffset, supernodeSize, L, X );
+        LocalFrontLowerMultiplyTranspose( orientation, diag, diagOffset, L, X );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -78,18 +75,16 @@ void LocalFrontLowerMultiply
 
 template<typename F>
 void DistFrontLowerMultiply
-( Orientation orientation, Diagonal diag, int diagOffset, int supernodeSize,
+( Orientation orientation, Diagonal diag, int diagOffset, 
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
     PushCallStack("numeric::DistFrontLowerMultiply");
 #endif
     if( orientation == NORMAL )
-        DistFrontLowerMultiplyNormal
-        ( diag, diagOffset, supernodeSize, L, X );
+        DistFrontLowerMultiplyNormal( diag, diagOffset, L, X );
     else
-        DistFrontLowerMultiplyTranspose
-        ( orientation, diag, diagOffset, supernodeSize, L, X );
+        DistFrontLowerMultiplyTranspose( orientation, diag, diagOffset, L, X );
 #ifndef RELEASE
     PopCallStack();
 #endif

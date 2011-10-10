@@ -26,87 +26,138 @@ using namespace elemental;
 
 template<typename F> // F represents a real or complex field
 void clique::numeric::DistFrontLDL
-( Orientation orientation, DistMatrix<F,MC,MR>& A, int supernodeSize )
+( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& AR )
 {
 #ifndef RELEASE
     clique::PushCallStack("numeric::DistFrontLDL");
-    if( A.Height() != A.Width() )
-        throw std::logic_error("A must be square");
+    if( AL.Height() != AR.Height() )
+        throw std::logic_error("AL and AR must be the same height");
+    if( AL.Height() != AL.Width() + AR.Width() )
+        throw std::logic_error
+        ("The combined widths of AL and AR must equal their heights");
+    if( AL.Grid() != AR.Grid() )
+        throw std::logic_error("AL and AR must use the same grid");
+    if( AL.ColAlignment() != AR.ColAlignment() )
+        throw std::logic_error("AL and AR must have the same col alignments");
+    if( AR.RowAlignment() != 
+        (AL.RowAlignment()+AL.Width()) % AL.Grid().Width() )
+        throw std::logic_error("AL and AR must have compatible row alignments");
     if( orientation == NORMAL )
         throw std::logic_error("DistFrontLDL must be (conjugate-)transposed.");
-    if( supernodeSize > A.Height() )
-        throw std::logic_error("Supernode is too big");
 #endif
-    const Grid& g = A.Grid();
+    const Grid& g = AL.Grid();
 
     // Matrix views
     DistMatrix<F,MC,MR>
-        ATL(g), ATR(g),  A00(g), A01(g), A02(g),
-        ABL(g), ABR(g),  A10(g), A11(g), A12(g),
-                         A20(g), A21(g), A22(g);
+        ALTL(g), ALTR(g),  AL00(g), AL01(g), AL02(g),
+        ALBL(g), ALBR(g),  AL10(g), AL11(g), AL12(g),
+                           AL20(g), AL21(g), AL22(g);
+    DistMatrix<F,MC,MR>
+        ART(g),  AR0(g),
+        ARB(g),  AR1(g),
+                 AR2(g);
 
     // Temporary matrices
-    DistMatrix<F,STAR,STAR> A11_STAR_STAR(g);
+    DistMatrix<F,STAR,STAR> AL11_STAR_STAR(g);
     DistMatrix<F,STAR,STAR> d1_STAR_STAR(g);
-    DistMatrix<F,VC,  STAR> A21_VC_STAR(g);
-    DistMatrix<F,VR,  STAR> A21_VR_STAR(g);
+    DistMatrix<F,VC,  STAR> AL21_VC_STAR(g);
+    DistMatrix<F,VR,  STAR> AL21_VR_STAR(g);
     DistMatrix<F,STAR,MC  > S21Trans_STAR_MC(g);
-    DistMatrix<F,STAR,MR  > A21AdjOrTrans_STAR_MR(g);
+    DistMatrix<F,STAR,MR  > AL21AdjOrTrans_STAR_MR(g);
+
+    DistMatrix<F,STAR,MC> leftL(g), leftR(g);
+    DistMatrix<F,STAR,MR> rightL(g), rightR(g);
+    DistMatrix<F,MC,  MR> AL22T(g), 
+                          AL22B(g);
+    DistMatrix<F,MC,  MR> AR2T(g), 
+                          AR2B(g);
 
     // Start the algorithm
     PartitionDownDiagonal
-    ( A, ATL, ATR,
-         ABL, ABR, 0 );
-    while( ATL.Height() < supernodeSize )
+    ( AL, ALTL, ALTR,
+          ALBL, ALBR, 0 );
+    PartitionDown
+    ( AR, ART,
+          ARB, 0 );
+    while( ALTL.Width() < AL.Width() )
     {
-        const int blocksize = std::min(Blocksize(),supernodeSize-ATL.Height());
         RepartitionDownDiagonal
-        ( ATL, /**/ ATR,  A00, /**/ A01, A02,
-         /*************/ /******************/
-               /**/       A10, /**/ A11, A12,
-          ABL, /**/ ABR,  A20, /**/ A21, A22, blocksize );
+        ( ALTL, /**/ ALTR,  AL00, /**/ AL01, AL02,
+         /***************/ /*********************/
+               /**/         AL10, /**/ AL11, AL12,
+          ALBL, /**/ ALBR,  AL20, /**/ AL21, AL22 );
 
-        A21_VC_STAR.AlignWith( A22 );
-        A21_VR_STAR.AlignWith( A22 );
-        S21Trans_STAR_MC.AlignWith( A22 );
-        A21AdjOrTrans_STAR_MR.AlignWith( A22 );
+        RepartitionDown
+        ( ART,  AR0,
+         /***/ /***/
+                AR1,
+          ARB,  AR2, AL11.Height() );
+
+        AL21_VC_STAR.AlignWith( AL22 );
+        AL21_VR_STAR.AlignWith( AL22 );
+        S21Trans_STAR_MC.AlignWith( AL22 );
+        AL21AdjOrTrans_STAR_MR.AlignWith( AL22 );
         //--------------------------------------------------------------------//
-        A11_STAR_STAR = A11; 
+        AL11_STAR_STAR = AL11; 
         elemental::advanced::internal::LocalLDL
-        ( orientation, A11_STAR_STAR, d1_STAR_STAR );
-        A11 = A11_STAR_STAR;
+        ( orientation, AL11_STAR_STAR, d1_STAR_STAR );
+        AL11 = AL11_STAR_STAR;
 
-        A21_VC_STAR = A21;
+        AL21_VC_STAR = AL21;
         basic::internal::LocalTrsm
         ( RIGHT, LOWER, orientation, UNIT, 
-          (F)1, A11_STAR_STAR, A21_VC_STAR );
+          (F)1, AL11_STAR_STAR, AL21_VC_STAR );
 
-        S21Trans_STAR_MC.TransposeFrom( A21_VC_STAR );
-        basic::DiagonalSolve( RIGHT, NORMAL, d1_STAR_STAR, A21_VC_STAR );
-        A21_VR_STAR = A21_VC_STAR;
+        S21Trans_STAR_MC.TransposeFrom( AL21_VC_STAR );
+        basic::DiagonalSolve( RIGHT, NORMAL, d1_STAR_STAR, AL21_VC_STAR );
+        AL21_VR_STAR = AL21_VC_STAR;
         if( orientation == ADJOINT )
-            A21AdjOrTrans_STAR_MR.AdjointFrom( A21_VR_STAR );
+            AL21AdjOrTrans_STAR_MR.AdjointFrom( AL21_VR_STAR );
         else
-            A21AdjOrTrans_STAR_MR.TransposeFrom( A21_VR_STAR );
+            AL21AdjOrTrans_STAR_MR.TransposeFrom( AL21_VR_STAR );
 
+        // Partition the update of the bottom-right corner into three pieces
+        PartitionRight
+        ( S21Trans_STAR_MC, 
+          leftL, leftR, AL22.Width() );
+        PartitionRight
+        ( AL21AdjOrTrans_STAR_MR,
+          rightL, rightR, AL22.Width() );
+        PartitionDown
+        ( AL22, AL22T,
+                AL22B, AL22.Width() );
+        PartitionDown
+        ( AR2,  AR2T,
+                AR2B, AL22.Width() );
         basic::internal::LocalTriangularRankK
-        ( LOWER, TRANSPOSE,
-          (F)-1, S21Trans_STAR_MC, A21AdjOrTrans_STAR_MR, (F)1, A22 );
+        ( LOWER, orientation, 
+          (F)-1, leftL, rightL, (F)1, AL22T );
+        basic::internal::LocalGemm
+        ( orientation, NORMAL, (F)-1, leftR, rightL, (F)1, AL22B );
+        basic::internal::LocalTriangularRankK
+        ( LOWER, orientation,
+          (F)-1, leftR, rightR, (F)1, AR2B );
 
         basic::DiagonalSolve
         ( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
-        A21.TransposeFrom( S21Trans_STAR_MC );
+        AL21.TransposeFrom( S21Trans_STAR_MC );
         //--------------------------------------------------------------------//
-        A21_VC_STAR.FreeAlignments();
-        A21_VR_STAR.FreeAlignments();
+        AL21_VC_STAR.FreeAlignments();
+        AL21_VR_STAR.FreeAlignments();
         S21Trans_STAR_MC.FreeAlignments();
-        A21AdjOrTrans_STAR_MR.FreeAlignments();
+        AL21AdjOrTrans_STAR_MR.FreeAlignments();
+
+        SlidePartitionDown
+        ( ART,   AR0,
+                 AR1, 
+         /***/  /***/
+          ARB,   AR2 );
 
         SlidePartitionDownDiagonal
-        ( ATL, /**/ ATR,  A00, A01, /**/ A02,
-               /**/       A10, A11, /**/ A12,
-         /*************/ /******************/
-          ABL, /**/ ABR,  A20, A21, /**/ A22 );
+        ( ALTL, /**/ ALTR,  AL00, AL01, /**/ AL02,
+               /**/         AL10, AL11, /**/ AL12,
+         /***************/ /*********************/
+          ALBL, /**/ ALBR,  AL20, AL21, /**/ AL22 );
     }
 #ifndef RELEASE
     clique::PopCallStack();
@@ -115,16 +166,20 @@ void clique::numeric::DistFrontLDL
 
 template void clique::numeric::DistFrontLDL
 ( Orientation orientation, 
-  DistMatrix<float,MC,MR>& A, int supernodeSize );
+  DistMatrix<float,MC,MR>& AL, 
+  DistMatrix<float,MC,MR>& AR );
 
 template void clique::numeric::DistFrontLDL
 ( Orientation orientation, 
-  DistMatrix<double,MC,MR>& A, int supernodeSize );
+  DistMatrix<double,MC,MR>& AL, 
+  DistMatrix<double,MC,MR>& AR );
 
 template void clique::numeric::DistFrontLDL
 ( Orientation orientation, 
-  DistMatrix<std::complex<float>,MC,MR>& A, int supernodeSize );
+  DistMatrix<std::complex<float>,MC,MR>& AL, 
+  DistMatrix<std::complex<float>,MC,MR>& AR );
 
 template void clique::numeric::DistFrontLDL
 ( Orientation orientation, 
-  DistMatrix<std::complex<double>,MC,MR>& A, int supernodeSize );
+  DistMatrix<std::complex<double>,MC,MR>& AL,
+  DistMatrix<std::complex<double>,MC,MR>& AR );

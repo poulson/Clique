@@ -38,11 +38,16 @@ void clique::numeric::DistLDL
     // The bottom front is already computed, so just view it
     const LocalSymmFront<F>& topLocalFront = L.local.fronts.back();
     DistSymmFront<F>& bottomDistFront = L.dist.fronts[0];
-    const Grid& bottomGrid = bottomDistFront.front2d.Grid();
-    bottomDistFront.front2d.Empty(); // eventually this can be removed...
-    bottomDistFront.front2d.LockedView
-    ( topLocalFront.front.Height(), topLocalFront.front.Width(), 0, 0, 
-      topLocalFront.front.LockedBuffer(), topLocalFront.front.LDim(), 
+    const Grid& bottomGrid = bottomDistFront.front2dL.Grid();
+    bottomDistFront.front2dL.Empty();
+    bottomDistFront.front2dL.LockedView
+    ( topLocalFront.frontL.Height(), topLocalFront.frontL.Width(), 0, 0, 
+      topLocalFront.frontL.LockedBuffer(), topLocalFront.frontL.LDim(), 
+      bottomGrid );
+    bottomDistFront.front2dR.Empty();
+    bottomDistFront.front2dR.LockedView
+    ( topLocalFront.frontR.Height(), topLocalFront.frontR.Width(), 0, 0,
+      topLocalFront.frontR.LockedBuffer(), topLocalFront.frontR.LDim(),
       bottomGrid );
 
     // Perform the distributed portion of the factorization
@@ -58,7 +63,7 @@ void clique::numeric::DistLDL
             ( sn.childFactRecvIndices.size() == 0 );
 
         // Grab this front's grid information
-        const Grid& grid = front.front2d.Grid();
+        const Grid& grid = front.front2dL.Grid();
         mpi::Comm comm = grid.VCComm();
         const unsigned commRank = mpi::CommRank( comm );
         const unsigned commSize = mpi::CommSize( comm );
@@ -66,7 +71,7 @@ void clique::numeric::DistLDL
         const unsigned gridWidth = grid.Width();
 
         // Grab the child's grid information
-        const Grid& childGrid = childFront.front2d.Grid();
+        const Grid& childGrid = childFront.front2dL.Grid();
         mpi::Comm childComm = childGrid.VCComm();
         const unsigned childCommRank = mpi::CommRank( childComm );
         const unsigned childCommSize = mpi::CommSize( childComm );
@@ -76,17 +81,20 @@ void clique::numeric::DistLDL
         const unsigned childGridCol = childGrid.MRRank();
 
 #ifndef RELEASE
-        if( front.front2d.Height() != sn.size+sn.lowerStruct.size() ||
-            front.front2d.Width()  != sn.size+sn.lowerStruct.size() )
+        if( front.front2dL.Height() != sn.size+sn.lowerStruct.size() ||
+            front.front2dL.Width() + front.front2dR.Width() != 
+              sn.size+sn.lowerStruct.size() )
             throw std::logic_error("Front was not the proper size");
+        if( front.front2dL.Grid() != front.front2dR.Grid() )
+            throw std::logic_error("Left and right front grids must match");
 #endif
 
         // Pack our child's update
         DistMatrix<F,MC,MR> childUpdate;
-        const int updateSize = childFront.front2d.Height()-childSN.size;
+        const int updateSize = childFront.front2dR.Width();
         childUpdate.LockedView
-        ( childFront.front2d, 
-          childSN.size, childSN.size, updateSize, updateSize );
+        ( childFront.front2dR, 
+          childSN.size, 0, updateSize, updateSize );
         const bool isLeftChild = ( commRank < commSize/2 );
         std::vector<int> sendCounts(commSize), sendDispls(commSize);
         int sendBufferSize = 0;
@@ -186,6 +194,7 @@ void clique::numeric::DistLDL
         sendDispls.clear();
 
         // Unpack the child udpates (with an Axpy)
+        const int leftLocalWidth = front.front2dL.LocalWidth();
         for( int proc=0; proc<commSize; ++proc )
         {
             const F* recvValues = &recvBuffer[recvDispls[proc]];
@@ -196,8 +205,12 @@ void clique::numeric::DistLDL
                 const int iFrontLocal = recvIndices[2*k+0];
                 const int jFrontLocal = recvIndices[2*k+1];
                 const F value = recvValues[k];
-                front.front2d.UpdateLocalEntry
-                ( iFrontLocal, jFrontLocal, value );
+                if( jFrontLocal < leftLocalWidth )
+                    front.front2dL.UpdateLocalEntry
+                    ( iFrontLocal, jFrontLocal, value );
+                else
+                    front.front2dR.UpdateLocalEntry
+                    ( iFrontLocal, jFrontLocal-leftLocalWidth, value );
             }
         }
         recvBuffer.clear();
@@ -207,7 +220,7 @@ void clique::numeric::DistLDL
             sn.childFactRecvIndices.clear();
 
         // Now that the frontal matrix is set up, perform the factorization
-        DistFrontLDL( orientation, front.front2d, sn.size );
+        DistFrontLDL( orientation, front.front2dL, front.front2dR );
     }
 #ifndef RELEASE
     PopCallStack();

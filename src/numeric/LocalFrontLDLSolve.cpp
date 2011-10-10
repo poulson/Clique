@@ -27,9 +27,7 @@ using namespace elemental;
 
 template<typename F>
 void clique::numeric::LocalFrontLDLDiagonalSolve
-( int supernodeSize,
-  const Matrix<F>& d, Matrix<F>& X,
-  bool checkIfSingular )
+( const Matrix<F>& d, Matrix<F>& X, bool checkIfSingular )
 {
 #ifndef RELEASE
     clique::PushCallStack("numeric::LocalFrontLDLDiagonalSolve");
@@ -46,34 +44,33 @@ void clique::numeric::LocalFrontLDLDiagonalSolve
 
 template<typename F>
 void clique::numeric::LocalFrontLDLForwardSolve
-( int supernodeSize, const Matrix<F>& L, Matrix<F>& X )
+( const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
     clique::PushCallStack("numeric::LocalFrontLDLForwardSolve");
-    if( L.Height() != L.Width() || L.Height() != X.Height() || 
-        L.Height() < supernodeSize )
+    if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
         msg << "Nonconformal solve:\n"
-            << "  supernodeSize ~ " << supernodeSize << "\n"
             << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
         throw std::logic_error( msg.str().c_str() );
     }
 #endif
-    Matrix<F> LTL, LTR,
-              LBL, LBR;
-    LockedPartitionDownDiagonal
-    ( L, LTL, LTR,
-         LBL, LBR, supernodeSize );
+    Matrix<F> LT,
+              LB;
+    LockedPartitionDown
+    ( L, LT,
+         LB, L.Width() );
 
-    Matrix<F> XT, XB;
+    Matrix<F> XT, 
+              XB;
     PartitionDown
     ( X, XT,
-         XB, supernodeSize );
+         XB, L.Width() );
 
-    basic::Trsm( LEFT, LOWER, NORMAL, UNIT, (F)1, LTL, XT );
-    basic::Gemm( NORMAL, NORMAL, (F)-1, LBL, XT, (F)1, XB );
+    basic::Trsm( LEFT, LOWER, NORMAL, UNIT, (F)1, LT, XT );
+    basic::Gemm( NORMAL, NORMAL, (F)-1, LB, XT, (F)1, XB );
 #ifndef RELEASE
     clique::PopCallStack();
 #endif
@@ -83,16 +80,14 @@ void clique::numeric::LocalFrontLDLForwardSolve
 // (with the exception of the diagonal) must be explicitly stored
 template<typename F>
 void clique::numeric::LocalFrontLDLBackwardSolve
-( Orientation orientation, int supernodeSize, const Matrix<F>& L, Matrix<F>& X )
+( Orientation orientation, const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
     clique::PushCallStack("numeric::LocalFrontLDLBackwardSolve");
-    if( L.Height() != L.Width() || L.Height() != X.Height() || 
-        L.Height() < supernodeSize )
+    if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
         msg << "Nonconformal solve:\n"
-            << "  supernodeSize ~ " << supernodeSize << "\n"
             << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
         throw std::logic_error( msg.str().c_str() );
@@ -100,64 +95,57 @@ void clique::numeric::LocalFrontLDLBackwardSolve
     if( orientation == NORMAL )
         throw std::logic_error("LDL must be (conjugate-)transposed");
 #endif
-    Matrix<F> LTL, LTR,
-              LBL, LBR;
-    LockedPartitionDownDiagonal
-    ( L, LTL, LTR, 
-         LBL, LBR, supernodeSize );
+    Matrix<F> LT,
+              LB;
+    LockedPartitionDown
+    ( L, LT,
+         LB, L.Width() );
 
-    Matrix<F> XT, XB;
+    Matrix<F> XT,
+              XB;
     PartitionDown
     ( X, XT,
-         XB, supernodeSize );
+         XB, L.Width() );
 
-    basic::Gemm( orientation, NORMAL, (F)-1, LBL, XB, (F)1, XT );
-    basic::Trsm( LEFT, LOWER, orientation, UNIT, (F)1, LTL, XT );
+    basic::Gemm( orientation, NORMAL, (F)-1, LB, XB, (F)1, XT );
+    basic::Trsm( LEFT, LOWER, orientation, UNIT, (F)1, LT, XT );
 #ifndef RELEASE
     clique::PopCallStack();
 #endif
 }
 
 template void clique::numeric::LocalFrontLDLForwardSolve
-( int supernodeSize,
-  const Matrix<float>& L, Matrix<float>& X );
+( const Matrix<float>& L, Matrix<float>& X );
 template void clique::numeric::LocalFrontLDLDiagonalSolve
-( int supernodeSize,
-  const Matrix<float>& d, Matrix<float>& X,
+( const Matrix<float>& d, Matrix<float>& X,
   bool checkIfSingular );
 template void clique::numeric::LocalFrontLDLBackwardSolve
-( Orientation orientation, int supernodeSize,
+( Orientation orientation, 
   const Matrix<float>& L, Matrix<float>& X );
 
 template void clique::numeric::LocalFrontLDLForwardSolve
-( int supernodeSize,
-  const Matrix<double>& L, Matrix<double>& X );
+( const Matrix<double>& L, Matrix<double>& X );
 template void clique::numeric::LocalFrontLDLDiagonalSolve
-( int supernodeSize,
-  const Matrix<double>& d, Matrix<double>& X,
+( const Matrix<double>& d, Matrix<double>& X,
   bool checkIfSingular );
 template void clique::numeric::LocalFrontLDLBackwardSolve
-( Orientation orientation, int supernodeSize,
+( Orientation orientation, 
   const Matrix<double>& L, Matrix<double>& X );
 
 template void clique::numeric::LocalFrontLDLForwardSolve
-( int supernodeSize,
-  const Matrix<std::complex<float> >& L, Matrix<std::complex<float> >& X );
+( const Matrix<std::complex<float> >& L, Matrix<std::complex<float> >& X );
 template void clique::numeric::LocalFrontLDLDiagonalSolve
-( int supernodeSize,
-  const Matrix<std::complex<float> >& d, Matrix<std::complex<float> >& X,
+( const Matrix<std::complex<float> >& d, Matrix<std::complex<float> >& X,
   bool checkIfSingular );
 template void clique::numeric::LocalFrontLDLBackwardSolve
-( Orientation orientation, int supernodeSize,
+( Orientation orientation, 
   const Matrix<std::complex<float> >& L, Matrix<std::complex<float> >& X );
 
 template void clique::numeric::LocalFrontLDLForwardSolve
-( int supernodeSize,
-  const Matrix<std::complex<double> >& L, Matrix<std::complex<double> >& X );
+( const Matrix<std::complex<double> >& L, Matrix<std::complex<double> >& X );
 template void clique::numeric::LocalFrontLDLDiagonalSolve
-( int supernodeSize,
-  const Matrix<std::complex<double> >& d, Matrix<std::complex<double> >& X,
+( const Matrix<std::complex<double> >& d, Matrix<std::complex<double> >& X,
   bool checkIfSingular );
 template void clique::numeric::LocalFrontLDLBackwardSolve
-( Orientation orientation, int supernodeSize,
+( Orientation orientation, 
   const Matrix<std::complex<double> >& L, Matrix<std::complex<double> >& X );

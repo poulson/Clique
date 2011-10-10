@@ -36,11 +36,11 @@ void clique::numeric::LocalLowerMultiplyNormal
     for( int s=0; s<numSupernodes; ++s )
     {
         const LocalSymmFactSupernode& sn = S.local.supernodes[s];
-        const Matrix<F>& front = L.local.fronts[s].front;
+        const Matrix<F>& frontL = L.local.fronts[s].frontL;
         Matrix<F>& W = L.local.fronts[s].work;
 
         // Set up a workspace
-        W.ResizeTo( front.Height(), width );
+        W.ResizeTo( frontL.Height(), width );
         Matrix<F> WT, WB;
         PartitionDown
         ( W, WT,
@@ -54,7 +54,7 @@ void clique::numeric::LocalLowerMultiplyNormal
 
         // Multiply this block column of L against the supernode portion of the
         // right-hand side and set W equal to the result
-        LocalFrontLowerMultiply( NORMAL, diag, diagOffset, sn.size, front, W );
+        LocalFrontLowerMultiply( NORMAL, diag, diagOffset, frontL, W );
 
         // Update using the children (if they exist)
         const int numChildren = sn.children.size();
@@ -131,11 +131,11 @@ void clique::numeric::LocalLowerMultiplyTranspose
     for( int s=numSupernodes-2; s>=0; --s )
     {
         const LocalSymmFactSupernode& sn = S.local.supernodes[s];
-        const Matrix<F>& front = L.local.fronts[s].front;
+        const Matrix<F>& frontL = L.local.fronts[s].frontL;
         Matrix<F>& W = L.local.fronts[s].work;
 
         // Set up a workspace
-        W.ResizeTo( front.Height(), width );
+        W.ResizeTo( frontL.Height(), width );
         Matrix<F> WT, WB;
         PartitionDown
         ( W, WT,
@@ -176,8 +176,7 @@ void clique::numeric::LocalLowerMultiplyTranspose
 
         // Multiply the (conjugate-)transpose of this block column of L against
         // the supernode portion of the right-hand side.
-        LocalFrontLowerMultiply
-        ( orientation, diag, diagOffset, sn.size, front, XNode );
+        LocalFrontLowerMultiply( orientation, diag, diagOffset, frontL, XNode );
 
         // Store the supernode portion of the result
         Matrix<F> XNodeT, XNodeB;

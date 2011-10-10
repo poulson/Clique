@@ -49,7 +49,7 @@ void clique::numeric::DistLowerMultiplyNormal
     distLeafFront.work1d.LockedView
     ( localRootFront.work.Height(), localRootFront.work.Width(), 0,
       localRootFront.work.LockedBuffer(), localRootFront.work.LDim(),
-      distLeafFront.front1d.Grid() );
+      distLeafFront.front1dL.Grid() );
     
     // Perform the distributed portion of the forward multiply
     for( int s=1; s<numSupernodes; ++s )
@@ -58,8 +58,8 @@ void clique::numeric::DistLowerMultiplyNormal
         const DistSymmFactSupernode& sn = S.dist.supernodes[s];
         const DistSymmFront<F>& childFront = L.dist.fronts[s-1];
         const DistSymmFront<F>& front = L.dist.fronts[s];
-        const Grid& childGrid = childFront.front1d.Grid();
-        const Grid& grid = front.front1d.Grid();
+        const Grid& childGrid = childFront.front1dL.Grid();
+        const Grid& grid = front.front1dL.Grid();
         mpi::Comm comm = grid.VCComm();
         mpi::Comm childComm = childGrid.VCComm();
         const int commSize = mpi::CommSize( comm );
@@ -70,7 +70,7 @@ void clique::numeric::DistLowerMultiplyNormal
         // Set up a workspace
         DistMatrix<F,VC,STAR>& W = front.work1d;
         W.SetGrid( grid );
-        W.ResizeTo( front.front1d.Height(), width );
+        W.ResizeTo( front.front1dL.Height(), width );
         DistMatrix<F,VC,STAR> WT(grid), WB(grid);
         PartitionDown
         ( W, WT,
@@ -83,8 +83,7 @@ void clique::numeric::DistLowerMultiplyNormal
         WB.SetToZero();
 
         // Now that the right-hand side is set up, perform the multiply
-        DistFrontLowerMultiply
-        ( NORMAL, diag, diagOffset, sn.size, front.front1d, W );
+        DistFrontLowerMultiply( NORMAL, diag, diagOffset, front.front1dL, W );
 
         // Pack our child's update
         DistMatrix<F,VC,STAR>& childW = childFront.work1d;
@@ -220,15 +219,14 @@ void clique::numeric::DistLowerMultiplyTranspose
     // Directly operate on the root separator's portion of the right-hand sides
     const DistSymmFactSupernode& rootSN = S.dist.supernodes.back();
     const DistSymmFront<F>& rootFront = L.dist.fronts.back();
-    const Grid& rootGrid = rootFront.front1d.Grid();
+    const Grid& rootGrid = rootFront.front1dL.Grid();
     DistMatrix<F,VC,STAR> XRoot(rootGrid);
     XRoot.View
     ( rootSN.size, width, 0,
       localX.Buffer(rootSN.localOffset1d,0), localX.LDim(), rootGrid );
     rootFront.work1d = XRoot; // store the RHS for use by the children
     DistFrontLowerMultiply
-    ( orientation, diag, diagOffset, rootSN.size, 
-      rootFront.front1d, XRoot );
+    ( orientation, diag, diagOffset, rootFront.front1dL, XRoot );
 
     std::vector<int>::const_iterator it;
     for( int s=numSupernodes-2; s>=0; --s )
@@ -237,8 +235,8 @@ void clique::numeric::DistLowerMultiplyTranspose
         const DistSymmFactSupernode& sn = S.dist.supernodes[s];
         const DistSymmFront<F>& parentFront = L.dist.fronts[s+1];
         const DistSymmFront<F>& front = L.dist.fronts[s];
-        const Grid& grid = front.front1d.Grid();
-        const Grid& parentGrid = parentFront.front1d.Grid();
+        const Grid& grid = front.front1dL.Grid();
+        const Grid& parentGrid = parentFront.front1dL.Grid();
         mpi::Comm comm = grid.VCComm(); 
         mpi::Comm parentComm = parentGrid.VCComm();
         const int commSize = mpi::CommSize( comm );
@@ -249,7 +247,7 @@ void clique::numeric::DistLowerMultiplyTranspose
         // Set up a copy of the RHS in our workspace.
         DistMatrix<F,VC,STAR>& W = front.work1d;
         W.SetGrid( grid );
-        W.ResizeTo( front.front1d.Height(), width );
+        W.ResizeTo( front.front1dL.Height(), width );
         DistMatrix<F,VC,STAR> WT(grid), WB(grid);
         PartitionDown
         ( W, WT,
@@ -366,7 +364,7 @@ void clique::numeric::DistLowerMultiplyTranspose
 
         // Perform the multiply for this front
         DistFrontLowerMultiply
-        ( orientation, diag, diagOffset, sn.size, front.front1d, XNode );
+        ( orientation, diag, diagOffset, front.front1dL, XNode );
 
         // Store the supernode portion of the result
         DistMatrix<F,VC,STAR> XNodeT(grid), XNodeB(grid);

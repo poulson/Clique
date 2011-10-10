@@ -43,7 +43,7 @@ void ModifyForTrmm( DistMatrix<F,STAR,STAR>& D, Diagonal diag, int diagOffset )
 
 template<typename F>
 void clique::numeric::DistFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset, int supernodeSize, 
+( Diagonal diag, int diagOffset,
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
@@ -51,12 +51,10 @@ void clique::numeric::DistFrontLowerMultiplyNormal
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
-    if( L.Height() != L.Width() || L.Height() != X.Height() || 
-        L.Height() < supernodeSize )
+    if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
         msg << "Nonconformal multiply:\n"
-            << "  supernodeSize ~ " << supernodeSize << "\n"
             << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
         throw std::logic_error( msg.str().c_str() );
@@ -85,10 +83,10 @@ void clique::numeric::DistFrontLowerMultiplyNormal
     // Start the algorithm
     LockedPartitionDownDiagonal
     ( L, LTL, LTR,
-         LBL, LBR, supernodeSize );
+         LBL, LBR, L.Width() );
     PartitionDown
     ( X, XT,
-         XB, supernodeSize );
+         XB, L.Width() );
     while( XT.Height() > 0 )
     {
         LockedRepartitionUpDiagonal
@@ -144,7 +142,7 @@ void clique::numeric::DistFrontLowerMultiplyNormal
 
 template<typename F>
 void clique::numeric::DistFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset, int supernodeSize,
+( Orientation orientation, Diagonal diag, int diagOffset,
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
@@ -152,12 +150,10 @@ void clique::numeric::DistFrontLowerMultiplyTranspose
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
-    if( L.Height() != L.Width() || L.Height() != X.Height() || 
-        L.Height() < supernodeSize )
+    if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
         msg << "Nonconformal multiply:\n"
-            << "  supernodeSize ~ " << supernodeSize << "\n"
             << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
         throw std::logic_error( msg.str().c_str() );
@@ -192,20 +188,19 @@ void clique::numeric::DistFrontLowerMultiplyTranspose
     PartitionDown
     ( X, XT,
          XB, 0 );
-    while( LTL.Height() < supernodeSize )
+    while( LTL.Width() < L.Width() )
     {
-        const int blocksize = std::min(Blocksize(),supernodeSize-LTL.Height());
         LockedRepartitionDownDiagonal
         ( LTL, /**/ LTR,   L00, /**/ L01, L02,
          /*************/  /******************/
                /**/        L10, /**/ L11, L12,
-          LBL, /**/ LBR,   L20, /**/ L21, L22, blocksize );
+          LBL, /**/ LBR,   L20, /**/ L21, L22 );
 
         RepartitionDown
         ( XT,  X0,
          /**/ /**/
                X1,
-          XB,  X2, blocksize );
+          XB,  X2, L11.Height() );
 
         //--------------------------------------------------------------------//
         X1_STAR_STAR = X1; // Can this be avoided?
@@ -225,7 +220,7 @@ void clique::numeric::DistFrontLowerMultiplyTranspose
         }
         X1 = X1_STAR_STAR;
 
-        Z1_STAR_STAR.ResizeTo( blocksize, X1.Width() );
+        Z1_STAR_STAR.ResizeTo( X1.Height(), X1.Width() );
         basic::internal::LocalGemm
         ( orientation, NORMAL, (F)1, L21, X2, (F)0, Z1_STAR_STAR );
         X1.SumScatterUpdate( (F)1, Z1_STAR_STAR );
@@ -249,37 +244,37 @@ void clique::numeric::DistFrontLowerMultiplyTranspose
 }
 
 template void clique::numeric::DistFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset, int supernodeSize,
+( Diagonal diag, int diagOffset, 
   const DistMatrix<float,VC,STAR>& L,
         DistMatrix<float,VC,STAR>& X );
 template void clique::numeric::DistFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset, int supernodeSize,
+( Orientation orientation, Diagonal diag, int diagOffset,
   const DistMatrix<float,VC,STAR>& L,
         DistMatrix<float,VC,STAR>& X );
 
 template void clique::numeric::DistFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset, int supernodeSize,
+( Diagonal diag, int diagOffset, 
   const DistMatrix<double,VC,STAR>& L, 
         DistMatrix<double,VC,STAR>& X );
 template void clique::numeric::DistFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset, int supernodeSize,
+( Orientation orientation, Diagonal diag, int diagOffset,
   const DistMatrix<double,VC,STAR>& L,
         DistMatrix<double,VC,STAR>& X );
 
 template void clique::numeric::DistFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset, int supernodeSize,
+( Diagonal diag, int diagOffset, 
   const DistMatrix<std::complex<float>,VC,STAR>& L, 
         DistMatrix<std::complex<float>,VC,STAR>& X );
 template void clique::numeric::DistFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset, int supernodeSize,
+( Orientation orientation, Diagonal diag, int diagOffset, 
   const DistMatrix<std::complex<float>,VC,STAR>& L, 
         DistMatrix<std::complex<float>,VC,STAR>& X );
 
 template void clique::numeric::DistFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset, int supernodeSize,
+( Diagonal diag, int diagOffset, 
   const DistMatrix<std::complex<double>,VC,STAR>& L, 
         DistMatrix<std::complex<double>,VC,STAR>& X );
 template void clique::numeric::DistFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset, int supernodeSize,
+( Orientation orientation, Diagonal diag, int diagOffset, 
   const DistMatrix<std::complex<double>,VC,STAR>& L,
         DistMatrix<std::complex<double>,VC,STAR>& X );

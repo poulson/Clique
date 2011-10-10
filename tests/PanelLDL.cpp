@@ -196,62 +196,58 @@ main( int argc, char* argv[] )
         {
             const clique::symbolic::LocalSymmFactSupernode& sn =
                 S.local.supernodes[s];
-            Matrix<F>& front = L.local.fronts[s].front;
+            Matrix<F>& frontL = L.local.fronts[s].frontL;
+            Matrix<F>& frontR = L.local.fronts[s].frontR;
 
             const int frontSize = sn.size+sn.lowerStruct.size();
-            front.ResizeTo( frontSize, frontSize );
-            Matrix<F> frontTL, frontTR,
-                      frontBL, frontBR;
-            PartitionDownDiagonal
-            ( front, frontTL, frontTR,
-                     frontBL, frontBR, sn.size );
-            frontTL.SetToRandom();
-            frontBL.SetToRandom();
-            frontTR.SetToZero();
-            frontBR.SetToZero();
+            frontL.ResizeTo( frontSize, sn.size );
+            frontR.ResizeTo( frontSize, frontSize-sn.size );
+            frontL.SetToRandom();
+            frontR.SetToZero();
             if( writeInfo )
-            {
-                frontTL.Print( infoFile, "frontTL local" );
-                frontBL.Print( infoFile, "frontBL local" );
-            }
+                frontL.Print( infoFile, "frontL local" );
         }
         L.dist.mode = clique::MANY_RHS;
         L.dist.fronts.resize( log2CommSize+1 );
         {
             const clique::symbolic::DistSymmFactSupernode& sn = 
                 S.dist.supernodes[0];
-            Matrix<F>& topLocalFront = L.local.fronts.back().front;
-            DistMatrix<F,MC,MR>& front2d = L.dist.fronts[0].front2d;
+            Matrix<F>& topLocalFrontL = L.local.fronts.back().frontL;
+            Matrix<F>& topLocalFrontR = L.local.fronts.back().frontR;
+            DistMatrix<F,MC,MR>& front2dL = L.dist.fronts[0].front2dL;
+            DistMatrix<F,MC,MR>& front2dR = L.dist.fronts[0].front2dR;
 
             const int frontSize = sn.size+sn.lowerStruct.size();
-            front2d.LockedView
-            ( topLocalFront.Height(), topLocalFront.Width(), 0, 0,
-              topLocalFront.LockedBuffer(), topLocalFront.LDim(),
+            front2dL.LockedView
+            ( topLocalFrontL.Height(), topLocalFrontL.Width(), 0, 0,
+              topLocalFrontL.LockedBuffer(), topLocalFrontL.LDim(),
+              *sn.grid );
+            front2dR.LockedView
+            ( topLocalFrontR.Height(), topLocalFrontR.Width(), 0, 0,
+              topLocalFrontR.LockedBuffer(), topLocalFrontR.LDim(),
               *sn.grid );
         }
         for( int s=1; s<log2CommSize+1; ++s )
         {
             const clique::symbolic::DistSymmFactSupernode& sn = 
                 S.dist.supernodes[s];
-            DistMatrix<F,MC,MR>& front2d = L.dist.fronts[s].front2d;
+            DistMatrix<F,MC,MR>& front2dL = L.dist.fronts[s].front2dL;
+            DistMatrix<F,MC,MR>& front2dR = L.dist.fronts[s].front2dR;
 
-            front2d.SetGrid( *sn.grid );
+            front2dL.SetGrid( *sn.grid );
             const int frontSize = sn.size+sn.lowerStruct.size();
-            front2d.ResizeTo( frontSize, frontSize );
-            DistMatrix<F,MC,MR> frontTL(*sn.grid), frontTR(*sn.grid),
-                                frontBL(*sn.grid), frontBR(*sn.grid);
-            PartitionDownDiagonal
-            ( front2d, frontTL, frontTR,
-                       frontBL, frontBR, sn.size );
-            frontTL.SetToRandom();
-            frontBL.SetToRandom();
-            frontTR.SetToZero();
-            frontBR.SetToZero();
+            front2dL.Align( 0, 0 );
+            front2dL.ResizeTo( frontSize, sn.size );
+            front2dL.SetToRandom();
+
+            const int rowAlignmentR = sn.size % sn.grid->Width();
+            front2dR.SetGrid( *sn.grid );
+            front2dR.Align( 0, rowAlignmentR );
+            front2dR.ResizeTo( frontSize, frontSize-sn.size );
+            front2dR.SetToZero();
+
             if( writeInfo )
-            {
-                frontTL.Print( infoFile, "frontTL dist" );
-                frontBL.Print( infoFile, "frontBL dist" );
-            }
+                front2dL.Print( infoFile, "frontL dist" );
         }
         mpi::Barrier( comm );
         const double fillStopTime = mpi::Time();

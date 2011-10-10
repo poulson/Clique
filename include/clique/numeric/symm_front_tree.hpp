@@ -31,7 +31,9 @@ using namespace elemental;
 template<typename F>
 struct LocalSymmFront
 {
-    Matrix<F> front;
+    // Split each front into a left and right piece such that the right piece
+    // is not needed after the factorization (and can be freed).
+    Matrix<F> frontL, frontR;
     mutable Matrix<F> work;
 };
 
@@ -48,11 +50,14 @@ struct DistSymmFront
     // determines which of the following fronts is active.
     //   FEW_RHS  -> front1d
     //   MANY_RHS -> front2d
+    //
+    // Split each front into a left and right piece such that the right piece
+    // is not needed after the factorization (and can be freed).
 
-    DistMatrix<F,VC,STAR> front1d;
+    DistMatrix<F,VC,STAR> front1dL;
     mutable DistMatrix<F,VC,STAR> work1d;
 
-    DistMatrix<F,MC,MR> front2d;
+    DistMatrix<F,MC,MR> front2dL, front2dR;
     mutable DistMatrix<F,MC,MR> work2d;
 };
 

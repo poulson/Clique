@@ -27,11 +27,11 @@ using namespace elemental;
 
 template<typename F>
 void LocalFrontLDL
-( Orientation orientation, Matrix<F>& A, int supernodeSize );
+( Orientation orientation, Matrix<F>& AL, Matrix<F>& AR );
 
 template<typename F>
 void DistFrontLDL
-( Orientation orientation, DistMatrix<F,MC,MR>& A, int supernodeSize );
+( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& AR );
 
 } // namespace numeric
 } // namespace clique

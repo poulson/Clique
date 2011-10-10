@@ -35,11 +35,11 @@ void clique::numeric::LocalLDLForwardSolve
     for( int s=0; s<numSupernodes; ++s )
     {
         const LocalSymmFactSupernode& sn = S.local.supernodes[s];
-        const Matrix<F>& front = L.local.fronts[s].front;
+        const Matrix<F>& frontL = L.local.fronts[s].frontL;
         Matrix<F>& W = L.local.fronts[s].work;
 
         // Set up a workspace
-        W.ResizeTo( front.Height(), width );
+        W.ResizeTo( frontL.Height(), width );
         Matrix<F> WT, WB;
         PartitionDown
         ( W, WT,
@@ -91,7 +91,7 @@ void clique::numeric::LocalLDLForwardSolve
         // else numChildren == 0
 
         // Solve against this front
-        LocalFrontLDLForwardSolve( sn.size, front, W );
+        LocalFrontLDLForwardSolve( frontL, W );
 
         // Store the supernode portion of the result
         XT = WT;
@@ -117,14 +117,14 @@ void clique::numeric::LocalLDLDiagonalSolve
     for( int s=0; s<numSupernodes; ++s )
     {
         const LocalSymmFactSupernode& sn = S.local.supernodes[s];
-        const Matrix<F>& front = L.local.fronts[s].front;
+        const Matrix<F>& frontL = L.local.fronts[s].frontL;
         XSub.View( X, sn.myOffset, 0, sn.size, width );
 
         Matrix<F> frontTL;
-        frontTL.LockedView( front, 0, 0, sn.size, sn.size );
+        frontTL.LockedView( frontL, 0, 0, sn.size, sn.size );
         Matrix<F> d;
         frontTL.GetDiagonal( d );
-        LocalFrontLDLDiagonalSolve( sn.size, d, XSub, checkIfSingular );
+        LocalFrontLDLDiagonalSolve( d, XSub, checkIfSingular );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -159,11 +159,11 @@ void clique::numeric::LocalLDLBackwardSolve
     for( int s=numSupernodes-2; s>=0; --s )
     {
         const LocalSymmFactSupernode& sn = S.local.supernodes[s];
-        const Matrix<F>& front = L.local.fronts[s].front;
+        const Matrix<F>& frontL = L.local.fronts[s].frontL;
         Matrix<F>& W = L.local.fronts[s].work;
 
         // Set up a workspace
-        W.ResizeTo( front.Height(), width );
+        W.ResizeTo( frontL.Height(), width );
         Matrix<F> WT, WB;
         PartitionDown
         ( W, WT,
@@ -196,7 +196,7 @@ void clique::numeric::LocalLDLBackwardSolve
             parentWork.Empty();
 
         // Solve against this front
-        LocalFrontLDLBackwardSolve( orientation, sn.size, front, W );
+        LocalFrontLDLBackwardSolve( orientation, frontL, W );
 
         // Store the supernode portion of the result
         XT = WT;

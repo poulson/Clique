@@ -48,7 +48,7 @@ void clique::numeric::DistLDLForwardSolve
     distLeafFront.work1d.LockedView
     ( localRootFront.work.Height(), localRootFront.work.Width(), 0,
       localRootFront.work.LockedBuffer(), localRootFront.work.LDim(), 
-      distLeafFront.front1d.Grid() );
+      distLeafFront.front1dL.Grid() );
     
     // Perform the distributed portion of the forward solve
     for( int s=1; s<numSupernodes; ++s )
@@ -57,8 +57,8 @@ void clique::numeric::DistLDLForwardSolve
         const DistSymmFactSupernode& sn = S.dist.supernodes[s];
         const DistSymmFront<F>& childFront = L.dist.fronts[s-1];
         const DistSymmFront<F>& front = L.dist.fronts[s];
-        const Grid& childGrid = childFront.front1d.Grid();
-        const Grid& grid = front.front1d.Grid();
+        const Grid& childGrid = childFront.front1dL.Grid();
+        const Grid& grid = front.front1dL.Grid();
         mpi::Comm comm = grid.VCComm();
         mpi::Comm childComm = childGrid.VCComm();
         const int commSize = mpi::CommSize( comm );
@@ -69,7 +69,7 @@ void clique::numeric::DistLDLForwardSolve
         // Set up a workspace
         DistMatrix<F,VC,STAR>& W = front.work1d;
         W.SetGrid( grid );
-        W.ResizeTo( front.front1d.Height(), width );
+        W.ResizeTo( front.front1dL.Height(), width );
         DistMatrix<F,VC,STAR> WT(grid), WB(grid);
         PartitionDown
         ( W, WT,
@@ -180,7 +180,7 @@ void clique::numeric::DistLDLForwardSolve
         recvDispls.clear();
 
         // Now that the RHS is set up, perform this supernode's solve
-        DistFrontLDLForwardSolve( sn.size, front.front1d, W );
+        DistFrontLDLForwardSolve( front.front1dL, W );
 
         // Store the supernode portion of the result
         localXT = WT.LocalMatrix();
@@ -215,7 +215,7 @@ void clique::numeric::DistLDLDiagonalSolve
 
         // Solve against the s'th supernode using the front
         DistMatrix<F,VC,STAR> FTL;
-        FTL.LockedView( front.front1d, 0, 0, sn.size, sn.size );
+        FTL.LockedView( front.front1dL, 0, 0, sn.size, sn.size );
         DistMatrix<F,VC,STAR> dTL;
         FTL.GetDiagonal( dTL );
         basic::DiagonalSolve
@@ -252,12 +252,12 @@ void clique::numeric::DistLDLBackwardSolve
     // Directly operate on the root separator's portion of the right-hand sides
     const DistSymmFactSupernode& rootSN = S.dist.supernodes.back();
     const DistSymmFront<F>& rootFront = L.dist.fronts.back();
-    const Grid& rootGrid = rootFront.front1d.Grid();
+    const Grid& rootGrid = rootFront.front1dL.Grid();
     rootFront.work1d.View
     ( rootSN.size, width, 0,
       localX.Buffer(rootSN.localOffset1d,0), localX.LDim(), rootGrid );
     DistFrontLDLBackwardSolve
-    ( orientation, rootSN.size, rootFront.front1d, rootFront.work1d );
+    ( orientation, rootFront.front1dL, rootFront.work1d );
 
     std::vector<int>::const_iterator it;
     for( int s=numSupernodes-2; s>=0; --s )
@@ -266,8 +266,8 @@ void clique::numeric::DistLDLBackwardSolve
         const DistSymmFactSupernode& sn = S.dist.supernodes[s];
         const DistSymmFront<F>& parentFront = L.dist.fronts[s+1];
         const DistSymmFront<F>& front = L.dist.fronts[s];
-        const Grid& grid = front.front1d.Grid();
-        const Grid& parentGrid = parentFront.front1d.Grid();
+        const Grid& grid = front.front1dL.Grid();
+        const Grid& parentGrid = parentFront.front1dL.Grid();
         mpi::Comm comm = grid.VCComm(); 
         mpi::Comm parentComm = parentGrid.VCComm();
         const int commSize = mpi::CommSize( comm );
@@ -278,7 +278,7 @@ void clique::numeric::DistLDLBackwardSolve
         // Set up a workspace
         DistMatrix<F,VC,STAR>& W = front.work1d;
         W.SetGrid( grid );
-        W.ResizeTo( front.front1d.Height(), width );
+        W.ResizeTo( front.front1dL.Height(), width );
         DistMatrix<F,VC,STAR> WT(grid), WB(grid);
         PartitionDown
         ( W, WT,
@@ -389,7 +389,7 @@ void clique::numeric::DistLDLBackwardSolve
         recvDispls.clear();
 
         // Call the custom supernode backward solve
-        DistFrontLDLBackwardSolve( orientation, sn.size, front.front1d, W );
+        DistFrontLDLBackwardSolve( orientation, front.front1dL, W );
 
         // Store the supernode portion of the result
         localXT = WT.LocalMatrix();

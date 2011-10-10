@@ -27,7 +27,7 @@ using namespace elemental;
 
 template<typename F>
 void clique::numeric::DistFrontLDLDiagonalSolve
-( int supernodeSize, const DistMatrix<F,VC,STAR>& d, DistMatrix<F,VC,STAR>& X,
+( const DistMatrix<F,VC,STAR>& d, DistMatrix<F,VC,STAR>& X,
   bool checkIfSingular )
 {
 #ifndef RELEASE
@@ -48,19 +48,17 @@ void clique::numeric::DistFrontLDLDiagonalSolve
 
 template<typename F>
 void clique::numeric::DistFrontLDLForwardSolve
-( int supernodeSize, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
+( const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
     clique::PushCallStack("numeric::DistFrontLDLForwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
-    if( L.Height() != L.Width() || L.Height() != X.Height() || 
-        L.Height() < supernodeSize )
+    if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
         msg << "Nonconformal solve:\n"
-            << "  supernodeSize ~ " << supernodeSize << "\n"
             << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
         throw std::logic_error( msg.str().c_str() );
@@ -71,8 +69,7 @@ void clique::numeric::DistFrontLDLForwardSolve
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
     {
-        LocalFrontLDLForwardSolve
-        ( supernodeSize, L.LockedLocalMatrix(), X.LocalMatrix() );
+        LocalFrontLDLForwardSolve( L.LockedLocalMatrix(), X.LocalMatrix() );
 #ifndef RELEASE
         PopCallStack();
 #endif
@@ -99,20 +96,19 @@ void clique::numeric::DistFrontLDLForwardSolve
     PartitionDown
     ( X, XT,
          XB, 0 );
-    while( XT.Height() < supernodeSize )
+    while( LTL.Width() < L.Width() )
     {
-        const int blocksize = std::min(Blocksize(),supernodeSize-XT.Height());
         LockedRepartitionDownDiagonal
         ( LTL, /**/ LTR,  L00, /**/ L01, L02,
          /*************/ /******************/
                /**/       L10, /**/ L11, L12,
-          LBL, /**/ LBR,  L20, /**/ L21, L22, blocksize );
+          LBL, /**/ LBR,  L20, /**/ L21, L22 );
 
         RepartitionDown
         ( XT,  X0,
          /**/ /**/
                X1,
-          XB,  X2, blocksize );
+          XB,  X2, L11.Height() );
 
         //--------------------------------------------------------------------//
         L11_STAR_STAR = L11; // L11[* ,* ] <- L11[VC,* ]
@@ -150,19 +146,17 @@ void clique::numeric::DistFrontLDLForwardSolve
 template<typename F>
 void clique::numeric::DistFrontLDLBackwardSolve
 ( Orientation orientation, 
-  int supernodeSize, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
+  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
     clique::PushCallStack("numeric::DistFrontLDLBackwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
-    if( L.Height() != L.Width() || L.Height() != X.Height() || 
-        L.Height() < supernodeSize )
+    if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
         msg << "Nonconformal solve:\n"
-            << "  supernodeSize ~ " << supernodeSize << "\n"
             << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
         throw std::logic_error( msg.str().c_str() );
@@ -176,91 +170,82 @@ void clique::numeric::DistFrontLDLBackwardSolve
     if( g.Size() == 1 )
     {
         LocalFrontLDLBackwardSolve
-        ( orientation, supernodeSize, L.LockedLocalMatrix(), X.LocalMatrix() );
+        ( orientation, L.LockedLocalMatrix(), X.LocalMatrix() );
 #ifndef RELEASE
         PopCallStack();
 #endif
         return;
     }
 
-    DistMatrix<F,VC,STAR>
-        LTL(g), LTR(g),
-        LBL(g), LBR(g);
-    LockedPartitionDownDiagonal
-    ( L, LTL, LTR,
-         LBL, LBR, supernodeSize );
+    DistMatrix<F,VC,STAR> LT(g),
+                          LB(g);
+    LockedPartitionDown
+    ( L, LT,
+         LB, L.Width() );
 
     DistMatrix<F,VC,STAR> XT(g),
                           XB(g);
     PartitionDown
     ( X, XT,
-         XB, supernodeSize );
+         XB, L.Width() );
 
     // Subtract off the parent updates
     DistMatrix<F,STAR,STAR> Z(XT.Height(),XT.Width(),g);
     Z.ResizeTo( XT.Height(), XT.Width() );
-    basic::internal::LocalGemm( orientation, NORMAL, (F)-1, LBL, XB, (F)0, Z );
+    basic::internal::LocalGemm( orientation, NORMAL, (F)-1, LB, XB, (F)0, Z );
     XT.SumScatterUpdate( (F)1, Z );
     Z.Empty();
 
-    basic::internal::TrsmLLTSmall( orientation, UNIT, (F)1, LTL, XT );
+    basic::internal::TrsmLLTSmall( orientation, UNIT, (F)1, LT, XT );
 #ifndef RELEASE
     clique::PopCallStack();
 #endif
 }
 
 template void clique::numeric::DistFrontLDLForwardSolve
-( int supernodeSize,
-  const DistMatrix<float,VC,STAR>& L,
+( const DistMatrix<float,VC,STAR>& L,
         DistMatrix<float,VC,STAR>& X );
 template void clique::numeric::DistFrontLDLDiagonalSolve
-( int supernodeSize,
-  const DistMatrix<float,VC,STAR>& d, 
+( const DistMatrix<float,VC,STAR>& d, 
         DistMatrix<float,VC,STAR>& X,
   bool checkIfSingular );
 template void clique::numeric::DistFrontLDLBackwardSolve
-( Orientation orientation, int supernodeSize,
+( Orientation orientation, 
   const DistMatrix<float,VC,STAR>& L,
         DistMatrix<float,VC,STAR>& X );
 
 template void clique::numeric::DistFrontLDLForwardSolve
-( int supernodeSize,
-  const DistMatrix<double,VC,STAR>& L, 
+( const DistMatrix<double,VC,STAR>& L, 
         DistMatrix<double,VC,STAR>& X );
 template void clique::numeric::DistFrontLDLDiagonalSolve
-( int supernodeSize,
-  const DistMatrix<double,VC,STAR>& d, 
+( const DistMatrix<double,VC,STAR>& d, 
         DistMatrix<double,VC,STAR>& X,
   bool checkIfSingular );
 template void clique::numeric::DistFrontLDLBackwardSolve
-( Orientation orientation, int supernodeSize,
+( Orientation orientation, 
   const DistMatrix<double,VC,STAR>& L,
         DistMatrix<double,VC,STAR>& X );
 
 template void clique::numeric::DistFrontLDLForwardSolve
-( int supernodeSize,
-  const DistMatrix<std::complex<float>,VC,STAR>& L, 
+( const DistMatrix<std::complex<float>,VC,STAR>& L, 
         DistMatrix<std::complex<float>,VC,STAR>& X );
 template void clique::numeric::DistFrontLDLDiagonalSolve
-( int supernodeSize,
-  const DistMatrix<std::complex<float>,VC,STAR>& d, 
+( const DistMatrix<std::complex<float>,VC,STAR>& d, 
         DistMatrix<std::complex<float>,VC,STAR>& X,
   bool checkIfSingular );
 template void clique::numeric::DistFrontLDLBackwardSolve
-( Orientation orientation, int supernodeSize,
+( Orientation orientation, 
   const DistMatrix<std::complex<float>,VC,STAR>& L, 
         DistMatrix<std::complex<float>,VC,STAR>& X );
 
 template void clique::numeric::DistFrontLDLForwardSolve
-( int supernodeSize,
-  const DistMatrix<std::complex<double>,VC,STAR>& L, 
+( const DistMatrix<std::complex<double>,VC,STAR>& L, 
         DistMatrix<std::complex<double>,VC,STAR>& X );
 template void clique::numeric::DistFrontLDLDiagonalSolve
-( int supernodeSize,
-  const DistMatrix<std::complex<double>,VC,STAR>& d, 
+( const DistMatrix<std::complex<double>,VC,STAR>& d, 
         DistMatrix<std::complex<double>,VC,STAR>& X,
   bool checkIfSingular );
 template void clique::numeric::DistFrontLDLBackwardSolve
-( Orientation orientation, int supernodeSize,
+( Orientation orientation, 
   const DistMatrix<std::complex<double>,VC,STAR>& L,
         DistMatrix<std::complex<double>,VC,STAR>& X );

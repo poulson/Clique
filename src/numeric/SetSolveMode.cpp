@@ -50,32 +50,36 @@ void clique::numeric::SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
     DistSymmFront<F>& leafFront = L.dist.fronts[0];
     if( mode == FEW_RHS )
     {
-        leafFront.front1d.LockedView
-        ( leafFront.front2d.Height(), leafFront.front2d.Width(), 0,
-          leafFront.front2d.LockedLocalBuffer(), leafFront.front2d.LocalLDim(),
-          leafFront.front2d.Grid() );
+        leafFront.front1dL.LockedView
+        ( leafFront.front2dL.Height(), 
+          leafFront.front2dL.Width(), 0,
+          leafFront.front2dL.LockedLocalBuffer(), 
+          leafFront.front2dL.LocalLDim(),
+          leafFront.front2dL.Grid() );
         for( int s=1; s<numSupernodes; ++s )
         {
             DistSymmFront<F>& front = L.dist.fronts[s];
-            front.front1d.Empty();
-            front.front1d.SetGrid( front.front2d.Grid() );
-            front.front1d = front.front2d;
-            front.front2d.Empty();
+            front.front1dL.Empty();
+            front.front1dL.SetGrid( front.front2dL.Grid() );
+            front.front1dL = front.front2dL;
+            front.front2dL.Empty();
         }
     }
     else
     {
-        leafFront.front2d.LockedView
-        ( leafFront.front1d.Height(), leafFront.front1d.Width(), 0, 0,
-          leafFront.front1d.LockedLocalBuffer(), leafFront.front1d.LocalLDim(),
-          leafFront.front1d.Grid() );
+        leafFront.front2dL.LockedView
+        ( leafFront.front1dL.Height(), 
+          leafFront.front1dL.Width(), 0, 0,
+          leafFront.front1dL.LockedLocalBuffer(), 
+          leafFront.front1dL.LocalLDim(),
+          leafFront.front1dL.Grid() );
         for( int s=1; s<numSupernodes; ++s )
         {
             DistSymmFront<F>& front = L.dist.fronts[s];
-            front.front2d.Empty();
-            front.front2d.SetGrid( front.front1d.Grid() );
-            front.front2d = front.front1d;
-            front.front1d.Empty();
+            front.front2dL.Empty();
+            front.front2dL.SetGrid( front.front1dL.Grid() );
+            front.front2dL = front.front1dL;
+            front.front1dL.Empty();
         }
     }
 #ifndef RELEASE

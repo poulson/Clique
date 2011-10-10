@@ -88,17 +88,14 @@ void ReplaceAfterTrmm
 
 template<typename F>
 void clique::numeric::LocalFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset, int supernodeSize, 
-  const Matrix<F>& L, Matrix<F>& X )
+( Diagonal diag, int diagOffset, const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
     clique::PushCallStack("numeric::LocalFrontLowerMultiplyNormal");
-    if( L.Height() != L.Width() || L.Height() != X.Height() || 
-        L.Height() < supernodeSize )
+    if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
         msg << "Nonconformal multiply:\n"
-            << "  supernodeSize ~ " << supernodeSize << "\n"
             << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
         throw std::logic_error( msg.str().c_str() );
@@ -107,29 +104,30 @@ void clique::numeric::LocalFrontLowerMultiplyNormal
         throw std::logic_error("Diagonal offsets cannot be positive");
 #endif
     Matrix<F>* LMod = const_cast<Matrix<F>*>(&L);
-    Matrix<F> LTL, LTR,
-              LBL, LBR;
-    PartitionDownDiagonal
-    ( *LMod, LTL, LTR,
-             LBL, LBR, supernodeSize );
+    Matrix<F> LT,
+              LB;
+    PartitionDown
+    ( *LMod, LT,
+             LB, L.Width() );
 
-    Matrix<F> XT, XB;
+    Matrix<F> XT, 
+              XB;
     PartitionDown
     ( X, XT,
-         XB, supernodeSize );
+         XB, L.Width() );
 
-    basic::Gemm( NORMAL, NORMAL, (F)1, LBL, XT, (F)1, XB );
+    basic::Gemm( NORMAL, NORMAL, (F)1, LB, XT, (F)1, XB );
 
     if( diagOffset == 0 )
     {
-        basic::Trmm( LEFT, LOWER, NORMAL, diag, (F)1, LTL, XT );
+        basic::Trmm( LEFT, LOWER, NORMAL, diag, (F)1, LT, XT );
     }
     else
     {
         std::vector<Matrix<F> > diagonals;
-        internal::ModifyForTrmm( LTL, diag, diagOffset, diagonals );
-        basic::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, (F)1, LTL, XT );
-        internal::ReplaceAfterTrmm( LTL, diag, diagOffset, diagonals );
+        internal::ModifyForTrmm( LT, diag, diagOffset, diagonals );
+        basic::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, (F)1, LT, XT );
+        internal::ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
     }
 #ifndef RELEASE
     clique::PopCallStack();
@@ -139,16 +137,14 @@ void clique::numeric::LocalFrontLowerMultiplyNormal
 template<typename F>
 void clique::numeric::LocalFrontLowerMultiplyTranspose
 ( Orientation orientation, Diagonal diag, int diagOffset,
-  int supernodeSize, const Matrix<F>& L, Matrix<F>& X )
+  const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
     clique::PushCallStack("numeric::LocalFrontLowerMultiplyTranspose");
-    if( L.Height() != L.Width() || L.Height() != X.Height() || 
-        L.Height() < supernodeSize )
+    if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
         msg << "Nonconformal solve:\n"
-            << "  supernodeSize ~ " << supernodeSize << "\n"
             << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
         throw std::logic_error( msg.str().c_str() );
@@ -159,59 +155,60 @@ void clique::numeric::LocalFrontLowerMultiplyTranspose
         throw std::logic_error("Diagonal offsets cannot be positive");
 #endif
     Matrix<F>* LMod = const_cast<Matrix<F>*>(&L);
-    Matrix<F> LTL, LTR,
-              LBL, LBR;
-    PartitionDownDiagonal
-    ( *LMod, LTL, LTR,
-             LBL, LBR, supernodeSize );
+    Matrix<F> LT,
+              LB;
+    PartitionDown
+    ( *LMod, LT,
+             LB, L.Width() );
 
-    Matrix<F> XT, XB;
+    Matrix<F> XT, 
+              XB;
     PartitionDown
     ( X, XT,
-         XB, supernodeSize );
+         XB, L.Width() );
 
     if( diagOffset == 0 )
     {
-        basic::Trmm( LEFT, LOWER, orientation, diag, (F)1, LTL, XT );
+        basic::Trmm( LEFT, LOWER, orientation, diag, (F)1, LT, XT );
     }
     else
     {
         std::vector<Matrix<F> > diagonals;
-        internal::ModifyForTrmm( LTL, diag, diagOffset, diagonals );
-        basic::Trmm( LEFT, LOWER, orientation, NON_UNIT, (F)1, LTL, XT );
-        internal::ReplaceAfterTrmm( LTL, diag, diagOffset, diagonals );
+        internal::ModifyForTrmm( LT, diag, diagOffset, diagonals );
+        basic::Trmm( LEFT, LOWER, orientation, NON_UNIT, (F)1, LT, XT );
+        internal::ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
     }
 
-    basic::Gemm( orientation, NORMAL, (F)1, LBL, XB, (F)1, XT );
+    basic::Gemm( orientation, NORMAL, (F)1, LB, XB, (F)1, XT );
 #ifndef RELEASE
     clique::PopCallStack();
 #endif
 }
 
 template void clique::numeric::LocalFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset, int supernodeSize,
+( Diagonal diag, int diagOffset, 
   const Matrix<float>& L, Matrix<float>& X );
 template void clique::numeric::LocalFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset, int supernodeSize,
+( Orientation orientation, Diagonal diag, int diagOffset, 
   const Matrix<float>& L, Matrix<float>& X );
 
 template void clique::numeric::LocalFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset, int supernodeSize,
+( Diagonal diag, int diagOffset,
   const Matrix<double>& L, Matrix<double>& X );
 template void clique::numeric::LocalFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset, int supernodeSize,
+( Orientation orientation, Diagonal diag, int diagOffset, 
   const Matrix<double>& L, Matrix<double>& X );
 
 template void clique::numeric::LocalFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset, int supernodeSize,
+( Diagonal diag, int diagOffset, 
   const Matrix<std::complex<float> >& L, Matrix<std::complex<float> >& X );
 template void clique::numeric::LocalFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset, int supernodeSize,
+( Orientation orientation, Diagonal diag, int diagOffset, 
   const Matrix<std::complex<float> >& L, Matrix<std::complex<float> >& X );
 
 template void clique::numeric::LocalFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset, int supernodeSize,
+( Diagonal diag, int diagOffset, 
   const Matrix<std::complex<double> >& L, Matrix<std::complex<double> >& X );
 template void clique::numeric::LocalFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset, int supernodeSize,
+( Orientation orientation, Diagonal diag, int diagOffset, 
   const Matrix<std::complex<double> >& L, Matrix<std::complex<double> >& X );

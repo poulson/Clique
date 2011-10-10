@@ -26,37 +26,31 @@ namespace numeric {
 using namespace elemental;
 
 template<typename F>
-void LocalFrontLDLForwardSolve
-( int supernodeSize,
-  const Matrix<F>& L, Matrix<F>& X );
+void LocalFrontLDLForwardSolve( const Matrix<F>& L, Matrix<F>& X );
 
 template<typename F>
 void LocalFrontLDLDiagonalSolve
-( int supernodeSize,
-  const Matrix<F>& d, Matrix<F>& X,
+( const Matrix<F>& d, Matrix<F>& X,
   bool checkIfSingular=false );
 
 template<typename F>
 void LocalFrontLDLBackwardSolve
-( Orientation orientation, int supernodeSize,
-  const Matrix<F>& L, Matrix<F>& X );
+( Orientation orientation, const Matrix<F>& L, Matrix<F>& X );
 
 template<typename F>
 void DistFrontLDLForwardSolve
-( int supernodeSize,
-  const DistMatrix<F,VC,STAR>& L, 
+( const DistMatrix<F,VC,STAR>& L, 
         DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
 void DistFrontLDLDiagonalSolve
-( int supernodeSize,
-  const DistMatrix<F,VC,STAR>& d,
+( const DistMatrix<F,VC,STAR>& d,
         DistMatrix<F,VC,STAR>& X,
   bool checkIfSingular=false );
 
 template<typename F>
 void DistFrontLDLBackwardSolve
-( Orientation orientation, int supernodeSize,
+( Orientation orientation, 
   const DistMatrix<F,VC,STAR>& L, 
         DistMatrix<F,VC,STAR>& X );
 

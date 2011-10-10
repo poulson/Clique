@@ -26,58 +26,93 @@ using namespace elemental;
 
 template<typename F> // F represents a real or complex field
 void clique::numeric::LocalFrontLDL
-( Orientation orientation, Matrix<F>& A, int supernodeSize )
+( Orientation orientation, Matrix<F>& AL, Matrix<F>& AR )
 {
 #ifndef RELEASE
     clique::PushCallStack("numeric::LocalFrontLDL");
-    if( A.Height() != A.Width() )
-        throw std::logic_error("A must be square");
+    if( AL.Height() != AR.Height() )
+        throw std::logic_error("AL and AR must be the same height");
+    if( AL.Height() != AL.Width() + AR.Width() )
+        throw std::logic_error("[AL AR] must be square");
     if( orientation == NORMAL )
         throw std::logic_error("LocalFrontLDL must be (conjugate-)transposed.");
-    if( supernodeSize > A.Height() )
-        throw std::logic_error("Supernode is too big");
 #endif
-    // Matrix views
     Matrix<F>
-        ATL, ATR,  A00, A01, A02,
-        ABL, ABR,  A10, A11, A12,
-                   A20, A21, A22;
+        ALTL, ALTR,  AL00, AL01, AL02,
+        ALBL, ALBR,  AL10, AL11, AL12,
+                     AL20, AL21, AL22;
+    Matrix<F>
+        ART,  AR0,
+        ARB,  AR1,
+              AR2;
     Matrix<F> d1;
     Matrix<F> S21;
 
+    Matrix<F> S21T,
+              S21B;
+    Matrix<F> AL21T,
+              AL21B;
+    Matrix<F> AR2T,
+              AR2B;
+
     // Start the algorithm
     PartitionDownDiagonal
-    ( A, ATL, ATR,
-         ABL, ABR, 0 );
-    while( ATL.Height() < supernodeSize )
+    ( AL, ALTL, ALTR,
+          ALBL, ALBR, 0 );
+    PartitionDown
+    ( AR, ART,
+          ARB, 0 );
+    while( ALTL.Width() < AL.Width() )
     {
-        const int blocksize = std::min(Blocksize(),supernodeSize-ATL.Height());
         RepartitionDownDiagonal
-        ( ATL, /**/ ATR,  A00, /**/ A01, A02,
-         /*************/ /******************/
-               /**/       A10, /**/ A11, A12,
-          ABL, /**/ ABR,  A20, /**/ A21, A22, blocksize );
+        ( ALTL, /**/ ALTR,  AL00, /**/ AL01, AL02,
+         /***************/ /*********************/
+                /**/        AL10, /**/ AL11, AL12,
+          ALBL, /**/ ALBR,  AL20, /**/ AL21, AL22 );
+
+        RepartitionDown
+        ( ART,  AR0,
+         /***/ /***/
+                AR1,
+          ARB,  AR2, AL11.Height() );
 
         //--------------------------------------------------------------------//
         // This routine is unblocked, hence the need for us to generalize to 
         // an (ideally) faster blocked algorithm.
-        advanced::internal::LDLVar3( orientation, A11, d1 );
+        advanced::internal::LDLVar3( orientation, AL11, d1 );
 
-        basic::Trsm( RIGHT, LOWER, orientation, UNIT, (F)1, A11, A21 );
+        basic::Trsm( RIGHT, LOWER, orientation, UNIT, (F)1, AL11, AL21 );
 
-        S21 = A21;
-        basic::DiagonalSolve( RIGHT, NORMAL, d1, A21 );
+        S21 = AL21;
+        basic::DiagonalSolve( RIGHT, NORMAL, d1, AL21 );
 
-        // For now, just perform 2x as much work as necessary via a gemm.
-        // Eventually, this should be replaced with a custom routine.
-        basic::Gemm( NORMAL, orientation, (F)-1, S21, A21, (F)1, A22 );
+        // For now, perform about 2x as much work as necessary on the 
+        // symmetric updates. Eventually, these should be replaced with 
+        // custom routines.
+        PartitionDown
+        ( S21, S21T,
+               S21B, AL22.Width() );
+        PartitionDown
+        ( AL21, AL21T,
+                AL21B, AL22.Width() );
+        PartitionDown
+        ( AR2, AR2T,
+               AR2B, AL22.Width() );
+        basic::Gemm( NORMAL, orientation, (F)-1, S21, AL21T, (F)1, AL22 );
+        basic::Gemm( NORMAL, orientation, (F)-1, S21B, AL21B, (F)1, AR2B );
         //--------------------------------------------------------------------//
 
+        SlidePartitionDown
+        ( ART,  AR0,
+                AR1,
+         /***/ /***/
+          ARB,  AR2 );
+
         SlidePartitionDownDiagonal
-        ( ATL, /**/ ATR,  A00, A01, /**/ A02,
-               /**/       A10, A11, /**/ A12,
-         /*************/ /******************/
-          ABL, /**/ ABR,  A20, A21, /**/ A22 );
+        ( ALTL, /**/ ALTR,  AL00, AL01, /**/ AL02,
+                /**/        AL10, AL11, /**/ AL12,
+         /***************/ /*********************/
+          ALBL, /**/ ALBR,  AL20, AL21, /**/ AL22 );
     }
 #ifndef RELEASE
     clique::PopCallStack();
@@ -85,15 +120,17 @@ void clique::numeric::LocalFrontLDL
 }
 
 template void clique::numeric::LocalFrontLDL
-( Orientation orientation, Matrix<float>& A, int supernodeSize );
-
-template void clique::numeric::LocalFrontLDL
-( Orientation orientation, Matrix<double>& A, int supernodeSize );
+( Orientation orientation, 
+  Matrix<float>& AL, Matrix<float>& AR);
 
 template void clique::numeric::LocalFrontLDL
 ( Orientation orientation, 
-  Matrix<std::complex<float> >& A, int supernodeSize );
+  Matrix<double>& AL, Matrix<double>& AR );
 
 template void clique::numeric::LocalFrontLDL
 ( Orientation orientation, 
-  Matrix<std::complex<double> >& A, int supernodeSize );
+  Matrix<std::complex<float> >& AL, Matrix<std::complex<float> >& AR );
+
+template void clique::numeric::LocalFrontLDL
+( Orientation orientation, 
+  Matrix<std::complex<double> >& AL, Matrix<std::complex<double> >& AR );
