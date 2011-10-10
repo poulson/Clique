@@ -38,9 +38,11 @@ void clique::numeric::LocalLDL
         Matrix<F>& frontR = L.local.fronts[s].frontR;
 #ifndef RELEASE
         if( frontL.Height() != sn.size+sn.lowerStruct.size() ||
-            frontL.Width()+frontR.Width() != sn.size+sn.lowerStruct.size() )
+            frontL.Width() != sn.size )
             throw std::logic_error("Front was not the proper size");
 #endif
+        frontR.ResizeTo( frontL.Height(), sn.lowerStruct.size() );
+        frontR.SetToZero();
 
         // Add updates from children (if they exist)
         const int numChildren = sn.children.size();
@@ -48,8 +50,8 @@ void clique::numeric::LocalLDL
         {
             const int leftIndex = sn.children[0];
             const int rightIndex = sn.children[1];
-            const Matrix<F>& leftFrontR = L.local.fronts[leftIndex].frontR;
-            const Matrix<F>& rightFrontR = L.local.fronts[rightIndex].frontR;
+            Matrix<F>& leftFrontR = L.local.fronts[leftIndex].frontR;
+            Matrix<F>& rightFrontR = L.local.fronts[rightIndex].frontR;
             const int leftSupernodeSize = S.local.supernodes[leftIndex].size;
             const int rightSupernodeSize = S.local.supernodes[rightIndex].size;
             const int leftUpdateSize = leftFrontR.Width();
@@ -79,6 +81,7 @@ void clique::numeric::LocalLDL
                         frontR.Update( iFront, jFront-sn.size, value );
                 }
             }
+            leftFrontR.Empty();
 
             // Add the right child's update matrix
             for( int jChild=0; jChild<rightUpdateSize; ++jChild )
@@ -94,6 +97,7 @@ void clique::numeric::LocalLDL
                         frontR.Update( iFront, jFront-sn.size, value );
                 }
             }
+            rightFrontR.Empty();
         }
 
         // Call the custom partial LDL

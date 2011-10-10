@@ -197,13 +197,10 @@ main( int argc, char* argv[] )
             const clique::symbolic::LocalSymmFactSupernode& sn =
                 S.local.supernodes[s];
             Matrix<F>& frontL = L.local.fronts[s].frontL;
-            Matrix<F>& frontR = L.local.fronts[s].frontR;
 
             const int frontSize = sn.size+sn.lowerStruct.size();
             frontL.ResizeTo( frontSize, sn.size );
-            frontR.ResizeTo( frontSize, frontSize-sn.size );
             frontL.SetToRandom();
-            frontR.SetToZero();
             if( writeInfo )
                 frontL.Print( infoFile, "frontL local" );
         }
@@ -215,16 +212,11 @@ main( int argc, char* argv[] )
             Matrix<F>& topLocalFrontL = L.local.fronts.back().frontL;
             Matrix<F>& topLocalFrontR = L.local.fronts.back().frontR;
             DistMatrix<F,MC,MR>& front2dL = L.dist.fronts[0].front2dL;
-            DistMatrix<F,MC,MR>& front2dR = L.dist.fronts[0].front2dR;
 
             const int frontSize = sn.size+sn.lowerStruct.size();
             front2dL.LockedView
             ( topLocalFrontL.Height(), topLocalFrontL.Width(), 0, 0,
               topLocalFrontL.LockedBuffer(), topLocalFrontL.LDim(),
-              *sn.grid );
-            front2dR.LockedView
-            ( topLocalFrontR.Height(), topLocalFrontR.Width(), 0, 0,
-              topLocalFrontR.LockedBuffer(), topLocalFrontR.LDim(),
               *sn.grid );
         }
         for( int s=1; s<log2CommSize+1; ++s )
@@ -232,20 +224,12 @@ main( int argc, char* argv[] )
             const clique::symbolic::DistSymmFactSupernode& sn = 
                 S.dist.supernodes[s];
             DistMatrix<F,MC,MR>& front2dL = L.dist.fronts[s].front2dL;
-            DistMatrix<F,MC,MR>& front2dR = L.dist.fronts[s].front2dR;
 
             front2dL.SetGrid( *sn.grid );
             const int frontSize = sn.size+sn.lowerStruct.size();
             front2dL.Align( 0, 0 );
             front2dL.ResizeTo( frontSize, sn.size );
             front2dL.SetToRandom();
-
-            const int rowAlignmentR = sn.size % sn.grid->Width();
-            front2dR.SetGrid( *sn.grid );
-            front2dR.Align( 0, rowAlignmentR );
-            front2dR.ResizeTo( frontSize, frontSize-sn.size );
-            front2dR.SetToZero();
-
             if( writeInfo )
                 front2dL.Print( infoFile, "frontL dist" );
         }
