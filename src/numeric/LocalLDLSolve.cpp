@@ -96,10 +96,6 @@ void clique::numeric::LocalLDLForwardSolve
         // Store the supernode portion of the result
         XT = WT;
     }
-
-    // Ensure that all of the temporary buffers are freed (except the root)
-    for( int s=0; s<numSupernodes-1; ++s )
-        L.local.fronts[s].work.Empty();
 #ifndef RELEASE
     PopCallStack();
 #endif

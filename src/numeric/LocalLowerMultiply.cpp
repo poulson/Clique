@@ -54,8 +54,7 @@ void clique::numeric::LocalLowerMultiplyNormal
 
         // Multiply this block column of L against the supernode portion of the
         // right-hand side and set W equal to the result
-        LocalFrontLowerMultiply
-        ( NORMAL, diag, diagOffset, sn.size, front, W );
+        LocalFrontLowerMultiply( NORMAL, diag, diagOffset, sn.size, front, W );
 
         // Update using the children (if they exist)
         const int numChildren = sn.children.size();
@@ -99,10 +98,6 @@ void clique::numeric::LocalLowerMultiplyNormal
         // Store the supernode portion of the result
         XT = WT;
     }
-
-    // Ensure that all of the temporary buffers are freed (except the root)
-    for( int s=0; s<numSupernodes-1; ++s )
-        L.local.fronts[s].work.Empty();
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -129,7 +124,7 @@ void clique::numeric::LocalLowerMultiplyTranspose
         return;
     }
 
-    // Pull in the top local information from the bottom distributed information
+    // Pull in the top local information from the bottom distributed infomation
     L.local.fronts.back().work.LockedView
     ( L.dist.fronts[0].work1d.LocalMatrix() );
 
@@ -153,8 +148,8 @@ void clique::numeric::LocalLowerMultiplyTranspose
 
         // Update using the parent's portion of the RHS
         const int parent = sn.parent;
-        Matrix<F>& parentWork = L.local.fronts[parent].work;
         const LocalSymmFactSupernode& parentSN = S.local.supernodes[parent];
+        Matrix<F>& parentWork = L.local.fronts[parent].work;
         const int currentUpdateSize = WB.Height();
         const std::vector<int>& parentRelIndices = 
             ( sn.isLeftChild ? 
@@ -167,23 +162,33 @@ void clique::numeric::LocalLowerMultiplyTranspose
                 WB.Set( iCurrent, j, parentWork.Get(iParent,j) );
         }
 
-        // The left child is numbered lower than the right child, so 
-        // we can safely free the parent's work if we are the left child
+        // The left child is numbered lower than the right child, so we can safely
+        // free the parent's work if this node is the left child
         if( sn.isLeftChild )
+        {
             parentWork.Empty();
+            if( parent == numSupernodes-1 )
+                L.dist.fronts[0].work1d.Empty();
+        }
+
+        // Make a copy of the unmodified RHS
+        Matrix<F> XNode = W;
 
         // Multiply the (conjugate-)transpose of this block column of L against
         // the supernode portion of the right-hand side.
         LocalFrontLowerMultiply
-        ( orientation, diag, diagOffset, sn.size, front, W );
+        ( orientation, diag, diagOffset, sn.size, front, XNode );
 
         // Store the supernode portion of the result
-        XT = WT;
+        Matrix<F> XNodeT, XNodeB;
+        PartitionDown
+        ( XNode, XNodeT,
+                 XNodeB, sn.size );
+        XT = XNodeT;
+        XNode.Empty();
     }
-
-    // Ensure that all of the temporary buffers are freed (this is overkill)
-    for( int s=0; s<numSupernodes; ++s )
-        L.local.fronts[s].work.Empty();
+    L.dist.fronts[0].work1d.Empty();
+    L.local.fronts.front().work.Empty();
 #ifndef RELEASE
     PopCallStack();
 #endif

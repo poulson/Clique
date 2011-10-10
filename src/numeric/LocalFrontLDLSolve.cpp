@@ -61,18 +61,19 @@ void clique::numeric::LocalFrontLDLForwardSolve
         throw std::logic_error( msg.str().c_str() );
     }
 #endif
-    Matrix<F> LT, LB;
-    Matrix<F> XT, XB;
+    Matrix<F> LTL, LTR,
+              LBL, LBR;
+    LockedPartitionDownDiagonal
+    ( L, LTL, LTR,
+         LBL, LBR, supernodeSize );
 
-    LockedPartitionDown
-    ( L, LT,
-         LB, supernodeSize );
+    Matrix<F> XT, XB;
     PartitionDown
     ( X, XT,
          XB, supernodeSize );
 
-    basic::Trsm( LEFT, LOWER, NORMAL, UNIT, (F)1, LT, XT );
-    basic::Gemm( NORMAL, NORMAL, (F)-1, LB, XT, (F)1, XB );
+    basic::Trsm( LEFT, LOWER, NORMAL, UNIT, (F)1, LTL, XT );
+    basic::Gemm( NORMAL, NORMAL, (F)-1, LBL, XT, (F)1, XB );
 #ifndef RELEASE
     clique::PopCallStack();
 #endif
@@ -99,17 +100,19 @@ void clique::numeric::LocalFrontLDLBackwardSolve
     if( orientation == NORMAL )
         throw std::logic_error("LDL must be (conjugate-)transposed");
 #endif
-    Matrix<F> LT, LB;
+    Matrix<F> LTL, LTR,
+              LBL, LBR;
+    LockedPartitionDownDiagonal
+    ( L, LTL, LTR, 
+         LBL, LBR, supernodeSize );
+
     Matrix<F> XT, XB;
-    LockedPartitionDown
-    ( L, LT, 
-         LB, supernodeSize );
     PartitionDown
     ( X, XT,
          XB, supernodeSize );
 
-    basic::Gemm( orientation, NORMAL, (F)-1, LB, XB, (F)1, XT );
-    basic::Trsm( LEFT, LOWER, orientation, UNIT, (F)1, LT, XT );
+    basic::Gemm( orientation, NORMAL, (F)-1, LBL, XB, (F)1, XT );
+    basic::Trsm( LEFT, LOWER, orientation, UNIT, (F)1, LTL, XT );
 #ifndef RELEASE
     clique::PopCallStack();
 #endif

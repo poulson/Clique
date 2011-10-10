@@ -44,7 +44,6 @@ void clique::numeric::DistLowerMultiplyNormal
     }
 
     // Copy the information from the local portion into the distributed leaf
-    // Copy the information from the local portion into the distributed leaf
     const LocalSymmFront<F>& localRootFront = L.local.fronts.back();
     const DistSymmFront<F>& distLeafFront = L.dist.fronts[0];
     distLeafFront.work1d.LockedView
@@ -122,6 +121,8 @@ void clique::numeric::DistLowerMultiplyNormal
         }
         packOffsets.clear();
         childW.Empty();
+        if( s == 1 )
+            L.local.fronts.back().work.Empty();
 
         // Set up the receive buffer
         int recvBufferSize = 0;
@@ -186,8 +187,6 @@ void clique::numeric::DistLowerMultiplyNormal
         // Store the supernode portion of the result
         localXT = WT.LocalMatrix();
     }
-
-    // Free the distributed and local root work buffers
     L.local.fronts.back().work.Empty();
     L.dist.fronts.back().work1d.Empty();
 #ifndef RELEASE
@@ -222,12 +221,14 @@ void clique::numeric::DistLowerMultiplyTranspose
     const DistSymmFactSupernode& rootSN = S.dist.supernodes.back();
     const DistSymmFront<F>& rootFront = L.dist.fronts.back();
     const Grid& rootGrid = rootFront.front1d.Grid();
-    rootFront.work1d.View
+    DistMatrix<F,VC,STAR> XRoot(rootGrid);
+    XRoot.View
     ( rootSN.size, width, 0,
       localX.Buffer(rootSN.localOffset1d,0), localX.LDim(), rootGrid );
+    rootFront.work1d = XRoot; // store the RHS for use by the children
     DistFrontLowerMultiply
     ( orientation, diag, diagOffset, rootSN.size, 
-      rootFront.front1d, rootFront.work1d );
+      rootFront.front1d, XRoot );
 
     std::vector<int>::const_iterator it;
     for( int s=numSupernodes-2; s>=0; --s )
@@ -245,7 +246,7 @@ void clique::numeric::DistLowerMultiplyTranspose
         const int parentCommSize = mpi::CommSize( parentComm );
         const int parentCommRank = mpi::CommRank( parentComm );
 
-        // Set up a workspace
+        // Set up a copy of the RHS in our workspace.
         DistMatrix<F,VC,STAR>& W = front.work1d;
         W.SetGrid( grid );
         W.ResizeTo( front.front1d.Height(), width );
@@ -260,7 +261,7 @@ void clique::numeric::DistLowerMultiplyTranspose
         WT.LocalMatrix() = localXT;
 
         //
-        // Set the bottom from the parent
+        // Set the bottom from the parent's workspace
         //
 
         // Pack the relevant portions of the parent's RHS's
@@ -287,11 +288,12 @@ void clique::numeric::DistLowerMultiplyTranspose
             for( int k=0; k<recvIndices.size(); ++k )
             {
                 const int iFrontLocal = recvIndices[k];
-                F* sendRow = &sendValues[k*width];
-                const F* workRow = parentWork.LocalBuffer( iFrontLocal, 0 );
+                F* packedRow = &sendValues[k*width];
+                const F* workRow = 
+                    parentWork.LockedLocalBuffer( iFrontLocal, 0 );
                 const int workLDim = parentWork.LocalLDim();
                 for( int jFront=0; jFront<width; ++jFront )
-                    sendRow[jFront] = workRow[jFront*workLDim];
+                    packedRow[jFront] = workRow[jFront*workLDim];
             }
         }
         parentWork.Empty();
@@ -359,12 +361,20 @@ void clique::numeric::DistLowerMultiplyTranspose
         recvCounts.clear();
         recvDispls.clear();
 
+        // Make a copy of the unmodified RHS
+        DistMatrix<F,VC,STAR> XNode( front.work1d );
+
         // Perform the multiply for this front
         DistFrontLowerMultiply
-        ( orientation, diag, diagOffset, sn.size, front.front1d, W );
+        ( orientation, diag, diagOffset, sn.size, front.front1d, XNode );
 
         // Store the supernode portion of the result
-        localXT = WT.LocalMatrix();
+        DistMatrix<F,VC,STAR> XNodeT(grid), XNodeB(grid);
+        PartitionDown
+        ( XNode, XNodeT,
+                 XNodeB, sn.size );
+        localXT = XNodeT.LocalMatrix();
+        XNode.Empty();
     }
 #ifndef RELEASE
     PopCallStack();

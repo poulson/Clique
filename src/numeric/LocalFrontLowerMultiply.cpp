@@ -107,28 +107,29 @@ void clique::numeric::LocalFrontLowerMultiplyNormal
         throw std::logic_error("Diagonal offsets cannot be positive");
 #endif
     Matrix<F>* LMod = const_cast<Matrix<F>*>(&L);
-    Matrix<F> LT, LB;
-    PartitionDown
-    ( *LMod, LT,
-             LB, supernodeSize );
+    Matrix<F> LTL, LTR,
+              LBL, LBR;
+    PartitionDownDiagonal
+    ( *LMod, LTL, LTR,
+             LBL, LBR, supernodeSize );
 
     Matrix<F> XT, XB;
     PartitionDown
     ( X, XT,
          XB, supernodeSize );
 
-    basic::Gemm( NORMAL, NORMAL, (F)1, LB, XT, (F)1, XB );
+    basic::Gemm( NORMAL, NORMAL, (F)1, LBL, XT, (F)1, XB );
 
     if( diagOffset == 0 )
     {
-        basic::Trmm( LEFT, LOWER, NORMAL, diag, (F)1, LT, XT );
+        basic::Trmm( LEFT, LOWER, NORMAL, diag, (F)1, LTL, XT );
     }
     else
     {
         std::vector<Matrix<F> > diagonals;
-        internal::ModifyForTrmm( LT, diag, diagOffset, diagonals );
-        basic::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, (F)1, LT, XT );
-        internal::ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
+        internal::ModifyForTrmm( LTL, diag, diagOffset, diagonals );
+        basic::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, (F)1, LTL, XT );
+        internal::ReplaceAfterTrmm( LTL, diag, diagOffset, diagonals );
     }
 #ifndef RELEASE
     clique::PopCallStack();
@@ -158,10 +159,11 @@ void clique::numeric::LocalFrontLowerMultiplyTranspose
         throw std::logic_error("Diagonal offsets cannot be positive");
 #endif
     Matrix<F>* LMod = const_cast<Matrix<F>*>(&L);
-    Matrix<F> LT, LB;
-    PartitionDown
-    ( *LMod, LT,
-             LB, supernodeSize );
+    Matrix<F> LTL, LTR,
+              LBL, LBR;
+    PartitionDownDiagonal
+    ( *LMod, LTL, LTR,
+             LBL, LBR, supernodeSize );
 
     Matrix<F> XT, XB;
     PartitionDown
@@ -170,17 +172,17 @@ void clique::numeric::LocalFrontLowerMultiplyTranspose
 
     if( diagOffset == 0 )
     {
-        basic::Trmm( LEFT, LOWER, orientation, diag, (F)1, LT, XT );
+        basic::Trmm( LEFT, LOWER, orientation, diag, (F)1, LTL, XT );
     }
     else
     {
         std::vector<Matrix<F> > diagonals;
-        internal::ModifyForTrmm( LT, diag, diagOffset, diagonals );
-        basic::Trmm( LEFT, LOWER, orientation, NON_UNIT, (F)1, LT, XT );
-        internal::ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
+        internal::ModifyForTrmm( LTL, diag, diagOffset, diagonals );
+        basic::Trmm( LEFT, LOWER, orientation, NON_UNIT, (F)1, LTL, XT );
+        internal::ReplaceAfterTrmm( LTL, diag, diagOffset, diagonals );
     }
 
-    basic::Gemm( orientation, NORMAL, (F)1, LB, XB, (F)1, XT );
+    basic::Gemm( orientation, NORMAL, (F)1, LBL, XB, (F)1, XT );
 #ifndef RELEASE
     clique::PopCallStack();
 #endif

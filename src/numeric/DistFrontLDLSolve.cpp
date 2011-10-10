@@ -98,6 +98,9 @@ void clique::numeric::DistFrontLDLForwardSolve
     {
         LocalFrontLDLForwardSolve
         ( supernodeSize, L.LockedLocalMatrix(), X.LocalMatrix() );
+#ifndef RELEASE
+        PopCallStack();
+#endif
         return;
     }
 
@@ -199,6 +202,9 @@ void clique::numeric::DistFrontLDLBackwardSolve
     {
         LocalFrontLDLBackwardSolve
         ( orientation, supernodeSize, L.LockedLocalMatrix(), X.LocalMatrix() );
+#ifndef RELEASE
+        PopCallStack();
+#endif
         return;
     }
 

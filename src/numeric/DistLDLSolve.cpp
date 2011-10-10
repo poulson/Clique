@@ -116,6 +116,8 @@ void clique::numeric::DistLDLForwardSolve
         }
         packOffsets.clear();
         childW.Empty();
+        if( s == 1 )
+            L.local.fronts.back().work.Empty();
 
         // Set up the receive buffer
         int recvBufferSize = 0;
@@ -183,8 +185,6 @@ void clique::numeric::DistLDLForwardSolve
         // Store the supernode portion of the result
         localXT = WT.LocalMatrix();
     }
-
-    // Free the distributed and local root work buffers
     L.local.fronts.back().work.Empty();
     L.dist.fronts.back().work1d.Empty();
 #ifndef RELEASE
