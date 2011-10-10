@@ -25,31 +25,6 @@
 #include "clique.hpp"
 using namespace elemental;
 
-namespace internal {
-template<typename F>
-void AddInLocalData
-( const DistMatrix<F,VC,STAR>& X1, DistMatrix<F,STAR,STAR>& Z )
-{
-#ifndef RELEASE
-    PushCallStack("internal::AddInLocalData");
-#endif
-    const int width = X1.Width();
-    const int localHeight = X1.LocalHeight();
-    const int stride = X1.Grid().Size();
-    const int offset = X1.ColShift();
-    for( int j=0; j<width; ++j )
-    {
-        F* ZColBuffer = Z.LocalBuffer(0,j);
-        const F* X1ColBuffer = X1.LockedLocalBuffer(0,j);
-        for( int iLocal=0; iLocal<localHeight; ++iLocal )
-            ZColBuffer[offset+stride*iLocal] += X1ColBuffer[iLocal];
-    }
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-}
-
 template<typename F>
 void clique::numeric::DistFrontLDLDiagonalSolve
 ( int supernodeSize, const DistMatrix<F,VC,STAR>& d, DistMatrix<F,VC,STAR>& X,
@@ -208,75 +183,27 @@ void clique::numeric::DistFrontLDLBackwardSolve
         return;
     }
 
-    // Matrix views
     DistMatrix<F,VC,STAR>
-        LTL(g), LTR(g),  L00(g), L01(g), L02(g),
-        LBL(g), LBR(g),  L10(g), L11(g), L12(g),
-                         L20(g), L21(g), L22(g);
-
-    DistMatrix<F,VC,STAR> XT(g),  X0(g),
-                          XB(g),  X1(g),
-                                  X2(g);
-
-    // Temporary distributions
-    DistMatrix<F,STAR,STAR> L11_STAR_STAR(g);
-    DistMatrix<F,STAR,STAR> Z(g);
-
+        LTL(g), LTR(g),
+        LBL(g), LBR(g);
     LockedPartitionDownDiagonal
     ( L, LTL, LTR,
          LBL, LBR, supernodeSize );
+
+    DistMatrix<F,VC,STAR> XT(g),
+                          XB(g);
     PartitionDown
     ( X, XT,
          XB, supernodeSize );
 
     // Subtract off the parent updates
+    DistMatrix<F,STAR,STAR> Z(XT.Height(),XT.Width(),g);
     Z.ResizeTo( XT.Height(), XT.Width() );
     basic::internal::LocalGemm( orientation, NORMAL, (F)-1, LBL, XB, (F)0, Z );
     XT.SumScatterUpdate( (F)1, Z );
     Z.Empty();
 
-    // Solve the remaining triangular system
-    while( XT.Height() > 0 )
-    {
-        LockedRepartitionUpDiagonal
-        ( LTL, /**/ LTR,   L00, L01, /**/ L02,
-               /**/        L10, L11, /**/ L12,
-         /*************/  /******************/
-          LBL, /**/ LBR,   L20, L21, /**/ L22 );
-
-        RepartitionUp
-        ( XT,  X0,
-               X1,
-         /**/ /**/
-          XB,  X2 );
-
-        //--------------------------------------------------------------------//
-        // X1 -= L21' X2
-        Z.ResizeTo( X1.Height(), X1.Width() );
-        basic::internal::LocalGemm
-        ( orientation, NORMAL, (F)-1, L21, X2, (F)0, Z );
-        internal::AddInLocalData( X1, Z );
-        Z.SumOverGrid();
-
-        // X1 := L11^-1 X1
-        L11_STAR_STAR = L11; 
-        basic::internal::LocalTrsm
-        ( LEFT, LOWER, orientation, UNIT, (F)1, L11_STAR_STAR, Z );
-        X1 = Z;
-        //--------------------------------------------------------------------//
-
-        SlideLockedPartitionUpDiagonal
-        ( LTL, /**/ LTR,  L00, /**/ L01, L02,
-         /*************/ /******************/
-               /**/       L10, /**/ L11, L12,
-          LBL, /**/ LBR,  L20, /**/ L21, L22 );
-
-        SlidePartitionUp
-        ( XT,  X0,
-         /**/ /**/
-               X1,
-          XB,  X2 );
-    }
+    basic::internal::TrsmLLTSmall( orientation, UNIT, (F)1, LTL, XT );
 #ifndef RELEASE
     clique::PopCallStack();
 #endif

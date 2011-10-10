@@ -171,8 +171,8 @@ void clique::numeric::DistLDLForwardSolve
                 const F* recvRow = &recvValues[k*width];
                 F* WRow = W.LocalBuffer( iFrontLocal, 0 );
                 const int WLDim = W.LocalLDim();
-                for( int jFront=0; jFront<width; ++jFront )
-                    WRow[jFront*WLDim] += recvRow[jFront];
+                for( int j=0; j<width; ++j )
+                    WRow[j*WLDim] += recvRow[j];
             }
         }
         recvBuffer.clear();
@@ -317,10 +317,10 @@ void clique::numeric::DistLDLBackwardSolve
             {
                 const int iFrontLocal = recvIndices[k];
                 F* sendRow = &sendValues[k*width];
-                const F* workRow = parentWork.LocalBuffer( iFrontLocal, 0 );
+                const F* workRow = parentWork.LockedLocalBuffer( iFrontLocal, 0 );
                 const int workLDim = parentWork.LocalLDim();
-                for( int jFront=0; jFront<width; ++jFront )
-                    sendRow[jFront] = workRow[jFront*workLDim];
+                for( int j=0; j<width; ++j )
+                    sendRow[j] = workRow[j*workLDim];
             }
         }
         parentWork.Empty();
@@ -380,8 +380,8 @@ void clique::numeric::DistLDLBackwardSolve
             const int iUpdate = updateColShift + iUpdateLocal*commSize;
             const int startRank = myRelIndices[iUpdate] % parentCommSize;
             const F* recvBuf = &recvBuffer[recvDispls[startRank]];
-            for( int jUpdate=0; jUpdate<width; ++jUpdate )
-                WB.SetLocalEntry(iUpdateLocal,jUpdate,recvBuf[jUpdate]);
+            for( int j=0; j<width; ++j )
+                WB.SetLocalEntry(iUpdateLocal,j,recvBuf[j]);
             recvDispls[startRank] += width;
         }
         recvBuffer.clear();
