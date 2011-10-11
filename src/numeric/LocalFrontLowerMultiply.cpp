@@ -20,14 +20,14 @@
 #include "clique.hpp"
 using namespace elemental;
 
-namespace internal {
+namespace {
 template<typename F> // represents a real or complex ring
 void ModifyForTrmm
 ( Matrix<F>& D, Diagonal diag, int diagOffset, 
   std::vector<Matrix<F> >& diagonals )
 {
 #ifndef RELEASE
-    PushCallStack("internal::ModifyForTrmm");
+    PushCallStack("ModifyForTrmm");
 #endif
     if( diag == UNIT )
     {
@@ -69,7 +69,7 @@ void ReplaceAfterTrmm
   const std::vector<Matrix<F> >& diagonals )
 {
 #ifndef RELEASE
-    PushCallStack("internal::ReplaceAfterTrmm");
+    PushCallStack("ReplaceAfterTrmm");
 #endif
     const int height = D.Height();
     for( int j=0; j<height; ++j )
@@ -84,7 +84,7 @@ void ReplaceAfterTrmm
     PopCallStack();
 #endif
 }
-} // internal
+} // anonymous namespace
 
 template<typename F>
 void clique::numeric::LocalFrontLowerMultiplyNormal
@@ -125,9 +125,9 @@ void clique::numeric::LocalFrontLowerMultiplyNormal
     else
     {
         std::vector<Matrix<F> > diagonals;
-        internal::ModifyForTrmm( LT, diag, diagOffset, diagonals );
+        ModifyForTrmm( LT, diag, diagOffset, diagonals );
         basic::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, (F)1, LT, XT );
-        internal::ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
+        ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
     }
 #ifndef RELEASE
     clique::PopCallStack();
@@ -174,9 +174,9 @@ void clique::numeric::LocalFrontLowerMultiplyTranspose
     else
     {
         std::vector<Matrix<F> > diagonals;
-        internal::ModifyForTrmm( LT, diag, diagOffset, diagonals );
+        ModifyForTrmm( LT, diag, diagOffset, diagonals );
         basic::Trmm( LEFT, LOWER, orientation, NON_UNIT, (F)1, LT, XT );
-        internal::ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
+        ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
     }
 
     basic::Gemm( orientation, NORMAL, (F)1, LB, XB, (F)1, XT );

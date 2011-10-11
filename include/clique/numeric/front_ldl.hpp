@@ -33,6 +33,16 @@ template<typename F>
 void DistFrontLDL
 ( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& AR );
 
+namespace internal {
+template<typename F>
+void DistFrontLDLGeneral
+( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& AR );
+
+template<typename F>
+void DistFrontLDLSquare
+( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& AR );
+} // namespace internal
+
 } // namespace numeric
 } // namespace clique
 

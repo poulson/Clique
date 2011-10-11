@@ -20,12 +20,12 @@
 #include "clique.hpp"
 using namespace elemental;
 
-namespace internal {
+namespace {
 template<typename F> // represents a real or complex ring
 void ModifyForTrmm( DistMatrix<F,STAR,STAR>& D, Diagonal diag, int diagOffset )
 {
 #ifndef RELEASE
-    PushCallStack("internal::ModifyForTrmm");
+    PushCallStack("ModifyForTrmm");
 #endif
     const int height = D.Height();
     for( int j=0; j<height; ++j )
@@ -39,7 +39,7 @@ void ModifyForTrmm( DistMatrix<F,STAR,STAR>& D, Diagonal diag, int diagOffset )
     PopCallStack();
 #endif
 }
-}
+} // anonymous namespace
 
 template<typename F>
 void clique::numeric::DistFrontLowerMultiplyNormal
@@ -115,7 +115,7 @@ void clique::numeric::DistFrontLowerMultiplyNormal
         else
         {
             L11_STAR_STAR = L11;
-            internal::ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
+            ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
             basic::internal::LocalTrmm
             ( LEFT, LOWER, NORMAL, NON_UNIT, 
               (F)1, L11_STAR_STAR, X1_STAR_STAR );
@@ -213,7 +213,7 @@ void clique::numeric::DistFrontLowerMultiplyTranspose
         }
         else
         {
-            internal::ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
+            ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
             basic::internal::LocalTrmm
             ( LEFT, LOWER, orientation, NON_UNIT, 
               (F)1, L11_STAR_STAR, X1_STAR_STAR );
