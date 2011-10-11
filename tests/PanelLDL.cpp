@@ -22,7 +22,8 @@ using namespace elemental;
 
 void Usage()
 {
-    std::cout << "PanelLDL <nx> <ny> <nz> <cutoff> <write info?>\n"
+    std::cout << "PanelLDL <numPanels> <nx> <ny> <nz> <cutoff> <write info?>\n"
+              << "<numPanels>: number of panels to factor in memory\n"
               << "<nx>: size of panel in x direction\n"
               << "<ny>: size of panel in y direction\n"
               << "<nz>: size of panel in z direction\n"
@@ -82,7 +83,7 @@ main( int argc, char* argv[] )
         return 0;
     }
 
-    if( argc < 6 )
+    if( argc < 7 )
     {
         if( commRank == 0 )        
             Usage();
@@ -91,12 +92,13 @@ main( int argc, char* argv[] )
     }
 
     int argNum = 1;
+    const int numPanels = atoi( argv[argNum++] );
     const int nx = atoi( argv[argNum++] );
     const int ny = atoi( argv[argNum++] );
     const int nz = atoi( argv[argNum++] );
     const int cutoff = atoi( argv[argNum++] );
     const bool writeInfo = atoi( argv[argNum++] );
-    if( writeInfo && argc == 6 )
+    if( writeInfo && argc == 7 )
     {
         if( commRank == 0 )
             Usage();
@@ -105,7 +107,8 @@ main( int argc, char* argv[] )
     }
     const char* basename = argv[argNum++];
     if( commRank == 0 )
-        std::cout << "(nx,ny,nz)=(" << nx << "," << ny << "," << nz << ")\n"
+        std::cout << "numPanels=" << numPanels << "\n"
+                  << "(nx,ny,nz)=(" << nx << "," << ny << "," << nz << ")\n"
                   << "cutoff=" << cutoff << std::endl;
 
     try
@@ -187,126 +190,148 @@ main( int argc, char* argv[] )
                         S.dist.supernodes.back().localSize1d << std::endl;
         }
 
-        // Directly initialize the frontal matrices with the original 
-        // sparse matrix (for now, use an original matrix equal to identity)
-        const double fillStartTime = mpi::Time();
-        clique::numeric::SymmFrontTree<F> L;
-        L.local.fronts.resize( S.local.supernodes.size() );
-        for( int s=0; s<S.local.supernodes.size(); ++s )
+        std::vector<clique::numeric::SymmFrontTree<F>*> symmFrontTrees;
+        for( int panel=0; panel<numPanels; ++panel )
         {
-            const clique::symbolic::LocalSymmFactSupernode& sn =
-                S.local.supernodes[s];
-            Matrix<F>& frontL = L.local.fronts[s].frontL;
-
-            const int frontSize = sn.size+sn.lowerStruct.size();
-            frontL.ResizeTo( frontSize, sn.size );
-            frontL.SetToRandom();
+            if( commRank == 0 )
+                std::cout << "Panel " << panel << " of " << numPanels 
+                          << std::endl;
             if( writeInfo )
-                frontL.Print( infoFile, "frontL local" );
-        }
-        L.dist.mode = clique::MANY_RHS;
-        L.dist.fronts.resize( log2CommSize+1 );
-        {
-            const clique::symbolic::DistSymmFactSupernode& sn = 
-                S.dist.supernodes[0];
-            Matrix<F>& topLocalFrontL = L.local.fronts.back().frontL;
-            Matrix<F>& topLocalFrontR = L.local.fronts.back().frontR;
-            DistMatrix<F,MC,MR>& front2dL = L.dist.fronts[0].front2dL;
+                infoFile << "Panel " << panel << " of " << numPanels 
+                         << std::endl;
+            // Directly initialize the frontal matrices with the original 
+            // sparse matrix (for now, use an original matrix equal to identity)
+            const double fillStartTime = mpi::Time();
+            symmFrontTrees.push_back( new clique::numeric::SymmFrontTree<F> );
+            clique::numeric::SymmFrontTree<F>& L = *symmFrontTrees.back();
+            L.local.fronts.resize( S.local.supernodes.size() );
+            for( int s=0; s<S.local.supernodes.size(); ++s )
+            {
+                const clique::symbolic::LocalSymmFactSupernode& sn =
+                    S.local.supernodes[s];
+                Matrix<F>& frontL = L.local.fronts[s].frontL;
 
-            const int frontSize = sn.size+sn.lowerStruct.size();
-            front2dL.LockedView
-            ( topLocalFrontL.Height(), topLocalFrontL.Width(), 0, 0,
-              topLocalFrontL.LockedBuffer(), topLocalFrontL.LDim(),
-              *sn.grid );
-        }
-        for( int s=1; s<log2CommSize+1; ++s )
-        {
-            const clique::symbolic::DistSymmFactSupernode& sn = 
-                S.dist.supernodes[s];
-            DistMatrix<F,MC,MR>& front2dL = L.dist.fronts[s].front2dL;
+                const int frontSize = sn.size+sn.lowerStruct.size();
+                frontL.ResizeTo( frontSize, sn.size );
+                frontL.SetToRandom();
+                if( writeInfo )
+                    frontL.Print( infoFile, "frontL local" );
+            }
+            L.dist.mode = clique::MANY_RHS;
+            L.dist.fronts.resize( log2CommSize+1 );
+            {
+                const clique::symbolic::DistSymmFactSupernode& sn = 
+                    S.dist.supernodes[0];
+                Matrix<F>& topLocalFrontL = L.local.fronts.back().frontL;
+                Matrix<F>& topLocalFrontR = L.local.fronts.back().frontR;
+                DistMatrix<F,MC,MR>& front2dL = L.dist.fronts[0].front2dL;
 
-            front2dL.SetGrid( *sn.grid );
-            const int frontSize = sn.size+sn.lowerStruct.size();
-            front2dL.Align( 0, 0 );
-            front2dL.ResizeTo( frontSize, sn.size );
-            front2dL.SetToRandom();
+                const int frontSize = sn.size+sn.lowerStruct.size();
+                front2dL.LockedView
+                ( topLocalFrontL.Height(), topLocalFrontL.Width(), 0, 0,
+                  topLocalFrontL.LockedBuffer(), topLocalFrontL.LDim(),
+                  *sn.grid );
+            }
+            for( int s=1; s<log2CommSize+1; ++s )
+            {
+                const clique::symbolic::DistSymmFactSupernode& sn = 
+                    S.dist.supernodes[s];
+                DistMatrix<F,MC,MR>& front2dL = L.dist.fronts[s].front2dL;
+
+                front2dL.SetGrid( *sn.grid );
+                const int frontSize = sn.size+sn.lowerStruct.size();
+                front2dL.Align( 0, 0 );
+                front2dL.ResizeTo( frontSize, sn.size );
+                front2dL.SetToRandom();
+                if( writeInfo )
+                    front2dL.Print( infoFile, "frontL dist" );
+            }
+            mpi::Barrier( comm );
+            const double fillStopTime = mpi::Time();
+            if( commRank == 0 )
+                std::cout << "Fill time: " << fillStopTime-fillStartTime
+                          << " secs" << std::endl;
+
+            // Generate a random RHS, multiply it by our matrix, and then 
+            // compare the original RHS against the solution.
+            const int NUM_RHS = 1;
+            const double makeRhsStartTime = mpi::Time();
+            const int localHeight1d = 
+                S.dist.supernodes.back().localOffset1d + 
+                S.dist.supernodes.back().localSize1d;
+            Matrix<F> localX( localHeight1d, NUM_RHS );
+            localX.SetToRandom();
+            Matrix<F> localYLower = localX;
+            clique::numeric::SetSolveMode( L, clique::FEW_RHS );
+            clique::numeric::LowerMultiply
+            ( NORMAL, NON_UNIT, -1, S, L, localYLower );
+            Matrix<F> localY = localX;
+            clique::numeric::LowerMultiply
+            ( TRANSPOSE, NON_UNIT, 0, S, L, localY );
+            basic::Axpy( (F)1, localYLower, localY );
+            localYLower.Empty();
+            clique::numeric::SetSolveMode( L, clique::MANY_RHS );
+            mpi::Barrier( comm );
+            const double makeRhsStopTime = mpi::Time();
+            if( commRank == 0 )
+                std::cout << "Make RHS time: " 
+                          << makeRhsStopTime-makeRhsStartTime
+                          << " secs" << std::endl;
             if( writeInfo )
-                front2dL.Print( infoFile, "frontL dist" );
+            {
+                localX.Print( infoFile, "localX" );
+                localY.Print( infoFile, "localY" );
+            }
+            const double myYNorm = advanced::Norm( localY );
+            double YNorm;
+            mpi::Reduce( &myYNorm, &YNorm, 1, mpi::SUM, 0, comm );
+
+            // Call the numerical factorization routine
+            const double factStartTime = mpi::Time();
+            clique::numeric::LDL( TRANSPOSE, S, L );
+            mpi::Barrier( comm );
+            const double factStopTime = mpi::Time();
+            if( commRank == 0 )
+                std::cout << "Factorization time: " 
+                          << factStopTime-factStartTime
+                          << " secs" << std::endl;
+
+            // Redistribute to 1d for fast solves with few right-hand sides
+            const double redistStartTime = mpi::Time();
+            clique::numeric::SetSolveMode( L, clique::FEW_RHS );
+            mpi::Barrier( comm );
+            const double redistStopTime = mpi::Time();
+            if( commRank == 0 )
+                std::cout << "Redistribution time: " 
+                          << redistStopTime-redistStartTime 
+                          << " secs" << std::endl;
+
+            // Solve
+            mpi::Barrier( comm );
+            const double solveStartTime = mpi::Time();
+            clique::numeric::LDLSolve( TRANSPOSE, S, L, localY, true );
+            mpi::Barrier( comm );
+            const double solveStopTime = mpi::Time();
+            if( commRank == 0 )
+                std::cout << "Solve time: " << solveStopTime-solveStartTime
+                          << " secs" << std::endl;
+
+            if( writeInfo )
+                localY.Print( infoFile, "localY final" );
+            basic::Axpy( (F)-1, localX, localY );
+            const double myErrorNorm = advanced::Norm( localY );
+            double errorNorm;
+            mpi::Reduce( &myErrorNorm, &errorNorm, 1, mpi::SUM, 0, comm );
+            if( commRank == 0 )
+            {
+                std::cout << "||y||_2: " << YNorm << "\n"
+                          << "||e||_2: " << errorNorm << "\n" 
+                          << "||e||_2/||y||_2: " << errorNorm/YNorm << "\n"
+                          << std::endl;
+            }
+            if( writeInfo )
+                localY.Print( infoFile, "error final" );
         }
-        mpi::Barrier( comm );
-        const double fillStopTime = mpi::Time();
-        if( commRank == 0 )
-            std::cout << "Fill time: " << fillStopTime-fillStartTime
-                      << " secs" << std::endl;
-
-        // Generate a random RHS, multiply it by our matrix, and then 
-        // compare the original RHS against the solution.
-        const int NUM_RHS = 1;
-        const double makeRhsStartTime = mpi::Time();
-        const int localHeight1d = 
-            S.dist.supernodes.back().localOffset1d + 
-            S.dist.supernodes.back().localSize1d;
-        Matrix<F> localX( localHeight1d, NUM_RHS );
-        localX.SetToRandom();
-        Matrix<F> localYLower = localX;
-        clique::numeric::SetSolveMode( L, clique::FEW_RHS );
-        clique::numeric::LowerMultiply
-        ( NORMAL, NON_UNIT, -1, S, L, localYLower );
-        Matrix<F> localY = localX;
-        clique::numeric::LowerMultiply
-        ( TRANSPOSE, NON_UNIT, 0, S, L, localY );
-        basic::Axpy( (F)1, localYLower, localY );
-        localYLower.Empty();
-        clique::numeric::SetSolveMode( L, clique::MANY_RHS );
-        mpi::Barrier( comm );
-        const double makeRhsStopTime = mpi::Time();
-        if( commRank == 0 )
-            std::cout << "Make RHS time: " << makeRhsStopTime-makeRhsStartTime
-                      << " secs" << std::endl;
-        if( writeInfo )
-        {
-            localX.Print( infoFile, "localX" );
-            localY.Print( infoFile, "localY" );
-        }
-
-        // Call the numerical factorization routine
-        const double factStartTime = mpi::Time();
-        clique::numeric::LDL( TRANSPOSE, S, L );
-        mpi::Barrier( comm );
-        const double factStopTime = mpi::Time();
-        if( commRank == 0 )
-            std::cout << "Factorization time: " << factStopTime-factStartTime
-                      << " secs" << std::endl;
-
-        // Redistribute to 1d for fast solves with few right-hand sides
-        const double redistStartTime = mpi::Time();
-        clique::numeric::SetSolveMode( L, clique::FEW_RHS );
-        mpi::Barrier( comm );
-        const double redistStopTime = mpi::Time();
-        if( commRank == 0 )
-            std::cout << "Redistribution time: " 
-                      << redistStopTime-redistStartTime << " secs" << std::endl;
-
-        // Solve
-        mpi::Barrier( comm );
-        const double solveStartTime = mpi::Time();
-        clique::numeric::LDLSolve( TRANSPOSE, S, L, localY, true );
-        mpi::Barrier( comm );
-        const double solveStopTime = mpi::Time();
-        if( commRank == 0 )
-            std::cout << "Solve time: " << solveStopTime-solveStartTime
-                      << " secs" << std::endl;
-
-        if( writeInfo )
-            localY.Print( infoFile, "localY final" );
-        basic::Axpy( (F)-1, localX, localY );
-        const double myNorm = advanced::Norm( localY );
-        double norm;
-        mpi::Reduce( &myNorm, &norm, 1, mpi::SUM, 0, comm );
-        if( commRank == 0 )
-            std::cout << "Error norm: " << norm << std::endl;
-        if( writeInfo )
-            localY.Print( infoFile, "error final" );
     }
     catch( std::exception& e )
     {
