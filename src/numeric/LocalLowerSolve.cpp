@@ -21,14 +21,16 @@
 using namespace elemental;
 
 template<typename F> // F represents a real or complex field
-void clique::numeric::LocalLDLForwardSolve
-( const symbolic::SymmFact& S,
+void clique::numeric::LocalLowerForwardSolve
+( Diagonal diag, 
+  const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& X )
+        Matrix<F>& X,
+        bool checkIfSingular )
 {
     using namespace clique::symbolic;
 #ifndef RELEASE
-    PushCallStack("numeric::LocalLDLForwardSolve");
+    PushCallStack("numeric::LocalLowerForwardSolve");
 #endif
     const int numSupernodes = S.local.supernodes.size();
     const int width = X.Width();
@@ -91,7 +93,7 @@ void clique::numeric::LocalLDLForwardSolve
         // else numChildren == 0
 
         // Solve against this front
-        LocalFrontLDLForwardSolve( frontL, W );
+        LocalFrontLowerForwardSolve( diag, frontL, W, checkIfSingular );
 
         // Store the supernode portion of the result
         XT = WT;
@@ -102,45 +104,16 @@ void clique::numeric::LocalLDLForwardSolve
 }
 
 template<typename F> // F represents a real or complex field
-void clique::numeric::LocalLDLDiagonalSolve
-( const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& X, bool checkIfSingular )
-{
-    using namespace clique::symbolic;
-#ifndef RELEASE
-    PushCallStack("numeric::LocalLDLDiagonalSolve");
-#endif
-    const int numSupernodes = S.local.supernodes.size();
-    const int width = X.Width();
-    Matrix<F> XSub;
-    for( int s=0; s<numSupernodes; ++s )
-    {
-        const LocalSymmFactSupernode& sn = S.local.supernodes[s];
-        const Matrix<F>& frontL = L.local.fronts[s].frontL;
-        XSub.View( X, sn.myOffset, 0, sn.size, width );
-
-        Matrix<F> frontTL;
-        frontTL.LockedView( frontL, 0, 0, sn.size, sn.size );
-        Matrix<F> d;
-        frontTL.GetDiagonal( d );
-        LocalFrontLDLDiagonalSolve( d, XSub, checkIfSingular );
-    }
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
-template<typename F> // F represents a real or complex field
-void clique::numeric::LocalLDLBackwardSolve
-( Orientation orientation,
+void clique::numeric::LocalLowerBackwardSolve
+( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S, 
   const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& X )
+        Matrix<F>& X,
+        bool checkIfSingular )
 {
     using namespace clique::symbolic;
 #ifndef RELEASE
-    PushCallStack("numeric::LocalLDLBackwardSolve");
+    PushCallStack("numeric::LocalLowerBackwardSolve");
 #endif
     const int numSupernodes = S.local.supernodes.size();
     const int width = X.Width();
@@ -196,7 +169,8 @@ void clique::numeric::LocalLDLBackwardSolve
             parentWork.Empty();
 
         // Solve against this front
-        LocalFrontLDLBackwardSolve( orientation, frontL, W );
+        LocalFrontLowerBackwardSolve
+        ( orientation, diag, frontL, W, checkIfSingular );
 
         // Store the supernode portion of the result
         XT = WT;
@@ -210,58 +184,54 @@ void clique::numeric::LocalLDLBackwardSolve
 #endif
 }
 
-template void clique::numeric::LocalLDLForwardSolve
-( const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<float>& L,
-        Matrix<float>& X );
-template void clique::numeric::LocalLDLDiagonalSolve
-( const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<float>& L,
-        Matrix<float>& X, bool checkIfSingular );
-template void clique::numeric::LocalLDLBackwardSolve
-( Orientation orientation,
+template void clique::numeric::LocalLowerForwardSolve
+( Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<float>& L,
-        Matrix<float>& X );
+        Matrix<float>& X,
+        bool checkIfSingular );
+template void clique::numeric::LocalLowerBackwardSolve
+( Orientation orientation, Diagonal diag,
+  const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<float>& L,
+        Matrix<float>& X,
+        bool checkIfSingular );
 
-template void clique::numeric::LocalLDLForwardSolve
-( const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<double>& L,
-        Matrix<double>& X );
-template void clique::numeric::LocalLDLDiagonalSolve
-( const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<double>& L,
-        Matrix<double>& X, bool checkIfSingular );
-template void clique::numeric::LocalLDLBackwardSolve
-( Orientation orientation,
+template void clique::numeric::LocalLowerForwardSolve
+( Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<double>& L,
-        Matrix<double>& X );
+        Matrix<double>& X,
+        bool checkIfSingular );
+template void clique::numeric::LocalLowerBackwardSolve
+( Orientation orientation, Diagonal diag,
+  const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<double>& L,
+        Matrix<double>& X,
+        bool checkIfSingular );
 
-template void clique::numeric::LocalLDLForwardSolve
-( const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<std::complex<float> >& L,
-        Matrix<std::complex<float> >& X );
-template void clique::numeric::LocalLDLDiagonalSolve
-( const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<std::complex<float> >& L,
-        Matrix<std::complex<float> >& X, bool checkIfSingular );
-template void clique::numeric::LocalLDLBackwardSolve
-( Orientation orientation,
+template void clique::numeric::LocalLowerForwardSolve
+( Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<std::complex<float> >& L,
-        Matrix<std::complex<float> >& X );
+        Matrix<std::complex<float> >& X,
+        bool checkIfSingular );
+template void clique::numeric::LocalLowerBackwardSolve
+( Orientation orientation, Diagonal diag,
+  const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<std::complex<float> >& L,
+        Matrix<std::complex<float> >& X,
+        bool checkIfSingular );
 
-template void clique::numeric::LocalLDLForwardSolve
-( const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<std::complex<double> >& L,
-        Matrix<std::complex<double> >& X );
-template void clique::numeric::LocalLDLDiagonalSolve
-( const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<std::complex<double> >& L,
-        Matrix<std::complex<double> >& X, bool checkIfSingular );
-template void clique::numeric::LocalLDLBackwardSolve
-( Orientation orientation,
+template void clique::numeric::LocalLowerForwardSolve
+( Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<std::complex<double> >& L,
-        Matrix<std::complex<double> >& X );
+        Matrix<std::complex<double> >& X,
+        bool checkIfSingular );
+template void clique::numeric::LocalLowerBackwardSolve
+( Orientation orientation, Diagonal diag,
+  const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<std::complex<double> >& L,
+        Matrix<std::complex<double> >& X,
+        bool checkIfSingular );

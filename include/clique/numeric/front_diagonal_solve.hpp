@@ -18,24 +18,25 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_HPP
-#define CLIQUE_HPP 1
+#ifndef CLIQUE_NUMERIC_FRONT_DIAGONAL_SOLVE_HPP
+#define CLIQUE_NUMERIC_FRONT_DIAGONAL_SOLVE_HPP 1
 
-#include "clique/core/environment.hpp"
-#include "clique/symbolic/symmetric_factorization.hpp"
+namespace clique {
+namespace numeric {
+using namespace elemental;
 
-#include "clique/numeric/front_diagonal_solve.hpp"
-#include "clique/numeric/front_lower_solve.hpp"
-#include "clique/numeric/front_lower_multiply.hpp"
+template<typename F>
+void LocalFrontDiagonalSolve
+( const Matrix<F>& d, Matrix<F>& X, bool checkIfSingular=true );
 
-#include "clique/numeric/symm_front_tree.hpp"
+template<typename F>
+void DistFrontDiagonalSolve
+( const DistMatrix<F,VC,STAR>& d,
+        DistMatrix<F,VC,STAR>& X,
+        bool checkIfSingular=true );
 
-#include "clique/numeric/diagonal_solve.hpp"
-#include "clique/numeric/lower_multiply.hpp"
-#include "clique/numeric/lower_solve.hpp"
+} // namespace numeric
+} // namespace clique
 
-#include "clique/numeric/front_ldl.hpp"
-#include "clique/numeric/ldl.hpp"
-#include "clique/numeric/ldl_solve.hpp"
+#endif /* CLIQUE_NUMERIC_FRONT_DIAGONAL_SOLVE_HPP */
 
-#endif /* CLIQUE_HPP */

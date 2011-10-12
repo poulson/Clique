@@ -18,18 +18,33 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_LDL_SOLVE_HPP
-#define CLIQUE_NUMERIC_LDL_SOLVE_HPP 1
+#ifndef CLIQUE_NUMERIC_DIAGONAL_SOLVE_HPP
+#define CLIQUE_NUMERIC_DIAGONAL_SOLVE_HPP 1
 
 namespace clique {
 namespace numeric {
 
 template<typename F>
-void LDLSolve
-( Orientation orientation,
-  const symbolic::SymmFact& S,
+void DiagonalSolve
+( const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX, 
+        Matrix<F>& localX,
+        bool checkIfSingular=true );
+
+// Helpers
+
+template<typename F>
+void LocalDiagonalSolve
+( const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<F>& L, 
+        Matrix<F>& localX,
+        bool checkIfSingular=true );
+
+template<typename F>
+void DistDiagonalSolve
+( const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<F>& L,
+        Matrix<F>& localX,
         bool checkIfSingular=true );
 
 //----------------------------------------------------------------------------//
@@ -37,28 +52,17 @@ void LDLSolve
 //----------------------------------------------------------------------------//
 
 template<typename F>
-void LDLSolve
-( Orientation orientation,
-  const symbolic::SymmFact& S,
+void DiagonalSolve
+( const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX, 
         bool checkIfSingular )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::LDLSolve");
-    if( orientation == NORMAL )
-        throw std::logic_error("Invalid orientation for LDL");
+    PushCallStack("numeric::DiagonalSolve");
 #endif
-    // Solve against unit diagonal L
-    clique::numeric::LowerSolve
-    ( NORMAL, UNIT, S, L, localX, checkIfSingular );
-
-    // Solve against diagonal
-    clique::numeric::DiagonalSolve( S, L, localX, checkIfSingular );
-
-    // Solve against the (conjugate-)transpose of the unit diagonal L
-    clique::numeric::LowerSolve
-    ( orientation, UNIT, S, L, localX, checkIfSingular );
+    clique::numeric::LocalDiagonalSolve( S, L, localX, checkIfSingular );
+    clique::numeric::DistDiagonalSolve( S, L, localX, checkIfSingular );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -67,5 +71,5 @@ void LDLSolve
 } // namespace numeric
 } // namespace clique
 
-#endif /* CLIQUE_NUMERIC_LDL_SOLVE_HPP */
+#endif /* CLIQUE_NUMERIC_DIAGONAL_SOLVE_HPP */
 
