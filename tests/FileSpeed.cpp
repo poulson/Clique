@@ -22,9 +22,10 @@ using namespace elemental;
 
 void Usage()
 {
-    std::cout << "FileSpeed <num MB> <num pieces> <base name>\n"
+    std::cout << "FileSpeed <num MB> <num pieces> <num files> <base name>\n"
               << "  <num MB>:     number of megabytes to write to file\n"
               << "  <num pieces>: number of pieces to break it into\n"
+              << "  <num files>:  number of files to read/write\n"
               << "  <base name>:  base file name to write/read\n"
               << std::endl;
 }
@@ -37,7 +38,7 @@ main( int argc, char* argv[] )
     const int commRank = mpi::CommRank( comm );
     const int commSize = mpi::CommSize( comm );
 
-    if( argc < 4 )
+    if( argc < 5 )
     {
         if( commRank == 0 )        
             Usage();
@@ -48,6 +49,7 @@ main( int argc, char* argv[] )
     int argNum = 1;
     const unsigned numMB = atoi( argv[argNum++] );
     const unsigned numPieces = atoi( argv[argNum++] );
+    const unsigned numFiles = atoi( argv[argNum++] );
     const char* baseName = argv[argNum++];
     if( numPieces == 0 && commRank == 0 )
     {
@@ -55,17 +57,21 @@ main( int argc, char* argv[] )
         clique::Finalize();
         return 0;
     }
+    if( numFiles == 0 && commRank == 0 )
+    {
+        std::cout << "Number of files must be positive." << std::endl;
+        clique::Finalize();
+        return 0;
+    }
     if( commRank == 0 )
         std::cout << "numMB:     " << numMB << "\n"
                   << "numPieces: " << numPieces << "\n"
+                  << "numFiles:  " << numFiles << "\n"
                   << "baseName:  " << baseName << "\n"
                   << std::endl;
 
     try
     {
-        std::ostringstream filename;
-        filename << baseName << "-" << commRank << ".dat";
-
         const std::size_t bufferSize = numMB<<20;
         std::vector<char> buffer( bufferSize );
 
@@ -73,33 +79,49 @@ main( int argc, char* argv[] )
         const std::size_t lastPieceSize = 
             normalPieceSize + (bufferSize%numPieces);
 
-        mpi::Barrier( comm );
-        const double writeStartTime = mpi::Time();
-        std::ofstream outFile
-        ( filename.str().c_str(), std::ios::out|std::ios::binary );
-        for( unsigned i=0; i<numPieces-1; ++i )
-            outFile.write( &buffer[i*normalPieceSize], normalPieceSize );
-        outFile.write( &buffer[(numPieces-1)*normalPieceSize], lastPieceSize );
-        outFile.close();
-        mpi::Barrier( comm );
-        const double writeStopTime = mpi::Time();
-        if( commRank == 0 )
-            std::cout << "Write time: " << writeStopTime-writeStartTime
-                      << " secs." << std::endl;
+        // Write the files
+        for( int f=0; f<numFiles; ++f )
+        {
+            std::ostringstream filename;
+            filename << baseName << "-" << commRank << "-" << f << ".dat";
 
-        mpi::Barrier( comm );
-        const double readStartTime = mpi::Time();
-        std::ifstream inFile
-        ( filename.str().c_str(), std::ios::in|std::ios::binary );
-        for( unsigned i=0; i<numPieces-1; ++i )
+            mpi::Barrier( comm );
+            const double writeStartTime = mpi::Time();
+            std::ofstream outFile
+            ( filename.str().c_str(), std::ios::out|std::ios::binary );
+            for( unsigned i=0; i<numPieces-1; ++i )
+                outFile.write( &buffer[i*normalPieceSize], normalPieceSize );
+            outFile.write
+            ( &buffer[(numPieces-1)*normalPieceSize], lastPieceSize );
+            outFile.close();
+            mpi::Barrier( comm );
+            const double writeStopTime = mpi::Time();
+            if( commRank == 0 )
+                std::cout << "Write time: " << writeStopTime-writeStartTime
+                          << " secs." << std::endl;
+        }
+
+        // Read the files
+        for( int f=0; f<numFiles; ++f )
+        {
+            std::ostringstream filename;
+            filename << baseName << "-" << commRank << "-" << f << ".dat";
+
+            mpi::Barrier( comm );
+            const double readStartTime = mpi::Time();
+            std::ifstream inFile
+            ( filename.str().c_str(), std::ios::in|std::ios::binary );
+            for( unsigned i=0; i<numPieces-1; ++i )
             inFile.read( &buffer[i*normalPieceSize], normalPieceSize );
-        inFile.read( &buffer[(numPieces-1)*normalPieceSize], lastPieceSize );
-        inFile.close();
-        mpi::Barrier( comm );
-        const double readStopTime = mpi::Time();
-        if( commRank == 0 )
-            std::cout << "Read time: " << readStopTime-readStartTime
-                      << " secs." << std::endl;
+            inFile.read
+            ( &buffer[(numPieces-1)*normalPieceSize], lastPieceSize );
+            inFile.close();
+            mpi::Barrier( comm );
+            const double readStopTime = mpi::Time();
+            if( commRank == 0 )
+                std::cout << "Read time: " << readStopTime-readStartTime
+                          << " secs." << std::endl;
+        }
     }
     catch( std::exception& e )
     {
