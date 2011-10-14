@@ -171,12 +171,15 @@ void clique::numeric::DistFrontLowerBackwardSolve
     ( X, XT,
          XB, L.Width() );
 
-    // Subtract off the parent updates
-    DistMatrix<F,STAR,STAR> Z(XT.Height(),XT.Width(),g);
-    Z.ResizeTo( XT.Height(), XT.Width() );
-    basic::internal::LocalGemm( orientation, NORMAL, (F)-1, LB, XB, (F)0, Z );
-    XT.SumScatterUpdate( (F)1, Z );
-    Z.Empty();
+    if( XB.Height() != 0 )
+    {
+        // Subtract off the parent updates
+        DistMatrix<F,STAR,STAR> Z(XT.Height(),XT.Width(),g);
+        Z.ResizeTo( XT.Height(), XT.Width() );
+        basic::internal::LocalGemm
+        ( orientation, NORMAL, (F)-1, LB, XB, (F)0, Z );
+        XT.SumScatterUpdate( (F)1, Z );
+    }
 
     basic::internal::TrsmLLTSmall
     ( orientation, diag, (F)1, LT, XT, checkIfSingular );
