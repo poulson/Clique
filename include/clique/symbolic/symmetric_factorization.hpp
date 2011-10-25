@@ -64,7 +64,7 @@ struct LocalSymmFactSupernode
 
     std::vector<int> lowerStruct;
     std::vector<int> leftChildRelIndices, rightChildRelIndices;
-    std::map<int,int> origLowerRelIndices;
+    std::vector<int> origLowerRelIndices;
 };
 
 struct LocalSymmFact
@@ -81,7 +81,7 @@ struct DistSymmFactSupernode
     std::vector<int> lowerStruct;
 
     // Useful for expanding sparse matrices into this frontal matrix
-    std::map<int,int> origLowerRelIndices;
+    std::vector<int> origLowerRelIndices;
 
     // The relative indices of the left and right children
     // (maps from the child update indices to our frontal indices).

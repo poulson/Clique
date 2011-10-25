@@ -220,6 +220,7 @@ void clique::symbolic::DistSymmetricFactorization
         // Construct the relative indices of the original lower structure
         const int numOrigLowerIndices = origSN.lowerStruct.size();
         it = fullStruct.begin();
+        factSN.origLowerRelIndices.resize( numOrigLowerIndices );
         for( int i=0; i<numOrigLowerIndices; ++i )
         {
             const int index = origSN.lowerStruct[i];
@@ -228,7 +229,7 @@ void clique::symbolic::DistSymmetricFactorization
             if( it == fullStruct.end() )
                 throw std::logic_error("Relative index failure");
 #endif
-            factSN.origLowerRelIndices[index] = int(it-fullStruct.begin());
+            factSN.origLowerRelIndices[i] = int(it-fullStruct.begin());
         }
 
         // Construct the relative indices of the children

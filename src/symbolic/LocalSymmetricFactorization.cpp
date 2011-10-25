@@ -129,11 +129,12 @@ void clique::symbolic::LocalSymmetricFactorization
 
             // Construct the relative indices of the original lower structure
             it = fullStruct.begin();
+            factSN.origLowerRelIndices.resize( numOrigLowerIndices );
             for( int i=0; i<numOrigLowerIndices; ++i )
             {
                 const int index = origSN.lowerStruct[i];
                 it = std::lower_bound ( it, fullStruct.end(), index );
-                factSN.origLowerRelIndices[index] = int(it-fullStruct.begin());
+                factSN.origLowerRelIndices[i] = int(it-fullStruct.begin());
             }
 
             // Construct the relative indices of the children
