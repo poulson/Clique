@@ -40,7 +40,7 @@ void Usage()
     cout << "Generates random Hermitian matrix then solves for its eigenpairs."
 	     << "\n\n"
          << "  HermitianEig <r> <c> <only eigenvalues?> <range> <a> <b> "
-            "<highAccuracy?> <shape> <m> <nb> <local nb symv/hemv> "
+            "<shape> <m> <nb> <local nb symv/hemv> "
             "<correctness?> <print?>\n\n"
          << "  r: number of process rows\n"
          << "  c: number of process cols\n"
@@ -51,7 +51,6 @@ void Usage()
             "     if range=='V', lower-bound on eigenvalues\n"
          << "  b: if range=='I', 0-indexed last eigenpair to compute\n"
             "     if range=='V', upper-bound on eigenvalues\n"
-         << "  highAccuracy?: try for high acc. iff != 0\n"
          << "  shape: L/U\n"
          << "  m: height of matrix\n"
          << "  nb: algorithmic blocksize\n"
@@ -64,7 +63,7 @@ void TestCorrectnessDouble
 ( bool printMatrices,
   Shape shape,
   const DistMatrix<double,MC,  MR>& A,
-  const DistMatrix<double,STAR,VR>& w,
+  const DistMatrix<double,VR,STAR>& w,
   const DistMatrix<double,MC,  MR>& Z,
   const DistMatrix<double,MC  ,MR>& AOrig )
 {
@@ -77,9 +76,9 @@ void TestCorrectnessDouble
         cout << "  Gathering computed eigenvalues...";
         cout.flush();
     }
-    DistMatrix<double,STAR,MR> w_STAR_MR(g); 
-    w_STAR_MR.AlignWith( Z );
-    w_STAR_MR = w;
+    DistMatrix<double,MR,STAR> w_MR_STAR(g); 
+    w_MR_STAR.AlignWith( Z );
+    w_MR_STAR = w;
     if( g.VCRank() == 0 )
         cout << "DONE" << endl;
 
@@ -103,12 +102,15 @@ void TestCorrectnessDouble
     X.ResizeTo( n, k );
     basic::Hemm( LEFT, shape, (double)1, AOrig, Z, (double)0, X );
     // Set X := X - ZW = AZ - ZW
-    for( int j=0; j<X.LocalWidth(); ++j )
+    for( int jLocal=0; jLocal<X.LocalWidth(); ++jLocal )
     {
-        double omega = w_STAR_MR.GetLocalEntry(0,j);
-        for( int i=0; i<X.LocalHeight(); ++i )
-            X.SetLocalEntry(i,j,
-                X.GetLocalEntry(i,j)-omega*Z.GetLocalEntry(i,j));
+        const double omega = w_MR_STAR.GetLocalEntry(jLocal,0);
+        for( int iLocal=0; iLocal<X.LocalHeight(); ++iLocal )
+        {
+            const double chi = X.GetLocalEntry(iLocal,jLocal);
+            const double zeta = Z.GetLocalEntry(iLocal,jLocal);
+            X.SetLocalEntry(iLocal,jLocal,chi-omega*zeta);
+        }
     }
     // Find the infinity norms of A, Z, and AZ-ZW
     double infNormOfA = 
@@ -139,7 +141,7 @@ void TestCorrectnessDoubleComplex
 ( bool printMatrices,
   Shape shape,
   const DistMatrix<std::complex<double>,MC,  MR>& A,
-  const DistMatrix<             double, STAR,VR>& w,
+  const DistMatrix<             double, VR,STAR>& w,
   const DistMatrix<std::complex<double>,MC,  MR>& Z,
   const DistMatrix<std::complex<double>,MC  ,MR>& AOrig )
 {
@@ -152,8 +154,8 @@ void TestCorrectnessDoubleComplex
         cout << "  Gathering computed eigenvalues...";
         cout.flush();
     }
-    DistMatrix<double,STAR,MR> w_STAR_MR(true,Z.RowAlignment(),g); 
-    w_STAR_MR = w;
+    DistMatrix<double,MR,STAR> w_MR_STAR(true,Z.RowAlignment(),g); 
+    w_MR_STAR = w;
     if( g.VCRank() == 0 )
         cout << "DONE" << endl;
 
@@ -181,12 +183,15 @@ void TestCorrectnessDoubleComplex
     ( LEFT, shape, std::complex<double>(1), AOrig, Z, 
       std::complex<double>(0), X );
     // Find the residual ||X-ZW||_oo = ||AZ-ZW||_oo
-    for( int j=0; j<X.LocalWidth(); ++j )
+    for( int jLocal=0; jLocal<X.LocalWidth(); ++jLocal )
     {
-        double omega = w_STAR_MR.GetLocalEntry(0,j);
-        for( int i=0; i<X.LocalHeight(); ++i )
-            X.SetLocalEntry(i,j,
-                X.GetLocalEntry(i,j)-omega*Z.GetLocalEntry(i,j));
+        const double omega = w_MR_STAR.GetLocalEntry(jLocal,0);
+        for( int iLocal=0; iLocal<X.LocalHeight(); ++iLocal )
+        {
+            const std::complex<double> chi = X.GetLocalEntry(iLocal,jLocal);
+            const std::complex<double> zeta = Z.GetLocalEntry(iLocal,jLocal);
+            X.SetLocalEntry(iLocal,jLocal,chi-omega*zeta);
+        }
     }
     // Find the infinity norms of A, Z, and AZ-ZW
     double infNormOfA = 
@@ -216,13 +221,12 @@ void TestCorrectnessDoubleComplex
 void TestHermitianEigDouble
 ( bool testCorrectness, bool printMatrices,
   bool onlyEigenvalues, char range, Shape shape, int m, 
-  double vl, double vu, int il, int iu, bool tryForHighAccuracy, 
-  const Grid& g )
+  double vl, double vu, int il, int iu, const Grid& g )
 {
     double startTime, endTime, runTime;
     DistMatrix<double,MC,MR> A(m,m,g);
     DistMatrix<double,MC,MR> AOrig(g);
-    DistMatrix<double,STAR,VR> w(g);
+    DistMatrix<double,VR,STAR> w(g);
     DistMatrix<double,MC,MR> Z(g);
 
     A.SetToRandomHermitian();
@@ -250,23 +254,20 @@ void TestHermitianEigDouble
     if( onlyEigenvalues )
     {
         if( range == 'A' )
-            advanced::HermitianEig( shape, A, w, tryForHighAccuracy );
+            advanced::HermitianEig( shape, A, w );
         else if( range == 'I' )
-            advanced::HermitianEig( shape, A, w, il, iu, tryForHighAccuracy );
+            advanced::HermitianEig( shape, A, w, il, iu );
         else
-            advanced::HermitianEig( shape, A, w, vl, vu, tryForHighAccuracy );
+            advanced::HermitianEig( shape, A, w, vl, vu );
     }
     else
     {
         if( range == 'A' )
-            advanced::HermitianEig
-            ( shape, A, w, Z, tryForHighAccuracy );
+            advanced::HermitianEig( shape, A, w, Z );
         else if( range == 'I' )
-            advanced::HermitianEig
-            ( shape, A, w, Z, il, iu, tryForHighAccuracy );
+            advanced::HermitianEig( shape, A, w, Z, il, iu );
         else
-            advanced::HermitianEig
-            ( shape, A, w, Z, vl, vu, tryForHighAccuracy );
+            advanced::HermitianEig( shape, A, w, Z, vl, vu );
     }
     mpi::Barrier( g.VCComm() );
     endTime = mpi::Time();
@@ -292,13 +293,12 @@ void TestHermitianEigDouble
 void TestHermitianEigDoubleComplex
 ( bool testCorrectness, bool printMatrices,
   bool onlyEigenvalues, char range, Shape shape, int m, 
-  double vl, double vu, int il, int iu, bool tryForHighAccuracy, 
-  const Grid& g )
+  double vl, double vu, int il, int iu, const Grid& g )
 {
     double startTime, endTime, runTime;
     DistMatrix<std::complex<double>,MC,  MR> A(m,m,g);
     DistMatrix<std::complex<double>,MC,  MR> AOrig(g);
-    DistMatrix<             double, STAR,VR> w(g);
+    DistMatrix<             double, VR,STAR> w(g);
     DistMatrix<std::complex<double>,MC,  MR> Z(g);
 
     A.SetToRandomHermitian();
@@ -328,20 +328,20 @@ void TestHermitianEigDoubleComplex
     if( onlyEigenvalues )
     {
         if( range == 'A' )
-            advanced::HermitianEig( shape, A, w, tryForHighAccuracy );
+            advanced::HermitianEig( shape, A, w );
         else if( range == 'I' )
-            advanced::HermitianEig( shape, A, w, il, iu, tryForHighAccuracy );
+            advanced::HermitianEig( shape, A, w, il, iu );
         else
-            advanced::HermitianEig( shape, A, w, vl, vu, tryForHighAccuracy );
+            advanced::HermitianEig( shape, A, w, vl, vu );
     }
     else
     {
         if( range == 'A' )
-            advanced::HermitianEig( shape, A, w, Z, tryForHighAccuracy );
+            advanced::HermitianEig( shape, A, w, Z );
         else if( range == 'I' )
-            advanced::HermitianEig( shape, A, w, Z, il, iu, tryForHighAccuracy );
+            advanced::HermitianEig( shape, A, w, Z, il, iu );
         else
-            advanced::HermitianEig( shape, A, w, Z, vl, vu, tryForHighAccuracy );
+            advanced::HermitianEig( shape, A, w, Z, vl, vu );
     }
     mpi::Barrier( g.VCComm() );
     endTime = mpi::Time();
@@ -371,7 +371,7 @@ main( int argc, char* argv[] )
     mpi::Comm comm = mpi::COMM_WORLD;
     const int rank = mpi::CommRank( comm );
 
-    if( argc < 14 )
+    if( argc < 13 )
     {
         if( rank == 0 )
             Usage();
@@ -404,7 +404,6 @@ main( int argc, char* argv[] )
         {
             argNum += 2;
         }
-        const bool tryForHighAccuracy = atoi(argv[++argNum]);
         const Shape shape = CharToShape(*argv[++argNum]);
         const int m = atoi(argv[++argNum]);
         const int nb = atoi(argv[++argNum]);
@@ -448,8 +447,7 @@ main( int argc, char* argv[] )
         advanced::SetHermitianTridiagApproach( HERMITIAN_TRIDIAG_NORMAL );
         TestHermitianEigDouble
         ( testCorrectness, printMatrices, 
-          onlyEigenvalues, range, shape, m, vl, vu, il, iu, 
-          tryForHighAccuracy, g );
+          onlyEigenvalues, range, shape, m, vl, vu, il, iu, g );
 
         if( rank == 0 )
         {
@@ -462,8 +460,7 @@ main( int argc, char* argv[] )
         advanced::SetHermitianTridiagGridOrder( ROW_MAJOR );
         TestHermitianEigDouble
         ( testCorrectness, printMatrices, 
-          onlyEigenvalues, range, shape, m, vl, vu, il, iu, 
-          tryForHighAccuracy, g );
+          onlyEigenvalues, range, shape, m, vl, vu, il, iu, g );
  
         if( rank == 0 )
         {
@@ -476,8 +473,7 @@ main( int argc, char* argv[] )
         advanced::SetHermitianTridiagGridOrder( COLUMN_MAJOR );
         TestHermitianEigDouble
         ( testCorrectness, printMatrices, 
-          onlyEigenvalues, range, shape, m, vl, vu, il, iu, 
-          tryForHighAccuracy, g );
+          onlyEigenvalues, range, shape, m, vl, vu, il, iu, g );
 
 #ifndef WITHOUT_COMPLEX
         if( rank == 0 )
@@ -490,8 +486,7 @@ main( int argc, char* argv[] )
         advanced::SetHermitianTridiagApproach( HERMITIAN_TRIDIAG_NORMAL );
         TestHermitianEigDoubleComplex
         ( testCorrectness, printMatrices, 
-          onlyEigenvalues, range, shape, m, vl, vu, il, iu, 
-          tryForHighAccuracy, g );
+          onlyEigenvalues, range, shape, m, vl, vu, il, iu, g );
 
         if( rank == 0 )
         {
@@ -505,8 +500,7 @@ main( int argc, char* argv[] )
         advanced::SetHermitianTridiagGridOrder( ROW_MAJOR );
         TestHermitianEigDoubleComplex
         ( testCorrectness, printMatrices, 
-          onlyEigenvalues, range, shape, m, vl, vu, il, iu, 
-          tryForHighAccuracy, g );
+          onlyEigenvalues, range, shape, m, vl, vu, il, iu, g );
 
         if( rank == 0 )
         {
@@ -520,8 +514,7 @@ main( int argc, char* argv[] )
         advanced::SetHermitianTridiagGridOrder( COLUMN_MAJOR );
         TestHermitianEigDoubleComplex
         ( testCorrectness, printMatrices, 
-          onlyEigenvalues, range, shape, m, vl, vu, il, iu, 
-          tryForHighAccuracy, g );
+          onlyEigenvalues, range, shape, m, vl, vu, il, iu, g );
 #endif 
     }
     catch( exception& e )

@@ -26,11 +26,15 @@ set(Clique_VERSION_MINOR 1)
 
 option(BUILD_TESTS "Build a collection of test executables" OFF)
 
-# We don't need a Hermitian eigensolver
+# Add Elemental, but don't worry about the Hermitian eigensolver
 option(BUILD_PMRRR "Build the parallel tridiagonal eigensolver" OFF)
 add_subdirectory(external/elemental)
 include_directories("${PROJECT_BINARY_DIR}/external/elemental/include")
 include_directories(${MPI_CXX_INCLUDE_PATH})
+
+# Add ParMetis
+add_subdirectory(external/parmetis)
+include_directories("${PROJECT_BINARY_DIR}/external/parmetis/include")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")
 
@@ -51,7 +55,7 @@ set(CLIQUE_SRC "${CLIQUE_CPP};${CLIQUE_HEADERS}")
 
 # The main library
 add_library(clique STATIC ${CLIQUE_SRC})
-target_link_libraries(clique elemental)
+target_link_libraries(clique elemental parmetis)
 set(MPI_LINK_FLAGS "${MPI_CXX_LINK_FLAGS}")
 install(TARGETS clique DESTINATION lib)
 

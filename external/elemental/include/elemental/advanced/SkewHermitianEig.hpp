@@ -41,9 +41,8 @@ inline void
 elemental::advanced::SkewHermitianEig
 ( Shape shape, 
   DistMatrix<double,              MC,  MR>& G,
-  DistMatrix<std::complex<double>,STAR,VR>& w,
-  DistMatrix<std::complex<double>,MC,  MR>& Z,
-  bool tryForHighAccuracy )
+  DistMatrix<double,              VR,STAR>& wImag,
+  DistMatrix<std::complex<double>,MC,  MR>& Z )
 {
 #ifndef RELEASE
     PushCallStack("advanced::SkewHermitianEig");
@@ -71,17 +70,7 @@ elemental::advanced::SkewHermitianEig
             ABuffer[i+j*ALDim] = negativeImagOne*GBuffer[i+j*GLDim];
 
     // Perform the Hermitian eigensolve
-    DistMatrix<double,STAR,VR> s(grid);
-    advanced::HermitianEig( shape, A, s, Z, tryForHighAccuracy );
-
-    // Backtransform the eigenvalues by multiplying by i
-    w.Align( s.RowAlignment() );
-    w.ResizeTo( 1, s.Width() );
-    const int numLocalEigs = w.LocalWidth();
-    const std::complex<double> imagOne(0,1.);
-    for( int j=0; j<numLocalEigs; ++j )
-        w.SetLocalEntry(0,j,s.GetLocalEntry(0,j)*imagOne);
-
+    advanced::HermitianEig( shape, A, wImag, Z );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -97,9 +86,9 @@ inline void
 elemental::advanced::SkewHermitianEig
 ( Shape shape, 
   DistMatrix<double,              MC,  MR>& G,
-  DistMatrix<std::complex<double>,STAR,VR>& w,
+  DistMatrix<double,              VR,STAR>& wImag,
   DistMatrix<std::complex<double>,MC,  MR>& Z,
-  int a, int b, bool tryForHighAccuracy )
+  int a, int b )
 {
 #ifndef RELEASE
     PushCallStack("advanced::SkewHermitianEig");
@@ -127,17 +116,7 @@ elemental::advanced::SkewHermitianEig
             ABuffer[i+j*ALDim] = negativeImagOne*GBuffer[i+j*GLDim];
 
     // Perform the Hermitian eigensolve
-    DistMatrix<double,STAR,VR> s(grid);
-    advanced::HermitianEig( shape, A, s, Z, a, b, tryForHighAccuracy );
-    
-    // Backtransform the eigenvalues by multiplying by i
-    w.Align( s.RowAlignment() );
-    w.ResizeTo( 1, s.Width() );
-    const int numLocalEigs = w.LocalWidth();
-    const std::complex<double> imagOne(0,1.);
-    for( int j=0; j<numLocalEigs; ++j )
-        w.SetLocalEntry(0,j,s.GetLocalEntry(0,j)*imagOne);
-
+    advanced::HermitianEig( shape, A, wImag, Z, a, b );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -151,9 +130,9 @@ inline void
 elemental::advanced::SkewHermitianEig
 ( Shape shape, 
   DistMatrix<double,              MC,  MR>& G,
-  DistMatrix<std::complex<double>,STAR,VR>& w,
+  DistMatrix<double,              VR,STAR>& wImag,
   DistMatrix<std::complex<double>,MC,  MR>& Z,
-  double a, double b, bool tryForHighAccuracy )
+  double a, double b )
 {
 #ifndef RELEASE
     PushCallStack("advanced::SkewHermitianEig");
@@ -181,17 +160,7 @@ elemental::advanced::SkewHermitianEig
             ABuffer[i+j*ALDim] = negativeImagOne*GBuffer[i+j*GLDim];
 
     // Perform the Hermitian eigensolve
-    DistMatrix<double,STAR,VR> s(grid);
-    advanced::HermitianEig( shape, A, s, Z, a, b, tryForHighAccuracy );
-    
-    // Backtransform the eigenvalues by multiplying by i
-    w.Align( s.RowAlignment() );
-    w.ResizeTo( 1, s.Width() );
-    const int numLocalEigs = w.LocalWidth();
-    const std::complex<double> imagOne(0,1.);
-    for( int j=0; j<numLocalEigs; ++j )
-        w.SetLocalEntry(0,j,s.GetLocalEntry(0,j)*imagOne);
-
+    advanced::HermitianEig( shape, A, wImag, Z, a, b );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -203,9 +172,8 @@ elemental::advanced::SkewHermitianEig
 inline void
 elemental::advanced::SkewHermitianEig
 ( Shape shape, 
-  DistMatrix<double,              MC,  MR>& G,
-  DistMatrix<std::complex<double>,STAR,VR>& w,
-  bool tryForHighAccuracy )
+  DistMatrix<double,MC,  MR>& G,
+  DistMatrix<double,VR,STAR>& wImag )
 {
 #ifndef RELEASE
     PushCallStack("advanced::SkewHermitianEig");
@@ -233,17 +201,7 @@ elemental::advanced::SkewHermitianEig
             ABuffer[i+j*ALDim] = negativeImagOne*GBuffer[i+j*GLDim];
 
     // Perform the Hermitian eigensolve
-    DistMatrix<double,STAR,VR> s(grid);
-    advanced::HermitianEig( shape, A, s, tryForHighAccuracy );
-    
-    // Backtransform the eigenvalues by multiplying by i
-    w.Align( s.RowAlignment() );
-    w.ResizeTo( 1, s.Width() );
-    const int numLocalEigs = w.LocalWidth();
-    const std::complex<double> imagOne(0,1.);
-    for( int j=0; j<numLocalEigs; ++j )
-        w.SetLocalEntry(0,j,s.GetLocalEntry(0,j)*imagOne);
-
+    advanced::HermitianEig( shape, A, wImag );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -258,9 +216,9 @@ elemental::advanced::SkewHermitianEig
 inline void
 elemental::advanced::SkewHermitianEig
 ( Shape shape, 
-  DistMatrix<double,              MC,  MR>& G,
-  DistMatrix<std::complex<double>,STAR,VR>& w,
-  int a, int b, bool tryForHighAccuracy )
+  DistMatrix<double,MC,  MR>& G,
+  DistMatrix<double,VR,STAR>& wImag,
+  int a, int b )
 {
 #ifndef RELEASE
     PushCallStack("advanced::SkewHermitianEig");
@@ -288,17 +246,7 @@ elemental::advanced::SkewHermitianEig
             ABuffer[i+j*ALDim] = negativeImagOne*GBuffer[i+j*GLDim];
 
     // Perform the Hermitian eigensolve
-    DistMatrix<double,STAR,VR> s(grid);
-    advanced::HermitianEig( shape, A, s, a, b, tryForHighAccuracy );
-    
-    // Backtransform the eigenvalues by multiplying by i
-    w.Align( s.RowAlignment() );
-    w.ResizeTo( 1, s.Width() );
-    const int numLocalEigs = w.LocalWidth();
-    const std::complex<double> imagOne(0,1.);
-    for( int j=0; j<numLocalEigs; ++j )
-        w.SetLocalEntry(0,j,s.GetLocalEntry(0,j)*imagOne);
-
+    advanced::HermitianEig( shape, A, wImag, a, b );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -311,9 +259,9 @@ elemental::advanced::SkewHermitianEig
 inline void
 elemental::advanced::SkewHermitianEig
 ( Shape shape, 
-  DistMatrix<double,              MC,  MR>& G,
-  DistMatrix<std::complex<double>,STAR,VR>& w,
-  double a, double b, bool tryForHighAccuracy )
+  DistMatrix<double,MC,  MR>& G,
+  DistMatrix<double,VR,STAR>& wImag,
+  double a, double b )
 {
 #ifndef RELEASE
     PushCallStack("advanced::SkewHermitianEig");
@@ -341,17 +289,7 @@ elemental::advanced::SkewHermitianEig
             ABuffer[i+j*ALDim] = negativeImagOne*GBuffer[i+j*GLDim];
 
     // Perform the Hermitian eigensolve
-    DistMatrix<double,STAR,VR> s(grid);
-    advanced::HermitianEig( shape, A, s, a, b, tryForHighAccuracy );
-    
-    // Backtransform the eigenvalues by multiplying by i
-    w.Align( s.RowAlignment() );
-    w.ResizeTo( 1, s.Width() );
-    const int numLocalEigs = w.LocalWidth();
-    const std::complex<double> imagOne(0,1.);
-    for( int j=0; j<numLocalEigs; ++j )
-        w.SetLocalEntry(0,j,s.GetLocalEntry(0,j)*imagOne); 
-
+    advanced::HermitianEig( shape, A, wImag, a, b );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -364,9 +302,8 @@ inline void
 elemental::advanced::SkewHermitianEig
 ( Shape shape, 
   DistMatrix<std::complex<double>,MC,  MR>& G,
-  DistMatrix<std::complex<double>,STAR,VR>& w,
-  DistMatrix<std::complex<double>,MC,  MR>& Z,
-  bool tryForHighAccuracy )
+  DistMatrix<double,              VR,STAR>& wImag,
+  DistMatrix<std::complex<double>,MC,  MR>& Z )
 {
 #ifndef RELEASE
     PushCallStack("advanced::SkewHermitianEig");
@@ -374,24 +311,12 @@ elemental::advanced::SkewHermitianEig
     if( G.Height() != G.Width() )
         throw std::logic_error("Skew-Hermitian matrices must be square");
 
-    const Grid& grid = G.Grid();
-
     // Make G Hermitian by scaling by -i
     const std::complex<double> negativeImagOne(0,-1.);
     G.ScaleTrapezoidal( negativeImagOne, LEFT, shape );
 
     // Perform the Hermitian eigensolve
-    DistMatrix<double,STAR,VR> s(grid);
-    advanced::HermitianEig( shape, G, s, Z, tryForHighAccuracy );
-
-    // Backtransform the eigenvalues by multiplying by i
-    w.Align( s.RowAlignment() );
-    w.ResizeTo( 1, s.Width() );
-    const int numLocalEigs = w.LocalWidth();
-    const std::complex<double> imagOne(0,1.);
-    for( int j=0; j<numLocalEigs; ++j )
-        w.SetLocalEntry(0,j,s.GetLocalEntry(0,j)*imagOne); 
-
+    advanced::HermitianEig( shape, G, wImag, Z );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -408,9 +333,9 @@ inline void
 elemental::advanced::SkewHermitianEig
 ( Shape shape, 
   DistMatrix<std::complex<double>,MC,  MR>& G,
-  DistMatrix<std::complex<double>,STAR,VR>& w,
+  DistMatrix<double,              VR,STAR>& wImag,
   DistMatrix<std::complex<double>,MC,  MR>& Z,
-  int a, int b, bool tryForHighAccuracy )
+  int a, int b )
 {
 #ifndef RELEASE
     PushCallStack("advanced::SkewHermitianEig");
@@ -418,24 +343,12 @@ elemental::advanced::SkewHermitianEig
     if( G.Height() != G.Width() )
         throw std::logic_error("Skew-Hermitian matrices must be square");
     
-    const Grid& grid = G.Grid();
-
     // Make G Hermitian by scaling by -i
     const std::complex<double> negativeImagOne(0,-1.);
     G.ScaleTrapezoidal( negativeImagOne, LEFT, shape );
 
     // Perform the Hermitian eigensolve
-    DistMatrix<double,STAR,VR> s(grid);
-    advanced::HermitianEig( shape, G, s, Z, a, b, tryForHighAccuracy );
-
-    // Backtransform the eigenvalues by multiplying by i
-    w.Align( s.RowAlignment() );
-    w.ResizeTo( 1, s.Width() );
-    const int numLocalEigs = w.LocalWidth();
-    const std::complex<double> imagOne(0,1.);
-    for( int j=0; j<numLocalEigs; ++j )
-        w.SetLocalEntry(0,j,s.GetLocalEntry(0,j)*imagOne);
-
+    advanced::HermitianEig( shape, G, wImag, Z, a, b );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -450,9 +363,9 @@ inline void
 elemental::advanced::SkewHermitianEig
 ( Shape shape, 
   DistMatrix<std::complex<double>,MC,  MR>& G,
-  DistMatrix<std::complex<double>,STAR,VR>& w,
+  DistMatrix<double,              VR,STAR>& wImag,
   DistMatrix<std::complex<double>,MC,  MR>& Z,
-  double a, double b, bool tryForHighAccuracy )
+  double a, double b )
 {
 #ifndef RELEASE
     PushCallStack("advanced::SkewHermitianEig");
@@ -460,24 +373,12 @@ elemental::advanced::SkewHermitianEig
     if( G.Height() != G.Width() )
         throw std::logic_error("Skew-Hermitian matrices must be square");
     
-    const Grid& grid = G.Grid();
-
     // Make G Hermitian by scaling by -i
     const std::complex<double> negativeImagOne(0,-1.);
     G.ScaleTrapezoidal( negativeImagOne, LEFT, shape );
 
     // Perform the Hermitian eigensolve
-    DistMatrix<double,STAR,VR> s(grid);
-    advanced::HermitianEig( shape, G, s, Z, a, b, tryForHighAccuracy );
-
-    // Backtransform the eigenvalues by multiplying by i
-    w.Align( s.RowAlignment() );
-    w.ResizeTo( 1, s.Width() );
-    const int numLocalEigs = w.LocalWidth();
-    const std::complex<double> imagOne(0,1.);
-    for( int j=0; j<numLocalEigs; ++j )
-        w.SetLocalEntry(0,j,s.GetLocalEntry(0,j)*imagOne);
-
+    advanced::HermitianEig( shape, G, wImag, Z, a, b );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -490,8 +391,7 @@ inline void
 elemental::advanced::SkewHermitianEig
 ( Shape shape, 
   DistMatrix<std::complex<double>,MC,  MR>& G,
-  DistMatrix<std::complex<double>,STAR,VR>& w,
-  bool tryForHighAccuracy )
+  DistMatrix<double,              VR,STAR>& wImag )
 {
 #ifndef RELEASE
     PushCallStack("advanced::SkewHermitianEig");
@@ -499,24 +399,12 @@ elemental::advanced::SkewHermitianEig
     if( G.Height() != G.Width() )
         throw std::logic_error("Skew-Hermitian matrices must be square");
     
-    const Grid& grid = G.Grid();
-
     // Make G Hermitian by scaling by -i
     const std::complex<double> negativeImagOne(0,-1.);
     G.ScaleTrapezoidal( negativeImagOne, LEFT, shape );
 
     // Perform the Hermitian eigensolve
-    DistMatrix<double,STAR,VR> s(grid);
-    advanced::HermitianEig( shape, G, s, tryForHighAccuracy );
-
-    // Backtransform the eigenvalues by multiplying by i
-    w.Align( s.RowAlignment() );
-    w.ResizeTo( 1, s.Width() );
-    const int numLocalEigs = w.LocalWidth();
-    const std::complex<double> imagOne(0,1.);
-    for( int j=0; j<numLocalEigs; ++j )
-        w.SetLocalEntry(0,j,s.GetLocalEntry(0,j)*imagOne);
-
+    advanced::HermitianEig( shape, G, wImag );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -533,8 +421,8 @@ inline void
 elemental::advanced::SkewHermitianEig
 ( Shape shape, 
   DistMatrix<std::complex<double>,MC,  MR>& G,
-  DistMatrix<std::complex<double>,STAR,VR>& w,
-  int a, int b, bool tryForHighAccuracy )
+  DistMatrix<double,              VR,STAR>& wImag,
+  int a, int b )
 {
 #ifndef RELEASE
     PushCallStack("advanced::SkewHermitianEig");
@@ -542,24 +430,12 @@ elemental::advanced::SkewHermitianEig
     if( G.Height() != G.Width() )
         throw std::logic_error("Skew-Hermitian matrices must be square");
     
-    const Grid& grid = G.Grid();
-
     // Make G Hermitian by scaling by -i
     const std::complex<double> negativeImagOne(0,-1.);
     G.ScaleTrapezoidal( negativeImagOne, LEFT, shape );
 
     // Perform the Hermitian eigensolve
-    DistMatrix<double,STAR,VR> s(grid);
-    advanced::HermitianEig( shape, G, s, a, b, tryForHighAccuracy );
-
-    // Backtransform the eigenvalues by multiplying by i
-    w.Align( s.RowAlignment() );
-    w.ResizeTo( 1, s.Width() );
-    const int numLocalEigs = w.LocalWidth();
-    const std::complex<double> imagOne(0,1.);
-    for( int j=0; j<numLocalEigs; ++j )
-        w.SetLocalEntry(0,j,s.GetLocalEntry(0,j)*imagOne);
-
+    advanced::HermitianEig( shape, G, wImag, a, b );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -574,8 +450,8 @@ inline void
 elemental::advanced::SkewHermitianEig
 ( Shape shape, 
   DistMatrix<std::complex<double>,MC,  MR>& G,
-  DistMatrix<std::complex<double>,STAR,VR>& w,
-  double a, double b, bool tryForHighAccuracy )
+  DistMatrix<double,              VR,STAR>& wImag,
+  double a, double b )
 {
 #ifndef RELEASE
     PushCallStack("advanced::SkewHermitianEig");
@@ -583,24 +459,12 @@ elemental::advanced::SkewHermitianEig
     if( G.Height() != G.Width() )
         throw std::logic_error("Skew-Hermitian matrices must be square");
     
-    const Grid& grid = G.Grid();
-
     // Make G Hermitian by scaling by -i
     const std::complex<double> negativeImagOne(0,-1.);
     G.ScaleTrapezoidal( negativeImagOne, LEFT, shape );
 
     // Perform the Hermitian eigensolve
-    DistMatrix<double,STAR,VR> s(grid);
-    advanced::HermitianEig( shape, G, s, a, b, tryForHighAccuracy );
-
-    // Backtransform the eigenvalues by multiplying by i
-    w.Align( s.RowAlignment() );
-    w.ResizeTo( 1, s.Width() );
-    const int numLocalEigs = w.LocalWidth();
-    const std::complex<double> imagOne(0,1.);
-    for( int j=0; j<numLocalEigs; ++j )
-        w.SetLocalEntry(0,j,s.GetLocalEntry(0,j)*imagOne);
-
+    advanced::HermitianEig( shape, G, wImag, a, b );
 #ifndef RELEASE
     PopCallStack();
 #endif

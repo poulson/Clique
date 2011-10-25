@@ -33,34 +33,12 @@
 
 #ifndef WITHOUT_PMRRR
 
+#include "elemental/imports/pmrrr.hpp"
+
 // The targeted number of pieces to break the eigenvectors into during the
 // redistribution from the [* ,VR] distribution after PMRRR to the [MC,MR]
 // distribution needed for backtransformation.
 #define TARGET_CHUNKS 20
-
-extern "C" {
-
-int pmrrr
-( const char* jobz,  // 'N' ~ only eigenvalues, 'V' ~ also eigenvectors
-  const char* range, // 'A'~all eigenpairs, 'V'~interval (vl,vu], 'I'~il-iu
-  const int* n,      // size of matrix
-  const double* d,   // full diagonal of tridiagonal matrix [length n]
-  const double* e,   // full subdiagonal in first n-1 entries [length n]
-  const double* vl,  // if range=='V', compute eigenpairs in (vl,vu]
-  const double* vu,
-  const int* il, // if range=='I', compute il-iu eigenpairs
-  const int* iu,
-  int* tryrac, // if nonzero, try for high relative accuracy
-  MPI_Comm comm, 
-  int* nz,        // number of locally computed eigenvectors
-  int* offset,    // the first eigenpair computed by our process
-  double* w,      // eigenvalues corresponding to local eigenvectors [length nz]
-  double* Z,      // local eigenvectors [size ldz x nz]
-  const int* ldz, // leading dimension of Z
-  int* ZSupp      // support of eigenvectors [length 2n]
-);
-
-} // extern "C"
 
 // We create specialized redistribution routines for redistributing the 
 // real eigenvectors of the symmetric tridiagonal matrix at the core of our 
@@ -244,9 +222,8 @@ inline void
 elemental::advanced::HermitianEig
 ( Shape shape, 
   DistMatrix<double,MC,  MR>& A,
-  DistMatrix<double,STAR,VR>& w,
-  DistMatrix<double,MC,  MR>& paddedZ,
-  bool tryForHighAccuracy )
+  DistMatrix<double,VR,STAR>& w,
+  DistMatrix<double,MC,  MR>& paddedZ )
 {
 #ifndef RELEASE
     PushCallStack("advanced::HermitianEig");
@@ -269,10 +246,10 @@ elemental::advanced::HermitianEig
     {
         if( paddedZ.Height() != N || paddedZ.Width() != K )
             throw std::logic_error
-                  ("paddedZ was a view but was not properly padded.");
+            ("paddedZ was a view but was not properly padded");
         if( paddedZ.ColAlignment() != 0 || paddedZ.RowAlignment() != 0 )
             throw std::logic_error
-                  ("paddedZ was a view but was not properly aligned.");
+            ("paddedZ was a view but was not properly aligned");
     }
     else
     {
@@ -282,17 +259,15 @@ elemental::advanced::HermitianEig
 
     if( w.Viewing() )
     {
-        if( w.RowAlignment() != 0 )
-            throw std::logic_error
-                  ("w was a view but was not properly aligned.");
-        if( w.Height() != 1 || w.Width() != k )
-            throw std::logic_error
-                  ("w was a view but was not the proper size.");
+        if( w.ColAlignment() != 0 )
+            throw std::logic_error("w was a view but was not properly aligned");
+        if( w.Height() != k || w.Width() != 1 )
+            throw std::logic_error("w was a view but was not the proper size");
     }
     else
     {
         w.Align( 0 );
-        w.ResizeTo( 1, k );
+        w.ResizeTo( k, 1 );
     }
 
     // Check if we need to scale the matrix, and do so if necessary
@@ -348,44 +323,14 @@ elemental::advanced::HermitianEig
         double* Z_STAR_VR_Buffer = 
             &paddedZBuffer[paddedZBufferSize-Z_STAR_VR_BufferSize];
 
-        char jobz = 'V'; // compute the eigenvalues and eigenvectors
-        char range = 'A'; // compute all eigenpairs
-        double vl, vu;
-        int il, iu;
-        int tryrac = tryForHighAccuracy;
-        int nz;
-        int offset;
-        int ldz = n;
-        std::vector<int> ZSupp(2*n);
-        std::vector<double> wBuffer(n);
-        int retval = 
-            pmrrr
-            ( &jobz, 
-              &range, 
-              &n, 
-              d_STAR_STAR.LocalBuffer(),
-              e_STAR_STAR.LocalBuffer(),
-              &vl, &vu, &il, &iu,
-              &tryrac,
-              g.VRComm(),
-              &nz,
-              &offset,
-              &wBuffer[0],
-              Z_STAR_VR_Buffer,
-              &ldz,
-              &ZSupp[0] );
-        if( retval != 0 )
-        {
-            std::ostringstream msg;
-            msg << "PMRRR returned " << retval;
-            throw std::runtime_error( msg.str() );
-        }
-        if( tryForHighAccuracy && tryrac==0 && g.VCRank() == 0 )
-            std::cerr << "PMRRR did not achieve high accuracy" << std::endl;
+        std::vector<double> wVector(n);
+        pmrrr::Eig
+        ( n, d_STAR_STAR.LockedLocalBuffer(), e_STAR_STAR.LockedLocalBuffer(),
+          &wVector[0], Z_STAR_VR_Buffer, n, g.VRComm() );
 
-        // Copy wBuffer into the distributed matrix w[* ,VR]
-        for( int j=0; j<w.LocalWidth(); ++j )
-            w.SetLocalEntry(0,j,wBuffer[j]);
+        // Copy wVector into the distributed matrix w[VR,* ]
+        for( int iLocal=0; iLocal<w.LocalHeight(); ++iLocal )
+            w.SetLocalEntry(iLocal,0,wVector[iLocal]);
 
         // Redistribute Z piece-by-piece in place. This is to keep the 
         // send/recv buffer memory usage low.
@@ -433,7 +378,7 @@ elemental::advanced::HermitianEig
     }
 
     // Backtransform the tridiagonal eigenvectors, Z
-    paddedZ.ResizeTo( A.Height(), w.Width() ); // We can simply shrink matrices
+    paddedZ.ResizeTo( A.Height(), w.Height() ); // We can simply shrink matrices
     if( shape == LOWER )
         advanced::ApplyPackedReflectors
         ( LEFT, LOWER, VERTICAL, BACKWARD, subdiagonal, A, paddedZ );
@@ -453,15 +398,16 @@ elemental::advanced::HermitianEig
 // Grab a partial set of eigenpairs of the real, symmetric n x n matrix A.    //
 // The partial set is determined by the inclusive zero-indexed range          //
 //   a,a+1,...,b    ; a >= 0, b < n                                           //
+// (where a=lowerBound, b=upperBound)                                         //
 // of the n eigenpairs sorted from smallest to largest eigenvalues.           //
 //----------------------------------------------------------------------------//
 inline void
 elemental::advanced::HermitianEig
 ( Shape shape, 
   DistMatrix<double,MC,  MR>& A,
-  DistMatrix<double,STAR,VR>& w,
+  DistMatrix<double,VR,STAR>& w,
   DistMatrix<double,MC,  MR>& paddedZ,
-  int a, int b, bool tryForHighAccuracy )
+  int lowerBound, int upperBound )
 {
 #ifndef RELEASE
     PushCallStack("advanced::HermitianEig");
@@ -472,7 +418,7 @@ elemental::advanced::HermitianEig
     const int subdiagonal = ( shape==LOWER ? -1 : +1 );
 
     const int n = A.Height();
-    const int k = (b - a) + 1;
+    const int k = (upperBound - lowerBound) + 1;
     const Grid& g = A.Grid();
 
     // We will use the same buffer for Z in the vector distribution used by 
@@ -484,10 +430,10 @@ elemental::advanced::HermitianEig
     {
         if( paddedZ.Height() != N || paddedZ.Width() != K )
             throw std::logic_error
-                  ("paddedZ was a view but was not properly padded.");
+            ("paddedZ was a view but was not properly padded.");
         if( paddedZ.ColAlignment() != 0 || paddedZ.RowAlignment() != 0 )
             throw std::logic_error
-                  ("paddedZ was a view but was not properly aligned.");
+            ("paddedZ was a view but was not properly aligned.");
     }
     else
     {
@@ -497,17 +443,15 @@ elemental::advanced::HermitianEig
 
     if( w.Viewing() )
     {
-        if( w.RowAlignment() != 0 )
-            throw std::logic_error
-                  ("w was a view but was not properly aligned.");
-        if( w.Height() != 1 || w.Width() != k )
-            throw std::logic_error
-                  ("w was a view but was not the proper size.");
+        if( w.ColAlignment() != 0 )
+            throw std::logic_error("w was a view but was not properly aligned");
+        if( w.Height() != k || w.Width() != 1 )
+            throw std::logic_error("w was a view but was not the proper size");
     }
     else
     {
         w.Align( 0 );
-        w.ResizeTo( 1, k );
+        w.ResizeTo( k, 1 );
     }
 
     // Check if we need to scale the matrix, and do so if necessary
@@ -563,45 +507,15 @@ elemental::advanced::HermitianEig
         double* Z_STAR_VR_Buffer = 
             &paddedZBuffer[paddedZBufferSize-Z_STAR_VR_BufferSize];
 
-        char jobz = 'V'; // compute the eigenvalues and eigenvectors
-        char range = 'I'; // use an integer range
-        double vl, vu;
-        int il = a+1; // convert from 0 to 1 indexing for Fortran
-        int iu = b+1; // convert from 0 to 1 indexing for Fortran
-        int tryrac = tryForHighAccuracy;
-        int nz;
-        int offset;
-        int ldz = n;
-        std::vector<int> ZSupp(2*n);
-        std::vector<double> wBuffer(n);
-        int retval = 
-            pmrrr
-            ( &jobz,
-              &range,
-              &n, 
-              d_STAR_STAR.LocalBuffer(),
-              e_STAR_STAR.LocalBuffer(),
-              &vl, &vu, &il, &iu,
-              &tryrac,
-              g.VRComm(),
-              &nz,
-              &offset,
-              &wBuffer[0],
-              Z_STAR_VR_Buffer,
-              &ldz,
-              &ZSupp[0] );
-        if( retval != 0 )
-        {
-            std::ostringstream msg;
-            msg << "PMRRR returned " << retval;
-            throw std::runtime_error( msg.str() );
-        }
-        if( tryForHighAccuracy && tryrac==0 && g.VCRank() == 0 )
-            std::cerr << "PMRRR did not achieve high accuracy" << std::endl;
+        std::vector<double> wVector(n);
+        pmrrr::Eig
+        ( n, d_STAR_STAR.LockedLocalBuffer(), e_STAR_STAR.LockedLocalBuffer(), 
+          &wVector[0], Z_STAR_VR_Buffer, n, g.VRComm(), 
+          lowerBound, upperBound );
 
-        // Copy wBuffer into the distributed matrix w[* ,VR]
-        for( int j=0; j<w.LocalWidth(); ++j )
-            w.SetLocalEntry(0,j,wBuffer[j]);
+        // Copy wVector into the distributed matrix w[VR,* ]
+        for( int iLocal=0; iLocal<w.LocalHeight(); ++iLocal )
+            w.SetLocalEntry(iLocal,0,wVector[iLocal]);
 
         // Redistribute Z piece-by-piece in place. This is to keep the 
         // send/recv buffer memory usage low.
@@ -649,7 +563,7 @@ elemental::advanced::HermitianEig
     }
 
     // Backtransform the tridiagonal eigenvectors, Z
-    paddedZ.ResizeTo( A.Height(), w.Width() );
+    paddedZ.ResizeTo( A.Height(), w.Height() );
     if( shape == LOWER )
         advanced::ApplyPackedReflectors
         ( LEFT, LOWER, VERTICAL, BACKWARD, subdiagonal, A, paddedZ );
@@ -668,14 +582,15 @@ elemental::advanced::HermitianEig
 //----------------------------------------------------------------------------//
 // Grab a partial set of eigenpairs of the real, symmetric n x n matrix A.    //
 // The partial set is determined by the half-open interval (a,b]              //
+// (where a=lowerBound, b=upperBound)                                         //
 //----------------------------------------------------------------------------//
 inline void
 elemental::advanced::HermitianEig
 ( Shape shape, 
   DistMatrix<double,MC,  MR>& A,
-  DistMatrix<double,STAR,VR>& w,
+  DistMatrix<double,VR,STAR>& w,
   DistMatrix<double,MC,  MR>& paddedZ,
-  double a, double b, bool tryForHighAccuracy )
+  double lowerBound, double upperBound )
 {
 #ifndef RELEASE
     PushCallStack("advanced::HermitianEig");
@@ -707,12 +622,10 @@ elemental::advanced::HermitianEig
 
     if( w.Viewing() )
     {
-        if( w.RowAlignment() != 0 )
-            throw std::logic_error
-                  ("w was a view but was not properly aligned.");
-        if( w.Height() != 1 || w.Width() != n )
-            throw std::logic_error
-                  ("w was a view but was not the proper size.");
+        if( w.ColAlignment() != 0 )
+            throw std::logic_error("w was a view but was not properly aligned");
+        if( w.Height() != n || w.Width() != 1 )
+            throw std::logic_error("w was a view but was not the proper size");
     }
     else
     {
@@ -761,39 +674,13 @@ elemental::advanced::HermitianEig
     // then redistribute into Z[MC,MR]
     {
         // Get an estimate of the amount of memory to allocate
-        char jobz = 'C'; // return upper-bound on the number of local eigenpairs
-        char range = 'V'; // use a floating point range
-        double vl = a;
-        double vu = b;
-        int il, iu;
-        int tryrac = tryForHighAccuracy;
-        int nz;
-        int offset;
-        int ldz;
-        std::vector<int> ZSupp(2*n);
-        std::vector<double> wBuffer(n);
-        int retval = 
-            pmrrr
-            ( &jobz, 
-              &range, 
-              &n, 
-              d_STAR_STAR.LocalBuffer(),
-              e_STAR_STAR.LocalBuffer(),
-              &vl, &vu, &il, &iu,
-              &tryrac,
-              g.VRComm(),
-              &nz,
-              &offset,
-              &wBuffer[0],
-              0,
-              &ldz,
-              &ZSupp[0] );
+        std::vector<double> wVector(n);
+        pmrrr::Estimate estimate = pmrrr::EigEstimate
+        ( n, d_STAR_STAR.LockedLocalBuffer(), e_STAR_STAR.LockedLocalBuffer(),
+          &wVector[0], g.VRComm(), lowerBound, upperBound );
 
-        // Perform an Allreduce summation to get the number of eigenvectors, 
-        // then create Z[* ,VR] 
-        int k;
-        mpi::AllReduce( &nz, &k, 1, mpi::SUM, g.VRComm() );
-
+        // Ensure that the paddedZ is sufficiently large
+        int k = estimate.numGlobalEigenvalues;
         if( !paddedZ.Viewing() )
         {
             const int K = MaxLocalLength(k,g.Size())*g.Size(); 
@@ -814,44 +701,16 @@ elemental::advanced::HermitianEig
             &paddedZBuffer[paddedZBufferSize-Z_STAR_VR_BufferSize];
 
         // Now perform the actual computation
-        jobz = 'V'; // compute the eigenvalues and eigenvectors
-        range = 'V'; // use a floating-point range
-        vl = a;
-        vu = b;
-        tryrac = tryForHighAccuracy;
-        ldz = n;
-        retval = 
-            pmrrr
-            ( &jobz, 
-              &range, 
-              &n, 
-              d_STAR_STAR.LocalBuffer(),
-              e_STAR_STAR.LocalBuffer(),
-              &vl, &vu, &il, &iu,
-              &tryrac,
-              g.VRComm(),
-              &nz,
-              &offset,
-              &wBuffer[0],
-              Z_STAR_VR_Buffer,
-              &ldz,
-              &ZSupp[0] );
-        if( retval != 0 )
-        {
-            std::ostringstream msg;
-            msg << "PMRRR returned " << retval;
-            throw std::runtime_error( msg.str() );
-        }
-        if( tryForHighAccuracy && tryrac==0 && g.VCRank() == 0 )
-            std::cerr << "PMRRR did not achieve high accuracy" << std::endl;
+        pmrrr::Info info = pmrrr::Eig
+        ( n, d_STAR_STAR.LockedLocalBuffer(), e_STAR_STAR.LockedLocalBuffer(),
+          &wVector[0], Z_STAR_VR_Buffer, n, g.VRComm(), 
+          lowerBound, upperBound );
+        k = info.numGlobalEigenvalues;
 
-        // Sum the local sizes to get the true number of eigenvectors 
-        mpi::AllReduce( &nz, &k, 1, mpi::SUM, g.VRComm() );
-
-        // Copy wBuffer into the distributed matrix 
-        w.ResizeTo( 1, k );
-        for( int j=0; j<w.LocalWidth(); ++j )
-            w.SetLocalEntry(0,j,wBuffer[j]);
+        // Copy wVector into the distributed matrix w[VR,* ]
+        w.ResizeTo( k, 1 );
+        for( int iLocal=0; iLocal<w.LocalHeight(); ++iLocal )
+            w.SetLocalEntry(iLocal,0,wVector[iLocal]);
 
         // Redistribute Z piece-by-piece in place. This is to keep the 
         // send/recv buffer memory usage low.
@@ -899,7 +758,7 @@ elemental::advanced::HermitianEig
     }
 
     // Backtransform the tridiagonal eigenvectors, Z
-    paddedZ.ResizeTo( A.Height(), w.Width() );
+    paddedZ.ResizeTo( A.Height(), w.Height() );
     if( shape == LOWER )
         advanced::ApplyPackedReflectors
         ( LEFT, LOWER, VERTICAL, BACKWARD, subdiagonal, A, paddedZ );
@@ -922,8 +781,7 @@ inline void
 elemental::advanced::HermitianEig
 ( Shape shape, 
   DistMatrix<double,MC,  MR>& A,
-  DistMatrix<double,STAR,VR>& w,
-  bool tryForHighAccuracy )
+  DistMatrix<double,VR,STAR>& w )
 {
 #ifndef RELEASE
     PushCallStack("advanced::HermitianEig");
@@ -939,17 +797,15 @@ elemental::advanced::HermitianEig
 
     if( w.Viewing() )
     {
-        if( w.RowAlignment() != 0 )
-            throw std::logic_error
-                  ("w was a view but was not properly aligned.");
-        if( w.Height() != 1 || w.Width() != k )
-            throw std::logic_error
-                  ("w was a view but was not the proper size.");
+        if( w.ColAlignment() != 0 )
+            throw std::logic_error("w was a view but was not properly aligned");
+        if( w.Height() != k || w.Width() != 1 )
+            throw std::logic_error("w was a view but was not the proper size");
     }
     else
     {
         w.Align( 0 );
-        w.ResizeTo( 1, k );
+        w.ResizeTo( k, 1 );
     }
 
     // Check if we need to scale the matrix, and do so if necessary
@@ -992,44 +848,14 @@ elemental::advanced::HermitianEig
 
     // Solve the tridiagonal eigenvalue problem with PMRRR.
     {
-        char jobz = 'N'; // just compute the eigenvalues
-        char range = 'A'; // compute all of the eigenvalues
-        double vl, vu;
-        int il, iu;
-        int tryrac = tryForHighAccuracy;
-        int nz;
-        int offset;
-        int ldz;
-        std::vector<double> wBuffer(n);
-        std::vector<int> ZSupp(2*n);
-        int retval = 
-            pmrrr
-            ( &jobz, 
-              &range, 
-              &n, 
-              d_STAR_STAR.LocalBuffer(),
-              e_STAR_STAR.LocalBuffer(),
-              &vl, &vu, &il, &iu,
-              &tryrac,
-              g.VRComm(),
-              &nz,
-              &offset,
-              &wBuffer[0],
-              0,
-              &ldz,
-              &ZSupp[0] );
-        if( retval != 0 )
-        {
-            std::ostringstream msg;
-            msg << "PMRRR returned " << retval;
-            throw std::runtime_error( msg.str() );
-        }
-        if( tryForHighAccuracy && tryrac==0 && g.VCRank() == 0 )
-            std::cerr << "PMRRR did not achieve high accuracy" << std::endl;
+        std::vector<double> wVector(n);
+        pmrrr::Eig
+        ( n, d_STAR_STAR.LockedLocalBuffer(), e_STAR_STAR.LockedLocalBuffer(),
+          &wVector[0], g.VRComm() );
 
-        // Copy wBuffer into the distributed matrix w[* ,VR]
-        for( int j=0; j<w.LocalWidth(); ++j )
-            w.SetLocalEntry(0,j,wBuffer[j]);
+        // Copy wVector into the distributed matrix w[VR,* ]
+        for( int iLocal=0; iLocal<w.LocalHeight(); ++iLocal )
+            w.SetLocalEntry(iLocal,0,wVector[iLocal]);
     }
 
     // Rescale the eigenvalues if necessary
@@ -1044,14 +870,15 @@ elemental::advanced::HermitianEig
 // Grab a partial set of eigenvalues of the real, symmetric n x n matrix A.   //
 // The partial set is determined by the inclusive zero-indexed range          //
 //   a,a+1,...,b    ; a >= 0, b < n                                           //
+// (where a=lowerBound, b=upperBound)                                         //
 // of the n eigenpairs sorted from smallest to largest eigenvalues.           //
 //----------------------------------------------------------------------------//
 inline void
 elemental::advanced::HermitianEig
 ( Shape shape, 
   DistMatrix<double,MC,  MR>& A,
-  DistMatrix<double,STAR,VR>& w,
-  int a, int b, bool tryForHighAccuracy )
+  DistMatrix<double,VR,STAR>& w,
+  int lowerBound, int upperBound ) 
 {
 #ifndef RELEASE
     PushCallStack("advanced::HermitianEig");
@@ -1062,22 +889,20 @@ elemental::advanced::HermitianEig
     const int subdiagonal = ( shape==LOWER ? -1 : +1 );
 
     const int n = A.Height();
-    const int k = (b - a) + 1;
+    const int k = (upperBound - lowerBound) + 1;
     const Grid& g = A.Grid();
 
     if( w.Viewing() )
     {
-        if( w.RowAlignment() != 0 )
-            throw std::logic_error
-                  ("w was a view but was not properly aligned.");
-        if( w.Height() != 1 || w.Width() != k )
-            throw std::logic_error
-                  ("w was a view but was not the proper size.");
+        if( w.ColAlignment() != 0 )
+            throw std::logic_error("w was a view but was not properly aligned");
+        if( w.Height() != k || w.Width() != 1 )
+            throw std::logic_error("w was a view but was not the proper size");
     }
     else
     {
         w.Align( 0 );
-        w.ResizeTo( 1, k );
+        w.ResizeTo( k, 1 );
     }
 
     // Check if we need to scale the matrix, and do so if necessary
@@ -1120,45 +945,14 @@ elemental::advanced::HermitianEig
 
     // Solve the tridiagonal eigenvalue problem with PMRRR.
     {
-        char jobz = 'N'; // just compute the eigenvalues
-        char range = 'I'; // use an integer range
-        double vl, vu;
-        int il = a + 1; // convert from 0 to 1 indexing for Fortran
-        int iu = b + 1; // convert from 0 to 1 indexing for Fortran
-        int tryrac = tryForHighAccuracy;
-        int nz;
-        int offset;
-        int ldz;
-        std::vector<double> wBuffer(n);
-        std::vector<int> ZSupp(2*n);
-        int retval = 
-            pmrrr
-            ( &jobz, 
-              &range, 
-              &n, 
-              d_STAR_STAR.LocalBuffer(),
-              e_STAR_STAR.LocalBuffer(),
-              &vl, &vu, &il, &iu,
-              &tryrac,
-              g.VRComm(),
-              &nz,
-              &offset,
-              &wBuffer[0],
-              0,
-              &ldz,
-              &ZSupp[0] );
-        if( retval != 0 )
-        {
-            std::ostringstream msg;
-            msg << "PMRRR returned " << retval;
-            throw std::runtime_error( msg.str() );
-        }
-        if( tryForHighAccuracy && tryrac==0 && g.VCRank() == 0 )
-            std::cerr << "PMRRR did not achieve high accuracy" << std::endl;
+        std::vector<double> wVector(n);
+        pmrrr::Eig
+        ( n, d_STAR_STAR.LockedLocalBuffer(), e_STAR_STAR.LockedLocalBuffer(),
+          &wVector[0], g.VRComm(), lowerBound, upperBound );
 
-        // Copy wBuffer into the distributed matrix w[* ,VR]
-        for( int j=0; j<w.LocalWidth(); ++j )
-            w.SetLocalEntry(0,j,wBuffer[j]);
+        // Copy wVector into the distributed matrix w[VR,* ]
+        for( int iLocal=0; iLocal<w.LocalHeight(); ++iLocal )
+            w.SetLocalEntry(iLocal,0,wVector[iLocal]);
     }
 
     // Rescale the eigenvalues if necessary
@@ -1172,13 +966,14 @@ elemental::advanced::HermitianEig
 //----------------------------------------------------------------------------//
 // Grab a partial set of eigenvalues of the real, symmetric n x n matrix A.   //
 // The partial set is determined by the half-open interval (a,b]              //
+// (where a=lowerBound and b=upperBound)                                      //
 //----------------------------------------------------------------------------//
 inline void
 elemental::advanced::HermitianEig
 ( Shape shape, 
   DistMatrix<double,MC,  MR>& A,
-  DistMatrix<double,STAR,VR>& w,
-  double a, double b, bool tryForHighAccuracy )
+  DistMatrix<double,VR,STAR>& w,
+  double lowerBound, double upperBound )
 {
 #ifndef RELEASE
     PushCallStack("advanced::HermitianEig");
@@ -1193,12 +988,10 @@ elemental::advanced::HermitianEig
 
     if( w.Viewing() )
     {
-        if( w.RowAlignment() != 0 )
-            throw std::logic_error
-                  ("w was a view but was not properly aligned.");
-        if( w.Height() != 1 || w.Width() != n )
-            throw std::logic_error
-                  ("w was a view but was not the proper size.");
+        if( w.ColAlignment() != 0 )
+            throw std::logic_error("w was a view but was not properly aligned");
+        if( w.Height() != n || w.Width() != 1 )
+            throw std::logic_error("w was a view but was not the proper size");
     }
     else
     {
@@ -1245,50 +1038,17 @@ elemental::advanced::HermitianEig
 
     // Solve the tridiagonal eigenvalue problem with PMRRR.
     {
-        char jobz = 'N'; // just compute the eigenvalues
-        char range = 'V'; // use a floating-point range
-        double vl = a;
-        double vu = b;
-        int il, iu;
-        int tryrac = tryForHighAccuracy;
-        int nz;
-        int offset;
-        int ldz;
-        std::vector<double> wBuffer(n);
-        std::vector<int> ZSupp(2*n);
-        int retval = 
-            pmrrr
-            ( &jobz, 
-              &range, 
-              &n, 
-              d_STAR_STAR.LocalBuffer(),
-              e_STAR_STAR.LocalBuffer(),
-              &vl, &vu, &il, &iu,
-              &tryrac,
-              g.VRComm(),
-              &nz,
-              &offset,
-              &wBuffer[0],
-              0,
-              &ldz,
-              &ZSupp[0] );
-        if( retval != 0 )
-        {
-            std::ostringstream msg;
-            msg << "PMRRR returned " << retval;
-            throw std::runtime_error( msg.str() );
-        }
-        if( tryForHighAccuracy && tryrac==0 && g.VCRank() == 0 )
-            std::cerr << "PMRRR did not achieve high accuracy" << std::endl;
+        std::vector<double> wVector(n);
+        pmrrr::Info info = pmrrr::Eig
+        ( n, d_STAR_STAR.LockedLocalBuffer(), e_STAR_STAR.LockedLocalBuffer(),
+          &wVector[0], g.VRComm(), lowerBound, upperBound );
 
-        // Get the total number of eigenvalues computed
-        int k;
-        mpi::AllReduce( &nz, &k, 1, mpi::SUM, g.VRComm() );
-
-        // Copy wBuffer into the distributed matrix w[* ,VR]
-        w.ResizeTo( 1, k );
-        for( int j=0; j<nz; ++j )
-            w.SetLocalEntry(0,j,wBuffer[j]);
+        // Copy wVector into the distributed matrix w[VR,* ]
+        const int k = info.numGlobalEigenvalues;
+        const int kLocal = info.numLocalEigenvalues;
+        w.ResizeTo( k, 1 );
+        for( int iLocal=0; iLocal<w.LocalHeight(); ++iLocal )
+            w.SetLocalEntry(iLocal,0,wVector[iLocal]);
     }
 
     // Rescale the eigenvalues if necessary
@@ -1307,9 +1067,8 @@ inline void
 elemental::advanced::HermitianEig
 ( Shape shape, 
   DistMatrix<std::complex<double>,MC,  MR>& A,
-  DistMatrix<             double, STAR,VR>& w,
-  DistMatrix<std::complex<double>,MC,  MR>& paddedZ,
-  bool tryForHighAccuracy )
+  DistMatrix<             double, VR,STAR>& w,
+  DistMatrix<std::complex<double>,MC,  MR>& paddedZ )
 {
 #ifndef RELEASE
     PushCallStack("advanced::HermitianEig");
@@ -1332,10 +1091,10 @@ elemental::advanced::HermitianEig
     {
         if( paddedZ.Height() != N || paddedZ.Width() != K )
             throw std::logic_error
-                  ("paddedZ was a view but was not properly padded.");
+            ("paddedZ was a view but was not properly padded");
         if( paddedZ.ColAlignment() != 0 || paddedZ.RowAlignment() != 0 )
             throw std::logic_error
-                  ("paddedZ was a view but was not properly aligned.");
+            ("paddedZ was a view but was not properly aligned");
     }
     else
     {
@@ -1345,17 +1104,15 @@ elemental::advanced::HermitianEig
 
     if( w.Viewing() )
     {
-        if( w.RowAlignment() != 0 )
-            throw std::logic_error
-                  ("w was a view but was not properly aligned.");
-        if( w.Height() != 1 || w.Width() != k )
-            throw std::logic_error
-                  ("w was a view but was not the proper size.");
+        if( w.ColAlignment() != 0 )
+            throw std::logic_error("w was a view but was not properly aligned");
+        if( w.Height() != k || w.Width() != 1 )
+            throw std::logic_error("w was a view but was not the proper size");
     }
     else
     {
         w.Align( 0 );
-        w.ResizeTo( 1, k );
+        w.ResizeTo( k, 1 );
     }
 
     // Check if we need to scale the matrix, and do so if necessary
@@ -1412,44 +1169,14 @@ elemental::advanced::HermitianEig
         double* Z_STAR_VR_Buffer = 
             &paddedZBuffer[paddedZBufferSize-Z_STAR_VR_BufferSize];
 
-        char jobz = 'V'; // compute the eigenvalues and eigenvectors
-        char range = 'A'; // compute all of them
-        double vl, vu;
-        int il, iu;
-        int tryrac = tryForHighAccuracy;
-        int nz;
-        int offset;
-        int ldz = n;
-        std::vector<int> ZSupp(2*n);
-        std::vector<double> wBuffer(n);
-        int retval = 
-            pmrrr
-            ( &jobz, 
-              &range, 
-              &n, 
-              d_STAR_STAR.LocalBuffer(),
-              e_STAR_STAR.LocalBuffer(),
-              &vl, &vu, &il, &iu,
-              &tryrac,
-              g.VRComm(),
-              &nz,
-              &offset,
-              &wBuffer[0],
-              Z_STAR_VR_Buffer,
-              &ldz,
-              &ZSupp[0] );
-        if( retval != 0 )
-        {
-            std::ostringstream msg;
-            msg << "PMRRR returned " << retval;
-            throw std::runtime_error( msg.str() );
-        }
-        if( tryForHighAccuracy && tryrac==0 && g.VCRank() == 0 )
-            std::cerr << "PMRRR did not achieve high accuracy." << std::endl;
+        std::vector<double> wVector(n);
+        pmrrr::Eig
+        ( n, d_STAR_STAR.LockedLocalBuffer(), e_STAR_STAR.LockedLocalBuffer(),
+          &wVector[0], Z_STAR_VR_Buffer, n, g.VRComm() );
         
-        // Copy wBuffer into the distributed matrix w[* ,VR]
-        for( int j=0; j<w.LocalWidth(); ++j )
-            w.SetLocalEntry(0,j,wBuffer[j]);
+        // Copy wVector into the distributed matrix w[VR,* ]
+        for( int iLocal=0; iLocal<w.LocalHeight(); ++iLocal )
+            w.SetLocalEntry(iLocal,0,wVector[iLocal]);
 
         // Redistribute Z piece-by-piece in place. This is to keep the
         // send/recv buffer memory usage low.
@@ -1497,7 +1224,7 @@ elemental::advanced::HermitianEig
     }
 
     // Backtransform the tridiagonal eigenvectors, Z
-    paddedZ.ResizeTo( A.Height(), w.Width() ); 
+    paddedZ.ResizeTo( A.Height(), w.Height() ); 
     if( shape == LOWER )
         advanced::ApplyPackedReflectors
         ( LEFT, LOWER, VERTICAL, BACKWARD, CONJUGATED, 
@@ -1525,9 +1252,9 @@ inline void
 elemental::advanced::HermitianEig
 ( Shape shape, 
   DistMatrix<std::complex<double>,MC,  MR>& A,
-  DistMatrix<             double, STAR,VR>& w,
+  DistMatrix<             double, VR,STAR>& w,
   DistMatrix<std::complex<double>,MC,  MR>& paddedZ,
-  int a, int b, bool tryForHighAccuracy )
+  int lowerBound, int upperBound )
 {
 #ifndef RELEASE
     PushCallStack("advanced::HermitianEig");
@@ -1538,7 +1265,7 @@ elemental::advanced::HermitianEig
     const int subdiagonal = ( shape==LOWER ? -1 : +1 );
 
     const int n = A.Height();
-    const int k = (b - a) + 1;
+    const int k = (upperBound - lowerBound) + 1;
     const Grid& g = A.Grid();
 
     // We will use the same buffer for Z in the vector distribution used by 
@@ -1550,10 +1277,10 @@ elemental::advanced::HermitianEig
     {
         if( paddedZ.Height() != N || paddedZ.Width() != K )
             throw std::logic_error
-                  ("paddedZ was a view but was not properly padded.");
+            ("paddedZ was a view but was not properly padded");
         if( paddedZ.ColAlignment() != 0 || paddedZ.RowAlignment() != 0 )
             throw std::logic_error
-                  ("paddedZ was a view but was not properly aligned.");
+            ("paddedZ was a view but was not properly aligned");
     }
     else
     {
@@ -1563,17 +1290,15 @@ elemental::advanced::HermitianEig
 
     if( w.Viewing() )
     {
-        if( w.RowAlignment() != 0 )
-            throw std::logic_error
-                  ("w was a view but was not properly aligned.");
-        if( w.Height() != 1 || w.Width() != k )
-            throw std::logic_error
-                  ("w was a view but was not the proper size.");
+        if( w.ColAlignment() != 0 )
+            throw std::logic_error("w was a view but was not properly aligned");
+        if( w.Height() != k || w.Width() != 1 )
+            throw std::logic_error("w was a view but was not the proper size");
     }
     else
     {
         w.Align( 0 );
-        w.ResizeTo( 1, k );
+        w.ResizeTo( k, 1 );
     }
 
     // Check if we need to scale the matrix, and do so if necessary
@@ -1630,45 +1355,15 @@ elemental::advanced::HermitianEig
         double* Z_STAR_VR_Buffer = 
             &paddedZBuffer[paddedZBufferSize-Z_STAR_VR_BufferSize];
 
-        char jobz = 'V'; // compute the eigenvalues and eigenvectors
-        char range = 'I'; // use an integer range
-        double vl, vu;
-        int il = a + 1; // convert form 0 to 1 indexing for Fortran
-        int iu = b + 1; // convert from 0 to 1 indexing for Fortran
-        int tryrac = tryForHighAccuracy;
-        int nz;
-        int offset;
-        int ldz = n;
-        std::vector<int> ZSupp(2*n);
-        std::vector<double> wBuffer(n);
-        int retval = 
-            pmrrr
-            ( &jobz, 
-              &range, 
-              &n, 
-              d_STAR_STAR.LocalBuffer(),
-              e_STAR_STAR.LocalBuffer(),
-              &vl, &vu, &il, &iu,
-              &tryrac,
-              g.VRComm(),
-              &nz,
-              &offset,
-              &wBuffer[0],
-              Z_STAR_VR_Buffer,
-              &ldz,
-              &ZSupp[0] );
-        if( retval != 0 )
-        {
-            std::ostringstream msg;
-            msg << "PMRRR returned " << retval;
-            throw std::runtime_error( msg.str() );
-        }
-        if( tryForHighAccuracy && tryrac==0 && g.VCRank() == 0 )
-            std::cerr << "PMRRR did not achieve high accuracy" << std::endl;
+        std::vector<double> wVector(n);
+        pmrrr::Eig
+        ( n, d_STAR_STAR.LockedLocalBuffer(), e_STAR_STAR.LockedLocalBuffer(),
+          &wVector[0], Z_STAR_VR_Buffer, n, g.VRComm(), 
+          lowerBound, upperBound );
 
-        // Copy wBuffer into the distributed matrix w[* ,VR]
-        for( int j=0; j<w.LocalWidth(); ++j )
-            w.SetLocalEntry(0,j,wBuffer[j]);
+        // Copy wVector into the distributed matrix w[VR,* ]
+        for( int iLocal=0; iLocal<w.LocalHeight(); ++iLocal )
+            w.SetLocalEntry(iLocal,0,wVector[iLocal]);
 
         // Redistribute Z piece-by-piece in place. This is to keep the 
         // send/recv buffer memory usage low.
@@ -1716,7 +1411,7 @@ elemental::advanced::HermitianEig
     }
 
     // Backtransform the tridiagonal eigenvectors, Z
-    paddedZ.ResizeTo( A.Height(), w.Width() );
+    paddedZ.ResizeTo( A.Height(), w.Height() );
     if( shape == LOWER )
         advanced::ApplyPackedReflectors
         ( LEFT, LOWER, VERTICAL, BACKWARD, CONJUGATED, 
@@ -1742,9 +1437,9 @@ inline void
 elemental::advanced::HermitianEig
 ( Shape shape, 
   DistMatrix<std::complex<double>,MC,  MR>& A,
-  DistMatrix<             double, STAR,VR>& w,
+  DistMatrix<             double, VR,STAR>& w,
   DistMatrix<std::complex<double>,MC,  MR>& paddedZ,
-  double a, double b, bool tryForHighAccuracy )
+  double lowerBound, double upperBound )
 {
 #ifndef RELEASE
     PushCallStack("advanced::HermitianEig");
@@ -1768,20 +1463,18 @@ elemental::advanced::HermitianEig
         const int K = MaxLocalLength(n,g.Size())*g.Size();
         if( paddedZ.Height() != N || paddedZ.Width() != K )
             throw std::logic_error
-                  ("paddedZ was a view but was not properly padded.");
+            ("paddedZ was a view but was not properly padded");
         if( paddedZ.ColAlignment() != 0 || paddedZ.RowAlignment() != 0 )
             throw std::logic_error
-                  ("paddedZ was a view but was not properly aligned.");
+            ("paddedZ was a view but was not properly aligned");
     }
 
     if( w.Viewing() )
     {
-        if( w.RowAlignment() != 0 )
-            throw std::logic_error
-                  ("w was a view but was not properly aligned.");
-        if( w.Height() != 1 || w.Width() != n )
-            throw std::logic_error
-                  ("w was a view but was not the proper size.");
+        if( w.ColAlignment() != 0 )
+            throw std::logic_error("w was a view but was not properly aligned");
+        if( w.Height() != n || w.Width() != 1 )
+            throw std::logic_error("w was a view but was not the proper size");
     }
     else
     {
@@ -1830,40 +1523,13 @@ elemental::advanced::HermitianEig
     // Solve the tridiagonal eigenvalue problem with PMRRR into Z[* ,VR]
     // then redistribute into Z[MC,MR]
     {
-        char jobz = 'C'; // return upper-bound on the number of local eigenpairs
-        char range = 'V'; // use a floating-point range
-        double vl = a;
-        double vu = b;
-        int il, iu;
-        int tryrac = tryForHighAccuracy;
-        int nz;
-        int offset;
-        int ldz;
-        std::vector<int> ZSupp(2*n);
-        std::vector<double> wBuffer(n);
-        int retval = 
-            pmrrr
-            ( &jobz, 
-              &range, 
-              &n, 
-              d_STAR_STAR.LocalBuffer(),
-              e_STAR_STAR.LocalBuffer(),
-              &vl, &vu, &il, &iu,
-              &tryrac,
-              g.VRComm(),
-              &nz,
-              &offset,
-              &wBuffer[0],
-              0,
-              &ldz,
-              &ZSupp[0] );
+        std::vector<double> wVector(n);
+        pmrrr::Estimate estimate = pmrrr::EigEstimate
+        ( n, d_STAR_STAR.LockedLocalBuffer(), e_STAR_STAR.LockedLocalBuffer(),
+          &wVector[0], g.VRComm(), lowerBound, upperBound );
 
-        // Perform an AllReduce summation to get the number of eigenvectors,
-        // then create Z[* ,VR]
-        int k;
-        mpi::AllReduce( &nz, &k, 1, mpi::SUM, g.VRComm() );
-        DistMatrix<double,STAR,VR> Z_STAR_VR( n, k, g );
-
+        // Ensure that the paddedZ is sufficiently large
+        int k = estimate.numGlobalEigenvalues;
         if( !paddedZ.Viewing() )
         {
             const int K = MaxLocalLength(k,g.Size())*g.Size();
@@ -1884,44 +1550,16 @@ elemental::advanced::HermitianEig
             &paddedZBuffer[paddedZBufferSize-Z_STAR_VR_BufferSize];
 
         // Now perform the actual computation
-        jobz = 'V'; // compute the eigenvalues and eigenvectors
-        range = 'V'; // use a floating-point range
-        vl = a;
-        vu = b;
-        tryrac = tryForHighAccuracy;
-        ldz = n;
-        retval = 
-            pmrrr
-            ( &jobz, 
-              &range, 
-              &n, 
-              d_STAR_STAR.LocalBuffer(),
-              e_STAR_STAR.LocalBuffer(),
-              &vl, &vu, &il, &iu,
-              &tryrac,
-              g.VRComm(),
-              &nz,
-              &offset,
-              &wBuffer[0],
-              Z_STAR_VR_Buffer,
-              &ldz,
-              &ZSupp[0] );
-        if( retval != 0 )
-        {
-            std::ostringstream msg;
-            msg << "PMRRR returned " << retval;
-            throw std::runtime_error( msg.str() );
-        }
-        if( tryForHighAccuracy && tryrac==0 && g.VCRank() == 0 )
-            std::cerr << "PMRRR did not achieve high accuracy" << std::endl;
+        pmrrr::Info info = pmrrr::Eig
+        ( n, d_STAR_STAR.LockedLocalBuffer(), e_STAR_STAR.LockedLocalBuffer(),
+          &wVector[0], Z_STAR_VR_Buffer, n, g.VRComm(), 
+          lowerBound, upperBound );
 
-        // Sum the local sizes to get the true number of eigenvectors 
-        mpi::AllReduce( &nz, &k, 1, mpi::SUM, g.VRComm() );
-
-        // Copy wBuffer into the distributed matrix
-        w.ResizeTo( 1, k );
-        for( int j=0; j<w.LocalWidth(); ++j )
-            w.SetLocalEntry(0,j,wBuffer[j]);
+        // Copy wVector into the distributed matrix w[VR,* ]
+        k = info.numGlobalEigenvalues;
+        w.ResizeTo( k, 1 );
+        for( int iLocal=0; iLocal<w.LocalHeight(); ++iLocal )
+            w.SetLocalEntry(iLocal,0,wVector[iLocal]);
 
         // Redistribute Z piece-by-piece in place. This is to keep the 
         // send/recv buffer memory usage low.
@@ -1969,7 +1607,7 @@ elemental::advanced::HermitianEig
     }
 
     // Backtransform the tridiagonal eigenvectors, Z
-    paddedZ.ResizeTo( A.Height(), w.Width() );
+    paddedZ.ResizeTo( A.Height(), w.Height() );
     if( shape == LOWER )
         advanced::ApplyPackedReflectors
         ( LEFT, LOWER, VERTICAL, BACKWARD, CONJUGATED, 
@@ -1994,8 +1632,7 @@ inline void
 elemental::advanced::HermitianEig
 ( Shape shape, 
   DistMatrix<std::complex<double>,MC,  MR>& A,
-  DistMatrix<             double, STAR,VR>& w,
-  bool tryForHighAccuracy )
+  DistMatrix<             double, VR,STAR>& w )
 {
 #ifndef RELEASE
     PushCallStack("advanced::HermitianEig");
@@ -2011,17 +1648,15 @@ elemental::advanced::HermitianEig
 
     if( w.Viewing() )
     {
-        if( w.RowAlignment() != 0 )
-            throw std::logic_error
-                  ("w was a view but was not properly aligned.");
-        if( w.Height() != 1 || w.Width() != k )
-            throw std::logic_error
-                  ("w was a view but was not the proper size.");
+        if( w.ColAlignment() != 0 )
+            throw std::logic_error("w was a view but was not properly aligned");
+        if( w.Height() != k || w.Width() != 1 )
+            throw std::logic_error("w was a view but was not the proper size");
     }
     else
     {
         w.Align( 0 );
-        w.ResizeTo( 1, k );
+        w.ResizeTo( k, 1 );
     }
 
     // Check if we need to scale the matrix, and do so if necessary
@@ -2065,44 +1700,14 @@ elemental::advanced::HermitianEig
 
     // Solve the tridiagonal eigenvalue problem with PMRRR
     {
-        char jobz = 'N'; // just compute the eigenvalues
-        char range = 'A'; // compute all of them
-        double vl, vu;
-        int il, iu;
-        int tryrac = tryForHighAccuracy;
-        int nz;
-        int offset;
-        int ldz;
-        std::vector<int> ZSupp(2*n);
-        std::vector<double> wBuffer(n);
-        int retval = 
-            pmrrr
-            ( &jobz, 
-              &range, 
-              &n, 
-              d_STAR_STAR.LocalBuffer(),
-              e_STAR_STAR.LocalBuffer(),
-              &vl, &vu, &il, &iu,
-              &tryrac,
-              g.VRComm(),
-              &nz,
-              &offset,
-              &wBuffer[0],
-              0,
-              &ldz,
-              &ZSupp[0] );
-        if( retval != 0 )
-        {
-            std::ostringstream msg;
-            msg << "PMRRR returned " << retval;
-            throw std::runtime_error( msg.str() );
-        }
-        if( tryForHighAccuracy && tryrac==0 && g.VCRank() == 0 )
-            std::cerr << "PMRRR did not achieve high accuracy" << std::endl;
+        std::vector<double> wVector(n);
+        pmrrr::Eig
+        ( n, d_STAR_STAR.LockedLocalBuffer(), e_STAR_STAR.LockedLocalBuffer(),
+          &wVector[0], g.VRComm() );
 
-        // Copy wBuffer into the distributed matrix w[* ,VR]
-        for( int j=0; j<w.LocalWidth(); ++j )
-            w.SetLocalEntry(0,j,wBuffer[j]);
+        // Copy wVector into the distributed matrix w[VR,* ]
+        for( int iLocal=0; iLocal<w.LocalHeight(); ++iLocal )
+            w.SetLocalEntry(iLocal,0,wVector[iLocal]);
     }
 
     // Rescale the eigenvalues if necessary
@@ -2123,8 +1728,8 @@ inline void
 elemental::advanced::HermitianEig
 ( Shape shape, 
   DistMatrix<std::complex<double>,MC,  MR>& A,
-  DistMatrix<             double, STAR,VR>& w,
-  int a, int b, bool tryForHighAccuracy )
+  DistMatrix<             double, VR,STAR>& w,
+  int lowerBound, int upperBound )
 {
 #ifndef RELEASE
     PushCallStack("advanced::HermitianEig");
@@ -2135,22 +1740,20 @@ elemental::advanced::HermitianEig
     const int subdiagonal = ( shape==LOWER ? -1 : +1 );
 
     const int n = A.Height();
-    const int k = (b - a) + 1;
+    const int k = (upperBound - lowerBound) + 1;
     const Grid& g = A.Grid();
 
     if( w.Viewing() )
     {
-        if( w.RowAlignment() != 0 )
-            throw std::logic_error
-                  ("w was a view but was not properly aligned.");
-        if( w.Height() != 1 || w.Width() != k )
-            throw std::logic_error
-                  ("w was a view but was not the proper size.");
+        if( w.ColAlignment() != 0 )
+            throw std::logic_error("w was a view but was not properly aligned");
+        if( w.Height() != k || w.Width() != 1 )
+            throw std::logic_error("w was a view but was not the proper size");
     }
     else
     {
         w.Align( 0 );
-        w.ResizeTo( 1, k );
+        w.ResizeTo( k, 1 );
     }
 
     // Check if we need to scale the matrix, and do so if necessary
@@ -2194,45 +1797,14 @@ elemental::advanced::HermitianEig
 
     // Solve the tridiagonal eigenvalue problem with PMRRR
     {
-        char jobz = 'N'; // just compute the eigenvalues
-        char range = 'I'; // use an integer range
-        double vl, vu;
-        int il = a + 1; // convert from 0 to 1 indexing for Fortran
-        int iu = b + 1; // convert from 0 to 1 indexing for Fortran
-        int tryrac = tryForHighAccuracy;
-        int nz;
-        int offset;
-        int ldz;
-        std::vector<int> ZSupp(2*n);
-        std::vector<double> wBuffer(n);
-        int retval = 
-            pmrrr
-            ( &jobz, 
-              &range, 
-              &n, 
-              d_STAR_STAR.LocalBuffer(),
-              e_STAR_STAR.LocalBuffer(),
-              &vl, &vu, &il, &iu,
-              &tryrac,
-              g.VRComm(),
-              &nz,
-              &offset,
-              &wBuffer[0],
-              0,
-              &ldz,
-              &ZSupp[0] );
-        if( retval != 0 )
-        {
-            std::ostringstream msg;
-            msg << "PMRRR returned " << retval;
-            throw std::runtime_error( msg.str() );
-        }
-        if( tryForHighAccuracy && tryrac==0 && g.VCRank() == 0 )
-            std::cerr << "PMRRR did not achieve high accuracy" << std::endl;
+        std::vector<double> wVector(n);
+        pmrrr::Eig
+        ( n, d_STAR_STAR.LockedLocalBuffer(), e_STAR_STAR.LockedLocalBuffer(),
+          &wVector[0], g.VRComm(), lowerBound, upperBound );
 
-        // Copy wBuffer into the distributed matrix w[* ,VR]
-        for( int j=0; j<w.LocalWidth(); ++j )
-            w.SetLocalEntry(0,j,wBuffer[j]);
+        // Copy wVector into the distributed matrix w[VR,* ]
+        for( int iLocal=0; iLocal<w.LocalHeight(); ++iLocal )
+            w.SetLocalEntry(iLocal,0,wVector[iLocal]);
     }
 
     // Rescale the eigenvalues if necessary
@@ -2251,8 +1823,8 @@ inline void
 elemental::advanced::HermitianEig
 ( Shape shape, 
   DistMatrix<std::complex<double>,MC,  MR>& A,
-  DistMatrix<             double, STAR,VR>& w,
-  double a, double b, bool tryForHighAccuracy )
+  DistMatrix<             double, VR,STAR>& w,
+  double lowerBound, double upperBound )
 {
 #ifndef RELEASE
     PushCallStack("advanced::HermitianEig");
@@ -2267,12 +1839,10 @@ elemental::advanced::HermitianEig
 
     if( w.Viewing() )
     {
-        if( w.RowAlignment() != 0 )
-            throw std::logic_error
-                  ("w was a view but was not properly aligned.");
-        if( w.Height() != 1 || w.Width() != n )
-            throw std::logic_error
-                  ("w was a view but was not the proper size.");
+        if( w.ColAlignment() != 0 )
+            throw std::logic_error("w was a view but was not properly aligned.");
+        if( w.Height() != n || w.Width() != 1 )
+            throw std::logic_error("w was a view but was not the proper size.");
     }
     else
     {
@@ -2320,50 +1890,16 @@ elemental::advanced::HermitianEig
 
     // Solve the tridiagonal eigenvalue problem with PMRRR
     {
-        char jobz = 'N'; // just compute the eigenvalues
-        char range = 'V'; // use a floating-point range
-        double vl = a; 
-        double vu = b;
-        int il, iu;
-        int tryrac = tryForHighAccuracy;
-        int nz;
-        int offset;
-        int ldz;
-        std::vector<int> ZSupp(2*n);
-        std::vector<double> wBuffer(n);
-        int retval = 
-            pmrrr
-            ( &jobz, 
-              &range, 
-              &n, 
-              d_STAR_STAR.LocalBuffer(),
-              e_STAR_STAR.LocalBuffer(),
-              &vl, &vu, &il, &iu,
-              &tryrac,
-              g.VRComm(),
-              &nz,
-              &offset,
-              &wBuffer[0],
-              0,
-              &ldz,
-              &ZSupp[0] );
-        if( retval != 0 )
-        {
-            std::ostringstream msg;
-            msg << "PMRRR returned " << retval;
-            throw std::runtime_error( msg.str() );
-        }
-        if( tryForHighAccuracy && tryrac==0 && g.VCRank() == 0 )
-            std::cerr << "PMRRR did not achieve high accuracy" << std::endl;
+        std::vector<double> wVector(n);
+        pmrrr::Info info = pmrrr::Eig
+        ( n, d_STAR_STAR.LockedLocalBuffer(), e_STAR_STAR.LockedLocalBuffer(),
+          &wVector[0], g.VRComm(), lowerBound, upperBound );
 
-        // Get the total number of eigenvalues computed 
-        int k;
-        mpi::AllReduce( &nz, &k, 1, mpi::SUM, g.VRComm() );
-
-        // Copy wBuffer into the distributed matrix w[* ,VR]
-        w.ResizeTo( 1, k );
-        for( int j=0; j<w.LocalWidth(); ++j )
-            w.SetLocalEntry(0,j,wBuffer[j]);
+        // Copy wVector into the distributed matrix w[VR,* ]
+        const int k = info.numGlobalEigenvalues;
+        w.ResizeTo( k, 1 );
+        for( int iLocal=0; iLocal<w.LocalHeight(); ++iLocal )
+            w.SetLocalEntry(iLocal,0,wVector[iLocal]);
     }
 
     // Rescale the eigenvalues if necessary
@@ -2375,3 +1911,5 @@ elemental::advanced::HermitianEig
 }
 #endif // WITHOUT_COMPLEX
 #endif // WITHOUT_PMRRR
+
+#undef TARGET_CHUNKS
