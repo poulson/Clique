@@ -23,7 +23,6 @@
 
 namespace clique {
 namespace numeric {
-using namespace elemental;
 
 template<typename F>
 void LocalFrontLowerForwardSolve

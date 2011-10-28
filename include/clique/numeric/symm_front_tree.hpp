@@ -26,7 +26,6 @@ namespace clique {
 enum SolveMode { FEW_RHS, MANY_RHS };
 
 namespace numeric {
-using namespace elemental;
 
 template<typename F>
 struct LocalSymmFront

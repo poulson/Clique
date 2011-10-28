@@ -18,7 +18,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "clique.hpp"
-using namespace elemental;
 
 void Usage()
 {
@@ -268,7 +267,7 @@ main( int argc, char* argv[] )
             Matrix<F> localY = localX;
             clique::numeric::LowerMultiply
             ( TRANSPOSE, NON_UNIT, 0, S, L, localY );
-            basic::Axpy( (F)1, localYLower, localY );
+            elemental::basic::Axpy( (F)1, localYLower, localY );
             localYLower.Empty();
             clique::numeric::SetSolveMode( L, clique::MANY_RHS );
             mpi::Barrier( comm );
@@ -282,7 +281,7 @@ main( int argc, char* argv[] )
                 localX.Print( infoFile, "localX" );
                 localY.Print( infoFile, "localY" );
             }
-            const double myYNorm = advanced::Norm( localY );
+            const double myYNorm = elemental::advanced::Norm( localY );
             double YNorm;
             mpi::Reduce( &myYNorm, &YNorm, 1, mpi::SUM, 0, comm );
 
@@ -318,8 +317,8 @@ main( int argc, char* argv[] )
 
             if( writeInfo )
                 localY.Print( infoFile, "localY final" );
-            basic::Axpy( (F)-1, localX, localY );
-            const double myErrorNorm = advanced::Norm( localY );
+            elemental::basic::Axpy( (F)-1, localX, localY );
+            const double myErrorNorm = elemental::advanced::Norm( localY );
             double errorNorm;
             mpi::Reduce( &myErrorNorm, &errorNorm, 1, mpi::SUM, 0, comm );
             if( commRank == 0 )

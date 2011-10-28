@@ -18,7 +18,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "clique.hpp"
-using namespace elemental;
 
 template<typename F> // F represents a real or complex field
 void clique::numeric::LocalLowerForwardSolve
@@ -43,7 +42,7 @@ void clique::numeric::LocalLowerForwardSolve
         // Set up a workspace
         W.ResizeTo( frontL.Height(), width );
         Matrix<F> WT, WB;
-        PartitionDown
+        elemental::PartitionDown
         ( W, WT,
              WB, sn.size );
 
@@ -138,7 +137,7 @@ void clique::numeric::LocalLowerBackwardSolve
         // Set up a workspace
         W.ResizeTo( frontL.Height(), width );
         Matrix<F> WT, WB;
-        PartitionDown
+        elemental::PartitionDown
         ( W, WT,
              WB, sn.size );
 

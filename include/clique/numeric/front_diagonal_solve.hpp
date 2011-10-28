@@ -23,11 +23,12 @@
 
 namespace clique {
 namespace numeric {
-using namespace elemental;
 
 template<typename F>
 void LocalFrontDiagonalSolve
-( const Matrix<F>& d, Matrix<F>& X, bool checkIfSingular=true );
+( const Matrix<F>& d, 
+        Matrix<F>& X, 
+  bool checkIfSingular=true );
 
 template<typename F>
 void DistFrontDiagonalSolve

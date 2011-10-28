@@ -18,7 +18,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "clique.hpp"
-using namespace elemental;
 
 template<typename F> // F represents a real or complex field
 void clique::numeric::LocalLowerMultiplyNormal
@@ -42,7 +41,7 @@ void clique::numeric::LocalLowerMultiplyNormal
         // Set up a workspace
         W.ResizeTo( frontL.Height(), width );
         Matrix<F> WT, WB;
-        PartitionDown
+        elemental::PartitionDown
         ( W, WT,
              WB, sn.size );
 
@@ -137,7 +136,7 @@ void clique::numeric::LocalLowerMultiplyTranspose
         // Set up a workspace
         W.ResizeTo( frontL.Height(), width );
         Matrix<F> WT, WB;
-        PartitionDown
+        elemental::PartitionDown
         ( W, WT,
              WB, sn.size );
 
@@ -180,7 +179,7 @@ void clique::numeric::LocalLowerMultiplyTranspose
 
         // Store the supernode portion of the result
         Matrix<F> XNodeT, XNodeB;
-        PartitionDown
+        elemental::PartitionDown
         ( XNode, XNodeT,
                  XNodeB, sn.size );
         XT = XNodeT;

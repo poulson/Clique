@@ -18,7 +18,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "clique.hpp"
-using namespace elemental;
 
 namespace {
 template<typename F> // represents a real or complex ring
@@ -81,21 +80,21 @@ void clique::numeric::DistFrontLowerMultiplyNormal
     DistMatrix<F,STAR,STAR> X1_STAR_STAR(g);
 
     // Start the algorithm
-    LockedPartitionDownDiagonal
+    elemental::LockedPartitionDownDiagonal
     ( L, LTL, LTR,
          LBL, LBR, L.Width() );
-    PartitionDown
+    elemental::PartitionDown
     ( X, XT,
          XB, L.Width() );
     while( XT.Height() > 0 )
     {
-        LockedRepartitionUpDiagonal
+        elemental::LockedRepartitionUpDiagonal
         ( LTL, /**/ LTR,  L00, L01, /**/ L02,
                /**/       L10, L11, /**/ L12,
          /*************/ /******************/
           LBL, /**/ LBR,  L20, L21, /**/ L22 );
 
-        RepartitionUp
+        elemental::RepartitionUp
         ( XT,  X0,
                X1,
          /**/ /**/
@@ -103,33 +102,33 @@ void clique::numeric::DistFrontLowerMultiplyNormal
 
         //--------------------------------------------------------------------//
         X1_STAR_STAR = X1;
-        basic::internal::LocalGemm
+        elemental::basic::internal::LocalGemm
         ( NORMAL, NORMAL, (F)1, L21, X1_STAR_STAR, (F)1, X2 );
 
         if( diagOffset == 0 )
         {
             L11_STAR_STAR = L11;
-            basic::internal::LocalTrmm
+            elemental::basic::internal::LocalTrmm
             ( LEFT, LOWER, NORMAL, diag, (F)1, L11_STAR_STAR, X1_STAR_STAR );
         }
         else
         {
             L11_STAR_STAR = L11;
             ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
-            basic::internal::LocalTrmm
+            elemental::basic::internal::LocalTrmm
             ( LEFT, LOWER, NORMAL, NON_UNIT, 
               (F)1, L11_STAR_STAR, X1_STAR_STAR );
         }
         X1 = X1_STAR_STAR;
         //--------------------------------------------------------------------//
 
-        SlideLockedPartitionUpDiagonal
+        elemental::SlideLockedPartitionUpDiagonal
         ( LTL, /**/ LTR,  L00, /**/ L01, L02,
          /*************/ /******************/
                /**/       L10, /**/ L11, L12,
           LBL, /**/ LBR,  L20, /**/ L21, L22 );
 
-        SlidePartitionUp
+        elemental::SlidePartitionUp
         ( XT,  X0,
          /**/ /**/
                X1,
@@ -207,21 +206,21 @@ void clique::numeric::DistFrontLowerMultiplyTranspose
         L11_STAR_STAR = L11;
         if( diagOffset == 0 )
         {
-            basic::internal::LocalTrmm
+            elemental::basic::internal::LocalTrmm
             ( LEFT, LOWER, orientation, diag, 
               (F)1, L11_STAR_STAR, X1_STAR_STAR );
         }
         else
         {
             ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
-            basic::internal::LocalTrmm
+            elemental::basic::internal::LocalTrmm
             ( LEFT, LOWER, orientation, NON_UNIT, 
               (F)1, L11_STAR_STAR, X1_STAR_STAR );
         }
         X1 = X1_STAR_STAR;
 
         Z1_STAR_STAR.ResizeTo( X1.Height(), X1.Width() );
-        basic::internal::LocalGemm
+        elemental::basic::internal::LocalGemm
         ( orientation, NORMAL, (F)1, L21, X2, (F)0, Z1_STAR_STAR );
         X1.SumScatterUpdate( (F)1, Z1_STAR_STAR );
         //--------------------------------------------------------------------//

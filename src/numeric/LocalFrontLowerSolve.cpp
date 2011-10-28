@@ -23,7 +23,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "clique.hpp"
-using namespace elemental;
 
 template<typename F>
 void clique::numeric::LocalFrontLowerForwardSolve
@@ -42,18 +41,20 @@ void clique::numeric::LocalFrontLowerForwardSolve
 #endif
     Matrix<F> LT,
               LB;
-    LockedPartitionDown
+    elemental::LockedPartitionDown
     ( L, LT,
          LB, L.Width() );
 
     Matrix<F> XT, 
               XB;
-    PartitionDown
+    elemental::PartitionDown
     ( X, XT,
          XB, L.Width() );
 
-    basic::Trsm( LEFT, LOWER, NORMAL, diag, (F)1, LT, XT, checkIfSingular );
-    basic::Gemm( NORMAL, NORMAL, (F)-1, LB, XT, (F)1, XB );
+    elemental::basic::Trsm
+    ( LEFT, LOWER, NORMAL, diag, (F)1, LT, XT, checkIfSingular );
+    elemental::basic::Gemm
+    ( NORMAL, NORMAL, (F)-1, LB, XT, (F)1, XB );
 #ifndef RELEASE
     clique::PopCallStack();
 #endif
@@ -79,18 +80,18 @@ void clique::numeric::LocalFrontLowerBackwardSolve
 #endif
     Matrix<F> LT,
               LB;
-    LockedPartitionDown
+    elemental::LockedPartitionDown
     ( L, LT,
          LB, L.Width() );
 
     Matrix<F> XT,
               XB;
-    PartitionDown
+    elemental::PartitionDown
     ( X, XT,
          XB, L.Width() );
 
-    basic::Gemm( orientation, NORMAL, (F)-1, LB, XB, (F)1, XT );
-    basic::Trsm
+    elemental::basic::Gemm( orientation, NORMAL, (F)-1, LB, XB, (F)1, XT );
+    elemental::basic::Trsm
     ( LEFT, LOWER, orientation, diag, (F)1, LT, XT, checkIfSingular );
 #ifndef RELEASE
     clique::PopCallStack();

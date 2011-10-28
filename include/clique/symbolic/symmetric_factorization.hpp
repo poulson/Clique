@@ -75,7 +75,7 @@ struct LocalSymmFact
 struct DistSymmFactSupernode
 {
     mpi::Comm comm;
-    elemental::Grid* grid;
+    Grid* grid;
 
     int size, offset, myOffset, leftChildSize, rightChildSize;
     std::vector<int> lowerStruct;

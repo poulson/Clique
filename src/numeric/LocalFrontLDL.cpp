@@ -22,7 +22,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "clique.hpp"
-using namespace elemental;
 
 template<typename F> // F represents a real or complex field
 void clique::numeric::LocalFrontLDL
@@ -56,21 +55,21 @@ void clique::numeric::LocalFrontLDL
               AR2B;
 
     // Start the algorithm
-    PartitionDownDiagonal
+    elemental::PartitionDownDiagonal
     ( AL, ALTL, ALTR,
           ALBL, ALBR, 0 );
-    PartitionDown
+    elemental::PartitionDown
     ( AR, ART,
           ARB, 0 );
     while( ALTL.Width() < AL.Width() )
     {
-        RepartitionDownDiagonal
+        elemental::RepartitionDownDiagonal
         ( ALTL, /**/ ALTR,  AL00, /**/ AL01, AL02,
          /***************/ /*********************/
                 /**/        AL10, /**/ AL11, AL12,
           ALBL, /**/ ALBR,  AL20, /**/ AL21, AL22 );
 
-        RepartitionDown
+        elemental::RepartitionDown
         ( ART,  AR0,
          /***/ /***/
                 AR1,
@@ -79,36 +78,39 @@ void clique::numeric::LocalFrontLDL
         //--------------------------------------------------------------------//
         // This routine is unblocked, hence the need for us to generalize to 
         // an (ideally) faster blocked algorithm.
-        advanced::internal::LDLVar3( orientation, AL11, d1 );
+        elemental::advanced::internal::LDLVar3( orientation, AL11, d1 );
 
-        basic::Trsm( RIGHT, LOWER, orientation, UNIT, (F)1, AL11, AL21 );
+        elemental::basic::Trsm
+        ( RIGHT, LOWER, orientation, UNIT, (F)1, AL11, AL21 );
 
         S21 = AL21;
-        basic::DiagonalSolve( RIGHT, NORMAL, d1, AL21 );
+        elemental::basic::DiagonalSolve( RIGHT, NORMAL, d1, AL21 );
 
         // For now, perform about 2x as much work as necessary on the 
         // symmetric updates. Eventually, these should be replaced with 
         // custom routines.
-        PartitionDown
+        elemental::PartitionDown
         ( S21, S21T,
                S21B, AL22.Width() );
-        PartitionDown
+        elemental::PartitionDown
         ( AL21, AL21T,
                 AL21B, AL22.Width() );
-        PartitionDown
+        elemental::PartitionDown
         ( AR2, AR2T,
                AR2B, AL22.Width() );
-        basic::Gemm( NORMAL, orientation, (F)-1, S21, AL21T, (F)1, AL22 );
-        basic::Gemm( NORMAL, orientation, (F)-1, S21B, AL21B, (F)1, AR2B );
+        elemental::basic::Gemm
+        ( NORMAL, orientation, (F)-1, S21, AL21T, (F)1, AL22 );
+        elemental::basic::Gemm
+        ( NORMAL, orientation, (F)-1, S21B, AL21B, (F)1, AR2B );
         //--------------------------------------------------------------------//
 
-        SlidePartitionDown
+        elemental::SlidePartitionDown
         ( ART,  AR0,
                 AR1,
          /***/ /***/
           ARB,  AR2 );
 
-        SlidePartitionDownDiagonal
+        elemental::SlidePartitionDownDiagonal
         ( ALTL, /**/ ALTR,  AL00, AL01, /**/ AL02,
                 /**/        AL10, AL11, /**/ AL12,
          /***************/ /*********************/

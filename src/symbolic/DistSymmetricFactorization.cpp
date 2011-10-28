@@ -19,7 +19,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "clique.hpp"
-using namespace elemental;
 
 // This is the part of the symbolic factorization that requires fine-grain 
 // parallelism: we assume that the upper floor(log2(commSize)) levels of the
@@ -63,7 +62,7 @@ void clique::symbolic::DistSymmetricFactorization
     const LocalSymmFactSupernode& topLocalSN = fact.local.supernodes.back();
     DistSymmFactSupernode& bottomDistSN = fact.dist.supernodes[0];
     mpi::CommSplit( orig.dist.comm, commRank, 0, bottomDistSN.comm );
-    bottomDistSN.grid = new elemental::Grid( bottomDistSN.comm, 1, 1 );
+    bottomDistSN.grid = new Grid( bottomDistSN.comm, 1, 1 );
     bottomDistSN.size = topLocalSN.size;
     bottomDistSN.localSize1d = topLocalSN.size;
     bottomDistSN.offset = topLocalSN.offset;
@@ -117,7 +116,7 @@ void clique::symbolic::DistSymmetricFactorization
         while( teamSize % gridHeight != 0 )
             ++gridHeight;
         const unsigned gridWidth = teamSize / gridHeight;
-        factSN.grid = new elemental::Grid( factSN.comm, gridHeight, gridWidth );
+        factSN.grid = new Grid( factSN.comm, gridHeight, gridWidth );
         const unsigned gridRow = factSN.grid->MCRank();
         const unsigned gridCol = factSN.grid->MRRank();
 

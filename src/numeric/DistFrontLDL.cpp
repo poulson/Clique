@@ -22,7 +22,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "clique.hpp"
-using namespace elemental;
 
 template<typename F> // F represents a real or complex field
 void clique::numeric::DistFrontLDL
@@ -90,21 +89,21 @@ void clique::numeric::internal::DistFrontLDLGeneral
                           AR2B(g);
 
     // Start the algorithm
-    PartitionDownDiagonal
+    elemental::PartitionDownDiagonal
     ( AL, ALTL, ALTR,
           ALBL, ALBR, 0 );
-    PartitionDown
+    elemental::PartitionDown
     ( AR, ART,
           ARB, 0 );
     while( ALTL.Width() < AL.Width() )
     {
-        RepartitionDownDiagonal
+        elemental::RepartitionDownDiagonal
         ( ALTL, /**/ ALTR,  AL00, /**/ AL01, AL02,
          /***************/ /*********************/
                /**/         AL10, /**/ AL11, AL12,
           ALBL, /**/ ALBR,  AL20, /**/ AL21, AL22 );
 
-        RepartitionDown
+        elemental::RepartitionDown
         ( ART,  AR0,
          /***/ /***/
                 AR1,
@@ -121,12 +120,13 @@ void clique::numeric::internal::DistFrontLDLGeneral
         AL11 = AL11_STAR_STAR;
 
         AL21_VC_STAR = AL21;
-        basic::internal::LocalTrsm
+        elemental::basic::internal::LocalTrsm
         ( RIGHT, LOWER, orientation, UNIT, 
           (F)1, AL11_STAR_STAR, AL21_VC_STAR );
 
         S21Trans_STAR_MC.TransposeFrom( AL21_VC_STAR );
-        basic::DiagonalSolve( RIGHT, NORMAL, d1_STAR_STAR, AL21_VC_STAR );
+        elemental::basic::DiagonalSolve
+        ( RIGHT, NORMAL, d1_STAR_STAR, AL21_VC_STAR );
         AL21_VR_STAR = AL21_VC_STAR;
         if( orientation == ADJOINT )
             AL21AdjOrTrans_STAR_MR.AdjointFrom( AL21_VR_STAR );
@@ -146,16 +146,16 @@ void clique::numeric::internal::DistFrontLDLGeneral
         PartitionDown
         ( AR2,  AR2T,
                 AR2B, AL22.Width() );
-        basic::internal::LocalTriangularRankK
+        elemental::basic::internal::LocalTriangularRankK
         ( LOWER, orientation, 
           (F)-1, leftL, rightL, (F)1, AL22T );
-        basic::internal::LocalGemm
+        elemental::basic::internal::LocalGemm
         ( orientation, NORMAL, (F)-1, leftR, rightL, (F)1, AL22B );
-        basic::internal::LocalTriangularRankK
+        elemental::basic::internal::LocalTriangularRankK
         ( LOWER, orientation,
           (F)-1, leftR, rightR, (F)1, AR2B );
 
-        basic::DiagonalSolve
+        elemental::basic::DiagonalSolve
         ( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
         AL21.TransposeFrom( S21Trans_STAR_MC );
         //--------------------------------------------------------------------//
@@ -164,13 +164,13 @@ void clique::numeric::internal::DistFrontLDLGeneral
         S21Trans_STAR_MC.FreeAlignments();
         AL21AdjOrTrans_STAR_MR.FreeAlignments();
 
-        SlidePartitionDown
+        elemental::SlidePartitionDown
         ( ART,   AR0,
                  AR1, 
          /***/  /***/
           ARB,   AR2 );
 
-        SlidePartitionDownDiagonal
+        elemental::SlidePartitionDownDiagonal
         ( ALTL, /**/ ALTR,  AL00, AL01, /**/ AL02,
                /**/         AL10, AL11, /**/ AL12,
          /***************/ /*********************/
@@ -248,21 +248,21 @@ void clique::numeric::internal::DistFrontLDLSquare
                           AR2B(g);
 
     // Start the algorithm
-    PartitionDownDiagonal
+    elemental::PartitionDownDiagonal
     ( AL, ALTL, ALTR,
           ALBL, ALBR, 0 );
-    PartitionDown
+    elemental::PartitionDown
     ( AR, ART,
           ARB, 0 );
     while( ALTL.Width() < AL.Width() )
     {
-        RepartitionDownDiagonal
+        elemental::RepartitionDownDiagonal
         ( ALTL, /**/ ALTR,  AL00, /**/ AL01, AL02,
          /***************/ /*********************/
                /**/         AL10, /**/ AL11, AL12,
           ALBL, /**/ ALBR,  AL20, /**/ AL21, AL22 );
 
-        RepartitionDown
+        elemental::RepartitionDown
         ( ART,  AR0,
          /***/ /***/
                 AR1,
@@ -278,7 +278,7 @@ void clique::numeric::internal::DistFrontLDLSquare
         AL11 = AL11_STAR_STAR;
 
         AL21_VC_STAR = AL21;
-        basic::internal::LocalTrsm
+        elemental::basic::internal::LocalTrsm
         ( RIGHT, LOWER, orientation, UNIT, 
           (F)1, AL11_STAR_STAR, AL21_VC_STAR );
 
@@ -306,10 +306,10 @@ void clique::numeric::internal::DistFrontLDLSquare
                   AL21AdjOrTrans_STAR_MR.LocalBuffer(), 
                   recvSize, transposeRank, 0, g.VCComm() );
             }
-            basic::DiagonalSolve
+            elemental::basic::DiagonalSolve
             ( LEFT, NORMAL, d1_STAR_STAR, AL21AdjOrTrans_STAR_MR );
             if( orientation == ADJOINT )
-                basic::Conjugate( AL21AdjOrTrans_STAR_MR );
+                elemental::basic::Conjugate( AL21AdjOrTrans_STAR_MR );
         }
 
         // Partition the update of the bottom-right corner into three pieces
@@ -325,16 +325,16 @@ void clique::numeric::internal::DistFrontLDLSquare
         PartitionDown
         ( AR2,  AR2T,
                 AR2B, AL22.Width() );
-        basic::internal::LocalTriangularRankK
+        elemental::basic::internal::LocalTriangularRankK
         ( LOWER, orientation, 
           (F)-1, leftL, rightL, (F)1, AL22T );
-        basic::internal::LocalGemm
+        elemental::basic::internal::LocalGemm
         ( orientation, NORMAL, (F)-1, leftR, rightL, (F)1, AL22B );
-        basic::internal::LocalTriangularRankK
+        elemental::basic::internal::LocalTriangularRankK
         ( LOWER, orientation,
           (F)-1, leftR, rightR, (F)1, AR2B );
 
-        basic::DiagonalSolve
+        elemental::basic::DiagonalSolve
         ( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
         AL21.TransposeFrom( S21Trans_STAR_MC );
         //--------------------------------------------------------------------//
@@ -342,13 +342,13 @@ void clique::numeric::internal::DistFrontLDLSquare
         S21Trans_STAR_MC.FreeAlignments();
         AL21AdjOrTrans_STAR_MR.FreeAlignments();
 
-        SlidePartitionDown
+        elemental::SlidePartitionDown
         ( ART,   AR0,
                  AR1, 
          /***/  /***/
           ARB,   AR2 );
 
-        SlidePartitionDownDiagonal
+        elemental::SlidePartitionDownDiagonal
         ( ALTL, /**/ ALTR,  AL00, AL01, /**/ AL02,
                /**/         AL10, AL11, /**/ AL12,
          /***************/ /*********************/

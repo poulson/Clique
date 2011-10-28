@@ -23,7 +23,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "clique.hpp"
-using namespace elemental;
 
 template<typename F>
 void clique::numeric::LocalFrontDiagonalSolve
@@ -36,7 +35,7 @@ void clique::numeric::LocalFrontDiagonalSolve
     if( d.Height() != X.Height() )
         throw std::logic_error("Invalid height of X");
 #endif
-    basic::DiagonalSolve( LEFT, NORMAL, d, X, checkIfSingular );
+    elemental::basic::DiagonalSolve( LEFT, NORMAL, d, X, checkIfSingular );
 #ifndef RELEASE
     clique::PopCallStack();
 #endif

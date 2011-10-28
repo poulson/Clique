@@ -18,7 +18,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "clique.hpp"
-using namespace elemental;
 
 // This routine could be modified later so that it uses much less memory
 // by replacing the '=' redistributions with piece-by-piece redistributions.

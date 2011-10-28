@@ -18,7 +18,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "clique.hpp"
-using namespace elemental;
 
 template<typename F> // F represents a real or complex field
 void clique::numeric::DistLowerForwardSolve
@@ -73,7 +72,7 @@ void clique::numeric::DistLowerForwardSolve
         W.SetGrid( grid );
         W.ResizeTo( front.front1dL.Height(), width );
         DistMatrix<F,VC,STAR> WT(grid), WB(grid);
-        PartitionDown
+        elemental::PartitionDown
         ( W, WT,
              WB, sn.size );
 
@@ -249,7 +248,7 @@ void clique::numeric::DistLowerBackwardSolve
         W.SetGrid( grid );
         W.ResizeTo( front.front1dL.Height(), width );
         DistMatrix<F,VC,STAR> WT(grid), WB(grid);
-        PartitionDown
+        elemental::PartitionDown
         ( W, WT,
              WB, sn.size );
 

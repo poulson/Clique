@@ -23,7 +23,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "clique.hpp"
-using namespace elemental;
 
 template<typename F>
 void clique::numeric::DistFrontLowerForwardSolve
@@ -71,21 +70,21 @@ void clique::numeric::DistFrontLowerForwardSolve
     DistMatrix<F,STAR,STAR> L11_STAR_STAR(g);
     DistMatrix<F,STAR,STAR> X1_STAR_STAR(g);
 
-    LockedPartitionDownDiagonal
+    elemental::LockedPartitionDownDiagonal
     ( L, LTL, LTR,
          LBL, LBR, 0 );
-    PartitionDown
+    elemental::PartitionDown
     ( X, XT,
          XB, 0 );
     while( LTL.Width() < L.Width() )
     {
-        LockedRepartitionDownDiagonal
+        elemental::LockedRepartitionDownDiagonal
         ( LTL, /**/ LTR,  L00, /**/ L01, L02,
          /*************/ /******************/
                /**/       L10, /**/ L11, L12,
           LBL, /**/ LBR,  L20, /**/ L21, L22 );
 
-        RepartitionDown
+        elemental::RepartitionDown
         ( XT,  X0,
          /**/ /**/
                X1,
@@ -96,23 +95,23 @@ void clique::numeric::DistFrontLowerForwardSolve
         X1_STAR_STAR = X1;   // X1[* ,* ] <- X1[VC,* ]
 
         // X1[* ,* ] := (L11[* ,* ])^-1 X1[* ,* ]
-        basic::internal::LocalTrsm
+        elemental::basic::internal::LocalTrsm
         ( LEFT, LOWER, NORMAL, diag, (F)1, L11_STAR_STAR, X1_STAR_STAR,
           checkIfSingular );
         X1 = X1_STAR_STAR;
 
         // X2[VC,* ] -= L21[VC,* ] X1[* ,* ]
-        basic::internal::LocalGemm
+        elemental::basic::internal::LocalGemm
         ( NORMAL, NORMAL, (F)-1, L21, X1_STAR_STAR, (F)1, X2 );
         //--------------------------------------------------------------------//
 
-        SlideLockedPartitionDownDiagonal
+        elemental::SlideLockedPartitionDownDiagonal
         ( LTL, /**/ LTR,  L00, L01, /**/ L02,
                /**/       L10, L11, /**/ L12,
          /*************/ /******************/
           LBL, /**/ LBR,  L20, L21, /**/ L22 );
 
-        SlidePartitionDown
+        elemental::SlidePartitionDown
         ( XT,  X0,
                X1,
          /**/ /**/
@@ -161,13 +160,13 @@ void clique::numeric::DistFrontLowerBackwardSolve
 
     DistMatrix<F,VC,STAR> LT(g),
                           LB(g);
-    LockedPartitionDown
+    elemental::LockedPartitionDown
     ( L, LT,
          LB, L.Width() );
 
     DistMatrix<F,VC,STAR> XT(g),
                           XB(g);
-    PartitionDown
+    elemental::PartitionDown
     ( X, XT,
          XB, L.Width() );
 
@@ -176,12 +175,12 @@ void clique::numeric::DistFrontLowerBackwardSolve
         // Subtract off the parent updates
         DistMatrix<F,STAR,STAR> Z(XT.Height(),XT.Width(),g);
         Z.ResizeTo( XT.Height(), XT.Width() );
-        basic::internal::LocalGemm
+        elemental::basic::internal::LocalGemm
         ( orientation, NORMAL, (F)-1, LB, XB, (F)0, Z );
         XT.SumScatterUpdate( (F)1, Z );
     }
 
-    basic::internal::TrsmLLTSmall
+    elemental::basic::internal::TrsmLLTSmall
     ( orientation, diag, (F)1, LT, XT, checkIfSingular );
 #ifndef RELEASE
     clique::PopCallStack();

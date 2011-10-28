@@ -18,7 +18,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "clique.hpp"
-using namespace elemental;
 
 template<typename F> // F representa a real or complex field
 void clique::numeric::DistDiagonalSolve
@@ -46,7 +45,7 @@ void clique::numeric::DistDiagonalSolve
         FTL.LockedView( front.front1dL, 0, 0, sn.size, sn.size );
         DistMatrix<F,VC,STAR> dTL;
         FTL.GetDiagonal( dTL );
-        basic::DiagonalSolve
+        elemental::basic::DiagonalSolve
         ( LEFT, NORMAL, dTL.LockedLocalMatrix(), localXT, checkIfSingular );
     }
 #ifndef RELEASE

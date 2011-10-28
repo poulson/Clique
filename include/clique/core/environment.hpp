@@ -44,9 +44,22 @@ void PopCallStack();
 void DumpCallStack();
 #endif
 
+// Pull in some of Elemental's imported libraries
 namespace blas = elemental::blas;
 namespace lapack = elemental::lapack;
 namespace mpi = elemental::mpi;
+
+// Pull in some serial datatypes from Elemental
+using elemental::Diagonal;
+using elemental::Orientation;
+using elemental::Shape;
+using elemental::Side;
+using elemental::Matrix;
+
+// Pull in some distributed datatypes from Elemental
+using elemental::Grid;
+using elemental::Distribution;
+using elemental::DistMatrix;
 
 } // namespace clique
 

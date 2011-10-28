@@ -18,7 +18,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "clique.hpp"
-using namespace elemental;
 
 namespace {
 template<typename F> // represents a real or complex ring
@@ -106,27 +105,27 @@ void clique::numeric::LocalFrontLowerMultiplyNormal
     Matrix<F>* LMod = const_cast<Matrix<F>*>(&L);
     Matrix<F> LT,
               LB;
-    PartitionDown
+    elemental::PartitionDown
     ( *LMod, LT,
              LB, L.Width() );
 
     Matrix<F> XT, 
               XB;
-    PartitionDown
+    elemental::PartitionDown
     ( X, XT,
          XB, L.Width() );
 
-    basic::Gemm( NORMAL, NORMAL, (F)1, LB, XT, (F)1, XB );
+    elemental::basic::Gemm( NORMAL, NORMAL, (F)1, LB, XT, (F)1, XB );
 
     if( diagOffset == 0 )
     {
-        basic::Trmm( LEFT, LOWER, NORMAL, diag, (F)1, LT, XT );
+        elemental::basic::Trmm( LEFT, LOWER, NORMAL, diag, (F)1, LT, XT );
     }
     else
     {
         std::vector<Matrix<F> > diagonals;
         ModifyForTrmm( LT, diag, diagOffset, diagonals );
-        basic::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, (F)1, LT, XT );
+        elemental::basic::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, (F)1, LT, XT );
         ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
     }
 #ifndef RELEASE
@@ -157,29 +156,30 @@ void clique::numeric::LocalFrontLowerMultiplyTranspose
     Matrix<F>* LMod = const_cast<Matrix<F>*>(&L);
     Matrix<F> LT,
               LB;
-    PartitionDown
+    elemental::PartitionDown
     ( *LMod, LT,
              LB, L.Width() );
 
     Matrix<F> XT, 
               XB;
-    PartitionDown
+    elemental::PartitionDown
     ( X, XT,
          XB, L.Width() );
 
     if( diagOffset == 0 )
     {
-        basic::Trmm( LEFT, LOWER, orientation, diag, (F)1, LT, XT );
+        elemental::basic::Trmm( LEFT, LOWER, orientation, diag, (F)1, LT, XT );
     }
     else
     {
         std::vector<Matrix<F> > diagonals;
         ModifyForTrmm( LT, diag, diagOffset, diagonals );
-        basic::Trmm( LEFT, LOWER, orientation, NON_UNIT, (F)1, LT, XT );
+        elemental::basic::Trmm
+        ( LEFT, LOWER, orientation, NON_UNIT, (F)1, LT, XT );
         ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
     }
 
-    basic::Gemm( orientation, NORMAL, (F)1, LB, XB, (F)1, XT );
+    elemental::basic::Gemm( orientation, NORMAL, (F)1, LB, XB, (F)1, XT );
 #ifndef RELEASE
     clique::PopCallStack();
 #endif

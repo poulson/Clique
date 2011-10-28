@@ -18,7 +18,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "clique.hpp"
-using namespace elemental;
 
 template<typename F> // F represents a real or complex field
 void clique::numeric::DistLowerMultiplyNormal
@@ -72,7 +71,7 @@ void clique::numeric::DistLowerMultiplyNormal
         W.SetGrid( grid );
         W.ResizeTo( front.front1dL.Height(), width );
         DistMatrix<F,VC,STAR> WT(grid), WB(grid);
-        PartitionDown
+        elemental::PartitionDown
         ( W, WT,
              WB, sn.size );
 
@@ -249,7 +248,7 @@ void clique::numeric::DistLowerMultiplyTranspose
         W.SetGrid( grid );
         W.ResizeTo( front.front1dL.Height(), width );
         DistMatrix<F,VC,STAR> WT(grid), WB(grid);
-        PartitionDown
+        elemental::PartitionDown
         ( W, WT,
              WB, sn.size );
 
@@ -368,7 +367,7 @@ void clique::numeric::DistLowerMultiplyTranspose
 
         // Store the supernode portion of the result
         DistMatrix<F,VC,STAR> XNodeT(grid), XNodeB(grid);
-        PartitionDown
+        elemental::PartitionDown
         ( XNode, XNodeT,
                  XNodeB, sn.size );
         localXT = XNodeT.LocalMatrix();
