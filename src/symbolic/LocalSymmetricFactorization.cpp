@@ -43,6 +43,7 @@ void clique::symbolic::LocalSymmetricFactorization
         factSN.myOffset = myOffset;
         factSN.parent = origSN.parent;
         factSN.children = origSN.children;
+        factSN.origLowerStruct = origSN.lowerStruct;
 
         const int numChildren = origSN.children.size();
 #ifndef RELEASE

@@ -69,6 +69,7 @@ void clique::symbolic::DistSymmetricFactorization
     bottomDistSN.myOffset = topLocalSN.myOffset;
     bottomDistSN.localOffset1d = topLocalSN.myOffset;
     bottomDistSN.lowerStruct = topLocalSN.lowerStruct;
+    bottomDistSN.origLowerStruct = topLocalSN.origLowerStruct;
     bottomDistSN.origLowerRelIndices = topLocalSN.origLowerRelIndices;
     bottomDistSN.leftChildRelIndices = topLocalSN.leftChildRelIndices;
     bottomDistSN.rightChildRelIndices = topLocalSN.rightChildRelIndices;
@@ -100,6 +101,7 @@ void clique::symbolic::DistSymmetricFactorization
         factSN.size = origSN.size;
         factSN.offset = origSN.offset;
         factSN.myOffset = myOffset;
+        factSN.origLowerStruct = origSN.lowerStruct;
 
         // Determine our partner based upon the bits of 'commRank'
         const unsigned powerOfTwo = 1u << (s-1);

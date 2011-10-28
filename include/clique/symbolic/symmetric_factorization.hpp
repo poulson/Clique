@@ -62,9 +62,9 @@ struct LocalSymmFactSupernode
     int parent; // -1 if root separator
     std::vector<int> children;
 
-    std::vector<int> lowerStruct;
-    std::vector<int> leftChildRelIndices, rightChildRelIndices;
+    std::vector<int> lowerStruct, origLowerStruct;
     std::vector<int> origLowerRelIndices;
+    std::vector<int> leftChildRelIndices, rightChildRelIndices;
 };
 
 struct LocalSymmFact
@@ -78,7 +78,7 @@ struct DistSymmFactSupernode
     Grid* grid;
 
     int size, offset, myOffset, leftChildSize, rightChildSize;
-    std::vector<int> lowerStruct;
+    std::vector<int> lowerStruct, origLowerStruct;
 
     // Useful for expanding sparse matrices into this frontal matrix
     std::vector<int> origLowerRelIndices;
