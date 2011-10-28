@@ -49,17 +49,17 @@ namespace blas = elemental::blas;
 namespace lapack = elemental::lapack;
 namespace mpi = elemental::mpi;
 
-// Pull in some serial datatypes from Elemental
-using elemental::Diagonal;
-using elemental::Orientation;
-using elemental::Shape;
-using elemental::Side;
-using elemental::Matrix;
+// Pull in a number of useful enums from Elemental
+using namespace elemental::diagonal_wrapper;
+using namespace elemental::distribution_wrapper;
+using namespace elemental::orientation_wrapper;
+using namespace elemental::shape_wrapper;
+using namespace elemental::side_wrapper;
 
-// Pull in some distributed datatypes from Elemental
-using elemental::Grid;
-using elemental::Distribution;
+// Pull in a few classes from Elemental
 using elemental::DistMatrix;
+using elemental::Grid;
+using elemental::Matrix;
 
 } // namespace clique
 
