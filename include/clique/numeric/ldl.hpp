@@ -28,6 +28,10 @@ namespace numeric {
 // original sparse matrix before calling the following factorizations.
 
 template<typename F>
+void InitializeDistLeaf
+( const symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L );
+
+template<typename F>
 void LDL
 ( Orientation orientation, 
   symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L );
@@ -45,6 +49,27 @@ void DistLDL
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
+
+template<typename F>
+void InitializeDistLeaf
+( const symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L )
+{
+#ifndef RELEASE
+    PushCallStack("numeric::InitializeDistLeaf");
+#endif
+    const symbolic::DistSymmFactSupernode& sn = S.dist.supernodes[0];
+    Matrix<F>& topLocalFrontL = L.local.fronts.back().frontL;
+    DistMatrix<F,MC,MR>& front2dL = L.dist.fronts[0].front2dL;
+
+    const int frontSize = sn.size + sn.lowerStruct.size();
+    front2dL.LockedView
+    ( topLocalFrontL.Height(), topLocalFrontL.Width(), 0, 0,
+      topLocalFrontL.LockedBuffer(), topLocalFrontL.LDim(), 
+      *sn.grid );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
 
 template<typename F>
 void LDL

@@ -218,8 +218,7 @@ main( int argc, char* argv[] )
             }
             L.dist.mode = clique::MANY_RHS;
             L.dist.fronts.resize( log2CommSize+1 );
-            // Skip the first distributed front, as it is shared with the last
-            // local front.
+            clique::numeric::InitializeDistLeaf( S, L );
             for( int s=1; s<log2CommSize+1; ++s )
             {
                 const clique::symbolic::DistSymmFactSupernode& sn = 

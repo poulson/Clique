@@ -161,8 +161,8 @@ void clique::numeric::LocalLowerMultiplyTranspose
                 WB.Set( iCurrent, j, parentWork.Get(iParent,j) );
         }
 
-        // The left child is numbered lower than the right child, so we can safely
-        // free the parent's work if this node is the left child
+        // The left child is numbered lower than the right child, so we can 
+        // safely free the parent's work if this node is the left child
         if( sn.isLeftChild )
         {
             parentWork.Empty();
