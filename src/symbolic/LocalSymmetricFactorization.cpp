@@ -46,6 +46,7 @@ void clique::symbolic::LocalSymmetricFactorization
         factSN.origLowerStruct = origSN.lowerStruct;
 
         const int numChildren = origSN.children.size();
+        const int numOrigLowerIndices = origSN.lowerStruct.size();
 #ifndef RELEASE
         if( numChildren != 0 && numChildren != 2 )
             throw std::logic_error("Tree must be built from bisections");
@@ -94,7 +95,7 @@ void clique::symbolic::LocalSymmetricFactorization
             childrenStruct.resize( childrenStructSize );
 
             // Union the lower structure of this supernode
-            const int numOrigLowerIndices = origSN.lowerStruct.size();
+
 #ifndef RELEASE
             for( int i=1; i<numOrigLowerIndices; ++i )
             {
@@ -166,6 +167,11 @@ void clique::symbolic::LocalSymmetricFactorization
         else // numChildren == 0, so this is a leaf supernode 
         {
             factSN.lowerStruct = origSN.lowerStruct;
+            
+            // Construct the trivial relative indices of the original structure
+            factSN.origLowerRelIndices.resize( numOrigLowerIndices );
+            for( int i=0; i<numOrigLowerIndices; ++i )
+                factSN.origLowerRelIndices[i] = i;
         }
 
         myOffset += factSN.size;
