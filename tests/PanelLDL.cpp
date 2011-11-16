@@ -218,19 +218,8 @@ main( int argc, char* argv[] )
             }
             L.dist.mode = clique::MANY_RHS;
             L.dist.fronts.resize( log2CommSize+1 );
-            {
-                const clique::symbolic::DistSymmFactSupernode& sn = 
-                    S.dist.supernodes[0];
-                Matrix<F>& topLocalFrontL = L.local.fronts.back().frontL;
-                Matrix<F>& topLocalFrontR = L.local.fronts.back().frontR;
-                DistMatrix<F,MC,MR>& front2dL = L.dist.fronts[0].front2dL;
-
-                const int frontSize = sn.size+sn.lowerStruct.size();
-                front2dL.LockedView
-                ( topLocalFrontL.Height(), topLocalFrontL.Width(), 0, 0,
-                  topLocalFrontL.LockedBuffer(), topLocalFrontL.LDim(),
-                  *sn.grid );
-            }
+            // Skip the first distributed front, as it is shared with the last
+            // local front.
             for( int s=1; s<log2CommSize+1; ++s )
             {
                 const clique::symbolic::DistSymmFactSupernode& sn = 

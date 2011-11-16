@@ -37,7 +37,7 @@ void clique::numeric::DistLDL
     // The bottom front is already computed, so just view it
     LocalSymmFront<F>& topLocalFront = L.local.fronts.back();
     DistSymmFront<F>& bottomDistFront = L.dist.fronts[0];
-    const Grid& bottomGrid = bottomDistFront.front2dL.Grid();
+    const Grid& bottomGrid = *S.dist.supernodes[0].grid;
     bottomDistFront.front2dL.Empty();
     bottomDistFront.front2dL.LockedView
     ( topLocalFront.frontL.Height(), topLocalFront.frontL.Width(), 0, 0, 
