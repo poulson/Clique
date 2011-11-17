@@ -165,7 +165,11 @@ void clique::numeric::LocalLowerBackwardSolve
         // The left child is numbered lower than the right child, so 
         // we can safely free the parent's work if we are the left child
         if( sn.isLeftChild )
+        {
             parentWork.Empty();
+            if( parent == numSupernodes-1 )
+                L.dist.fronts[0].work1d.Empty();
+        }
 
         // Solve against this front
         LocalFrontLowerBackwardSolve
@@ -176,6 +180,7 @@ void clique::numeric::LocalLowerBackwardSolve
     }
 
     // Ensure that all of the temporary buffers are freed (this is overkill)
+    L.dist.fronts[0].work1d.Empty();
     for( int s=0; s<numSupernodes; ++s )
         L.local.fronts[s].work.Empty();
 #ifndef RELEASE

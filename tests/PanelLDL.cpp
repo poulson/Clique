@@ -750,7 +750,7 @@ void FillLocalOrigStruct
                   log2CommSize, cutoff );
             sn.children.clear();
 
-        // Count, allocate, and fill the lower struct
+            // Count, allocate, and fill the lower struct
             int joinSize = 0;
             if( box.xOffset-1 >= 0 )
                 joinSize += box.ny*nz;

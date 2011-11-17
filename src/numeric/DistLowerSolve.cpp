@@ -225,7 +225,8 @@ void clique::numeric::DistLowerBackwardSolve
     ( rootSN.size, width, 0,
       localX.Buffer(rootSN.localOffset1d,0), localX.LDim(), rootGrid );
     DistFrontLowerBackwardSolve
-    ( orientation, diag, rootFront.front1dL, rootFront.work1d, checkIfSingular );
+    ( orientation, diag, rootFront.front1dL, rootFront.work1d, 
+      checkIfSingular );
 
     std::vector<int>::const_iterator it;
     for( int s=numSupernodes-2; s>=0; --s )
@@ -285,7 +286,8 @@ void clique::numeric::DistLowerBackwardSolve
             {
                 const int iFrontLocal = recvIndices[k];
                 F* sendRow = &sendValues[k*width];
-                const F* workRow = parentWork.LockedLocalBuffer( iFrontLocal, 0 );
+                const F* workRow = 
+                    parentWork.LockedLocalBuffer( iFrontLocal, 0 );
                 const int workLDim = parentWork.LocalLDim();
                 for( int j=0; j<width; ++j )
                     sendRow[j] = workRow[j*workLDim];
