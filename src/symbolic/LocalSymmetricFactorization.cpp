@@ -171,7 +171,7 @@ void clique::symbolic::LocalSymmetricFactorization
             // Construct the trivial relative indices of the original structure
             factSN.origLowerRelIndices.resize( numOrigLowerIndices );
             for( int i=0; i<numOrigLowerIndices; ++i )
-                factSN.origLowerRelIndices[i] = i;
+                factSN.origLowerRelIndices[i] = i + factSN.size;
         }
 
         myOffset += factSN.size;

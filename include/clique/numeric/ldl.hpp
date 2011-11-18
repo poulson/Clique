@@ -61,7 +61,6 @@ void InitializeDistLeaf
     Matrix<F>& topLocalFrontL = L.local.fronts.back().frontL;
     DistMatrix<F,MC,MR>& front2dL = L.dist.fronts[0].front2dL;
 
-    const int frontSize = sn.size + sn.lowerStruct.size();
     front2dL.LockedView
     ( topLocalFrontL.Height(), topLocalFrontL.Width(), 0, 0,
       topLocalFrontL.LockedBuffer(), topLocalFrontL.LDim(), 
