@@ -30,11 +30,11 @@ void clique::numeric::DistLowerMultiplyNormal
 #ifndef RELEASE
     PushCallStack("numeric::DistLowerMultiplyNormal");
 #endif
-    const int numSupernodes = S.dist.supernodes.size();
+    const int numDistSupernodes = S.dist.supernodes.size();
     const int width = localX.Width();
     if( L.dist.mode == MANY_RHS )
         throw std::logic_error("This multiply mode is not yet implemented");
-    if( numSupernodes == 0 || width == 0 )
+    if( width == 0 )
     {
 #ifndef RELEASE
         PopCallStack();
@@ -51,7 +51,7 @@ void clique::numeric::DistLowerMultiplyNormal
       distLeafFront.front1dL.Grid() );
     
     // Perform the distributed portion of the forward multiply
-    for( int s=1; s<numSupernodes; ++s )
+    for( int s=1; s<numDistSupernodes; ++s )
     {
         const DistSymmFactSupernode& childSN = S.dist.supernodes[s-1];
         const DistSymmFactSupernode& sn = S.dist.supernodes[s];
@@ -203,11 +203,11 @@ void clique::numeric::DistLowerMultiplyTranspose
 #ifndef RELEASE
     PushCallStack("numeric::DistLowerMultiplyTranspose");
 #endif
-    const int numSupernodes = S.dist.supernodes.size();
+    const int numDistSupernodes = S.dist.supernodes.size();
     const int width = localX.Width();
     if( L.dist.mode == MANY_RHS )
         throw std::logic_error("This multiply mode is not yet implemented");
-    if( numSupernodes == 0 || width == 0 )
+    if( width == 0 )
     {
 #ifndef RELEASE
         PopCallStack();
@@ -228,7 +228,7 @@ void clique::numeric::DistLowerMultiplyTranspose
     ( orientation, diag, diagOffset, rootFront.front1dL, XRoot );
 
     std::vector<int>::const_iterator it;
-    for( int s=numSupernodes-2; s>=0; --s )
+    for( int s=numDistSupernodes-2; s>=0; --s )
     {
         const DistSymmFactSupernode& parentSN = S.dist.supernodes[s+1];
         const DistSymmFactSupernode& sn = S.dist.supernodes[s];

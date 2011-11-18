@@ -29,10 +29,8 @@ void clique::numeric::DistLDL
     if( orientation == NORMAL )
         throw std::logic_error("LDL must be (conjugate-)transposed");
 #endif
-    const int numSupernodes = S.dist.supernodes.size();
+    const int numDistSupernodes = S.dist.supernodes.size();
     L.dist.mode = MANY_RHS;
-    if( numSupernodes == 0 )
-        return;
 
     // The bottom front is already computed, so just view it
     LocalSymmFront<F>& topLocalFront = L.local.fronts.back();
@@ -51,7 +49,7 @@ void clique::numeric::DistLDL
 
     // Perform the distributed portion of the factorization
     std::vector<int>::const_iterator it;
-    for( unsigned s=1; s<numSupernodes; ++s )
+    for( unsigned s=1; s<numDistSupernodes; ++s )
     {
         const DistSymmFactSupernode& childSN = S.dist.supernodes[s-1];
         const DistSymmFactSupernode& sn = S.dist.supernodes[s];

@@ -30,9 +30,9 @@ void clique::numeric::LocalLowerMultiplyNormal
 #ifndef RELEASE
     PushCallStack("numeric::LocalLowerMultiplyNormal");
 #endif
-    const int numSupernodes = S.local.supernodes.size();
+    const int numLocalSupernodes = S.local.supernodes.size();
     const int width = X.Width();
-    for( int s=0; s<numSupernodes; ++s )
+    for( int s=0; s<numLocalSupernodes; ++s )
     {
         const LocalSymmFactSupernode& sn = S.local.supernodes[s];
         const Matrix<F>& frontL = L.local.fronts[s].frontL;
@@ -113,9 +113,9 @@ void clique::numeric::LocalLowerMultiplyTranspose
 #ifndef RELEASE
     PushCallStack("numeric::LocalLowerMultiplyTranspose");
 #endif
-    const int numSupernodes = S.local.supernodes.size();
+    const int numLocalSupernodes = S.local.supernodes.size();
     const int width = X.Width();
-    if( numSupernodes == 0 || width == 0 )
+    if( width == 0 )
     {
 #ifndef RELEASE
         PopCallStack();
@@ -127,7 +127,7 @@ void clique::numeric::LocalLowerMultiplyTranspose
     L.local.fronts.back().work.LockedView
     ( L.dist.fronts[0].work1d.LocalMatrix() );
 
-    for( int s=numSupernodes-2; s>=0; --s )
+    for( int s=numLocalSupernodes-2; s>=0; --s )
     {
         const LocalSymmFactSupernode& sn = S.local.supernodes[s];
         const Matrix<F>& frontL = L.local.fronts[s].frontL;
@@ -166,7 +166,7 @@ void clique::numeric::LocalLowerMultiplyTranspose
         if( sn.isLeftChild )
         {
             parentWork.Empty();
-            if( parent == numSupernodes-1 )
+            if( parent == numLocalSupernodes-1 )
                 L.dist.fronts[0].work1d.Empty();
         }
 

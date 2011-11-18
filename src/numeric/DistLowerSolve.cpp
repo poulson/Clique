@@ -31,11 +31,11 @@ void clique::numeric::DistLowerForwardSolve
 #ifndef RELEASE
     PushCallStack("numeric::DistLowerForwardSolve");
 #endif
-    const int numSupernodes = S.dist.supernodes.size();
+    const int numDistSupernodes = S.dist.supernodes.size();
     const int width = localX.Width();
     if( L.dist.mode == MANY_RHS )
         throw std::logic_error("This solve mode is not yet implemented");
-    if( numSupernodes == 0 || width == 0 )
+    if( width == 0 )
     {
 #ifndef RELEASE
         PopCallStack();
@@ -52,7 +52,7 @@ void clique::numeric::DistLowerForwardSolve
       distLeafFront.front1dL.Grid() );
     
     // Perform the distributed portion of the forward solve
-    for( int s=1; s<numSupernodes; ++s )
+    for( int s=1; s<numDistSupernodes; ++s )
     {
         const DistSymmFactSupernode& childSN = S.dist.supernodes[s-1];
         const DistSymmFactSupernode& sn = S.dist.supernodes[s];
@@ -205,11 +205,11 @@ void clique::numeric::DistLowerBackwardSolve
 #ifndef RELEASE
     PushCallStack("numeric::DistLowerBackwardSolve");
 #endif
-    const int numSupernodes = S.dist.supernodes.size();
+    const int numDistSupernodes = S.dist.supernodes.size();
     const int width = localX.Width();
     if( L.dist.mode == MANY_RHS )
         throw std::logic_error("This solve mode is not yet implemented");
-    if( numSupernodes == 0 || width == 0 )
+    if( width == 0 )
     {
 #ifndef RELEASE
         PopCallStack();
@@ -229,7 +229,7 @@ void clique::numeric::DistLowerBackwardSolve
       checkIfSingular );
 
     std::vector<int>::const_iterator it;
-    for( int s=numSupernodes-2; s>=0; --s )
+    for( int s=numDistSupernodes-2; s>=0; --s )
     {
         const DistSymmFactSupernode& parentSN = S.dist.supernodes[s+1];
         const DistSymmFactSupernode& sn = S.dist.supernodes[s];

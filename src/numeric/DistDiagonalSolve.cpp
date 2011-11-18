@@ -29,10 +29,10 @@ void clique::numeric::DistDiagonalSolve
 #ifndef RELEASE
     PushCallStack("numeric::DistDiagonalSolve");
 #endif
-    const int numSupernodes = S.dist.supernodes.size();
+    const int numDistSupernodes = S.dist.supernodes.size();
     const int width = localX.Width();
 
-    for( int s=1; s<numSupernodes; ++s )
+    for( int s=1; s<numDistSupernodes; ++s )
     {
         const DistSymmFactSupernode& sn = S.dist.supernodes[s];
         const DistSymmFront<F>& front = L.dist.fronts[s];

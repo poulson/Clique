@@ -29,10 +29,10 @@ void clique::numeric::LocalDiagonalSolve
 #ifndef RELEASE
     PushCallStack("numeric::LocalDiagonalSolve");
 #endif
-    const int numSupernodes = S.local.supernodes.size();
+    const int numLocalSupernodes = S.local.supernodes.size();
     const int width = X.Width();
     Matrix<F> XSub;
-    for( int s=0; s<numSupernodes; ++s )
+    for( int s=0; s<numLocalSupernodes; ++s )
     {
         const LocalSymmFactSupernode& sn = S.local.supernodes[s];
         const Matrix<F>& frontL = L.local.fronts[s].frontL;

@@ -35,18 +35,10 @@ void clique::numeric::SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
 #endif
         return;
     }
+    const int numDistSupernodes = L.dist.fronts.size();    
+    DistSymmFront<F>& leafFront = L.dist.fronts[0];
 
     L.dist.mode = mode;
-    const int numSupernodes = L.dist.fronts.size();    
-    if( numSupernodes == 0 )
-    {
-#ifndef RELEASE
-        PopCallStack();
-#endif
-        return;
-    }
-
-    DistSymmFront<F>& leafFront = L.dist.fronts[0];
     if( mode == FEW_RHS )
     {
         leafFront.front1dL.LockedView
@@ -55,7 +47,7 @@ void clique::numeric::SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
           leafFront.front2dL.LockedLocalBuffer(), 
           leafFront.front2dL.LocalLDim(),
           leafFront.front2dL.Grid() );
-        for( int s=1; s<numSupernodes; ++s )
+        for( int s=1; s<numDistSupernodes; ++s )
         {
             DistSymmFront<F>& front = L.dist.fronts[s];
             front.front1dL.Empty();
@@ -72,7 +64,7 @@ void clique::numeric::SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
           leafFront.front1dL.LockedLocalBuffer(), 
           leafFront.front1dL.LocalLDim(),
           leafFront.front1dL.Grid() );
-        for( int s=1; s<numSupernodes; ++s )
+        for( int s=1; s<numDistSupernodes; ++s )
         {
             DistSymmFront<F>& front = L.dist.fronts[s];
             front.front2dL.Empty();

@@ -31,9 +31,9 @@ void clique::numeric::LocalLowerForwardSolve
 #ifndef RELEASE
     PushCallStack("numeric::LocalLowerForwardSolve");
 #endif
-    const int numSupernodes = S.local.supernodes.size();
+    const int numLocalSupernodes = S.local.supernodes.size();
     const int width = X.Width();
-    for( int s=0; s<numSupernodes; ++s )
+    for( int s=0; s<numLocalSupernodes; ++s )
     {
         const LocalSymmFactSupernode& sn = S.local.supernodes[s];
         const Matrix<F>& frontL = L.local.fronts[s].frontL;
@@ -114,9 +114,9 @@ void clique::numeric::LocalLowerBackwardSolve
 #ifndef RELEASE
     PushCallStack("numeric::LocalLowerBackwardSolve");
 #endif
-    const int numSupernodes = S.local.supernodes.size();
+    const int numLocalSupernodes = S.local.supernodes.size();
     const int width = X.Width();
-    if( numSupernodes == 0 || width == 0 )
+    if( width == 0 )
     {
 #ifndef RELEASE
         PopCallStack();
@@ -128,7 +128,7 @@ void clique::numeric::LocalLowerBackwardSolve
     L.local.fronts.back().work.LockedView
     ( L.dist.fronts[0].work1d.LocalMatrix() );
 
-    for( int s=numSupernodes-2; s>=0; --s )
+    for( int s=numLocalSupernodes-2; s>=0; --s )
     {
         const LocalSymmFactSupernode& sn = S.local.supernodes[s];
         const Matrix<F>& frontL = L.local.fronts[s].frontL;
@@ -167,7 +167,7 @@ void clique::numeric::LocalLowerBackwardSolve
         if( sn.isLeftChild )
         {
             parentWork.Empty();
-            if( parent == numSupernodes-1 )
+            if( parent == numLocalSupernodes-1 )
                 L.dist.fronts[0].work1d.Empty();
         }
 
@@ -181,7 +181,7 @@ void clique::numeric::LocalLowerBackwardSolve
 
     // Ensure that all of the temporary buffers are freed (this is overkill)
     L.dist.fronts[0].work1d.Empty();
-    for( int s=0; s<numSupernodes; ++s )
+    for( int s=0; s<numLocalSupernodes; ++s )
         L.local.fronts[s].work.Empty();
 #ifndef RELEASE
     PopCallStack();

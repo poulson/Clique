@@ -29,8 +29,8 @@ void clique::numeric::LocalLDL
     if( orientation == NORMAL )
         throw std::logic_error("LDL must be (conjugate-)transposed");
 #endif
-    const int numSupernodes = S.local.supernodes.size();
-    for( int s=0; s<numSupernodes; ++s )
+    const int numLocalSupernodes = S.local.supernodes.size();
+    for( int s=0; s<numLocalSupernodes; ++s )
     {
         LocalSymmFactSupernode& sn = S.local.supernodes[s];
         Matrix<F>& frontL = L.local.fronts[s].frontL;
