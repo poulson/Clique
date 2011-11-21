@@ -21,12 +21,15 @@
 
 void Usage()
 {
-    std::cout << "PanelLDL <numPanels> <nx> <ny> <nz> <cutoff> <write info?>\n"
+    std::cout << "PanelLDL <numPanels> <nx> <ny> <nz> <cutoff> <fact blocksize>"
+                 " <solve blocksize> <write info?>\n"
               << "<numPanels>: number of panels to factor in memory\n"
               << "<nx>: size of panel in x direction\n"
               << "<ny>: size of panel in y direction\n"
               << "<nz>: size of panel in z direction\n"
               << "<cutoff>: minimum required leaf size\n" 
+              << "<fact blocksize>: algorithmic blocksize for factorization\n"
+              << "<solve blocksize>: algorithm blocksize for solve\n"
               << "<write info?>: write basic local info to file? [0/1]\n"
               << "<prefix>: prefix for each process's info file\n"
               << std::endl;
@@ -82,7 +85,7 @@ main( int argc, char* argv[] )
         return 0;
     }
 
-    if( argc < 7 )
+    if( argc < 9 )
     {
         if( commRank == 0 )        
             Usage();
@@ -96,8 +99,10 @@ main( int argc, char* argv[] )
     const int ny = atoi( argv[argNum++] );
     const int nz = atoi( argv[argNum++] );
     const int cutoff = atoi( argv[argNum++] );
+    const int factBlocksize = atoi( argv[argNum++] );
+    const int solveBlocksize = atoi( argv[argNum++] );
     const bool writeInfo = atoi( argv[argNum++] );
-    if( writeInfo && argc == 7 )
+    if( writeInfo && argc == 9 )
     {
         if( commRank == 0 )
             Usage();
@@ -108,7 +113,9 @@ main( int argc, char* argv[] )
     if( commRank == 0 )
         std::cout << "numPanels=" << numPanels << "\n"
                   << "(nx,ny,nz)=(" << nx << "," << ny << "," << nz << ")\n"
-                  << "cutoff=" << cutoff << std::endl;
+                  << "cutoff=" << cutoff << "\n"
+                  << "factBlocksize=" << factBlocksize << "\n"
+                  << "solveBlocksize=" << solveBlocksize << std::endl;
 
     try
     {
@@ -274,6 +281,7 @@ main( int argc, char* argv[] )
             mpi::Reduce( &myYNorm, &YNorm, 1, mpi::SUM, 0, comm );
 
             // Call the numerical factorization routine
+            elemental::SetBlocksize( factBlocksize );
             const double factStartTime = mpi::Time();
             clique::numeric::LDL( TRANSPOSE, S, L );
             mpi::Barrier( comm );
@@ -294,6 +302,7 @@ main( int argc, char* argv[] )
                           << " secs" << std::endl;
 
             // Solve
+            elemental::SetBlocksize( solveBlocksize );
             mpi::Barrier( comm );
             const double solveStartTime = mpi::Time();
             clique::numeric::LDLSolve( TRANSPOSE, S, L, localY, true );
