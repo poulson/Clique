@@ -6,16 +6,23 @@ Cholesky solve
 Solves :math:`AX=B` for :math:`X` given Hermitian positive-definite (HPD) 
 :math:`A` and right-hand side matrix :math:`B`. The solution is computed by 
 first finding the Cholesky factorization of :math:`A` and then performing two
-successive triangular solves against :math:`B`.
+successive triangular solves against :math:`B`:
+
+.. math::
+
+   B := A^{-1} B = (L L^H)^{-1} B = L^{-H} L^{-1} B
+
 
 .. cpp:function:: void advanced::CholeskySolve( Shape shape, DistMatrix<F,MC,MR>& A, DistMatrix<F,MC,MR>& B )
 
-   Only the triangle of :math:`A` specified by ``shape`` is accessed.
+   Overwrite `B` with the solution to :math:`AX=B`, where `A` is Hermitian 
+   positive-definite and only the triangle of `A` specified by `shape` is 
+   accessed.
 
 Gaussian elimination
 --------------------
 Solves :math:`AX=B` for :math:`X` given a general square nonsingular matrix 
-:math:`A` and right-hand side matrix :math:`B`. The solution is computed through 
+:math:`A` and right-hand side matrix :math:`B`. The solution is computed through
 (partially pivoted) Gaussian elimination.
 
 .. cpp:function:: void advanced::GaussianElimination( DistMatrix<F,MC,MR>& A, DistMatrix<F,MC,MR>& B )
@@ -38,7 +45,7 @@ If :math:`m \ge n`, then the first step is to form the QR factorization of
 
 .. cpp:function:: void advanced::HouseholderSolve( Orientation orientation, DistMatrix<F,MC,MR>& A, DistMatrix<F,MC,MR>& B )
 
-   If ``orientation`` is set to ``NORMAL``, then solve :math:`AX=B`, otherwise 
-   ``orientation`` must be equal to ``ADJOINT`` and :math:`A^H X=B` will 
+   If `orientation` is set to ``NORMAL``, then solve :math:`AX=B`, otherwise 
+   `orientation` must be equal to ``ADJOINT`` and :math:`A^H X=B` will 
    be solved. Upon completion, :math:`A` is overwritten with its QR or LQ 
    factorization, and :math:`B` is overwritten with :math:`X`.

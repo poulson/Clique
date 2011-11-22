@@ -146,12 +146,12 @@ void clique::numeric::internal::DistFrontLDLGeneral
         PartitionDown
         ( AR2,  AR2T,
                 AR2B, AL22.Width() );
-        elemental::basic::internal::LocalTriangularRankK
+        elemental::basic::internal::LocalTrrk
         ( LOWER, orientation, 
           (F)-1, leftL, rightL, (F)1, AL22T );
         elemental::basic::internal::LocalGemm
         ( orientation, NORMAL, (F)-1, leftR, rightL, (F)1, AL22B );
-        elemental::basic::internal::LocalTriangularRankK
+        elemental::basic::internal::LocalTrrk
         ( LOWER, orientation,
           (F)-1, leftR, rightR, (F)1, AR2B );
 
@@ -325,12 +325,12 @@ void clique::numeric::internal::DistFrontLDLSquare
         PartitionDown
         ( AR2,  AR2T,
                 AR2B, AL22.Width() );
-        elemental::basic::internal::LocalTriangularRankK
+        elemental::basic::internal::LocalTrrk
         ( LOWER, orientation, 
           (F)-1, leftL, rightL, (F)1, AL22T );
         elemental::basic::internal::LocalGemm
         ( orientation, NORMAL, (F)-1, leftR, rightL, (F)1, AL22B );
-        elemental::basic::internal::LocalTriangularRankK
+        elemental::basic::internal::LocalTrrk
         ( LOWER, orientation,
           (F)-1, leftR, rightR, (F)1, AR2B );
 

@@ -20,6 +20,7 @@
 #include "clique.hpp"
 
 namespace {
+using namespace elemental;
 template<typename F> // represents a real or complex ring
 void ModifyForTrmm
 ( Matrix<F>& D, Diagonal diag, int diagOffset, 

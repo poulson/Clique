@@ -123,7 +123,8 @@ void clique::symbolic::DistSymmetricFactorization
         const unsigned gridCol = factSN.grid->MRRank();
 
         // Set some offset and size information for this supernode
-        factSN.localSize1d = LocalLength( origSN.size, teamRank, teamSize );
+        factSN.localSize1d = 
+            elemental::LocalLength( origSN.size, teamRank, teamSize );
         factSN.localOffset1d = localOffset1d;
 
         // Retrieve the child grid information
@@ -312,13 +313,17 @@ void clique::symbolic::DistSymmetricFactorization
             const int updateColAlignment = myChildSize % childGridHeight;
             const int updateRowAlignment = myChildSize % childGridWidth;
             const int updateColShift = 
-                Shift( childGridRow, updateColAlignment, childGridHeight );
+                elemental::Shift
+                ( childGridRow, updateColAlignment, childGridHeight );
             const int updateRowShift = 
-                Shift( childGridCol, updateRowAlignment, childGridWidth );
+                elemental::Shift
+                ( childGridCol, updateRowAlignment, childGridWidth );
             const int updateLocalHeight = 
-                LocalLength( updateSize, updateColShift, childGridHeight );
+                elemental::LocalLength
+                ( updateSize, updateColShift, childGridHeight );
             const int updateLocalWidth = 
-                LocalLength( updateSize, updateRowShift, childGridWidth );
+                elemental::LocalLength
+                ( updateSize, updateRowShift, childGridWidth );
             for( int jChildLocal=0; 
                      jChildLocal<updateLocalWidth; ++jChildLocal )
             {
@@ -353,9 +358,11 @@ void clique::symbolic::DistSymmetricFactorization
         {
             const int updateAlignment = myChildSize % childTeamSize;
             const int updateShift = 
-                Shift( childTeamRank, updateAlignment, childTeamSize );
+                elemental::Shift
+                ( childTeamRank, updateAlignment, childTeamSize );
             const int updateLocalHeight = 
-                LocalLength( updateSize, updateShift, childTeamSize );
+                elemental::LocalLength
+                ( updateSize, updateShift, childTeamSize );
             for( int iChildLocal=0; 
                      iChildLocal<updateLocalHeight; ++iChildLocal )
             {
