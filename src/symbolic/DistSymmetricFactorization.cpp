@@ -110,8 +110,8 @@ void clique::symbolic::DistSymmetricFactorization
 
         // Create this level's communicator
         const unsigned teamSize  = powerOfTwo << 1;
-        const int teamColor = commRank & ~(teamSize-1);
-        const int teamRank  = commRank &  (teamSize-1);
+        const unsigned teamColor = commRank & ~(teamSize-1);
+        const unsigned teamRank  = commRank &  (teamSize-1);
         mpi::CommSplit( orig.dist.comm, teamColor, teamRank, factSN.comm );
         unsigned gridHeight = 
             static_cast<unsigned>(sqrt(static_cast<double>(teamSize)));
@@ -124,7 +124,7 @@ void clique::symbolic::DistSymmetricFactorization
 
         // Set some offset and size information for this supernode
         factSN.localSize1d = 
-            elemental::LocalLength( origSN.size, teamRank, teamSize );
+            elemental::LocalLength<int>( origSN.size, teamRank, teamSize );
         factSN.localOffset1d = localOffset1d;
 
         // Retrieve the child grid information
@@ -313,16 +313,16 @@ void clique::symbolic::DistSymmetricFactorization
             const int updateColAlignment = myChildSize % childGridHeight;
             const int updateRowAlignment = myChildSize % childGridWidth;
             const int updateColShift = 
-                elemental::Shift
+                elemental::Shift<int>
                 ( childGridRow, updateColAlignment, childGridHeight );
             const int updateRowShift = 
-                elemental::Shift
+                elemental::Shift<int>
                 ( childGridCol, updateRowAlignment, childGridWidth );
             const int updateLocalHeight = 
-                elemental::LocalLength
+                elemental::LocalLength<int>
                 ( updateSize, updateColShift, childGridHeight );
             const int updateLocalWidth = 
-                elemental::LocalLength
+                elemental::LocalLength<int>
                 ( updateSize, updateRowShift, childGridWidth );
             for( int jChildLocal=0; 
                      jChildLocal<updateLocalWidth; ++jChildLocal )
@@ -358,10 +358,10 @@ void clique::symbolic::DistSymmetricFactorization
         {
             const int updateAlignment = myChildSize % childTeamSize;
             const int updateShift = 
-                elemental::Shift
+                elemental::Shift<int>
                 ( childTeamRank, updateAlignment, childTeamSize );
             const int updateLocalHeight = 
-                elemental::LocalLength
+                elemental::LocalLength<int>
                 ( updateSize, updateShift, childTeamSize );
             for( int iChildLocal=0; 
                      iChildLocal<updateLocalHeight; ++iChildLocal )
