@@ -25,14 +25,14 @@
 
 template<typename F> // F represents a real or complex field
 void clique::numeric::LocalFrontLDL
-( Orientation orientation, Matrix<F>& AL, Matrix<F>& AR )
+( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR )
 {
 #ifndef RELEASE
     clique::PushCallStack("numeric::LocalFrontLDL");
-    if( AL.Height() != AR.Height() )
-        throw std::logic_error("AL and AR must be the same height");
-    if( AL.Height() != AL.Width() + AR.Width() )
-        throw std::logic_error("[AL AR] must be square");
+    if( ABR.Height() != ABR.Width() )
+        throw std::logic_error("ABR must be square");
+    if( AL.Height() != AL.Width() + ABR.Width() )
+        throw std::logic_error("AL and ABR don't have conformal dimensions");
     if( orientation == NORMAL )
         throw std::logic_error("LocalFrontLDL must be (conjugate-)transposed.");
 #endif
@@ -40,10 +40,6 @@ void clique::numeric::LocalFrontLDL
         ALTL, ALTR,  AL00, AL01, AL02,
         ALBL, ALBR,  AL10, AL11, AL12,
                      AL20, AL21, AL22;
-    Matrix<F>
-        ART,  AR0,
-        ARB,  AR1,
-              AR2;
     Matrix<F> d1;
     Matrix<F> S21;
 
@@ -51,16 +47,11 @@ void clique::numeric::LocalFrontLDL
               S21B;
     Matrix<F> AL21T,
               AL21B;
-    Matrix<F> AR2T,
-              AR2B;
 
     // Start the algorithm
     elemental::PartitionDownDiagonal
     ( AL, ALTL, ALTR,
           ALBL, ALBR, 0 );
-    elemental::PartitionDown
-    ( AR, ART,
-          ARB, 0 );
     while( ALTL.Width() < AL.Width() )
     {
         elemental::RepartitionDownDiagonal
@@ -68,12 +59,6 @@ void clique::numeric::LocalFrontLDL
          /***************/ /*********************/
                 /**/        AL10, /**/ AL11, AL12,
           ALBL, /**/ ALBR,  AL20, /**/ AL21, AL22 );
-
-        elemental::RepartitionDown
-        ( ART,  AR0,
-         /***/ /***/
-                AR1,
-          ARB,  AR2, AL11.Height() );
 
         //--------------------------------------------------------------------//
         // This routine is unblocked, hence the need for us to generalize to 
@@ -95,20 +80,11 @@ void clique::numeric::LocalFrontLDL
         elemental::PartitionDown
         ( AL21, AL21T,
                 AL21B, AL22.Width() );
-        elemental::PartitionDown
-        ( AR2, AR2T,
-               AR2B, AL22.Width() );
         elemental::basic::Gemm
         ( NORMAL, orientation, (F)-1, S21, AL21T, (F)1, AL22 );
         elemental::basic::Gemm
-        ( NORMAL, orientation, (F)-1, S21B, AL21B, (F)1, AR2B );
+        ( NORMAL, orientation, (F)-1, S21B, AL21B, (F)1, ABR );
         //--------------------------------------------------------------------//
-
-        elemental::SlidePartitionDown
-        ( ART,  AR0,
-                AR1,
-         /***/ /***/
-          ARB,  AR2 );
 
         elemental::SlidePartitionDownDiagonal
         ( ALTL, /**/ ALTR,  AL00, AL01, /**/ AL02,
@@ -123,16 +99,16 @@ void clique::numeric::LocalFrontLDL
 
 template void clique::numeric::LocalFrontLDL
 ( Orientation orientation, 
-  Matrix<float>& AL, Matrix<float>& AR);
+  Matrix<float>& AL, Matrix<float>& ABR);
 
 template void clique::numeric::LocalFrontLDL
 ( Orientation orientation, 
-  Matrix<double>& AL, Matrix<double>& AR );
+  Matrix<double>& AL, Matrix<double>& ABR );
 
 template void clique::numeric::LocalFrontLDL
 ( Orientation orientation, 
-  Matrix<std::complex<float> >& AL, Matrix<std::complex<float> >& AR );
+  Matrix<std::complex<float> >& AL, Matrix<std::complex<float> >& ABR );
 
 template void clique::numeric::LocalFrontLDL
 ( Orientation orientation, 
-  Matrix<std::complex<double> >& AL, Matrix<std::complex<double> >& AR );
+  Matrix<std::complex<double> >& AL, Matrix<std::complex<double> >& ABR );

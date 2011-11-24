@@ -41,10 +41,10 @@ void clique::numeric::DistLDL
     ( topLocalFront.frontL.Height(), topLocalFront.frontL.Width(), 0, 0, 
       topLocalFront.frontL.LockedBuffer(), topLocalFront.frontL.LDim(), 
       bottomGrid );
-    bottomDistFront.front2dR.Empty();
-    bottomDistFront.front2dR.LockedView
-    ( topLocalFront.frontR.Height(), topLocalFront.frontR.Width(), 0, 0,
-      topLocalFront.frontR.LockedBuffer(), topLocalFront.frontR.LDim(),
+    bottomDistFront.work2d.Empty();
+    bottomDistFront.work2d.LockedView
+    ( topLocalFront.work.Height(), topLocalFront.work.Width(), 0, 0,
+      topLocalFront.work.LockedBuffer(), topLocalFront.work.LDim(),
       bottomGrid );
 
     // Perform the distributed portion of the factorization
@@ -55,6 +55,12 @@ void clique::numeric::DistLDL
         const DistSymmFactSupernode& sn = S.dist.supernodes[s];
         DistSymmFront<F>& childFront = L.dist.fronts[s-1];
         DistSymmFront<F>& front = L.dist.fronts[s];
+        front.work2d.Empty();
+#ifndef RELEASE
+        if( front.front2dL.Height() != sn.size+sn.lowerStruct.size() ||
+            front.front2dL.Width() != sn.size )
+            throw std::logic_error("Front was not the proper size");
+#endif
 
         const bool computeFactRecvIndices = 
             ( sn.childFactRecvIndices.size() == 0 );
@@ -77,23 +83,8 @@ void clique::numeric::DistLDL
         const unsigned childGridRow = childGrid.MCRank();
         const unsigned childGridCol = childGrid.MRRank();
 
-#ifndef RELEASE
-        if( front.front2dL.Height() != sn.size+sn.lowerStruct.size() ||
-            front.front2dL.Width() != sn.size )
-            throw std::logic_error("Front was not the proper size");
-#endif
-        front.front2dR.SetGrid( front.front2dL.Grid() );
-        front.front2dR.Align( 0, sn.size%grid.Width() );
-        front.front2dR.ResizeTo
-        ( front.front2dL.Height(), sn.lowerStruct.size() );
-        front.front2dR.SetToZero();
-
         // Pack our child's update
-        DistMatrix<F,MC,MR> childUpdate;
-        const int updateSize = childFront.front2dR.Width();
-        childUpdate.LockedView
-        ( childFront.front2dR, 
-          childSN.size, 0, updateSize, updateSize );
+        const DistMatrix<F,MC,MR>& childUpdate = childFront.work2d;
         const bool isLeftChild = ( commRank < commSize/2 );
         std::vector<int> sendCounts(commSize), sendDispls(commSize);
         int sendBufferSize = 0;
@@ -148,9 +139,9 @@ void clique::numeric::DistLDL
         }
 #endif
         packOffsets.clear();
-        childFront.front2dR.Empty();
+        childFront.work2d.Empty();
         if( s == 1 )
-            topLocalFront.frontR.Empty();
+            topLocalFront.work.Empty();
 
         // Set up the recv buffer for the AllToAll
         if( computeFactRecvIndices )
@@ -196,7 +187,13 @@ void clique::numeric::DistLDL
         sendDispls.clear();
 
         // Unpack the child udpates (with an Axpy)
+        front.work2d.SetGrid( front.front2dL.Grid() );
+        front.work2d.Align( sn.size%grid.Height(), sn.size%grid.Width() );
+        front.work2d.ResizeTo( sn.lowerStruct.size(), sn.lowerStruct.size() );
+        front.work2d.SetToZero();
         const int leftLocalWidth = front.front2dL.LocalWidth();
+        const int topLocalHeight = 
+            elemental::LocalLength<int>( sn.size, grid.MCRank(), gridHeight );
         for( int proc=0; proc<commSize; ++proc )
         {
             const F* recvValues = &recvBuffer[recvDispls[proc]];
@@ -211,8 +208,9 @@ void clique::numeric::DistLDL
                     front.front2dL.UpdateLocalEntry
                     ( iFrontLocal, jFrontLocal, value );
                 else
-                    front.front2dR.UpdateLocalEntry
-                    ( iFrontLocal, jFrontLocal-leftLocalWidth, value );
+                    front.work2d.UpdateLocalEntry
+                    ( iFrontLocal-topLocalHeight, 
+                      jFrontLocal-leftLocalWidth, value );
             }
         }
         recvBuffer.clear();
@@ -222,10 +220,10 @@ void clique::numeric::DistLDL
             sn.childFactRecvIndices.clear();
 
         // Now that the frontal matrix is set up, perform the factorization
-        DistFrontLDL( orientation, front.front2dL, front.front2dR );
+        DistFrontLDL( orientation, front.front2dL, front.work2d );
     }
-    L.local.fronts.back().frontR.Empty();
-    L.dist.fronts.back().front2dR.Empty();
+    L.local.fronts.back().work.Empty();
+    L.dist.fronts.back().work2d.Empty();
 #ifndef RELEASE
     PopCallStack();
 #endif

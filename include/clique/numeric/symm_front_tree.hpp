@@ -27,12 +27,14 @@ enum SolveMode { FEW_RHS, MANY_RHS };
 
 namespace numeric {
 
+// Only keep track of the left and bottom-right piece of the fronts
+// (with the bottom-right piece stored in workspace) since only the left side
+// needs to be kept after the factorization is complete.
+
 template<typename F>
 struct LocalSymmFront
 {
-    // Split each front into a left and right piece such that the right piece
-    // is not needed after the factorization (and can be freed).
-    Matrix<F> frontL, frontR;
+    Matrix<F> frontL;
     mutable Matrix<F> work;
 };
 
@@ -56,7 +58,7 @@ struct DistSymmFront
     DistMatrix<F,VC,STAR> front1dL;
     mutable DistMatrix<F,VC,STAR> work1d;
 
-    DistMatrix<F,MC,MR> front2dL, front2dR;
+    DistMatrix<F,MC,MR> front2dL;
     mutable DistMatrix<F,MC,MR> work2d;
 };
 

@@ -25,16 +25,16 @@
 
 template<typename F> // F represents a real or complex field
 void clique::numeric::DistFrontLDL
-( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& AR )
+( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR )
 {
 #ifndef RELEASE
     PushCallStack("numeric::DistFrontLDL");
 #endif
     const Grid& grid = AL.Grid();
     if( grid.Height() == grid.Width() )
-        internal::DistFrontLDLSquare( orientation, AL, AR );
+        internal::DistFrontLDLSquare( orientation, AL, ABR );
     else
-        internal::DistFrontLDLGeneral( orientation, AL, AR );
+        internal::DistFrontLDLGeneral( orientation, AL, ABR );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -42,22 +42,22 @@ void clique::numeric::DistFrontLDL
 
 template<typename F> // F represents a real or complex field
 void clique::numeric::internal::DistFrontLDLGeneral
-( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& AR )
+( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR )
 {
 #ifndef RELEASE
     clique::PushCallStack("numeric::internal::DistFrontLDLGeneral");
-    if( AL.Height() != AR.Height() )
-        throw std::logic_error("AL and AR must be the same height");
-    if( AL.Height() != AL.Width() + AR.Width() )
-        throw std::logic_error
-        ("The combined widths of AL and AR must equal their heights");
-    if( AL.Grid() != AR.Grid() )
-        throw std::logic_error("AL and AR must use the same grid");
-    if( AL.ColAlignment() != AR.ColAlignment() )
-        throw std::logic_error("AL and AR must have the same col alignments");
-    if( AR.RowAlignment() != 
+    if( ABR.Height() != ABR.Width() )
+        throw std::logic_error("ABR must be square");
+    if( AL.Height() != AL.Width()+ABR.Height() )
+        throw std::logic_error("AL and ABR must have compatible dimensions");
+    if( AL.Grid() != ABR.Grid() )
+        throw std::logic_error("AL and ABR must use the same grid");
+    if( ABR.ColAlignment() !=
+        (AL.ColAlignment()+AL.Height()) % AL.Grid().Height() )
+        throw std::logic_error("AL and ABR must have compatible col alignments");
+    if( ABR.RowAlignment() != 
         (AL.RowAlignment()+AL.Width()) % AL.Grid().Width() )
-        throw std::logic_error("AL and AR must have compatible row alignments");
+        throw std::logic_error("AL and ABR must have compatible row alignments");
     if( orientation == NORMAL )
         throw std::logic_error("DistFrontLDL must be (conjugate-)transposed.");
 #endif
@@ -68,10 +68,6 @@ void clique::numeric::internal::DistFrontLDLGeneral
         ALTL(g), ALTR(g),  AL00(g), AL01(g), AL02(g),
         ALBL(g), ALBR(g),  AL10(g), AL11(g), AL12(g),
                            AL20(g), AL21(g), AL22(g);
-    DistMatrix<F,MC,MR>
-        ART(g),  AR0(g),
-        ARB(g),  AR1(g),
-                 AR2(g);
 
     // Temporary matrices
     DistMatrix<F,STAR,STAR> AL11_STAR_STAR(g);
@@ -85,16 +81,11 @@ void clique::numeric::internal::DistFrontLDLGeneral
     DistMatrix<F,STAR,MR> rightL(g), rightR(g);
     DistMatrix<F,MC,  MR> AL22T(g), 
                           AL22B(g);
-    DistMatrix<F,MC,  MR> AR2T(g), 
-                          AR2B(g);
 
     // Start the algorithm
     elemental::PartitionDownDiagonal
     ( AL, ALTL, ALTR,
           ALBL, ALBR, 0 );
-    elemental::PartitionDown
-    ( AR, ART,
-          ARB, 0 );
     while( ALTL.Width() < AL.Width() )
     {
         elemental::RepartitionDownDiagonal
@@ -102,12 +93,6 @@ void clique::numeric::internal::DistFrontLDLGeneral
          /***************/ /*********************/
                /**/         AL10, /**/ AL11, AL12,
           ALBL, /**/ ALBR,  AL20, /**/ AL21, AL22 );
-
-        elemental::RepartitionDown
-        ( ART,  AR0,
-         /***/ /***/
-                AR1,
-          ARB,  AR2, AL11.Height() );
 
         AL21_VC_STAR.AlignWith( AL22 );
         AL21_VR_STAR.AlignWith( AL22 );
@@ -143,17 +128,12 @@ void clique::numeric::internal::DistFrontLDLGeneral
         PartitionDown
         ( AL22, AL22T,
                 AL22B, AL22.Width() );
-        PartitionDown
-        ( AR2,  AR2T,
-                AR2B, AL22.Width() );
         elemental::basic::internal::LocalTrrk
-        ( LOWER, orientation, 
-          (F)-1, leftL, rightL, (F)1, AL22T );
+        ( LOWER, orientation, (F)-1, leftL, rightL, (F)1, AL22T );
         elemental::basic::internal::LocalGemm
         ( orientation, NORMAL, (F)-1, leftR, rightL, (F)1, AL22B );
         elemental::basic::internal::LocalTrrk
-        ( LOWER, orientation,
-          (F)-1, leftR, rightR, (F)1, AR2B );
+        ( LOWER, orientation, (F)-1, leftR, rightR, (F)1, ABR );
 
         elemental::basic::DiagonalSolve
         ( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
@@ -163,12 +143,6 @@ void clique::numeric::internal::DistFrontLDLGeneral
         AL21_VR_STAR.FreeAlignments();
         S21Trans_STAR_MC.FreeAlignments();
         AL21AdjOrTrans_STAR_MR.FreeAlignments();
-
-        elemental::SlidePartitionDown
-        ( ART,   AR0,
-                 AR1, 
-         /***/  /***/
-          ARB,   AR2 );
 
         elemental::SlidePartitionDownDiagonal
         ( ALTL, /**/ ALTR,  AL00, AL01, /**/ AL02,
@@ -183,22 +157,22 @@ void clique::numeric::internal::DistFrontLDLGeneral
 
 template<typename F> // F represents a real or complex field
 void clique::numeric::internal::DistFrontLDLSquare
-( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& AR )
+( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR )
 {
 #ifndef RELEASE
     clique::PushCallStack("numeric::internal::DistFrontLDLSquare");
-    if( AL.Height() != AR.Height() )
-        throw std::logic_error("AL and AR must be the same height");
-    if( AL.Height() != AL.Width() + AR.Width() )
-        throw std::logic_error
-        ("The combined widths of AL and AR must equal their heights");
-    if( AL.Grid() != AR.Grid() )
-        throw std::logic_error("AL and AR must use the same grid");
-    if( AL.ColAlignment() != AR.ColAlignment() )
-        throw std::logic_error("AL and AR must have the same col alignments");
-    if( AR.RowAlignment() != 
+    if( ABR.Height() != ABR.Width() )
+        throw std::logic_error("ABR must be square");
+    if( AL.Height() != AL.Width()+ABR.Height() )
+        throw std::logic_error("AL and ABR must have compatible dimensions");
+    if( AL.Grid() != ABR.Grid() )
+        throw std::logic_error("AL and ABR must use the same grid");
+    if( ABR.ColAlignment() !=
+        (AL.ColAlignment()+AL.Height()) % AL.Grid().Height() )
+        throw std::logic_error("AL and ABR must have compatible col alignments");
+    if( ABR.RowAlignment() != 
         (AL.RowAlignment()+AL.Width()) % AL.Grid().Width() )
-        throw std::logic_error("AL and AR must have compatible row alignments");
+        throw std::logic_error("AL and ABR must have compatible row alignments");
     if( orientation == NORMAL )
         throw std::logic_error("DistFrontLDL must be (conjugate-)transposed.");
 #endif
@@ -228,10 +202,6 @@ void clique::numeric::internal::DistFrontLDLSquare
         ALTL(g), ALTR(g),  AL00(g), AL01(g), AL02(g),
         ALBL(g), ALBR(g),  AL10(g), AL11(g), AL12(g),
                            AL20(g), AL21(g), AL22(g);
-    DistMatrix<F,MC,MR>
-        ART(g),  AR0(g),
-        ARB(g),  AR1(g),
-                 AR2(g);
 
     // Temporary matrices
     DistMatrix<F,STAR,STAR> AL11_STAR_STAR(g);
@@ -251,9 +221,6 @@ void clique::numeric::internal::DistFrontLDLSquare
     elemental::PartitionDownDiagonal
     ( AL, ALTL, ALTR,
           ALBL, ALBR, 0 );
-    elemental::PartitionDown
-    ( AR, ART,
-          ARB, 0 );
     while( ALTL.Width() < AL.Width() )
     {
         elemental::RepartitionDownDiagonal
@@ -261,12 +228,6 @@ void clique::numeric::internal::DistFrontLDLSquare
          /***************/ /*********************/
                /**/         AL10, /**/ AL11, AL12,
           ALBL, /**/ ALBR,  AL20, /**/ AL21, AL22 );
-
-        elemental::RepartitionDown
-        ( ART,  AR0,
-         /***/ /***/
-                AR1,
-          ARB,  AR2, AL11.Height() );
 
         AL21_VC_STAR.AlignWith( AL22 );
         S21Trans_STAR_MC.AlignWith( AL22 );
@@ -298,7 +259,7 @@ void clique::numeric::internal::DistFrontLDLSquare
             {
                 const int sendSize = AL21.LocalHeight()*AL11.Width();
                 const int recvSize = 
-                    (AL22.LocalWidth()+AR2.LocalWidth())*AL11.Height();
+                    (AL22.LocalWidth()+ABR.LocalWidth())*AL11.Height();
                 // We know that the ldim is the height since we have manually
                 // created both temporary matrices.
                 mpi::SendRecv
@@ -322,17 +283,12 @@ void clique::numeric::internal::DistFrontLDLSquare
         PartitionDown
         ( AL22, AL22T,
                 AL22B, AL22.Width() );
-        PartitionDown
-        ( AR2,  AR2T,
-                AR2B, AL22.Width() );
         elemental::basic::internal::LocalTrrk
-        ( LOWER, orientation, 
-          (F)-1, leftL, rightL, (F)1, AL22T );
+        ( LOWER, orientation, (F)-1, leftL, rightL, (F)1, AL22T );
         elemental::basic::internal::LocalGemm
         ( orientation, NORMAL, (F)-1, leftR, rightL, (F)1, AL22B );
         elemental::basic::internal::LocalTrrk
-        ( LOWER, orientation,
-          (F)-1, leftR, rightR, (F)1, AR2B );
+        ( LOWER, orientation, (F)-1, leftR, rightR, (F)1, ABR );
 
         elemental::basic::DiagonalSolve
         ( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
@@ -341,12 +297,6 @@ void clique::numeric::internal::DistFrontLDLSquare
         AL21_VC_STAR.FreeAlignments();
         S21Trans_STAR_MC.FreeAlignments();
         AL21AdjOrTrans_STAR_MR.FreeAlignments();
-
-        elemental::SlidePartitionDown
-        ( ART,   AR0,
-                 AR1, 
-         /***/  /***/
-          ARB,   AR2 );
 
         elemental::SlidePartitionDownDiagonal
         ( ALTL, /**/ ALTR,  AL00, AL01, /**/ AL02,
@@ -362,51 +312,51 @@ void clique::numeric::internal::DistFrontLDLSquare
 template void clique::numeric::DistFrontLDL
 ( Orientation orientation, 
   DistMatrix<float,MC,MR>& AL, 
-  DistMatrix<float,MC,MR>& AR );
+  DistMatrix<float,MC,MR>& ABR );
 template void clique::numeric::internal::DistFrontLDLGeneral
 ( Orientation orientation, 
   DistMatrix<float,MC,MR>& AL, 
-  DistMatrix<float,MC,MR>& AR );
+  DistMatrix<float,MC,MR>& ABR );
 template void clique::numeric::internal::DistFrontLDLSquare
 ( Orientation orientation, 
   DistMatrix<float,MC,MR>& AL, 
-  DistMatrix<float,MC,MR>& AR );
+  DistMatrix<float,MC,MR>& ABR );
 
 template void clique::numeric::DistFrontLDL
 ( Orientation orientation, 
   DistMatrix<double,MC,MR>& AL, 
-  DistMatrix<double,MC,MR>& AR );
+  DistMatrix<double,MC,MR>& ABR );
 template void clique::numeric::internal::DistFrontLDLGeneral
 ( Orientation orientation, 
   DistMatrix<double,MC,MR>& AL, 
-  DistMatrix<double,MC,MR>& AR );
+  DistMatrix<double,MC,MR>& ABR );
 template void clique::numeric::internal::DistFrontLDLSquare
 ( Orientation orientation, 
   DistMatrix<double,MC,MR>& AL, 
-  DistMatrix<double,MC,MR>& AR );
+  DistMatrix<double,MC,MR>& ABR );
 
 template void clique::numeric::DistFrontLDL
 ( Orientation orientation, 
   DistMatrix<std::complex<float>,MC,MR>& AL, 
-  DistMatrix<std::complex<float>,MC,MR>& AR );
+  DistMatrix<std::complex<float>,MC,MR>& ABR );
 template void clique::numeric::internal::DistFrontLDLGeneral
 ( Orientation orientation, 
   DistMatrix<std::complex<float>,MC,MR>& AL, 
-  DistMatrix<std::complex<float>,MC,MR>& AR );
+  DistMatrix<std::complex<float>,MC,MR>& ABR );
 template void clique::numeric::internal::DistFrontLDLSquare
 ( Orientation orientation, 
   DistMatrix<std::complex<float>,MC,MR>& AL, 
-  DistMatrix<std::complex<float>,MC,MR>& AR );
+  DistMatrix<std::complex<float>,MC,MR>& ABR );
 
 template void clique::numeric::DistFrontLDL
 ( Orientation orientation, 
   DistMatrix<std::complex<double>,MC,MR>& AL,
-  DistMatrix<std::complex<double>,MC,MR>& AR );
+  DistMatrix<std::complex<double>,MC,MR>& ABR );
 template void clique::numeric::internal::DistFrontLDLGeneral
 ( Orientation orientation, 
   DistMatrix<std::complex<double>,MC,MR>& AL,
-  DistMatrix<std::complex<double>,MC,MR>& AR );
+  DistMatrix<std::complex<double>,MC,MR>& ABR );
 template void clique::numeric::internal::DistFrontLDLSquare
 ( Orientation orientation, 
   DistMatrix<std::complex<double>,MC,MR>& AL,
-  DistMatrix<std::complex<double>,MC,MR>& AR );
+  DistMatrix<std::complex<double>,MC,MR>& ABR );

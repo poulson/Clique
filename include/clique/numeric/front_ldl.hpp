@@ -26,20 +26,20 @@ namespace numeric {
 
 template<typename F>
 void LocalFrontLDL
-( Orientation orientation, Matrix<F>& AL, Matrix<F>& AR );
+( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR );
 
 template<typename F>
 void DistFrontLDL
-( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& AR );
+( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR );
 
 namespace internal {
 template<typename F>
 void DistFrontLDLGeneral
-( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& AR );
+( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR );
 
 template<typename F>
 void DistFrontLDLSquare
-( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& AR );
+( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR );
 } // namespace internal
 
 } // namespace numeric
