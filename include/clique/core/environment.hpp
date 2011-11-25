@@ -53,7 +53,7 @@ namespace mpi = elemental::mpi;
 using namespace elemental::diagonal_wrapper;
 using namespace elemental::distribution_wrapper;
 using namespace elemental::orientation_wrapper;
-using namespace elemental::shape_wrapper;
+using namespace elemental::upper_or_lower_wrapper;
 using namespace elemental::side_wrapper;
 
 // Pull in a few classes from Elemental
