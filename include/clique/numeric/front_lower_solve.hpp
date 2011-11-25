@@ -38,14 +38,16 @@ void DistFrontLowerForwardSolve
 ( Diagonal diag, 
   const DistMatrix<F,VC,STAR>& L, 
         DistMatrix<F,VC,STAR>& X,
-        bool checkIfSingular=true );
+        bool checkIfSingular=true,
+        bool singleL11AllGather=false );
 
 template<typename F>
 void DistFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const DistMatrix<F,VC,STAR>& L, 
         DistMatrix<F,VC,STAR>& X,
-        bool checkIfSingular=true );
+        bool checkIfSingular=true,
+        bool singleL11AllGather=false );
 
 } // namespace numeric
 } // namespace clique

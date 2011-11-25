@@ -30,7 +30,8 @@ void LDLSolve
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX, 
-        bool checkIfSingular=true );
+        bool checkIfSingular=true,
+        bool singleL11AllGather=false );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -42,7 +43,8 @@ void LDLSolve
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX, 
-        bool checkIfSingular )
+        bool checkIfSingular,
+        bool singleL11AllGather )
 {
 #ifndef RELEASE
     PushCallStack("numeric::LDLSolve");
@@ -51,14 +53,14 @@ void LDLSolve
 #endif
     // Solve against unit diagonal L
     clique::numeric::LowerSolve
-    ( NORMAL, UNIT, S, L, localX, checkIfSingular );
+    ( NORMAL, UNIT, S, L, localX, checkIfSingular, singleL11AllGather );
 
     // Solve against diagonal
     clique::numeric::DiagonalSolve( S, L, localX, checkIfSingular );
 
     // Solve against the (conjugate-)transpose of the unit diagonal L
     clique::numeric::LowerSolve
-    ( orientation, UNIT, S, L, localX, checkIfSingular );
+    ( orientation, UNIT, S, L, localX, checkIfSingular, singleL11AllGather );
 #ifndef RELEASE
     PopCallStack();
 #endif

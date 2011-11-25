@@ -30,7 +30,8 @@ void LowerSolve
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX,
-        bool checkIfSingular=true );
+        bool checkIfSingular=true,
+        bool singleL11AllGather=false );
 
 // Helpers
 
@@ -48,7 +49,8 @@ void DistLowerForwardSolve
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX,
-        bool checkIfSingular=true );
+        bool checkIfSingular=true,
+        bool singleL11AllGather=false );
 
 template<typename F>
 void LocalLowerBackwardSolve
@@ -64,7 +66,8 @@ void DistLowerBackwardSolve
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX,
-        bool checkIfSingular=true );
+        bool checkIfSingular=true,
+        bool singleL11AllGather=false );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -76,7 +79,8 @@ void LowerSolve
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX,
-        bool checkIfSingular )
+        bool checkIfSingular,
+        bool singleL11AllGather )
 {
 #ifndef RELEASE
     PushCallStack("numeric::LowerSolve");
@@ -84,12 +88,14 @@ void LowerSolve
     if( orientation == NORMAL )
     {
         LocalLowerForwardSolve( diag, S, L, localX, checkIfSingular );
-        DistLowerForwardSolve( diag, S, L, localX, checkIfSingular );
+        DistLowerForwardSolve
+        ( diag, S, L, localX, checkIfSingular, singleL11AllGather );
     }
     else
     {
         DistLowerBackwardSolve
-        ( orientation, diag, S, L, localX, checkIfSingular );
+        ( orientation, diag, S, L, localX, checkIfSingular, 
+          singleL11AllGather );
         LocalLowerBackwardSolve
         ( orientation, diag, S, L, localX, checkIfSingular );
     }

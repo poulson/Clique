@@ -22,7 +22,7 @@
 void Usage()
 {
     std::cout << "PanelLDL <numPanels> <nx> <ny> <nz> <cutoff> <fact blocksize>"
-                 " <solve blocksize> <write info?>\n"
+                 " <solve blocksize> <single allgather?> <write info?>\n"
               << "<numPanels>: number of panels to factor in memory\n"
               << "<nx>: size of panel in x direction\n"
               << "<ny>: size of panel in y direction\n"
@@ -30,6 +30,7 @@ void Usage()
               << "<cutoff>: minimum required leaf size\n" 
               << "<fact blocksize>: algorithmic blocksize for factorization\n"
               << "<solve blocksize>: algorithm blocksize for solve\n"
+              << "<single allgather?>: single allgather iff != 0\n"
               << "<write info?>: write basic local info to file? [0/1]\n"
               << "<prefix>: prefix for each process's info file\n"
               << std::endl;
@@ -85,7 +86,7 @@ main( int argc, char* argv[] )
         return 0;
     }
 
-    if( argc < 9 )
+    if( argc < 10 )
     {
         if( commRank == 0 )        
             Usage();
@@ -101,8 +102,9 @@ main( int argc, char* argv[] )
     const int cutoff = atoi( argv[argNum++] );
     const int factBlocksize = atoi( argv[argNum++] );
     const int solveBlocksize = atoi( argv[argNum++] );
+    const bool singleAllGather = atoi( argv[argNum++] );
     const bool writeInfo = atoi( argv[argNum++] );
-    if( writeInfo && argc == 9 )
+    if( writeInfo && argc == 10 )
     {
         if( commRank == 0 )
             Usage();
@@ -307,7 +309,8 @@ main( int argc, char* argv[] )
             elemental::SetBlocksize( solveBlocksize );
             clique::mpi::Barrier( comm );
             const double solveStartTime = clique::mpi::Time();
-            clique::numeric::LDLSolve( clique::TRANSPOSE, S, L, localY, true );
+            clique::numeric::LDLSolve
+            ( clique::TRANSPOSE, S, L, localY, true, singleAllGather );
             clique::mpi::Barrier( comm );
             const double solveStopTime = clique::mpi::Time();
             if( commRank == 0 )
