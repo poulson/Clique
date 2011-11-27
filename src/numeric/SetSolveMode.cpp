@@ -37,9 +37,9 @@ void clique::numeric::SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
     }
     const int numDistSupernodes = L.dist.fronts.size();    
     DistSymmFront<F>& leafFront = L.dist.fronts[0];
+    const SolveMode oldMode = L.dist.mode;
 
-    L.dist.mode = mode;
-    if( mode == FEW_RHS )
+    if( mode == FEW_RHS && oldMode == MANY_RHS )
     {
         leafFront.front1dL.LockedView
         ( leafFront.front2dL.Height(), 
@@ -56,7 +56,35 @@ void clique::numeric::SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
             front.front2dL.Empty();
         }
     }
-    else
+    else if( mode == FEW_RHS_FAST_LDL && oldMode == MANY_RHS )
+    {
+        leafFront.front1dL.LockedView
+        ( leafFront.front2dL.Height(), 
+          leafFront.front2dL.Width(), 0,
+          leafFront.front2dL.LockedLocalBuffer(), 
+          leafFront.front2dL.LocalLDim(),
+          leafFront.front2dL.Grid() );
+        for( int s=1; s<numDistSupernodes; ++s )
+        {
+            DistSymmFront<F>& front = L.dist.fronts[s];
+            const elemental::Grid& grid = front.front2dL.Grid();
+            const int snSize = front.front2dL.Width();
+
+            // Invert the strictly lower portion of the diagonal block 
+            elemental::DistMatrix<F> LT( grid );
+            LT.View( front.front2dL, 0, 0, snSize, snSize );
+            elemental::advanced::TriangularInverse
+            ( elemental::LOWER, elemental::UNIT, LT );
+
+            // Copy the data and make the strictly upper triangle zero
+            front.front1dL.Empty();
+            front.front1dL.SetGrid( grid );
+            front.front1dL = front.front2dL;
+            front.front1dL.MakeTrapezoidal( elemental::LEFT, elemental::LOWER );
+            front.front2dL.Empty();
+        }
+    }
+    else if( mode == MANY_RHS && oldMode == FEW_RHS )
     {
         leafFront.front2dL.LockedView
         ( leafFront.front1dL.Height(), 
@@ -73,6 +101,9 @@ void clique::numeric::SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
             front.front1dL.Empty();
         }
     }
+    else
+        throw std::logic_error("Unavailable solve mode change");
+    L.dist.mode = mode;
 #ifndef RELEASE
     PopCallStack();
 #endif

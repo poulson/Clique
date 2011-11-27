@@ -29,14 +29,13 @@ using namespace elemental;
 
 template<typename F>
 void ForwardMany
-( Diagonal diag, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
-  bool checkIfSingular )
+( Diagonal diag, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
     {
         clique::numeric::LocalFrontLowerForwardSolve
-        ( diag, L.LockedLocalMatrix(), X.LocalMatrix(), checkIfSingular );
+        ( diag, L.LockedLocalMatrix(), X.LocalMatrix() );
         return;
     }
 
@@ -80,8 +79,7 @@ void ForwardMany
 
         // X1[* ,* ] := (L11[* ,* ])^-1 X1[* ,* ]
         basic::internal::LocalTrsm
-        ( LEFT, LOWER, NORMAL, diag, (F)1, L11_STAR_STAR, X1_STAR_STAR,
-          checkIfSingular );
+        ( LEFT, LOWER, NORMAL, diag, (F)1, L11_STAR_STAR, X1_STAR_STAR, true );
         X1 = X1_STAR_STAR;
 
         // X2[VC,* ] -= L21[VC,* ] X1[* ,* ]
@@ -200,14 +198,13 @@ void AccumulateRHS
 
 template<typename F>
 void ForwardSingle
-( Diagonal diag, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
-  bool checkIfSingular )
+( Diagonal diag, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
     {
         clique::numeric::LocalFrontLowerForwardSolve
-        ( diag, L.LockedLocalMatrix(), X.LocalMatrix(), checkIfSingular );
+        ( diag, L.LockedLocalMatrix(), X.LocalMatrix() );
         return;
     }
 
@@ -257,7 +254,7 @@ void ForwardSingle
         // X1[* ,* ] := (L11[* ,* ])^-1 X1[* ,* ]
         basic::internal::LocalTrsm
         ( LEFT, UPPER, TRANSPOSE, diag, (F)1, L11Trans_STAR_STAR, X1_STAR_STAR,
-          checkIfSingular );
+          true );
         X1 = X1_STAR_STAR;
 
         // X2[VC,* ] -= L21[VC,* ] X1[* ,* ]
@@ -282,19 +279,16 @@ void ForwardSingle
 template<typename F>
 void BackwardMany
 ( Orientation orientation, Diagonal diag, 
-  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
-  bool checkIfSingular )
+  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
     // TODO: Replace this with modified inline code?
-    basic::internal::TrsmLLTSmall
-    ( orientation, diag, (F)1, L, X, checkIfSingular );
+    basic::internal::TrsmLLTSmall( orientation, diag, (F)1, L, X, true );
 }
 
 template<typename F>
 void BackwardSingle
 ( Orientation orientation, Diagonal diag, 
-  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
-  bool checkIfSingular )
+  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
     const Grid& g = L.Grid();
 
@@ -384,7 +378,7 @@ void BackwardSingle
 template<typename F>
 void clique::numeric::DistFrontLowerForwardSolve
 ( Diagonal diag, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
-  bool checkIfSingular, bool singleL11AllGather )
+  bool singleL11AllGather )
 {
 #ifndef RELEASE
     clique::PushCallStack("numeric::DistFrontLowerForwardSolve");
@@ -403,9 +397,9 @@ void clique::numeric::DistFrontLowerForwardSolve
         throw std::logic_error("L and X are assumed to be aligned");
 #endif
     if( singleL11AllGather )
-        ForwardSingle( diag, L, X, checkIfSingular );
+        ForwardSingle( diag, L, X );
     else
-        ForwardMany( diag, L, X, checkIfSingular );
+        ForwardMany( diag, L, X );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -415,7 +409,7 @@ template<typename F>
 void clique::numeric::DistFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag, 
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
-  bool checkIfSingular, bool singleL11AllGather )
+  bool singleL11AllGather )
 {
 #ifndef RELEASE
     clique::PushCallStack("numeric::DistFrontLowerBackwardSolve");
@@ -439,8 +433,7 @@ void clique::numeric::DistFrontLowerBackwardSolve
     if( g.Size() == 1 )
     {
         LocalFrontLowerBackwardSolve
-        ( orientation, diag, L.LockedLocalMatrix(), X.LocalMatrix(),
-          checkIfSingular );
+        ( orientation, diag, L.LockedLocalMatrix(), X.LocalMatrix() );
 #ifndef RELEASE
         PopCallStack();
 #endif
@@ -470,9 +463,9 @@ void clique::numeric::DistFrontLowerBackwardSolve
     }
 
     if( singleL11AllGather )
-        BackwardSingle( orientation, diag, LT, XT, checkIfSingular );
+        BackwardSingle( orientation, diag, LT, XT );
     else
-        BackwardMany( orientation, diag, LT, XT, checkIfSingular );
+        BackwardMany( orientation, diag, LT, XT );
 #ifndef RELEASE
     clique::PopCallStack();
 #endif
@@ -482,42 +475,42 @@ template void clique::numeric::DistFrontLowerForwardSolve
 ( Diagonal diag, 
   const DistMatrix<float,VC,STAR>& L,
         DistMatrix<float,VC,STAR>& X,
-        bool checkIfSingular, bool singleL11AllGather );
+        bool singleL11AllGather );
 template void clique::numeric::DistFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const DistMatrix<float,VC,STAR>& L,
         DistMatrix<float,VC,STAR>& X,
-        bool checkIfSingular, bool singleL11AllGather );
+        bool singleL11AllGather );
 
 template void clique::numeric::DistFrontLowerForwardSolve
 ( Diagonal diag,
   const DistMatrix<double,VC,STAR>& L, 
         DistMatrix<double,VC,STAR>& X,
-        bool checkIfSingular, bool singleL11AllGather );
+        bool singleL11AllGather );
 template void clique::numeric::DistFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const DistMatrix<double,VC,STAR>& L,
         DistMatrix<double,VC,STAR>& X,
-        bool checkIfSingular, bool singleL11AllGather );
+        bool singleL11AllGather );
 
 template void clique::numeric::DistFrontLowerForwardSolve
 ( Diagonal diag,
   const DistMatrix<std::complex<float>,VC,STAR>& L, 
         DistMatrix<std::complex<float>,VC,STAR>& X,
-        bool checkIfSingular, bool singleL11AllGather );
+        bool singleL11AllGather );
 template void clique::numeric::DistFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const DistMatrix<std::complex<float>,VC,STAR>& L, 
         DistMatrix<std::complex<float>,VC,STAR>& X,
-        bool checkIfSingular, bool singleL11AllGather );
+        bool singleL11AllGather );
 
 template void clique::numeric::DistFrontLowerForwardSolve
 ( Diagonal diag,
   const DistMatrix<std::complex<double>,VC,STAR>& L, 
         DistMatrix<std::complex<double>,VC,STAR>& X,
-        bool checkIfSingular, bool singleL11AllGather );
+        bool singleL11AllGather );
 template void clique::numeric::DistFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const DistMatrix<std::complex<double>,VC,STAR>& L,
         DistMatrix<std::complex<double>,VC,STAR>& X,
-        bool checkIfSingular, bool singleL11AllGather );
+        bool singleL11AllGather );

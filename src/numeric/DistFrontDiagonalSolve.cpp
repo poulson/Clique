@@ -26,8 +26,7 @@
 
 template<typename F>
 void clique::numeric::DistFrontDiagonalSolve
-( const DistMatrix<F,VC,STAR>& d, DistMatrix<F,VC,STAR>& X,
-  bool checkIfSingular )
+( const DistMatrix<F,VC,STAR>& d, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
     clique::PushCallStack("numeric::DistFrontDiagonalSolve");
@@ -39,7 +38,7 @@ void clique::numeric::DistFrontDiagonalSolve
         throw std::logic_error("Invalid height of X");
 #endif
     elemental::basic::DiagonalSolve
-    ( LEFT, NORMAL, d.LockedLocalMatrix(), X.LocalMatrix(), checkIfSingular );
+    ( LEFT, NORMAL, d.LockedLocalMatrix(), X.LocalMatrix(), true );
 #ifndef RELEASE
     clique::PopCallStack();
 #endif
@@ -47,20 +46,16 @@ void clique::numeric::DistFrontDiagonalSolve
 
 template void clique::numeric::DistFrontDiagonalSolve
 ( const DistMatrix<float,VC,STAR>& d, 
-        DistMatrix<float,VC,STAR>& X,
-  bool checkIfSingular );
+        DistMatrix<float,VC,STAR>& X );
 
 template void clique::numeric::DistFrontDiagonalSolve
 ( const DistMatrix<double,VC,STAR>& d, 
-        DistMatrix<double,VC,STAR>& X,
-  bool checkIfSingular );
+        DistMatrix<double,VC,STAR>& X );
 
 template void clique::numeric::DistFrontDiagonalSolve
 ( const DistMatrix<std::complex<float>,VC,STAR>& d, 
-        DistMatrix<std::complex<float>,VC,STAR>& X,
-  bool checkIfSingular );
+        DistMatrix<std::complex<float>,VC,STAR>& X );
 
 template void clique::numeric::DistFrontDiagonalSolve
 ( const DistMatrix<std::complex<double>,VC,STAR>& d, 
-        DistMatrix<std::complex<double>,VC,STAR>& X,
-  bool checkIfSingular );
+        DistMatrix<std::complex<double>,VC,STAR>& X );

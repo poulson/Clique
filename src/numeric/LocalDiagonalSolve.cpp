@@ -23,7 +23,7 @@ template<typename F> // F represents a real or complex field
 void clique::numeric::LocalDiagonalSolve
 ( const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& X, bool checkIfSingular )
+        Matrix<F>& X )
 {
     using namespace clique::symbolic;
 #ifndef RELEASE
@@ -42,7 +42,7 @@ void clique::numeric::LocalDiagonalSolve
         frontTL.LockedView( frontL, 0, 0, sn.size, sn.size );
         Matrix<F> d;
         frontTL.GetDiagonal( d );
-        LocalFrontDiagonalSolve( d, XSub, checkIfSingular );
+        LocalFrontDiagonalSolve( d, XSub );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -52,23 +52,19 @@ void clique::numeric::LocalDiagonalSolve
 template void clique::numeric::LocalDiagonalSolve
 ( const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<float>& L,
-        Matrix<float>& X, 
-        bool checkIfSingular );
+        Matrix<float>& X );
 
 template void clique::numeric::LocalDiagonalSolve
 ( const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<double>& L,
-        Matrix<double>& X, 
-        bool checkIfSingular );
+        Matrix<double>& X );
 
 template void clique::numeric::LocalDiagonalSolve
 ( const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<std::complex<float> >& L,
-        Matrix<std::complex<float> >& X, 
-        bool checkIfSingular );
+        Matrix<std::complex<float> >& X );
 
 template void clique::numeric::LocalDiagonalSolve
 ( const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<std::complex<double> >& L,
-        Matrix<std::complex<double> >& X, 
-        bool checkIfSingular );
+        Matrix<std::complex<double> >& X );

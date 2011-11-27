@@ -23,7 +23,7 @@
 
 namespace clique {
 
-enum SolveMode { FEW_RHS, MANY_RHS };
+enum SolveMode { FEW_RHS, FEW_RHS_FAST_LDL, MANY_RHS };
 
 namespace numeric {
 
@@ -55,7 +55,7 @@ struct DistSymmFront
     // Split each front into a left and right piece such that the right piece
     // is not needed after the factorization (and can be freed).
 
-    DistMatrix<F,VC,STAR> front1dL;
+    mutable DistMatrix<F,VC,STAR> front1dL;
     mutable DistMatrix<F,VC,STAR> work1d;
 
     DistMatrix<F,MC,MR> front2dL;

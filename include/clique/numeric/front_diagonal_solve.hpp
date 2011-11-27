@@ -27,14 +27,12 @@ namespace numeric {
 template<typename F>
 void LocalFrontDiagonalSolve
 ( const Matrix<F>& d, 
-        Matrix<F>& X, 
-  bool checkIfSingular=true );
+        Matrix<F>& X );
 
 template<typename F>
 void DistFrontDiagonalSolve
 ( const DistMatrix<F,VC,STAR>& d,
-        DistMatrix<F,VC,STAR>& X,
-        bool checkIfSingular=true );
+        DistMatrix<F,VC,STAR>& X );
 
 } // namespace numeric
 } // namespace clique

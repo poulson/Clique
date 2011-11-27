@@ -28,8 +28,7 @@ template<typename F>
 void DiagonalSolve
 ( const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX,
-        bool checkIfSingular=true );
+        Matrix<F>& localX );
 
 // Helpers
 
@@ -37,15 +36,13 @@ template<typename F>
 void LocalDiagonalSolve
 ( const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L, 
-        Matrix<F>& localX,
-        bool checkIfSingular=true );
+        Matrix<F>& localX );
 
 template<typename F>
 void DistDiagonalSolve
 ( const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX,
-        bool checkIfSingular=true );
+        Matrix<F>& localX );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -55,14 +52,13 @@ template<typename F>
 void DiagonalSolve
 ( const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX, 
-        bool checkIfSingular )
+        Matrix<F>& localX )
 {
 #ifndef RELEASE
     PushCallStack("numeric::DiagonalSolve");
 #endif
-    clique::numeric::LocalDiagonalSolve( S, L, localX, checkIfSingular );
-    clique::numeric::DistDiagonalSolve( S, L, localX, checkIfSingular );
+    clique::numeric::LocalDiagonalSolve( S, L, localX );
+    clique::numeric::DistDiagonalSolve( S, L, localX );
 #ifndef RELEASE
     PopCallStack();
 #endif

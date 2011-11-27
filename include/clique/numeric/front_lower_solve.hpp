@@ -26,28 +26,38 @@ namespace numeric {
 
 template<typename F>
 void LocalFrontLowerForwardSolve
-( Diagonal diag, const Matrix<F>& L, Matrix<F>& X, bool checkIfSingular=true );
+( Diagonal diag, const Matrix<F>& L, Matrix<F>& X );
 
 template<typename F>
 void LocalFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag, 
-  const Matrix<F>& L, Matrix<F>& X, bool checkIfSingular=true );
+  const Matrix<F>& L, Matrix<F>& X );
 
 template<typename F>
 void DistFrontLowerForwardSolve
 ( Diagonal diag, 
   const DistMatrix<F,VC,STAR>& L, 
         DistMatrix<F,VC,STAR>& X,
-        bool checkIfSingular=true,
-        bool singleL11AllGather=false );
+        bool singleL11AllGather=true );
+
+template<typename F>
+void DistFrontFastLowerForwardSolve
+( Diagonal diag,
+  DistMatrix<F,VC,STAR>& L,
+  DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
 void DistFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const DistMatrix<F,VC,STAR>& L, 
         DistMatrix<F,VC,STAR>& X,
-        bool checkIfSingular=true,
-        bool singleL11AllGather=false );
+        bool singleL11AllGather=true );
+
+template<typename F>
+void DistFrontFastLowerBackwardSolve
+( Orientation orientation, Diagonal diag,
+  DistMatrix<F,VC,STAR>& L,
+  DistMatrix<F,VC,STAR>& X );
 
 } // namespace numeric
 } // namespace clique

@@ -29,9 +29,7 @@ void LowerSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX,
-        bool checkIfSingular=true,
-        bool singleL11AllGather=false );
+        Matrix<F>& localX );
 
 // Helpers
 
@@ -40,34 +38,28 @@ void LocalLowerForwardSolve
 ( Diagonal diag,
   const symbolic::SymmFact& S, 
   const numeric::SymmFrontTree<F>& L, 
-        Matrix<F>& localX,
-        bool checkIfSingular=true );
+        Matrix<F>& localX );
 
 template<typename F>
 void DistLowerForwardSolve
 ( Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX,
-        bool checkIfSingular=true,
-        bool singleL11AllGather=false );
+        Matrix<F>& localX );
 
 template<typename F>
 void LocalLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S, 
   const numeric::SymmFrontTree<F>& L, 
-        Matrix<F>& localX,
-        bool checkIfSingular=true );
+        Matrix<F>& localX );
 
 template<typename F>
 void DistLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX,
-        bool checkIfSingular=true,
-        bool singleL11AllGather=false );
+        Matrix<F>& localX );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -78,26 +70,20 @@ void LowerSolve
 ( Orientation orientation, Diagonal diag, 
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX,
-        bool checkIfSingular,
-        bool singleL11AllGather )
+        Matrix<F>& localX )
 {
 #ifndef RELEASE
     PushCallStack("numeric::LowerSolve");
 #endif
     if( orientation == NORMAL )
     {
-        LocalLowerForwardSolve( diag, S, L, localX, checkIfSingular );
-        DistLowerForwardSolve
-        ( diag, S, L, localX, checkIfSingular, singleL11AllGather );
+        LocalLowerForwardSolve( diag, S, L, localX );
+        DistLowerForwardSolve( diag, S, L, localX );
     }
     else
     {
-        DistLowerBackwardSolve
-        ( orientation, diag, S, L, localX, checkIfSingular, 
-          singleL11AllGather );
-        LocalLowerBackwardSolve
-        ( orientation, diag, S, L, localX, checkIfSingular );
+        DistLowerBackwardSolve( orientation, diag, S, L, localX );
+        LocalLowerBackwardSolve( orientation, diag, S, L, localX );
     }
 #ifndef RELEASE
     PopCallStack();

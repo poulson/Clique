@@ -23,7 +23,7 @@ template<typename F> // F representa a real or complex field
 void clique::numeric::DistDiagonalSolve
 ( const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX, bool checkIfSingular )
+        Matrix<F>& localX )
 {
     using namespace clique::symbolic;
 #ifndef RELEASE
@@ -46,7 +46,7 @@ void clique::numeric::DistDiagonalSolve
         DistMatrix<F,VC,STAR> dTL;
         FTL.GetDiagonal( dTL );
         elemental::basic::DiagonalSolve
-        ( LEFT, NORMAL, dTL.LockedLocalMatrix(), localXT, checkIfSingular );
+        ( LEFT, NORMAL, dTL.LockedLocalMatrix(), localXT, true );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -56,23 +56,19 @@ void clique::numeric::DistDiagonalSolve
 template void clique::numeric::DistDiagonalSolve
 ( const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<float>& L,
-        Matrix<float>& localX,
-        bool checkIfSingular );
+        Matrix<float>& localX );
 
 template void clique::numeric::DistDiagonalSolve
 ( const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<double>& L,
-        Matrix<double>& localX,
-        bool checkIfSingular );
+        Matrix<double>& localX );
 
 template void clique::numeric::DistDiagonalSolve
 ( const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<std::complex<float> >& L,
-        Matrix<std::complex<float> >& localX,
-        bool checkIfSingular );
+        Matrix<std::complex<float> >& localX );
 
 template void clique::numeric::DistDiagonalSolve
 ( const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<std::complex<double> >& L,
-        Matrix<std::complex<double> >& localX,
-        bool checkIfSingular );
+        Matrix<std::complex<double> >& localX );

@@ -26,7 +26,7 @@
 
 template<typename F>
 void clique::numeric::LocalFrontDiagonalSolve
-( const Matrix<F>& d, Matrix<F>& X, bool checkIfSingular )
+( const Matrix<F>& d, Matrix<F>& X )
 {
 #ifndef RELEASE
     clique::PushCallStack("numeric::LocalFrontDiagonalSolve");
@@ -35,22 +35,20 @@ void clique::numeric::LocalFrontDiagonalSolve
     if( d.Height() != X.Height() )
         throw std::logic_error("Invalid height of X");
 #endif
-    elemental::basic::DiagonalSolve( LEFT, NORMAL, d, X, checkIfSingular );
+    elemental::basic::DiagonalSolve( LEFT, NORMAL, d, X, true );
 #ifndef RELEASE
     clique::PopCallStack();
 #endif
 }
 
 template void clique::numeric::LocalFrontDiagonalSolve
-( const Matrix<float>& d, Matrix<float>& X, bool checkIfSingular );
+( const Matrix<float>& d, Matrix<float>& X );
 
 template void clique::numeric::LocalFrontDiagonalSolve
-( const Matrix<double>& d, Matrix<double>& X, bool checkIfSingular );
+( const Matrix<double>& d, Matrix<double>& X );
 
 template void clique::numeric::LocalFrontDiagonalSolve
-( const Matrix<std::complex<float> >& d, Matrix<std::complex<float> >& X,
-  bool checkIfSingular );
+( const Matrix<std::complex<float> >& d, Matrix<std::complex<float> >& X );
 
 template void clique::numeric::LocalFrontDiagonalSolve
-( const Matrix<std::complex<double> >& d, Matrix<std::complex<double> >& X,
-  bool checkIfSingular );
+( const Matrix<std::complex<double> >& d, Matrix<std::complex<double> >& X );

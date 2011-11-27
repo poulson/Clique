@@ -24,8 +24,7 @@ void clique::numeric::DistLowerForwardSolve
 ( Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L, 
-        Matrix<F>& localX,
-        bool checkIfSingular, bool singleL11AllGather )
+        Matrix<F>& localX )
 {
     using namespace clique::symbolic;
 #ifndef RELEASE
@@ -33,7 +32,8 @@ void clique::numeric::DistLowerForwardSolve
 #endif
     const int numDistSupernodes = S.dist.supernodes.size();
     const int width = localX.Width();
-    if( L.dist.mode == MANY_RHS )
+    const SolveMode mode = L.dist.mode;
+    if( mode != FEW_RHS && mode != FEW_RHS_FAST_LDL )
         throw std::logic_error("This solve mode is not yet implemented");
     if( width == 0 )
     {
@@ -181,8 +181,10 @@ void clique::numeric::DistLowerForwardSolve
         recvDispls.clear();
 
         // Now that the RHS is set up, perform this supernode's solve
-        DistFrontLowerForwardSolve
-        ( diag, front.front1dL, W, checkIfSingular, singleL11AllGather );
+        if( mode == FEW_RHS )
+            DistFrontLowerForwardSolve( diag, front.front1dL, W );
+        else
+            DistFrontFastLowerForwardSolve( diag, front.front1dL, W );
 
         // Store the supernode portion of the result
         localXT = WT.LocalMatrix();
@@ -199,8 +201,7 @@ void clique::numeric::DistLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX,
-        bool checkIfSingular, bool singleL11AllGather )
+        Matrix<F>& localX )
 {
     using namespace clique::symbolic;
 #ifndef RELEASE
@@ -208,7 +209,8 @@ void clique::numeric::DistLowerBackwardSolve
 #endif
     const int numDistSupernodes = S.dist.supernodes.size();
     const int width = localX.Width();
-    if( L.dist.mode == MANY_RHS )
+    const SolveMode mode = L.dist.mode;
+    if( mode != FEW_RHS && mode != FEW_RHS_FAST_LDL )
         throw std::logic_error("This solve mode is not yet implemented");
     if( width == 0 )
     {
@@ -225,9 +227,12 @@ void clique::numeric::DistLowerBackwardSolve
     rootFront.work1d.View
     ( rootSN.size, width, 0,
       localX.Buffer(rootSN.localOffset1d,0), localX.LDim(), rootGrid );
-    DistFrontLowerBackwardSolve
-    ( orientation, diag, rootFront.front1dL, rootFront.work1d, 
-      checkIfSingular );
+    if( mode == FEW_RHS )
+        DistFrontLowerBackwardSolve
+        ( orientation, diag, rootFront.front1dL, rootFront.work1d );
+    else
+        DistFrontFastLowerBackwardSolve
+        ( orientation, diag, rootFront.front1dL, rootFront.work1d );
 
     std::vector<int>::const_iterator it;
     for( int s=numDistSupernodes-2; s>=0; --s )
@@ -360,9 +365,11 @@ void clique::numeric::DistLowerBackwardSolve
         recvDispls.clear();
 
         // Call the custom supernode backward solve
-        DistFrontLowerBackwardSolve
-        ( orientation, diag, front.front1dL, W, checkIfSingular, 
-          singleL11AllGather );
+        if( mode == FEW_RHS )
+            DistFrontLowerBackwardSolve( orientation, diag, front.front1dL, W );
+        else
+            DistFrontFastLowerBackwardSolve
+            ( orientation, diag, front.front1dL, W );
 
         // Store the supernode portion of the result
         localXT = WT.LocalMatrix();
@@ -376,50 +383,42 @@ template void clique::numeric::DistLowerForwardSolve
 ( Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<float>& L,
-        Matrix<float>& localX,
-        bool checkIfSingular, bool singleL11AllGather );
+        Matrix<float>& localX );
 template void clique::numeric::DistLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<float>& L,
-        Matrix<float>& localX,
-        bool checkIfSingular, bool singleL11AllGather );
+        Matrix<float>& localX );
 
 template void clique::numeric::DistLowerForwardSolve
 ( Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<double>& L,
-        Matrix<double>& localX,
-        bool checkIfSingular, bool singleL11AllGather );
+        Matrix<double>& localX );
 template void clique::numeric::DistLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<double>& L,
-        Matrix<double>& localX,
-        bool checkIfSingular, bool singleL11AllGather );
+        Matrix<double>& localX );
 
 template void clique::numeric::DistLowerForwardSolve
 ( Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<std::complex<float> >& L,
-        Matrix<std::complex<float> >& localX,
-        bool checkIfSingular, bool singleL11AllGather );
+        Matrix<std::complex<float> >& localX );
 template void clique::numeric::DistLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<std::complex<float> >& L,
-        Matrix<std::complex<float> >& localX,
-        bool checkIfSingular, bool singleL11AllGather );
+        Matrix<std::complex<float> >& localX );
 
 template void clique::numeric::DistLowerForwardSolve
 ( Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<std::complex<double> >& L,
-        Matrix<std::complex<double> >& localX,
-        bool checkIfSingular, bool singleL11AllGather );
+        Matrix<std::complex<double> >& localX );
 template void clique::numeric::DistLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<std::complex<double> >& L,
-        Matrix<std::complex<double> >& localX,
-        bool checkIfSingular, bool singleL11AllGather );
+        Matrix<std::complex<double> >& localX );

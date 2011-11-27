@@ -24,8 +24,7 @@ void clique::numeric::LocalLowerForwardSolve
 ( Diagonal diag, 
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& X,
-        bool checkIfSingular )
+        Matrix<F>& X )
 {
     using namespace clique::symbolic;
 #ifndef RELEASE
@@ -92,7 +91,7 @@ void clique::numeric::LocalLowerForwardSolve
         // else numChildren == 0
 
         // Solve against this front
-        LocalFrontLowerForwardSolve( diag, frontL, W, checkIfSingular );
+        LocalFrontLowerForwardSolve( diag, frontL, W );
 
         // Store the supernode portion of the result
         XT = WT;
@@ -107,8 +106,7 @@ void clique::numeric::LocalLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S, 
   const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& X,
-        bool checkIfSingular )
+        Matrix<F>& X )
 {
     using namespace clique::symbolic;
 #ifndef RELEASE
@@ -172,8 +170,7 @@ void clique::numeric::LocalLowerBackwardSolve
         }
 
         // Solve against this front
-        LocalFrontLowerBackwardSolve
-        ( orientation, diag, frontL, W, checkIfSingular );
+        LocalFrontLowerBackwardSolve( orientation, diag, frontL, W );
 
         // Store the supernode portion of the result
         XT = WT;
@@ -192,50 +189,42 @@ template void clique::numeric::LocalLowerForwardSolve
 ( Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<float>& L,
-        Matrix<float>& X,
-        bool checkIfSingular );
+        Matrix<float>& X );
 template void clique::numeric::LocalLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<float>& L,
-        Matrix<float>& X,
-        bool checkIfSingular );
+        Matrix<float>& X );
 
 template void clique::numeric::LocalLowerForwardSolve
 ( Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<double>& L,
-        Matrix<double>& X,
-        bool checkIfSingular );
+        Matrix<double>& X );
 template void clique::numeric::LocalLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<double>& L,
-        Matrix<double>& X,
-        bool checkIfSingular );
+        Matrix<double>& X );
 
 template void clique::numeric::LocalLowerForwardSolve
 ( Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<std::complex<float> >& L,
-        Matrix<std::complex<float> >& X,
-        bool checkIfSingular );
+        Matrix<std::complex<float> >& X );
 template void clique::numeric::LocalLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<std::complex<float> >& L,
-        Matrix<std::complex<float> >& X,
-        bool checkIfSingular );
+        Matrix<std::complex<float> >& X );
 
 template void clique::numeric::LocalLowerForwardSolve
 ( Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<std::complex<double> >& L,
-        Matrix<std::complex<double> >& X,
-        bool checkIfSingular );
+        Matrix<std::complex<double> >& X );
 template void clique::numeric::LocalLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<std::complex<double> >& L,
-        Matrix<std::complex<double> >& X,
-        bool checkIfSingular );
+        Matrix<std::complex<double> >& X );

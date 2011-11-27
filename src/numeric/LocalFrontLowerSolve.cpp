@@ -26,7 +26,7 @@
 
 template<typename F>
 void clique::numeric::LocalFrontLowerForwardSolve
-( Diagonal diag, const Matrix<F>& L, Matrix<F>& X, bool checkIfSingular )
+( Diagonal diag, const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
     clique::PushCallStack("numeric::LocalFrontLowerForwardSolve");
@@ -52,7 +52,7 @@ void clique::numeric::LocalFrontLowerForwardSolve
          XB, L.Width() );
 
     elemental::basic::Trsm
-    ( LEFT, LOWER, NORMAL, diag, (F)1, LT, XT, checkIfSingular );
+    ( LEFT, LOWER, NORMAL, diag, (F)1, LT, XT, true );
     elemental::basic::Gemm
     ( NORMAL, NORMAL, (F)-1, LB, XT, (F)1, XB );
 #ifndef RELEASE
@@ -63,7 +63,7 @@ void clique::numeric::LocalFrontLowerForwardSolve
 template<typename F>
 void clique::numeric::LocalFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag, 
-  const Matrix<F>& L, Matrix<F>& X, bool checkIfSingular )
+  const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
     clique::PushCallStack("numeric::LocalFrontLowerBackwardSolve");
@@ -92,7 +92,7 @@ void clique::numeric::LocalFrontLowerBackwardSolve
 
     elemental::basic::Gemm( orientation, NORMAL, (F)-1, LB, XB, (F)1, XT );
     elemental::basic::Trsm
-    ( LEFT, LOWER, orientation, diag, (F)1, LT, XT, checkIfSingular );
+    ( LEFT, LOWER, orientation, diag, (F)1, LT, XT, true );
 #ifndef RELEASE
     clique::PopCallStack();
 #endif
@@ -100,36 +100,28 @@ void clique::numeric::LocalFrontLowerBackwardSolve
 
 template void clique::numeric::LocalFrontLowerForwardSolve
 ( Diagonal diag, 
-  const Matrix<float>& L, Matrix<float>& X, 
-  bool checkIfSingular );
+  const Matrix<float>& L, Matrix<float>& X );
 template void clique::numeric::LocalFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
-  const Matrix<float>& L, Matrix<float>& X,
-  bool checkIfSingular );
+  const Matrix<float>& L, Matrix<float>& X );
 
 template void clique::numeric::LocalFrontLowerForwardSolve
 ( Diagonal diag, 
-  const Matrix<double>& L, Matrix<double>& X, 
-  bool checkIfSingular );
+  const Matrix<double>& L, Matrix<double>& X );
 template void clique::numeric::LocalFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
-  const Matrix<double>& L, Matrix<double>& X,
-  bool checkIfSingular );
+  const Matrix<double>& L, Matrix<double>& X );
 
 template void clique::numeric::LocalFrontLowerForwardSolve
 ( Diagonal diag,
-  const Matrix<std::complex<float> >& L, Matrix<std::complex<float> >& X,
-  bool checkIfSingular );
+  const Matrix<std::complex<float> >& L, Matrix<std::complex<float> >& X );
 template void clique::numeric::LocalFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
-  const Matrix<std::complex<float> >& L, Matrix<std::complex<float> >& X,
-  bool checkIfSingular );
+  const Matrix<std::complex<float> >& L, Matrix<std::complex<float> >& X );
 
 template void clique::numeric::LocalFrontLowerForwardSolve
 ( Diagonal diag,
-  const Matrix<std::complex<double> >& L, Matrix<std::complex<double> >& X,
-  bool checkIfSingular );
+  const Matrix<std::complex<double> >& L, Matrix<std::complex<double> >& X );
 template void clique::numeric::LocalFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
-  const Matrix<std::complex<double> >& L, Matrix<std::complex<double> >& X,
-  bool checkIfSingular );
+  const Matrix<std::complex<double> >& L, Matrix<std::complex<double> >& X );

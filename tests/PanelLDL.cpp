@@ -22,7 +22,7 @@
 void Usage()
 {
     std::cout << "PanelLDL <numPanels> <nx> <ny> <nz> <cutoff> <fact blocksize>"
-                 " <solve blocksize> <single allgather?> <write info?>\n"
+                 " <solve blocksize> <write info?>\n"
               << "<numPanels>: number of panels to factor in memory\n"
               << "<nx>: size of panel in x direction\n"
               << "<ny>: size of panel in y direction\n"
@@ -30,7 +30,6 @@ void Usage()
               << "<cutoff>: minimum required leaf size\n" 
               << "<fact blocksize>: algorithmic blocksize for factorization\n"
               << "<solve blocksize>: algorithm blocksize for solve\n"
-              << "<single allgather?>: single allgather iff != 0\n"
               << "<write info?>: write basic local info to file? [0/1]\n"
               << "<prefix>: prefix for each process's info file\n"
               << std::endl;
@@ -86,7 +85,7 @@ main( int argc, char* argv[] )
         return 0;
     }
 
-    if( argc < 10 )
+    if( argc < 9 )
     {
         if( commRank == 0 )        
             Usage();
@@ -102,7 +101,6 @@ main( int argc, char* argv[] )
     const int cutoff = atoi( argv[argNum++] );
     const int factBlocksize = atoi( argv[argNum++] );
     const int solveBlocksize = atoi( argv[argNum++] );
-    const bool singleAllGather = atoi( argv[argNum++] );
     const bool writeInfo = atoi( argv[argNum++] );
     if( writeInfo && argc == 10 )
     {
@@ -297,7 +295,7 @@ main( int argc, char* argv[] )
 
             // Redistribute to 1d for fast solves with few right-hand sides
             const double redistStartTime = clique::mpi::Time();
-            clique::numeric::SetSolveMode( L, clique::FEW_RHS );
+            clique::numeric::SetSolveMode( L, clique::FEW_RHS_FAST_LDL );
             clique::mpi::Barrier( comm );
             const double redistStopTime = clique::mpi::Time();
             if( commRank == 0 )
@@ -309,8 +307,7 @@ main( int argc, char* argv[] )
             elemental::SetBlocksize( solveBlocksize );
             clique::mpi::Barrier( comm );
             const double solveStartTime = clique::mpi::Time();
-            clique::numeric::LDLSolve
-            ( clique::TRANSPOSE, S, L, localY, true, singleAllGather );
+            clique::numeric::LDLSolve( clique::TRANSPOSE, S, L, localY );
             clique::mpi::Barrier( comm );
             const double solveStopTime = clique::mpi::Time();
             if( commRank == 0 )

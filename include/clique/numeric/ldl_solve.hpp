@@ -29,9 +29,7 @@ void LDLSolve
 ( Orientation orientation,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX, 
-        bool checkIfSingular=true,
-        bool singleL11AllGather=false );
+        Matrix<F>& localX );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -42,9 +40,7 @@ void LDLSolve
 ( Orientation orientation,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX, 
-        bool checkIfSingular,
-        bool singleL11AllGather )
+        Matrix<F>& localX )
 {
 #ifndef RELEASE
     PushCallStack("numeric::LDLSolve");
@@ -52,15 +48,13 @@ void LDLSolve
         throw std::logic_error("Invalid orientation for LDL");
 #endif
     // Solve against unit diagonal L
-    clique::numeric::LowerSolve
-    ( NORMAL, UNIT, S, L, localX, checkIfSingular, singleL11AllGather );
+    clique::numeric::LowerSolve( NORMAL, UNIT, S, L, localX );
 
     // Solve against diagonal
-    clique::numeric::DiagonalSolve( S, L, localX, checkIfSingular );
+    clique::numeric::DiagonalSolve( S, L, localX );
 
     // Solve against the (conjugate-)transpose of the unit diagonal L
-    clique::numeric::LowerSolve
-    ( orientation, UNIT, S, L, localX, checkIfSingular, singleL11AllGather );
+    clique::numeric::LowerSolve( orientation, UNIT, S, L, localX );
 #ifndef RELEASE
     PopCallStack();
 #endif
