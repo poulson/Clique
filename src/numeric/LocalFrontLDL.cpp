@@ -71,9 +71,6 @@ void clique::numeric::LocalFrontLDL
         S21 = AL21;
         elemental::basic::DiagonalSolve( RIGHT, NORMAL, d1, AL21 );
 
-        // For now, perform about 2x as much work as necessary on the 
-        // symmetric updates. Eventually, these should be replaced with 
-        // custom routines.
         elemental::PartitionDown
         ( S21, S21T,
                S21B, AL22.Width() );
@@ -82,8 +79,8 @@ void clique::numeric::LocalFrontLDL
                 AL21B, AL22.Width() );
         elemental::basic::Gemm
         ( NORMAL, orientation, (F)-1, S21, AL21T, (F)1, AL22 );
-        elemental::basic::Gemm
-        ( NORMAL, orientation, (F)-1, S21B, AL21B, (F)1, ABR );
+        elemental::basic::internal::LocalTrrkNT
+        ( LOWER, orientation, (F)-1, S21B, AL21B, (F)1, ABR );
         //--------------------------------------------------------------------//
 
         elemental::SlidePartitionDownDiagonal
