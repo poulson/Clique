@@ -53,7 +53,7 @@ void clique::numeric::internal::DistFrontLDLGeneral
     if( AL.Grid() != ABR.Grid() )
         throw std::logic_error("AL and ABR must use the same grid");
     if( ABR.ColAlignment() !=
-        (AL.ColAlignment()+AL.Height()) % AL.Grid().Height() )
+        (AL.ColAlignment()+AL.Width()) % AL.Grid().Height() )
         throw std::logic_error("AL and ABR must have compatible col alignments");
     if( ABR.RowAlignment() != 
         (AL.RowAlignment()+AL.Width()) % AL.Grid().Width() )
@@ -168,7 +168,7 @@ void clique::numeric::internal::DistFrontLDLSquare
     if( AL.Grid() != ABR.Grid() )
         throw std::logic_error("AL and ABR must use the same grid");
     if( ABR.ColAlignment() !=
-        (AL.ColAlignment()+AL.Height()) % AL.Grid().Height() )
+        (AL.ColAlignment()+AL.Width()) % AL.Grid().Height() )
         throw std::logic_error("AL and ABR must have compatible col alignments");
     if( ABR.RowAlignment() != 
         (AL.RowAlignment()+AL.Width()) % AL.Grid().Width() )
