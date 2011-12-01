@@ -65,7 +65,6 @@ void clique::numeric::DistLowerForwardSolve
         const int commSize = mpi::CommSize( comm );
         const int commRank = mpi::CommRank( comm );
         const int childCommSize = mpi::CommSize( childComm );
-        const int childCommRank = mpi::CommRank( childComm );
 
         // Set up a workspace
         DistMatrix<F,VC,STAR>& W = front.work1d;
@@ -166,7 +165,7 @@ void clique::numeric::DistLowerForwardSolve
         {
             const F* recvValues = &recvBuffer[recvDispls[proc]];
             const std::deque<int>& recvIndices = sn.childSolveRecvIndices[proc];
-            for( int k=0; k<recvIndices.size(); ++k )
+            for( unsigned k=0; k<recvIndices.size(); ++k )
             {
                 const int iFrontLocal = recvIndices[k];
                 const F* recvRow = &recvValues[k*width];
@@ -246,7 +245,6 @@ void clique::numeric::DistLowerBackwardSolve
         mpi::Comm comm = grid.VCComm(); 
         mpi::Comm parentComm = parentGrid.VCComm();
         const int commSize = mpi::CommSize( comm );
-        const int commRank = mpi::CommRank( comm );
         const int parentCommSize = mpi::CommSize( parentComm );
         const int parentCommRank = mpi::CommRank( parentComm );
 
@@ -288,7 +286,7 @@ void clique::numeric::DistLowerBackwardSolve
             F* sendValues = &sendBuffer[sendDispls[proc]];
             const std::deque<int>& recvIndices = 
                 parentSN.childSolveRecvIndices[proc];
-            for( int k=0; k<recvIndices.size(); ++k )
+            for( unsigned k=0; k<recvIndices.size(); ++k )
             {
                 const int iFrontLocal = recvIndices[k];
                 F* sendRow = &sendValues[k*width];

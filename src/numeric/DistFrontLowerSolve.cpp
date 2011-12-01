@@ -164,7 +164,7 @@ void FormDiagonalBlocks
         {
             const int i = proc + iLocal*commSize;
             for( int jOffset=0; jOffset<blocksize; ++jOffset )
-                DBuffer[jOffset+i*blocksize] = 
+                DBuffer[jOffset+i*DLDim] = 
                     procRecv[jOffset+iLocal*blocksize];
         }
     }

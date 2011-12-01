@@ -189,7 +189,7 @@ void clique::symbolic::DistSymmetricFactorization
 
         // Union the lower structure of this supernode
 #ifndef RELEASE
-        for( int i=1; i<origSN.lowerStruct.size(); ++i )
+        for( unsigned i=1; i<origSN.lowerStruct.size(); ++i )
         {
             if( origSN.lowerStruct[i] <= origSN.lowerStruct[i-1] )    
             {
@@ -400,6 +400,8 @@ void clique::symbolic::DistSymmetricFactorization
         for( int i=0; i<numRightIndices; ++i )
             if( factSN.rightChildRelIndices[i] % teamSize == teamRank )
                 factSN.rightChildSolveIndices.push_back( i );
+        const int numLeftSolveIndices = factSN.leftChildSolveIndices.size();
+        const int numRightSolveIndices = factSN.rightChildSolveIndices.size();
 
         //
         // Compute the solve recv indices
@@ -412,7 +414,7 @@ void clique::symbolic::DistSymmetricFactorization
         // Compute the recv indices for the left child 
         const int leftUpdateAlignment = 
             factSN.leftChildSize % leftChildTeamSize;
-        for( int iPre=0; iPre<factSN.leftChildSolveIndices.size(); ++iPre )
+        for( int iPre=0; iPre<numLeftSolveIndices; ++iPre )
         {
             const int iChild = factSN.leftChildSolveIndices[iPre];
             const int iFront = factSN.leftChildRelIndices[iChild];
@@ -427,7 +429,7 @@ void clique::symbolic::DistSymmetricFactorization
         // Compute the recv indices for the right child
         const int rightUpdateAlignment = 
             factSN.rightChildSize % rightChildTeamSize;
-        for( int iPre=0; iPre<factSN.rightChildSolveIndices.size(); ++iPre )
+        for( int iPre=0; iPre<numRightSolveIndices; ++iPre )
         {
             const int iChild = factSN.rightChildSolveIndices[iPre];
             const int iFront = factSN.rightChildRelIndices[iChild];
@@ -504,10 +506,10 @@ void clique::symbolic::ComputeFactRecvIndices
         throw std::logic_error("Supernode sizes conflicted");
     if( sn.leftChildSize != basicData[5] || sn.rightChildSize != basicData[6] )
         throw std::logic_error("Child supernode sizes conflicted");
-    if( sn.lowerStruct.size() != basicData[7] )
+    if( sn.lowerStruct.size() != (unsigned)basicData[7] )
         throw std::logic_error("Lower struct sizes conflicted");
-    if( sn.leftChildRelIndices.size() != basicData[8] ||
-        sn.rightChildRelIndices.size() != basicData[9] )
+    if( sn.leftChildRelIndices.size() != (unsigned)basicData[8] ||
+        sn.rightChildRelIndices.size() != (unsigned)basicData[9] )
         throw std::logic_error("Child lower struct sizes conflicted");
 #endif
 
@@ -516,7 +518,7 @@ void clique::symbolic::ComputeFactRecvIndices
     std::deque<int>::const_iterator it;
 
     // Compute the recv indices of the left child from each process 
-    for( int jPre=0; jPre<sn.leftChildFactRowIndices.size(); ++jPre )
+    for( unsigned jPre=0; jPre<sn.leftChildFactRowIndices.size(); ++jPre )
     {
         const int jChild = sn.leftChildFactRowIndices[jPre];
         const int jFront = sn.leftChildRelIndices[jChild];
@@ -532,8 +534,8 @@ void clique::symbolic::ComputeFactRecvIndices
              ( sn.leftChildFactColIndices.begin(),
                sn.leftChildFactColIndices.end(), jChild );
         const int iPreStart = int(it-sn.leftChildFactColIndices.begin());
-        for( int iPre=iPreStart; 
-                 iPre<sn.leftChildFactColIndices.size(); ++iPre )
+        for( unsigned iPre=iPreStart; 
+                      iPre<sn.leftChildFactColIndices.size(); ++iPre )
         {
             const int iChild = sn.leftChildFactColIndices[iPre];
             const int iFront = sn.leftChildRelIndices[iChild];
@@ -555,7 +557,7 @@ void clique::symbolic::ComputeFactRecvIndices
     }
     
     // Compute the recv indices of the right child from each process 
-    for( int jPre=0; jPre<sn.rightChildFactRowIndices.size(); ++jPre )
+    for( unsigned jPre=0; jPre<sn.rightChildFactRowIndices.size(); ++jPre )
     {
         const int jChild = sn.rightChildFactRowIndices[jPre];
         const int jFront = sn.rightChildRelIndices[jChild];
@@ -571,7 +573,7 @@ void clique::symbolic::ComputeFactRecvIndices
              ( sn.rightChildFactColIndices.begin(),
                sn.rightChildFactColIndices.end(), jChild );
         const int iPreStart = int(it-sn.rightChildFactColIndices.begin());
-        for( int iPre=iPreStart; 
+        for( unsigned iPre=iPreStart; 
                  iPre<sn.rightChildFactColIndices.size(); ++iPre )
         {
             const int iChild = sn.rightChildFactColIndices[iPre];

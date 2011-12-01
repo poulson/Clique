@@ -36,7 +36,6 @@ main( int argc, char* argv[] )
     clique::Initialize( argc, argv );
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
-    const int commSize = mpi::CommSize( comm );
 
     if( argc < 5 )
     {
@@ -80,7 +79,7 @@ main( int argc, char* argv[] )
             normalPieceSize + (bufferSize%numPieces);
 
         // Write the files
-        for( int f=0; f<numFiles; ++f )
+        for( unsigned f=0; f<numFiles; ++f )
         {
             std::ostringstream filename;
             filename << baseName << "-" << commRank << "-" << f << ".dat";
@@ -102,7 +101,7 @@ main( int argc, char* argv[] )
         }
 
         // Read the files
-        for( int f=0; f<numFiles; ++f )
+        for( unsigned f=0; f<numFiles; ++f )
         {
             std::ostringstream filename;
             filename << baseName << "-" << commRank << "-" << f << ".dat";

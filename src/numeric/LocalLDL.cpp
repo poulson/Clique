@@ -33,17 +33,18 @@ void clique::numeric::LocalLDL
     for( int s=0; s<numLocalSupernodes; ++s )
     {
         LocalSymmFactSupernode& sn = S.local.supernodes[s];
+        const int updateSize = sn.lowerStruct.size();
         Matrix<F>& frontL = L.local.fronts[s].frontL;
         Matrix<F>& frontBR = L.local.fronts[s].work;
         frontBR.Empty();
 #ifndef RELEASE
-        if( frontL.Height() != sn.size+sn.lowerStruct.size() ||
+        if( frontL.Height() != sn.size+updateSize ||
             frontL.Width() != sn.size )
             throw std::logic_error("Front was not the proper size");
 #endif
 
         // Add updates from children (if they exist)
-        frontBR.ResizeTo( sn.lowerStruct.size(), sn.lowerStruct.size() );
+        frontBR.ResizeTo( updateSize, updateSize );
         frontBR.SetToZero();
         const int numChildren = sn.children.size();
         if( numChildren == 2 )

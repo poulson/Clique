@@ -66,7 +66,7 @@ main( int argc, char* argv[] )
     clique::Initialize( argc, argv );
     clique::mpi::Comm comm = clique::mpi::COMM_WORLD;
     const int commRank = clique::mpi::CommRank( comm );
-    const int commSize = clique::mpi::CommSize( comm );
+    const unsigned commSize = clique::mpi::CommSize( comm );
     typedef std::complex<double> F;
 
     // Ensure that we have a power of two number of processes
@@ -211,7 +211,7 @@ main( int argc, char* argv[] )
             symmFrontTrees.push_back( new clique::numeric::SymmFrontTree<F> );
             clique::numeric::SymmFrontTree<F>& L = *symmFrontTrees.back();
             L.local.fronts.resize( S.local.supernodes.size() );
-            for( int s=0; s<S.local.supernodes.size(); ++s )
+            for( unsigned s=0; s<S.local.supernodes.size(); ++s )
             {
                 const clique::symbolic::LocalSymmFactSupernode& sn =
                     S.local.supernodes[s];
@@ -226,7 +226,7 @@ main( int argc, char* argv[] )
             L.dist.mode = clique::MANY_RHS;
             L.dist.fronts.resize( log2CommSize+1 );
             clique::numeric::InitializeDistLeaf( S, L );
-            for( int s=1; s<log2CommSize+1; ++s )
+            for( unsigned s=1; s<log2CommSize+1; ++s )
             {
                 const clique::symbolic::DistSymmFactSupernode& sn = 
                     S.dist.supernodes[s];

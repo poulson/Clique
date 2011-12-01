@@ -29,7 +29,6 @@ void clique::numeric::DistLDL
     if( orientation == NORMAL )
         throw std::logic_error("LDL must be (conjugate-)transposed");
 #endif
-    const int numDistSupernodes = S.dist.supernodes.size();
     L.dist.mode = MANY_RHS;
 
     // The bottom front is already computed, so just view it
@@ -48,16 +47,17 @@ void clique::numeric::DistLDL
       bottomGrid );
 
     // Perform the distributed portion of the factorization
-    std::vector<int>::const_iterator it;
+    const unsigned numDistSupernodes = S.dist.supernodes.size();
     for( unsigned s=1; s<numDistSupernodes; ++s )
     {
         const DistSymmFactSupernode& childSN = S.dist.supernodes[s-1];
         const DistSymmFactSupernode& sn = S.dist.supernodes[s];
+        const int updateSize = sn.lowerStruct.size();
         DistSymmFront<F>& childFront = L.dist.fronts[s-1];
         DistSymmFront<F>& front = L.dist.fronts[s];
         front.work2d.Empty();
 #ifndef RELEASE
-        if( front.front2dL.Height() != sn.size+sn.lowerStruct.size() ||
+        if( front.front2dL.Height() != sn.size+updateSize ||
             front.front2dL.Width() != sn.size )
             throw std::logic_error("Front was not the proper size");
 #endif
@@ -75,20 +75,15 @@ void clique::numeric::DistLDL
 
         // Grab the child's grid information
         const Grid& childGrid = childFront.front2dL.Grid();
-        mpi::Comm childComm = childGrid.VCComm();
-        const unsigned childCommRank = mpi::CommRank( childComm );
-        const unsigned childCommSize = mpi::CommSize( childComm );
         const unsigned childGridHeight = childGrid.Height();
         const unsigned childGridWidth = childGrid.Width();
-        const unsigned childGridRow = childGrid.MCRank();
-        const unsigned childGridCol = childGrid.MRRank();
 
         // Pack our child's update
         const DistMatrix<F,MC,MR>& childUpdate = childFront.work2d;
         const bool isLeftChild = ( commRank < commSize/2 );
         std::vector<int> sendCounts(commSize), sendDispls(commSize);
         int sendBufferSize = 0;
-        for( int proc=0; proc<commSize; ++proc )
+        for( unsigned proc=0; proc<commSize; ++proc )
         {
             const int actualSend = sn.numChildFactSendIndices[proc];
             const int thisSend = std::max(actualSend,1);
@@ -101,7 +96,6 @@ void clique::numeric::DistLDL
         const std::vector<int>& myChildRelIndices = 
             ( isLeftChild ? sn.leftChildRelIndices
                           : sn.rightChildRelIndices );
-        const int updateRowAlignment = childUpdate.RowAlignment();
         const int updateColShift = childUpdate.ColShift();
         const int updateRowShift = childUpdate.RowShift();
         const int updateLocalHeight = childUpdate.LocalHeight();
@@ -131,7 +125,7 @@ void clique::numeric::DistLDL
             }
         }
 #ifndef RELEASE
-        for( int proc=0; proc<commSize; ++proc )
+        for( unsigned proc=0; proc<commSize; ++proc )
         {
             if( packOffsets[proc]-sendDispls[proc] != 
                 sn.numChildFactSendIndices[proc] )
@@ -148,7 +142,7 @@ void clique::numeric::DistLDL
             ComputeFactRecvIndices( sn, childSN );
         std::vector<int> recvCounts(commSize), recvDispls(commSize);
         int recvBufferSize = 0;
-        for( int proc=0; proc<commSize; ++proc )
+        for( unsigned proc=0; proc<commSize; ++proc )
         {
             const int actualRecv = sn.childFactRecvIndices[proc].size()/2;
             const int thisRecv = std::max(actualRecv,1);
@@ -163,7 +157,7 @@ void clique::numeric::DistLDL
         mpi::AllToAll
         ( &sendCounts[0],       1, 
           &actualRecvCounts[0], 1, comm );
-        for( int proc=0; proc<commSize; ++proc )
+        for( unsigned proc=0; proc<commSize; ++proc )
         {
             if( actualRecvCounts[proc] != recvCounts[proc] )
             {
@@ -189,12 +183,12 @@ void clique::numeric::DistLDL
         // Unpack the child udpates (with an Axpy)
         front.work2d.SetGrid( front.front2dL.Grid() );
         front.work2d.Align( sn.size%grid.Height(), sn.size%grid.Width() );
-        front.work2d.ResizeTo( sn.lowerStruct.size(), sn.lowerStruct.size() );
+        front.work2d.ResizeTo( updateSize, updateSize );
         front.work2d.SetToZero();
         const int leftLocalWidth = front.front2dL.LocalWidth();
         const int topLocalHeight = 
             elemental::LocalLength<int>( sn.size, grid.MCRank(), gridHeight );
-        for( int proc=0; proc<commSize; ++proc )
+        for( unsigned proc=0; proc<commSize; ++proc )
         {
             const F* recvValues = &recvBuffer[recvDispls[proc]];
             const std::deque<int>& recvIndices = sn.childFactRecvIndices[proc];
