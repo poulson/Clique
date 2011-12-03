@@ -79,7 +79,7 @@ void clique::numeric::LocalFrontLDL
                 AL21B, AL22.Width() );
         elemental::basic::Gemm
         ( NORMAL, orientation, (F)-1, S21, AL21T, (F)1, AL22 );
-        elemental::basic::internal::LocalTrrkNT
+        elemental::basic::internal::TrrkNT
         ( LOWER, orientation, (F)-1, S21B, AL21B, (F)1, ABR );
         //--------------------------------------------------------------------//
 
