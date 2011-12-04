@@ -124,6 +124,84 @@ routine from the following list:
    Sort a set of real eigenvalues and complex eigenvectors into non-decreasing
    order (based on the eigenvalues).
 
+Hermitian functions
+-------------------
+Reform the matrix with the eigenvalues modified by a user-defined function. 
+When the user-defined function is real-valued, the result will remain Hermitian,
+but when the function is complex-valued, the result is best characterized as 
+normal. 
+
+When the user-defined function, say :math:`f`, is analytic, we can say much
+more about the result: if the eigenvalue decomposition of the 
+Hermitian matrix :math:`A` is :math:`A=Z \Omega Z^H`, then
+
+.. math::
+
+   f(A) = f(Z \Omega Z^H) = Z f(\Omega) Z^H.
+
+Two important special cases are :math:`f(\lambda) = \exp(\lambda)` and 
+:math:`f(\lambda)=\exp(i \lambda)`, where the former results in a Hermitian 
+matrix and the latter in a normal (in fact, unitary) matrix.
+
+.. note:: 
+
+   Since Elemental currently depends on PMRRR for its tridiagonal 
+   eigensolver, only double-precision results are supported as of now.
+
+.. cpp:function:: void advanced::RealHermitianFunction( UpperOrLower uplo, DistMatrix<R,MC,MR>& A, const RealFunctor& f )
+
+   Modifies the eigenvalues of the passed-in real symmetric matrix by replacing 
+   each eigenvalue :math:`\omega_i` with :math:`f(\omega_i) \in \mathbb{R}`. 
+   ``RealFunctor`` is any 
+   class which has the member function ``R operator()( R omega ) const``.
+   See `examples/advanced/RealSymmetricFunction.cpp <../../../../examples/advanced/RealSymmetricFunction.cpp>`_ for an example usage.
+
+.. cpp:function:: void advanced::RealHermitianFunction( UpperOrLower uplo, DistMatrix<std::complex<R>,MC,MR>& A, const RealFunctor& f )
+
+   Modifies the eigenvalues of the passed-in complex Hermitian matrix by 
+   replacing each eigenvalue :math:`\omega_i` with 
+   :math:`f(\omega_i) \in \mathbb{R}`. 
+   ``RealFunctor`` can be any class which has the member function 
+   ``R operator()( R omega ) const``.
+   See `examples/advanced/RealHermitianFunction.cpp <../../../../examples/advanced/RealHermitianFunction.cpp>`_ for an example usage.
+
+.. cpp:function:: void advanced::ComplexHermitianFunction( UpperOrLower uplo, DistMatrix<std::complex<R>,MC,MR>& A, const ComplexFunctor& f )
+
+   Modifies the eigenvalues of the passed-in complex Hermitian matrix by
+   replacing each eigenvalue :math:`\omega_i` with 
+   :math:`f(\omega_i) \in \mathbb{C}`. ``ComplexFunctor`` can be any class
+   which has the member function ``std::complex<R> operator()( R omega ) const``.
+   See `examples/advanced/ComplexHermitianFunction.cpp <../../../../examples/advanced/ComplexHermitianFunction.cpp>`_ for an example usage.
+
+Hermitian pseudoinverse
+-----------------------
+Computes the pseudoinverse of a Hermitian matrix through a customized version of 
+``advanced::RealHermitianFunction`` which used the eigenvalue mapping function
+
+.. math::
+   :nowrap:
+
+   \[
+   f(\omega_i) = \left\{\begin{array}{cc} 
+     1/\omega_i, & |\omega_i| \ge \epsilon \, n \, ||A||_2 \\
+         0,      & \mbox{otherwise}
+   \end{array}\right.,
+   \]
+
+where :math:`\epsilon` is the relative machine precision, 
+:math:`n` is the height of :math:`A`, and :math:`||A||_2` can be computed
+as the maximum absolute value of the eigenvalues of :math:`A`.
+
+.. cpp:function:: advanced::HermitianPseudoinverse( UpperOrLower uplo, DistMatrix<R,MC,MR>& A )
+
+   Computes the pseudoinverse of a distributed real symmetric matrix with data 
+   stored in the `uplo` triangle.
+
+.. cpp:function:: advanced::HermitianPseudoinverse( UpperOrLower uplo, DistMatrix<std::complex<R>,MC,MR>& A )
+
+   Computes the pseudoinverse of a distributed complex Hermitian matrix with 
+   data stored in the `uplo` triangle.
+ 
 Skew-Hermitian eigensolver
 --------------------------
 **TODO:** Describe :math:`Gx=\lambda x` and ``advanced::SkewHermitianEig`` here.

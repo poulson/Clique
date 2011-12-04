@@ -553,6 +553,51 @@ void HermitianEig
 #endif // WITHOUT_PMRRR
 
 //----------------------------------------------------------------------------//
+// [Real/Complex]HermitianFunction                                            //
+//                                                                            //
+// Uses a Hermitian eigenvalue decomposition and the passed in functor to     //
+// modify the eigenvalues of the passed-in matrix.                            //
+//                                                                            //
+// When the functor's range is real, the resulting matrix will remain         //
+// Hermitian, but when the functor's range is complex, the matrix is only     //
+// normal (and hence the full matrix must be stored).                         //
+//----------------------------------------------------------------------------//
+
+#ifndef WITHOUT_PMRRR
+template<typename R,class RealFunctor>
+void RealHermitianFunction
+( UpperOrLower uplo, 
+  DistMatrix<R,MC,MR>& A, const RealFunctor& f );
+#ifndef WITHOUT_COMPLEX
+template<typename R,class RealFunctor>
+void RealHermitianFunction
+( UpperOrLower uplo, 
+  DistMatrix<std::complex<R>,MC,MR>& A, const RealFunctor& f );
+
+template<typename R,class ComplexFunctor>
+void ComplexHermitianFunction
+( UpperOrLower uplo, 
+  DistMatrix<std::complex<R>,MC,MR>& A, const ComplexFunctor& f );
+#endif // WITHOUT_COMPLEX
+#endif // WITHOUT_PMRRR
+
+//----------------------------------------------------------------------------//
+// HermitianPseudoinverse                                                     //
+//                                                                            //
+// Specializes RealHermitianFunction routine to compute the pseudoinverse.    //
+//----------------------------------------------------------------------------//
+
+#ifndef WITHOUT_PMRRR
+template<typename R>
+void HermitianPseudoinverse( UpperOrLower uplo, DistMatrix<R,MC,MR>& A );
+#ifndef WITHOUT_COMPLEX
+template<typename R>
+void HermitianPseudoinverse
+( UpperOrLower uplo, DistMatrix<std::complex<R>,MC,MR>& A );
+#endif // WITHOUT_COMPLEX
+#endif // WITHOUT_PMRRR
+
+//----------------------------------------------------------------------------//
 // HouseholderSolve:                                                          //
 //                                                                            //
 // Overwrite B with the solution of inv(A) B or inv(A)^H B, where A need not  //
@@ -1014,8 +1059,10 @@ void TriangularInverse
 #include "./advanced/GaussianElimination.hpp"
 #include "./advanced/Hegst.hpp"
 #include "./advanced/HermitianEig.hpp"
+#include "./advanced/HermitianFunction.hpp"
 #include "./advanced/HermitianGenDefiniteEig.hpp"
 #include "./advanced/HermitianNorm.hpp"
+#include "./advanced/HermitianPseudoinverse.hpp"
 #include "./advanced/HermitianTridiag.hpp"
 #include "./advanced/HouseholderSolve.hpp"
 #include "./advanced/HPDInverse.hpp"

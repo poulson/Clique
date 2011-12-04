@@ -31,27 +31,25 @@
    POSSIBILITY OF SUCH DAMAGE.
 */
 
-// Distributed C := alpha A^{T/H} B + beta C
+// Distributed E := alpha (A^{T/H} B + C^{T/H} D) + beta E
 template<typename T>
 inline void
-elemental::basic::internal::TrrkTN
+elemental::basic::internal::Trr2kTNTN
 ( UpperOrLower uplo,
-  Orientation orientationOfA,
-  T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C )
+  Orientation orientationOfA, Orientation orientationOfC,
+  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
+           const DistMatrix<T,MC,MR>& C, const DistMatrix<T,MC,MR>& D,
+  T beta,        DistMatrix<T,MC,MR>& E )
 {
 #ifndef RELEASE
-    PushCallStack("basic::internal::TrrkTN");
-    if( C.Height() != C.Width() ||
-        A.Width() != C.Height() || 
-        B.Width() != C.Width() ||
-        A.Height() != B.Height() )
-        throw std::logic_error("Nonconformal TrrkTN");
-    if( orientationOfA == NORMAL )
-        throw std::logic_error("Orientation must be ADJOINT or NORMAL");
+    PushCallStack("basic::internal::Trr2kTNTN");
+    if( E.Height() != E.Width()  || A.Height() != C.Height() ||
+        A.Width()  != E.Height() || C.Width()  != E.Height() ||
+        B.Width()  != E.Width()  || D.Width()  != E.Width()  ||
+        A.Height() != B.Height() || C.Height() != D.Height() )
+        throw std::logic_error("Nonconformal Trr2kTNTN");
 #endif
-    const Grid& g = C.Grid();
+    const Grid& g = E.Grid();
 
     DistMatrix<T,MC,MR> AT(g),  A0(g),
                         AB(g),  A1(g),
@@ -60,8 +58,17 @@ elemental::basic::internal::TrrkTN
                         BB(g),  B1(g),
                                 B2(g);
 
-    DistMatrix<T,STAR,MC> A1_STAR_MC(g);
-    DistMatrix<T,MR,STAR> B1Trans_MR_STAR(g);
+    DistMatrix<T,MC,MR> CT(g),  C0(g),
+                        CB(g),  C1(g),
+                                C2(g);
+    DistMatrix<T,MC,MR> DT(g),  D0(g),
+                        DB(g),  D1(g),
+                                D2(g);
+
+    DistMatrix<T,STAR,MC  > A1_STAR_MC(g);
+    DistMatrix<T,MR,  STAR> B1Trans_MR_STAR(g);
+    DistMatrix<T,STAR,MC  > C1_STAR_MC(g);
+    DistMatrix<T,MR,  STAR> D1Trans_MR_STAR(g);
 
     LockedPartitionDown
     ( A, AT,
@@ -69,6 +76,12 @@ elemental::basic::internal::TrrkTN
     LockedPartitionDown
     ( B, BT,
          BB, 0 );
+    LockedPartitionDown
+    ( C, CT,
+         CB, 0 );
+    LockedPartitionDown
+    ( D, DT,
+         DB, 0 );
     while( AT.Height() < A.Height() )
     {
         LockedRepartitionDown
@@ -81,19 +94,47 @@ elemental::basic::internal::TrrkTN
          /**/ /**/
                B1,
           BB,  B2 );
+        LockedRepartitionDown
+        ( CT,  C0,
+         /**/ /**/
+               C1,
+          CB,  C2 );
+        LockedRepartitionDown
+        ( DT,  D0,
+         /**/ /**/
+               D1,
+          DB,  D2 );
 
-        A1_STAR_MC.AlignWith( C );
-        B1Trans_MR_STAR.AlignWith( C );
+        A1_STAR_MC.AlignWith( E );
+        B1Trans_MR_STAR.AlignWith( E );
+        C1_STAR_MC.AlignWith( E );
+        D1Trans_MR_STAR.AlignWith( E );
         //--------------------------------------------------------------------//
         A1_STAR_MC = A1;
+        C1_STAR_MC = C1;
         B1Trans_MR_STAR.TransposeFrom( B1 );
-        basic::internal::LocalTrrk
-        ( uplo, orientationOfA, TRANSPOSE, 
-          alpha, A1_STAR_MC, B1Trans_MR_STAR, beta, C );
+        D1Trans_MR_STAR.TransposeFrom( D1 );
+        basic::internal::LocalTrr2k
+        ( uplo, orientationOfA, TRANSPOSE, orientationOfC, TRANSPOSE,
+          alpha, A1_STAR_MC, B1Trans_MR_STAR, 
+                 C1_STAR_MC, D1Trans_MR_STAR,
+          beta,  E );
         //--------------------------------------------------------------------//
+        D1Trans_MR_STAR.FreeAlignments();
+        C1_STAR_MC.FreeAlignments();
         B1Trans_MR_STAR.FreeAlignments();
         A1_STAR_MC.FreeAlignments();
 
+        SlideLockedPartitionDown
+        ( DT,  D0,
+               D1,
+         /**/ /**/
+          DB,  D2 );
+        SlideLockedPartitionDown
+        ( CT,  C0,
+               C1,
+         /**/ /**/
+          CB,  C2 );
         SlideLockedPartitionDown
         ( BT,  B0,
                B1,

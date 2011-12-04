@@ -31,24 +31,25 @@
    POSSIBILITY OF SUCH DAMAGE.
 */
 
-// Distributed C := alpha A B + beta C
+// Distributed E := alpha (A B + C D^{T/H}) + beta E
 template<typename T>
 inline void
-elemental::basic::internal::TrrkNN
+elemental::basic::internal::Trr2kNNNT
 ( UpperOrLower uplo,
-  T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C )
+  Orientation orientationOfD,
+  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
+           const DistMatrix<T,MC,MR>& C, const DistMatrix<T,MC,MR>& D,
+  T beta,        DistMatrix<T,MC,MR>& E )
 {
 #ifndef RELEASE
-    PushCallStack("basic::internal::TrrkNN");
-    if( C.Height() != C.Width() ||
-        A.Height() != C.Height() || 
-        B.Width() != C.Width() ||
-        A.Width() != B.Height() )
-        throw std::logic_error("Nonconformal TrrkNN");
+    PushCallStack("basic::internal::Trr2kNNNT");
+    if( E.Height() != E.Width()  || A.Width()  != C.Width()  ||
+        A.Height() != E.Height() || C.Height() != E.Height() ||
+        B.Width()  != E.Width()  || D.Height() != E.Width()  ||
+        A.Width()  != B.Height() || C.Width()  != D.Width() )
+        throw std::logic_error("Nonconformal Trr2kNNNT");
 #endif
-    const Grid& g = C.Grid();
+    const Grid& g = E.Grid();
 
     DistMatrix<T,MC,MR> AL(g), AR(g),
                         A0(g), A1(g), A2(g);
@@ -56,13 +57,23 @@ elemental::basic::internal::TrrkNN
                         BB(g),  B1(g),
                                 B2(g);
 
-    DistMatrix<T,MC,STAR> A1_MC_STAR(g);
-    DistMatrix<T,MR,STAR> B1Trans_MR_STAR(g);
+    DistMatrix<T,MC,MR> CL(g), CR(g),
+                        C0(g), C1(g), C2(g);
+    DistMatrix<T,MC,MR> DL(g), DR(g),
+                        D0(g), D1(g), D2(g);
+
+    DistMatrix<T,MC,  STAR> A1_MC_STAR(g);
+    DistMatrix<T,MR,  STAR> B1Trans_MR_STAR(g);
+    DistMatrix<T,MC,  STAR> C1_MC_STAR(g);
+    DistMatrix<T,VR,  STAR> D1_VR_STAR(g);
+    DistMatrix<T,STAR,MR  > D1AdjOrTrans_STAR_MR(g);
 
     LockedPartitionRight( A, AL, AR, 0 );
     LockedPartitionDown
     ( B, BT,
          BB, 0 );
+    LockedPartitionRight( C, CL, CR, 0 );
+    LockedPartitionRight( D, DL, DR, 0 );
     while( AL.Width() < A.Width() )
     {
         LockedRepartitionRight
@@ -73,18 +84,45 @@ elemental::basic::internal::TrrkNN
          /**/ /**/
                B1,
           BB,  B2 );
+        LockedRepartitionRight
+        ( CL, /**/ CR,
+          C0, /**/ C1, C2 );
+        LockedRepartitionRight
+        ( CL, /**/ CR,
+          C0, /**/ C1, C2 );
 
-        A1_MC_STAR.AlignWith( C );
-        B1Trans_MR_STAR.AlignWith( C );
+        A1_MC_STAR.AlignWith( E );
+        B1Trans_MR_STAR.AlignWith( E );
+        C1_MC_STAR.AlignWith( E );
+        D1_VR_STAR.AlignWith( E );
+        D1AdjOrTrans_STAR_MR.AlignWith( E );
         //--------------------------------------------------------------------//
         A1_MC_STAR = A1;
+        C1_MC_STAR = C1;
         B1Trans_MR_STAR.TransposeFrom( B1 );
-        basic::internal::LocalTrrk
-        ( uplo, TRANSPOSE, alpha, A1_MC_STAR, B1Trans_MR_STAR, beta, C );
+        D1_VR_STAR = D1;
+        if( orientationOfD == ADJOINT )
+            D1AdjOrTrans_STAR_MR.AdjointFrom( D1_VR_STAR );
+        else
+            D1AdjOrTrans_STAR_MR.TransposeFrom( D1_VR_STAR );
+        basic::internal::LocalTrr2k
+        ( uplo, TRANSPOSE, 
+          alpha, A1_MC_STAR, B1Trans_MR_STAR, 
+                 C1_MC_STAR, D1AdjOrTrans_STAR_MR,
+          beta,  E );
         //--------------------------------------------------------------------//
+        D1AdjOrTrans_STAR_MR.FreeAlignments();
+        D1_VR_STAR.FreeAlignments();
+        C1_MC_STAR.FreeAlignments();
         B1Trans_MR_STAR.FreeAlignments();
         A1_MC_STAR.FreeAlignments();
 
+        SlideLockedPartitionRight
+        ( DL,     /**/ DR,
+          D0, D1, /**/ D2 );
+        SlideLockedPartitionRight
+        ( CL,     /**/ CR,
+          C0, C1, /**/ C2 );
         SlideLockedPartitionDown
         ( BT,  B0,
                B1,
