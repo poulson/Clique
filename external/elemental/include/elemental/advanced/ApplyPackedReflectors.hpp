@@ -61,6 +61,13 @@ elemental::advanced::ApplyPackedReflectors
 #ifndef RELEASE
     PushCallStack("advanced::ApplyPackedReflectors");
 #endif
+    // Since the complex version does not have the same argument list, there is
+    // currently no good way to ensure that this version is not called with 
+    // complex datatypes. Until C++11 compilers are commonplace, we cannot
+    // use static_assert either.
+    if( IsComplex<R>::val )
+        throw std::logic_error("Called real routine with complex datatype");
+
     if( side == LEFT )
     {
         if( uplo == LOWER )
@@ -116,7 +123,6 @@ elemental::advanced::ApplyPackedReflectors
 #endif
 }
 
-#ifndef WITHOUT_COMPLEX
 template<typename R> // representation of a real number
 inline void
 elemental::advanced::ApplyPackedReflectors
@@ -225,4 +231,3 @@ elemental::advanced::ApplyPackedReflectors
     PopCallStack();
 #endif
 }
-#endif // WITHOUT_COMPLEX

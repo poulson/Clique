@@ -31,51 +31,34 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 cmake_minimum_required(VERSION 2.8.5)
+
 project(Elemental)
-
 set(Elemental_VERSION_MAJOR 0)
-set(Elemental_VERSION_MINOR 71)
+set(Elemental_VERSION_MINOR 72)
 
-# Check if an in-source build was attempted
+# Complain if an in-source build was attempted
 if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
   message(FATAL_ERROR "In-source build attempted; please clean the CMake cache and then switch to an out-of-source build, e.g., rm CMakeCache.txt && rm -Rf CMakeFiles/ && mkdir build/ && cd build/ && cmake ..")
 endif("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
 
-if(NOT CMAKE_BUILD_TYPE)
-  message(STATUS "Build mode not specified, defaulting to PureRelease build.")
-  set(CMAKE_BUILD_TYPE PureRelease)
-else(NOT CMAKE_BUILD_TYPE)
-  if(NOT (CMAKE_BUILD_TYPE MATCHES HybridDebug) AND
-     NOT (CMAKE_BUILD_TYPE MATCHES HybridRelease) AND 
-     NOT (CMAKE_BUILD_TYPE MATCHES PureDebug) AND
-     NOT (CMAKE_BUILD_TYPE MATCHES PureRelease))
-    message(
-      FATAL_ERROR 
-      "CMAKE_BUILD_TYPE must be in {HybridDebug,HybridRelease,PureDebug,PureRelease}"
-    )
-  endif(NOT (CMAKE_BUILD_TYPE MATCHES HybridDebug) AND
-        NOT (CMAKE_BUILD_TYPE MATCHES HybridRelease) AND 
-        NOT (CMAKE_BUILD_TYPE MATCHES PureDebug) AND
-        NOT (CMAKE_BUILD_TYPE MATCHES PureRelease))
-endif(NOT CMAKE_BUILD_TYPE)
-
-option(BUILD_EXAMPLES "Build the examples" OFF)
+option(BUILD_EXAMPLES "Build the examples" ON)
 option(BUILD_TESTS "Build a collection of test executables" OFF)
+
+# Do not attempt to build PMRRR if on a Windows platform (it requires pthreads)
 if(WIN32)
   option(BUILD_PMRRR "Build and link against eigensolver PMRRR" OFF)
 else(WIN32)
   option(BUILD_PMRRR "Build and link against eigensolver PMRRR" ON)
 endif(WIN32)
 
-option(WITHOUT_COMPLEX "Avoid all usage of complex numbers" OFF)
-if(NOT WITHOUT_COMPLEX)
-  option(AVOID_COMPLEX_MPI "Avoid complex MPI routines for robustness" ON)
-endif(NOT WITHOUT_COMPLEX)
+# Bugs in the complex version of MPI routines are quite common
+option(AVOID_COMPLEX_MPI "Avoid complex MPI routines for robustness" ON)
 
 # Bug fix for Darwin g++ compiler throwing an internal compiler error.
 # It seems to have somehow been circumvented after pulling most of the library
 # into header files.
 option(DISABLE_SCALAR_WRAPPER "Avoid pretty-printing of complex numbers" OFF)
+mark_as_advanced(DISABLE_SCALAR_WRAPPER)
 
 # Bug fix for IBM's compiler miscompiling OpenMP a[i] += alpha b[i] statements
 # for complex datatypes
@@ -87,22 +70,35 @@ mark_as_advanced(AVOID_OMP_FMA)
 option(USE_BYTE_ALLGATHERS "Avoid BG/P Allgather performance bug." ON)
 mark_as_advanced(USE_BYTE_ALLGATHERS)
 
-# This is mainly useful for the library developers
-option(CACHE_WARNINGS "Warns when using cache-unfriendly routines" OFF)
-mark_as_advanced(CACHE_WARNINGS)
-
-# This is mainly useful for the library developers
-option(UNALIGNED_WARNINGS "Warn when performing unaligned redistributions" OFF)
-mark_as_advanced(UNALIGNED_WARNINGS)
-
-# This is mainly useful for the library developers
-option(VECTOR_WARNINGS "Warn when vector redistribution chances are missed" OFF)
-mark_as_advanced(VECTOR_WARNINGS)
-
 # This can easily be performed, but is likely not a good idea
 option(POOL_MEMORY "Make Memory class accumulate memory until destruction" OFF)
 mark_as_advanced(POOL_MEMORY)
 
+# These are mainly useful for library developers
+option(CACHE_WARNINGS "Warns when using cache-unfriendly routines" OFF)
+option(UNALIGNED_WARNINGS "Warn when performing unaligned redistributions" OFF)
+option(VECTOR_WARNINGS "Warn when vector redistribution chances are missed" OFF)
+mark_as_advanced(CACHE_WARNINGS)
+mark_as_advanced(UNALIGNED_WARNINGS)
+mark_as_advanced(VECTOR_WARNINGS)
+
+# Ensure that we have a valid build type
+if(NOT CMAKE_BUILD_TYPE)
+  message(STATUS "Build mode not specified, defaulting to PureRelease build.")
+  set(CMAKE_BUILD_TYPE PureRelease)
+else(NOT CMAKE_BUILD_TYPE)
+  if(NOT (CMAKE_BUILD_TYPE MATCHES HybridDebug) AND
+     NOT (CMAKE_BUILD_TYPE MATCHES HybridRelease) AND 
+     NOT (CMAKE_BUILD_TYPE MATCHES PureDebug) AND
+     NOT (CMAKE_BUILD_TYPE MATCHES PureRelease))
+    message(FATAL_ERROR "CMAKE_BUILD_TYPE must be [Hybrid,Pure][Debug,Release]")
+  endif(NOT (CMAKE_BUILD_TYPE MATCHES HybridDebug) AND
+        NOT (CMAKE_BUILD_TYPE MATCHES HybridRelease) AND 
+        NOT (CMAKE_BUILD_TYPE MATCHES PureDebug) AND
+        NOT (CMAKE_BUILD_TYPE MATCHES PureRelease))
+endif(NOT CMAKE_BUILD_TYPE)
+
+# Extract a few booleans from the build type
 if(CMAKE_BUILD_TYPE STREQUAL "HybridDebug")
   set(HYBRID TRUE)
   set(DEBUG TRUE)
@@ -124,6 +120,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "PureRelease")
   set(PURE_RELEASE TRUE)   
 endif(CMAKE_BUILD_TYPE STREQUAL "PureRelease")
 
+# Set the basic compile flags from the build type
 if(NOT WIN32)
   if(HYBRID_DEBUG AND NOT CXX_HYBRID_DEBUG_FLAGS)
     set(CXX_HYBRID_DEBUG_FLAGS "-O2 -g" CACHE STRING
@@ -143,12 +140,14 @@ if(NOT WIN32)
   endif(PURE_RELEASE AND NOT CXX_PURE_RELEASE_FLAGS)
 endif(NOT WIN32)
 
+# Make sure that MPI is available
 find_package(MPI)
 if(NOT MPI_CXX_FOUND)
   message(FATAL_ERROR "MPI C++ compiler was not found and is required")
 endif(NOT MPI_CXX_FOUND)
 include_directories(${MPI_CXX_INCLUDE_PATH})
 
+# Search for OpenMP if necessary
 if(HYBRID)
   if(OpenMP_CXX_FLAGS)
     set(HAVE_OPENMP TRUE)
@@ -168,6 +167,7 @@ if(HYBRID)
   endif(OpenMP_CXX_FLAGS)
 endif(HYBRID)
 
+# Append MPI and OpenMP compile flags as necessary
 set(CMAKE_CXX_FLAGS_HYBRIDDEBUG 
     "${CXX_HYBRID_DEBUG_FLAGS} ${OpenMP_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")
 set(CMAKE_CXX_FLAGS_HYBRIDRELEASE 
@@ -403,11 +403,14 @@ else(HAVE___restrict__)
   endif(HAVE___restrict)
 endif(HAVE___restrict__)
 
+# Add the Parallel Linear Congruential Generator (PLCG) project
 add_subdirectory(external/plcg)
+
+# Add the Parallel Multiple Relatively Robust Representations (PMRRR) project
+# if necessary
 if(BUILD_PMRRR)
   add_subdirectory(external/pmrrr)
 endif(BUILD_PMRRR)
-
 if(BUILD_PMRRR AND NOT FAILED_PMRRR)
   set(WITHOUT_PMRRR FALSE)
 else(BUILD_PMRRR AND NOT FAILED_PMRRR)
@@ -528,20 +531,6 @@ if(BUILD_TESTS)
     endif(MPI_LINK_FLAGS)
     install(TARGETS tests-advanced-${TEST} DESTINATION bin/tests/advanced)
   endforeach(TEST)
-  # Build the export tests
-  set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/tests/exports/c")
-  foreach(TEST ${EXPORT_TESTS})
-    add_executable(tests-exports-${TEST} ${TEST_DIR}/exports/${TEST}.c)
-    target_link_libraries(tests-exports-${TEST} elemental cmake-dummy-lib)
-    set_target_properties(tests-exports-${TEST} PROPERTIES
-                          OUTPUT_NAME ${TEST}
-                          RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
-    if(MPI_LINK_FLAGS)
-      set_target_properties(tests-exports-${TEST} PROPERTIES
-                            LINK_FLAGS ${MPI_LINK_FLAGS})
-    endif(MPI_LINK_FLAGS)
-    install(TARGETS tests-exports-c-${TEST} DESTINATION bin/tests/exports/c)
-  endforeach(TEST)
 endif(BUILD_TESTS)
 
 # Build the example drivers if necessary
@@ -549,15 +538,15 @@ if(BUILD_EXAMPLES)
   set(EXAMPLE_DIR ${PROJECT_SOURCE_DIR}/examples)
 
   set(CORE_EXAMPLES Identity Random)
-  set(ADVANCED_EXAMPLES)
+  set(ADVANCED_EXAMPLES GaussianElimination)
 
   if(BUILD_PMRRR AND NOT FAILED_PMRRR)
-    if(NOT WITHOUT_COMPLEX)
-      list(APPEND ADVANCED_EXAMPLES HermitianEig 
-                                    ComplexHermitianFunction 
-                                    RealHermitianFunction
-                                    HermitianPseudoinverse )
-    endif(NOT WITHOUT_COMPLEX)
+    list(APPEND ADVANCED_EXAMPLES HermitianEig 
+                                  ComplexHermitianFunction 
+                                  RealHermitianFunction
+                                  HermitianPseudoinverse
+                                  HPSDCholesky
+                                  SquareRoot)
     list(APPEND ADVANCED_EXAMPLES SymmetricEig RealSymmetricFunction)
   endif(BUILD_PMRRR AND NOT FAILED_PMRRR)
 
@@ -613,6 +602,5 @@ set(BLAS_POST ${BLAS_POST} PARENT_SCOPE)
 set(LAPACK_POST ${LAPACK_POST} PARENT_SCOPE)
 set(WITHOUT_PMRRR ${WITHOUT_PMRRR} PARENT_SCOPE)
 set(DISABLE_SCALAR_WRAPPER ${DISABLE_SCALAR_WRAPPER} PARENT_SCOPE)
-set(WITHOUT_COMPLEX ${WITHOUT_COMPLEX} PARENT_SCOPE)
 set(AVOID_COMPLEX_MPI ${AVOID_COMPLEX_MPI} PARENT_SCOPE)
 set(USE_BYTE_ALLGATHERS ${USE_BYTE_ALLGATHERS} PARENT_SCOPE)

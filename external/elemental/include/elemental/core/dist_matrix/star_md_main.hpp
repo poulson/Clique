@@ -33,9 +33,386 @@
 
 namespace elemental {
 
-template<typename T>
+template<typename T,typename Int>
+inline
+DistMatrix<T,STAR,MD,Int>::DistMatrix( const elemental::Grid& g )
+: AbstractDistMatrix<T,Int>
+  (0,0,false,false,0,0,
+   0,
+   (g.InGrid() && g.DiagPath()==g.DiagPath(0) ?
+    Shift(g.DiagPathRank(),g.DiagPathRank(0),g.LCM()) : 0),
+   0,0,g)
+{ inDiagonal_ = ( g.InGrid() && g.DiagPath()==g.DiagPath(0) ); }
+
+template<typename T,typename Int>
+inline
+DistMatrix<T,STAR,MD,Int>::DistMatrix
+( Int height, Int width, const elemental::Grid& g )
+: AbstractDistMatrix<T,Int>
+  (height,width,false,false,0,0,
+   0,
+   (g.InGrid() && g.DiagPath()==g.DiagPath(0) ?
+    Shift(g.DiagPathRank(),g.DiagPathRank(0),g.LCM()) : 0),
+   height,
+   (g.InGrid() && g.DiagPath()==g.DiagPath(0) ?
+    LocalLength(width,g.DiagPathRank(),g.DiagPathRank(0),g.LCM()) : 0),
+   g)
+{ inDiagonal_ = ( g.InGrid() && g.DiagPath()==g.DiagPath(0) ); }
+
+template<typename T,typename Int>
+inline
+DistMatrix<T,STAR,MD,Int>::DistMatrix
+( bool constrainedRowAlignment, Int rowAlignment, const elemental::Grid& g )
+: AbstractDistMatrix<T,Int>
+  (0,0,false,constrainedRowAlignment,0,rowAlignment,
+   0,
+   (g.InGrid() && g.DiagPath()==g.DiagPath(rowAlignment) ?
+    Shift(g.DiagPathRank(),g.DiagPathRank(rowAlignment),g.LCM()) : 0),
+   0,0,g)
+{ inDiagonal_ = ( g.InGrid() && g.DiagPath()==g.DiagPath(rowAlignment) ); }
+
+template<typename T,typename Int>
+inline
+DistMatrix<T,STAR,MD,Int>::DistMatrix
+( Int height, Int width, bool constrainedRowAlignment, Int rowAlignment,
+  const elemental::Grid& g )
+: AbstractDistMatrix<T,Int>
+  (height,width,false,constrainedRowAlignment,0,rowAlignment,
+   0,
+   (g.InGrid() && g.DiagPath()==g.DiagPath(rowAlignment) ?
+    Shift(g.DiagPathRank(),g.DiagPathRank(rowAlignment),g.LCM()) : 0),
+   height,
+   (g.InGrid() && g.DiagPath()==g.DiagPath(rowAlignment) ?
+    LocalLength(width,g.DiagPathRank(),g.DiagPathRank(rowAlignment),g.LCM()) :
+    0),
+   g)
+{ inDiagonal_ = ( g.InGrid() && g.DiagPath()==g.DiagPath(rowAlignment) ); }
+
+template<typename T,typename Int>
+inline
+DistMatrix<T,STAR,MD,Int>::DistMatrix
+( Int height, Int width, bool constrainedRowAlignment, Int rowAlignment,
+  Int ldim, const elemental::Grid& g )
+: AbstractDistMatrix<T,Int>
+  (height,width,false,constrainedRowAlignment,0,rowAlignment,
+   0,
+   (g.InGrid() && g.DiagPath()==g.DiagPath(rowAlignment) ?
+    Shift(g.DiagPathRank(),g.DiagPathRank(rowAlignment),g.LCM()) : 0),
+   height,
+   (g.InGrid() && g.DiagPath()==g.DiagPath(rowAlignment) ?
+    LocalLength(width,g.DiagPathRank(),g.DiagPathRank(rowAlignment),g.LCM()) :
+    0),
+   ldim,g)
+{ inDiagonal_ = ( g.InGrid() && g.DiagPath()==g.DiagPath(rowAlignment) ); }
+
+template<typename T,typename Int>
+inline
+DistMatrix<T,STAR,MD,Int>::DistMatrix
+( Int height, Int width, Int rowAlignment, const T* buffer, Int ldim,
+  const elemental::Grid& g )
+: AbstractDistMatrix<T,Int>
+  (height,width,0,rowAlignment,
+   0,
+   (g.InGrid() && g.DiagPath()==g.DiagPath(rowAlignment) ?
+    Shift(g.DiagPathRank(),g.DiagPathRank(rowAlignment),g.LCM()) : 0),
+   height,
+   (g.InGrid() && g.DiagPath()==g.DiagPath(rowAlignment) ?
+    LocalLength(width,g.DiagPathRank(),g.DiagPathRank(rowAlignment),g.LCM()) :
+    0),
+   buffer,ldim,g)
+{ inDiagonal_ = ( g.InGrid() && g.DiagPath()==g.DiagPath(rowAlignment) ); }
+
+template<typename T,typename Int>
+inline
+DistMatrix<T,STAR,MD,Int>::DistMatrix
+( Int height, Int width, Int rowAlignment, T* buffer, Int ldim,
+  const elemental::Grid& g )
+: AbstractDistMatrix<T,Int>
+  (height,width,0,rowAlignment,
+   0,
+   (g.InGrid() && g.DiagPath()==g.DiagPath(rowAlignment) ?
+    Shift(g.DiagPathRank(),g.DiagPathRank(rowAlignment),g.LCM()) : 0),
+   height,
+   (g.InGrid() && g.DiagPath()==g.DiagPath(rowAlignment) ?
+    LocalLength(width,g.DiagPathRank(),g.DiagPathRank(rowAlignment),g.LCM()) :
+    0),
+   buffer,ldim,g)
+{ inDiagonal_ = ( g.InGrid() && g.DiagPath()==g.DiagPath(rowAlignment) ); }
+
+template<typename T,typename Int>
+template<Distribution U,Distribution V>
+inline
+DistMatrix<T,STAR,MD,Int>::DistMatrix( const DistMatrix<T,U,V,Int>& A )
+: AbstractDistMatrix<T,Int>(0,0,false,false,0,0,0,0,0,0,A.Grid())
+{
+#ifndef RELEASE
+    PushCallStack("DistMatrix[* ,MD]::DistMatrix");
+#endif
+    if( STAR != U || MD != V || 
+        reinterpret_cast<const DistMatrix<T,STAR,MD,Int>*>(&A) != this )
+        *this = A;
+    else
+        throw std::logic_error("Tried to construct [* ,MD] with itself");
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename T,typename Int>
+inline
+DistMatrix<T,STAR,MD,Int>::~DistMatrix()
+{ }
+
+template<typename T,typename Int>
 inline void
-DistMatrix<T,STAR,MD>::PrintBase
+DistMatrix<T,STAR,MD,Int>::SetGrid( const elemental::Grid& g )
+{
+    this->Empty();
+    this->grid_ = &g;
+    this->rowAlignment_ = 0;
+    if( g.InGrid() && g.DiagPath()==g.DiagPath(0) )
+    {
+        inDiagonal_ = true;
+        this->rowShift_ = Shift(g.DiagPathRank(),g.DiagPathRank(0),g.LCM());
+    }
+    else
+        inDiagonal_ = false;
+}
+
+template<typename T,typename Int>
+inline bool
+DistMatrix<T,STAR,MD,Int>::InDiagonal() const
+{ return inDiagonal_; }
+
+template<typename T,typename Int>
+template<typename S,typename N>
+inline void
+DistMatrix<T,STAR,MD,Int>::AlignWith( const DistMatrix<S,STAR,MD,N>& A )
+{
+#ifndef RELEASE
+    PushCallStack("[* ,MD]::AlignWith([* ,MD])");
+    this->AssertFreeRowAlignment();
+    this->AssertSameGrid( A );
+#endif
+    this->rowAlignment_ = A.RowAlignment();
+    this->inDiagonal_   = A.InDiagonal();
+    if( this->InDiagonal() )
+        this->rowShift_ = A.RowShift();
+    this->constrainedRowAlignment_ = true;
+    this->height_ = 0;
+    this->width_ = 0;
+    this->localMatrix_.ResizeTo( 0, 0 );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename T,typename Int>
+template<typename S,typename N>
+inline void
+DistMatrix<T,STAR,MD,Int>::AlignWith( const DistMatrix<S,MD,STAR,N>& A )
+{
+#ifndef RELEASE
+    PushCallStack("[* ,MD]::AlignWith([MD,* ])");
+    this->AssertFreeRowAlignment();
+    this->AssertSameGrid( A );
+#endif
+    this->rowAlignment_ = A.ColAlignment();
+    this->inDiagonal_   = A.InDiagonal();
+    if( this->InDiagonal() )
+        this->rowShift_ = A.ColShift();
+    this->constrainedRowAlignment_ = true;
+    this->height_ = 0;
+    this->width_ = 0;
+    this->localMatrix_.ResizeTo( 0, 0 );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename T,typename Int>
+template<typename S,typename N>
+inline void
+DistMatrix<T,STAR,MD,Int>::AlignRowsWith( const DistMatrix<S,STAR,MD,N>& A )
+{ AlignWith( A ); }
+
+template<typename T,typename Int>
+template<typename S,typename N>
+inline void
+DistMatrix<T,STAR,MD,Int>::AlignRowsWith( const DistMatrix<S,MD,STAR,N>& A )
+{ AlignWith( A ); }
+
+template<typename T,typename Int>
+template<typename S,typename N>
+inline bool
+DistMatrix<T,STAR,MD,Int>::AlignedWithDiagonal
+( const DistMatrix<S,MC,MR,N>& A, Int offset ) const
+{
+#ifndef RELEASE
+    PushCallStack("[* ,MD]::AlignedWithDiagonal([MC,MR])");
+    this->AssertSameGrid( A );
+#endif
+    const elemental::Grid& g = this->Grid();
+    const Int r = g.Height();
+    const Int c = g.Width();
+    const Int colAlignment = A.ColAlignment();
+    const Int rowAlignment = A.RowAlignment();
+    bool aligned;
+
+    if( offset >= 0 )
+    {
+        const Int ownerRow = colAlignment;
+        const Int ownerCol = (rowAlignment + offset) % c;
+        aligned = ( this->RowAlignment() == ownerRow + r*ownerCol );
+    }
+    else
+    {
+        const Int ownerRow = (colAlignment-offset) % r;
+        const Int ownerCol = rowAlignment;
+        aligned = ( this->RowAlignment() == ownerRow + r*ownerCol );
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return aligned;
+}
+
+template<typename T,typename Int>
+template<typename S,typename N>
+inline bool
+DistMatrix<T,STAR,MD,Int>::AlignedWithDiagonal
+( const DistMatrix<S,MR,MC,N>& A, Int offset ) const
+{
+#ifndef RELEASE
+    PushCallStack("[* ,MD]::AlignedWithDiagonal([MR,MC])");
+    this->AssertSameGrid( A );
+#endif
+    const elemental::Grid& g = this->Grid();
+    const Int r = g.Height();
+    const Int c = g.Width();
+    const Int colAlignment = A.ColAlignment();
+    const Int rowAlignment = A.RowAlignment();
+    bool aligned;
+
+    if( offset >= 0 )
+    {
+        const Int ownerRow = rowAlignment;
+        const Int ownerCol = (colAlignment + offset) % c;
+        aligned = ( this->RowAlignment() == ownerRow + r*ownerCol );
+    }
+    else
+    {
+        const Int ownerRow = (rowAlignment-offset) % r;
+        const Int ownerCol = colAlignment;
+        aligned = ( this->RowAlignment() == ownerRow + r*ownerCol );
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return aligned;
+}
+
+template<typename T,typename Int>
+template<typename S,typename N>
+inline void
+DistMatrix<T,STAR,MD,Int>::AlignWithDiagonal
+( const DistMatrix<S,MC,MR,N>& A, Int offset )
+{
+#ifndef RELEASE
+    PushCallStack("[* ,MD]::AlignWithDiagonal([MC,MR])");
+    this->AssertFreeRowAlignment();
+    this->AssertSameGrid( A );
+#endif
+    const elemental::Grid& g = this->Grid();
+    const Int r = g.Height();
+    const Int c = g.Width();
+    const Int lcm = g.LCM();
+    const Int colAlignment = A.ColAlignment();
+    const Int rowAlignment = A.RowAlignment();
+
+    if( offset >= 0 )
+    {
+        const Int ownerRow = colAlignment;
+        const Int ownerCol = (rowAlignment + offset) % c;
+        this->rowAlignment_ = ownerRow + r*ownerCol;
+        this->inDiagonal_ =
+            ( g.DiagPath() == g.DiagPath( this->RowAlignment() ) );
+    }
+    else
+    {
+        const Int ownerRow = (colAlignment-offset) % r;
+        const Int ownerCol = rowAlignment;
+        this->rowAlignment_ = ownerRow + r*ownerCol;
+        this->inDiagonal_ =
+            ( g.DiagPath() == g.DiagPath( this->RowAlignment() ) );
+    }
+    if( this->InDiagonal() )
+    {
+        this->rowShift_ =
+            ( g.DiagPathRank() + lcm -
+              g.DiagPathRank( this->RowAlignment() ) ) % lcm;
+    }
+    this->constrainedRowAlignment_ = true;
+    this->height_ = 0;
+    this->width_ = 0;
+    this->localMatrix_.ResizeTo( 0, 0 );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename T,typename Int>
+template<typename S,typename N>
+inline void
+DistMatrix<T,STAR,MD,Int>::AlignWithDiagonal
+( const DistMatrix<S,MR,MC,N>& A, Int offset )
+{
+#ifndef RELEASE
+    PushCallStack("[* ,MD]::AlignWithDiagonal([MR,MC])");
+    this->AssertFreeRowAlignment();
+    this->AssertSameGrid( A );
+#endif
+    const elemental::Grid& g = this->Grid();
+    const Int r = g.Height();
+    const Int c = g.Width();
+    const Int lcm = g.LCM();
+    const Int colAlignment = A.ColAlignment();
+    const Int rowAlignment = A.RowAlignment();
+
+    if( offset >= 0 )
+    {
+        const Int ownerRow = rowAlignment;
+        const Int ownerCol = (colAlignment + offset) % c;
+        this->rowAlignment_ = ownerRow + r*ownerCol;
+        this->inDiagonal_ =
+            ( g.DiagPath() == g.DiagPath( this->RowAlignment() ) );
+    }
+    else
+    {
+        const Int ownerRow = (rowAlignment-offset) % r;
+        const Int ownerCol = colAlignment;
+        this->rowAlignment_ = ownerRow + r*ownerCol;
+        this->inDiagonal_ =
+            ( g.DiagPath() == g.DiagPath( this->RowAlignment() ) );
+    }
+    if( this->InDiagonal() )
+    {
+        this->rowShift_ =
+            ( g.DiagPathRank() + lcm -
+              g.DiagPathRank( this->RowAlignment() ) ) % lcm;
+    }
+    this->constrainedRowAlignment_ = true;
+    this->height_ = 0;
+    this->width_ = 0;
+    this->localMatrix_.ResizeTo( 0, 0 );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename T,typename Int>
+inline void
+DistMatrix<T,STAR,MD,Int>::PrintBase
 ( std::ostream& os, const std::string msg ) const
 {
 #ifndef RELEASE
@@ -44,11 +421,11 @@ DistMatrix<T,STAR,MD>::PrintBase
     if( this->Grid().VCRank() == 0 && msg != "" )
         os << msg << std::endl;
         
-    const int height     = this->Height();
-    const int width      = this->Width();
-    const int localWidth = this->LocalWidth();
-    const int lcm        = this->Grid().LCM();
-    const int inDiagonal = this->InDiagonal();
+    const Int height     = this->Height();
+    const Int width      = this->Width();
+    const Int localWidth = this->LocalWidth();
+    const Int lcm        = this->Grid().LCM();
+    const Int inDiagonal = this->InDiagonal();
 
     if( height == 0 || width == 0 )
     {
@@ -61,14 +438,14 @@ DistMatrix<T,STAR,MD>::PrintBase
     std::vector<T> sendBuf(height*width,0);
     if( inDiagonal )
     {
-        const int colShift = this->ColShift();
+        const Int colShift = this->ColShift();
         const T* thisLocalBuffer = this->LockedLocalBuffer();
-        const int thisLDim = this->LocalLDim();
+        const Int thisLDim = this->LocalLDim();
 #ifdef _OPENMP
         #pragma omp parallel for COLLAPSE(2)
 #endif
-        for( int i=0; i<height; ++i )
-            for( int jLocal=0; jLocal<localWidth; ++jLocal )
+        for( Int i=0; i<height; ++i )
+            for( Int jLocal=0; jLocal<localWidth; ++jLocal )
                 sendBuf[(colShift+i)+jLocal*lcm*height] = 
                     thisLocalBuffer[i+jLocal*thisLDim];
     }
@@ -86,9 +463,9 @@ DistMatrix<T,STAR,MD>::PrintBase
     if( this->Grid().VCRank() == 0 )
     {
         // Print the data
-        for( int i=0; i<height; ++i )
+        for( Int i=0; i<height; ++i )
         {
-            for( int j=0; j<width; ++j )
+            for( Int j=0; j<width; ++j )
                 os << WrapScalar(recvBuf[i+j*height]) << " ";
             os << "\n";
         }
@@ -99,9 +476,9 @@ DistMatrix<T,STAR,MD>::PrintBase
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 inline void
-DistMatrix<T,STAR,MD>::Align( int rowAlignment )
+DistMatrix<T,STAR,MD,Int>::Align( Int rowAlignment )
 {
 #ifndef RELEASE
     PushCallStack("[STAR,MD]::Align");
@@ -113,9 +490,9 @@ DistMatrix<T,STAR,MD>::Align( int rowAlignment )
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 inline void
-DistMatrix<T,STAR,MD>::AlignRows( int rowAlignment )
+DistMatrix<T,STAR,MD,Int>::AlignRows( Int rowAlignment )
 {
 #ifndef RELEASE
     PushCallStack("[STAR,MD]::AlignRows");
@@ -139,9 +516,9 @@ DistMatrix<T,STAR,MD>::AlignRows( int rowAlignment )
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 inline void
-DistMatrix<T,STAR,MD>::View( DistMatrix<T,STAR,MD>& A )
+DistMatrix<T,STAR,MD,Int>::View( DistMatrix<T,STAR,MD,Int>& A )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::View");
@@ -165,11 +542,11 @@ DistMatrix<T,STAR,MD>::View( DistMatrix<T,STAR,MD>& A )
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 inline void
-DistMatrix<T,STAR,MD>::View
-( int height, int width, int rowAlignment,
-  T* buffer, int ldim, const elemental::Grid& grid )
+DistMatrix<T,STAR,MD,Int>::View
+( Int height, Int width, Int rowAlignment,
+  T* buffer, Int ldim, const elemental::Grid& grid )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::View");
@@ -188,7 +565,7 @@ DistMatrix<T,STAR,MD>::View
             Shift(grid.DiagPathRank(),
                   grid.DiagPathRank(rowAlignment),
                   grid.LCM());
-        const int localWidth = LocalLength(width,this->rowShift_,grid.LCM());
+        const Int localWidth = LocalLength(width,this->rowShift_,grid.LCM());
         this->localMatrix_.View( height, localWidth, buffer, ldim );
     }
     this->viewing_ = true;
@@ -198,9 +575,9 @@ DistMatrix<T,STAR,MD>::View
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 inline void
-DistMatrix<T,STAR,MD>::LockedView( const DistMatrix<T,STAR,MD>& A )
+DistMatrix<T,STAR,MD,Int>::LockedView( const DistMatrix<T,STAR,MD,Int>& A )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::LockedView");
@@ -224,11 +601,11 @@ DistMatrix<T,STAR,MD>::LockedView( const DistMatrix<T,STAR,MD>& A )
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 inline void
-DistMatrix<T,STAR,MD>::LockedView
-( int height, int width, int rowAlignment,
-  const T* buffer, int ldim, const elemental::Grid& grid )
+DistMatrix<T,STAR,MD,Int>::LockedView
+( Int height, Int width, Int rowAlignment,
+  const T* buffer, Int ldim, const elemental::Grid& grid )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::LockedView");
@@ -247,7 +624,7 @@ DistMatrix<T,STAR,MD>::LockedView
             Shift(grid.DiagPathRank(),
                   grid.DiagPathRank(rowAlignment),
                   grid.LCM());
-        const int localWidth = LocalLength(width,this->rowShift_,grid.LCM());
+        const Int localWidth = LocalLength(width,this->rowShift_,grid.LCM());
         this->localMatrix_.LockedView( height, localWidth, buffer, ldim );
     }
     this->viewing_ = true;
@@ -257,10 +634,10 @@ DistMatrix<T,STAR,MD>::LockedView
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 inline void
-DistMatrix<T,STAR,MD>::View
-( DistMatrix<T,STAR,MD>& A, int i, int j, int height, int width )
+DistMatrix<T,STAR,MD,Int>::View
+( DistMatrix<T,STAR,MD,Int>& A, Int i, Int j, Int height, Int width )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::View");
@@ -273,16 +650,16 @@ DistMatrix<T,STAR,MD>::View
     this->width_  = width;
     {
         const elemental::Grid& g = this->Grid();
-        const int r = g.Height();
-        const int c = g.Width();
-        const int lcm = g.LCM();
-        const int diagPathRank = g.DiagPathRank(); 
-        const int alignmentRank = A.RowAlignment();
-        const int alignmentRow = alignmentRank % r;
-        const int alignmentCol = alignmentRank / r;
-        const int newAlignmentRow = (alignmentRow + i) % r;
-        const int newAlignmentCol = (alignmentCol + i) % c;
-        const int newAlignmentRank = newAlignmentRow + r*newAlignmentCol;
+        const Int r = g.Height();
+        const Int c = g.Width();
+        const Int lcm = g.LCM();
+        const Int diagPathRank = g.DiagPathRank(); 
+        const Int alignmentRank = A.RowAlignment();
+        const Int alignmentRow = alignmentRank % r;
+        const Int alignmentCol = alignmentRank / r;
+        const Int newAlignmentRow = (alignmentRow + i) % r;
+        const Int newAlignmentCol = (alignmentCol + i) % c;
+        const Int newAlignmentRank = newAlignmentRow + r*newAlignmentCol;
 
         this->rowAlignment_ = newAlignmentRank;
         this->inDiagonal_ = A.InDiagonal();
@@ -293,8 +670,8 @@ DistMatrix<T,STAR,MD>::View
                 Shift( diagPathRank,
                        g.DiagPathRank(this->RowAlignment()),
                        lcm );
-            int localWidthBefore = LocalLength( j, A.RowShift(), lcm );
-            int localWidth = LocalLength( width, this->RowShift(), lcm );
+            Int localWidthBefore = LocalLength( j, A.RowShift(), lcm );
+            Int localWidth = LocalLength( width, this->RowShift(), lcm );
         
             this->localMatrix_.View
             ( A.LocalMatrix(), i, localWidthBefore, height, localWidth );
@@ -308,10 +685,10 @@ DistMatrix<T,STAR,MD>::View
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 inline void
-DistMatrix<T,STAR,MD>::LockedView
-( const DistMatrix<T,STAR,MD>& A, int i, int j, int height, int width )
+DistMatrix<T,STAR,MD,Int>::LockedView
+( const DistMatrix<T,STAR,MD,Int>& A, Int i, Int j, Int height, Int width )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::LockedView");
@@ -324,16 +701,16 @@ DistMatrix<T,STAR,MD>::LockedView
     this->width_  = width;
     {
         const elemental::Grid& g = this->Grid();
-        const int r = g.Height();
-        const int c = g.Width();
-        const int lcm = g.LCM();
-        const int diagPathRank = g.DiagPathRank();
-        const int alignmentRank = A.RowAlignment();
-        const int alignmentRow = alignmentRank % r;
-        const int alignmentCol = alignmentRank / r;
-        const int newAlignmentRow = (alignmentRow + i) % r;
-        const int newAlignmentCol = (alignmentCol + i) % c;
-        const int newAlignmentRank = newAlignmentRow + r*newAlignmentCol;
+        const Int r = g.Height();
+        const Int c = g.Width();
+        const Int lcm = g.LCM();
+        const Int diagPathRank = g.DiagPathRank();
+        const Int alignmentRank = A.RowAlignment();
+        const Int alignmentRow = alignmentRank % r;
+        const Int alignmentCol = alignmentRank / r;
+        const Int newAlignmentRow = (alignmentRow + i) % r;
+        const Int newAlignmentCol = (alignmentCol + i) % c;
+        const Int newAlignmentRank = newAlignmentRow + r*newAlignmentCol;
 
         this->rowAlignment_ = newAlignmentRank;
         this->inDiagonal_ = A.InDiagonal();
@@ -344,8 +721,8 @@ DistMatrix<T,STAR,MD>::LockedView
                 Shift( diagPathRank,
                        g.DiagPathRank( this->RowAlignment() ),
                        lcm );
-            int localWidthBefore = LocalLength( j, A.RowShift(), lcm);
-            int localWidth = LocalLength( width, this->RowShift(), lcm );
+            Int localWidthBefore = LocalLength( j, A.RowShift(), lcm);
+            Int localWidth = LocalLength( width, this->RowShift(), lcm );
         
             this->localMatrix_.LockedView
             ( A.LockedLocalMatrix(), i, localWidthBefore, height, localWidth );
@@ -358,10 +735,10 @@ DistMatrix<T,STAR,MD>::LockedView
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 inline void
-DistMatrix<T,STAR,MD>::View1x2
-( DistMatrix<T,STAR,MD>& AL, DistMatrix<T,STAR,MD>& AR )
+DistMatrix<T,STAR,MD,Int>::View1x2
+( DistMatrix<T,STAR,MD,Int>& AL, DistMatrix<T,STAR,MD,Int>& AR )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::View1x2");    
@@ -387,10 +764,10 @@ DistMatrix<T,STAR,MD>::View1x2
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 inline void
-DistMatrix<T,STAR,MD>::LockedView1x2
-( const DistMatrix<T,STAR,MD>& AL, const DistMatrix<T,STAR,MD>& AR )
+DistMatrix<T,STAR,MD,Int>::LockedView1x2
+( const DistMatrix<T,STAR,MD,Int>& AL, const DistMatrix<T,STAR,MD,Int>& AR )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::LockedView1x2");
@@ -417,11 +794,11 @@ DistMatrix<T,STAR,MD>::LockedView1x2
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 inline void
-DistMatrix<T,STAR,MD>::View2x1
-( DistMatrix<T,STAR,MD>& AT,
-  DistMatrix<T,STAR,MD>& AB )
+DistMatrix<T,STAR,MD,Int>::View2x1
+( DistMatrix<T,STAR,MD,Int>& AT,
+  DistMatrix<T,STAR,MD,Int>& AB )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::View2x1");
@@ -448,11 +825,11 @@ DistMatrix<T,STAR,MD>::View2x1
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 inline void
-DistMatrix<T,STAR,MD>::LockedView2x1
-( const DistMatrix<T,STAR,MD>& AT,
-  const DistMatrix<T,STAR,MD>& AB )
+DistMatrix<T,STAR,MD,Int>::LockedView2x1
+( const DistMatrix<T,STAR,MD,Int>& AT,
+  const DistMatrix<T,STAR,MD,Int>& AB )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::LockedView2x1");
@@ -479,11 +856,11 @@ DistMatrix<T,STAR,MD>::LockedView2x1
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 inline void
-DistMatrix<T,STAR,MD>::View2x2
-( DistMatrix<T,STAR,MD>& ATL, DistMatrix<T,STAR,MD>& ATR,
-  DistMatrix<T,STAR,MD>& ABL, DistMatrix<T,STAR,MD>& ABR )
+DistMatrix<T,STAR,MD,Int>::View2x2
+( DistMatrix<T,STAR,MD,Int>& ATL, DistMatrix<T,STAR,MD,Int>& ATR,
+  DistMatrix<T,STAR,MD,Int>& ABL, DistMatrix<T,STAR,MD,Int>& ABR )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::View2x2");
@@ -513,11 +890,11 @@ DistMatrix<T,STAR,MD>::View2x2
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 inline void
-DistMatrix<T,STAR,MD>::LockedView2x2
-( const DistMatrix<T,STAR,MD>& ATL, const DistMatrix<T,STAR,MD>& ATR,
-  const DistMatrix<T,STAR,MD>& ABL, const DistMatrix<T,STAR,MD>& ABR )
+DistMatrix<T,STAR,MD,Int>::LockedView2x2
+( const DistMatrix<T,STAR,MD,Int>& ATL, const DistMatrix<T,STAR,MD,Int>& ATR,
+  const DistMatrix<T,STAR,MD,Int>& ABL, const DistMatrix<T,STAR,MD,Int>& ABR )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::LockedView2x2");
@@ -547,9 +924,9 @@ DistMatrix<T,STAR,MD>::LockedView2x2
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 inline void
-DistMatrix<T,STAR,MD>::ResizeTo( int height, int width )
+DistMatrix<T,STAR,MD,Int>::ResizeTo( Int height, Int width )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::ResizeTo");
@@ -561,7 +938,7 @@ DistMatrix<T,STAR,MD>::ResizeTo( int height, int width )
     this->width_ = width;
     if( this->InDiagonal() )
     {
-        const int lcm = this->Grid().LCM();
+        const Int lcm = this->Grid().LCM();
         this->localMatrix_.ResizeTo
         ( height, LocalLength(width,this->RowShift(),lcm) );
     }
@@ -570,32 +947,32 @@ DistMatrix<T,STAR,MD>::ResizeTo( int height, int width )
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 inline T
-DistMatrix<T,STAR,MD>::Get( int i, int j ) const
+DistMatrix<T,STAR,MD,Int>::Get( Int i, Int j ) const
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::Get");
     this->AssertValidEntry( i, j );
 #endif
     // We will determine the owner of entry (i,j) and broadcast from it
-    int ownerRank;
+    Int ownerRank;
     const elemental::Grid& g = this->Grid();
     {
-        const int r = g.Height();
-        const int c = g.Width();
-        const int alignmentRank = this->RowAlignment();
-        const int alignmentRow = alignmentRank % r;
-        const int alignmentCol = alignmentRank / r;
-        const int ownerRow = (alignmentRow + j) % r;
-        const int ownerCol = (alignmentCol + j) % c;
+        const Int r = g.Height();
+        const Int c = g.Width();
+        const Int alignmentRank = this->RowAlignment();
+        const Int alignmentRow = alignmentRank % r;
+        const Int alignmentCol = alignmentRank / r;
+        const Int ownerRow = (alignmentRow + j) % r;
+        const Int ownerCol = (alignmentCol + j) % c;
         ownerRank = ownerRow + r*ownerCol;
     }
 
     T u;
     if( g.VCRank() == ownerRank )
     {
-        const int jLoc = (j-this->RowShift()) / g.LCM();
+        const Int jLoc = (j-this->RowShift()) / g.LCM();
         u = this->GetLocalEntry(i,jLoc);
     }
     mpi::Broadcast( &u, 1, ownerRank, g.VCComm() );
@@ -606,30 +983,30 @@ DistMatrix<T,STAR,MD>::Get( int i, int j ) const
     return u;
 }
 
-template<typename T>
+template<typename T,typename Int>
 inline void
-DistMatrix<T,STAR,MD>::Set( int i, int j, T u )
+DistMatrix<T,STAR,MD,Int>::Set( Int i, Int j, T u )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::Set");
     this->AssertValidEntry( i, j );
 #endif
-    int ownerRank;
+    Int ownerRank;
     const elemental::Grid& g = this->Grid();
     {
-        const int r = g.Height();
-        const int c = g.Width();
-        const int alignmentRank = this->RowAlignment();
-        const int alignmentRow = alignmentRank % r;
-        const int alignmentCol = alignmentRank / r;
-        const int ownerRow = (alignmentRow + j) % r;
-        const int ownerCol = (alignmentCol + j) % c;
+        const Int r = g.Height();
+        const Int c = g.Width();
+        const Int alignmentRank = this->RowAlignment();
+        const Int alignmentRow = alignmentRank % r;
+        const Int alignmentCol = alignmentRank / r;
+        const Int ownerRow = (alignmentRow + j) % r;
+        const Int ownerCol = (alignmentCol + j) % c;
         ownerRank = ownerRow + r*ownerCol;
     }
 
     if( g.VCRank() == ownerRank )
     {
-        const int jLoc = (j-this->RowShift()) / g.LCM();
+        const Int jLoc = (j-this->RowShift()) / g.LCM();
         this->SetLocalEntry(i,jLoc,u);
     }
 #ifndef RELEASE
@@ -637,30 +1014,30 @@ DistMatrix<T,STAR,MD>::Set( int i, int j, T u )
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 inline void
-DistMatrix<T,STAR,MD>::Update( int i, int j, T u )
+DistMatrix<T,STAR,MD,Int>::Update( Int i, Int j, T u )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::Update");
     this->AssertValidEntry( i, j );
 #endif
-    int ownerRank;
+    Int ownerRank;
     const elemental::Grid& g = this->Grid();
     {
-        const int r = g.Height();
-        const int c = g.Width();
-        const int alignmentRank = this->RowAlignment();
-        const int alignmentRow = alignmentRank % r;
-        const int alignmentCol = alignmentRank / r;
-        const int ownerRow = (alignmentRow + j) % r;
-        const int ownerCol = (alignmentCol + j) % c;
+        const Int r = g.Height();
+        const Int c = g.Width();
+        const Int alignmentRank = this->RowAlignment();
+        const Int alignmentRow = alignmentRank % r;
+        const Int alignmentCol = alignmentRank / r;
+        const Int ownerRow = (alignmentRow + j) % r;
+        const Int ownerCol = (alignmentCol + j) % c;
         ownerRank = ownerRow + r*ownerCol;
     }
 
     if( g.VCRank() == ownerRank )
     {
-        const int jLoc = (j-this->RowShift()) / g.LCM();
+        const Int jLoc = (j-this->RowShift()) / g.LCM();
         this->UpdateLocalEntry(i,jLoc,u);
     }
 #ifndef RELEASE
@@ -672,10 +1049,10 @@ DistMatrix<T,STAR,MD>::Update( int i, int j, T u )
 // Utility functions, e.g., SetToIdentity and MakeTrapezoidal
 //
 
-template<typename T>
+template<typename T,typename Int>
 inline void
-DistMatrix<T,STAR,MD>::MakeTrapezoidal
-( Side side, UpperOrLower uplo, int offset )
+DistMatrix<T,STAR,MD,Int>::MakeTrapezoidal
+( Side side, UpperOrLower uplo, Int offset )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::MakeTrapezoidal");
@@ -683,27 +1060,27 @@ DistMatrix<T,STAR,MD>::MakeTrapezoidal
 #endif
     if( this->InDiagonal() )
     {
-        const int height = this->Height();
-        const int width = this->Width();
-        const int localWidth = this->LocalWidth();
-        const int lcm = this->Grid().LCM();
-        const int rowShift = this->RowShift();
+        const Int height = this->Height();
+        const Int width = this->Width();
+        const Int localWidth = this->LocalWidth();
+        const Int lcm = this->Grid().LCM();
+        const Int rowShift = this->RowShift();
 
         if( uplo == LOWER )
         {
             T* thisLocalBuffer = this->LocalBuffer();
-            const int thisLDim = this->LocalLDim();
+            const Int thisLDim = this->LocalLDim();
 #ifdef _OPENMP
             #pragma omp parallel for
 #endif
-            for( int jLocal=0; jLocal<localWidth; ++jLocal )
+            for( Int jLocal=0; jLocal<localWidth; ++jLocal )
             {
-                int j = rowShift + jLocal*lcm;
-                int lastZeroRow = ( side==LEFT ? j-offset-1
+                Int j = rowShift + jLocal*lcm;
+                Int lastZeroRow = ( side==LEFT ? j-offset-1
                                                : j-offset+height-width-1 );
                 if( lastZeroRow >= 0 )
                 {
-                    int boundary = std::min( lastZeroRow+1, height );
+                    Int boundary = std::min( lastZeroRow+1, height );
                     T* thisCol = &thisLocalBuffer[jLocal*thisLDim];
                     std::memset( thisCol, 0, boundary*sizeof(T) );
                 }
@@ -712,14 +1089,14 @@ DistMatrix<T,STAR,MD>::MakeTrapezoidal
         else
         {
             T* thisLocalBuffer = this->LocalBuffer();
-            const int thisLDim = this->LocalLDim();
+            const Int thisLDim = this->LocalLDim();
 #ifdef _OPENMP
             #pragma omp parallel for
 #endif
-            for( int jLocal=0; jLocal<localWidth; ++jLocal )
+            for( Int jLocal=0; jLocal<localWidth; ++jLocal )
             {
-                int j = rowShift + jLocal*lcm;
-                int firstZeroRow = 
+                Int j = rowShift + jLocal*lcm;
+                Int firstZeroRow = 
                     ( side==LEFT ? std::max(j-offset+1,0)
                                  : std::max(j-offset+height-width+1,0) );
                 if( firstZeroRow < height )
@@ -735,10 +1112,10 @@ DistMatrix<T,STAR,MD>::MakeTrapezoidal
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 inline void
-DistMatrix<T,STAR,MD>::ScaleTrapezoid
-( T alpha, Side side, UpperOrLower uplo, int offset )
+DistMatrix<T,STAR,MD,Int>::ScaleTrapezoid
+( T alpha, Side side, UpperOrLower uplo, Int offset )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::ScaleTrapezoid");
@@ -746,44 +1123,44 @@ DistMatrix<T,STAR,MD>::ScaleTrapezoid
 #endif
     if( this->InDiagonal() )
     {
-        const int height = this->Height();
-        const int width = this->Width();
-        const int localWidth = this->LocalWidth();
-        const int lcm = this->Grid().LCM();
-        const int rowShift = this->RowShift();
+        const Int height = this->Height();
+        const Int width = this->Width();
+        const Int localWidth = this->LocalWidth();
+        const Int lcm = this->Grid().LCM();
+        const Int rowShift = this->RowShift();
 
         if( uplo == UPPER )
         {
             T* thisLocalBuffer = this->LocalBuffer();
-            const int thisLDim = this->LocalLDim();
+            const Int thisLDim = this->LocalLDim();
 #ifdef _OPENMP
             #pragma omp parallel for
 #endif
-            for( int jLocal=0; jLocal<localWidth; ++jLocal )
+            for( Int jLocal=0; jLocal<localWidth; ++jLocal )
             {
-                int j = rowShift + jLocal*lcm;
-                int lastRow = ( side==LEFT ? j-offset : j-offset+height-width );
-                int boundary = std::min( lastRow+1, height );
+                Int j = rowShift + jLocal*lcm;
+                Int lastRow = ( side==LEFT ? j-offset : j-offset+height-width );
+                Int boundary = std::min( lastRow+1, height );
                 T* thisCol = &thisLocalBuffer[jLocal*thisLDim];
-                for( int i=0; i<boundary; ++i )
+                for( Int i=0; i<boundary; ++i )
                     thisCol[i] *= alpha;
             }
         }
         else
         {
             T* thisLocalBuffer = this->LocalBuffer();
-            const int thisLDim = this->LocalLDim();
+            const Int thisLDim = this->LocalLDim();
 #ifdef _OPENMP
             #pragma omp parallel for
 #endif
-            for( int jLocal=0; jLocal<localWidth; ++jLocal )
+            for( Int jLocal=0; jLocal<localWidth; ++jLocal )
             {
-                int j = rowShift + jLocal*lcm;
-                int firstRow = 
+                Int j = rowShift + jLocal*lcm;
+                Int firstRow = 
                     ( side==LEFT ? std::max(j-offset,0)
                                  : std::max(j-offset+height-width,0) );
                 T* thisCol = &thisLocalBuffer[firstRow+jLocal*thisLDim];
-                for( int i=0; i<(height-firstRow); ++i )
+                for( Int i=0; i<(height-firstRow); ++i )
                     thisCol[i] *= alpha;
             }
         }
@@ -793,9 +1170,9 @@ DistMatrix<T,STAR,MD>::ScaleTrapezoid
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 inline void
-DistMatrix<T,STAR, MD>::SetToIdentity()
+DistMatrix<T,STAR,MD,Int>::SetToIdentity()
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::SetToIdentity");
@@ -803,21 +1180,21 @@ DistMatrix<T,STAR, MD>::SetToIdentity()
 #endif
     if( this->InDiagonal() )
     {
-        const int lcm = this->Grid().LCM();
-        const int height = this->Height();
-        const int localWidth = this->LocalWidth();
-        const int rowShift = this->RowShift();
+        const Int lcm = this->Grid().LCM();
+        const Int height = this->Height();
+        const Int localWidth = this->LocalWidth();
+        const Int rowShift = this->RowShift();
 
         this->localMatrix_.SetToZero();
 
         T* thisLocalBuffer = this->LocalBuffer();
-        const int thisLDim = this->LocalLDim();
+        const Int thisLDim = this->LocalLDim();
 #ifdef _OPENMP
         #pragma omp parallel for
 #endif
-        for( int jLocal=0; jLocal<localWidth; ++jLocal )
+        for( Int jLocal=0; jLocal<localWidth; ++jLocal )
         {
-            const int j = rowShift + jLocal*lcm;
+            const Int j = rowShift + jLocal*lcm;
             if( j < height )
                 thisLocalBuffer[j+jLocal*thisLDim] = 1;
         }
@@ -827,9 +1204,9 @@ DistMatrix<T,STAR, MD>::SetToIdentity()
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 inline void
-DistMatrix<T,STAR,MD>::SetToRandom()
+DistMatrix<T,STAR,MD,Int>::SetToRandom()
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::SetToRandom");
@@ -837,10 +1214,10 @@ DistMatrix<T,STAR,MD>::SetToRandom()
 #endif
     if( this->InDiagonal() )
     {
-        const int height = this->Height();
-        const int localWidth = this->LocalWidth();
-        for( int jLocal=0; jLocal<localWidth; ++jLocal )
-            for( int i=0; i<height; ++i )
+        const Int height = this->Height();
+        const Int localWidth = this->LocalWidth();
+        for( Int jLocal=0; jLocal<localWidth; ++jLocal )
+            for( Int i=0; i<height; ++i )
                 this->SetLocalEntry(i,jLocal,SampleUnitBall<T>());
     }
 #ifndef RELEASE
@@ -848,9 +1225,9 @@ DistMatrix<T,STAR,MD>::SetToRandom()
 #endif
 }
 
-template<typename T>
-inline const DistMatrix<T,STAR,MD>&
-DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,MC,MR>& A )
+template<typename T,typename Int>
+inline const DistMatrix<T,STAR,MD,Int>&
+DistMatrix<T,STAR,MD,Int>::operator=( const DistMatrix<T,MC,MR,Int>& A )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD] = [MC,MR]");
@@ -866,9 +1243,9 @@ DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,MC,MR>& A )
     return *this;
 }
 
-template<typename T>
-inline const DistMatrix<T,STAR,MD>&
-DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,MC,STAR>& A )
+template<typename T,typename Int>
+inline const DistMatrix<T,STAR,MD,Int>&
+DistMatrix<T,STAR,MD,Int>::operator=( const DistMatrix<T,MC,STAR,Int>& A )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD] = [MC,* ]");
@@ -884,9 +1261,9 @@ DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,MC,STAR>& A )
     return *this;
 }
 
-template<typename T>
-inline const DistMatrix<T,STAR,MD>&
-DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,STAR,MR>& A )
+template<typename T,typename Int>
+inline const DistMatrix<T,STAR,MD,Int>&
+DistMatrix<T,STAR,MD,Int>::operator=( const DistMatrix<T,STAR,MR,Int>& A )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD] = [* ,MR]");
@@ -902,9 +1279,9 @@ DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,STAR,MR>& A )
     return *this;
 }
 
-template<typename T>
-inline const DistMatrix<T,STAR,MD>&
-DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,MD,STAR>& A )
+template<typename T,typename Int>
+inline const DistMatrix<T,STAR,MD,Int>&
+DistMatrix<T,STAR,MD,Int>::operator=( const DistMatrix<T,MD,STAR,Int>& A )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD] = [MD,* ]");
@@ -920,9 +1297,9 @@ DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,MD,STAR>& A )
     return *this;
 }
 
-template<typename T>
-inline const DistMatrix<T,STAR,MD>&
-DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,STAR,MD>& A )
+template<typename T,typename Int>
+inline const DistMatrix<T,STAR,MD,Int>&
+DistMatrix<T,STAR,MD,Int>::operator=( const DistMatrix<T,STAR,MD,Int>& A )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD] = [* ,MD]");
@@ -962,9 +1339,9 @@ DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,STAR,MD>& A )
     return *this;
 }
 
-template<typename T>
-inline const DistMatrix<T,STAR,MD>&
-DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,MR,MC>& A )
+template<typename T,typename Int>
+inline const DistMatrix<T,STAR,MD,Int>&
+DistMatrix<T,STAR,MD,Int>::operator=( const DistMatrix<T,MR,MC,Int>& A )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD] = [MR,MC]");
@@ -980,9 +1357,9 @@ DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,MR,MC>& A )
     return *this;
 }
 
-template<typename T>
-inline const DistMatrix<T,STAR,MD>&
-DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,MR,STAR>& A )
+template<typename T,typename Int>
+inline const DistMatrix<T,STAR,MD,Int>&
+DistMatrix<T,STAR,MD,Int>::operator=( const DistMatrix<T,MR,STAR,Int>& A )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD] = [MR,* ]");
@@ -998,9 +1375,9 @@ DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,MR,STAR>& A )
     return *this;
 }
 
-template<typename T>
-inline const DistMatrix<T,STAR,MD>&
-DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,STAR,MC>& A )
+template<typename T,typename Int>
+inline const DistMatrix<T,STAR,MD,Int>&
+DistMatrix<T,STAR,MD,Int>::operator=( const DistMatrix<T,STAR,MC,Int>& A )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD] = [* ,MC]");
@@ -1016,9 +1393,9 @@ DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,STAR,MC>& A )
     return *this;
 }
 
-template<typename T>
-inline const DistMatrix<T,STAR,MD>&
-DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,VC,STAR>& A )
+template<typename T,typename Int>
+inline const DistMatrix<T,STAR,MD,Int>&
+DistMatrix<T,STAR,MD,Int>::operator=( const DistMatrix<T,VC,STAR,Int>& A )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD] = [VC,* ]");
@@ -1034,9 +1411,9 @@ DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,VC,STAR>& A )
     return *this;
 }
 
-template<typename T>
-inline const DistMatrix<T,STAR,MD>&
-DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,STAR,VC>& A )
+template<typename T,typename Int>
+inline const DistMatrix<T,STAR,MD,Int>&
+DistMatrix<T,STAR,MD,Int>::operator=( const DistMatrix<T,STAR,VC,Int>& A )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD] = [* ,VC]");
@@ -1052,9 +1429,9 @@ DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,STAR,VC>& A )
     return *this;
 }
 
-template<typename T>
-inline const DistMatrix<T,STAR,MD>&
-DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,VR,STAR>& A )
+template<typename T,typename Int>
+inline const DistMatrix<T,STAR,MD,Int>&
+DistMatrix<T,STAR,MD,Int>::operator=( const DistMatrix<T,VR,STAR,Int>& A )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD] = [VR,* ]");
@@ -1070,9 +1447,9 @@ DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,VR,STAR>& A )
     return *this;
 }
 
-template<typename T>
-inline const DistMatrix<T,STAR,MD>&
-DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,STAR,VR>& A )
+template<typename T,typename Int>
+inline const DistMatrix<T,STAR,MD,Int>&
+DistMatrix<T,STAR,MD,Int>::operator=( const DistMatrix<T,STAR,VR,Int>& A )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD] = [* ,VR]");
@@ -1088,9 +1465,9 @@ DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,STAR,VR>& A )
     return *this;
 }
 
-template<typename T>
-inline const DistMatrix<T,STAR,MD>&
-DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,STAR,STAR>& A )
+template<typename T,typename Int>
+inline const DistMatrix<T,STAR,MD,Int>&
+DistMatrix<T,STAR,MD,Int>::operator=( const DistMatrix<T,STAR,STAR,Int>& A )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD] = [* ,* ]");
@@ -1104,20 +1481,20 @@ DistMatrix<T,STAR,MD>::operator=( const DistMatrix<T,STAR,STAR>& A )
 
     if( this->InDiagonal() )
     {
-        const int lcm = this->Grid().LCM();
-        const int rowShift = this->RowShift();
+        const Int lcm = this->Grid().LCM();
+        const Int rowShift = this->RowShift();
 
-        const int height = this->Height();
-        const int localWidth = this->LocalWidth();
+        const Int height = this->Height();
+        const Int localWidth = this->LocalWidth();
 
         T* thisLocalBuffer = this->LocalBuffer();
-        const int thisLDim = this->LocalLDim();
+        const Int thisLDim = this->LocalLDim();
         const T* ALocalBuffer = A.LockedLocalBuffer();
-        const int ALDim = A.LocalLDim();
+        const Int ALDim = A.LocalLDim();
 #ifdef _OPENMP
         #pragma omp parallel for
 #endif
-        for( int jLocal=0; jLocal<localWidth; ++jLocal )
+        for( Int jLocal=0; jLocal<localWidth; ++jLocal )
         {
             const T* ACol = &ALocalBuffer[(rowShift+jLocal*lcm)*ALDim];
             T* thisCol = &thisLocalBuffer[jLocal*thisLDim];

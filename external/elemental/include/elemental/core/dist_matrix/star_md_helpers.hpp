@@ -33,11 +33,127 @@
 
 namespace elemental {
 
-template<typename T>
+template<typename T,typename Int>
+inline void
+DistMatrix<T,STAR,MD,Int>::SetToRandomHermitian()
+{ SetToRandomHermitianHelper<T>::Func( *this ); }
+
+template<typename T,typename Int>
+inline void
+DistMatrix<T,STAR,MD,Int>::SetToRandomHPD()
+{ SetToRandomHPDHelper<T>::Func( *this ); }
+
+template<typename T,typename Int>
+inline typename RealBase<T>::type
+DistMatrix<T,STAR,MD,Int>::GetReal( Int i, Int j ) const
+{ return GetRealHelper<T>::Func( *this, i, j ); }
+
+template<typename T,typename Int>
+template<typename Z>
+inline Z
+DistMatrix<T,STAR,MD,Int>::GetRealHelper<Z>::Func
+( const DistMatrix<Z,STAR,MD,Int>& parent, Int i, Int j )
+{
+#ifndef RELEASE
+    PushCallStack("[* ,MD]::GetRealHelper");
+#endif
+    throw std::logic_error("Called complex-only routine with real datatype");
+}
+
+template<typename T,typename Int>
+inline typename RealBase<T>::type
+DistMatrix<T,STAR,MD,Int>::GetImag( Int i, Int j ) const
+{ return GetImagHelper<T>::Func( *this, i, j ); }
+
+template<typename T,typename Int>
+template<typename Z>
+inline Z
+DistMatrix<T,STAR,MD,Int>::GetImagHelper<Z>::Func
+( const DistMatrix<Z,STAR,MD,Int>& parent, Int i, Int j )
+{
+#ifndef RELEASE
+    PushCallStack("[* ,MD]::GetImag");
+#endif
+    throw std::logic_error("Called complex-only routine with real datatype");
+}
+
+template<typename T,typename Int>
+inline void
+DistMatrix<T,STAR,MD,Int>::SetReal
+( Int i, Int j, typename RealBase<T>::type alpha )
+{ SetRealHelper<T>::Func( *this, i, j, alpha ); }
+
+template<typename T,typename Int>
 template<typename Z>
 inline void
-DistMatrix<T,STAR,MD>::SetToRandomHermitianHelper<Z>::Func
-( DistMatrix<Z,STAR,MD>& parent )
+DistMatrix<T,STAR,MD,Int>::SetRealHelper<Z>::Func
+( DistMatrix<Z,STAR,MD,Int>& parent, Int i, Int j, Z alpha )
+{
+#ifndef RELEASE
+    PushCallStack("[* ,MD]::SetReal");
+#endif
+    throw std::logic_error("Called complex-only routine with real datatype");
+}
+
+template<typename T,typename Int>
+inline void
+DistMatrix<T,STAR,MD,Int>::SetImag
+( Int i, Int j, typename RealBase<T>::type alpha )
+{ SetImagHelper<T>::Func( *this, i, j, alpha ); }
+
+template<typename T,typename Int>
+template<typename Z>
+inline void
+DistMatrix<T,STAR,MD,Int>::SetImagHelper<Z>::Func
+( DistMatrix<Z,STAR,MD,Int>& parent, Int i, Int j, Z alpha )
+{
+#ifndef RELEASE
+    PushCallStack("[* ,MD]::SetImag");
+#endif
+    throw std::logic_error("Called complex-only routine with real datatype");
+}
+
+template<typename T,typename Int>
+inline void
+DistMatrix<T,STAR,MD,Int>::UpdateReal
+( Int i, Int j, typename RealBase<T>::type alpha )
+{ UpdateRealHelper<T>::Func( *this, i, j, alpha ); }
+
+template<typename T,typename Int>
+template<typename Z>
+inline void
+DistMatrix<T,STAR,MD,Int>::UpdateRealHelper<Z>::Func
+( DistMatrix<Z,STAR,MD,Int>& parent, Int i, Int j, Z alpha )
+{
+#ifndef RELEASE
+    PushCallStack("[* ,MD]::UpdateReal");
+#endif
+    throw std::logic_error("Called complex-only routine with real datatype");
+}
+
+template<typename T,typename Int>
+inline void
+DistMatrix<T,STAR,MD,Int>::UpdateImag
+( Int i, Int j, typename RealBase<T>::type alpha )
+{ UpdateImagHelper<T>::Func( *this, i, j, alpha ); }
+
+template<typename T,typename Int>
+template<typename Z>
+inline void
+DistMatrix<T,STAR,MD,Int>::UpdateImagHelper<Z>::Func
+( DistMatrix<Z,STAR,MD,Int>& parent, Int i, Int j, Z alpha )
+{
+#ifndef RELEASE
+    PushCallStack("[* ,MD]::UpdateImag");
+#endif
+    throw std::logic_error("Called complex-only routine with real datatype");
+}
+
+template<typename T,typename Int>
+template<typename Z>
+inline void
+DistMatrix<T,STAR,MD,Int>::SetToRandomHermitianHelper<Z>::Func
+( DistMatrix<Z,STAR,MD,Int>& parent )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::SetToRandomHermitian");
@@ -51,12 +167,11 @@ DistMatrix<T,STAR,MD>::SetToRandomHermitianHelper<Z>::Func
 #endif
 }
 
-#ifndef WITHOUT_COMPLEX
-template<typename T>
+template<typename T,typename Int>
 template<typename Z>
 inline void
-DistMatrix<T,STAR,MD>::SetToRandomHermitianHelper<std::complex<Z> >::Func
-( DistMatrix<std::complex<Z>,STAR,MD>& parent )
+DistMatrix<T,STAR,MD,Int>::SetToRandomHermitianHelper<std::complex<Z> >::Func
+( DistMatrix<std::complex<Z>,STAR,MD,Int>& parent )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::SetToRandomHermitian");
@@ -68,19 +183,19 @@ DistMatrix<T,STAR,MD>::SetToRandomHermitianHelper<std::complex<Z> >::Func
 
     if( parent.InDiagonal() )
     {
-        const int height = parent.Height();
-        const int localWidth = parent.LocalWidth();
-        const int lcm = parent.Grid().LCM();
-        const int rowShift = parent.RowShift();
+        const Int height = parent.Height();
+        const Int localWidth = parent.LocalWidth();
+        const Int lcm = parent.Grid().LCM();
+        const Int rowShift = parent.RowShift();
 
         std::complex<Z>* thisLocalBuffer = parent.LocalBuffer();
-        const int thisLDim = parent.LocalLDim();
+        const Int thisLDim = parent.LocalLDim();
 #ifdef _OPENMP
         #pragma omp parallel for
 #endif
-        for( int jLocal=0; jLocal<localWidth; ++jLocal )
+        for( Int jLocal=0; jLocal<localWidth; ++jLocal )
         {
-            const int j = rowShift + jLocal*lcm;
+            const Int j = rowShift + jLocal*lcm;
             if( j < height )
             {
                 const Z value = real(thisLocalBuffer[j+jLocal*thisLDim]);
@@ -92,13 +207,12 @@ DistMatrix<T,STAR,MD>::SetToRandomHermitianHelper<std::complex<Z> >::Func
     PopCallStack();
 #endif
 }
-#endif // WITHOUT_COMPLEX
 
-template<typename T>
+template<typename T,typename Int>
 template<typename Z>
 inline void
-DistMatrix<T,STAR,MD>::SetToRandomHPDHelper<Z>::Func
-( DistMatrix<Z,STAR,MD>& parent )
+DistMatrix<T,STAR,MD,Int>::SetToRandomHPDHelper<Z>::Func
+( DistMatrix<Z,STAR,MD,Int>& parent )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::SetToRandomHPD");
@@ -110,20 +224,20 @@ DistMatrix<T,STAR,MD>::SetToRandomHPDHelper<Z>::Func
 
     if( parent.InDiagonal() )
     {
-        const int height = parent.Height();
-        const int width = parent.Width();
-        const int localWidth = parent.LocalWidth();
-        const int lcm = parent.Grid().LCM();
-        const int rowShift = parent.RowShift();
+        const Int height = parent.Height();
+        const Int width = parent.Width();
+        const Int localWidth = parent.LocalWidth();
+        const Int lcm = parent.Grid().LCM();
+        const Int rowShift = parent.RowShift();
 
         Z* thisLocalBuffer = parent.LocalBuffer();
-        const int thisLDim = parent.LocalLDim();
+        const Int thisLDim = parent.LocalLDim();
 #ifdef _OPENMP
         #pragma omp parallel for
 #endif
-        for( int jLocal=0; jLocal<localWidth; ++jLocal )
+        for( Int jLocal=0; jLocal<localWidth; ++jLocal )
         {
-            const int j = rowShift + jLocal*lcm;
+            const Int j = rowShift + jLocal*lcm;
             if( j < height )
                 thisLocalBuffer[j+jLocal*thisLDim] += width;
         }
@@ -133,12 +247,11 @@ DistMatrix<T,STAR,MD>::SetToRandomHPDHelper<Z>::Func
 #endif
 }
 
-#ifndef WITHOUT_COMPLEX
-template<typename T>
+template<typename T,typename Int>
 template<typename Z>
 inline void
-DistMatrix<T,STAR,MD>::SetToRandomHPDHelper<std::complex<Z> >::Func
-( DistMatrix<std::complex<Z>,STAR,MD>& parent )
+DistMatrix<T,STAR,MD,Int>::SetToRandomHPDHelper<std::complex<Z> >::Func
+( DistMatrix<std::complex<Z>,STAR,MD,Int>& parent )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::SetToRandomHPD");
@@ -150,20 +263,20 @@ DistMatrix<T,STAR,MD>::SetToRandomHPDHelper<std::complex<Z> >::Func
 
     if( parent.InDiagonal() )
     {
-        const int height = parent.Height();
-        const int width = parent.Width();
-        const int localWidth = parent.LocalWidth();
-        const int lcm = parent.Grid().LCM();
-        const int rowShift = parent.RowShift();
+        const Int height = parent.Height();
+        const Int width = parent.Width();
+        const Int localWidth = parent.LocalWidth();
+        const Int lcm = parent.Grid().LCM();
+        const Int rowShift = parent.RowShift();
 
         std::complex<Z>* thisLocalBuffer = parent.LocalBuffer();
-        const int thisLDim = parent.LocalLDim();
+        const Int thisLDim = parent.LocalLDim();
 #ifdef _OPENMP
         #pragma omp parallel for
 #endif
-        for( int jLocal=0; jLocal<localWidth; ++jLocal )
+        for( Int jLocal=0; jLocal<localWidth; ++jLocal )
         {
-            const int j = rowShift + jLocal*lcm;
+            const Int j = rowShift + jLocal*lcm;
             if( j < height )
             {
                 const Z value = real(thisLocalBuffer[j+jLocal*thisLDim]);
@@ -176,34 +289,34 @@ DistMatrix<T,STAR,MD>::SetToRandomHPDHelper<std::complex<Z> >::Func
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 template<typename Z>
 inline Z
-DistMatrix<T,STAR,MD>::GetRealHelper<std::complex<Z> >::Func
-( const DistMatrix<std::complex<Z>,STAR,MD>& parent, int i, int j ) 
+DistMatrix<T,STAR,MD,Int>::GetRealHelper<std::complex<Z> >::Func
+( const DistMatrix<std::complex<Z>,STAR,MD,Int>& parent, Int i, Int j ) 
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::GetReal");
     parent.AssertValidEntry( i, j );
 #endif
     // We will determine the owner of entry (i,j) and broadcast from it
-    int ownerRank;
+    Int ownerRank;
     const elemental::Grid& g = parent.Grid();
     {
-        const int r = g.Height();
-        const int c = g.Width();
-        const int alignmentRank = parent.RowAlignment();
-        const int alignmentRow = alignmentRank % r;
-        const int alignmentCol = alignmentRank / r;
-        const int ownerRow = (alignmentRow + j) % r;
-        const int ownerCol = (alignmentCol + j) % c;
+        const Int r = g.Height();
+        const Int c = g.Width();
+        const Int alignmentRank = parent.RowAlignment();
+        const Int alignmentRow = alignmentRank % r;
+        const Int alignmentCol = alignmentRank / r;
+        const Int ownerRow = (alignmentRow + j) % r;
+        const Int ownerCol = (alignmentCol + j) % c;
         ownerRank = ownerRow + r*ownerCol;
     }
 
     Z u;
     if( g.VCRank() == ownerRank )
     {
-        const int jLoc = (j-parent.RowShift()) / g.LCM();
+        const Int jLoc = (j-parent.RowShift()) / g.LCM();
         u = parent.GetRealLocalEntry(i,jLoc);
     }
     mpi::Broadcast( &u, 1, ownerRank, g.VCComm() );
@@ -214,34 +327,34 @@ DistMatrix<T,STAR,MD>::GetRealHelper<std::complex<Z> >::Func
     return u;
 }
 
-template<typename T>
+template<typename T,typename Int>
 template<typename Z>
 inline Z
-DistMatrix<T,STAR,MD>::GetImagHelper<std::complex<Z> >::Func
-( const DistMatrix<std::complex<Z>,STAR,MD>& parent, int i, int j )
+DistMatrix<T,STAR,MD,Int>::GetImagHelper<std::complex<Z> >::Func
+( const DistMatrix<std::complex<Z>,STAR,MD,Int>& parent, Int i, Int j )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::GetImag");
     parent.AssertValidEntry( i, j );
 #endif
     // We will determine the owner of entry (i,j) and broadcast from it
-    int ownerRank;
+    Int ownerRank;
     const elemental::Grid& g = parent.Grid();
     {
-        const int r = g.Height();
-        const int c = g.Width();
-        const int alignmentRank = parent.RowAlignment();
-        const int alignmentRow = alignmentRank % r;
-        const int alignmentCol = alignmentRank / r;
-        const int ownerRow = (alignmentRow + j) % r;
-        const int ownerCol = (alignmentCol + j) % c;
+        const Int r = g.Height();
+        const Int c = g.Width();
+        const Int alignmentRank = parent.RowAlignment();
+        const Int alignmentRow = alignmentRank % r;
+        const Int alignmentCol = alignmentRank / r;
+        const Int ownerRow = (alignmentRow + j) % r;
+        const Int ownerCol = (alignmentCol + j) % c;
         ownerRank = ownerRow + r*ownerCol;
     }
 
     Z u;
     if( g.VCRank() == ownerRank )
     {
-        const int jLoc = (j-parent.RowShift()) / g.LCM();
+        const Int jLoc = (j-parent.RowShift()) / g.LCM();
         u = parent.GetImagLocalEntry(i,jLoc);
     }
     mpi::Broadcast( &u, 1, ownerRank, g.VCComm() );
@@ -252,32 +365,32 @@ DistMatrix<T,STAR,MD>::GetImagHelper<std::complex<Z> >::Func
     return u;
 }
 
-template<typename T>
+template<typename T,typename Int>
 template<typename Z>
 inline void
-DistMatrix<T,STAR,MD>::SetRealHelper<std::complex<Z> >::Func
-( DistMatrix<std::complex<Z>,STAR,MD>& parent, int i, int j, Z u )
+DistMatrix<T,STAR,MD,Int>::SetRealHelper<std::complex<Z> >::Func
+( DistMatrix<std::complex<Z>,STAR,MD,Int>& parent, Int i, Int j, Z u )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::SetReal");
     parent.AssertValidEntry( i, j );
 #endif
-    int ownerRank;
+    Int ownerRank;
     const elemental::Grid& g = parent.Grid();
     {
-        const int r = g.Height();
-        const int c = g.Width();
-        const int alignmentRank = parent.RowAlignment();
-        const int alignmentRow = alignmentRank % r;
-        const int alignmentCol = alignmentRank / r;
-        const int ownerRow = (alignmentRow + j) % r;
-        const int ownerCol = (alignmentCol + j) % c;
+        const Int r = g.Height();
+        const Int c = g.Width();
+        const Int alignmentRank = parent.RowAlignment();
+        const Int alignmentRow = alignmentRank % r;
+        const Int alignmentCol = alignmentRank / r;
+        const Int ownerRow = (alignmentRow + j) % r;
+        const Int ownerCol = (alignmentCol + j) % c;
         ownerRank = ownerRow + r*ownerCol;
     }
 
     if( g.VCRank() == ownerRank )
     {
-        const int jLoc = (j-parent.RowShift()) / g.LCM();
+        const Int jLoc = (j-parent.RowShift()) / g.LCM();
         parent.SetRealLocalEntry(i,jLoc,u);
     }
 #ifndef RELEASE
@@ -285,32 +398,32 @@ DistMatrix<T,STAR,MD>::SetRealHelper<std::complex<Z> >::Func
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 template<typename Z>
 inline void
-DistMatrix<T,STAR,MD>::SetImagHelper<std::complex<Z> >::Func
-( DistMatrix<std::complex<Z>,STAR,MD>& parent, int i, int j, Z u )
+DistMatrix<T,STAR,MD,Int>::SetImagHelper<std::complex<Z> >::Func
+( DistMatrix<std::complex<Z>,STAR,MD,Int>& parent, Int i, Int j, Z u )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::SetImag");
     parent.AssertValidEntry( i, j );
 #endif
-    int ownerRank;
+    Int ownerRank;
     const elemental::Grid& g = parent.Grid();
     {
-        const int r = g.Height();
-        const int c = g.Width();
-        const int alignmentRank = parent.RowAlignment();
-        const int alignmentRow = alignmentRank % r;
-        const int alignmentCol = alignmentRank / r;
-        const int ownerRow = (alignmentRow + j) % r;
-        const int ownerCol = (alignmentCol + j) % c;
+        const Int r = g.Height();
+        const Int c = g.Width();
+        const Int alignmentRank = parent.RowAlignment();
+        const Int alignmentRow = alignmentRank % r;
+        const Int alignmentCol = alignmentRank / r;
+        const Int ownerRow = (alignmentRow + j) % r;
+        const Int ownerCol = (alignmentCol + j) % c;
         ownerRank = ownerRow + r*ownerCol;
     }
 
     if( g.VCRank() == ownerRank )
     {
-        const int jLoc = (j-parent.RowShift()) / g.LCM();
+        const Int jLoc = (j-parent.RowShift()) / g.LCM();
         parent.SetImagLocalEntry(i,jLoc,u);
     }
 #ifndef RELEASE
@@ -318,32 +431,32 @@ DistMatrix<T,STAR,MD>::SetImagHelper<std::complex<Z> >::Func
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 template<typename Z>
 inline void
-DistMatrix<T,STAR,MD>::UpdateRealHelper<std::complex<Z> >::Func
-( DistMatrix<std::complex<Z>,STAR,MD>& parent, int i, int j, Z u )
+DistMatrix<T,STAR,MD,Int>::UpdateRealHelper<std::complex<Z> >::Func
+( DistMatrix<std::complex<Z>,STAR,MD,Int>& parent, Int i, Int j, Z u )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::UpdateReal");
     parent.AssertValidEntry( i, j );
 #endif
-    int ownerRank;
+    Int ownerRank;
     const elemental::Grid& g = parent.Grid();
     {
-        const int r = g.Height();
-        const int c = g.Width();
-        const int alignmentRank = parent.RowAlignment();
-        const int alignmentRow = alignmentRank % r;
-        const int alignmentCol = alignmentRank / r;
-        const int ownerRow = (alignmentRow + j) % r;
-        const int ownerCol = (alignmentCol + j) % c;
+        const Int r = g.Height();
+        const Int c = g.Width();
+        const Int alignmentRank = parent.RowAlignment();
+        const Int alignmentRow = alignmentRank % r;
+        const Int alignmentCol = alignmentRank / r;
+        const Int ownerRow = (alignmentRow + j) % r;
+        const Int ownerCol = (alignmentCol + j) % c;
         ownerRank = ownerRow + r*ownerCol;
     }
 
     if( g.VCRank() == ownerRank )
     {
-        const int jLoc = (j-parent.RowShift()) / g.LCM();
+        const Int jLoc = (j-parent.RowShift()) / g.LCM();
         parent.UpdateRealLocalEntry(i,jLoc,u);
     }
 #ifndef RELEASE
@@ -351,38 +464,37 @@ DistMatrix<T,STAR,MD>::UpdateRealHelper<std::complex<Z> >::Func
 #endif
 }
 
-template<typename T>
+template<typename T,typename Int>
 template<typename Z>
 inline void
-DistMatrix<T,STAR,MD>::UpdateImagHelper<std::complex<Z> >::Func
-( DistMatrix<std::complex<Z>,STAR,MD>& parent, int i, int j, Z u )
+DistMatrix<T,STAR,MD,Int>::UpdateImagHelper<std::complex<Z> >::Func
+( DistMatrix<std::complex<Z>,STAR,MD,Int>& parent, Int i, Int j, Z u )
 {
 #ifndef RELEASE
     PushCallStack("[* ,MD]::UpdateImag");
     parent.AssertValidEntry( i, j );
 #endif
-    int ownerRank;
+    Int ownerRank;
     const elemental::Grid& g = parent.Grid();
     {
-        const int r = g.Height();
-        const int c = g.Width();
-        const int alignmentRank = parent.RowAlignment();
-        const int alignmentRow = alignmentRank % r;
-        const int alignmentCol = alignmentRank / r;
-        const int ownerRow = (alignmentRow + j) % r;
-        const int ownerCol = (alignmentCol + j) % c;
+        const Int r = g.Height();
+        const Int c = g.Width();
+        const Int alignmentRank = parent.RowAlignment();
+        const Int alignmentRow = alignmentRank % r;
+        const Int alignmentCol = alignmentRank / r;
+        const Int ownerRow = (alignmentRow + j) % r;
+        const Int ownerCol = (alignmentCol + j) % c;
         ownerRank = ownerRow + r*ownerCol;
     }
 
     if( g.VCRank() == ownerRank )
     {
-        const int jLoc = (j-parent.RowShift()) / g.LCM();
+        const Int jLoc = (j-parent.RowShift()) / g.LCM();
         parent.UpdateImagLocalEntry(i,jLoc,u);
     }
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
-#endif // WITHOUT_COMPLEX
 
 } // namespace elemental

@@ -77,12 +77,13 @@ elemental::advanced::HermitianPseudoinverse
 
     // Compute the two-norm of A as the maximum absolute value 
     // of its eigenvalues
-    R maxLocalEig = 0;
+    R maxLocalAbsEig = 0;
     const int localHeight = w.LocalHeight();
     for( int iLocal=0; iLocal<localHeight; ++iLocal )
-        maxLocalEig = std::max(maxLocalEig,w.GetLocalEntry(iLocal,0));
+        maxLocalAbsEig = 
+            std::max(maxLocalAbsEig,Abs(w.GetLocalEntry(iLocal,0)));
     R twoNorm;
-    mpi::AllReduce( &maxLocalEig, &twoNorm, 1, mpi::MAX, g.VCComm() );
+    mpi::AllReduce( &maxLocalAbsEig, &twoNorm, 1, mpi::MAX, g.VCComm() );
 
     // Set the tolerance equal to n ||A||_2 eps
     const int n = A.Height();
@@ -97,7 +98,6 @@ elemental::advanced::HermitianPseudoinverse
 #endif
 }
 
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 inline void
 elemental::advanced::HermitianPseudoinverse
@@ -112,14 +112,15 @@ elemental::advanced::HermitianPseudoinverse
     DistMatrix<std::complex<R>,MC,MR> Z(g);
     HermitianEig( uplo, A, w, Z );
 
-    // Compute the two-norm of A as the maximum absolute value 
-    // of its eigenvalues
-    R maxLocalEig = 0;
+    // Compute the two-norm of A as the maximum absolute value of its
+    // eigenvalues
+    R maxLocalAbsEig = 0;
     const int localHeight = w.LocalHeight();
     for( int iLocal=0; iLocal<localHeight; ++iLocal )
-        maxLocalEig = std::max(maxLocalEig,w.GetLocalEntry(iLocal,0));
+        maxLocalAbsEig = 
+            std::max(maxLocalAbsEig,Abs(w.GetLocalEntry(iLocal,0)));
     R twoNorm;
-    mpi::AllReduce( &maxLocalEig, &twoNorm, 1, mpi::MAX, g.VCComm() );
+    mpi::AllReduce( &maxLocalAbsEig, &twoNorm, 1, mpi::MAX, g.VCComm() );
 
     // Set the tolerance equal to n ||A||_2 eps
     const int n = A.Height();
@@ -133,5 +134,4 @@ elemental::advanced::HermitianPseudoinverse
     PopCallStack();
 #endif
 }
-#endif // WITHOUT_COMPLEX
 #endif // WITHOUT_PMRRR

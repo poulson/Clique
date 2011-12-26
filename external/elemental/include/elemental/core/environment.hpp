@@ -36,6 +36,7 @@
 #include "mpi.h"
 #include <algorithm>
 #include <cmath>
+#include <complex>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
@@ -47,10 +48,6 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-
-#ifndef WITHOUT_COMPLEX
-#include <complex>
-#endif
 
 #include "elemental/config.h"
 
@@ -79,11 +76,17 @@ template<typename R>
 struct RealBase
 { typedef R type; };
 
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 struct RealBase<std::complex<R> >
 { typedef R type; };
-#endif
+
+template<typename R>
+struct IsComplex
+{ enum { val=0 }; };
+
+template<typename R>
+struct IsComplex<std::complex<R> >
+{ enum { val=1 }; };
 
 } // namespace elemental
 
@@ -117,26 +120,20 @@ const Grid& DefaultGrid();
 template<typename Z>
 Z Abs( Z alpha );
 
-#ifndef WITHOUT_COMPLEX
 template<typename Z>
 Z Abs( std::complex<Z> alpha );
-#endif
 
 template<typename Z>
 Z FastAbs( Z alpha );
 
-#ifndef WITHOUT_COMPLEX
 template<typename Z>
 Z FastAbs( std::complex<Z> alpha );
-#endif
 
 template<typename Z>
 Z Conj( Z alpha );
 
-#ifndef WITHOUT_COMPLEX
 template<typename Z>
 std::complex<Z> Conj( std::complex<Z> alpha );
-#endif
 
 // An exception which signifies that a matrix was unexpectedly singular.
 class SingularMatrixException : public std::runtime_error 
@@ -151,6 +148,14 @@ class NonHPDMatrixException  : public std::runtime_error
 {
 public:
     NonHPDMatrixException( const char* msg="Matrix was not HPD" )
+    : std::runtime_error( msg ) { }
+};
+
+// An exception which signifies that a matrix was unexpectedly non-HPSD
+class NonHPSDMatrixException  : public std::runtime_error
+{
+public:
+    NonHPSDMatrixException( const char* msg="Matrix was not HPSD" )
     : std::runtime_error( msg ) { }
 };
 
@@ -192,7 +197,6 @@ public:
     }
 };
 
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 class ScalarWrapper<std::complex<R> >
 {
@@ -207,28 +211,19 @@ public:
         return os;
     }
 };
-#endif // ifndef WITHOUT_COMPLEX
 
 // There is a known bug in the Darwin g++ that causes an internal compiler
 // error, so, by default, this routine is subverted.
 #ifdef DISABLE_SCALAR_WRAPPER
-
 template<typename R>
 R WrapScalar( R alpha );
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 std::complex<R> WrapScalar( std::complex<R> alpha );
-#endif // ifndef WITHOUT_COMPLEX
-
 #else  // ifdef DISABLE_SCALAR_WRAPPER
-
 template<typename R>
 ScalarWrapper<R> WrapScalar( R alpha );
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 ScalarWrapper<std::complex<R> > WrapScalar( std::complex<R> alpha );
-#endif // ifndef WITHOUT_COMPLEX
-
 #endif // ifdef DISABLE_SCALAR_WRAPPER
 
 //----------------------------------------------------------------------------//
@@ -236,31 +231,25 @@ ScalarWrapper<std::complex<R> > WrapScalar( std::complex<R> alpha );
 //----------------------------------------------------------------------------//
 
 #ifdef DISABLE_SCALAR_WRAPPER
-
 template<typename R>
 inline R
 WrapScalar( R alpha )
 { return alpha; }
-#ifndef WITHOUT_COMPLEX
+
 template<typename R>
 inline std::complex<R>
 WrapScalar( std::complex<R> alpha )
 { return alpha; }
-#endif // ifndef WITHOUT_COMPLEX
-
 #else // ifdef DISABLE_SCALAR_WRAPPER
-
 template<typename R>
 inline ScalarWrapper<R>
 WrapScalar( R alpha )
 { return ScalarWrapper<R>( alpha ); }
-#ifndef WITHOUT_COMPLEX
+
 template<typename R>
 inline ScalarWrapper<std::complex<R> >
 WrapScalar( std::complex<R> alpha )
 { return ScalarWrapper<std::complex<R> >( alpha ); }
-#endif // ifndef WITHOUT_COMPLEX
-
 #endif // ifdef DISABLE_SCALAR_WRAPPER
 
 template<typename Z>
@@ -268,24 +257,20 @@ inline Z
 Abs( Z alpha )
 { return std::abs(alpha); }
 
-#ifndef WITHOUT_COMPLEX
 template<typename Z>
 inline Z
 Abs( std::complex<Z> alpha )
 { return std::abs( alpha ); }
-#endif
 
 template<typename Z>
 inline Z
 FastAbs( Z alpha )
 { return std::abs(alpha); }
 
-#ifndef WITHOUT_COMPLEX
 template<typename Z>
 inline Z
 FastAbs( std::complex<Z> alpha )
 { return std::abs( std::real(alpha) ) + std::abs( std::imag(alpha) ); }
-#endif
 
 template<typename Z>
 inline Z
@@ -293,12 +278,10 @@ Conj
 ( Z alpha )
 { return alpha; }
 
-#ifndef WITHOUT_COMPLEX
 template<typename Z>
 inline std::complex<Z>
 Conj( std::complex<Z> alpha )
 { return std::conj( alpha ); }
-#endif
 
 } // namespace elemental
 

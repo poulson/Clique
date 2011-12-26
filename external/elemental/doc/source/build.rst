@@ -256,7 +256,6 @@ subdirectory of your main project folder, say ``external/elemental``, and uncomm
 out the bottom section of Elemental's ``CMakeLists.txt``, i.e., change ::
 
     # Simplify the inclusion of Elemental as a subproject in another build system
-    #
     #set(MPI_C_COMPILER ${MPI_C_COMPILER} PARENT_SCOPE)
     #set(MPI_C_INCLUDE_PATH ${MPI_C_INCLUDE_PATH} PARENT_SCOPE)
     #set(MPI_C_COMPILE_FLAGS ${MPI_C_COMPILE_FLAGS} PARENT_SCOPE)
@@ -274,7 +273,6 @@ out the bottom section of Elemental's ``CMakeLists.txt``, i.e., change ::
     #set(LAPACK_POST ${LAPACK_POST} PARENT_SCOPE)
     #set(WITHOUT_PMRRR ${WITHOUT_PMRRR} PARENT_SCOPE)
     #set(DISABLE_SCALAR_WRAPPER ${DISABLE_SCALAR_WRAPPER} PARENT_SCOPE)
-    #set(WITHOUT_COMPLEX ${WITHOUT_COMPLEX} PARENT_SCOPE)
     #set(AVOID_COMPLEX_MPI ${AVOID_COMPLEX_MPI} PARENT_SCOPE)
     #set(USE_BYTE_ALLGATHERS ${USE_BYTE_ALLGATHERS} PARENT_SCOPE)
 
@@ -298,7 +296,6 @@ to ::
     set(LAPACK_POST ${LAPACK_POST} PARENT_SCOPE)
     set(WITHOUT_PMRRR ${WITHOUT_PMRRR} PARENT_SCOPE)
     set(DISABLE_SCALAR_WRAPPER ${DISABLE_SCALAR_WRAPPER} PARENT_SCOPE)
-    set(WITHOUT_COMPLEX ${WITHOUT_COMPLEX} PARENT_SCOPE)
     set(AVOID_COMPLEX_MPI ${AVOID_COMPLEX_MPI} PARENT_SCOPE)
     set(USE_BYTE_ALLGATHERS ${USE_BYTE_ALLGATHERS} PARENT_SCOPE)
            

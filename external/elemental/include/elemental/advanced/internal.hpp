@@ -197,39 +197,17 @@ void ComposePanelPivots
         std::vector<int>& image,
         std::vector<int>& preimage );
 
-template<typename F>
-void CreatePivotOp();
+template<typename F> void CreatePivotOp();
+template<> void CreatePivotOp<float>();
+template<> void CreatePivotOp<double>();
+template<> void CreatePivotOp<scomplex>();
+template<> void CreatePivotOp<dcomplex>();
 
-template<>
-void CreatePivotOp<float>();
-
-template<>
-void CreatePivotOp<double>();
-
-#ifndef WITHOUT_COMPLEX
-template<>
-void CreatePivotOp<scomplex>();
-
-template<>
-void CreatePivotOp<dcomplex>();
-#endif
-
-template<typename T>
-void DestroyPivotOp();
-
-template<>
-void DestroyPivotOp<float>();
-
-template<>
-void DestroyPivotOp<double>();
-
-#ifndef WITHOUT_COMPLEX
-template<>
-void DestroyPivotOp<scomplex>();
-
-template<>
-void DestroyPivotOp<dcomplex>();
-#endif
+template<typename T> void DestroyPivotOp();
+template<> void DestroyPivotOp<float>();
+template<> void DestroyPivotOp<double>();
+template<> void DestroyPivotOp<scomplex>();
+template<> void DestroyPivotOp<dcomplex>();
 
 template<typename F>
 void PanelLU
@@ -238,18 +216,11 @@ void PanelLU
   DistMatrix<int,STAR,STAR>& p, 
   int pivotOffset=0 );
 
-template<typename F>
-mpi::Op PivotOp();
-
+template<typename F> mpi::Op PivotOp();
 template<> mpi::Op PivotOp<float>();
-
 template<> mpi::Op PivotOp<double>();
-
-#ifndef WITHOUT_COMPLEX
 template<> mpi::Op PivotOp<scomplex>();
-
 template<> mpi::Op PivotOp<dcomplex>();
-#endif
             
 template<typename F>
 void PivotFunc
@@ -262,12 +233,10 @@ void PivotFunc
 template<typename R>
 void PanelLQ( DistMatrix<R,MC,MR>& A );
 
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 void PanelLQ
 ( DistMatrix<std::complex<R>,MC,MR  >& A,
   DistMatrix<std::complex<R>,MD,STAR>& t );
-#endif
 
 //----------------------------------------------------------------------------//
 // Norm                                                                       //
@@ -291,7 +260,6 @@ R MaxNorm( const DistMatrix<R,MC,MR>& A );
 template<typename R>
 R OneNorm( const DistMatrix<R,MC,MR>& A );
 
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 R FrobeniusNorm( const Matrix<std::complex<R> >& A );
 template<typename R>
@@ -309,7 +277,6 @@ template<typename R>
 R MaxNorm( const DistMatrix<std::complex<R>,MC,MR>& A );
 template<typename R>
 R OneNorm( const DistMatrix<std::complex<R>,MC,MR>& A );
-#endif
 
 //----------------------------------------------------------------------------//
 // HermitianNorm                                                              //
@@ -333,7 +300,6 @@ R HermitianMaxNorm( UpperOrLower uplo, const DistMatrix<R,MC,MR>& A );
 template<typename R>
 R HermitianOneNorm( UpperOrLower uplo, const DistMatrix<R,MC,MR>& A );
 
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 R HermitianFrobeniusNorm
 ( UpperOrLower uplo, const Matrix<std::complex<R> >& A );
@@ -359,7 +325,6 @@ R HermitianMaxNorm
 template<typename R>
 R HermitianOneNorm
 ( UpperOrLower uplo, const DistMatrix<std::complex<R>,MC,MR>& A );
-#endif
 
 //----------------------------------------------------------------------------//
 // QR                                                                         //
@@ -368,12 +333,10 @@ R HermitianOneNorm
 template<typename R>
 void PanelQR( DistMatrix<R,MC,MR>& A );
 
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 void PanelQR
 ( DistMatrix<std::complex<R>,MC,MR  >& A,
   DistMatrix<std::complex<R>,MD,STAR>& t );
-#endif
 
 //----------------------------------------------------------------------------//
 // Reflector                                                                  //
@@ -381,22 +344,72 @@ void PanelQR
 template<typename R>
 R ColReflector( DistMatrix<R,MC,MR>& chi, DistMatrix<R,MC,MR>& x );
 
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 std::complex<R> ColReflector
 ( DistMatrix<std::complex<R>,MC,MR>& chi, 
   DistMatrix<std::complex<R>,MC,MR>& x );
-#endif
 
 template<typename R>
 R RowReflector( DistMatrix<R,MC,MR>& chi, DistMatrix<R,MC,MR>& x );
 
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 std::complex<R> RowReflector
 ( DistMatrix<std::complex<R>,MC,MR>& chi,
   DistMatrix<std::complex<R>,MC,MR>& x );
-#endif
+
+//----------------------------------------------------------------------------//
+// Bidiag                                                                     //
+//----------------------------------------------------------------------------//
+
+template<typename R>
+void BidiagL( DistMatrix<R,MC,MR>& A );
+template<typename R>
+void BidiagU( DistMatrix<R,MC,MR>& A );
+
+template<typename R>
+void BidiagL
+( DistMatrix<std::complex<R>,MC,MR>& A,
+  DistMatrix<std::complex<R>,STAR,STAR>& tP,
+  DistMatrix<std::complex<R>,STAR,STAR>& tQ );
+template<typename R>
+void BidiagU
+( DistMatrix<std::complex<R>,MC,MR>& A, 
+  DistMatrix<std::complex<R>,STAR,STAR>& tP,
+  DistMatrix<std::complex<R>,STAR,STAR>& tQ );
+
+template<typename R>
+void PanelBidiagL
+( DistMatrix<R,MC,  MR  >& A,
+  DistMatrix<R,MC,  MR  >& X,
+  DistMatrix<R,MC,  MR  >& Y,
+  DistMatrix<R,MC,  STAR>& AColPan_MC_STAR,
+  DistMatrix<R,STAR,MR  >& ARowPan_STAR_MR );
+template<typename R>
+void PanelBidiagU
+( DistMatrix<R,MC,  MR  >& A,
+  DistMatrix<R,MC,  MR  >& X,
+  DistMatrix<R,MC,  MR  >& Y,
+  DistMatrix<R,MC,  STAR>& AColPan_MC_STAR,
+  DistMatrix<R,STAR,MR  >& ARowPan_STAR_MR );
+
+template<typename R>
+void PanelBidiagL
+( DistMatrix<std::complex<R>,MC,  MR  >& A,
+  DistMatrix<std::complex<R>,MD,  STAR>& tP,
+  DistMatrix<std::complex<R>,MD,  STAR>& tQ,
+  DistMatrix<std::complex<R>,MC,  MR  >& X,
+  DistMatrix<std::complex<R>,MC,  MR  >& Y,
+  DistMatrix<std::complex<R>,MC,  STAR>& AColPan_MC_STAR,
+  DistMatrix<std::complex<R>,STAR,MR  >& ARowPan_STAR_MR );
+template<typename R>
+void PanelBidiagU
+( DistMatrix<std::complex<R>,MC,  MR  >& A,
+  DistMatrix<std::complex<R>,MD,  STAR>& tP,
+  DistMatrix<std::complex<R>,MD,  STAR>& tQ,
+  DistMatrix<std::complex<R>,MC,  MR  >& X,
+  DistMatrix<std::complex<R>,MC,  MR  >& Y,
+  DistMatrix<std::complex<R>,MC,  STAR>& AColPan_MC_STAR,
+  DistMatrix<std::complex<R>,STAR,MR  >& ARowPan_STAR_MR );
 
 //----------------------------------------------------------------------------//
 // HermitianTridiag                                                           //
@@ -435,7 +448,6 @@ void HermitianPanelTridiagUSquare
   DistMatrix<R,MC,STAR>& W_MC_STAR,
   DistMatrix<R,MR,STAR>& W_MR_STAR );
 
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 void HermitianPanelTridiagL
 ( DistMatrix<std::complex<R>,MC,MR  >& A,
@@ -473,7 +485,6 @@ void HermitianPanelTridiagUSquare
   DistMatrix<std::complex<R>,MR,STAR>& APan_MR_STAR,
   DistMatrix<std::complex<R>,MC,STAR>& W_MC_STAR,
   DistMatrix<std::complex<R>,MR,STAR>& W_MR_STAR );
-#endif
  
 template<typename R>
 void HermitianTridiagL( DistMatrix<R,MC,MR>& A );
@@ -485,7 +496,6 @@ void HermitianTridiagLSquare( DistMatrix<R,MC,MR>& A );
 template<typename R>
 void HermitianTridiagUSquare( DistMatrix<R,MC,MR>& A );
 
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 void HermitianTridiagL
 ( DistMatrix<std::complex<R>,MC,  MR  >& A, 
@@ -503,7 +513,6 @@ template<typename R>
 void HermitianTridiagUSquare
 ( DistMatrix<std::complex<R>,MC,  MR  >& A, 
   DistMatrix<std::complex<R>,STAR,STAR>& t );
-#endif
 
 //----------------------------------------------------------------------------//
 // HPD Inverse                                                                //
@@ -540,224 +549,192 @@ void ApplyPackedReflectorsLLVF
 ( int offset, 
   const DistMatrix<R,MC,MR>& H, 
         DistMatrix<R,MC,MR>& A );
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 void ApplyPackedReflectorsLLVF
 ( Conjugation conjugation, int offset,
   const DistMatrix<std::complex<R>,MC,MR  >& H,
   const DistMatrix<std::complex<R>,MD,STAR>& t,
         DistMatrix<std::complex<R>,MC,MR  >& A );
-#endif
 
 template<typename R>
 void ApplyPackedReflectorsLLVB
 ( int offset, 
   const DistMatrix<R,MC,MR>& H, 
         DistMatrix<R,MC,MR>& A );
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 void ApplyPackedReflectorsLLVB
 ( Conjugation conjugation, int offset,
   const DistMatrix<std::complex<R>,MC,MR  >& H,
   const DistMatrix<std::complex<R>,MD,STAR>& t,
         DistMatrix<std::complex<R>,MC,MR  >& A );
-#endif
 
 template<typename R>
 void ApplyPackedReflectorsLLHF
 ( int offset, 
   const DistMatrix<R,MC,MR>& H, 
         DistMatrix<R,MC,MR>& A );
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 void ApplyPackedReflectorsLLHF
 ( Conjugation conjugation, int offset,
   const DistMatrix<std::complex<R>,MC,MR  >& H,
   const DistMatrix<std::complex<R>,MD,STAR>& t,
         DistMatrix<std::complex<R>,MC,MR  >& A );
-#endif
 
 template<typename R>
 void ApplyPackedReflectorsLLHB
 ( int offset, 
   const DistMatrix<R,MC,MR>& H, 
         DistMatrix<R,MC,MR>& A );
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 void ApplyPackedReflectorsLLHB
 ( Conjugation conjugation, int offset,
   const DistMatrix<std::complex<R>,MC,MR  >& H,
   const DistMatrix<std::complex<R>,MD,STAR>& t,
         DistMatrix<std::complex<R>,MC,MR  >& A );
-#endif
 
 template<typename R>
 void ApplyPackedReflectorsLUVF
 ( int offset, 
   const DistMatrix<R,MC,MR>& H, 
         DistMatrix<R,MC,MR>& A );
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 void ApplyPackedReflectorsLUVF
 ( Conjugation conjugation, int offset,
   const DistMatrix<std::complex<R>,MC,MR  >& H,
   const DistMatrix<std::complex<R>,MD,STAR>& t,
         DistMatrix<std::complex<R>,MC,MR  >& A );
-#endif
 
 template<typename R>
 void ApplyPackedReflectorsLUVB
 ( int offset, 
   const DistMatrix<R,MC,MR>& H, 
         DistMatrix<R,MC,MR>& A );
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 void ApplyPackedReflectorsLUVB
 ( Conjugation conjugation, int offset,
   const DistMatrix<std::complex<R>,MC,MR  >& H,
   const DistMatrix<std::complex<R>,MD,STAR>& t,
         DistMatrix<std::complex<R>,MC,MR  >& A );
-#endif
 
 template<typename R>
 void ApplyPackedReflectorsLUHF
 ( int offset, 
   const DistMatrix<R,MC,MR>& H, 
         DistMatrix<R,MC,MR>& A );
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 void ApplyPackedReflectorsLUHF
 ( Conjugation conjugation, int offset,
   const DistMatrix<std::complex<R>,MC,MR  >& H,
   const DistMatrix<std::complex<R>,MD,STAR>& t,
         DistMatrix<std::complex<R>,MC,MR  >& A );
-#endif
 
 template<typename R>
 void ApplyPackedReflectorsLUHB
 ( int offset, 
   const DistMatrix<R,MC,MR>& H, 
         DistMatrix<R,MC,MR>& A );
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 void ApplyPackedReflectorsLUHB
 ( Conjugation conjugation, int offset,
   const DistMatrix<std::complex<R>,MC,MR  >& H,
   const DistMatrix<std::complex<R>,MD,STAR>& t,
         DistMatrix<std::complex<R>,MC,MR  >& A );
-#endif
 
 template<typename R>
 void ApplyPackedReflectorsRLVF
 ( int offset, 
   const DistMatrix<R,MC,MR>& H, 
         DistMatrix<R,MC,MR>& A );
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 void ApplyPackedReflectorsRLVF
 ( Conjugation conjugation, int offset,
   const DistMatrix<std::complex<R>,MC,MR  >& H,
   const DistMatrix<std::complex<R>,MD,STAR>& t,
         DistMatrix<std::complex<R>,MC,MR  >& A );
-#endif
 
 template<typename R>
 void ApplyPackedReflectorsRLVB
 ( int offset, 
   const DistMatrix<R,MC,MR>& H, 
         DistMatrix<R,MC,MR>& A );
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 void ApplyPackedReflectorsRLVB
 ( Conjugation conjugation, int offset,
   const DistMatrix<std::complex<R>,MC,MR  >& H,
   const DistMatrix<std::complex<R>,MD,STAR>& t,
         DistMatrix<std::complex<R>,MC,MR  >& A );
-#endif
 
 template<typename R>
 void ApplyPackedReflectorsRLHF
 ( int offset, 
   const DistMatrix<R,MC,MR>& H, 
         DistMatrix<R,MC,MR>& A );
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 void ApplyPackedReflectorsRLHF
 ( Conjugation conjugation, int offset,
   const DistMatrix<std::complex<R>,MC,MR  >& H,
   const DistMatrix<std::complex<R>,MD,STAR>& t,
         DistMatrix<std::complex<R>,MC,MR  >& A );
-#endif
 
 template<typename R>
 void ApplyPackedReflectorsRLHB
 ( int offset, 
   const DistMatrix<R,MC,MR>& H, 
         DistMatrix<R,MC,MR>& A );
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 void ApplyPackedReflectorsRLHB
 ( Conjugation conjugation, int offset,
   const DistMatrix<std::complex<R>,MC,MR  >& H,
   const DistMatrix<std::complex<R>,MD,STAR>& t,
         DistMatrix<std::complex<R>,MC,MR  >& A );
-#endif
 
 template<typename R>
 void ApplyPackedReflectorsRUVF
 ( int offset, 
   const DistMatrix<R,MC,MR>& H, 
         DistMatrix<R,MC,MR>& A );
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 void ApplyPackedReflectorsRUVF
 ( Conjugation conjugation, int offset,
   const DistMatrix<std::complex<R>,MC,MR  >& H,
   const DistMatrix<std::complex<R>,MD,STAR>& t,
         DistMatrix<std::complex<R>,MC,MR  >& A );
-#endif
 
 template<typename R>
 void ApplyPackedReflectorsRUVB
 ( int offset, 
   const DistMatrix<R,MC,MR>& H, 
         DistMatrix<R,MC,MR>& A );
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 void ApplyPackedReflectorsRUVB
 ( Conjugation conjugation, int offset,
   const DistMatrix<std::complex<R>,MC,MR  >& H,
   const DistMatrix<std::complex<R>,MD,STAR>& t,
         DistMatrix<std::complex<R>,MC,MR  >& A );
-#endif
 
 template<typename R>
 void ApplyPackedReflectorsRUHF
 ( int offset, 
   const DistMatrix<R,MC,MR>& H, 
         DistMatrix<R,MC,MR>& A );
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 void ApplyPackedReflectorsRUHF
 ( Conjugation conjugation, int offset,
   const DistMatrix<std::complex<R>,MC,MR  >& H,
   const DistMatrix<std::complex<R>,MD,STAR>& t,
         DistMatrix<std::complex<R>,MC,MR  >& A );
-#endif
 
 template<typename R>
 void ApplyPackedReflectorsRUHB
 ( int offset, 
   const DistMatrix<R,MC,MR>& H, 
         DistMatrix<R,MC,MR>& A );
-#ifndef WITHOUT_COMPLEX
 template<typename R>
 void ApplyPackedReflectorsRUHB
 ( Conjugation conjugation, int offset,
   const DistMatrix<std::complex<R>,MC,MR  >& H,
   const DistMatrix<std::complex<R>,MD,STAR>& t,
         DistMatrix<std::complex<R>,MC,MR  >& A );
-#endif
 
 //----------------------------------------------------------------------------//
 // LAPACK-like Utility Functions                                              //
@@ -917,7 +894,6 @@ CholeskyGFlops<double>
 ( int m, double seconds )
 { return CholeskyGFlops<float>(m,seconds); }
             
-#ifndef WITHOUT_COMPLEX
 template<>
 inline double
 CholeskyGFlops<scomplex>
@@ -929,7 +905,6 @@ inline double
 CholeskyGFlops<dcomplex>
 ( int m, double seconds )
 { return 4.*CholeskyGFlops<float>(m,seconds); }
-#endif
 
 template<>
 inline double
@@ -943,7 +918,6 @@ HegstGFlops<double>
 ( int m, double seconds )
 { return HegstGFlops<float>(m,seconds); }
 
-#ifndef WITHOUT_COMPLEX
 template<>
 inline double
 HegstGFlops<scomplex>
@@ -955,7 +929,6 @@ inline double
 HegstGFlops<dcomplex>
 ( int m, double seconds )
 { return 4.*HegstGFlops<float>(m,seconds); }
-#endif
 
 template<>
 inline double
@@ -977,7 +950,6 @@ LUGFlops<double>
 ( int m, double seconds )
 { return LUGFlops<float>(m,seconds); }
 
-#ifndef WITHOUT_COMPLEX
 template<>
 inline double
 LUGFlops<scomplex>
@@ -989,7 +961,6 @@ inline double
 LUGFlops<dcomplex>
 ( int m, double seconds )
 { return 4.*LUGFlops<float>(m,seconds); }
-#endif
 
 template<>
 inline double
@@ -1003,7 +974,6 @@ LQGFlops<double>
 ( int m, int n, double seconds )
 { return LQGFlops<float>(m,n,seconds); }
 
-#ifndef WITHOUT_COMPLEX
 template<>
 inline double
 LQGFlops<scomplex>
@@ -1015,7 +985,6 @@ inline double
 LQGFlops<dcomplex>
 ( int m, int n, double seconds )
 { return 4.*LQGFlops<float>(m,n,seconds); }
-#endif
 
 template<>
 inline double
@@ -1029,7 +998,6 @@ QRGFlops<double>
 ( int m, int n, double seconds )
 { return QRGFlops<float>(m,n,seconds); }
 
-#ifndef WITHOUT_COMPLEX
 template<>
 inline double
 QRGFlops<scomplex>
@@ -1041,7 +1009,6 @@ inline double
 QRGFlops<dcomplex>
 ( int m, int n, double seconds )
 { return 4.*QRGFlops<float>(m,n,seconds); }
-#endif
 
 template<>
 inline double
@@ -1055,7 +1022,6 @@ HermitianTridiagGFlops<double>
 ( int m, double seconds )
 { return HermitianTridiagGFlops<float>(m,seconds); }
 
-#ifndef WITHOUT_COMPLEX
 template<>
 inline double
 HermitianTridiagGFlops<scomplex>
@@ -1067,7 +1033,6 @@ inline double
 HermitianTridiagGFlops<dcomplex>
 ( int m, double seconds )
 { return 4.*HermitianTridiagGFlops<float>(m,seconds); }
-#endif
 
 template<>
 inline double
@@ -1081,7 +1046,6 @@ HPDInverseGFlops<double>
 ( int m, double seconds )
 { return HPDInverseGFlops<float>(m,seconds); }
 
-#ifndef WITHOUT_COMPLEX
 template<>
 inline double
 HPDInverseGFlops<scomplex>
@@ -1093,7 +1057,6 @@ inline double
 HPDInverseGFlops<dcomplex>
 ( int m, double seconds )
 { return 4.*HPDInverseGFlops<float>(m,seconds); }
-#endif
 
 template<>
 inline double
@@ -1107,7 +1070,6 @@ TriangularInverseGFlops<double>
 ( int m, double seconds )
 { return TriangularInverseGFlops<float>(m,seconds); }
 
-#ifndef WITHOUT_COMPLEX
 template<>
 inline double
 TriangularInverseGFlops<scomplex>
@@ -1119,7 +1081,6 @@ inline double
 TriangularInverseGFlops<dcomplex>
 ( int m, double seconds )
 { return 4.*TriangularInverseGFlops<float>(m,seconds); }
-#endif
 
 template<>
 inline double
@@ -1133,7 +1094,6 @@ ApplyPackedReflectorsGFlops<double>
 ( int m, double seconds )
 { return ApplyPackedReflectorsGFlops<float>(m,seconds); }
 
-#ifndef WITHOUT_COMPLEX
 template<>
 inline double
 ApplyPackedReflectorsGFlops<scomplex>
@@ -1145,7 +1105,6 @@ inline double
 ApplyPackedReflectorsGFlops<dcomplex>
 ( int m, double seconds )
 { return 4.*ApplyPackedReflectorsGFlops<float>(m,seconds); }
-#endif
 
 } // internal
 } // advanced
