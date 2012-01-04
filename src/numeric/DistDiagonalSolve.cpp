@@ -45,7 +45,7 @@ void clique::numeric::DistDiagonalSolve
         FTL.LockedView( front.front1dL, 0, 0, sn.size, sn.size );
         DistMatrix<F,VC,STAR> dTL;
         FTL.GetDiagonal( dTL );
-        elemental::basic::DiagonalSolve
+        elemental::DiagonalSolve
         ( LEFT, NORMAL, dTL.LockedLocalMatrix(), localXT, true );
     }
 #ifndef RELEASE

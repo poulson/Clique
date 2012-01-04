@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2011, Jack Poulson
+   Copyright (c) 2009-2012, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental.
@@ -56,9 +56,12 @@ int PMRRR
 
 } // extern "C"
 
+namespace elemental {
+namespace pmrrr {
+
 // Return upper bounds on the number of (local) eigenvalues in the given range,
 // (lowerBound,upperBound]
-elemental::pmrrr::Estimate elemental::pmrrr::EigEstimate
+Estimate EigEstimate
 ( int n, const double* d, const double* e, double* w, 
   mpi::Comm comm, double lowerBound, double upperBound )
 {
@@ -82,7 +85,7 @@ elemental::pmrrr::Estimate elemental::pmrrr::EigEstimate
         throw std::runtime_error( msg.str().c_str() );
     }
 
-    pmrrr::Estimate estimate;
+    Estimate estimate;
     estimate.numLocalEigenvalues = nz;
     mpi::AllReduce( &nz, &estimate.numGlobalEigenvalues, 1, mpi::SUM, comm );
 
@@ -93,8 +96,7 @@ elemental::pmrrr::Estimate elemental::pmrrr::EigEstimate
 }
 
 // Compute all of the eigenvalues
-elemental::pmrrr::Info elemental::pmrrr::Eig
-( int n, const double* d, const double* e, double* w, mpi::Comm comm )
+Info Eig( int n, const double* d, const double* e, double* w, mpi::Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("pmrrr::Eig");
@@ -117,7 +119,7 @@ elemental::pmrrr::Info elemental::pmrrr::Eig
         throw std::runtime_error( msg.str().c_str() );
     }
 
-    pmrrr::Info info;
+    Info info;
     info.numLocalEigenvalues=nz;
     info.firstLocalEigenvalue=offset;
     info.numGlobalEigenvalues=n;
@@ -129,7 +131,7 @@ elemental::pmrrr::Info elemental::pmrrr::Eig
 }
 
 // Compute all of the eigenpairs
-elemental::pmrrr::Info elemental::pmrrr::Eig
+Info Eig
 ( int n, const double* d, const double* e, double* w, double* Z, int ldz, 
   mpi::Comm comm )
 {
@@ -153,7 +155,7 @@ elemental::pmrrr::Info elemental::pmrrr::Eig
         throw std::runtime_error( msg.str().c_str() );
     }
 
-    pmrrr::Info info;
+    Info info;
     info.numLocalEigenvalues=nz;
     info.firstLocalEigenvalue=offset;
     info.numGlobalEigenvalues=n;
@@ -165,7 +167,7 @@ elemental::pmrrr::Info elemental::pmrrr::Eig
 }
 
 // Compute all of the eigenvalues in (lowerBound,upperBound]
-elemental::pmrrr::Info elemental::pmrrr::Eig
+Info Eig
 ( int n, const double* d, const double* e, double* w, 
   mpi::Comm comm, double lowerBound, double upperBound )
 {
@@ -189,7 +191,7 @@ elemental::pmrrr::Info elemental::pmrrr::Eig
         throw std::runtime_error( msg.str().c_str() );
     }
 
-    pmrrr::Info info;
+    Info info;
     info.numLocalEigenvalues=nz;
     info.firstLocalEigenvalue=offset;
     mpi::AllReduce( &nz, &info.numGlobalEigenvalues, 1, mpi::SUM, comm );
@@ -201,7 +203,7 @@ elemental::pmrrr::Info elemental::pmrrr::Eig
 }
 
 // Compute all of the eigenpairs with eigenvalues in (lowerBound,upperBound]
-elemental::pmrrr::Info elemental::pmrrr::Eig
+Info Eig
 ( int n, const double* d, const double* e, double* w, double* Z, int ldz, 
   mpi::Comm comm, double lowerBound, double upperBound )
 {
@@ -224,7 +226,7 @@ elemental::pmrrr::Info elemental::pmrrr::Eig
         throw std::runtime_error( msg.str().c_str() );
     }
 
-    pmrrr::Info info;
+    Info info;
     info.numLocalEigenvalues=nz;
     info.firstLocalEigenvalue=offset;
     mpi::AllReduce( &nz, &info.numGlobalEigenvalues, 1, mpi::SUM, comm );
@@ -236,7 +238,7 @@ elemental::pmrrr::Info elemental::pmrrr::Eig
 }
 
 // Compute all of the eigenvalues with indices in [lowerBound,upperBound]
-elemental::pmrrr::Info elemental::pmrrr::Eig
+Info Eig
 ( int n, const double* d, const double* e, double* w, 
   mpi::Comm comm, int lowerBound, int upperBound )
 {
@@ -262,7 +264,7 @@ elemental::pmrrr::Info elemental::pmrrr::Eig
         throw std::runtime_error( msg.str().c_str() );
     }
 
-    pmrrr::Info info;
+    Info info;
     info.numLocalEigenvalues=nz;
     info.firstLocalEigenvalue=offset;
     info.numGlobalEigenvalues=(upperBound-lowerBound)+1;
@@ -275,7 +277,7 @@ elemental::pmrrr::Info elemental::pmrrr::Eig
 
 // Compute all of the eigenpairs with eigenvalues indices in 
 // [lowerBound,upperBound]
-elemental::pmrrr::Info elemental::pmrrr::Eig
+Info Eig
 ( int n, const double* d, const double* e, double* w, double* Z, int ldz, 
   mpi::Comm comm, int lowerBound, int upperBound )
 {
@@ -300,7 +302,7 @@ elemental::pmrrr::Info elemental::pmrrr::Eig
         throw std::runtime_error( msg.str().c_str() );
     }
 
-    pmrrr::Info info;
+    Info info;
     info.numLocalEigenvalues=nz;
     info.firstLocalEigenvalue=offset;
     info.numGlobalEigenvalues=(upperBound-lowerBound)+1;
@@ -311,3 +313,5 @@ elemental::pmrrr::Info elemental::pmrrr::Eig
     return info;
 }
 
+} // namespace pmrrr
+} // namespace elemental

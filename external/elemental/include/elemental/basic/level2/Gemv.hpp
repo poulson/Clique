@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2011, Jack Poulson
+   Copyright (c) 2009-2012, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental.
@@ -34,23 +34,27 @@
 #include "./Gemv/GemvN.hpp"
 #include "./Gemv/GemvT.hpp"
 
+namespace elemental {
+
 template<typename T>
 inline void
-elemental::basic::Gemv
+Gemv
 ( Orientation orientation,
   T alpha, const DistMatrix<T,MC,MR>& A, 
            const DistMatrix<T,MC,MR>& x,
   T beta,        DistMatrix<T,MC,MR>& y )
 {
 #ifndef RELEASE
-    PushCallStack("basic::Gemv");
+    PushCallStack("Gemv");
 #endif
     if( orientation == NORMAL )
-        basic::internal::GemvN( alpha, A, x, beta, y );
+        internal::GemvN( alpha, A, x, beta, y );
     else
-        basic::internal::GemvT( orientation, alpha, A, x, beta, y );
+        internal::GemvT( orientation, alpha, A, x, beta, y );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
+
+} // namespace elemental
 

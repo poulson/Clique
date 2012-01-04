@@ -35,7 +35,7 @@ void clique::numeric::LocalFrontDiagonalSolve
     if( d.Height() != X.Height() )
         throw std::logic_error("Invalid height of X");
 #endif
-    elemental::basic::DiagonalSolve( LEFT, NORMAL, d, X, true );
+    elemental::DiagonalSolve( LEFT, NORMAL, d, X, true );
 #ifndef RELEASE
     clique::PopCallStack();
 #endif

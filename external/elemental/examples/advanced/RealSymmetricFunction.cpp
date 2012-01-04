@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2011, Jack Poulson
+   Copyright (c) 2009-2012, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental.
@@ -86,7 +86,7 @@ main( int argc, char* argv[] )
         H.Print("H");
 
         // Reform the matrix with the exponentials of the original eigenvalues
-        advanced::RealHermitianFunction( LOWER, H, ExpFunctor() );
+        RealHermitianFunction( LOWER, H, ExpFunctor() );
 
         // Print the exponential of the original matrix
         H.Print("exp(H)");

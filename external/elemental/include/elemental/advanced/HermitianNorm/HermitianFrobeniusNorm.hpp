@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2011, Jack Poulson
+   Copyright (c) 2009-2012, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental.
@@ -31,13 +31,14 @@
    POSSIBILITY OF SUCH DAMAGE.
 */
 
-template<typename R> // representation of a real number
+namespace elemental {
+
+template<typename R>
 inline R
-elemental::advanced::internal::HermitianFrobeniusNorm
-( UpperOrLower uplo, const Matrix<R>& A )
+internal::HermitianFrobeniusNorm( UpperOrLower uplo, const Matrix<R>& A )
 {
 #ifndef RELEASE
-    PushCallStack("advanced::internal::HermitianFrobeniusNorm");
+    PushCallStack("internal::HermitianFrobeniusNorm");
 #endif
     if( A.Height() != A.Width() )
         throw std::logic_error("Hermitian matrices must be square.");
@@ -77,13 +78,13 @@ elemental::advanced::internal::HermitianFrobeniusNorm
     return norm;
 }
 
-template<typename R> // representation of a real number
+template<typename R>
 inline R
-elemental::advanced::internal::HermitianFrobeniusNorm
+internal::HermitianFrobeniusNorm
 ( UpperOrLower uplo, const Matrix<std::complex<R> >& A )
 {
 #ifndef RELEASE
-    PushCallStack("advanced::internal::HermitianFrobeniusNorm");
+    PushCallStack("internal::HermitianFrobeniusNorm");
 #endif
     if( A.Height() != A.Width() )
         throw std::logic_error("Hermitian matrices must be square.");
@@ -125,13 +126,13 @@ elemental::advanced::internal::HermitianFrobeniusNorm
     return norm;
 }
 
-template<typename R> // representation of a real number
+template<typename R>
 inline R
-elemental::advanced::internal::HermitianFrobeniusNorm
+internal::HermitianFrobeniusNorm
 ( UpperOrLower uplo, const DistMatrix<R,MC,MR>& A )
 {
 #ifndef RELEASE
-    PushCallStack("advanced::internal::HermitianFrobeniusNorm");
+    PushCallStack("internal::HermitianFrobeniusNorm");
 #endif
     if( A.Height() != A.Width() )
         throw std::logic_error("Hermitian matrices must be square.");
@@ -190,13 +191,13 @@ elemental::advanced::internal::HermitianFrobeniusNorm
     return norm;
 }
 
-template<typename R> // representation of a real number
+template<typename R> 
 inline R
-elemental::advanced::internal::HermitianFrobeniusNorm
+internal::HermitianFrobeniusNorm
 ( UpperOrLower uplo, const DistMatrix<std::complex<R>,MC,MR>& A )
 {
 #ifndef RELEASE
-    PushCallStack("advanced::internal::HermitianFrobeniusNorm");
+    PushCallStack("internal::HermitianFrobeniusNorm");
 #endif
     if( A.Height() != A.Width() )
         throw std::logic_error("Hermitian matrices must be square.");
@@ -256,3 +257,5 @@ elemental::advanced::internal::HermitianFrobeniusNorm
 #endif
     return norm;
 }
+
+} // namespace elemental

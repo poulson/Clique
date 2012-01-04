@@ -78,12 +78,12 @@ void ForwardMany
         X1_STAR_STAR = X1;   // X1[* ,* ] <- X1[VC,* ]
 
         // X1[* ,* ] := (L11[* ,* ])^-1 X1[* ,* ]
-        basic::internal::LocalTrsm
+        internal::LocalTrsm
         ( LEFT, LOWER, NORMAL, diag, (F)1, L11_STAR_STAR, X1_STAR_STAR, true );
         X1 = X1_STAR_STAR;
 
         // X2[VC,* ] -= L21[VC,* ] X1[* ,* ]
-        basic::internal::LocalGemm
+        internal::LocalGemm
         ( NORMAL, NORMAL, (F)-1, L21, X1_STAR_STAR, (F)1, X2 );
         //--------------------------------------------------------------------//
 
@@ -252,13 +252,13 @@ void ForwardSingle
         AccumulateRHS( X1, X1_STAR_STAR ); // X1[* ,* ] <- X1[VC,* ]
 
         // X1[* ,* ] := (L11[* ,* ])^-1 X1[* ,* ]
-        basic::internal::LocalTrsm
+        internal::LocalTrsm
         ( LEFT, UPPER, TRANSPOSE, diag, (F)1, L11Trans_STAR_STAR, X1_STAR_STAR,
           true );
         X1 = X1_STAR_STAR;
 
         // X2[VC,* ] -= L21[VC,* ] X1[* ,* ]
-        basic::internal::LocalGemm
+        internal::LocalGemm
         ( NORMAL, NORMAL, (F)-1, L21, X1_STAR_STAR, (F)1, X2 );
         //--------------------------------------------------------------------//
 
@@ -282,7 +282,7 @@ void BackwardMany
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
     // TODO: Replace this with modified inline code?
-    basic::internal::TrsmLLTSmall( orientation, diag, (F)1, L, X, true );
+    internal::TrsmLLTSmall( orientation, diag, (F)1, L, X, true );
 }
 
 template<typename F>
@@ -345,13 +345,13 @@ void BackwardSingle
         //--------------------------------------------------------------------//
         // X1 -= L21' X2
         Z1_STAR_STAR.ResizeTo( X1.Height(), X1.Width() );
-        basic::internal::LocalGemm
+        internal::LocalGemm
         ( orientation, NORMAL, (F)-1, L21, X2, (F)0, Z1_STAR_STAR );
-        basic::internal::AddInLocalData( X1, Z1_STAR_STAR );
+        internal::AddInLocalData( X1, Z1_STAR_STAR );
         Z1_STAR_STAR.SumOverGrid();
 
         // X1 := L11^-1 X1
-        basic::internal::LocalTrsm
+        internal::LocalTrsm
         ( LEFT, UPPER, NORMAL, UNIT, 
           (F)1, L11AdjOrTrans_STAR_STAR, Z1_STAR_STAR );
         X1 = Z1_STAR_STAR;
@@ -457,7 +457,7 @@ void clique::numeric::DistFrontLowerBackwardSolve
         // Subtract off the parent updates
         DistMatrix<F,STAR,STAR> Z(XT.Height(),XT.Width(),g);
         Z.ResizeTo( XT.Height(), XT.Width() );
-        elemental::basic::internal::LocalGemm
+        elemental::internal::LocalGemm
         ( orientation, NORMAL, (F)-1, LB, XB, (F)0, Z );
         XT.SumScatterUpdate( (F)1, Z );
     }

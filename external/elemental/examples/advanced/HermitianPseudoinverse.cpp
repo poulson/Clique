@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2011, Jack Poulson
+   Copyright (c) 2009-2012, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental.
@@ -81,7 +81,7 @@ main( int argc, char* argv[] )
         H.Print("H");
 
         // Replace H with its pseudoinverse
-        advanced::HermitianPseudoinverse( LOWER, H );
+        HermitianPseudoinverse( LOWER, H );
 
         // Print the pseudoinverse
         H.Print("pinv(H)");

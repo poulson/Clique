@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2011, Jack Poulson
+   Copyright (c) 2009-2012, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental.
@@ -100,7 +100,7 @@ main( int argc, char* argv[] )
         ASqrt = A;
         ASqrt.Print("ASqrt := A");
 
-        basic::Scal( 2.0, ASqrt );
+        Scal( 2.0, ASqrt );
         ASqrt.Print("ASqrt := 2 ASqrt");
 
         A = ASqrt;

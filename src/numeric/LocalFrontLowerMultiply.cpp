@@ -116,17 +116,17 @@ void clique::numeric::LocalFrontLowerMultiplyNormal
     ( X, XT,
          XB, L.Width() );
 
-    elemental::basic::Gemm( NORMAL, NORMAL, (F)1, LB, XT, (F)1, XB );
+    elemental::Gemm( NORMAL, NORMAL, (F)1, LB, XT, (F)1, XB );
 
     if( diagOffset == 0 )
     {
-        elemental::basic::Trmm( LEFT, LOWER, NORMAL, diag, (F)1, LT, XT );
+        elemental::Trmm( LEFT, LOWER, NORMAL, diag, (F)1, LT, XT );
     }
     else
     {
         std::vector<Matrix<F> > diagonals;
         ModifyForTrmm( LT, diag, diagOffset, diagonals );
-        elemental::basic::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, (F)1, LT, XT );
+        elemental::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, (F)1, LT, XT );
         ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
     }
 #ifndef RELEASE
@@ -169,18 +169,17 @@ void clique::numeric::LocalFrontLowerMultiplyTranspose
 
     if( diagOffset == 0 )
     {
-        elemental::basic::Trmm( LEFT, LOWER, orientation, diag, (F)1, LT, XT );
+        elemental::Trmm( LEFT, LOWER, orientation, diag, (F)1, LT, XT );
     }
     else
     {
         std::vector<Matrix<F> > diagonals;
         ModifyForTrmm( LT, diag, diagOffset, diagonals );
-        elemental::basic::Trmm
-        ( LEFT, LOWER, orientation, NON_UNIT, (F)1, LT, XT );
+        elemental::Trmm( LEFT, LOWER, orientation, NON_UNIT, (F)1, LT, XT );
         ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
     }
 
-    elemental::basic::Gemm( orientation, NORMAL, (F)1, LB, XB, (F)1, XT );
+    elemental::Gemm( orientation, NORMAL, (F)1, LB, XB, (F)1, XT );
 #ifndef RELEASE
     clique::PopCallStack();
 #endif

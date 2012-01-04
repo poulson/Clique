@@ -54,10 +54,12 @@ void clique::numeric::internal::DistFrontLDLGeneral
         throw std::logic_error("AL and ABR must use the same grid");
     if( ABR.ColAlignment() !=
         (AL.ColAlignment()+AL.Width()) % AL.Grid().Height() )
-        throw std::logic_error("AL and ABR must have compatible col alignments");
+        throw std::logic_error
+        ("AL and ABR must have compatible col alignments");
     if( ABR.RowAlignment() != 
         (AL.RowAlignment()+AL.Width()) % AL.Grid().Width() )
-        throw std::logic_error("AL and ABR must have compatible row alignments");
+        throw std::logic_error
+        ("AL and ABR must have compatible row alignments");
     if( orientation == NORMAL )
         throw std::logic_error("DistFrontLDL must be (conjugate-)transposed.");
 #endif
@@ -100,17 +102,17 @@ void clique::numeric::internal::DistFrontLDLGeneral
         AL21AdjOrTrans_STAR_MR.AlignWith( AL22 );
         //--------------------------------------------------------------------//
         AL11_STAR_STAR = AL11; 
-        elemental::advanced::internal::LocalLDL
+        elemental::internal::LocalLDL
         ( orientation, AL11_STAR_STAR, d1_STAR_STAR );
         AL11 = AL11_STAR_STAR;
 
         AL21_VC_STAR = AL21;
-        elemental::basic::internal::LocalTrsm
+        elemental::internal::LocalTrsm
         ( RIGHT, LOWER, orientation, UNIT, 
           (F)1, AL11_STAR_STAR, AL21_VC_STAR );
 
         S21Trans_STAR_MC.TransposeFrom( AL21_VC_STAR );
-        elemental::basic::DiagonalSolve
+        elemental::DiagonalSolve
         ( RIGHT, NORMAL, d1_STAR_STAR, AL21_VC_STAR );
         AL21_VR_STAR = AL21_VC_STAR;
         if( orientation == ADJOINT )
@@ -128,14 +130,14 @@ void clique::numeric::internal::DistFrontLDLGeneral
         PartitionDown
         ( AL22, AL22T,
                 AL22B, AL22.Width() );
-        elemental::basic::internal::LocalTrrk
+        elemental::internal::LocalTrrk
         ( LOWER, orientation, (F)-1, leftL, rightL, (F)1, AL22T );
-        elemental::basic::internal::LocalGemm
+        elemental::internal::LocalGemm
         ( orientation, NORMAL, (F)-1, leftR, rightL, (F)1, AL22B );
-        elemental::basic::internal::LocalTrrk
+        elemental::internal::LocalTrrk
         ( LOWER, orientation, (F)-1, leftR, rightR, (F)1, ABR );
 
-        elemental::basic::DiagonalSolve
+        elemental::DiagonalSolve
         ( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
         AL21.TransposeFrom( S21Trans_STAR_MC );
         //--------------------------------------------------------------------//
@@ -234,12 +236,12 @@ void clique::numeric::internal::DistFrontLDLSquare
         AL21AdjOrTrans_STAR_MR.AlignWith( AL22 );
         //--------------------------------------------------------------------//
         AL11_STAR_STAR = AL11; 
-        elemental::advanced::internal::LocalLDL
+        elemental::internal::LocalLDL
         ( orientation, AL11_STAR_STAR, d1_STAR_STAR );
         AL11 = AL11_STAR_STAR;
 
         AL21_VC_STAR = AL21;
-        elemental::basic::internal::LocalTrsm
+        elemental::internal::LocalTrsm
         ( RIGHT, LOWER, orientation, UNIT, 
           (F)1, AL11_STAR_STAR, AL21_VC_STAR );
 
@@ -267,10 +269,10 @@ void clique::numeric::internal::DistFrontLDLSquare
                   AL21AdjOrTrans_STAR_MR.LocalBuffer(), 
                   recvSize, transposeRank, 0, g.VCComm() );
             }
-            elemental::basic::DiagonalSolve
+            elemental::DiagonalSolve
             ( LEFT, NORMAL, d1_STAR_STAR, AL21AdjOrTrans_STAR_MR );
             if( orientation == ADJOINT )
-                elemental::basic::Conjugate( AL21AdjOrTrans_STAR_MR );
+                elemental::Conjugate( AL21AdjOrTrans_STAR_MR );
         }
 
         // Partition the update of the bottom-right corner into three pieces
@@ -283,14 +285,14 @@ void clique::numeric::internal::DistFrontLDLSquare
         PartitionDown
         ( AL22, AL22T,
                 AL22B, AL22.Width() );
-        elemental::basic::internal::LocalTrrk
+        elemental::internal::LocalTrrk
         ( LOWER, orientation, (F)-1, leftL, rightL, (F)1, AL22T );
-        elemental::basic::internal::LocalGemm
+        elemental::internal::LocalGemm
         ( orientation, NORMAL, (F)-1, leftR, rightL, (F)1, AL22B );
-        elemental::basic::internal::LocalTrrk
+        elemental::internal::LocalTrrk
         ( LOWER, orientation, (F)-1, leftR, rightR, (F)1, ABR );
 
-        elemental::basic::DiagonalSolve
+        elemental::DiagonalSolve
         ( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
         AL21.TransposeFrom( S21Trans_STAR_MC );
         //--------------------------------------------------------------------//

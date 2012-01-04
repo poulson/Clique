@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2011, Jack Poulson
+   Copyright (c) 2009-2012, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental.
@@ -44,7 +44,7 @@ namespace elemental {
 // using namespace elemental;
 // Matrix<double> A;
 // ...
-// double norm = advanced::Norm( A, ONE_NORM );
+// double norm = Norm( A, ONE_NORM );
 //
 
 namespace norm_type_wrapper {
@@ -77,8 +77,6 @@ enum HermitianTridiagApproach
 };
 }
 using namespace hermitian_tridiag_approach_wrapper;
-
-namespace advanced {
 
 //----------------------------------------------------------------------------//
 // ApplyPackedReflectors                                                      //
@@ -1073,7 +1071,6 @@ template<typename F>
 void TriangularInverse
 ( UpperOrLower uplo, Diagonal diagonal, DistMatrix<F,MC,MR>& A  );
 
-} // advanced
 } // elemental
 
 //----------------------------------------------------------------------------//
@@ -1114,13 +1111,14 @@ void TriangularInverse
 #include "./advanced/Trace.hpp"
 #include "./advanced/TriangularInverse.hpp"
 
+namespace elemental {
+
 template<typename F>
 inline void
-elemental::advanced::Cholesky
-( UpperOrLower uplo, Matrix<F>& A )
+Cholesky( UpperOrLower uplo, Matrix<F>& A )
 {
 #ifndef RELEASE
-    PushCallStack("advanced::Cholesky");
+    PushCallStack("Cholesky");
     if( A.Height() != A.Width() )
         throw std::logic_error("A must be square");
 #endif
@@ -1133,11 +1131,10 @@ elemental::advanced::Cholesky
 
 template<typename F>
 inline void
-elemental::advanced::Hegst
-( Side side, UpperOrLower uplo, Matrix<F>& A, const Matrix<F>& B )
+Hegst( Side side, UpperOrLower uplo, Matrix<F>& A, const Matrix<F>& B )
 {
 #ifndef RELEASE
-    PushCallStack("advanced::Hegst");
+    PushCallStack("Hegst");
     if( A.Height() != A.Width() )
         throw std::logic_error("A must be square");
     if( B.Height() != B.Width() )
@@ -1157,11 +1154,10 @@ elemental::advanced::Hegst
 
 template<typename F>
 inline void
-elemental::advanced::LU
-( Matrix<F>& A, Matrix<int>& p )
+LU( Matrix<F>& A, Matrix<int>& p )
 {
 #ifndef RELEASE
-    PushCallStack("advanced::LU");
+    PushCallStack("LU");
     if( p.Height() != A.Height() )
         throw std::logic_error("A and p must be the same height");
 #endif
@@ -1180,11 +1176,10 @@ elemental::advanced::LU
 
 template<typename R>
 inline R
-elemental::advanced::SymmetricNorm
-( UpperOrLower uplo, const Matrix<R>& A, NormType type )
+SymmetricNorm( UpperOrLower uplo, const Matrix<R>& A, NormType type )
 { 
 #ifndef RELEASE
-    PushCallStack("advanced::SymmetricNorm");
+    PushCallStack("SymmetricNorm");
 #endif
     HermitianNorm( uplo, A, type );
 #ifndef RELEASE
@@ -1194,11 +1189,11 @@ elemental::advanced::SymmetricNorm
 
 template<typename R>
 inline R
-elemental::advanced::SymmetricNorm
+SymmetricNorm
 ( UpperOrLower uplo, const DistMatrix<R,MC,MR>& A, NormType type )
 { 
 #ifndef RELEASE
-    PushCallStack("advanced::SymmetricNorm");
+    PushCallStack("SymmetricNorm");
 #endif
     HermitianNorm( uplo, A, type );
 #ifndef RELEASE
@@ -1208,11 +1203,11 @@ elemental::advanced::SymmetricNorm
 
 template<typename R>
 inline R
-elemental::advanced::SymmetricNorm
+SymmetricNorm
 ( UpperOrLower uplo, const Matrix<std::complex<R> >& A, NormType type )
 { 
 #ifndef RELEASE
-    PushCallStack("advanced::SymmetricNorm");
+    PushCallStack("SymmetricNorm");
 #endif
     HermitianNorm( uplo, A, type );
 #ifndef RELEASE
@@ -1222,11 +1217,11 @@ elemental::advanced::SymmetricNorm
 
 template<typename R>
 inline R
-elemental::advanced::SymmetricNorm
+SymmetricNorm
 ( UpperOrLower uplo, const DistMatrix<std::complex<R>,MC,MR>& A, NormType type )
 { 
 #ifndef RELEASE
-    PushCallStack("advanced::SymmetricNorm");
+    PushCallStack("SymmetricNorm");
 #endif
     HermitianNorm( uplo, A, type );
 #ifndef RELEASE
@@ -1236,11 +1231,11 @@ elemental::advanced::SymmetricNorm
 
 template<typename F>
 inline void
-elemental::advanced::TriangularInverse
+TriangularInverse
 ( UpperOrLower uplo, Diagonal diagonal, Matrix<F>& A )
 {
 #ifndef RELEASE
-    PushCallStack("advanced::TriangularInverse");
+    PushCallStack("TriangularInverse");
     if( A.Height() != A.Width() )
         throw std::logic_error("A must be square");
 #endif
@@ -1252,6 +1247,8 @@ elemental::advanced::TriangularInverse
     PopCallStack();
 #endif
 }
+
+} // namespace elemental
 
 #endif /* ELEMENTAL_ADVANCED_HPP */
 

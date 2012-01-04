@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2011, Jack Poulson
+   Copyright (c) 2009-2012, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental.
@@ -81,11 +81,11 @@ void TestHerk
     }
     mpi::Barrier( g.Comm() );
     startTime = mpi::Time();
-    basic::Herk( uplo, orientation, alpha, A, beta, C );
+    Herk( uplo, orientation, alpha, A, beta, C );
     mpi::Barrier( g.Comm() );
     endTime = mpi::Time();
     runTime = endTime - startTime;
-    gFlops = basic::internal::HerkGFlops<T>(m,k,runTime);
+    gFlops = internal::HerkGFlops<T>(m,k,runTime);
     if( g.Rank() == 0 )
     {
         cout << "DONE. " << endl
@@ -140,8 +140,8 @@ main( int argc, char* argv[] )
 #endif
         const Grid g( comm, r, c );
         SetBlocksize( nb );
-        basic::SetLocalTrrkBlocksize<double>( nbLocal );
-        basic::SetLocalTrrkBlocksize<complex<double> >( nbLocal );
+        SetLocalTrrkBlocksize<double>( nbLocal );
+        SetLocalTrrkBlocksize<complex<double> >( nbLocal );
 
         if( rank == 0 )
         {

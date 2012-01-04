@@ -263,7 +263,7 @@ main( int argc, char* argv[] )
             elemental::Matrix<F> localY = localX;
             clique::numeric::LowerMultiply
             ( elemental::TRANSPOSE, elemental::NON_UNIT, 0, S, L, localY );
-            elemental::basic::Axpy( (F)1, localYLower, localY );
+            elemental::Axpy( (F)1, localYLower, localY );
             localYLower.Empty();
             clique::numeric::SetSolveMode( L, clique::MANY_RHS );
             clique::mpi::Barrier( comm );
@@ -277,7 +277,7 @@ main( int argc, char* argv[] )
                 localX.Print( infoFile, "localX" );
                 localY.Print( infoFile, "localY" );
             }
-            const double myYNorm = elemental::advanced::Norm( localY );
+            const double myYNorm = elemental::Norm( localY );
             double YNorm;
             clique::mpi::Reduce
             ( &myYNorm, &YNorm, 1, clique::mpi::SUM, 0, comm );
@@ -316,8 +316,8 @@ main( int argc, char* argv[] )
 
             if( writeInfo )
                 localY.Print( infoFile, "localY final" );
-            elemental::basic::Axpy( (F)-1, localX, localY );
-            const double myErrorNorm = elemental::advanced::Norm( localY );
+            elemental::Axpy( (F)-1, localX, localY );
+            const double myErrorNorm = elemental::Norm( localY );
             double errorNorm;
             clique::mpi::Reduce
             ( &myErrorNorm, &errorNorm, 1, clique::mpi::SUM, 0, comm );

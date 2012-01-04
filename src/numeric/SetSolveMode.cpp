@@ -73,7 +73,7 @@ void clique::numeric::SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
             // Invert the strictly lower portion of the diagonal block 
             elemental::DistMatrix<F> LT( grid );
             LT.View( front.front2dL, 0, 0, snSize, snSize );
-            elemental::advanced::TriangularInverse
+            elemental::TriangularInverse
             ( elemental::LOWER, elemental::UNIT, LT );
 
             // Copy the data and make the strictly upper triangle zero

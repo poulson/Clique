@@ -103,20 +103,20 @@ void clique::numeric::DistFrontLowerMultiplyNormal
 
         //--------------------------------------------------------------------//
         X1_STAR_STAR = X1;
-        elemental::basic::internal::LocalGemm
+        elemental::internal::LocalGemm
         ( NORMAL, NORMAL, (F)1, L21, X1_STAR_STAR, (F)1, X2 );
 
         if( diagOffset == 0 )
         {
             L11_STAR_STAR = L11;
-            elemental::basic::internal::LocalTrmm
+            elemental::internal::LocalTrmm
             ( LEFT, LOWER, NORMAL, diag, (F)1, L11_STAR_STAR, X1_STAR_STAR );
         }
         else
         {
             L11_STAR_STAR = L11;
             ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
-            elemental::basic::internal::LocalTrmm
+            elemental::internal::LocalTrmm
             ( LEFT, LOWER, NORMAL, NON_UNIT, 
               (F)1, L11_STAR_STAR, X1_STAR_STAR );
         }
@@ -207,21 +207,21 @@ void clique::numeric::DistFrontLowerMultiplyTranspose
         L11_STAR_STAR = L11;
         if( diagOffset == 0 )
         {
-            elemental::basic::internal::LocalTrmm
+            elemental::internal::LocalTrmm
             ( LEFT, LOWER, orientation, diag, 
               (F)1, L11_STAR_STAR, X1_STAR_STAR );
         }
         else
         {
             ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
-            elemental::basic::internal::LocalTrmm
+            elemental::internal::LocalTrmm
             ( LEFT, LOWER, orientation, NON_UNIT, 
               (F)1, L11_STAR_STAR, X1_STAR_STAR );
         }
         X1 = X1_STAR_STAR;
 
         Z1_STAR_STAR.ResizeTo( X1.Height(), X1.Width() );
-        elemental::basic::internal::LocalGemm
+        elemental::internal::LocalGemm
         ( orientation, NORMAL, (F)1, L21, X2, (F)0, Z1_STAR_STAR );
         X1.SumScatterUpdate( (F)1, Z1_STAR_STAR );
         //--------------------------------------------------------------------//

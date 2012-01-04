@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2011, Jack Poulson
+   Copyright (c) 2009-2012, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental.
@@ -31,15 +31,18 @@
    POSSIBILITY OF SUCH DAMAGE.
 */
 
+namespace elemental {
+namespace internal {
+
 template<typename T>
 inline void
-elemental::basic::internal::GemvN
+GemvN
 ( T alpha, const DistMatrix<T,MC,MR>& A,
            const DistMatrix<T,MC,MR>& x,
   T beta,        DistMatrix<T,MC,MR>& y )
 {
 #ifndef RELEASE
-    PushCallStack("basic::internal::GemvN");
+    PushCallStack("internal::GemvN");
     if( A.Grid() != x.Grid() || x.Grid() != y.Grid() )
         throw std::logic_error
         ("{A,x,y} must be distributed over the same grid");
@@ -66,13 +69,13 @@ elemental::basic::internal::GemvN
         DistMatrix<T,MC,STAR> z_MC_STAR(g);
 
         // Start the algorithm
-        basic::Scal( beta, y );
+        Scal( beta, y );
         x_MR_STAR.AlignWith( A );
         z_MC_STAR.AlignWith( A );
         z_MC_STAR.ResizeTo( A.Height(), 1 );
         //--------------------------------------------------------------------//
         x_MR_STAR = x;
-        basic::Gemv
+        Gemv
         ( NORMAL,
           alpha, A.LockedLocalMatrix(), 
                  x_MR_STAR.LockedLocalMatrix(),
@@ -91,7 +94,7 @@ elemental::basic::internal::GemvN
         DistMatrix<T,MC,MR  > zTrans(g);
 
         // Start the algorithm
-        basic::Scal( beta, y );
+        Scal( beta, y );
         x_MR_STAR.AlignWith( A );
         z_MC_STAR.AlignWith( A );
         z_MC_STAR.ResizeTo( A.Height(), 1 );
@@ -99,14 +102,14 @@ elemental::basic::internal::GemvN
         zTrans.AlignWith( y );
         //--------------------------------------------------------------------//
         x_MR_STAR = x;
-        basic::Gemv
+        Gemv
         ( NORMAL,
           alpha, A.LockedLocalMatrix(),
                  x_MR_STAR.LockedLocalMatrix(),
           (T)0,  z_MC_STAR.LocalMatrix() );
         z.SumScatterFrom( z_MC_STAR );
-        basic::Transpose( z, zTrans );
-        basic::Axpy( (T)1, zTrans, y );
+        Transpose( z, zTrans );
+        Axpy( (T)1, zTrans, y );
         //--------------------------------------------------------------------//
         x_MR_STAR.FreeAlignments();
         z_MC_STAR.FreeAlignments();
@@ -120,13 +123,13 @@ elemental::basic::internal::GemvN
         DistMatrix<T,MC,  STAR> z_MC_STAR(g);
 
         // Start the algorithm
-        basic::Scal( beta, y );
+        Scal( beta, y );
         x_STAR_MR.AlignWith( A );
         z_MC_STAR.AlignWith( A );
         z_MC_STAR.ResizeTo( A.Height(), 1 );
         //--------------------------------------------------------------------//
         x_STAR_MR = x;
-        basic::Gemv
+        Gemv
         ( NORMAL,
           alpha, A.LockedLocalMatrix(), 
                  x_STAR_MR.LockedLocalMatrix(),
@@ -145,7 +148,7 @@ elemental::basic::internal::GemvN
         DistMatrix<T,MC,  MR  > zTrans(g);
 
         // Start the algorithm
-        basic::Scal( beta, y );
+        Scal( beta, y );
         x_STAR_MR.AlignWith( A );
         z_MC_STAR.AlignWith( A );
         z_MC_STAR.ResizeTo( A.Height(), 1 );
@@ -153,14 +156,14 @@ elemental::basic::internal::GemvN
         zTrans.AlignWith( y );
         //--------------------------------------------------------------------//
         x_STAR_MR = x;
-        basic::Gemv
+        Gemv
         ( NORMAL,
           alpha, A.LockedLocalMatrix(),
                  x_STAR_MR.LockedLocalMatrix(),
           (T)0,  z_MC_STAR.LocalMatrix() );
         z.SumScatterFrom( z_MC_STAR );
-        basic::Transpose( z, zTrans );
-        basic::Axpy( (T)1, zTrans, y );
+        Transpose( z, zTrans );
+        Axpy( (T)1, zTrans, y );
         //--------------------------------------------------------------------//
         x_STAR_MR.FreeAlignments();
         z_MC_STAR.FreeAlignments();
@@ -171,3 +174,6 @@ elemental::basic::internal::GemvN
     PopCallStack();
 #endif
 }
+
+} // namespace internal
+} // namespace elemental

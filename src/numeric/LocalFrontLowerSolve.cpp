@@ -51,10 +51,8 @@ void clique::numeric::LocalFrontLowerForwardSolve
     ( X, XT,
          XB, L.Width() );
 
-    elemental::basic::Trsm
-    ( LEFT, LOWER, NORMAL, diag, (F)1, LT, XT, true );
-    elemental::basic::Gemm
-    ( NORMAL, NORMAL, (F)-1, LB, XT, (F)1, XB );
+    elemental::Trsm( LEFT, LOWER, NORMAL, diag, (F)1, LT, XT, true );
+    elemental::Gemm( NORMAL, NORMAL, (F)-1, LB, XT, (F)1, XB );
 #ifndef RELEASE
     clique::PopCallStack();
 #endif
@@ -90,9 +88,8 @@ void clique::numeric::LocalFrontLowerBackwardSolve
     ( X, XT,
          XB, L.Width() );
 
-    elemental::basic::Gemm( orientation, NORMAL, (F)-1, LB, XB, (F)1, XT );
-    elemental::basic::Trsm
-    ( LEFT, LOWER, orientation, diag, (F)1, LT, XT, true );
+    elemental::Gemm( orientation, NORMAL, (F)-1, LB, XB, (F)1, XT );
+    elemental::Trsm( LEFT, LOWER, orientation, diag, (F)1, LT, XT, true );
 #ifndef RELEASE
     clique::PopCallStack();
 #endif

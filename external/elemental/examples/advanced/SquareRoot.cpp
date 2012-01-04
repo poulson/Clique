@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2011, Jack Poulson
+   Copyright (c) 2009-2012, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental.
@@ -55,13 +55,13 @@ main( int argc, char* argv[] )
         L.SetToRandom();
         L.MakeTrapezoidal( LEFT, LOWER, -1 );
         DistMatrix<C,MC,MR> A( n, n, g );
-        basic::Herk( LOWER, NORMAL, (C)1, L, (C)0, A );
+        Herk( LOWER, NORMAL, (C)1, L, (C)0, A );
 
         // Print our matrix.
         A.Print("A");
 
         // Replace A with its matrix square root
-        advanced::SquareRoot( LOWER, A );
+        SquareRoot( LOWER, A );
 
         // Print the pseudoinverse
         A.Print("sqrt(A)");

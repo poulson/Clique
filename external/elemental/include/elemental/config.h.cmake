@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2011, Jack Poulson
+   Copyright (c) 2009-2012, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental.
@@ -66,6 +66,8 @@
 #cmakedefine DISABLE_SCALAR_WRAPPER
 #cmakedefine AVOID_COMPLEX_MPI
 #cmakedefine HAVE_REDUCE_SCATTER_BLOCK
+#cmakedefine HAVE_MPI3_NONBLOCKING_COLLECTIVES
+#cmakedefine HAVE_MPIX_NONBLOCKING_COLLECTIVES
 #cmakedefine REDUCE_SCATTER_BLOCK_VIA_ALL_REDUCE
 #cmakedefine USE_BYTE_ALLGATHERS
 

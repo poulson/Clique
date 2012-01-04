@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2011, Jack Poulson
+   Copyright (c) 2009-2012, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental.
@@ -31,7 +31,6 @@
    POSSIBILITY OF SUCH DAMAGE.
 */
 #include "elemental/core/environment.hpp"
-using namespace elemental;
 
 namespace {
 
@@ -51,52 +50,44 @@ SafeMpi( int mpiError )
 
 } // anonymous namespace
 
+namespace elemental {
+namespace mpi {
+
 //----------------------------//
 // MPI environmental routines //
 //----------------------------//
 
-void
-elemental::mpi::Initialize
-( int& argc, char**& argv )
+void Initialize( int& argc, char**& argv )
 { MPI_Init( &argc, &argv ); }
 
-int
-elemental::mpi::InitializeThread
-( int& argc, char**& argv, int required )
+int InitializeThread( int& argc, char**& argv, int required )
 { 
     int provided; 
     MPI_Init_thread( &argc, &argv, required, &provided ); 
     return provided;
 }
 
-void
-elemental::mpi::Finalize()
+void Finalize()
 { MPI_Finalize(); }
 
-bool
-elemental::mpi::Initialized()
+bool Initialized()
 { 
     int initialized;
     MPI_Initialized( &initialized );
     return initialized;
 }
 
-bool
-elemental::mpi::Finalized()
+bool Finalized()
 {
     int finalized;
     MPI_Finalized( &finalized );
     return finalized;
 }
 
-double
-elemental::mpi::Time()
+double Time()
 { return MPI_Wtime(); }
 
-
-void
-elemental::mpi::OpCreate
-( mpi::UserFunction* func, bool commutes, mpi::Op& op )
+void OpCreate( UserFunction* func, bool commutes, Op& op )
 {
 #ifndef RELEASE
     PushCallStack("mpi::OpCreate");
@@ -107,8 +98,7 @@ elemental::mpi::OpCreate
 #endif
 }
 
-void
-elemental::mpi::OpFree( mpi::Op& op )
+void OpFree( Op& op )
 {
 #ifndef RELEASE
     PushCallStack("mpi::OpFree");
@@ -123,8 +113,7 @@ elemental::mpi::OpFree( mpi::Op& op )
 // Communicator manipulation //
 //---------------------------//
 
-int
-elemental::mpi::CommRank( mpi::Comm comm )
+int CommRank( Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::CommRank");
@@ -137,8 +126,7 @@ elemental::mpi::CommRank( mpi::Comm comm )
     return rank;
 }
 
-int
-elemental::mpi::CommSize( mpi::Comm comm )
+int CommSize( Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::CommSize");
@@ -151,9 +139,7 @@ elemental::mpi::CommSize( mpi::Comm comm )
     return size;
 }
 
-void
-elemental::mpi::CommCreate
-( mpi::Comm parentComm, mpi::Group subsetGroup, mpi::Comm& subsetComm )
+void CommCreate( Comm parentComm, Group subsetGroup, Comm& subsetComm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::CommCreate");
@@ -164,8 +150,7 @@ elemental::mpi::CommCreate
 #endif
 }
 
-void
-elemental::mpi::CommDup( mpi::Comm original, mpi::Comm& duplicate )
+void CommDup( Comm original, Comm& duplicate )
 {
 #ifndef RELEASE
     PushCallStack("mpi::CommDup");
@@ -176,9 +161,7 @@ elemental::mpi::CommDup( mpi::Comm original, mpi::Comm& duplicate )
 #endif
 }
 
-void
-elemental::mpi::CommSplit
-( mpi::Comm comm, int color, int key, mpi::Comm& newComm )
+void CommSplit( Comm comm, int color, int key, Comm& newComm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::CommSplit");
@@ -189,8 +172,7 @@ elemental::mpi::CommSplit
 #endif
 }
 
-void
-elemental::mpi::CommFree( mpi::Comm& comm )
+void CommFree( Comm& comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::CommFree");
@@ -201,8 +183,7 @@ elemental::mpi::CommFree( mpi::Comm& comm )
 #endif
 }
 
-bool
-elemental::mpi::CongruentComms( mpi::Comm comm1, mpi::Comm comm2 )
+bool CongruentComms( Comm comm1, Comm comm2 )
 {
 #ifndef RELEASE
     PushCallStack("mpi::CongruentComms");
@@ -215,9 +196,7 @@ elemental::mpi::CongruentComms( mpi::Comm comm1, mpi::Comm comm2 )
     return ( result == MPI_IDENT || result == MPI_CONGRUENT );
 }
 
-void
-elemental::mpi::ErrorHandlerSet
-( mpi::Comm comm, mpi::ErrorHandler errorHandler )
+void ErrorHandlerSet( Comm comm, ErrorHandler errorHandler )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ErrorHandlerSet");
@@ -232,10 +211,9 @@ elemental::mpi::ErrorHandlerSet
 // Cartesian communicator routines //
 //---------------------------------//
 
-void
-elemental::mpi::CartCreate
-( mpi::Comm comm, int numDims, const int* dimensions, const int* periods, 
-  bool reorder, mpi::Comm& cartComm )
+void CartCreate
+( Comm comm, int numDims, const int* dimensions, const int* periods, 
+  bool reorder, Comm& cartComm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::CartCreate");
@@ -250,9 +228,7 @@ elemental::mpi::CartCreate
 #endif
 }
 
-void
-elemental::mpi::CartSub
-( mpi::Comm comm, const int* remainingDims, mpi::Comm& subComm )
+void CartSub( Comm comm, const int* remainingDims, Comm& subComm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::CartSub");
@@ -267,8 +243,7 @@ elemental::mpi::CartSub
 // Group manipulation //
 //--------------------//
 
-int
-elemental::mpi::GroupRank( mpi::Group group )
+int GroupRank( Group group )
 {
 #ifndef RELEASE
     PushCallStack("mpi::GroupRank");
@@ -281,8 +256,7 @@ elemental::mpi::GroupRank( mpi::Group group )
     return rank;
 }
 
-int
-elemental::mpi::GroupSize( mpi::Group group )
+int GroupSize( Group group )
 {
 #ifndef RELEASE
     PushCallStack("mpi::GroupSize");
@@ -295,8 +269,7 @@ elemental::mpi::GroupSize( mpi::Group group )
     return size;
 }
 
-void
-elemental::mpi::CommGroup( mpi::Comm comm, mpi::Group& group )
+void CommGroup( Comm comm, Group& group )
 {
 #ifndef RELEASE
     PushCallStack("mpi::CommGroup");
@@ -307,9 +280,7 @@ elemental::mpi::CommGroup( mpi::Comm comm, mpi::Group& group )
 #endif
 }
 
-void
-elemental::mpi::GroupIncl
-( mpi::Group group, int n, const int* ranks, mpi::Group& subGroup )
+void GroupIncl( Group group, int n, const int* ranks, Group& subGroup )
 {
 #ifndef RELEASE
     PushCallStack("mpi::GroupIncl");
@@ -320,9 +291,7 @@ elemental::mpi::GroupIncl
 #endif
 }
 
-void
-elemental::mpi::GroupDifference
-( mpi::Group parent, mpi::Group subset, mpi::Group& complement )
+void GroupDifference( Group parent, Group subset, Group& complement )
 {
 #ifndef RELEASE
     PushCallStack("mpi::GroupDifference");
@@ -333,8 +302,7 @@ elemental::mpi::GroupDifference
 #endif
 }
 
-void
-elemental::mpi::GroupFree( mpi::Group& group )
+void GroupFree( Group& group )
 {
 #ifndef RELEASE
     PushCallStack("mpi::GroupFree");
@@ -345,10 +313,9 @@ elemental::mpi::GroupFree( mpi::Group& group )
 #endif
 }
 
-void
-elemental::mpi::GroupTranslateRanks
-( mpi::Group origGroup, int size, const int* origRanks, 
-  mpi::Group newGroup,                  int* newRanks )
+void GroupTranslateRanks
+( Group origGroup, int size, const int* origRanks, 
+  Group newGroup,                  int* newRanks )
 {
 #ifndef RELEASE
     PushCallStack("mpi::GroupTranslateRanks");
@@ -363,8 +330,7 @@ elemental::mpi::GroupTranslateRanks
 }
 
 // Wait until every process in comm reaches this statement
-void
-elemental::mpi::Barrier( mpi::Comm comm )
+void Barrier( Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Barrier");
@@ -376,8 +342,7 @@ elemental::mpi::Barrier( mpi::Comm comm )
 }
 
 // Test for completion
-bool
-elemental::mpi::Test( mpi::Request& request )
+bool Test( Request& request )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Test");
@@ -392,8 +357,7 @@ elemental::mpi::Test( mpi::Request& request )
 }
 
 // Ensure that the request finishes before continuing
-void
-elemental::mpi::Wait( mpi::Request& request )
+void Wait( Request& request )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Wait");
@@ -406,9 +370,7 @@ elemental::mpi::Wait( mpi::Request& request )
 }
 
 // Nonblocking test for message completion
-bool
-elemental::mpi::IProbe
-( int source, int tag, mpi::Comm comm, mpi::Status& status )
+bool IProbe( int source, int tag, Comm comm, Status& status )
 {
 #ifndef RELEASE
     PushCallStack("mpi::IProbe");
@@ -422,8 +384,7 @@ elemental::mpi::IProbe
 }
 
 template<>
-int
-elemental::mpi::GetCount<elemental::byte>( mpi::Status& status )
+int GetCount<byte>( Status& status )
 {
 #ifndef RELEASE
     PushCallStack("mpi::GetCount");
@@ -437,8 +398,7 @@ elemental::mpi::GetCount<elemental::byte>( mpi::Status& status )
 }
 
 template<>
-int
-elemental::mpi::GetCount<int>( mpi::Status& status )
+int GetCount<int>( Status& status )
 {
 #ifndef RELEASE
     PushCallStack("mpi::GetCount");
@@ -452,8 +412,7 @@ elemental::mpi::GetCount<int>( mpi::Status& status )
 }
 
 template<>
-int
-elemental::mpi::GetCount<float>( mpi::Status& status )
+int GetCount<float>( Status& status )
 {
 #ifndef RELEASE
     PushCallStack("mpi::GetCount");
@@ -467,8 +426,7 @@ elemental::mpi::GetCount<float>( mpi::Status& status )
 }
 
 template<>
-int
-elemental::mpi::GetCount<double>( mpi::Status& status )
+int GetCount<double>( Status& status )
 {
 #ifndef RELEASE
     PushCallStack("mpi::GetCount");
@@ -482,8 +440,7 @@ elemental::mpi::GetCount<double>( mpi::Status& status )
 }
 
 template<>
-int
-elemental::mpi::GetCount<elemental::scomplex>( mpi::Status& status )
+int GetCount<scomplex>( Status& status )
 {
 #ifndef RELEASE
     PushCallStack("mpi::GetCount");
@@ -497,8 +454,7 @@ elemental::mpi::GetCount<elemental::scomplex>( mpi::Status& status )
 }
 
 template<>
-int
-elemental::mpi::GetCount<elemental::dcomplex>( mpi::Status& status )
+int GetCount<dcomplex>( Status& status )
 {
 #ifndef RELEASE
     PushCallStack("mpi::GetCount");
@@ -511,9 +467,7 @@ elemental::mpi::GetCount<elemental::dcomplex>( mpi::Status& status )
     return count;
 }
 
-void
-elemental::mpi::Send
-( const byte* buf, int count, int to, int tag, mpi::Comm comm )
+void Send( const byte* buf, int count, int to, int tag, Comm comm )
 { 
 #ifndef RELEASE
     PushCallStack("mpi::Send");
@@ -527,10 +481,8 @@ elemental::mpi::Send
 #endif
 }
 
-void
-elemental::mpi::ISend
-( const byte* buf, int count, int to, int tag, mpi::Comm comm,
-  mpi::Request& request )
+void ISend
+( const byte* buf, int count, int to, int tag, Comm comm, Request& request )
 { 
 #ifndef RELEASE
     PushCallStack("mpi::ISend");
@@ -545,10 +497,8 @@ elemental::mpi::ISend
 #endif
 }
 
-void
-elemental::mpi::ISSend
-( const byte* buf, int count, int to, int tag, mpi::Comm comm,
-  mpi::Request& request )
+void ISSend
+( const byte* buf, int count, int to, int tag, Comm comm, Request& request )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ISSend");
@@ -563,9 +513,7 @@ elemental::mpi::ISSend
 #endif
 }
 
-void
-elemental::mpi::Send
-( const int* buf, int count, int to, int tag, mpi::Comm comm )
+void Send( const int* buf, int count, int to, int tag, Comm comm )
 { 
 #ifndef RELEASE
     PushCallStack("mpi::Send");
@@ -578,10 +526,8 @@ elemental::mpi::Send
 #endif
 }
 
-void
-elemental::mpi::ISend
-( const int* buf, int count, int to, int tag, mpi::Comm comm,
-  mpi::Request& request )
+void ISend
+( const int* buf, int count, int to, int tag, Comm comm, Request& request )
 { 
 #ifndef RELEASE
     PushCallStack("mpi::ISend");
@@ -595,10 +541,8 @@ elemental::mpi::ISend
 #endif
 }
 
-void
-elemental::mpi::ISSend
-( const int* buf, int count, int to, int tag, mpi::Comm comm,
-  mpi::Request& request )
+void ISSend
+( const int* buf, int count, int to, int tag, Comm comm, Request& request )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ISSend");
@@ -612,9 +556,7 @@ elemental::mpi::ISSend
 #endif
 }
 
-void
-elemental::mpi::Send
-( const float* buf, int count, int to, int tag, mpi::Comm comm )
+void Send( const float* buf, int count, int to, int tag, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Send");
@@ -627,10 +569,8 @@ elemental::mpi::Send
 #endif
 }
 
-void
-elemental::mpi::ISend
-( const float* buf, int count, int to, int tag, mpi::Comm comm,
-  mpi::Request& request )
+void ISend
+( const float* buf, int count, int to, int tag, Comm comm, Request& request )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ISend");
@@ -644,10 +584,8 @@ elemental::mpi::ISend
 #endif
 }
 
-void
-elemental::mpi::ISSend
-( const float* buf, int count, int to, int tag, mpi::Comm comm,
-  mpi::Request& request )
+void ISSend
+( const float* buf, int count, int to, int tag, Comm comm, Request& request )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ISSend");
@@ -661,9 +599,7 @@ elemental::mpi::ISSend
 #endif
 }
 
-void
-elemental::mpi::Send
-( const double* buf, int count, int to, int tag, mpi::Comm comm )
+void Send( const double* buf, int count, int to, int tag, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Send");
@@ -676,10 +612,8 @@ elemental::mpi::Send
 #endif
 }
 
-void
-elemental::mpi::ISend
-( const double* buf, int count, int to, int tag, mpi::Comm comm,
-  mpi::Request& request )
+void ISend
+( const double* buf, int count, int to, int tag, Comm comm, Request& request )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ISend");
@@ -693,10 +627,8 @@ elemental::mpi::ISend
 #endif
 }
 
-void
-elemental::mpi::ISSend
-( const double* buf, int count, int to, int tag, mpi::Comm comm,
-  mpi::Request& request )
+void ISSend
+( const double* buf, int count, int to, int tag, Comm comm, Request& request )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ISSend");
@@ -710,9 +642,7 @@ elemental::mpi::ISSend
 #endif
 }
 
-void
-elemental::mpi::Send
-( const scomplex* buf, int count, int to, int tag, mpi::Comm comm )
+void Send( const scomplex* buf, int count, int to, int tag, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Send");
@@ -733,10 +663,8 @@ elemental::mpi::Send
 #endif
 }
 
-void
-elemental::mpi::ISend
-( const scomplex* buf, int count, int to, int tag, mpi::Comm comm,
-  mpi::Request& request )
+void ISend
+( const scomplex* buf, int count, int to, int tag, Comm comm, Request& request )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ISend");
@@ -759,10 +687,8 @@ elemental::mpi::ISend
 #endif
 }
 
-void
-elemental::mpi::ISSend
-( const scomplex* buf, int count, int to, int tag, mpi::Comm comm,
-  mpi::Request& request )
+void ISSend
+( const scomplex* buf, int count, int to, int tag, Comm comm, Request& request )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ISSend");
@@ -785,9 +711,7 @@ elemental::mpi::ISSend
 #endif
 }
 
-void
-elemental::mpi::Send
-( const dcomplex* buf, int count, int to, int tag, mpi::Comm comm )
+void Send( const dcomplex* buf, int count, int to, int tag, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Send");
@@ -808,10 +732,8 @@ elemental::mpi::Send
 #endif
 }
 
-void
-elemental::mpi::ISend
-( const dcomplex* buf, int count, int to, int tag, mpi::Comm comm,
-  mpi::Request& request )
+void ISend
+( const dcomplex* buf, int count, int to, int tag, Comm comm, Request& request )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ISend");
@@ -834,10 +756,8 @@ elemental::mpi::ISend
 #endif
 }
 
-void
-elemental::mpi::ISSend
-( const dcomplex* buf, int count, int to, int tag, mpi::Comm comm,
-  mpi::Request& request )
+void ISSend
+( const dcomplex* buf, int count, int to, int tag, Comm comm, Request& request )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ISSend");
@@ -860,9 +780,7 @@ elemental::mpi::ISSend
 #endif
 }
 
-void
-elemental::mpi::Recv
-( byte* buf, int count, int from, int tag, mpi::Comm comm )
+void Recv( byte* buf, int count, int from, int tag, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Recv");
@@ -876,10 +794,8 @@ elemental::mpi::Recv
 #endif
 }
 
-void
-elemental::mpi::IRecv
-( byte* buf, int count, int from, int tag, mpi::Comm comm, 
-  mpi::Request& request )
+void IRecv
+( byte* buf, int count, int from, int tag, Comm comm, Request& request )
 {
 #ifndef RELEASE
     PushCallStack("mpi::IRecv");
@@ -892,24 +808,20 @@ elemental::mpi::IRecv
 #endif
 }
 
-void
-elemental::mpi::Recv
-( int* buf, int count, int from, int tag, mpi::Comm comm )
+void Recv( int* buf, int count, int from, int tag, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Recv");
 #endif
-    mpi::Status status;
+    Status status;
     SafeMpi( MPI_Recv( buf, count, MPI_INT, from, tag, comm, &status ) );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
-void
-elemental::mpi::IRecv
-( int* buf, int count, int from, int tag, mpi::Comm comm, 
-  mpi::Request& request )
+void IRecv
+( int* buf, int count, int from, int tag, Comm comm, Request& request )
 {
 #ifndef RELEASE
     PushCallStack("mpi::IRecv");
@@ -920,24 +832,20 @@ elemental::mpi::IRecv
 #endif
 }
 
-void
-elemental::mpi::Recv
-( float* buf, int count, int from, int tag, mpi::Comm comm )
+void Recv( float* buf, int count, int from, int tag, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Recv");
 #endif
-    mpi::Status status;
+    Status status;
     SafeMpi( MPI_Recv( buf, count, MPI_FLOAT, from, tag, comm, &status ) );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
-void
-elemental::mpi::IRecv
-( float* buf, int count, int from, int tag, mpi::Comm comm, 
-  mpi::Request& request )
+void IRecv
+( float* buf, int count, int from, int tag, Comm comm, Request& request )
 {
 #ifndef RELEASE
     PushCallStack("mpi::IRecv");
@@ -948,24 +856,20 @@ elemental::mpi::IRecv
 #endif
 }
 
-void
-elemental::mpi::Recv
-( double* buf, int count, int from, int tag, mpi::Comm comm )
+void Recv( double* buf, int count, int from, int tag, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Recv");
 #endif
-    mpi::Status status;
+    Status status;
     SafeMpi( MPI_Recv( buf, count, MPI_DOUBLE, from, tag, comm, &status ) );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
-void
-elemental::mpi::IRecv
-( double* buf, int count, int from, int tag, mpi::Comm comm,
-  mpi::Request& request )
+void IRecv
+( double* buf, int count, int from, int tag, Comm comm, Request& request )
 {
 #ifndef RELEASE
     PushCallStack("mpi::IRecv");
@@ -976,14 +880,12 @@ elemental::mpi::IRecv
 #endif
 }
 
-void
-elemental::mpi::Recv
-( scomplex* buf, int count, int from, int tag, mpi::Comm comm )
+void Recv( scomplex* buf, int count, int from, int tag, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Recv");
 #endif
-    mpi::Status status;
+    Status status;
 #ifdef AVOID_COMPLEX_MPI
     SafeMpi( MPI_Recv( buf, 2*count, MPI_FLOAT, from, tag, comm, &status ) );
 #else
@@ -994,10 +896,8 @@ elemental::mpi::Recv
 #endif
 }
 
-void
-elemental::mpi::IRecv
-( scomplex* buf, int count, int from, int tag, mpi::Comm comm,
-  mpi::Request& request )
+void IRecv
+( scomplex* buf, int count, int from, int tag, Comm comm, Request& request )
 {
 #ifndef RELEASE
     PushCallStack("mpi::IRecv");
@@ -1012,14 +912,12 @@ elemental::mpi::IRecv
 #endif
 }
 
-void
-elemental::mpi::Recv
-( dcomplex* buf, int count, int from, int tag, mpi::Comm comm )
+void Recv( dcomplex* buf, int count, int from, int tag, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Recv");
 #endif
-    mpi::Status status;
+    Status status;
 #ifdef AVOID_COMPLEX_MPI
     SafeMpi(
         MPI_Recv( buf, 2*count, MPI_DOUBLE, from, tag, comm, &status )
@@ -1034,10 +932,8 @@ elemental::mpi::Recv
 #endif
 }
 
-void
-elemental::mpi::IRecv
-( dcomplex* buf, int count, int from, int tag, mpi::Comm comm,
-  mpi::Request& request )
+void IRecv
+( dcomplex* buf, int count, int from, int tag, Comm comm, Request& request )
 {
 #ifndef RELEASE
     PushCallStack("mpi::IRecv");
@@ -1056,15 +952,14 @@ elemental::mpi::IRecv
 #endif
 }
 
-void
-elemental::mpi::SendRecv
+void SendRecv
 ( const byte* sbuf, int sc, int to,   int stag,
-        byte* rbuf, int rc, int from, int rtag, mpi::Comm comm )
+        byte* rbuf, int rc, int from, int rtag, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::SendRecv");
 #endif
-    mpi::Status status;
+    Status status;
     SafeMpi( 
         MPI_Sendrecv
         ( const_cast<byte*>(sbuf), sc, MPI_UNSIGNED_CHAR, to, stag,
@@ -1075,15 +970,14 @@ elemental::mpi::SendRecv
 #endif
 }
 
-void
-elemental::mpi::SendRecv
+void SendRecv
 ( const int* sbuf, int sc, int to,   int stag,
-        int* rbuf, int rc, int from, int rtag, mpi::Comm comm )
+        int* rbuf, int rc, int from, int rtag, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::SendRecv");
 #endif
-    mpi::Status status;
+    Status status;
     SafeMpi( 
         MPI_Sendrecv
         ( const_cast<int*>(sbuf), sc, MPI_INT, to, stag,
@@ -1094,15 +988,14 @@ elemental::mpi::SendRecv
 #endif
 }
 
-void
-elemental::mpi::SendRecv
+void SendRecv
 ( const float* sbuf, int sc, int to,   int stag,
-        float* rbuf, int rc, int from, int rtag, mpi::Comm comm )
+        float* rbuf, int rc, int from, int rtag, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::SendRecv");
 #endif
-    mpi::Status status;
+    Status status;
     SafeMpi( 
         MPI_Sendrecv
         ( const_cast<float*>(sbuf), sc, MPI_FLOAT, to, stag,
@@ -1113,15 +1006,14 @@ elemental::mpi::SendRecv
 #endif
 }
 
-void
-elemental::mpi::SendRecv
+void SendRecv
 ( const double* sbuf, int sc, int to,   int stag,
-        double* rbuf, int rc, int from, int rtag, mpi::Comm comm )
+        double* rbuf, int rc, int from, int rtag, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::SendRecv");
 #endif
-    mpi::Status status;
+    Status status;
     SafeMpi( 
         MPI_Sendrecv
         ( const_cast<double*>(sbuf), sc, MPI_DOUBLE, to, stag,
@@ -1132,15 +1024,14 @@ elemental::mpi::SendRecv
 #endif
 }
 
-void
-elemental::mpi::SendRecv
+void SendRecv
 ( const scomplex* sbuf, int sc, int to,   int stag,
-        scomplex* rbuf, int rc, int from, int rtag, mpi::Comm comm )
+        scomplex* rbuf, int rc, int from, int rtag, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::SendRecv");
 #endif
-    mpi::Status status;
+    Status status;
 #ifdef AVOID_COMPLEX_MPI
     SafeMpi(
         MPI_Sendrecv
@@ -1161,15 +1052,14 @@ elemental::mpi::SendRecv
 #endif
 }
 
-void
-elemental::mpi::SendRecv
+void SendRecv
 ( const dcomplex* sbuf, int sc, int to,   int stag,
-        dcomplex* rbuf, int rc, int from, int rtag, mpi::Comm comm )
+        dcomplex* rbuf, int rc, int from, int rtag, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::SendRecv");
 #endif
-    mpi::Status status;
+    Status status;
 #ifdef AVOID_COMPLEX_MPI
     SafeMpi(
         MPI_Sendrecv
@@ -1190,9 +1080,7 @@ elemental::mpi::SendRecv
 #endif
 }
 
-void
-elemental::mpi::Broadcast
-( byte* buf, int count, int root, mpi::Comm comm )
+void Broadcast( byte* buf, int count, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Broadcast");
@@ -1203,9 +1091,7 @@ elemental::mpi::Broadcast
 #endif
 }
 
-void
-elemental::mpi::Broadcast
-( int* buf, int count, int root, mpi::Comm comm )
+void Broadcast( int* buf, int count, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Broadcast");
@@ -1216,9 +1102,7 @@ elemental::mpi::Broadcast
 #endif
 }
 
-void
-elemental::mpi::Broadcast
-( float* buf, int count, int root, mpi::Comm comm )
+void Broadcast( float* buf, int count, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Broadcast");
@@ -1229,9 +1113,7 @@ elemental::mpi::Broadcast
 #endif
 }
 
-void
-elemental::mpi::Broadcast
-( double* buf, int count, int root, mpi::Comm comm )
+void Broadcast( double* buf, int count, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Broadcast");
@@ -1242,9 +1124,7 @@ elemental::mpi::Broadcast
 #endif
 }
 
-void
-elemental::mpi::Broadcast
-( scomplex* buf, int count, int root, mpi::Comm comm )
+void Broadcast( scomplex* buf, int count, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Broadcast");
@@ -1259,9 +1139,7 @@ elemental::mpi::Broadcast
 #endif
 }
 
-void
-elemental::mpi::Broadcast
-( dcomplex* buf, int count, int root, mpi::Comm comm )
+void Broadcast( dcomplex* buf, int count, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Broadcast");
@@ -1276,10 +1154,91 @@ elemental::mpi::Broadcast
 #endif
 }
 
-void
-elemental::mpi::Gather
+#ifdef HAVE_NONBLOCKING_COLLECTIVES
+void IBroadcast( byte* buf, int count, int root, Comm comm, Request& request )
+{
+#ifndef RELEASE
+    PushCallStack("mpi::IBroadcast");
+#endif
+    SafeMpi( 
+        MPI_Ibcast( buf, count, MPI_UNSIGNED_CHAR, root, comm, &request ) 
+    );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+void IBroadcast( int* buf, int count, int root, Comm comm, Request& request )
+{
+#ifndef RELEASE
+    PushCallStack("mpi::IBroadcast");
+#endif
+    SafeMpi( MPI_Ibcast( buf, count, MPI_INT, root, comm, &request ) );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+void IBroadcast( float* buf, int count, int root, Comm comm, Request& request )
+{
+#ifndef RELEASE
+    PushCallStack("mpi::IBroadcast");
+#endif
+    SafeMpi( MPI_Ibcast( buf, count, MPI_FLOAT, root, comm, &request ) );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+void IBroadcast( double* buf, int count, int root, Comm comm, Request& request )
+{
+#ifndef RELEASE
+    PushCallStack("mpi::IBroadcast");
+#endif
+    SafeMpi( MPI_Ibcast( buf, count, MPI_DOUBLE, root, comm, &request ) );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+void IBroadcast
+( scomplex* buf, int count, int root, Comm comm, Request& request )
+{
+#ifndef RELEASE
+    PushCallStack("mpi::IBroadcast");
+#endif
+#ifdef AVOID_COMPLEX_MPI
+    SafeMpi( MPI_Ibcast( buf, 2*count, MPI_FLOAT, root, comm, &request ) );
+#else
+    SafeMpi( MPI_Ibcast( buf, count, MPI_COMPLEX, root, comm, &request ) );
+#endif
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+void IBroadcast
+( dcomplex* buf, int count, int root, Comm comm, Request& request )
+{
+#ifndef RELEASE
+    PushCallStack("mpi::IBroadcast");
+#endif
+#ifdef AVOID_COMPLEX_MPI
+    SafeMpi( MPI_Ibcast( buf, 2*count, MPI_DOUBLE, root, comm, &request ) );
+#else
+    SafeMpi( 
+        MPI_Ibcast( buf, count, MPI_DOUBLE_COMPLEX, root, comm, &request ) 
+    );
+#endif
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+#endif // ifdef HAVE_NONBLOCKING_COLLECTIVES
+
+void Gather
 ( const byte* sbuf, int sc,
-        byte* rbuf, int rc, int root, mpi::Comm comm )
+        byte* rbuf, int rc, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Gather");
@@ -1294,10 +1253,9 @@ elemental::mpi::Gather
 #endif
 }
 
-void
-elemental::mpi::Gather
+void Gather
 ( const int* sbuf, int sc,
-        int* rbuf, int rc, int root, mpi::Comm comm )
+        int* rbuf, int rc, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Gather");
@@ -1312,10 +1270,9 @@ elemental::mpi::Gather
 #endif
 }
 
-void
-elemental::mpi::Gather
+void Gather
 ( const float* sbuf, int sc,
-        float* rbuf, int rc, int root, mpi::Comm comm )
+        float* rbuf, int rc, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Gather");
@@ -1330,10 +1287,9 @@ elemental::mpi::Gather
 #endif
 }
 
-void
-elemental::mpi::Gather
+void Gather
 ( const double* sbuf, int sc,
-        double* rbuf, int rc, int root, mpi::Comm comm )
+        double* rbuf, int rc, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Gather");
@@ -1348,10 +1304,9 @@ elemental::mpi::Gather
 #endif
 }
 
-void
-elemental::mpi::Gather
+void Gather
 ( const scomplex* sbuf, int sc,
-        scomplex* rbuf, int rc, int root, mpi::Comm comm )
+        scomplex* rbuf, int rc, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Gather");
@@ -1374,10 +1329,9 @@ elemental::mpi::Gather
 #endif
 }
 
-void
-elemental::mpi::Gather
+void Gather
 ( const dcomplex* sbuf, int sc,
-        dcomplex* rbuf, int rc, int root, mpi::Comm comm )
+        dcomplex* rbuf, int rc, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Gather");
@@ -1400,10 +1354,137 @@ elemental::mpi::Gather
 #endif
 }
 
-void
-elemental::mpi::Gather
+#ifdef HAVE_NONBLOCKING_COLLECTIVES
+void IGather
 ( const byte* sbuf, int sc,
-        byte* rbuf, int* rcs, int* rds, int root, mpi::Comm comm )
+        byte* rbuf, int rc, int root, Comm comm, Request& request )
+{
+#ifndef RELEASE
+    PushCallStack("mpi::IGather");
+#endif
+    SafeMpi( 
+        MPI_Igather
+        ( const_cast<byte*>(sbuf), sc, MPI_UNSIGNED_CHAR,
+          rbuf,                    rc, MPI_UNSIGNED_CHAR, 
+          root, comm, &request ) 
+    );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+void IGather
+( const int* sbuf, int sc,
+        int* rbuf, int rc, int root, Comm comm, Request& request )
+{
+#ifndef RELEASE
+    PushCallStack("mpi::IGather");
+#endif
+    SafeMpi( 
+        MPI_Igather
+        ( const_cast<int*>(sbuf), sc, MPI_INT,
+          rbuf,                   rc, MPI_INT, 
+          root, comm, &request ) 
+    );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+void Igather
+( const float* sbuf, int sc,
+        float* rbuf, int rc, int root, Comm comm, Request& request )
+{
+#ifndef RELEASE
+    PushCallStack("mpi::IGather");
+#endif
+    SafeMpi( 
+        MPI_Igather
+        ( const_cast<float*>(sbuf), sc, MPI_FLOAT,
+          rbuf,                     rc, MPI_FLOAT, 
+          root, comm, &request ) 
+    );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+void IGather
+( const double* sbuf, int sc,
+        double* rbuf, int rc, int root, Comm comm, Request& request )
+{
+#ifndef RELEASE
+    PushCallStack("mpi::IGather");
+#endif
+    SafeMpi( 
+        MPI_Igather
+        ( const_cast<double*>(sbuf), sc, MPI_DOUBLE,
+          rbuf,                      rc, MPI_DOUBLE, 
+          root, comm, &request ) 
+    );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+void IGather
+( const scomplex* sbuf, int sc,
+        scomplex* rbuf, int rc, int root, Comm comm, Request& request )
+{
+#ifndef RELEASE
+    PushCallStack("mpi::IGather");
+#endif
+#ifdef AVOID_COMPLEX_MPI
+    SafeMpi(
+        MPI_Igather
+        ( const_cast<scomplex*>(sbuf), 2*sc, MPI_FLOAT,
+          rbuf,                        2*rc, MPI_FLOAT, 
+          root, comm, &request )
+    );
+#else
+    SafeMpi( 
+        MPI_Igather
+        ( const_cast<scomplex*>(sbuf), sc, MPI_COMPLEX,
+          rbuf,                        rc, MPI_COMPLEX, 
+          root, comm, &request ) 
+    );
+#endif
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+void IGather
+( const dcomplex* sbuf, int sc,
+        dcomplex* rbuf, int rc, int root, Comm comm, Request& request )
+{
+#ifndef RELEASE
+    PushCallStack("mpi::IGather");
+#endif
+#ifdef AVOID_COMPLEX_MPI
+    SafeMpi(
+        MPI_Igather
+        ( const_cast<dcomplex*>(sbuf), 2*sc, MPI_DOUBLE,
+          rbuf,                        2*rc, MPI_DOUBLE, 
+          root, comm, &request )
+    );
+#else
+    SafeMpi( 
+        MPI_Igather
+        ( const_cast<dcomplex*>(sbuf), sc, MPI_DOUBLE_COMPLEX,
+          rbuf,                        rc, MPI_DOUBLE_COMPLEX, 
+          root, comm, &request )
+    );
+#endif
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+#endif // ifdef HAVE_NONBLOCKING_COLLECTIVES
+
+void Gather
+( const byte* sbuf, int sc,
+        byte* rbuf, int* rcs, int* rds, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Gather");
@@ -1418,10 +1499,9 @@ elemental::mpi::Gather
 #endif
 }
 
-void
-elemental::mpi::Gather
+void Gather
 ( const int* sbuf, int sc,
-        int* rbuf, int* rcs, int* rds, int root, mpi::Comm comm )
+        int* rbuf, int* rcs, int* rds, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Gather");
@@ -1436,10 +1516,9 @@ elemental::mpi::Gather
 #endif
 }
 
-void
-elemental::mpi::Gather
+void Gather
 ( const float* sbuf, int sc,
-        float* rbuf, int* rcs, int* rds, int root, mpi::Comm comm )
+        float* rbuf, int* rcs, int* rds, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Gather");
@@ -1454,10 +1533,9 @@ elemental::mpi::Gather
 #endif
 }
 
-void
-elemental::mpi::Gather
+void Gather
 ( const double* sbuf, int sc,
-        double* rbuf, int* rcs, int* rds, int root, mpi::Comm comm )
+        double* rbuf, int* rcs, int* rds, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Gather");
@@ -1472,17 +1550,16 @@ elemental::mpi::Gather
 #endif
 }
 
-void
-elemental::mpi::Gather
+void Gather
 ( const scomplex* sbuf, int sc,
-        scomplex* rbuf, int* rcs, int* rds, int root, mpi::Comm comm )
+        scomplex* rbuf, int* rcs, int* rds, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Gather");
 #endif
 #ifdef AVOID_COMPLEX_MPI
-    const int commRank = mpi::CommRank( comm );
-    const int commSize = mpi::CommSize( comm );
+    const int commRank = CommRank( comm );
+    const int commSize = CommSize( comm );
     std::vector<int> rcsDouble, rdsDouble;
     if( commRank == root )
     {
@@ -1512,17 +1589,16 @@ elemental::mpi::Gather
 #endif
 }
 
-void
-elemental::mpi::Gather
+void Gather
 ( const dcomplex* sbuf, int sc,
-        dcomplex* rbuf, int* rcs, int* rds, int root, mpi::Comm comm )
+        dcomplex* rbuf, int* rcs, int* rds, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Gather");
 #endif
 #ifdef AVOID_COMPLEX_MPI
-    const int commRank = mpi::CommRank( comm );
-    const int commSize = mpi::CommSize( comm );
+    const int commRank = CommRank( comm );
+    const int commSize = CommSize( comm );
     std::vector<int> rcsDouble, rdsDouble;
     if( commRank == root )
     {
@@ -1553,10 +1629,9 @@ elemental::mpi::Gather
 #endif
 }
 
-void
-elemental::mpi::AllGather
+void AllGather
 ( const byte* sbuf, int sc,
-        byte* rbuf, int rc, mpi::Comm comm )
+        byte* rbuf, int rc, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllGather");
@@ -1571,10 +1646,9 @@ elemental::mpi::AllGather
 #endif
 }
 
-void
-elemental::mpi::AllGather
+void AllGather
 ( const int* sbuf, int sc,
-        int* rbuf, int rc, mpi::Comm comm )
+        int* rbuf, int rc, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllGather");
@@ -1597,10 +1671,9 @@ elemental::mpi::AllGather
 #endif
 }
 
-void
-elemental::mpi::AllGather
+void AllGather
 ( const float* sbuf, int sc,
-        float* rbuf, int rc, mpi::Comm comm )
+        float* rbuf, int rc, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllGather");
@@ -1623,10 +1696,9 @@ elemental::mpi::AllGather
 #endif
 }
 
-void
-elemental::mpi::AllGather
+void AllGather
 ( const double* sbuf, int sc,
-        double* rbuf, int rc, mpi::Comm comm )
+        double* rbuf, int rc, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllGather");
@@ -1650,10 +1722,9 @@ elemental::mpi::AllGather
 #endif
 }
 
-void
-elemental::mpi::AllGather
+void AllGather
 ( const scomplex* sbuf, int sc,
-        scomplex* rbuf, int rc, mpi::Comm comm )
+        scomplex* rbuf, int rc, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllGather");
@@ -1685,10 +1756,9 @@ elemental::mpi::AllGather
 #endif
 }
 
-void
-elemental::mpi::AllGather
+void AllGather
 ( const dcomplex* sbuf, int sc,
-        dcomplex* rbuf, int rc, mpi::Comm comm )
+        dcomplex* rbuf, int rc, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllGather");
@@ -1720,10 +1790,9 @@ elemental::mpi::AllGather
 #endif
 }
 
-void
-elemental::mpi::Scatter
+void Scatter
 ( const byte* sbuf, int sc,
-        byte* rbuf, int rc, int root, mpi::Comm comm )
+        byte* rbuf, int rc, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Scatter");
@@ -1738,10 +1807,9 @@ elemental::mpi::Scatter
 #endif
 }
 
-void
-elemental::mpi::Scatter
+void Scatter
 ( const int* sbuf, int sc,
-        int* rbuf, int rc, int root, mpi::Comm comm )
+        int* rbuf, int rc, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Scatter");
@@ -1756,10 +1824,9 @@ elemental::mpi::Scatter
 #endif
 }
 
-void
-elemental::mpi::Scatter
+void Scatter
 ( const float* sbuf, int sc,
-        float* rbuf, int rc, int root, mpi::Comm comm )
+        float* rbuf, int rc, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Scatter");
@@ -1774,10 +1841,9 @@ elemental::mpi::Scatter
 #endif
 }
 
-void
-elemental::mpi::Scatter
+void Scatter
 ( const double* sbuf, int sc,
-        double* rbuf, int rc, int root, mpi::Comm comm )
+        double* rbuf, int rc, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Scatter");
@@ -1792,10 +1858,9 @@ elemental::mpi::Scatter
 #endif
 }
 
-void
-elemental::mpi::Scatter
+void Scatter
 ( const scomplex* sbuf, int sc,
-        scomplex* rbuf, int rc, int root, mpi::Comm comm )
+        scomplex* rbuf, int rc, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Scatter");
@@ -1818,10 +1883,9 @@ elemental::mpi::Scatter
 #endif
 }
 
-void
-elemental::mpi::Scatter
+void Scatter
 ( const dcomplex* sbuf, int sc,
-        dcomplex* rbuf, int rc, int root, mpi::Comm comm )
+        dcomplex* rbuf, int rc, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Scatter");
@@ -1844,9 +1908,7 @@ elemental::mpi::Scatter
 #endif
 }
 
-void
-elemental::mpi::Scatter
-( byte* buf, int sc, int rc, int root, mpi::Comm comm )
+void Scatter( byte* buf, int sc, int rc, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Scatter");
@@ -1873,9 +1935,7 @@ elemental::mpi::Scatter
 #endif
 }
 
-void
-elemental::mpi::Scatter
-( int* buf, int sc, int rc, int root, mpi::Comm comm )
+void Scatter( int* buf, int sc, int rc, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Scatter");
@@ -1902,9 +1962,7 @@ elemental::mpi::Scatter
 #endif
 }
 
-void
-elemental::mpi::Scatter
-( float* buf, int sc, int rc, int root, mpi::Comm comm )
+void Scatter( float* buf, int sc, int rc, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Scatter");
@@ -1931,9 +1989,7 @@ elemental::mpi::Scatter
 #endif
 }
 
-void
-elemental::mpi::Scatter
-( double* buf, int sc, int rc, int root, mpi::Comm comm )
+void Scatter( double* buf, int sc, int rc, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Scatter");
@@ -1960,9 +2016,7 @@ elemental::mpi::Scatter
 #endif
 }
 
-void
-elemental::mpi::Scatter
-( scomplex* buf, int sc, int rc, int root, mpi::Comm comm )
+void Scatter( scomplex* buf, int sc, int rc, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Scatter");
@@ -2005,9 +2059,7 @@ elemental::mpi::Scatter
 #endif
 }
 
-void
-elemental::mpi::Scatter
-( dcomplex* buf, int sc, int rc, int root, mpi::Comm comm )
+void Scatter( dcomplex* buf, int sc, int rc, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Scatter");
@@ -2050,10 +2102,9 @@ elemental::mpi::Scatter
 #endif
 }
 
-void
-elemental::mpi::AllToAll
+void AllToAll
 ( const byte* sbuf, int sc,
-        byte* rbuf, int rc, mpi::Comm comm )
+        byte* rbuf, int rc, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllToAll");
@@ -2068,10 +2119,9 @@ elemental::mpi::AllToAll
 #endif
 }
 
-void
-elemental::mpi::AllToAll
+void AllToAll
 ( const int* sbuf, int sc,
-        int* rbuf, int rc, mpi::Comm comm )
+        int* rbuf, int rc, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllToAll");
@@ -2086,10 +2136,9 @@ elemental::mpi::AllToAll
 #endif
 }
 
-void
-elemental::mpi::AllToAll
+void AllToAll
 ( const float* sbuf, int sc,
-        float* rbuf, int rc, mpi::Comm comm )
+        float* rbuf, int rc, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllToAll");
@@ -2104,10 +2153,9 @@ elemental::mpi::AllToAll
 #endif
 }
 
-void
-elemental::mpi::AllToAll
+void AllToAll
 ( const double* sbuf, int sc,
-        double* rbuf, int rc, mpi::Comm comm )
+        double* rbuf, int rc, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllToAll");
@@ -2122,10 +2170,9 @@ elemental::mpi::AllToAll
 #endif
 }
 
-void
-elemental::mpi::AllToAll
+void AllToAll
 ( const scomplex* sbuf, int sc,
-        scomplex* rbuf, int rc, mpi::Comm comm )
+        scomplex* rbuf, int rc, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllToAll");
@@ -2148,10 +2195,9 @@ elemental::mpi::AllToAll
 #endif
 }
 
-void
-elemental::mpi::AllToAll
+void AllToAll
 ( const dcomplex* sbuf, int sc,
-        dcomplex* rbuf, int rc, mpi::Comm comm )
+        dcomplex* rbuf, int rc, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllToAll");
@@ -2174,10 +2220,9 @@ elemental::mpi::AllToAll
 #endif
 }
 
-void
-elemental::mpi::AllToAll
+void AllToAll
 ( const byte* sbuf, const int* scs, const int* sds, 
-        byte* rbuf, const int* rcs, const int* rds, mpi::Comm comm )
+        byte* rbuf, const int* rcs, const int* rds, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllToAll");
@@ -2199,10 +2244,9 @@ elemental::mpi::AllToAll
 #endif
 }
 
-void
-elemental::mpi::AllToAll
+void AllToAll
 ( const int* sbuf, const int* scs, const int* sds, 
-        int* rbuf, const int* rcs, const int* rds, mpi::Comm comm )
+        int* rbuf, const int* rcs, const int* rds, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllToAll");
@@ -2224,10 +2268,9 @@ elemental::mpi::AllToAll
 #endif
 }
 
-void
-elemental::mpi::AllToAll
+void AllToAll
 ( const float* sbuf, const int* scs, const int* sds,
-        float* rbuf, const int* rcs, const int* rds, mpi::Comm comm )
+        float* rbuf, const int* rcs, const int* rds, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllToAll");
@@ -2249,10 +2292,9 @@ elemental::mpi::AllToAll
 #endif
 }
 
-void
-elemental::mpi::AllToAll
+void AllToAll
 ( const double* sbuf, const int* scs, const int* sds,
-        double* rbuf, const int* rcs, const int* rds, mpi::Comm comm )
+        double* rbuf, const int* rcs, const int* rds, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllToAll");
@@ -2274,10 +2316,9 @@ elemental::mpi::AllToAll
 #endif
 }
 
-void
-elemental::mpi::AllToAll
+void AllToAll
 ( const scomplex* sbuf, const int* scs, const int* sds,
-        scomplex* rbuf, const int* rcs, const int* rds, mpi::Comm comm )
+        scomplex* rbuf, const int* rcs, const int* rds, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllToAll");
@@ -2322,10 +2363,9 @@ elemental::mpi::AllToAll
 #endif
 }
 
-void
-elemental::mpi::AllToAll
+void AllToAll
 ( const dcomplex* sbuf, const int* scs, const int* sds,
-        dcomplex* rbuf, const int* rcs, const int* rds, mpi::Comm comm )
+        dcomplex* rbuf, const int* rcs, const int* rds, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllToAll");
@@ -2370,10 +2410,8 @@ elemental::mpi::AllToAll
 #endif
 }
 
-void
-elemental::mpi::Reduce
-( const byte* sbuf, byte* rbuf, int count, mpi::Op op, int root, 
-  mpi::Comm comm )
+void Reduce
+( const byte* sbuf, byte* rbuf, int count, Op op, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Reduce");
@@ -2391,9 +2429,7 @@ elemental::mpi::Reduce
 #endif
 }
 
-void
-elemental::mpi::Reduce
-( byte* buf, int count, mpi::Op op, int root, mpi::Comm comm )
+void Reduce( byte* buf, int count, Op op, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Reduce");
@@ -2417,9 +2453,8 @@ elemental::mpi::Reduce
 #endif
 }
 
-void
-elemental::mpi::Reduce
-( const int* sbuf, int* rbuf, int count, mpi::Op op, int root, mpi::Comm comm )
+void Reduce
+( const int* sbuf, int* rbuf, int count, Op op, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Reduce");
@@ -2436,9 +2471,7 @@ elemental::mpi::Reduce
 #endif
 }
 
-void
-elemental::mpi::Reduce
-( int* buf, int count, mpi::Op op, int root, mpi::Comm comm )
+void Reduce( int* buf, int count, Op op, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Reduce");
@@ -2462,10 +2495,8 @@ elemental::mpi::Reduce
 #endif
 }
 
-void
-elemental::mpi::Reduce
-( const float* sbuf, float* rbuf, int count, mpi::Op op, int root, 
-  mpi::Comm comm )
+void Reduce
+( const float* sbuf, float* rbuf, int count, Op op, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Reduce");
@@ -2482,9 +2513,7 @@ elemental::mpi::Reduce
 #endif
 }
 
-void
-elemental::mpi::Reduce
-( float* buf, int count, mpi::Op op, int root, mpi::Comm comm )
+void Reduce( float* buf, int count, Op op, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Reduce");
@@ -2508,10 +2537,8 @@ elemental::mpi::Reduce
 #endif
 }
 
-void
-elemental::mpi::Reduce
-( const double* sbuf, double* rbuf, int count, mpi::Op op, int root, 
-  mpi::Comm comm )
+void Reduce
+( const double* sbuf, double* rbuf, int count, Op op, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Reduce");
@@ -2529,9 +2556,7 @@ elemental::mpi::Reduce
 #endif
 }
 
-void
-elemental::mpi::Reduce
-( double* buf, int count, mpi::Op op, int root, mpi::Comm comm )
+void Reduce( double* buf, int count, Op op, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Reduce");
@@ -2555,10 +2580,8 @@ elemental::mpi::Reduce
 #endif
 }
 
-void
-elemental::mpi::Reduce
-( const scomplex* sbuf, scomplex* rbuf, int count, mpi::Op op, int root, 
-  mpi::Comm comm )
+void Reduce
+( const scomplex* sbuf, scomplex* rbuf, int count, Op op, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Reduce");
@@ -2566,7 +2589,7 @@ elemental::mpi::Reduce
     if( count != 0 )
     {
 #ifdef AVOID_COMPLEX_MPI
-        if( op == mpi::SUM )
+        if( op == SUM )
         {
             SafeMpi(
                 MPI_Reduce
@@ -2595,9 +2618,7 @@ elemental::mpi::Reduce
 #endif
 }
 
-void
-elemental::mpi::Reduce
-( scomplex* buf, int count, mpi::Op op, int root, mpi::Comm comm )
+void Reduce( scomplex* buf, int count, Op op, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Reduce");
@@ -2606,7 +2627,7 @@ elemental::mpi::Reduce
     {
         const int commRank = CommRank( comm );
 #ifdef AVOID_COMPLEX_MPI
-        if( op == mpi::SUM )
+        if( op == SUM )
         {
             if( commRank == root )
                 SafeMpi(
@@ -2650,10 +2671,8 @@ elemental::mpi::Reduce
 #endif
 }
 
-void
-elemental::mpi::Reduce
-( const dcomplex* sbuf, dcomplex* rbuf, int count, mpi::Op op, int root, 
-  mpi::Comm comm )
+void Reduce
+( const dcomplex* sbuf, dcomplex* rbuf, int count, Op op, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Reduce");
@@ -2661,7 +2680,7 @@ elemental::mpi::Reduce
     if( count != 0 )
     {
 #ifdef AVOID_COMPLEX_MPI
-        if( op == mpi::SUM )
+        if( op == SUM )
         {
             SafeMpi(
                 MPI_Reduce
@@ -2690,9 +2709,7 @@ elemental::mpi::Reduce
 #endif
 }
 
-void
-elemental::mpi::Reduce
-( dcomplex* buf, int count, mpi::Op op, int root, mpi::Comm comm )
+void Reduce( dcomplex* buf, int count, Op op, int root, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::Reduce");
@@ -2701,7 +2718,7 @@ elemental::mpi::Reduce
     {
         const int commRank = CommRank( comm );
 #ifdef AVOID_COMPLEX_MPI
-        if( op == mpi::SUM )
+        if( op == SUM )
         {
             if( commRank == root )
                 SafeMpi(
@@ -2746,9 +2763,7 @@ elemental::mpi::Reduce
 #endif
 }
 
-void
-elemental::mpi::AllReduce
-( const byte* sbuf, byte* rbuf, int count, mpi::Op op, mpi::Comm comm )
+void AllReduce( const byte* sbuf, byte* rbuf, int count, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllReduce");
@@ -2766,9 +2781,7 @@ elemental::mpi::AllReduce
 #endif
 }
 
-void
-elemental::mpi::AllReduce
-( byte* buf, int count, mpi::Op op, mpi::Comm comm )
+void AllReduce( byte* buf, int count, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllReduce");
@@ -2785,9 +2798,7 @@ elemental::mpi::AllReduce
 #endif
 }
 
-void
-elemental::mpi::AllReduce
-( const int* sbuf, int* rbuf, int count, mpi::Op op, mpi::Comm comm )
+void AllReduce( const int* sbuf, int* rbuf, int count, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllReduce");
@@ -2804,9 +2815,7 @@ elemental::mpi::AllReduce
 #endif
 }
 
-void
-elemental::mpi::AllReduce
-( int* buf, int count, mpi::Op op, mpi::Comm comm )
+void AllReduce( int* buf, int count, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllReduce");
@@ -2822,9 +2831,7 @@ elemental::mpi::AllReduce
 #endif
 }
 
-void
-elemental::mpi::AllReduce
-( const float* sbuf, float* rbuf, int count, mpi::Op op, mpi::Comm comm )
+void AllReduce( const float* sbuf, float* rbuf, int count, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllReduce");
@@ -2841,9 +2848,7 @@ elemental::mpi::AllReduce
 #endif
 }
 
-void
-elemental::mpi::AllReduce
-( float* buf, int count, mpi::Op op, mpi::Comm comm )
+void AllReduce( float* buf, int count, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllReduce");
@@ -2859,9 +2864,7 @@ elemental::mpi::AllReduce
 #endif
 }
 
-void
-elemental::mpi::AllReduce
-( const double* sbuf, double* rbuf, int count, mpi::Op op, mpi::Comm comm )
+void AllReduce( const double* sbuf, double* rbuf, int count, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllReduce");
@@ -2878,9 +2881,7 @@ elemental::mpi::AllReduce
 #endif
 }
 
-void
-elemental::mpi::AllReduce
-( double* buf, int count, mpi::Op op, mpi::Comm comm )
+void AllReduce( double* buf, int count, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllReduce");
@@ -2896,9 +2897,8 @@ elemental::mpi::AllReduce
 #endif
 }
 
-void
-elemental::mpi::AllReduce
-( const scomplex* sbuf, scomplex* rbuf, int count, mpi::Op op, mpi::Comm comm )
+void AllReduce
+( const scomplex* sbuf, scomplex* rbuf, int count, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllReduce");
@@ -2906,7 +2906,7 @@ elemental::mpi::AllReduce
     if( count != 0 )
     {
 #ifdef AVOID_COMPLEX_MPI
-        if( op == mpi::SUM )
+        if( op == SUM )
         {
             SafeMpi(
                 MPI_Allreduce
@@ -2935,9 +2935,7 @@ elemental::mpi::AllReduce
 #endif
 }
 
-void
-elemental::mpi::AllReduce
-( scomplex* buf, int count, mpi::Op op, mpi::Comm comm )
+void AllReduce( scomplex* buf, int count, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllReduce");
@@ -2945,7 +2943,7 @@ elemental::mpi::AllReduce
     if( count != 0 )
     {
 #ifdef AVOID_COMPLEX_MPI
-        if( op == mpi::SUM )
+        if( op == SUM )
         {
             SafeMpi(
                 MPI_Allreduce( MPI_IN_PLACE, buf, 2*count, MPI_FLOAT, op, comm )
@@ -2968,9 +2966,8 @@ elemental::mpi::AllReduce
 #endif
 }
 
-void
-elemental::mpi::AllReduce
-( const dcomplex* sbuf, dcomplex* rbuf, int count, mpi::Op op, mpi::Comm comm )
+void AllReduce
+( const dcomplex* sbuf, dcomplex* rbuf, int count, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllReduce");
@@ -2978,7 +2975,7 @@ elemental::mpi::AllReduce
     if( count != 0 )
     {
 #ifdef AVOID_COMPLEX_MPI
-        if( op == mpi::SUM )
+        if( op == SUM )
         {
             SafeMpi(
                 MPI_Allreduce
@@ -3007,9 +3004,7 @@ elemental::mpi::AllReduce
 #endif
 }
 
-void
-elemental::mpi::AllReduce
-( dcomplex* buf, int count, mpi::Op op, mpi::Comm comm )
+void AllReduce( dcomplex* buf, int count, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::AllReduce");
@@ -3017,7 +3012,7 @@ elemental::mpi::AllReduce
     if( count != 0 )
     {
 #ifdef AVOID_COMPLEX_MPI
-        if( op == mpi::SUM )
+        if( op == SUM )
         {
             SafeMpi(
                 MPI_Allreduce
@@ -3043,9 +3038,7 @@ elemental::mpi::AllReduce
 #endif
 }
 
-void 
-elemental::mpi::ReduceScatter
-( byte* sbuf, byte* rbuf, int rc, mpi::Op op, mpi::Comm comm )
+void ReduceScatter( byte* sbuf, byte* rbuf, int rc, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ReduceScatter");
@@ -3070,9 +3063,7 @@ elemental::mpi::ReduceScatter
 #endif
 }
 
-void 
-elemental::mpi::ReduceScatter
-( int* sbuf, int* rbuf, int rc, mpi::Op op, mpi::Comm comm )
+void ReduceScatter( int* sbuf, int* rbuf, int rc, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ReduceScatter");
@@ -3096,9 +3087,7 @@ elemental::mpi::ReduceScatter
 #endif
 }
 
-void 
-elemental::mpi::ReduceScatter
-( float* sbuf, float* rbuf, int rc, mpi::Op op, mpi::Comm comm )
+void ReduceScatter( float* sbuf, float* rbuf, int rc, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ReduceScatter");
@@ -3122,9 +3111,7 @@ elemental::mpi::ReduceScatter
 #endif
 }
 
-void 
-elemental::mpi::ReduceScatter
-( double* sbuf, double* rbuf, int rc, mpi::Op op, mpi::Comm comm )
+void ReduceScatter( double* sbuf, double* rbuf, int rc, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ReduceScatter");
@@ -3148,9 +3135,7 @@ elemental::mpi::ReduceScatter
 #endif
 }
 
-void 
-elemental::mpi::ReduceScatter
-( scomplex* sbuf, scomplex* rbuf, int rc, mpi::Op op, mpi::Comm comm )
+void ReduceScatter( scomplex* sbuf, scomplex* rbuf, int rc, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ReduceScatter");
@@ -3182,9 +3167,7 @@ elemental::mpi::ReduceScatter
 #endif
 }
 
-void 
-elemental::mpi::ReduceScatter
-( dcomplex* sbuf, dcomplex* rbuf, int rc, mpi::Op op, mpi::Comm comm )
+void ReduceScatter( dcomplex* sbuf, dcomplex* rbuf, int rc, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ReduceScatter");
@@ -3216,9 +3199,7 @@ elemental::mpi::ReduceScatter
 #endif
 }
 
-void 
-elemental::mpi::ReduceScatter
-( byte* buf, int rc, mpi::Op op, mpi::Comm comm )
+void ReduceScatter( byte* buf, int rc, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ReduceScatter");
@@ -3245,9 +3226,7 @@ elemental::mpi::ReduceScatter
 #endif
 }
 
-void 
-elemental::mpi::ReduceScatter
-( int* buf, int rc, mpi::Op op, mpi::Comm comm )
+void ReduceScatter( int* buf, int rc, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ReduceScatter");
@@ -3273,9 +3252,7 @@ elemental::mpi::ReduceScatter
 #endif
 }
 
-void 
-elemental::mpi::ReduceScatter
-( float* buf, int rc, mpi::Op op, mpi::Comm comm )
+void ReduceScatter( float* buf, int rc, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ReduceScatter");
@@ -3301,9 +3278,7 @@ elemental::mpi::ReduceScatter
 #endif
 }
 
-void 
-elemental::mpi::ReduceScatter
-( double* buf, int rc, mpi::Op op, mpi::Comm comm )
+void ReduceScatter( double* buf, int rc, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ReduceScatter");
@@ -3329,9 +3304,7 @@ elemental::mpi::ReduceScatter
 #endif
 }
 
-void 
-elemental::mpi::ReduceScatter
-( scomplex* buf, int rc, mpi::Op op, mpi::Comm comm )
+void ReduceScatter( scomplex* buf, int rc, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ReduceScatter");
@@ -3365,9 +3338,7 @@ elemental::mpi::ReduceScatter
 #endif
 }
 
-void 
-elemental::mpi::ReduceScatter
-( dcomplex* buf, int rc, mpi::Op op, mpi::Comm comm )
+void ReduceScatter( dcomplex* buf, int rc, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ReduceScatter");
@@ -3401,9 +3372,8 @@ elemental::mpi::ReduceScatter
 #endif
 }
 
-void
-elemental::mpi::ReduceScatter
-( const byte* sbuf, byte* rbuf, const int* rcs, mpi::Op op, mpi::Comm comm )
+void ReduceScatter
+( const byte* sbuf, byte* rbuf, const int* rcs, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ReduceScatter");
@@ -3418,9 +3388,8 @@ elemental::mpi::ReduceScatter
 #endif
 }
 
-void
-elemental::mpi::ReduceScatter
-( const int* sbuf, int* rbuf, const int* rcs, mpi::Op op, mpi::Comm comm )
+void ReduceScatter
+( const int* sbuf, int* rbuf, const int* rcs, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ReduceScatter");
@@ -3435,9 +3404,8 @@ elemental::mpi::ReduceScatter
 #endif
 }
 
-void
-elemental::mpi::ReduceScatter
-( const float* sbuf, float* rbuf, const int* rcs, mpi::Op op, mpi::Comm comm )
+void ReduceScatter
+( const float* sbuf, float* rbuf, const int* rcs, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ReduceScatter");
@@ -3452,9 +3420,8 @@ elemental::mpi::ReduceScatter
 #endif
 }
 
-void
-elemental::mpi::ReduceScatter
-( const double* sbuf, double* rbuf, const int* rcs, mpi::Op op, mpi::Comm comm )
+void ReduceScatter
+( const double* sbuf, double* rbuf, const int* rcs, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ReduceScatter");
@@ -3469,16 +3436,14 @@ elemental::mpi::ReduceScatter
 #endif
 }
 
-void
-elemental::mpi::ReduceScatter
-( const scomplex* sbuf, scomplex* rbuf, const int* rcs, mpi::Op op, 
-  mpi::Comm comm )
+void ReduceScatter
+( const scomplex* sbuf, scomplex* rbuf, const int* rcs, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ReduceScatter");
 #endif
 #ifdef AVOID_COMPLEX_MPI
-    if( op == mpi::SUM )
+    if( op == SUM )
     {
         int p;
         MPI_Comm_size( comm, &p );
@@ -3511,16 +3476,14 @@ elemental::mpi::ReduceScatter
 #endif
 }
 
-void
-elemental::mpi::ReduceScatter
-( const dcomplex* sbuf, dcomplex* rbuf, const int* rcs, mpi::Op op, 
-  mpi::Comm comm )
+void ReduceScatter
+( const dcomplex* sbuf, dcomplex* rbuf, const int* rcs, Op op, Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("mpi::ReduceScatter");
 #endif
 #ifdef AVOID_COMPLEX_MPI
-    if( op == mpi::SUM )
+    if( op == SUM )
     {
         int p;
         MPI_Comm_size( comm, &p );
@@ -3553,3 +3516,5 @@ elemental::mpi::ReduceScatter
 #endif
 }
 
+} // namespace mpi
+} // namespace elemental

@@ -91,7 +91,7 @@ void clique::numeric::DistFrontFastLowerForwardSolve
     DistMatrix<F,STAR,STAR> XT_STAR_STAR( XT );
 
     // XT := LT XT
-    basic::internal::LocalGemm
+    elemental::internal::LocalGemm
     ( NORMAL, NORMAL, (F)1, LT, XT_STAR_STAR, (F)0, XT );
 
     if( diag == UNIT )
@@ -112,7 +112,7 @@ void clique::numeric::DistFrontFastLowerForwardSolve
         XT_STAR_STAR = XT;
 
         // XB := XB - LB XT
-        basic::internal::LocalGemm
+        elemental::internal::LocalGemm
         ( NORMAL, NORMAL, (F)-1, LB, XT_STAR_STAR, (F)1, XB );
     }
 #ifndef RELEASE
@@ -172,7 +172,7 @@ void clique::numeric::DistFrontFastLowerBackwardSolve
     DistMatrix<F,STAR,STAR> Z( snSize, XT.Width(), g );
     if( XB.Height() != 0 )
     {
-        elemental::basic::internal::LocalGemm
+        elemental::internal::LocalGemm
         ( orientation, NORMAL, (F)-1, LB, XB, (F)0, Z );
         XT.SumScatterUpdate( (F)1, Z );
     }
@@ -194,7 +194,7 @@ void clique::numeric::DistFrontFastLowerBackwardSolve
     }
 
     // XT := LT^{T/H} XT
-    elemental::basic::internal::LocalGemm
+    elemental::internal::LocalGemm
     ( orientation, NORMAL, (F)1, LT, XT, (F)0, Z );
     XT.SumScatterFrom( Z );
 

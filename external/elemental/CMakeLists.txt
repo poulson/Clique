@@ -1,5 +1,5 @@
 #
-#  Copyright (c) 2009-2011, Jack Poulson
+#  Copyright (c) 2009-2012, Jack Poulson
 #  All rights reserved.
 #
 #  This file is part of Elemental.
@@ -384,6 +384,10 @@ check_function_exists(MPI_Reduce_scatter_block HAVE_MPI_REDUCE_SCATTER_BLOCK)
 if(NOT HAVE_MPI_REDUCE_SCATTER)
   message(FATAL_ERROR "Could not find MPI_Reduce_scatter")
 endif(NOT HAVE_MPI_REDUCE_SCATTER)
+
+# Check for nonblocking collectives
+check_function_exists(MPI_Iallgather HAVE_MPI3_NONBLOCKING_COLLECTIVES)
+check_function_exists(MPIX_Iallgather HAVE_MPIX_NONBLOCKING_COLLECTIVES)
 
 # Look for restrict support
 include(CheckCXXSourceCompiles)

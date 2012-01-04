@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2011, Jack Poulson
+   Copyright (c) 2009-2012, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental.
@@ -32,9 +32,7 @@
 */
 
 namespace elemental {
-namespace advanced {
 namespace internal {
-using namespace elemental;
 
 template<typename T> 
 void
@@ -133,5 +131,4 @@ FixDiagonal
 }
 
 } // internal
-} // advanced
 } // elemental

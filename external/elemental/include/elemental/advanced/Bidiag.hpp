@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2011, Jack Poulson
+   Copyright (c) 2009-2012, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental.
@@ -38,38 +38,41 @@
 #include "./Bidiag/BidiagL.hpp"
 #include "./Bidiag/BidiagU.hpp"
 
+namespace elemental {
+
 template<typename R> 
-inline void elemental::advanced::Bidiag( DistMatrix<R,MC,MR>& A )
+inline void Bidiag( DistMatrix<R,MC,MR>& A )
 {
 #ifndef RELEASE
-    PushCallStack("advanced::Bidiag");
+    PushCallStack("Bidiag");
 #endif
     if( IsComplex<R>::val )
         throw std::logic_error("Called real routine with complex datatype");
     if( A.Height() >= A.Width() )
-        advanced::internal::BidiagU( A );
+        internal::BidiagU( A );
     else
-        advanced::internal::BidiagL( A );
+        internal::BidiagL( A );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
 template<typename R> 
-inline void elemental::advanced::Bidiag
+inline void Bidiag
 ( DistMatrix<std::complex<R>,MC,  MR  >& A,
   DistMatrix<std::complex<R>,STAR,STAR>& tP,
   DistMatrix<std::complex<R>,STAR,STAR>& tQ )
 {
 #ifndef RELEASE
-    PushCallStack("advanced::Bidiag");
+    PushCallStack("Bidiag");
 #endif
     if( A.Height() >= A.Width() )
-        advanced::internal::BidiagU( A, tP, tQ );
+        internal::BidiagU( A, tP, tQ );
     else
-        advanced::internal::BidiagL( A, tP, tQ );
+        internal::BidiagL( A, tP, tQ );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
+} // namespace elemental

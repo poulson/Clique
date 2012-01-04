@@ -63,13 +63,12 @@ void clique::numeric::LocalFrontLDL
         //--------------------------------------------------------------------//
         // This routine is unblocked, hence the need for us to generalize to 
         // an (ideally) faster blocked algorithm.
-        elemental::advanced::internal::LDLVar3( orientation, AL11, d1 );
+        elemental::internal::LDLVar3( orientation, AL11, d1 );
 
-        elemental::basic::Trsm
-        ( RIGHT, LOWER, orientation, UNIT, (F)1, AL11, AL21 );
+        elemental::Trsm( RIGHT, LOWER, orientation, UNIT, (F)1, AL11, AL21 );
 
         S21 = AL21;
-        elemental::basic::DiagonalSolve( RIGHT, NORMAL, d1, AL21 );
+        elemental::DiagonalSolve( RIGHT, NORMAL, d1, AL21 );
 
         elemental::PartitionDown
         ( S21, S21T,
@@ -77,9 +76,8 @@ void clique::numeric::LocalFrontLDL
         elemental::PartitionDown
         ( AL21, AL21T,
                 AL21B, AL22.Width() );
-        elemental::basic::Gemm
-        ( NORMAL, orientation, (F)-1, S21, AL21T, (F)1, AL22 );
-        elemental::basic::internal::TrrkNT
+        elemental::Gemm( NORMAL, orientation, (F)-1, S21, AL21T, (F)1, AL22 );
+        elemental::internal::TrrkNT
         ( LOWER, orientation, (F)-1, S21B, AL21B, (F)1, ABR );
         //--------------------------------------------------------------------//
 
