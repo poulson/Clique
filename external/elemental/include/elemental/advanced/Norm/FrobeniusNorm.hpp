@@ -31,113 +31,103 @@
    POSSIBILITY OF SUCH DAMAGE.
 */
 
-namespace elemental {
+namespace elem {
 
-template<typename R> 
-inline R
-internal::FrobeniusNorm( const Matrix<R>& A )
+template<typename F> 
+inline typename Base<F>::type
+internal::FrobeniusNorm( const Matrix<F>& A )
 {
 #ifndef RELEASE
     PushCallStack("internal::FrobeniusNorm");
 #endif
-    R normSquared = 0;
+    typedef typename Base<F>::type R;
+
+    R scale = 0;
+    R scaledSquare = 1;
+
     for( int j=0; j<A.Width(); ++j )
     {
         for( int i=0; i<A.Height(); ++i )
         {
-            const R alpha = A.Get(i,j);
-            normSquared += alpha*alpha;
+            const R alphaAbs = Abs(A.Get(i,j));
+            if( alphaAbs != 0 )
+            {
+                if( alphaAbs <= scale )
+                {
+                    const R relScale = alphaAbs/scale;
+                    scaledSquare += relScale*relScale;
+                }
+                else
+                {
+                    const R relScale = scale/alphaAbs;
+                    scaledSquare = scaledSquare*relScale*relScale + 1;
+                    scale = alphaAbs;
+                }
+            }
         }
     }
-    R norm = sqrt(normSquared);
+    const R norm = scale*sqrt(scaledSquare);
 #ifndef RELEASE
     PopCallStack();
 #endif
     return norm;
 }
 
-template<typename R>
-inline R
-internal::FrobeniusNorm( const Matrix<std::complex<R> >& A )
+template<typename F> 
+inline typename Base<F>::type
+internal::FrobeniusNorm( const DistMatrix<F,MC,MR>& A )
 {
 #ifndef RELEASE
     PushCallStack("internal::FrobeniusNorm");
 #endif
-    R normSquared = 0;
-    for( int j=0; j<A.Width(); ++j )
+    typedef typename Base<F>::type R;
+
+    R localScale = 0;
+    R localScaledSquare = 1;
+    for( int jLocal=0; jLocal<A.LocalWidth(); ++jLocal )
     {
-        for( int i=0; i<A.Height(); ++i )
+        for( int iLocal=0; iLocal<A.LocalHeight(); ++iLocal )
         {
-            const std::complex<R> alpha = A.Get(i,j);
-            // The std::norm function is a field norm rather than a vector norm.
-            normSquared += norm(alpha);
+            const R alphaAbs = Abs(A.GetLocalEntry(iLocal,jLocal));
+            if( alphaAbs != 0 )
+            {
+                if( alphaAbs <= localScale )
+                {
+                    const R relScale = alphaAbs/localScale;
+                    localScaledSquare += relScale*relScale;
+                }
+                else
+                {
+                    const R relScale = localScale/alphaAbs;
+                    localScaledSquare = localScaledSquare*relScale*relScale + 1;
+                    localScale = alphaAbs; 
+                }
+            }
         }
     }
-    R norm = sqrt(normSquared);
+
+    // Find the maximum relative scale
+    R scale;
+    mpi::AllReduce( &localScale, &scale, 1, mpi::MAX, A.Grid().VCComm() );
+
+    R norm = 0;
+    if( scale != 0 )
+    {
+        // Equilibrate our local scaled sum to the maximum scale
+        R relScale = localScale/scale;
+        localScaledSquare *= relScale*relScale;
+
+        // The scaled square is now simply the sum of the local contributions
+        R scaledSquare;
+        mpi::AllReduce
+        ( &localScaledSquare, &scaledSquare, 1, mpi::SUM, A.Grid().VCComm() );
+
+        norm = scale*sqrt(scaledSquare);
+    }
 #ifndef RELEASE
     PopCallStack();
 #endif
     return norm;
 }
 
-template<typename R> 
-inline R
-internal::FrobeniusNorm( const DistMatrix<R,MC,MR>& A )
-{
-#ifndef RELEASE
-    PushCallStack("internal::FrobeniusNorm");
-#endif
-    R localNormSquared = 0;
-    for( int j=0; j<A.LocalWidth(); ++j )
-    {
-        for( int i=0; i<A.LocalHeight(); ++i )
-        {
-            const R alpha = A.GetLocalEntry(i,j);
-            localNormSquared += alpha*alpha;
-        }
-    }
-
-    // The norm squared is simply the sum of the local contributions
-    R normSquared;
-    mpi::AllReduce
-    ( &localNormSquared, &normSquared, 1, mpi::SUM, A.Grid().VCComm() );
-
-    R norm = sqrt(normSquared);
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return norm;
-}
-
-template<typename R> 
-inline R
-internal::FrobeniusNorm
-( const DistMatrix<std::complex<R>,MC,MR>& A )
-{
-#ifndef RELEASE
-    PushCallStack("internal::FrobeniusNorm");
-#endif
-    R localNormSquared = 0;
-    for( int j=0; j<A.LocalWidth(); ++j )
-    {
-        for( int i=0; i<A.LocalHeight(); ++i )
-        {
-            const std::complex<R> alpha = A.GetLocalEntry(i,j);
-            // The std::norm function is a field norm rather than a vector norm.
-            localNormSquared += norm(alpha);
-        }
-    }
-
-    // The norm squared is simply the sum of the local contributions
-    R normSquared;
-    mpi::AllReduce
-    ( &localNormSquared, &normSquared, 1, mpi::SUM, A.Grid().VCComm() );
-
-    R norm = sqrt(normSquared);
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return norm;
-}
-
-} // namespace elemental
+} // namespace elem

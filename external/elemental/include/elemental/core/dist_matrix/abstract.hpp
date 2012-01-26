@@ -33,7 +33,7 @@
 #ifndef ELEMENTAL_DIST_MATRIX_ABSTRACT_HPP
 #define ELEMENTAL_DIST_MATRIX_ABSTRACT_HPP 1
 
-namespace elemental {
+namespace elem {
 
 template<typename T,typename Int> 
 class AbstractDistMatrix
@@ -100,7 +100,7 @@ public:
     Int LocalLDim() const;
     size_t AllocatedMemory() const;
 
-    const elemental::Grid& Grid() const;
+    const elem::Grid& Grid() const;
 
           T* LocalBuffer( Int iLocal=0, Int jLocal=0 );
     const T* LockedLocalBuffer( Int iLocal=0, Int jLocal=0 ) const;
@@ -138,18 +138,18 @@ public:
 
     // Only valid for complex datatypes
 
-    typename RealBase<T>::type 
+    typename Base<T>::type 
     GetRealLocalEntry( Int iLocal, Int jLocal ) const;
-    typename RealBase<T>::type 
+    typename Base<T>::type 
     GetImagLocalEntry( Int iLocal, Int jLocal ) const;
     void SetRealLocalEntry
-    ( Int iLocal, Int jLocal, typename RealBase<T>::type alpha );
+    ( Int iLocal, Int jLocal, typename Base<T>::type alpha );
     void SetImagLocalEntry
-    ( Int iLocal, Int jLocal, typename RealBase<T>::type alpha );
+    ( Int iLocal, Int jLocal, typename Base<T>::type alpha );
     void UpdateRealLocalEntry
-    ( Int iLocal, Int jLocal, typename RealBase<T>::type alpha );
+    ( Int iLocal, Int jLocal, typename Base<T>::type alpha );
     void UpdateImagLocalEntry
-    ( Int iLocal, Int jLocal, typename RealBase<T>::type alpha );
+    ( Int iLocal, Int jLocal, typename Base<T>::type alpha );
 
     //
     // Viewing 
@@ -173,7 +173,7 @@ public:
     // Basic information
     //
 
-    virtual void SetGrid( const elemental::Grid& grid ) = 0;
+    virtual void SetGrid( const elem::Grid& grid ) = 0;
 
     //
     // Entry manipulation
@@ -185,18 +185,12 @@ public:
 
     // Only valid for complex datatypes
 
-    virtual typename RealBase<T>::type GetReal
-    ( Int i, Int j ) const = 0;
-    virtual typename RealBase<T>::type GetImag
-    ( Int i, Int j ) const = 0;
-    virtual void SetReal
-    ( Int i, Int j, typename RealBase<T>::type alpha ) = 0;
-    virtual void SetImag
-    ( Int i, Int j, typename RealBase<T>::type alpha ) = 0;
-    virtual void UpdateReal
-    ( Int i, Int j, typename RealBase<T>::type alpha ) = 0;
-    virtual void UpdateImag
-    ( Int i, Int j, typename RealBase<T>::type alpha ) = 0;
+    virtual typename Base<T>::type GetReal( Int i, Int j ) const = 0;
+    virtual typename Base<T>::type GetImag( Int i, Int j ) const = 0;
+    virtual void SetReal( Int i, Int j, typename Base<T>::type alpha ) = 0;
+    virtual void SetImag( Int i, Int j, typename Base<T>::type alpha ) = 0;
+    virtual void UpdateReal( Int i, Int j, typename Base<T>::type alpha ) = 0;
+    virtual void UpdateImag( Int i, Int j, typename Base<T>::type alpha ) = 0;
 
     //
     // Utilities
@@ -226,7 +220,7 @@ protected:
     Int rowAlignment_;
     Int colShift_;
     Int rowShift_;
-    const elemental::Grid* grid_;
+    const elem::Grid* grid_;
 
     // Initialize with particular local dimensions
     AbstractDistMatrix
@@ -240,7 +234,7 @@ protected:
       Int rowShift,
       Int localHeight,
       Int localWidth,
-      const elemental::Grid& g );
+      const elem::Grid& g );
 
     // Initialize with particular local dimensions and local leading dimensions
     AbstractDistMatrix
@@ -255,7 +249,7 @@ protected:
       Int localHeight,
       Int localWidth,
       Int ldim,
-      const elemental::Grid& g );
+      const elem::Grid& g );
 
     // View a constant distributed matrix's buffer
     AbstractDistMatrix
@@ -269,7 +263,7 @@ protected:
       Int localWidth,
       const T* buffer,
       Int ldim,
-      const elemental::Grid& g );
+      const elem::Grid& g );
 
     // View a mutable distributed matrix's buffer
     AbstractDistMatrix
@@ -283,7 +277,7 @@ protected:
       Int localWidth,
       T* buffer,
       Int ldim,
-      const elemental::Grid& g );
+      const elem::Grid& g );
 
     virtual void PrintBase( std::ostream& os, const std::string msg ) const = 0;
 };
@@ -305,7 +299,7 @@ AbstractDistMatrix<T,Int>::AbstractDistMatrix
   Int rowShift, 
   Int localHeight,
   Int localWidth,
-  const elemental::Grid& grid )
+  const elem::Grid& grid )
 : viewing_(false), 
   lockedView_(false), 
   height_(height), 
@@ -335,7 +329,7 @@ AbstractDistMatrix<T,Int>::AbstractDistMatrix
   Int localHeight,
   Int localWidth,
   Int ldim,
-  const elemental::Grid& grid )
+  const elem::Grid& grid )
 : viewing_(false), 
   lockedView_(false), 
   height_(height), 
@@ -364,7 +358,7 @@ AbstractDistMatrix<T,Int>::AbstractDistMatrix
   Int localWidth,
   const T* buffer,
   Int ldim,
-  const elemental::Grid& grid )
+  const elem::Grid& grid )
 : viewing_(true), 
   lockedView_(true), 
   height_(height), 
@@ -393,7 +387,7 @@ AbstractDistMatrix<T,Int>::AbstractDistMatrix
   Int localWidth,
   T* buffer,
   Int ldim,
-  const elemental::Grid& grid )
+  const elem::Grid& grid )
 : viewing_(true), 
   lockedView_(false), 
   height_(height), 
@@ -602,7 +596,7 @@ AbstractDistMatrix<T,Int>::Height() const
 template<typename T,typename Int>
 inline Int
 AbstractDistMatrix<T,Int>::DiagonalLength( Int offset ) const
-{ return elemental::DiagonalLength(height_,width_,offset); }
+{ return elem::DiagonalLength(height_,width_,offset); }
 
 template<typename T,typename Int>
 inline Int
@@ -648,7 +642,7 @@ AbstractDistMatrix<T,Int>::RowShift() const
 { return rowShift_; }
 
 template<typename T,typename Int>
-inline const elemental::Grid&
+inline const elem::Grid&
 AbstractDistMatrix<T,Int>::Grid() const
 { return *grid_; }
 
@@ -750,7 +744,7 @@ AbstractDistMatrix<T,Int>::Write
 #ifndef RELEASE
     PushCallStack("AbstractDistMatrix::Write");
 #endif
-    const elemental::Grid& g = Grid();
+    const elem::Grid& g = Grid();
     const int commRank = mpi::CommRank( g.VCComm() ); 
 
     if( commRank == 0 )
@@ -775,13 +769,13 @@ AbstractDistMatrix<T,Int>::Write
 //
 
 template<typename T,typename Int>
-inline typename RealBase<T>::type
+inline typename Base<T>::type
 AbstractDistMatrix<T,Int>::GetRealLocalEntry
 ( Int iLocal, Int jLocal ) const
 { return this->localMatrix_.GetReal(iLocal,jLocal); }
 
 template<typename T,typename Int>
-inline typename RealBase<T>::type
+inline typename Base<T>::type
 AbstractDistMatrix<T,Int>::GetImagLocalEntry
 ( Int iLocal, Int jLocal ) const
 { return this->localMatrix_.GetImag(iLocal,jLocal); }
@@ -789,28 +783,28 @@ AbstractDistMatrix<T,Int>::GetImagLocalEntry
 template<typename T,typename Int>
 inline void
 AbstractDistMatrix<T,Int>::SetRealLocalEntry
-( Int iLocal, Int jLocal, typename RealBase<T>::type alpha )
+( Int iLocal, Int jLocal, typename Base<T>::type alpha )
 { this->localMatrix_.SetReal(iLocal,jLocal,alpha); }
 
 template<typename T,typename Int>
 inline void
 AbstractDistMatrix<T,Int>::SetImagLocalEntry
-( Int iLocal, Int jLocal, typename RealBase<T>::type alpha )
+( Int iLocal, Int jLocal, typename Base<T>::type alpha )
 { this->localMatrix_.SetImag(iLocal,jLocal,alpha); }
 
 template<typename T,typename Int>
 inline void
 AbstractDistMatrix<T,Int>::UpdateRealLocalEntry
-( Int iLocal, Int jLocal, typename RealBase<T>::type alpha )
+( Int iLocal, Int jLocal, typename Base<T>::type alpha )
 { this->localMatrix_.UpdateReal(iLocal,jLocal,alpha); }
 
 template<typename T,typename Int>
 inline void
 AbstractDistMatrix<T,Int>::UpdateImagLocalEntry
-( Int iLocal, Int jLocal, typename RealBase<T>::type alpha )
+( Int iLocal, Int jLocal, typename Base<T>::type alpha )
 { this->localMatrix_.UpdateImag(iLocal,jLocal,alpha); }
 
-} // elemental
+} // elem
 
 #endif /* ELEMENTAL_DIST_MATRIX_ABSTRACT_HPP */
 

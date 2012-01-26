@@ -1,7 +1,7 @@
 /*
    Clique: a scalable implementation of the multifrontal algorithm
 
-   Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
+   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
    The University of Texas at Austin
  
    This program is free software: you can redistribute it and/or modify
@@ -19,13 +19,15 @@
 */
 #include "clique.hpp"
 
+namespace cliq {
+
 template<typename F> // F representa a real or complex field
-void clique::numeric::DistDiagonalSolve
+void numeric::DistDiagonalSolve
 ( const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX )
 {
-    using namespace clique::symbolic;
+    using namespace symbolic;
 #ifndef RELEASE
     PushCallStack("numeric::DistDiagonalSolve");
 #endif
@@ -45,7 +47,7 @@ void clique::numeric::DistDiagonalSolve
         FTL.LockedView( front.front1dL, 0, 0, sn.size, sn.size );
         DistMatrix<F,VC,STAR> dTL;
         FTL.GetDiagonal( dTL );
-        elemental::DiagonalSolve
+        elem::DiagonalSolve
         ( LEFT, NORMAL, dTL.LockedLocalMatrix(), localXT, true );
     }
 #ifndef RELEASE
@@ -53,22 +55,24 @@ void clique::numeric::DistDiagonalSolve
 #endif
 }
 
-template void clique::numeric::DistDiagonalSolve
+} // namespace cliq
+
+template void cliq::numeric::DistDiagonalSolve
 ( const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<float>& L,
         Matrix<float>& localX );
 
-template void clique::numeric::DistDiagonalSolve
+template void cliq::numeric::DistDiagonalSolve
 ( const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<double>& L,
         Matrix<double>& localX );
 
-template void clique::numeric::DistDiagonalSolve
+template void cliq::numeric::DistDiagonalSolve
 ( const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<std::complex<float> >& L,
-        Matrix<std::complex<float> >& localX );
+  const numeric::SymmFrontTree<Complex<float> >& L,
+        Matrix<Complex<float> >& localX );
 
-template void clique::numeric::DistDiagonalSolve
+template void cliq::numeric::DistDiagonalSolve
 ( const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<std::complex<double> >& L,
-        Matrix<std::complex<double> >& localX );
+  const numeric::SymmFrontTree<Complex<double> >& L,
+        Matrix<Complex<double> >& localX );

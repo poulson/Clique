@@ -33,7 +33,7 @@
 
 #ifndef WITHOUT_PMRRR
 
-namespace elemental {
+namespace elem {
 namespace hpsd_cholesky {
 
 template<typename F>
@@ -132,7 +132,7 @@ HPSDCholesky( UpperOrLower uplo, DistMatrix<R,MC,MR>& A )
 
 template<typename R>
 inline void
-HPSDCholesky( UpperOrLower uplo, DistMatrix<std::complex<R>,MC,MR>& A )
+HPSDCholesky( UpperOrLower uplo, DistMatrix<Complex<R>,MC,MR>& A )
 {
 #ifndef RELEASE
     PushCallStack("HPSDCholesky");
@@ -143,13 +143,13 @@ HPSDCholesky( UpperOrLower uplo, DistMatrix<std::complex<R>,MC,MR>& A )
     const Grid& g = A.Grid();
     if( uplo == LOWER )
     {
-        DistMatrix<std::complex<R>,MD,STAR> t(g);
+        DistMatrix<Complex<R>,MD,STAR> t(g);
         LQ( A, t );
         A.MakeTrapezoidal( LEFT, LOWER );
     }
     else
     {
-        DistMatrix<std::complex<R>,MD,STAR> t(g);
+        DistMatrix<Complex<R>,MD,STAR> t(g);
         QR( A, t );
         A.MakeTrapezoidal( RIGHT, UPPER );
     }
@@ -158,6 +158,6 @@ HPSDCholesky( UpperOrLower uplo, DistMatrix<std::complex<R>,MC,MR>& A )
 #endif
 }
 
-} // namespace elemental
+} // namespace elem
 
 #endif // WITHOUT_PMRRR

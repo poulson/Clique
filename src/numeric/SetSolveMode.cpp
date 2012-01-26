@@ -1,7 +1,7 @@
 /*
    Clique: a scalable implementation of the multifrontal algorithm
 
-   Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
+   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
    The University of Texas at Austin
  
    This program is free software: you can redistribute it and/or modify
@@ -19,10 +19,12 @@
 */
 #include "clique.hpp"
 
+namespace cliq {
+
 // This routine could be modified later so that it uses much less memory
 // by replacing the '=' redistributions with piece-by-piece redistributions.
 template<typename F>
-void clique::numeric::SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
+void numeric::SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
 {
 #ifndef RELEASE
     PushCallStack("numeric::SetSolveMode");
@@ -67,20 +69,19 @@ void clique::numeric::SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
         for( int s=1; s<numDistSupernodes; ++s )
         {
             DistSymmFront<F>& front = L.dist.fronts[s];
-            const elemental::Grid& grid = front.front2dL.Grid();
+            const elem::Grid& grid = front.front2dL.Grid();
             const int snSize = front.front2dL.Width();
 
             // Invert the strictly lower portion of the diagonal block 
-            elemental::DistMatrix<F> LT( grid );
+            DistMatrix<F> LT( grid );
             LT.View( front.front2dL, 0, 0, snSize, snSize );
-            elemental::TriangularInverse
-            ( elemental::LOWER, elemental::UNIT, LT );
+            elem::TriangularInverse( elem::LOWER, elem::UNIT, LT );
 
             // Copy the data and make the strictly upper triangle zero
             front.front1dL.Empty();
             front.front1dL.SetGrid( grid );
             front.front1dL = front.front2dL;
-            front.front1dL.MakeTrapezoidal( elemental::LEFT, elemental::LOWER );
+            front.front1dL.MakeTrapezoidal( elem::LEFT, elem::LOWER );
             front.front2dL.Empty();
         }
     }
@@ -109,14 +110,16 @@ void clique::numeric::SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
 #endif
 }
 
-template void clique::numeric::SetSolveMode
+} // namespace cliq
+
+template void cliq::numeric::SetSolveMode
 ( SymmFrontTree<float>& L, SolveMode mode );
 
-template void clique::numeric::SetSolveMode
+template void cliq::numeric::SetSolveMode
 ( SymmFrontTree<double>& L, SolveMode mode );
 
-template void clique::numeric::SetSolveMode
-( SymmFrontTree<std::complex<float> >& L, SolveMode mode );
+template void cliq::numeric::SetSolveMode
+( SymmFrontTree<Complex<float> >& L, SolveMode mode );
 
-template void clique::numeric::SetSolveMode
-( SymmFrontTree<std::complex<double> >& L, SolveMode mode );
+template void cliq::numeric::SetSolveMode
+( SymmFrontTree<Complex<double> >& L, SolveMode mode );

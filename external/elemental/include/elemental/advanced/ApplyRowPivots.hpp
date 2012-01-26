@@ -31,7 +31,7 @@
    POSSIBILITY OF SUCH DAMAGE.
 */
 
-namespace elemental {
+namespace elem {
 
 template<typename F>
 inline void
@@ -181,7 +181,7 @@ ApplyRowPivots
     const int b = image.size();
 #ifndef RELEASE
     PushCallStack("ApplyRowPivots");
-    if( A.Height() < b || b != preimage.size() )
+    if( A.Height() < b || b != (int)preimage.size() )
         throw std::logic_error
         ("image and preimage must be vectors of equal length that are not "
          "taller than A.");
@@ -346,4 +346,4 @@ ApplyRowPivots
 #endif
 }
 
-} // namespace elemental
+} // namespace elem

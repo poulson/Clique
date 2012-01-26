@@ -32,7 +32,7 @@
 */
 #include "elemental.hpp"
 using namespace std;
-using namespace elemental;
+using namespace elem;
 
 // Typedef our real type to 'R' for convenience
 typedef double R;
@@ -40,7 +40,7 @@ typedef double R;
 int
 main( int argc, char* argv[] )
 {
-    // Initialize Elemental. The full routine is elemental::Initialize.
+    // Initialize Elemental. The full routine is elem::Initialize.
     // It detects whether or not you have already initialized MPI and 
     // does so if necessary.
     Initialize( argc, argv );
@@ -59,7 +59,7 @@ main( int argc, char* argv[] )
         // r x c grid.
         Grid g( comm );
     
-        // Create an n x n complex distributed matrix, 
+        // Create an n x n real distributed matrix, 
         // [MC,MR] is standard 2d matrix distribution. 
         // We distribute the matrix using grid 'g'.
         //

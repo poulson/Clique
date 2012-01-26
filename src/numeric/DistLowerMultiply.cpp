@@ -1,7 +1,7 @@
 /*
    Clique: a scalable implementation of the multifrontal algorithm
 
-   Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
+   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
    The University of Texas at Austin
  
    This program is free software: you can redistribute it and/or modify
@@ -19,14 +19,16 @@
 */
 #include "clique.hpp"
 
-template<typename F> // F represents a real or complex field
-void clique::numeric::DistLowerMultiplyNormal
+namespace cliq {
+
+template<typename F> 
+void numeric::DistLowerMultiplyNormal
 ( Diagonal diag, int diagOffset,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX )
 {
-    using namespace clique::symbolic;
+    using namespace symbolic;
 #ifndef RELEASE
     PushCallStack("numeric::DistLowerMultiplyNormal");
 #endif
@@ -71,7 +73,7 @@ void clique::numeric::DistLowerMultiplyNormal
         W.SetGrid( grid );
         W.ResizeTo( front.front1dL.Height(), width );
         DistMatrix<F,VC,STAR> WT(grid), WB(grid);
-        elemental::PartitionDown
+        elem::PartitionDown
         ( W, WT,
              WB, sn.size );
 
@@ -193,13 +195,13 @@ void clique::numeric::DistLowerMultiplyNormal
 }
 
 template<typename F> // F represents a real or complex field
-void clique::numeric::DistLowerMultiplyTranspose
+void numeric::DistLowerMultiplyTranspose
 ( Orientation orientation, Diagonal diag, int diagOffset,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX )
 {
-    using namespace clique::symbolic;
+    using namespace symbolic;
 #ifndef RELEASE
     PushCallStack("numeric::DistLowerMultiplyTranspose");
 #endif
@@ -248,7 +250,7 @@ void clique::numeric::DistLowerMultiplyTranspose
         W.SetGrid( grid );
         W.ResizeTo( front.front1dL.Height(), width );
         DistMatrix<F,VC,STAR> WT(grid), WB(grid);
-        elemental::PartitionDown
+        elem::PartitionDown
         ( W, WT,
              WB, sn.size );
 
@@ -367,7 +369,7 @@ void clique::numeric::DistLowerMultiplyTranspose
 
         // Store the supernode portion of the result
         DistMatrix<F,VC,STAR> XNodeT(grid), XNodeB(grid);
-        elemental::PartitionDown
+        elem::PartitionDown
         ( XNode, XNodeT,
                  XNodeB, sn.size );
         localXT = XNodeT.LocalMatrix();
@@ -378,46 +380,48 @@ void clique::numeric::DistLowerMultiplyTranspose
 #endif
 }
 
-template void clique::numeric::DistLowerMultiplyNormal
+} // namespace cliq
+
+template void cliq::numeric::DistLowerMultiplyNormal
 ( Diagonal diag, int diagOffset,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<float>& L,
         Matrix<float>& localX );
-template void clique::numeric::DistLowerMultiplyTranspose
+template void cliq::numeric::DistLowerMultiplyTranspose
 ( Orientation orientation, Diagonal diag, int diagOffset,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<float>& L,
         Matrix<float>& localX );
 
-template void clique::numeric::DistLowerMultiplyNormal
+template void cliq::numeric::DistLowerMultiplyNormal
 ( Diagonal diag, int diagOffset, 
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<double>& L,
         Matrix<double>& localX );
-template void clique::numeric::DistLowerMultiplyTranspose
+template void cliq::numeric::DistLowerMultiplyTranspose
 ( Orientation orientation, Diagonal diag, int diagOffset,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<double>& L,
         Matrix<double>& localX );
 
-template void clique::numeric::DistLowerMultiplyNormal
+template void cliq::numeric::DistLowerMultiplyNormal
 ( Diagonal diag, int diagOffset,
   const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<std::complex<float> >& L,
-        Matrix<std::complex<float> >& localX );
-template void clique::numeric::DistLowerMultiplyTranspose
+  const numeric::SymmFrontTree<Complex<float> >& L,
+        Matrix<Complex<float> >& localX );
+template void cliq::numeric::DistLowerMultiplyTranspose
 ( Orientation orientation, Diagonal diag, int diagOffset,
   const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<std::complex<float> >& L,
-        Matrix<std::complex<float> >& localX );
+  const numeric::SymmFrontTree<Complex<float> >& L,
+        Matrix<Complex<float> >& localX );
 
-template void clique::numeric::DistLowerMultiplyNormal
+template void cliq::numeric::DistLowerMultiplyNormal
 ( Diagonal diag, int diagOffset,
   const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<std::complex<double> >& L,
-        Matrix<std::complex<double> >& localX );
-template void clique::numeric::DistLowerMultiplyTranspose
+  const numeric::SymmFrontTree<Complex<double> >& L,
+        Matrix<Complex<double> >& localX );
+template void cliq::numeric::DistLowerMultiplyTranspose
 ( Orientation orientation, Diagonal diag, int diagOffset,
   const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<std::complex<double> >& L,
-        Matrix<std::complex<double> >& localX );
+  const numeric::SymmFrontTree<Complex<double> >& L,
+        Matrix<Complex<double> >& localX );

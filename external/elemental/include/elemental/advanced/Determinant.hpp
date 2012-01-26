@@ -31,7 +31,7 @@
    POSSIBILITY OF SUCH DAMAGE.
 */
 
-namespace elemental {
+namespace elem {
 
 template<typename F> 
 inline SafeProduct<F> 
@@ -44,7 +44,7 @@ SafeDeterminant( DistMatrix<F,MC,MR>& A )
         throw std::logic_error
         ("Cannot compute determinant of nonsquare matrix");
 
-    typedef typename RealBase<F>::type R;
+    typedef typename Base<F>::type R;
     const int n = A.Height();
     SafeProduct<F> det( n );
     const Grid& g = A.Grid();
@@ -111,7 +111,7 @@ SafeDeterminant( Matrix<F>& A )
         throw std::logic_error
         ("Cannot compute determinant of nonsquare matrix");
 
-    typedef typename RealBase<F>::type R;
+    typedef typename Base<F>::type R;
     const int n = A.Height();
     SafeProduct<F> det( n );
 
@@ -158,4 +158,4 @@ inline F Determinant( Matrix<F>& A )
     return det;
 }
 
-} // namespace elemental
+} // namespace elem

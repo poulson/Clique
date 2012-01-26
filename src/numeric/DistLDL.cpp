@@ -1,7 +1,7 @@
 /*
    Clique: a scalable implementation of the multifrontal algorithm
 
-   Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
+   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
    The University of Texas at Austin
  
    This program is free software: you can redistribute it and/or modify
@@ -19,11 +19,13 @@
 */
 #include "clique.hpp"
 
-template<typename F> // F represents a real or complex field
-void clique::numeric::DistLDL
+namespace cliq {
+
+template<typename F> 
+void numeric::DistLDL
 ( Orientation orientation, symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L )
 {
-    using namespace clique::symbolic;
+    using namespace symbolic;
 #ifndef RELEASE
     PushCallStack("numeric::DistLDL");
     if( orientation == NORMAL )
@@ -187,7 +189,7 @@ void clique::numeric::DistLDL
         front.work2d.SetToZero();
         const int leftLocalWidth = front.front2dL.LocalWidth();
         const int topLocalHeight = 
-            elemental::LocalLength<int>( sn.size, grid.MCRank(), gridHeight );
+            elem::LocalLength<int>( sn.size, grid.MCRank(), gridHeight );
         for( unsigned proc=0; proc<commSize; ++proc )
         {
             const F* recvValues = &recvBuffer[recvDispls[proc]];
@@ -223,18 +225,20 @@ void clique::numeric::DistLDL
 #endif
 }
 
-template void clique::numeric::DistLDL
+} // namespace cliq
+
+template void cliq::numeric::DistLDL
 ( Orientation orientation,
   symbolic::SymmFact& S, numeric::SymmFrontTree<float>& L );
 
-template void clique::numeric::DistLDL
+template void cliq::numeric::DistLDL
 ( Orientation orientation,
   symbolic::SymmFact& S, numeric::SymmFrontTree<double>& L );
 
-template void clique::numeric::DistLDL
+template void cliq::numeric::DistLDL
 ( Orientation orientation,
-  symbolic::SymmFact& S, numeric::SymmFrontTree<std::complex<float> >& L );
+  symbolic::SymmFact& S, numeric::SymmFrontTree<Complex<float> >& L );
 
-template void clique::numeric::DistLDL
+template void cliq::numeric::DistLDL
 ( Orientation orientation,
-  symbolic::SymmFact& S, numeric::SymmFrontTree<std::complex<double> >& L );
+  symbolic::SymmFact& S, numeric::SymmFrontTree<Complex<double> >& L );

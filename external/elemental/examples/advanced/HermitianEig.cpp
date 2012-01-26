@@ -32,17 +32,17 @@
 */
 #include "elemental.hpp"
 using namespace std;
-using namespace elemental;
+using namespace elem;
 
 // Typedef our real and complex types to 'R' and 'C' for convenience
 typedef double R;
-typedef complex<R> C;
+typedef Complex<R> C;
 
 int
 main( int argc, char* argv[] )
 {
     // This detects whether or not you have already initialized MPI and 
-    // does so if necessary. The full routine is elemental::Initialize.
+    // does so if necessary. The full routine is elem::Initialize.
     Initialize( argc, argv );
 
     // Extract our MPI rank

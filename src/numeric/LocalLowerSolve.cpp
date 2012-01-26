@@ -1,7 +1,7 @@
 /*
    Clique: a scalable implementation of the multifrontal algorithm
 
-   Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
+   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
    The University of Texas at Austin
  
    This program is free software: you can redistribute it and/or modify
@@ -19,14 +19,16 @@
 */
 #include "clique.hpp"
 
-template<typename F> // F represents a real or complex field
-void clique::numeric::LocalLowerForwardSolve
+namespace cliq {
+
+template<typename F> 
+void numeric::LocalLowerForwardSolve
 ( Diagonal diag, 
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& X )
 {
-    using namespace clique::symbolic;
+    using namespace symbolic;
 #ifndef RELEASE
     PushCallStack("numeric::LocalLowerForwardSolve");
 #endif
@@ -41,7 +43,7 @@ void clique::numeric::LocalLowerForwardSolve
         // Set up a workspace
         W.ResizeTo( frontL.Height(), width );
         Matrix<F> WT, WB;
-        elemental::PartitionDown
+        elem::PartitionDown
         ( W, WT,
              WB, sn.size );
 
@@ -101,14 +103,14 @@ void clique::numeric::LocalLowerForwardSolve
 #endif
 }
 
-template<typename F> // F represents a real or complex field
-void clique::numeric::LocalLowerBackwardSolve
+template<typename F> 
+void numeric::LocalLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S, 
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& X )
 {
-    using namespace clique::symbolic;
+    using namespace symbolic;
 #ifndef RELEASE
     PushCallStack("numeric::LocalLowerBackwardSolve");
 #endif
@@ -135,7 +137,7 @@ void clique::numeric::LocalLowerBackwardSolve
         // Set up a workspace
         W.ResizeTo( frontL.Height(), width );
         Matrix<F> WT, WB;
-        elemental::PartitionDown
+        elem::PartitionDown
         ( W, WT,
              WB, sn.size );
 
@@ -185,46 +187,48 @@ void clique::numeric::LocalLowerBackwardSolve
 #endif
 }
 
-template void clique::numeric::LocalLowerForwardSolve
+} // namespace cliq
+
+template void cliq::numeric::LocalLowerForwardSolve
 ( Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<float>& L,
         Matrix<float>& X );
-template void clique::numeric::LocalLowerBackwardSolve
+template void cliq::numeric::LocalLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<float>& L,
         Matrix<float>& X );
 
-template void clique::numeric::LocalLowerForwardSolve
+template void cliq::numeric::LocalLowerForwardSolve
 ( Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<double>& L,
         Matrix<double>& X );
-template void clique::numeric::LocalLowerBackwardSolve
+template void cliq::numeric::LocalLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<double>& L,
         Matrix<double>& X );
 
-template void clique::numeric::LocalLowerForwardSolve
+template void cliq::numeric::LocalLowerForwardSolve
 ( Diagonal diag,
   const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<std::complex<float> >& L,
-        Matrix<std::complex<float> >& X );
-template void clique::numeric::LocalLowerBackwardSolve
+  const numeric::SymmFrontTree<Complex<float> >& L,
+        Matrix<Complex<float> >& X );
+template void cliq::numeric::LocalLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<std::complex<float> >& L,
-        Matrix<std::complex<float> >& X );
+  const numeric::SymmFrontTree<Complex<float> >& L,
+        Matrix<Complex<float> >& X );
 
-template void clique::numeric::LocalLowerForwardSolve
+template void cliq::numeric::LocalLowerForwardSolve
 ( Diagonal diag,
   const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<std::complex<double> >& L,
-        Matrix<std::complex<double> >& X );
-template void clique::numeric::LocalLowerBackwardSolve
+  const numeric::SymmFrontTree<Complex<double> >& L,
+        Matrix<Complex<double> >& X );
+template void cliq::numeric::LocalLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<std::complex<double> >& L,
-        Matrix<std::complex<double> >& X );
+  const numeric::SymmFrontTree<Complex<double> >& L,
+        Matrix<Complex<double> >& X );

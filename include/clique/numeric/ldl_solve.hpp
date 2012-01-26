@@ -1,8 +1,7 @@
 /*
    Clique: a scalable implementation of the multifrontal algorithm
 
-   Copyright (C) 2010-2011 Jack Poulson <jack.poulson@gmail.com>
-   Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
+   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
    The University of Texas at Austin
  
    This program is free software: you can redistribute it and/or modify
@@ -21,7 +20,7 @@
 #ifndef CLIQUE_NUMERIC_LDL_SOLVE_HPP
 #define CLIQUE_NUMERIC_LDL_SOLVE_HPP 1
 
-namespace clique {
+namespace cliq {
 namespace numeric {
 
 template<typename F>
@@ -48,20 +47,19 @@ void LDLSolve
         throw std::logic_error("Invalid orientation for LDL");
 #endif
     // Solve against unit diagonal L
-    clique::numeric::LowerSolve( NORMAL, UNIT, S, L, localX );
+    LowerSolve( NORMAL, UNIT, S, L, localX );
 
     // Solve against diagonal
-    clique::numeric::DiagonalSolve( S, L, localX );
+    DiagonalSolve( S, L, localX );
 
     // Solve against the (conjugate-)transpose of the unit diagonal L
-    clique::numeric::LowerSolve( orientation, UNIT, S, L, localX );
+    LowerSolve( orientation, UNIT, S, L, localX );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
 } // namespace numeric
-} // namespace clique
+} // namespace cliq
 
 #endif /* CLIQUE_NUMERIC_LDL_SOLVE_HPP */
-

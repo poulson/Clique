@@ -1,12 +1,12 @@
 /*
    Modification of include/elemental/basic/level3/Trsm/TrsmLLN.hpp 
    from Elemental.
-   Copyright (c) 2009-2011, Jack Poulson
+   Copyright (c) 2009-2012, Jack Poulson
    All rights reserved.
 
    Clique: a scalable implementation of the multifrontal algorithm
 
-   Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
+   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
    The University of Texas at Austin
  
    This program is free software: you can redistribute it and/or modify
@@ -24,12 +24,14 @@
 */
 #include "clique.hpp"
 
+namespace cliq {
+
 template<typename F>
-void clique::numeric::LocalFrontLowerForwardSolve
+void numeric::LocalFrontLowerForwardSolve
 ( Diagonal diag, const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    clique::PushCallStack("numeric::LocalFrontLowerForwardSolve");
+    PushCallStack("numeric::LocalFrontLowerForwardSolve");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
@@ -41,30 +43,30 @@ void clique::numeric::LocalFrontLowerForwardSolve
 #endif
     Matrix<F> LT,
               LB;
-    elemental::LockedPartitionDown
+    elem::LockedPartitionDown
     ( L, LT,
          LB, L.Width() );
 
     Matrix<F> XT, 
               XB;
-    elemental::PartitionDown
+    elem::PartitionDown
     ( X, XT,
          XB, L.Width() );
 
-    elemental::Trsm( LEFT, LOWER, NORMAL, diag, (F)1, LT, XT, true );
-    elemental::Gemm( NORMAL, NORMAL, (F)-1, LB, XT, (F)1, XB );
+    elem::Trsm( LEFT, LOWER, NORMAL, diag, (F)1, LT, XT, true );
+    elem::Gemm( NORMAL, NORMAL, (F)-1, LB, XT, (F)1, XB );
 #ifndef RELEASE
-    clique::PopCallStack();
+    PopCallStack();
 #endif
 }
 
 template<typename F>
-void clique::numeric::LocalFrontLowerBackwardSolve
+void numeric::LocalFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag, 
   const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    clique::PushCallStack("numeric::LocalFrontLowerBackwardSolve");
+    PushCallStack("numeric::LocalFrontLowerBackwardSolve");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
@@ -78,47 +80,49 @@ void clique::numeric::LocalFrontLowerBackwardSolve
 #endif
     Matrix<F> LT,
               LB;
-    elemental::LockedPartitionDown
+    elem::LockedPartitionDown
     ( L, LT,
          LB, L.Width() );
 
     Matrix<F> XT,
               XB;
-    elemental::PartitionDown
+    elem::PartitionDown
     ( X, XT,
          XB, L.Width() );
 
-    elemental::Gemm( orientation, NORMAL, (F)-1, LB, XB, (F)1, XT );
-    elemental::Trsm( LEFT, LOWER, orientation, diag, (F)1, LT, XT, true );
+    elem::Gemm( orientation, NORMAL, (F)-1, LB, XB, (F)1, XT );
+    elem::Trsm( LEFT, LOWER, orientation, diag, (F)1, LT, XT, true );
 #ifndef RELEASE
-    clique::PopCallStack();
+    PopCallStack();
 #endif
 }
 
-template void clique::numeric::LocalFrontLowerForwardSolve
+} // namespace cliq
+
+template void cliq::numeric::LocalFrontLowerForwardSolve
 ( Diagonal diag, 
   const Matrix<float>& L, Matrix<float>& X );
-template void clique::numeric::LocalFrontLowerBackwardSolve
+template void cliq::numeric::LocalFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const Matrix<float>& L, Matrix<float>& X );
 
-template void clique::numeric::LocalFrontLowerForwardSolve
+template void cliq::numeric::LocalFrontLowerForwardSolve
 ( Diagonal diag, 
   const Matrix<double>& L, Matrix<double>& X );
-template void clique::numeric::LocalFrontLowerBackwardSolve
+template void cliq::numeric::LocalFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const Matrix<double>& L, Matrix<double>& X );
 
-template void clique::numeric::LocalFrontLowerForwardSolve
+template void cliq::numeric::LocalFrontLowerForwardSolve
 ( Diagonal diag,
-  const Matrix<std::complex<float> >& L, Matrix<std::complex<float> >& X );
-template void clique::numeric::LocalFrontLowerBackwardSolve
+  const Matrix<Complex<float> >& L, Matrix<Complex<float> >& X );
+template void cliq::numeric::LocalFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
-  const Matrix<std::complex<float> >& L, Matrix<std::complex<float> >& X );
+  const Matrix<Complex<float> >& L, Matrix<Complex<float> >& X );
 
-template void clique::numeric::LocalFrontLowerForwardSolve
+template void cliq::numeric::LocalFrontLowerForwardSolve
 ( Diagonal diag,
-  const Matrix<std::complex<double> >& L, Matrix<std::complex<double> >& X );
-template void clique::numeric::LocalFrontLowerBackwardSolve
+  const Matrix<Complex<double> >& L, Matrix<Complex<double> >& X );
+template void cliq::numeric::LocalFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
-  const Matrix<std::complex<double> >& L, Matrix<std::complex<double> >& X );
+  const Matrix<Complex<double> >& L, Matrix<Complex<double> >& X );

@@ -1,7 +1,7 @@
 /*
    Clique: a scalable implementation of the multifrontal algorithm
 
-   Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
+   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
    The University of Texas at Austin
  
    This program is free software: you can redistribute it and/or modify
@@ -19,11 +19,13 @@
 */
 #include "clique.hpp"
 
-template<typename F> // F represents a real or complex field
-void clique::numeric::LocalLDL
+namespace cliq {
+
+template<typename F> 
+void numeric::LocalLDL
 ( Orientation orientation, symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L )
 {
-    using namespace clique::symbolic;
+    using namespace symbolic;
 #ifndef RELEASE
     PushCallStack("numeric::LocalLDL");
     if( orientation == NORMAL )
@@ -97,19 +99,21 @@ void clique::numeric::LocalLDL
 #endif
 }
 
-template void clique::numeric::LocalLDL
+} // namespace cliq
+
+template void cliq::numeric::LocalLDL
 ( Orientation orientation, 
   symbolic::SymmFact& S, numeric::SymmFrontTree<float>& L );
 
-template void clique::numeric::LocalLDL
+template void cliq::numeric::LocalLDL
 ( Orientation orientation,
   symbolic::SymmFact& S, numeric::SymmFrontTree<double>& L );
 
-template void clique::numeric::LocalLDL
+template void cliq::numeric::LocalLDL
 ( Orientation orientation,
-  symbolic::SymmFact& S, numeric::SymmFrontTree<std::complex<float> >& L );
+  symbolic::SymmFact& S, numeric::SymmFrontTree<Complex<float> >& L );
 
-template void clique::numeric::LocalLDL
+template void cliq::numeric::LocalLDL
 ( Orientation orientation,
-  symbolic::SymmFact& S, numeric::SymmFrontTree<std::complex<double> >& L );
+  symbolic::SymmFact& S, numeric::SymmFrontTree<Complex<double> >& L );
 

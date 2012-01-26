@@ -1,12 +1,7 @@
 /*
-   Modification of include/elemental/basic/level3/Trsm/TrsmLLN.hpp 
-   from Elemental.
-   Copyright (c) 2009-2011, Jack Poulson
-   All rights reserved.
-
    Clique: a scalable implementation of the multifrontal algorithm
 
-   Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
+   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
    The University of Texas at Austin
  
    This program is free software: you can redistribute it and/or modify
@@ -24,31 +19,35 @@
 */
 #include "clique.hpp"
 
+namespace cliq {
+
 template<typename F>
-void clique::numeric::LocalFrontDiagonalSolve
+void numeric::LocalFrontDiagonalSolve
 ( const Matrix<F>& d, Matrix<F>& X )
 {
 #ifndef RELEASE
-    clique::PushCallStack("numeric::LocalFrontDiagonalSolve");
+    PushCallStack("numeric::LocalFrontDiagonalSolve");
     if( d.Width() != 1 )
         throw std::logic_error("d must be a column vector");
     if( d.Height() != X.Height() )
         throw std::logic_error("Invalid height of X");
 #endif
-    elemental::DiagonalSolve( LEFT, NORMAL, d, X, true );
+    elem::DiagonalSolve( LEFT, NORMAL, d, X, true );
 #ifndef RELEASE
-    clique::PopCallStack();
+    PopCallStack();
 #endif
 }
 
-template void clique::numeric::LocalFrontDiagonalSolve
+} // namespace cliq
+
+template void cliq::numeric::LocalFrontDiagonalSolve
 ( const Matrix<float>& d, Matrix<float>& X );
 
-template void clique::numeric::LocalFrontDiagonalSolve
+template void cliq::numeric::LocalFrontDiagonalSolve
 ( const Matrix<double>& d, Matrix<double>& X );
 
-template void clique::numeric::LocalFrontDiagonalSolve
-( const Matrix<std::complex<float> >& d, Matrix<std::complex<float> >& X );
+template void cliq::numeric::LocalFrontDiagonalSolve
+( const Matrix<Complex<float> >& d, Matrix<Complex<float> >& X );
 
-template void clique::numeric::LocalFrontDiagonalSolve
-( const Matrix<std::complex<double> >& d, Matrix<std::complex<double> >& X );
+template void cliq::numeric::LocalFrontDiagonalSolve
+( const Matrix<Complex<double> >& d, Matrix<Complex<double> >& X );

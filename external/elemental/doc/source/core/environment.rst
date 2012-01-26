@@ -16,11 +16,11 @@ Set up and clean up
       int
       main( int argc, char* argv[] )
       {
-          elemental::Initialize( argc, argv );
+          elem::Initialize( argc, argv );
 
           // ...
 
-          elemental::Finalize();
+          elem::Finalize();
           return 0;
       }
 
@@ -63,7 +63,7 @@ Scalar manipulation
 
    Return the absolute value of non-complex :math:`\alpha`.
 
-.. cpp:function:: Z Abs( std::complex<Z> alpha )
+.. cpp:function:: Z Abs( Complex<Z> alpha )
 
    Return the absolute value of complex :math:`\alpha`: 
 
@@ -75,7 +75,7 @@ Scalar manipulation
 
    Same as :cpp:function::Abs: for non-complex :math:`\alpha`.
 
-.. cpp:function:: Z FastAbs( std::complex<Z> alpha )
+.. cpp:function:: Z FastAbs( Complex<Z> alpha )
 
    Return a cheaper norm of the complex :math:`\alpha`:
 
@@ -88,7 +88,7 @@ Scalar manipulation
    Return the complex conjugate of the non-complex variable :math:`\alpha`,
    which is simply :math:`\alpha`.
 
-.. cpp:function:: std::complex<Z> Conj( std::complex<Z> alpha )
+.. cpp:function:: Complex<Z> Conj( Complex<Z> alpha )
 
    Return the complex conjugate of the complex variable :math:`\alpha`,
 
@@ -96,13 +96,13 @@ Scalar manipulation
 
       \bar \alpha = \mathcal{R}(\alpha) - \mathcal{I}(\alpha) i
 
-.. cpp:class:: RealBase<F>
+.. cpp:class:: Base<F>
 
    .. cpp:type:: type
 
       The underlying real datatype of the (potentially complex) datatype ``F``.
-      For example, ``typename RealBase< std::complex<double> >::type`` and 
-      ``typename RealBase<double>::type`` are both equivalent to ``double``.
+      For example, ``typename Base<Complex<double> >::type`` and 
+      ``typename Base<double>::type`` are both equivalent to ``double``.
       This is often extremely useful in implementing routines which are 
       templated over real and complex datatypes but still make use of real 
       datatypes.
@@ -114,13 +114,165 @@ Custom datatypes
 
    ``typedef unsigned char byte;``
 
+.. cpp:class:: Complex<R>
+
+   .. cpp:type:: R BaseType
+
+   .. cpp:member:: R real  
+   
+      The real part of the complex number
+
+   .. cpp:member:: R imag
+
+      The imaginary part of the complex number
+
+   .. cpp:function:: Complex()
+ 
+      This default constructor is a no-op.
+
+   .. cpp:function:: Complex( R a )
+
+      Construction from a real value.
+
+   .. cpp:function:: Complex( R a, R b )
+   
+      Construction from a complex value.
+
+   .. cpp:function:: Complex( const std::complex<R>& alpha )
+
+      Construction from an ``std::complex<R>`` instance.
+
+   .. cpp:function:: Complex<R>& operator=( const R& alpha )
+
+      Assignment from a real value.
+
+   .. cpp:function:: Complex<R>& operator+=( const R& alpha )
+
+      Increment with a real value.
+
+   .. cpp:function:: Complex<R>& operator-=( const R& alpha )
+
+      Decrement with a real value.
+
+   .. cpp:function:: Complex<R>& operator*=( const R& alpha )
+
+      Scale with a real value.
+
+   .. cpp:function:: Complex<R>& operator/=( const R& alpha )
+
+      Divide with a real value.
+
+   .. cpp:function:: Complex<R>& operator=( const Complex<R>& alpha )
+
+      Assignment from a complex value.
+
+   .. cpp:function:: Complex<R>& operator+=( const Complex<R>& alpha )
+
+      Increment with a complex value.
+
+   .. cpp:function:: Complex<R>& operator-=( const Complex<R>& alpha )
+
+      Decrement with a complex value.
+
+   .. cpp:function:: Complex<R>& operator*=( const Complex<R>& alpha )
+
+      Scale with a complex value.
+
+   .. cpp:function:: Complex<R>& operator/=( const Complex<R>& alpha )
+
+      Divide with a complex value.
+
+.. cpp:function:: Complex<R> operator+( const Complex<R>& alpha, const Complex<R>& beta )
+
+   (complex,complex) addition.
+
+.. cpp:function:: Complex<R> operator+( const Complex<R>& alpha, const R& beta )
+
+   (complex,real) addition.
+
+.. cpp:function:: Complex<R> operator+( const R& alpha, const Complex<R>& beta )
+
+   (real,complex) addition.
+
+.. cpp:function:: Complex<R> operator-( const Complex<R>& alpha, const Complex<R>& beta )
+
+   (complex,complex) subtraction.
+
+.. cpp:function:: Complex<R> operator-( const Complex<R>& alpha, R& beta )
+
+   (complex,real) subtraction.
+
+.. cpp:function:: Complex<R> operator-( const R& alpha, const Complex<R>& beta )
+
+   (real,complex) subtraction.
+
+.. cpp:function:: Complex<R> operator*( const Complex<R>& alpha, const Complex<R>& beta )
+
+   (complex,complex) multiplication.
+
+.. cpp:function:: Complex<R> operator*( const Complex<R>& alpha, R& beta )
+
+   (complex,real) multiplication.
+
+.. cpp:function:: Complex<R> operator*( const R& alpha, const Complex<R>& beta )
+
+   (real,complex) multiplication.
+
+.. cpp:function:: Complex<R> operator/( const Complex<R>& alpha, const Complex<R>& beta )
+
+   (complex,complex) division.
+
+.. cpp:function:: Complex<R> operator/( const Complex<R>& alpha, const R& beta )
+
+   (complex,real) division.
+
+.. cpp:function:: Complex<R> operator/( const R& alpha, const Complex<R>& beta )
+
+   (real,complex) division.
+
+.. cpp:function:: Complex<R> operator+( const Complex<R>& alpha )
+
+   Returns `alpha`.
+
+.. cpp:function:: Complex<R> operator-( const Complex<R>& alpha )
+
+   Returns negative `alpha`.
+
+.. cpp:function:: bool operator==( const Complex<R>& alpha, const Complex<R>& beta )
+
+   (complex,complex) equality check.
+
+.. cpp:function:: bool operator==( const Complex<R>& alpha, const R& beta )
+
+   (complex,real) equality check.
+
+.. cpp:function:: bool operator==( const R& alpha, const Complex<R>& beta )
+
+   (real,complex) equality check.
+
+.. cpp:function:: bool operator!=( const Complex<R>& alpha, const Complex<R>& beta )
+
+   (complex,complex) inequality check.
+
+.. cpp:function:: bool operator!=( const Complex<R>& alpha, const R& beta )
+
+   (complex,real) inequality check.
+
+.. cpp:function:: bool operator!=( const R& alpha, const Complex<R>& beta )
+
+   (real,complex) inequality check.
+
+.. cpp:function:: std::ostream& operator<<( std::ostream& os, Complex<R> alpha )
+
+   Pretty prints `alpha` in the form ``a+bi``.
+
 .. cpp:type:: scomplex
 
-   ``typedef std::complex<float> scomplex;``
+   ``typedef Complex<float> scomplex;``
 
 .. cpp:type:: dcomplex
 
-   ``typedef std::complex<double> dcomplex;``
+   ``typedef Complex<double> dcomplex;``
 
 .. cpp:type:: Diagonal
 
@@ -184,7 +336,7 @@ Custom exceptions
 
    .. code-block:: cpp
 
-      throw elemental::SingularMatrixException();
+      throw elem::SingularMatrixException();
 
 .. cpp:class:: NonHPDMatrixException 
 
@@ -199,7 +351,7 @@ Custom exceptions
 
    .. code-block:: cpp
 
-      throw elemental::NonHPDMatrixException();
+      throw elem::NonHPDMatrixException();
 
 .. cpp:class:: NonHPSDMatrixException 
 
@@ -214,7 +366,7 @@ Custom exceptions
 
    .. code-block:: cpp
 
-      throw elemental::NonHPSDMatrixException();
+      throw elem::NonHPSDMatrixException();
 
 Call stack manipulation
 -----------------------
@@ -251,6 +403,6 @@ Default process grid
    .. code-block:: cpp
 
       // Build a 10 x 10 distributed matrix over mpi::COMM_WORLD
-      elemental::DistMatrix<T,MC,MR> A( 10, 10 );
+      elem::DistMatrix<T,MC,MR> A( 10, 10 );
 
 

@@ -1,12 +1,12 @@
 /*
    Modification of include/elemental/basic/level3/Trsm/TrsmLLN.hpp 
    from Elemental.
-   Copyright (c) 2009-2011, Jack Poulson
+   Copyright (c) 2009-2012, Jack Poulson
    All rights reserved.
 
    Clique: a scalable implementation of the multifrontal algorithm
 
-   Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
+   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
    The University of Texas at Austin
  
    This program is free software: you can redistribute it and/or modify
@@ -25,7 +25,7 @@
 #include "clique.hpp"
 
 namespace {
-using namespace elemental;
+using namespace elem;
 
 template<typename F>
 void ForwardMany
@@ -34,7 +34,7 @@ void ForwardMany
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
     {
-        clique::numeric::LocalFrontLowerForwardSolve
+        cliq::numeric::LocalFrontLowerForwardSolve
         ( diag, L.LockedLocalMatrix(), X.LocalMatrix() );
         return;
     }
@@ -203,7 +203,7 @@ void ForwardSingle
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
     {
-        clique::numeric::LocalFrontLowerForwardSolve
+        cliq::numeric::LocalFrontLowerForwardSolve
         ( diag, L.LockedLocalMatrix(), X.LocalMatrix() );
         return;
     }
@@ -375,13 +375,15 @@ void BackwardSingle
 
 } // anonymous namespace
 
+namespace cliq {
+
 template<typename F>
-void clique::numeric::DistFrontLowerForwardSolve
+void numeric::DistFrontLowerForwardSolve
 ( Diagonal diag, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
   bool singleL11AllGather )
 {
 #ifndef RELEASE
-    clique::PushCallStack("numeric::DistFrontLowerForwardSolve");
+    PushCallStack("numeric::DistFrontLowerForwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -406,13 +408,13 @@ void clique::numeric::DistFrontLowerForwardSolve
 }
 
 template<typename F>
-void clique::numeric::DistFrontLowerBackwardSolve
+void numeric::DistFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag, 
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
   bool singleL11AllGather )
 {
 #ifndef RELEASE
-    clique::PushCallStack("numeric::DistFrontLowerBackwardSolve");
+    PushCallStack("numeric::DistFrontLowerBackwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -442,13 +444,13 @@ void clique::numeric::DistFrontLowerBackwardSolve
 
     DistMatrix<F,VC,STAR> LT(g),
                           LB(g);
-    elemental::LockedPartitionDown
+    elem::LockedPartitionDown
     ( L, LT,
          LB, L.Width() );
 
     DistMatrix<F,VC,STAR> XT(g),
                           XB(g);
-    elemental::PartitionDown
+    elem::PartitionDown
     ( X, XT,
          XB, L.Width() );
 
@@ -457,7 +459,7 @@ void clique::numeric::DistFrontLowerBackwardSolve
         // Subtract off the parent updates
         DistMatrix<F,STAR,STAR> Z(XT.Height(),XT.Width(),g);
         Z.ResizeTo( XT.Height(), XT.Width() );
-        elemental::internal::LocalGemm
+        elem::internal::LocalGemm
         ( orientation, NORMAL, (F)-1, LB, XB, (F)0, Z );
         XT.SumScatterUpdate( (F)1, Z );
     }
@@ -467,50 +469,52 @@ void clique::numeric::DistFrontLowerBackwardSolve
     else
         BackwardMany( orientation, diag, LT, XT );
 #ifndef RELEASE
-    clique::PopCallStack();
+    PopCallStack();
 #endif
 }
 
-template void clique::numeric::DistFrontLowerForwardSolve
+} // namespace cliq
+
+template void cliq::numeric::DistFrontLowerForwardSolve
 ( Diagonal diag, 
   const DistMatrix<float,VC,STAR>& L,
         DistMatrix<float,VC,STAR>& X,
         bool singleL11AllGather );
-template void clique::numeric::DistFrontLowerBackwardSolve
+template void cliq::numeric::DistFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const DistMatrix<float,VC,STAR>& L,
         DistMatrix<float,VC,STAR>& X,
         bool singleL11AllGather );
 
-template void clique::numeric::DistFrontLowerForwardSolve
+template void cliq::numeric::DistFrontLowerForwardSolve
 ( Diagonal diag,
   const DistMatrix<double,VC,STAR>& L, 
         DistMatrix<double,VC,STAR>& X,
         bool singleL11AllGather );
-template void clique::numeric::DistFrontLowerBackwardSolve
+template void cliq::numeric::DistFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const DistMatrix<double,VC,STAR>& L,
         DistMatrix<double,VC,STAR>& X,
         bool singleL11AllGather );
 
-template void clique::numeric::DistFrontLowerForwardSolve
+template void cliq::numeric::DistFrontLowerForwardSolve
 ( Diagonal diag,
-  const DistMatrix<std::complex<float>,VC,STAR>& L, 
-        DistMatrix<std::complex<float>,VC,STAR>& X,
+  const DistMatrix<Complex<float>,VC,STAR>& L, 
+        DistMatrix<Complex<float>,VC,STAR>& X,
         bool singleL11AllGather );
-template void clique::numeric::DistFrontLowerBackwardSolve
+template void cliq::numeric::DistFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
-  const DistMatrix<std::complex<float>,VC,STAR>& L, 
-        DistMatrix<std::complex<float>,VC,STAR>& X,
+  const DistMatrix<Complex<float>,VC,STAR>& L, 
+        DistMatrix<Complex<float>,VC,STAR>& X,
         bool singleL11AllGather );
 
-template void clique::numeric::DistFrontLowerForwardSolve
+template void cliq::numeric::DistFrontLowerForwardSolve
 ( Diagonal diag,
-  const DistMatrix<std::complex<double>,VC,STAR>& L, 
-        DistMatrix<std::complex<double>,VC,STAR>& X,
+  const DistMatrix<Complex<double>,VC,STAR>& L, 
+        DistMatrix<Complex<double>,VC,STAR>& X,
         bool singleL11AllGather );
-template void clique::numeric::DistFrontLowerBackwardSolve
+template void cliq::numeric::DistFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
-  const DistMatrix<std::complex<double>,VC,STAR>& L,
-        DistMatrix<std::complex<double>,VC,STAR>& X,
+  const DistMatrix<Complex<double>,VC,STAR>& L,
+        DistMatrix<Complex<double>,VC,STAR>& X,
         bool singleL11AllGather );

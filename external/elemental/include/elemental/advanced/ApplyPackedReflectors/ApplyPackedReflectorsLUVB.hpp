@@ -31,7 +31,7 @@
    POSSIBILITY OF SUCH DAMAGE.
 */
 
-namespace elemental {
+namespace elem {
 
 template<typename R>
 inline void
@@ -156,9 +156,9 @@ template<typename R>
 void
 internal::ApplyPackedReflectorsLUVB
 ( Conjugation conjugation, int offset, 
-  const DistMatrix<std::complex<R>,MC,MR  >& H,
-  const DistMatrix<std::complex<R>,MD,STAR>& t,
-        DistMatrix<std::complex<R>,MC,MR  >& A )
+  const DistMatrix<Complex<R>,MC,MR  >& H,
+  const DistMatrix<Complex<R>,MD,STAR>& t,
+        DistMatrix<Complex<R>,MC,MR  >& A )
 {
 #ifndef RELEASE
     PushCallStack("internal::ApplyPackedReflectorsLUVB");
@@ -177,7 +177,7 @@ internal::ApplyPackedReflectorsLUVB
     if( !t.AlignedWithDiagonal( H, offset ) )
         throw std::logic_error("t must be aligned with H's 'offset' diagonal");
 #endif
-    typedef std::complex<R> C;
+    typedef Complex<R> C;
     const Grid& g = H.Grid();
 
     // Matrix views    
@@ -298,4 +298,4 @@ internal::ApplyPackedReflectorsLUVB
 #endif
 }
 
-} // namespace elemental
+} // namespace elem

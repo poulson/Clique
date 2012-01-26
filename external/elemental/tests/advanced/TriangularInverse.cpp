@@ -33,7 +33,7 @@
 #include <ctime>
 #include "elemental.hpp"
 using namespace std;
-using namespace elemental;
+using namespace elem;
 
 void Usage()
 {
@@ -188,7 +188,7 @@ main( int argc, char* argv[] )
                  << "Testing with double-precision complex:\n"
                  << "--------------------------------------" << endl;
         }
-        TestTriangularInverse<dcomplex>
+        TestTriangularInverse<Complex<double> >
         ( testCorrectness, printMatrices, uplo, diagonal, m, g );
     }
     catch( exception& e )

@@ -1,7 +1,7 @@
 /*
    Clique: a scalable implementation of the multifrontal algorithm
 
-   Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
+   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
    The University of Texas at Austin
  
    This program is free software: you can redistribute it and/or modify
@@ -20,12 +20,12 @@
 #include "clique.hpp"
 
 namespace {
-using namespace elemental;
-template<typename F> // represents a real or complex ring
+using namespace elem;
+template<typename F>
 void ModifyForTrmm( DistMatrix<F,STAR,STAR>& D, Diagonal diag, int diagOffset )
 {
 #ifndef RELEASE
-    PushCallStack("ModifyForTrmm");
+    cliq::PushCallStack("ModifyForTrmm");
 #endif
     const int height = D.Height();
     for( int j=0; j<height; ++j )
@@ -36,18 +36,20 @@ void ModifyForTrmm( DistMatrix<F,STAR,STAR>& D, Diagonal diag, int diagOffset )
             D.SetLocalEntry( j-diagOffset, j, (F)1 );
     }
 #ifndef RELEASE
-    PopCallStack();
+    cliq::PopCallStack();
 #endif
 }
 } // anonymous namespace
 
+namespace cliq {
+
 template<typename F>
-void clique::numeric::DistFrontLowerMultiplyNormal
+void numeric::DistFrontLowerMultiplyNormal
 ( Diagonal diag, int diagOffset,
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    clique::PushCallStack("numeric::DistFrontLowerMultiplyNormal");
+    PushCallStack("numeric::DistFrontLowerMultiplyNormal");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -81,21 +83,21 @@ void clique::numeric::DistFrontLowerMultiplyNormal
     DistMatrix<F,STAR,STAR> X1_STAR_STAR(g);
 
     // Start the algorithm
-    elemental::LockedPartitionDownDiagonal
+    elem::LockedPartitionDownDiagonal
     ( L, LTL, LTR,
          LBL, LBR, L.Width() );
-    elemental::PartitionDown
+    elem::PartitionDown
     ( X, XT,
          XB, L.Width() );
     while( XT.Height() > 0 )
     {
-        elemental::LockedRepartitionUpDiagonal
+        elem::LockedRepartitionUpDiagonal
         ( LTL, /**/ LTR,  L00, L01, /**/ L02,
                /**/       L10, L11, /**/ L12,
          /*************/ /******************/
           LBL, /**/ LBR,  L20, L21, /**/ L22 );
 
-        elemental::RepartitionUp
+        elem::RepartitionUp
         ( XT,  X0,
                X1,
          /**/ /**/
@@ -103,50 +105,50 @@ void clique::numeric::DistFrontLowerMultiplyNormal
 
         //--------------------------------------------------------------------//
         X1_STAR_STAR = X1;
-        elemental::internal::LocalGemm
+        elem::internal::LocalGemm
         ( NORMAL, NORMAL, (F)1, L21, X1_STAR_STAR, (F)1, X2 );
 
         if( diagOffset == 0 )
         {
             L11_STAR_STAR = L11;
-            elemental::internal::LocalTrmm
+            elem::internal::LocalTrmm
             ( LEFT, LOWER, NORMAL, diag, (F)1, L11_STAR_STAR, X1_STAR_STAR );
         }
         else
         {
             L11_STAR_STAR = L11;
             ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
-            elemental::internal::LocalTrmm
+            elem::internal::LocalTrmm
             ( LEFT, LOWER, NORMAL, NON_UNIT, 
               (F)1, L11_STAR_STAR, X1_STAR_STAR );
         }
         X1 = X1_STAR_STAR;
         //--------------------------------------------------------------------//
 
-        elemental::SlideLockedPartitionUpDiagonal
+        elem::SlideLockedPartitionUpDiagonal
         ( LTL, /**/ LTR,  L00, /**/ L01, L02,
          /*************/ /******************/
                /**/       L10, /**/ L11, L12,
           LBL, /**/ LBR,  L20, /**/ L21, L22 );
 
-        elemental::SlidePartitionUp
+        elem::SlidePartitionUp
         ( XT,  X0,
          /**/ /**/
                X1,
           XB,  X2 );
     }
 #ifndef RELEASE
-    clique::PopCallStack();
+    PopCallStack();
 #endif
 }
 
 template<typename F>
-void clique::numeric::DistFrontLowerMultiplyTranspose
+void numeric::DistFrontLowerMultiplyTranspose
 ( Orientation orientation, Diagonal diag, int diagOffset,
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    clique::PushCallStack("numeric::DistFrontLowerMultiplyTranspose");
+    PushCallStack("numeric::DistFrontLowerMultiplyTranspose");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -207,21 +209,21 @@ void clique::numeric::DistFrontLowerMultiplyTranspose
         L11_STAR_STAR = L11;
         if( diagOffset == 0 )
         {
-            elemental::internal::LocalTrmm
+            elem::internal::LocalTrmm
             ( LEFT, LOWER, orientation, diag, 
               (F)1, L11_STAR_STAR, X1_STAR_STAR );
         }
         else
         {
             ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
-            elemental::internal::LocalTrmm
+            elem::internal::LocalTrmm
             ( LEFT, LOWER, orientation, NON_UNIT, 
               (F)1, L11_STAR_STAR, X1_STAR_STAR );
         }
         X1 = X1_STAR_STAR;
 
         Z1_STAR_STAR.ResizeTo( X1.Height(), X1.Width() );
-        elemental::internal::LocalGemm
+        elem::internal::LocalGemm
         ( orientation, NORMAL, (F)1, L21, X2, (F)0, Z1_STAR_STAR );
         X1.SumScatterUpdate( (F)1, Z1_STAR_STAR );
         //--------------------------------------------------------------------//
@@ -239,42 +241,44 @@ void clique::numeric::DistFrontLowerMultiplyTranspose
           XB,  X2 );
     }
 #ifndef RELEASE
-    clique::PopCallStack();
+    PopCallStack();
 #endif
 }
 
-template void clique::numeric::DistFrontLowerMultiplyNormal
+} // namespace cliq
+
+template void cliq::numeric::DistFrontLowerMultiplyNormal
 ( Diagonal diag, int diagOffset, 
   const DistMatrix<float,VC,STAR>& L,
         DistMatrix<float,VC,STAR>& X );
-template void clique::numeric::DistFrontLowerMultiplyTranspose
+template void cliq::numeric::DistFrontLowerMultiplyTranspose
 ( Orientation orientation, Diagonal diag, int diagOffset,
   const DistMatrix<float,VC,STAR>& L,
         DistMatrix<float,VC,STAR>& X );
 
-template void clique::numeric::DistFrontLowerMultiplyNormal
+template void cliq::numeric::DistFrontLowerMultiplyNormal
 ( Diagonal diag, int diagOffset, 
   const DistMatrix<double,VC,STAR>& L, 
         DistMatrix<double,VC,STAR>& X );
-template void clique::numeric::DistFrontLowerMultiplyTranspose
+template void cliq::numeric::DistFrontLowerMultiplyTranspose
 ( Orientation orientation, Diagonal diag, int diagOffset,
   const DistMatrix<double,VC,STAR>& L,
         DistMatrix<double,VC,STAR>& X );
 
-template void clique::numeric::DistFrontLowerMultiplyNormal
+template void cliq::numeric::DistFrontLowerMultiplyNormal
 ( Diagonal diag, int diagOffset, 
-  const DistMatrix<std::complex<float>,VC,STAR>& L, 
-        DistMatrix<std::complex<float>,VC,STAR>& X );
-template void clique::numeric::DistFrontLowerMultiplyTranspose
+  const DistMatrix<Complex<float>,VC,STAR>& L, 
+        DistMatrix<Complex<float>,VC,STAR>& X );
+template void cliq::numeric::DistFrontLowerMultiplyTranspose
 ( Orientation orientation, Diagonal diag, int diagOffset, 
-  const DistMatrix<std::complex<float>,VC,STAR>& L, 
-        DistMatrix<std::complex<float>,VC,STAR>& X );
+  const DistMatrix<Complex<float>,VC,STAR>& L, 
+        DistMatrix<Complex<float>,VC,STAR>& X );
 
-template void clique::numeric::DistFrontLowerMultiplyNormal
+template void cliq::numeric::DistFrontLowerMultiplyNormal
 ( Diagonal diag, int diagOffset, 
-  const DistMatrix<std::complex<double>,VC,STAR>& L, 
-        DistMatrix<std::complex<double>,VC,STAR>& X );
-template void clique::numeric::DistFrontLowerMultiplyTranspose
+  const DistMatrix<Complex<double>,VC,STAR>& L, 
+        DistMatrix<Complex<double>,VC,STAR>& X );
+template void cliq::numeric::DistFrontLowerMultiplyTranspose
 ( Orientation orientation, Diagonal diag, int diagOffset, 
-  const DistMatrix<std::complex<double>,VC,STAR>& L,
-        DistMatrix<std::complex<double>,VC,STAR>& X );
+  const DistMatrix<Complex<double>,VC,STAR>& L,
+        DistMatrix<Complex<double>,VC,STAR>& X );

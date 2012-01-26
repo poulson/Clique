@@ -19,14 +19,16 @@
 */
 #include "clique.hpp"
 
-template<typename F> // F represents a real or complex field
-void clique::numeric::DistLowerForwardSolve
+namespace cliq {
+
+template<typename F> 
+void numeric::DistLowerForwardSolve
 ( Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L, 
         Matrix<F>& localX )
 {
-    using namespace clique::symbolic;
+    using namespace symbolic;
 #ifndef RELEASE
     PushCallStack("numeric::DistLowerForwardSolve");
 #endif
@@ -71,7 +73,7 @@ void clique::numeric::DistLowerForwardSolve
         W.SetGrid( grid );
         W.ResizeTo( front.front1dL.Height(), width );
         DistMatrix<F,VC,STAR> WT(grid), WB(grid);
-        elemental::PartitionDown
+        elem::PartitionDown
         ( W, WT,
              WB, sn.size );
 
@@ -195,14 +197,14 @@ void clique::numeric::DistLowerForwardSolve
 #endif
 }
 
-template<typename F> // F represents a real or complex field
-void clique::numeric::DistLowerBackwardSolve
+template<typename F>
+void numeric::DistLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX )
 {
-    using namespace clique::symbolic;
+    using namespace symbolic;
 #ifndef RELEASE
     PushCallStack("numeric::DistLowerBackwardSolve");
 #endif
@@ -253,7 +255,7 @@ void clique::numeric::DistLowerBackwardSolve
         W.SetGrid( grid );
         W.ResizeTo( front.front1dL.Height(), width );
         DistMatrix<F,VC,STAR> WT(grid), WB(grid);
-        elemental::PartitionDown
+        elem::PartitionDown
         ( W, WT,
              WB, sn.size );
 
@@ -377,46 +379,48 @@ void clique::numeric::DistLowerBackwardSolve
 #endif
 }
 
-template void clique::numeric::DistLowerForwardSolve
+} // namespace cliq
+
+template void cliq::numeric::DistLowerForwardSolve
 ( Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<float>& L,
         Matrix<float>& localX );
-template void clique::numeric::DistLowerBackwardSolve
+template void cliq::numeric::DistLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<float>& L,
         Matrix<float>& localX );
 
-template void clique::numeric::DistLowerForwardSolve
+template void cliq::numeric::DistLowerForwardSolve
 ( Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<double>& L,
         Matrix<double>& localX );
-template void clique::numeric::DistLowerBackwardSolve
+template void cliq::numeric::DistLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<double>& L,
         Matrix<double>& localX );
 
-template void clique::numeric::DistLowerForwardSolve
+template void cliq::numeric::DistLowerForwardSolve
 ( Diagonal diag,
   const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<std::complex<float> >& L,
-        Matrix<std::complex<float> >& localX );
-template void clique::numeric::DistLowerBackwardSolve
+  const numeric::SymmFrontTree<Complex<float> >& L,
+        Matrix<Complex<float> >& localX );
+template void cliq::numeric::DistLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<std::complex<float> >& L,
-        Matrix<std::complex<float> >& localX );
+  const numeric::SymmFrontTree<Complex<float> >& L,
+        Matrix<Complex<float> >& localX );
 
-template void clique::numeric::DistLowerForwardSolve
+template void cliq::numeric::DistLowerForwardSolve
 ( Diagonal diag,
   const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<std::complex<double> >& L,
-        Matrix<std::complex<double> >& localX );
-template void clique::numeric::DistLowerBackwardSolve
+  const numeric::SymmFrontTree<Complex<double> >& L,
+        Matrix<Complex<double> >& localX );
+template void cliq::numeric::DistLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<std::complex<double> >& L,
-        Matrix<std::complex<double> >& localX );
+  const numeric::SymmFrontTree<Complex<double> >& L,
+        Matrix<Complex<double> >& localX );

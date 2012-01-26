@@ -52,6 +52,10 @@
 
 #include "elemental/config.h"
 
+#ifdef HAVE_F90_INTERFACE
+# include "elemental/FCMangle.h"
+#endif
+
 // If defined, the _OPENMP macro contains the date of the specification
 #ifdef _OPENMP
 # include <omp.h>
@@ -62,79 +66,45 @@
 # endif 
 #endif
 
+namespace elem {
 
-namespace elemental {
+// Forward declarations
+class Grid;
+template<typename Z> struct Complex;
 
-#ifndef RELEASE
-void PushCallStack( std::string s );
-void PopCallStack();
-void DumpCallStack();
-#endif // ifndef RELEASE
-
-// For extracting the underlying real datatype, 
-// e.g., typename RealBase<Scalar>::type a = 3.0;
-template<typename R>
-struct RealBase
-{ typedef R type; };
-
-template<typename R>
-struct RealBase<std::complex<R> >
-{ typedef R type; };
-
-template<typename R>
-struct IsComplex
-{ enum { val=0 }; };
-
-template<typename R>
-struct IsComplex<std::complex<R> >
-{ enum { val=1 }; };
-
-} // namespace elemental
-
-#include "elemental/core/types.hpp"
-#include "elemental/core/utilities.hpp"
-
-#include "elemental/imports.hpp"
-
-#include "elemental/core/memory.hpp"
-#include "elemental/core/grid.hpp"
-#include "elemental/core/random.hpp"
-#include "elemental/core/timer.hpp"
-
-namespace elemental {
-
+// For initializing and finalizing Elemental
 void Initialize( int& argc, char**& argv );
 void Finalize();
 bool Initialized();
-// Elemental can be finalized more than once, so there is no need
-// to query for whether or not it has been finalized already.
 
-// Naive blocksize set and get
+// Return a grid constructed using mpi::COMM_WORLD.
+const Grid& DefaultGrid();
+
+// For getting and setting the algorithmic blocksize
 int Blocksize();
 void SetBlocksize( int blocksize );
 
+// For manipulating the algorithmic blocksize as a stack
 void PushBlocksizeStack( int blocksize );
 void PopBlocksizeStack();
 
-const Grid& DefaultGrid();
+// Euclidean (l_2) magnitudes
+template<typename R>
+R Abs( R alpha );
+template<typename R>
+R Abs( Complex<R> alpha );
 
-template<typename Z>
-Z Abs( Z alpha );
-
-template<typename Z>
-Z Abs( std::complex<Z> alpha );
-
+// Square-root free (l_1) magnitudes
 template<typename Z>
 Z FastAbs( Z alpha );
-
 template<typename Z>
-Z FastAbs( std::complex<Z> alpha );
+Z FastAbs( Complex<Z> alpha );
 
+// Conjugation
 template<typename Z>
 Z Conj( Z alpha );
-
 template<typename Z>
-std::complex<Z> Conj( std::complex<Z> alpha );
+Complex<Z> Conj( Complex<Z> alpha );
 
 // An exception which signifies that a matrix was unexpectedly singular.
 class SingularMatrixException : public std::runtime_error 
@@ -160,6 +130,26 @@ public:
     : std::runtime_error( msg ) { }
 };
 
+#ifndef RELEASE
+void PushCallStack( std::string s );
+void PopCallStack();
+void DumpCallStack();
+#endif // ifndef RELEASE
+
+// For extracting the underlying real datatype, 
+// e.g., typename Base<Scalar>::type a = 3.0;
+template<typename Z>
+struct Base { typedef Z type; };
+template<typename Z>
+struct Base<Complex<Z> > { typedef Z type; };
+
+// For querying whether or not a scalar is complex,
+// e.g., IsComplex<Scalar>::val
+template<typename Z>
+struct IsComplex { enum { val=0 }; };
+template<typename Z>
+struct IsComplex<Complex<Z> > { enum { val=1 }; };
+
 // We define an output stream that does nothing. This is done so that the 
 // root process can be used to print data to a file's ostream while all other 
 // processes use a null ostream. This is used within the DistMatrix class's
@@ -176,92 +166,42 @@ struct NullStream : std::ostream
     { }
 };
 
-// Create a wrappers around real and std::complex<real> types so that they
-// can be conveniently printed in a more Matlab-compatible format.
+} // namespace elem
+
+#include "elemental/core/types.hpp"
+#include "elemental/core/utilities.hpp"
+
+#include "elemental/imports.hpp"
+
+#include "elemental/core/memory.hpp"
+#include "elemental/core/grid.hpp"
+#include "elemental/core/random.hpp"
+#include "elemental/core/timer.hpp"
+
 //
-// All printing of scalars should now be performed in the fashion:
-//     std::cout << WrapScalar(alpha);
-// where 'alpha' can be real or complex.
+// Implementation begins here
+//
+
+namespace elem {
 
 template<typename R>
-class ScalarWrapper
-{
-    const R value_;
-public:
-    ScalarWrapper( R alpha ) : value_(alpha) { }
-
-    friend std::ostream& operator<<
-    ( std::ostream& out, ScalarWrapper<R> alpha )
-    {
-        out << alpha.value_;
-        return out;
-    }
-};
-
-template<typename R>
-class ScalarWrapper<std::complex<R> >
-{
-    const std::complex<R> value_;
-public:
-    ScalarWrapper( std::complex<R> alpha ) : value_(alpha) { }
-
-    friend std::ostream& operator<<
-    ( std::ostream& os, ScalarWrapper<std::complex<R> > alpha )
-    {
-        os << std::real(alpha.value_) << "+" << std::imag(alpha.value_) << "i";
-        return os;
-    }
-};
-
-// There is a known bug in the Darwin g++ that causes an internal compiler
-// error, so, by default, this routine is subverted.
-#ifdef DISABLE_SCALAR_WRAPPER
-template<typename R>
-R WrapScalar( R alpha );
-template<typename R>
-std::complex<R> WrapScalar( std::complex<R> alpha );
-#else  // ifdef DISABLE_SCALAR_WRAPPER
-template<typename R>
-ScalarWrapper<R> WrapScalar( R alpha );
-template<typename R>
-ScalarWrapper<std::complex<R> > WrapScalar( std::complex<R> alpha );
-#endif // ifdef DISABLE_SCALAR_WRAPPER
-
-//----------------------------------------------------------------------------//
-// Implementation begins here                                                 //
-//----------------------------------------------------------------------------//
-
-#ifdef DISABLE_SCALAR_WRAPPER
-template<typename R>
-inline R
-WrapScalar( R alpha )
-{ return alpha; }
-
-template<typename R>
-inline std::complex<R>
-WrapScalar( std::complex<R> alpha )
-{ return alpha; }
-#else // ifdef DISABLE_SCALAR_WRAPPER
-template<typename R>
-inline ScalarWrapper<R>
-WrapScalar( R alpha )
-{ return ScalarWrapper<R>( alpha ); }
-
-template<typename R>
-inline ScalarWrapper<std::complex<R> >
-WrapScalar( std::complex<R> alpha )
-{ return ScalarWrapper<std::complex<R> >( alpha ); }
-#endif // ifdef DISABLE_SCALAR_WRAPPER
-
-template<typename Z>
-inline Z 
-Abs( Z alpha )
+inline R 
+Abs( R alpha )
 { return std::abs(alpha); }
 
-template<typename Z>
-inline Z
-Abs( std::complex<Z> alpha )
-{ return std::abs( alpha ); }
+template<typename R>
+inline R
+Abs( Complex<R> alpha )
+{
+    const R x=alpha.real, y=alpha.imag;
+    const R xMag=Abs(x), yMag=Abs(y);
+    const R minMag = std::min(xMag,yMag);
+    const R maxMag = std::max(xMag,yMag);
+    if( minMag == (R)0 )
+        return maxMag;
+    else
+        return maxMag*sqrt(1+(minMag/maxMag)*(minMag/maxMag));
+}
 
 template<typename Z>
 inline Z
@@ -270,21 +210,20 @@ FastAbs( Z alpha )
 
 template<typename Z>
 inline Z
-FastAbs( std::complex<Z> alpha )
-{ return std::abs( std::real(alpha) ) + std::abs( std::imag(alpha) ); }
+FastAbs( Complex<Z> alpha )
+{ return std::abs(alpha.real) + std::abs(alpha.imag); }
 
 template<typename Z>
 inline Z
-Conj
-( Z alpha )
+Conj( Z alpha )
 { return alpha; }
 
 template<typename Z>
-inline std::complex<Z>
-Conj( std::complex<Z> alpha )
-{ return std::conj( alpha ); }
+inline Complex<Z>
+Conj( Complex<Z> alpha )
+{ return Complex<Z>(alpha.real,-alpha.imag); }
 
-} // namespace elemental
+} // namespace elem
 
 #endif /* ELEMENTAL_ENVIRONMENT_HPP */
 

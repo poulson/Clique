@@ -31,7 +31,7 @@
    POSSIBILITY OF SUCH DAMAGE.
 */
 
-namespace elemental {
+namespace elem {
 
 template<typename R> 
 inline void
@@ -57,9 +57,9 @@ template<typename R>
 inline void
 internal::ApplyPackedReflectorsLLHF
 ( Conjugation conjugation, int offset, 
-  const DistMatrix<std::complex<R>,MC,MR  >& H,
-  const DistMatrix<std::complex<R>,MD,STAR>& t,
-        DistMatrix<std::complex<R>,MC,MR  >& A )
+  const DistMatrix<Complex<R>,MC,MR  >& H,
+  const DistMatrix<Complex<R>,MD,STAR>& t,
+        DistMatrix<Complex<R>,MC,MR  >& A )
 {
 #ifndef RELEASE
     PushCallStack("internal::ApplyPackedReflectorsLLHF");
@@ -74,4 +74,4 @@ internal::ApplyPackedReflectorsLLHF
 #endif
 }
 
-} // namespace elemental
+} // namespace elem

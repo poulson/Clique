@@ -1,7 +1,7 @@
 /*
    Clique: a scalable implementation of the multifrontal algorithm
 
-   Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
+   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
    The University of Texas at Austin
  
    This program is free software: you can redistribute it and/or modify
@@ -20,8 +20,8 @@
 #include "clique.hpp"
 
 namespace {
-using namespace elemental;
-template<typename F> // represents a real or complex ring
+using namespace elem;
+template<typename F> 
 void ModifyForTrmm
 ( Matrix<F>& D, Diagonal diag, int diagOffset, 
   std::vector<Matrix<F> >& diagonals )
@@ -86,12 +86,14 @@ void ReplaceAfterTrmm
 }
 } // anonymous namespace
 
+namespace cliq {
+
 template<typename F>
-void clique::numeric::LocalFrontLowerMultiplyNormal
+void numeric::LocalFrontLowerMultiplyNormal
 ( Diagonal diag, int diagOffset, const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    clique::PushCallStack("numeric::LocalFrontLowerMultiplyNormal");
+    PushCallStack("numeric::LocalFrontLowerMultiplyNormal");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
@@ -106,41 +108,41 @@ void clique::numeric::LocalFrontLowerMultiplyNormal
     Matrix<F>* LMod = const_cast<Matrix<F>*>(&L);
     Matrix<F> LT,
               LB;
-    elemental::PartitionDown
+    elem::PartitionDown
     ( *LMod, LT,
              LB, L.Width() );
 
     Matrix<F> XT, 
               XB;
-    elemental::PartitionDown
+    elem::PartitionDown
     ( X, XT,
          XB, L.Width() );
 
-    elemental::Gemm( NORMAL, NORMAL, (F)1, LB, XT, (F)1, XB );
+    elem::Gemm( NORMAL, NORMAL, (F)1, LB, XT, (F)1, XB );
 
     if( diagOffset == 0 )
     {
-        elemental::Trmm( LEFT, LOWER, NORMAL, diag, (F)1, LT, XT );
+        elem::Trmm( LEFT, LOWER, NORMAL, diag, (F)1, LT, XT );
     }
     else
     {
         std::vector<Matrix<F> > diagonals;
         ModifyForTrmm( LT, diag, diagOffset, diagonals );
-        elemental::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, (F)1, LT, XT );
+        elem::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, (F)1, LT, XT );
         ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
     }
 #ifndef RELEASE
-    clique::PopCallStack();
+    PopCallStack();
 #endif
 }
 
 template<typename F>
-void clique::numeric::LocalFrontLowerMultiplyTranspose
+void numeric::LocalFrontLowerMultiplyTranspose
 ( Orientation orientation, Diagonal diag, int diagOffset,
   const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    clique::PushCallStack("numeric::LocalFrontLowerMultiplyTranspose");
+    PushCallStack("numeric::LocalFrontLowerMultiplyTranspose");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
@@ -157,58 +159,60 @@ void clique::numeric::LocalFrontLowerMultiplyTranspose
     Matrix<F>* LMod = const_cast<Matrix<F>*>(&L);
     Matrix<F> LT,
               LB;
-    elemental::PartitionDown
+    elem::PartitionDown
     ( *LMod, LT,
              LB, L.Width() );
 
     Matrix<F> XT, 
               XB;
-    elemental::PartitionDown
+    elem::PartitionDown
     ( X, XT,
          XB, L.Width() );
 
     if( diagOffset == 0 )
     {
-        elemental::Trmm( LEFT, LOWER, orientation, diag, (F)1, LT, XT );
+        elem::Trmm( LEFT, LOWER, orientation, diag, (F)1, LT, XT );
     }
     else
     {
         std::vector<Matrix<F> > diagonals;
         ModifyForTrmm( LT, diag, diagOffset, diagonals );
-        elemental::Trmm( LEFT, LOWER, orientation, NON_UNIT, (F)1, LT, XT );
+        elem::Trmm( LEFT, LOWER, orientation, NON_UNIT, (F)1, LT, XT );
         ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
     }
 
-    elemental::Gemm( orientation, NORMAL, (F)1, LB, XB, (F)1, XT );
+    elem::Gemm( orientation, NORMAL, (F)1, LB, XB, (F)1, XT );
 #ifndef RELEASE
-    clique::PopCallStack();
+    PopCallStack();
 #endif
 }
 
-template void clique::numeric::LocalFrontLowerMultiplyNormal
+} // namespace cliq
+
+template void cliq::numeric::LocalFrontLowerMultiplyNormal
 ( Diagonal diag, int diagOffset, 
   const Matrix<float>& L, Matrix<float>& X );
-template void clique::numeric::LocalFrontLowerMultiplyTranspose
+template void cliq::numeric::LocalFrontLowerMultiplyTranspose
 ( Orientation orientation, Diagonal diag, int diagOffset, 
   const Matrix<float>& L, Matrix<float>& X );
 
-template void clique::numeric::LocalFrontLowerMultiplyNormal
+template void cliq::numeric::LocalFrontLowerMultiplyNormal
 ( Diagonal diag, int diagOffset,
   const Matrix<double>& L, Matrix<double>& X );
-template void clique::numeric::LocalFrontLowerMultiplyTranspose
+template void cliq::numeric::LocalFrontLowerMultiplyTranspose
 ( Orientation orientation, Diagonal diag, int diagOffset, 
   const Matrix<double>& L, Matrix<double>& X );
 
-template void clique::numeric::LocalFrontLowerMultiplyNormal
+template void cliq::numeric::LocalFrontLowerMultiplyNormal
 ( Diagonal diag, int diagOffset, 
-  const Matrix<std::complex<float> >& L, Matrix<std::complex<float> >& X );
-template void clique::numeric::LocalFrontLowerMultiplyTranspose
+  const Matrix<Complex<float> >& L, Matrix<Complex<float> >& X );
+template void cliq::numeric::LocalFrontLowerMultiplyTranspose
 ( Orientation orientation, Diagonal diag, int diagOffset, 
-  const Matrix<std::complex<float> >& L, Matrix<std::complex<float> >& X );
+  const Matrix<Complex<float> >& L, Matrix<Complex<float> >& X );
 
-template void clique::numeric::LocalFrontLowerMultiplyNormal
+template void cliq::numeric::LocalFrontLowerMultiplyNormal
 ( Diagonal diag, int diagOffset, 
-  const Matrix<std::complex<double> >& L, Matrix<std::complex<double> >& X );
-template void clique::numeric::LocalFrontLowerMultiplyTranspose
+  const Matrix<Complex<double> >& L, Matrix<Complex<double> >& X );
+template void cliq::numeric::LocalFrontLowerMultiplyTranspose
 ( Orientation orientation, Diagonal diag, int diagOffset, 
-  const Matrix<std::complex<double> >& L, Matrix<std::complex<double> >& X );
+  const Matrix<Complex<double> >& L, Matrix<Complex<double> >& X );

@@ -33,12 +33,14 @@
 #ifndef ELEMENTAL_TYPES_HPP
 #define ELEMENTAL_TYPES_HPP 1
 
-namespace elemental {
+#include "elemental/core/complex.hpp"
+
+namespace elem {
 
 typedef unsigned char byte;
  
-typedef std::complex<float>  scomplex; 
-typedef std::complex<double> dcomplex;
+typedef Complex<float>  scomplex; 
+typedef Complex<double> dcomplex;
 
 // For the safe computation of products. The result is given by 
 //   product = rho * exp(kappa*n)
@@ -47,7 +49,7 @@ template<typename F,typename Int=int>
 struct SafeProduct
 {
     F rho;
-    typename RealBase<F>::type kappa;
+    typename Base<F>::type kappa;
     Int n;
 
     SafeProduct( Int numEntries ) : rho(1), kappa(0), n(numEntries) { }
@@ -297,7 +299,7 @@ inline Side CharToSide( char c )
     return side;
 }
 
-} // namespace elemental
+} // namespace elem
 
 #endif /* ELEMENTAL_TYPES_HPP */
 

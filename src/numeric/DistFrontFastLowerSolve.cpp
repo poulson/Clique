@@ -1,12 +1,12 @@
 /*
    Modification of include/elemental/basic/level3/Trsm/TrsmLLN.hpp 
    from Elemental.
-   Copyright (c) 2009-2011, Jack Poulson
+   Copyright (c) 2009-2012, Jack Poulson
    All rights reserved.
 
    Clique: a scalable implementation of the multifrontal algorithm
 
-   Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
+   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
    The University of Texas at Austin
  
    This program is free software: you can redistribute it and/or modify
@@ -23,14 +23,15 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "clique.hpp"
-using namespace elemental;
+
+namespace cliq {
 
 template<typename F>
-void clique::numeric::DistFrontFastLowerForwardSolve
+void numeric::DistFrontFastLowerForwardSolve
 ( Diagonal diag, DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    clique::PushCallStack("numeric::DistFrontFastLowerForwardSolve");
+    PushCallStack("numeric::DistFrontFastLowerForwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -50,7 +51,7 @@ void clique::numeric::DistFrontFastLowerForwardSolve
     const int commSize = g.Size();
     if( commSize == 1 )
     {
-        clique::numeric::LocalFrontLowerForwardSolve
+        numeric::LocalFrontLowerForwardSolve
         ( diag, L.LockedLocalMatrix(), X.LocalMatrix() );
 #ifndef RELEASE
         PopCallStack();
@@ -91,7 +92,7 @@ void clique::numeric::DistFrontFastLowerForwardSolve
     DistMatrix<F,STAR,STAR> XT_STAR_STAR( XT );
 
     // XT := LT XT
-    elemental::internal::LocalGemm
+    elem::internal::LocalGemm
     ( NORMAL, NORMAL, (F)1, LT, XT_STAR_STAR, (F)0, XT );
 
     if( diag == UNIT )
@@ -112,7 +113,7 @@ void clique::numeric::DistFrontFastLowerForwardSolve
         XT_STAR_STAR = XT;
 
         // XB := XB - LB XT
-        elemental::internal::LocalGemm
+        elem::internal::LocalGemm
         ( NORMAL, NORMAL, (F)-1, LB, XT_STAR_STAR, (F)1, XB );
     }
 #ifndef RELEASE
@@ -121,12 +122,12 @@ void clique::numeric::DistFrontFastLowerForwardSolve
 }
 
 template<typename F>
-void clique::numeric::DistFrontFastLowerBackwardSolve
+void numeric::DistFrontFastLowerBackwardSolve
 ( Orientation orientation, Diagonal diag, 
   DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    clique::PushCallStack("numeric::DistFrontFastLowerBackwardSolve");
+    PushCallStack("numeric::DistFrontFastLowerBackwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -159,12 +160,12 @@ void clique::numeric::DistFrontFastLowerBackwardSolve
     const int snSize = L.Width();
     DistMatrix<F,VC,STAR> LT(g),
                           LB(g);
-    elemental::PartitionDown
+    elem::PartitionDown
     ( L, LT,
          LB, snSize );
     DistMatrix<F,VC,STAR> XT(g),
                           XB(g);
-    elemental::PartitionDown
+    elem::PartitionDown
     ( X, XT,
          XB, snSize );
 
@@ -172,7 +173,7 @@ void clique::numeric::DistFrontFastLowerBackwardSolve
     DistMatrix<F,STAR,STAR> Z( snSize, XT.Width(), g );
     if( XB.Height() != 0 )
     {
-        elemental::internal::LocalGemm
+        elem::internal::LocalGemm
         ( orientation, NORMAL, (F)-1, LB, XB, (F)0, Z );
         XT.SumScatterUpdate( (F)1, Z );
     }
@@ -194,8 +195,7 @@ void clique::numeric::DistFrontFastLowerBackwardSolve
     }
 
     // XT := LT^{T/H} XT
-    elemental::internal::LocalGemm
-    ( orientation, NORMAL, (F)1, LT, XT, (F)0, Z );
+    elem::internal::LocalGemm( orientation, NORMAL, (F)1, LT, XT, (F)0, Z );
     XT.SumScatterFrom( Z );
 
     if( diag == UNIT )
@@ -214,38 +214,40 @@ void clique::numeric::DistFrontFastLowerBackwardSolve
 #endif
 }
 
-template void clique::numeric::DistFrontFastLowerForwardSolve
+} // namespace cliq
+
+template void cliq::numeric::DistFrontFastLowerForwardSolve
 ( Diagonal diag, 
   DistMatrix<float,VC,STAR>& L,
   DistMatrix<float,VC,STAR>& X );
-template void clique::numeric::DistFrontFastLowerBackwardSolve
+template void cliq::numeric::DistFrontFastLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   DistMatrix<float,VC,STAR>& L,
   DistMatrix<float,VC,STAR>& X );
 
-template void clique::numeric::DistFrontFastLowerForwardSolve
+template void cliq::numeric::DistFrontFastLowerForwardSolve
 ( Diagonal diag,
   DistMatrix<double,VC,STAR>& L, 
   DistMatrix<double,VC,STAR>& X );
-template void clique::numeric::DistFrontFastLowerBackwardSolve
+template void cliq::numeric::DistFrontFastLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   DistMatrix<double,VC,STAR>& L,
   DistMatrix<double,VC,STAR>& X );
 
-template void clique::numeric::DistFrontFastLowerForwardSolve
+template void cliq::numeric::DistFrontFastLowerForwardSolve
 ( Diagonal diag,
-  DistMatrix<std::complex<float>,VC,STAR>& L, 
-  DistMatrix<std::complex<float>,VC,STAR>& X );
-template void clique::numeric::DistFrontFastLowerBackwardSolve
+  DistMatrix<Complex<float>,VC,STAR>& L, 
+  DistMatrix<Complex<float>,VC,STAR>& X );
+template void cliq::numeric::DistFrontFastLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
-  DistMatrix<std::complex<float>,VC,STAR>& L, 
-  DistMatrix<std::complex<float>,VC,STAR>& X );
+  DistMatrix<Complex<float>,VC,STAR>& L, 
+  DistMatrix<Complex<float>,VC,STAR>& X );
 
-template void clique::numeric::DistFrontFastLowerForwardSolve
+template void cliq::numeric::DistFrontFastLowerForwardSolve
 ( Diagonal diag,
-  DistMatrix<std::complex<double>,VC,STAR>& L, 
-  DistMatrix<std::complex<double>,VC,STAR>& X );
-template void clique::numeric::DistFrontFastLowerBackwardSolve
+  DistMatrix<Complex<double>,VC,STAR>& L, 
+  DistMatrix<Complex<double>,VC,STAR>& X );
+template void cliq::numeric::DistFrontFastLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
-  DistMatrix<std::complex<double>,VC,STAR>& L,
-  DistMatrix<std::complex<double>,VC,STAR>& X );
+  DistMatrix<Complex<double>,VC,STAR>& L,
+  DistMatrix<Complex<double>,VC,STAR>& X );

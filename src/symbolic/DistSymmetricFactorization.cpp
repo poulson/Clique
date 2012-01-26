@@ -1,8 +1,7 @@
 /*
    Clique: a scalable implementation of the multifrontal algorithm
 
-   Copyright (C) 2010-2011 Jack Poulson <jack.poulson@gmail.com>
-   Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
+   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
    The University of Texas at Austin
  
    This program is free software: you can redistribute it and/or modify
@@ -20,6 +19,8 @@
 */
 #include "clique.hpp"
 
+namespace cliq {
+
 // This is the part of the symbolic factorization that requires fine-grain 
 // parallelism: we assume that the upper floor(log2(commSize)) levels of the
 // tree are balanced.
@@ -30,7 +31,7 @@
 //
 // TODO: Generalize to support more than just a power-of-two number of 
 //       processes. This should be relatively straightforward.
-void clique::symbolic::DistSymmetricFactorization
+void symbolic::DistSymmetricFactorization
 ( const SymmOrig& orig, SymmFact& fact, bool storeFactRecvIndices )
 {
 #ifndef RELEASE
@@ -124,7 +125,7 @@ void clique::symbolic::DistSymmetricFactorization
 
         // Set some offset and size information for this supernode
         factSN.localSize1d = 
-            elemental::LocalLength<int>( origSN.size, teamRank, teamSize );
+            elem::LocalLength<int>( origSN.size, teamRank, teamSize );
         factSN.localOffset1d = localOffset1d;
 
         // Retrieve the child grid information
@@ -313,16 +314,16 @@ void clique::symbolic::DistSymmetricFactorization
             const int updateColAlignment = myChildSize % childGridHeight;
             const int updateRowAlignment = myChildSize % childGridWidth;
             const int updateColShift = 
-                elemental::Shift<int>
+                elem::Shift<int>
                 ( childGridRow, updateColAlignment, childGridHeight );
             const int updateRowShift = 
-                elemental::Shift<int>
+                elem::Shift<int>
                 ( childGridCol, updateRowAlignment, childGridWidth );
             const int updateLocalHeight = 
-                elemental::LocalLength<int>
+                elem::LocalLength<int>
                 ( updateSize, updateColShift, childGridHeight );
             const int updateLocalWidth = 
-                elemental::LocalLength<int>
+                elem::LocalLength<int>
                 ( updateSize, updateRowShift, childGridWidth );
             for( int jChildLocal=0; 
                      jChildLocal<updateLocalWidth; ++jChildLocal )
@@ -358,10 +359,10 @@ void clique::symbolic::DistSymmetricFactorization
         {
             const int updateAlignment = myChildSize % childTeamSize;
             const int updateShift = 
-                elemental::Shift<int>
+                elem::Shift<int>
                 ( childTeamRank, updateAlignment, childTeamSize );
             const int updateLocalHeight = 
-                elemental::LocalLength<int>
+                elem::LocalLength<int>
                 ( updateSize, updateShift, childTeamSize );
             for( int iChildLocal=0; 
                      iChildLocal<updateLocalHeight; ++iChildLocal )
@@ -456,7 +457,7 @@ void clique::symbolic::DistSymmetricFactorization
 #endif
 }
 
-void clique::symbolic::ComputeFactRecvIndices
+void symbolic::ComputeFactRecvIndices
 ( const DistSymmFactSupernode& sn, 
   const DistSymmFactSupernode& childSN )
 {
@@ -599,3 +600,4 @@ void clique::symbolic::ComputeFactRecvIndices
 #endif
 }
 
+} // namespace cliq

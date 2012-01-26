@@ -1,8 +1,7 @@
 /*
    Clique: a scalable implementation of the multifrontal algorithm
 
-   Copyright (C) 2010-2011 Jack Poulson <jack.poulson@gmail.com>
-   Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
+   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
    The University of Texas at Austin
  
    This program is free software: you can redistribute it and/or modify
@@ -21,7 +20,7 @@
 #ifndef CLIQUE_NUMERIC_DIAGONAL_SOLVE_HPP
 #define CLIQUE_NUMERIC_DIAGONAL_SOLVE_HPP 1
 
-namespace clique {
+namespace cliq {
 namespace numeric {
 
 template<typename F>
@@ -57,15 +56,14 @@ void DiagonalSolve
 #ifndef RELEASE
     PushCallStack("numeric::DiagonalSolve");
 #endif
-    clique::numeric::LocalDiagonalSolve( S, L, localX );
-    clique::numeric::DistDiagonalSolve( S, L, localX );
+    cliq::numeric::LocalDiagonalSolve( S, L, localX );
+    cliq::numeric::DistDiagonalSolve( S, L, localX );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
 } // namespace numeric
-} // namespace clique
+} // namespace cliq
 
 #endif /* CLIQUE_NUMERIC_DIAGONAL_SOLVE_HPP */
-

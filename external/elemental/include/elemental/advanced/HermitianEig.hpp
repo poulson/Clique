@@ -38,7 +38,7 @@
 // We create specialized redistribution routines for redistributing the 
 // real eigenvectors of the symmetric tridiagonal matrix at the core of our 
 // eigensolver in order to minimize the temporary memory usage.
-namespace elemental {
+namespace elem {
 
 // The targeted number of pieces to break the eigenvectors into during the
 // redistribution from the [* ,VR] distribution after PMRRR to the [MC,MR]
@@ -130,7 +130,7 @@ RealToRealInPlaceRedist
 
 inline void
 RealToComplexInPlaceRedist
-( DistMatrix<std::complex<double>,MC,MR>& paddedZ,
+( DistMatrix<Complex<double>,MC,MR>& paddedZ,
   int height,
   int width,
   int rowAlignmentOfInput,
@@ -1054,9 +1054,9 @@ HermitianEig
 inline void
 HermitianEig
 ( UpperOrLower uplo, 
-  DistMatrix<std::complex<double>,MC,  MR>& A,
-  DistMatrix<             double, VR,STAR>& w,
-  DistMatrix<std::complex<double>,MC,  MR>& paddedZ )
+  DistMatrix<Complex<double>,MC,  MR>& A,
+  DistMatrix<        double, VR,STAR>& w,
+  DistMatrix<Complex<double>,MC,  MR>& paddedZ )
 {
 #ifndef RELEASE
     PushCallStack("HermitianEig");
@@ -1125,7 +1125,7 @@ HermitianEig
     }
 
     // Tridiagonalize A
-    DistMatrix<std::complex<double>,STAR,STAR> t(g);
+    DistMatrix<Complex<double>,STAR,STAR> t(g);
     HermitianTridiag( uplo, A, t );
 
     // Grab copies of the diagonal and subdiagonal of A
@@ -1174,7 +1174,7 @@ HermitianEig
         const int redistBlocksize = numPanelsPerComm*p;
 
         PushBlocksizeStack( redistBlocksize );
-        DistMatrix<std::complex<double>,MC,MR> 
+        DistMatrix<Complex<double>,MC,MR> 
             paddedZL(g), paddedZR(g),
             paddedZ0(g), paddedZ1(g), paddedZ2(g); 
         PartitionRight( paddedZ, paddedZL, paddedZR, 0 );
@@ -1235,9 +1235,9 @@ HermitianEig
 inline void
 HermitianEig
 ( UpperOrLower uplo, 
-  DistMatrix<std::complex<double>,MC,  MR>& A,
-  DistMatrix<             double, VR,STAR>& w,
-  DistMatrix<std::complex<double>,MC,  MR>& paddedZ,
+  DistMatrix<Complex<double>,MC,  MR>& A,
+  DistMatrix<        double, VR,STAR>& w,
+  DistMatrix<Complex<double>,MC,  MR>& paddedZ,
   int lowerBound, int upperBound )
 {
 #ifndef RELEASE
@@ -1307,7 +1307,7 @@ HermitianEig
     }
 
     // Tridiagonalize A
-    DistMatrix<std::complex<double>,STAR,STAR> t(g);
+    DistMatrix<Complex<double>,STAR,STAR> t(g);
     HermitianTridiag( uplo, A, t );
 
     // Grab copies of the diagonal and subdiagonal of A
@@ -1357,7 +1357,7 @@ HermitianEig
         const int redistBlocksize = numPanelsPerComm*p;
 
         PushBlocksizeStack( redistBlocksize );
-        DistMatrix<std::complex<double>,MC,MR> 
+        DistMatrix<Complex<double>,MC,MR> 
             paddedZL(g), paddedZR(g),
             paddedZ0(g), paddedZ1(g), paddedZ2(g);
         PartitionRight( paddedZ, paddedZL, paddedZR, 0 );
@@ -1416,9 +1416,9 @@ HermitianEig
 inline void
 HermitianEig
 ( UpperOrLower uplo, 
-  DistMatrix<std::complex<double>,MC,  MR>& A,
-  DistMatrix<             double, VR,STAR>& w,
-  DistMatrix<std::complex<double>,MC,  MR>& paddedZ,
+  DistMatrix<Complex<double>,MC,  MR>& A,
+  DistMatrix<        double, VR,STAR>& w,
+  DistMatrix<Complex<double>,MC,  MR>& paddedZ,
   double lowerBound, double upperBound )
 {
 #ifndef RELEASE
@@ -1483,7 +1483,7 @@ HermitianEig
     }
 
     // Tridiagonalize A
-    DistMatrix<std::complex<double>,STAR,STAR> t(g);
+    DistMatrix<Complex<double>,STAR,STAR> t(g);
     HermitianTridiag( uplo, A, t );
 
     // Grab copies of the diagonal and subdiagonal of A
@@ -1549,7 +1549,7 @@ HermitianEig
         const int redistBlocksize = numPanelsPerComm*p;
 
         PushBlocksizeStack( redistBlocksize );
-        DistMatrix<std::complex<double>,MC,MR> 
+        DistMatrix<Complex<double>,MC,MR> 
             paddedZL(g), paddedZR(g),
             paddedZ0(g), paddedZ1(g), paddedZ2(g);
         PartitionRight( paddedZ, paddedZL, paddedZR, 0 );
@@ -1607,8 +1607,8 @@ HermitianEig
 inline void
 HermitianEig
 ( UpperOrLower uplo, 
-  DistMatrix<std::complex<double>,MC,  MR>& A,
-  DistMatrix<             double, VR,STAR>& w )
+  DistMatrix<Complex<double>,MC,  MR>& A,
+  DistMatrix<        double, VR,STAR>& w )
 {
 #ifndef RELEASE
     PushCallStack("HermitianEig");
@@ -1657,7 +1657,7 @@ HermitianEig
     }
 
     // Tridiagonalize A
-    DistMatrix<std::complex<double>,STAR,STAR> t(g);
+    DistMatrix<Complex<double>,STAR,STAR> t(g);
     HermitianTridiag( uplo, A, t );
 
     // Grab copies of the diagonal and subdiagonal of A
@@ -1703,8 +1703,8 @@ HermitianEig
 inline void
 HermitianEig
 ( UpperOrLower uplo, 
-  DistMatrix<std::complex<double>,MC,  MR>& A,
-  DistMatrix<             double, VR,STAR>& w,
+  DistMatrix<Complex<double>,MC,  MR>& A,
+  DistMatrix<        double, VR,STAR>& w,
   int lowerBound, int upperBound )
 {
 #ifndef RELEASE
@@ -1754,7 +1754,7 @@ HermitianEig
     }
 
     // Tridiagonalize A
-    DistMatrix<std::complex<double>,STAR,STAR> t(g);
+    DistMatrix<Complex<double>,STAR,STAR> t(g);
     HermitianTridiag( uplo, A, t );
 
     // Grab copies of the diagonal and subdiagonal of A
@@ -1798,8 +1798,8 @@ HermitianEig
 inline void
 HermitianEig
 ( UpperOrLower uplo, 
-  DistMatrix<std::complex<double>,MC,  MR>& A,
-  DistMatrix<             double, VR,STAR>& w,
+  DistMatrix<Complex<double>,MC,  MR>& A,
+  DistMatrix<        double, VR,STAR>& w,
   double lowerBound, double upperBound )
 {
 #ifndef RELEASE
@@ -1847,7 +1847,7 @@ HermitianEig
     }
 
     // Tridiagonalize A
-    DistMatrix<std::complex<double>,STAR,STAR> t(g);
+    DistMatrix<Complex<double>,STAR,STAR> t(g);
     HermitianTridiag( uplo, A, t );
 
     // Grab copies of the diagonal and subdiagonal of A
@@ -1888,6 +1888,6 @@ HermitianEig
 
 #undef TARGET_CHUNKS
 
-} // namespace elemental
+} // namespace elem
 
 #endif // WITHOUT_PMRRR

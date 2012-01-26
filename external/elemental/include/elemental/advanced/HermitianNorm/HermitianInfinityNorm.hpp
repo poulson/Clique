@@ -31,19 +31,20 @@
    POSSIBILITY OF SUCH DAMAGE.
 */
 
-namespace elemental {
+namespace elem {
 
 // The operator L1 and Linf norms for Hermitian matrices are identical. The 
 // former is the maximum column L1 norm and the latter is the maximum row L1 
 // norm. Hermiticity implies their equivalence.
 
-template<typename R>
-inline R
-internal::HermitianInfinityNorm( UpperOrLower uplo, const Matrix<R>& A )
+template<typename F>
+inline typename Base<F>::type
+internal::HermitianInfinityNorm( UpperOrLower uplo, const Matrix<F>& A )
 {
 #ifndef RELEASE
     PushCallStack("internal::HermitianInfinityNorm");
 #endif
+    typedef typename Base<F>::type R;
     R maxRowSum = internal::HermitianOneNorm( uplo, A );
 #ifndef RELEASE
     PopCallStack();
@@ -51,14 +52,15 @@ internal::HermitianInfinityNorm( UpperOrLower uplo, const Matrix<R>& A )
     return maxRowSum;
 }
 
-template<typename R> 
-inline R
+template<typename F>
+inline typename Base<F>::type
 internal::HermitianInfinityNorm
-( UpperOrLower uplo, const Matrix<std::complex<R> >& A )
+( UpperOrLower uplo, const DistMatrix<F,MC,MR>& A )
 {
 #ifndef RELEASE
     PushCallStack("internal::HermitianInfinityNorm");
 #endif
+    typedef typename Base<F>::type R;
     R maxRowSum = internal::HermitianOneNorm( uplo, A );
 #ifndef RELEASE
     PopCallStack();
@@ -66,34 +68,4 @@ internal::HermitianInfinityNorm
     return maxRowSum;
 }
 
-template<typename R>
-inline R
-internal::HermitianInfinityNorm
-( UpperOrLower uplo, const DistMatrix<R,MC,MR>& A )
-{
-#ifndef RELEASE
-    PushCallStack("internal::HermitianInfinityNorm");
-#endif
-    R maxRowSum = internal::HermitianOneNorm( uplo, A );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return maxRowSum;
-}
-
-template<typename R>
-inline R
-internal::HermitianInfinityNorm
-( UpperOrLower uplo, const DistMatrix<std::complex<R>,MC,MR>& A )
-{
-#ifndef RELEASE
-    PushCallStack("internal::HermitianInfinityNorm");
-#endif
-    R maxRowSum = internal::HermitianOneNorm( uplo, A );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return maxRowSum;
-}
-
-} // namespace elemental
+} // namespace elem

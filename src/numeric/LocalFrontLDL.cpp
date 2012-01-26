@@ -1,11 +1,11 @@
 /*
    Modification of include/elemental/advanced/LDL.hpp from Elemental.
-   Copyright (c) 2009-2011, Jack Poulson
+   Copyright (c) 2009-2012, Jack Poulson
    All rights reserved.
 
    Clique: a scalable implementation of the multifrontal algorithm
 
-   Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
+   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
    The University of Texas at Austin
  
    This program is free software: you can redistribute it and/or modify
@@ -23,12 +23,14 @@
 */
 #include "clique.hpp"
 
-template<typename F> // F represents a real or complex field
-void clique::numeric::LocalFrontLDL
+namespace cliq {
+
+template<typename F> 
+void numeric::LocalFrontLDL
 ( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR )
 {
 #ifndef RELEASE
-    clique::PushCallStack("numeric::LocalFrontLDL");
+    PushCallStack("numeric::LocalFrontLDL");
     if( ABR.Height() != ABR.Width() )
         throw std::logic_error("ABR must be square");
     if( AL.Height() != AL.Width() + ABR.Width() )
@@ -49,12 +51,12 @@ void clique::numeric::LocalFrontLDL
               AL21B;
 
     // Start the algorithm
-    elemental::PartitionDownDiagonal
+    elem::PartitionDownDiagonal
     ( AL, ALTL, ALTR,
           ALBL, ALBR, 0 );
     while( ALTL.Width() < AL.Width() )
     {
-        elemental::RepartitionDownDiagonal
+        elem::RepartitionDownDiagonal
         ( ALTL, /**/ ALTR,  AL00, /**/ AL01, AL02,
          /***************/ /*********************/
                 /**/        AL10, /**/ AL11, AL12,
@@ -63,47 +65,49 @@ void clique::numeric::LocalFrontLDL
         //--------------------------------------------------------------------//
         // This routine is unblocked, hence the need for us to generalize to 
         // an (ideally) faster blocked algorithm.
-        elemental::internal::LDLVar3( orientation, AL11, d1 );
+        elem::internal::LDLVar3( orientation, AL11, d1 );
 
-        elemental::Trsm( RIGHT, LOWER, orientation, UNIT, (F)1, AL11, AL21 );
+        elem::Trsm( RIGHT, LOWER, orientation, UNIT, (F)1, AL11, AL21 );
 
         S21 = AL21;
-        elemental::DiagonalSolve( RIGHT, NORMAL, d1, AL21 );
+        elem::DiagonalSolve( RIGHT, NORMAL, d1, AL21 );
 
-        elemental::PartitionDown
+        elem::PartitionDown
         ( S21, S21T,
                S21B, AL22.Width() );
-        elemental::PartitionDown
+        elem::PartitionDown
         ( AL21, AL21T,
                 AL21B, AL22.Width() );
-        elemental::Gemm( NORMAL, orientation, (F)-1, S21, AL21T, (F)1, AL22 );
-        elemental::internal::TrrkNT
+        elem::Gemm( NORMAL, orientation, (F)-1, S21, AL21T, (F)1, AL22 );
+        elem::internal::TrrkNT
         ( LOWER, orientation, (F)-1, S21B, AL21B, (F)1, ABR );
         //--------------------------------------------------------------------//
 
-        elemental::SlidePartitionDownDiagonal
+        elem::SlidePartitionDownDiagonal
         ( ALTL, /**/ ALTR,  AL00, AL01, /**/ AL02,
                 /**/        AL10, AL11, /**/ AL12,
          /***************/ /*********************/
           ALBL, /**/ ALBR,  AL20, AL21, /**/ AL22 );
     }
 #ifndef RELEASE
-    clique::PopCallStack();
+    PopCallStack();
 #endif
 }
 
-template void clique::numeric::LocalFrontLDL
+} // namespace cliq
+
+template void cliq::numeric::LocalFrontLDL
 ( Orientation orientation, 
   Matrix<float>& AL, Matrix<float>& ABR);
 
-template void clique::numeric::LocalFrontLDL
+template void cliq::numeric::LocalFrontLDL
 ( Orientation orientation, 
   Matrix<double>& AL, Matrix<double>& ABR );
 
-template void clique::numeric::LocalFrontLDL
+template void cliq::numeric::LocalFrontLDL
 ( Orientation orientation, 
-  Matrix<std::complex<float> >& AL, Matrix<std::complex<float> >& ABR );
+  Matrix<Complex<float> >& AL, Matrix<Complex<float> >& ABR );
 
-template void clique::numeric::LocalFrontLDL
+template void cliq::numeric::LocalFrontLDL
 ( Orientation orientation, 
-  Matrix<std::complex<double> >& AL, Matrix<std::complex<double> >& ABR );
+  Matrix<Complex<double> >& AL, Matrix<Complex<double> >& ABR );

@@ -1,7 +1,7 @@
 /*
    Clique: a scalable implementation of the multifrontal algorithm
 
-   Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
+   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
    The University of Texas at Austin
  
    This program is free software: you can redistribute it and/or modify
@@ -47,27 +47,27 @@ void CountLocalTreeSize
 ( int nxSub, int nySub, int nz, int cutoff, int& numSupernodes );
 
 void FillOrigStruct
-( int nx, int ny, int nz, int cutoff, clique::mpi::Comm comm, int log2CommSize,
-  clique::symbolic::SymmOrig& S );
+( int nx, int ny, int nz, int cutoff, cliq::mpi::Comm comm, int log2CommSize,
+  cliq::symbolic::SymmOrig& S );
 
 void FillDistOrigStruct
 ( int nx, int ny, int nz, int& nxSub, int& nySub, int& xOffset, int& yOffset, 
-  int cutoff, clique::mpi::Comm comm, int log2CommSize,
-  clique::symbolic::SymmOrig& S );
+  int cutoff, cliq::mpi::Comm comm, int log2CommSize,
+  cliq::symbolic::SymmOrig& S );
 
 void FillLocalOrigStruct
 ( int nx, int ny, int nz, int nxSub, int nySub, int xOffset, int yOffset, 
   int cutoff, int log2CommSize,
-  clique::symbolic::SymmOrig& S );
+  cliq::symbolic::SymmOrig& S );
 
 int
 main( int argc, char* argv[] )
 {
-    clique::Initialize( argc, argv );
-    clique::mpi::Comm comm = clique::mpi::COMM_WORLD;
-    const int commRank = clique::mpi::CommRank( comm );
-    const unsigned commSize = clique::mpi::CommSize( comm );
-    typedef std::complex<double> F;
+    cliq::Initialize( argc, argv );
+    cliq::mpi::Comm comm = cliq::mpi::COMM_WORLD;
+    const int commRank = cliq::mpi::CommRank( comm );
+    const unsigned commSize = cliq::mpi::CommSize( comm );
+    typedef elem::Complex<double> F;
 
     // Ensure that we have a power of two number of processes
     unsigned temp = commSize;
@@ -81,7 +81,7 @@ main( int argc, char* argv[] )
             std::cerr << "Must use a power of two number of processes" 
                       << std::endl;
         }
-        clique::Finalize();
+        cliq::Finalize();
         return 0;
     }
 
@@ -89,7 +89,7 @@ main( int argc, char* argv[] )
     {
         if( commRank == 0 )        
             Usage();
-        clique::Finalize();
+        cliq::Finalize();
         return 0;
     }
 
@@ -106,7 +106,7 @@ main( int argc, char* argv[] )
     {
         if( commRank == 0 )
             Usage();
-        clique::Finalize();
+        cliq::Finalize();
         return 0;
     }
     const char* basename = argv[argNum++];
@@ -128,13 +128,13 @@ main( int argc, char* argv[] )
         }
 
         // Fill the distributed portion of the original structure
-        clique::mpi::Barrier( comm );
-        const double initStartTime = clique::mpi::Time();
-        clique::symbolic::SymmOrig SOrig;
+        cliq::mpi::Barrier( comm );
+        const double initStartTime = cliq::mpi::Time();
+        cliq::symbolic::SymmOrig SOrig;
         FillOrigStruct
         ( nx, ny, nz, cutoff, comm, log2CommSize, SOrig );
-        clique::mpi::Barrier( comm );
-        const double initStopTime = clique::mpi::Time();
+        cliq::mpi::Barrier( comm );
+        const double initStopTime = cliq::mpi::Time();
         if( commRank == 0 )
             std::cout << "Init time: " << initStopTime-initStartTime << " secs"
                       << std::endl;
@@ -161,11 +161,11 @@ main( int argc, char* argv[] )
         }
 
         // Call the symbolic factorization routine
-        const double symbFactStartTime = clique::mpi::Time();
-        clique::symbolic::SymmFact S;
-        clique::symbolic::SymmetricFactorization( SOrig, S, true );
-        clique::mpi::Barrier( comm );
-        const double symbFactStopTime = clique::mpi::Time();
+        const double symbFactStartTime = cliq::mpi::Time();
+        cliq::symbolic::SymmFact S;
+        cliq::symbolic::SymmetricFactorization( SOrig, S, true );
+        cliq::mpi::Barrier( comm );
+        const double symbFactStopTime = cliq::mpi::Time();
         if( commRank == 0 )
             std::cout << "Symbolic factorization time: " 
                       << symbFactStopTime-symbFactStartTime << " secs"
@@ -196,7 +196,7 @@ main( int argc, char* argv[] )
                         S.dist.supernodes.back().localSize1d << std::endl;
         }
 
-        std::vector<clique::numeric::SymmFrontTree<F>*> symmFrontTrees;
+        std::vector<cliq::numeric::SymmFrontTree<F>*> symmFrontTrees;
         for( int panel=0; panel<numPanels; ++panel )
         {
             if( commRank == 0 )
@@ -207,15 +207,15 @@ main( int argc, char* argv[] )
                          << std::endl;
             // Directly initialize the frontal matrices with the original 
             // sparse matrix (for now, use an original matrix equal to identity)
-            const double fillStartTime = clique::mpi::Time();
-            symmFrontTrees.push_back( new clique::numeric::SymmFrontTree<F> );
-            clique::numeric::SymmFrontTree<F>& L = *symmFrontTrees.back();
+            const double fillStartTime = cliq::mpi::Time();
+            symmFrontTrees.push_back( new cliq::numeric::SymmFrontTree<F> );
+            cliq::numeric::SymmFrontTree<F>& L = *symmFrontTrees.back();
             L.local.fronts.resize( S.local.supernodes.size() );
             for( unsigned s=0; s<S.local.supernodes.size(); ++s )
             {
-                const clique::symbolic::LocalSymmFactSupernode& sn =
+                const cliq::symbolic::LocalSymmFactSupernode& sn =
                     S.local.supernodes[s];
-                elemental::Matrix<F>& frontL = L.local.fronts[s].frontL;
+                elem::Matrix<F>& frontL = L.local.fronts[s].frontL;
 
                 const int frontSize = sn.size+sn.lowerStruct.size();
                 frontL.ResizeTo( frontSize, sn.size );
@@ -223,14 +223,14 @@ main( int argc, char* argv[] )
                 if( writeInfo )
                     frontL.Print( infoFile, "frontL local" );
             }
-            L.dist.mode = clique::MANY_RHS;
+            L.dist.mode = cliq::MANY_RHS;
             L.dist.fronts.resize( log2CommSize+1 );
-            clique::numeric::InitializeDistLeaf( S, L );
+            cliq::numeric::InitializeDistLeaf( S, L );
             for( unsigned s=1; s<log2CommSize+1; ++s )
             {
-                const clique::symbolic::DistSymmFactSupernode& sn = 
+                const cliq::symbolic::DistSymmFactSupernode& sn = 
                     S.dist.supernodes[s];
-                elemental::DistMatrix<F,elemental::MC,elemental::MR>& front2dL =
+                elem::DistMatrix<F,elem::MC,elem::MR>& front2dL =
                     L.dist.fronts[s].front2dL;
 
                 front2dL.SetGrid( *sn.grid );
@@ -241,8 +241,8 @@ main( int argc, char* argv[] )
                 if( writeInfo )
                     front2dL.Print( infoFile, "frontL dist" );
             }
-            clique::mpi::Barrier( comm );
-            const double fillStopTime = clique::mpi::Time();
+            cliq::mpi::Barrier( comm );
+            const double fillStopTime = cliq::mpi::Time();
             if( commRank == 0 )
                 std::cout << "Fill time: " << fillStopTime-fillStartTime
                           << " secs" << std::endl;
@@ -250,24 +250,24 @@ main( int argc, char* argv[] )
             // Generate a random RHS, multiply it by our matrix, and then 
             // compare the original RHS against the solution.
             const int NUM_RHS = 1;
-            const double makeRhsStartTime = clique::mpi::Time();
+            const double makeRhsStartTime = cliq::mpi::Time();
             const int localHeight1d = 
                 S.dist.supernodes.back().localOffset1d + 
                 S.dist.supernodes.back().localSize1d;
-            elemental::Matrix<F> localX( localHeight1d, NUM_RHS );
+            elem::Matrix<F> localX( localHeight1d, NUM_RHS );
             localX.SetToRandom();
-            elemental::Matrix<F> localYLower = localX;
-            clique::numeric::SetSolveMode( L, clique::FEW_RHS );
-            clique::numeric::LowerMultiply
-            ( elemental::NORMAL, elemental::NON_UNIT, -1, S, L, localYLower );
-            elemental::Matrix<F> localY = localX;
-            clique::numeric::LowerMultiply
-            ( elemental::TRANSPOSE, elemental::NON_UNIT, 0, S, L, localY );
-            elemental::Axpy( (F)1, localYLower, localY );
+            elem::Matrix<F> localYLower = localX;
+            cliq::numeric::SetSolveMode( L, cliq::FEW_RHS );
+            cliq::numeric::LowerMultiply
+            ( elem::NORMAL, elem::NON_UNIT, -1, S, L, localYLower );
+            elem::Matrix<F> localY = localX;
+            cliq::numeric::LowerMultiply
+            ( elem::TRANSPOSE, elem::NON_UNIT, 0, S, L, localY );
+            elem::Axpy( (F)1, localYLower, localY );
             localYLower.Empty();
-            clique::numeric::SetSolveMode( L, clique::MANY_RHS );
-            clique::mpi::Barrier( comm );
-            const double makeRhsStopTime = clique::mpi::Time();
+            cliq::numeric::SetSolveMode( L, cliq::MANY_RHS );
+            cliq::mpi::Barrier( comm );
+            const double makeRhsStopTime = cliq::mpi::Time();
             if( commRank == 0 )
                 std::cout << "Make RHS time: " 
                           << makeRhsStopTime-makeRhsStartTime
@@ -277,50 +277,50 @@ main( int argc, char* argv[] )
                 localX.Print( infoFile, "localX" );
                 localY.Print( infoFile, "localY" );
             }
-            const double myYNorm = elemental::Norm( localY );
+            const double myYNorm = elem::Norm( localY );
             double YNorm;
-            clique::mpi::Reduce
-            ( &myYNorm, &YNorm, 1, clique::mpi::SUM, 0, comm );
+            cliq::mpi::Reduce
+            ( &myYNorm, &YNorm, 1, cliq::mpi::SUM, 0, comm );
 
             // Call the numerical factorization routine
-            elemental::SetBlocksize( factBlocksize );
-            const double factStartTime = clique::mpi::Time();
-            clique::numeric::LDL( elemental::TRANSPOSE, S, L );
-            clique::mpi::Barrier( comm );
-            const double factStopTime = clique::mpi::Time();
+            elem::SetBlocksize( factBlocksize );
+            const double factStartTime = cliq::mpi::Time();
+            cliq::numeric::LDL( elem::TRANSPOSE, S, L );
+            cliq::mpi::Barrier( comm );
+            const double factStopTime = cliq::mpi::Time();
             if( commRank == 0 )
                 std::cout << "Factorization time: " 
                           << factStopTime-factStartTime
                           << " secs" << std::endl;
 
             // Redistribute to 1d for fast solves with few right-hand sides
-            const double redistStartTime = clique::mpi::Time();
-            clique::numeric::SetSolveMode( L, clique::FEW_RHS_FAST_LDL );
-            clique::mpi::Barrier( comm );
-            const double redistStopTime = clique::mpi::Time();
+            const double redistStartTime = cliq::mpi::Time();
+            cliq::numeric::SetSolveMode( L, cliq::FEW_RHS_FAST_LDL );
+            cliq::mpi::Barrier( comm );
+            const double redistStopTime = cliq::mpi::Time();
             if( commRank == 0 )
                 std::cout << "Redistribution time: " 
                           << redistStopTime-redistStartTime 
                           << " secs" << std::endl;
 
             // Solve
-            elemental::SetBlocksize( solveBlocksize );
-            clique::mpi::Barrier( comm );
-            const double solveStartTime = clique::mpi::Time();
-            clique::numeric::LDLSolve( clique::TRANSPOSE, S, L, localY );
-            clique::mpi::Barrier( comm );
-            const double solveStopTime = clique::mpi::Time();
+            elem::SetBlocksize( solveBlocksize );
+            cliq::mpi::Barrier( comm );
+            const double solveStartTime = cliq::mpi::Time();
+            cliq::numeric::LDLSolve( cliq::TRANSPOSE, S, L, localY );
+            cliq::mpi::Barrier( comm );
+            const double solveStopTime = cliq::mpi::Time();
             if( commRank == 0 )
                 std::cout << "Solve time: " << solveStopTime-solveStartTime
                           << " secs" << std::endl;
 
             if( writeInfo )
                 localY.Print( infoFile, "localY final" );
-            elemental::Axpy( (F)-1, localX, localY );
-            const double myErrorNorm = elemental::Norm( localY );
+            elem::Axpy( (F)-1, localX, localY );
+            const double myErrorNorm = elem::Norm( localY );
             double errorNorm;
-            clique::mpi::Reduce
-            ( &myErrorNorm, &errorNorm, 1, clique::mpi::SUM, 0, comm );
+            cliq::mpi::Reduce
+            ( &myErrorNorm, &errorNorm, 1, cliq::mpi::SUM, 0, comm );
             if( commRank == 0 )
             {
                 std::cout << "||y||_2: " << YNorm << "\n"
@@ -335,8 +335,8 @@ main( int argc, char* argv[] )
     catch( std::exception& e )
     {
 #ifndef RELEASE
-        elemental::DumpCallStack();
-        clique::DumpCallStack();
+        elem::DumpCallStack();
+        cliq::DumpCallStack();
 #endif
         std::ostringstream msg;
         msg << "Process " << commRank << " caught message:\n"
@@ -344,7 +344,7 @@ main( int argc, char* argv[] )
         std::cerr << msg.str() << std::endl;
     }
 
-    clique::Finalize();
+    cliq::Finalize();
     return 0;
 }
  
@@ -411,22 +411,22 @@ int ReorderedIndex
   int minBalancedDepth, int cutoff )
 {
 #ifndef RELEASE    
-    clique::PushCallStack("ReorderedIndex");
+    cliq::PushCallStack("ReorderedIndex");
 #endif
     int index = ReorderedIndexRecursion
     ( x, y, z, nx, ny, nz, minBalancedDepth, cutoff, 0 );
 #ifndef RELEASE
-    clique::PopCallStack();
+    cliq::PopCallStack();
 #endif
     return index;
 }
 
 void FillOrigStruct
-( int nx, int ny, int nz, int cutoff, clique::mpi::Comm comm, int log2CommSize,
-  clique::symbolic::SymmOrig& SOrig )
+( int nx, int ny, int nz, int cutoff, cliq::mpi::Comm comm, int log2CommSize,
+  cliq::symbolic::SymmOrig& SOrig )
 {
 #ifndef RELEASE
-    clique::PushCallStack("FillOrigStruct");
+    cliq::PushCallStack("FillOrigStruct");
 #endif
     int nxSub=nx, nySub=ny, xOffset=0, yOffset=0;
     FillDistOrigStruct
@@ -436,25 +436,25 @@ void FillOrigStruct
     ( nx, ny, nz, nxSub, nySub, xOffset, yOffset, cutoff, 
       log2CommSize, SOrig );
 #ifndef RELEASE
-    clique::PopCallStack();
+    cliq::PopCallStack();
 #endif
 }
   
 void FillDistOrigStruct
 ( int nx, int ny, int nz, int& nxSub, int& nySub, int& xOffset, int& yOffset, 
-  int cutoff, clique::mpi::Comm comm, int log2CommSize, 
-  clique::symbolic::SymmOrig& S )
+  int cutoff, cliq::mpi::Comm comm, int log2CommSize, 
+  cliq::symbolic::SymmOrig& S )
 {
 #ifndef RELEASE
-    clique::PushCallStack("FillDistOrigStruct");
+    cliq::PushCallStack("FillDistOrigStruct");
 #endif
-    const int commRank = clique::mpi::CommRank( comm );
+    const int commRank = cliq::mpi::CommRank( comm );
     S.dist.comm = comm;
     S.dist.supernodes.resize( log2CommSize+1 );
     // Fill the distributed nodes
     for( int s=log2CommSize; s>0; --s )
     {
-        clique::symbolic::DistSymmOrigSupernode& sn = S.dist.supernodes[s];
+        cliq::symbolic::DistSymmOrigSupernode& sn = S.dist.supernodes[s];
         const int powerOfTwo = 1u<<(s-1);
         const bool onLeft = (commRank&powerOfTwo) == 0;
         if( nxSub >= nySub )
@@ -562,7 +562,7 @@ void FillDistOrigStruct
     }
 
     // Fill the bottom node, which is only owned by a single process
-    clique::symbolic::DistSymmOrigSupernode& sn = S.dist.supernodes[0];
+    cliq::symbolic::DistSymmOrigSupernode& sn = S.dist.supernodes[0];
     if( nxSub*nySub*nz <= cutoff )
     {
         sn.size = nxSub*nySub*nz;
@@ -698,7 +698,7 @@ void FillDistOrigStruct
         std::sort( sn.lowerStruct.begin(), sn.lowerStruct.end() );
     }
 #ifndef RELEASE
-    clique::PopCallStack();
+    cliq::PopCallStack();
 #endif
 }
 
@@ -715,10 +715,10 @@ struct Box
 
 void FillLocalOrigStruct
 ( int nx, int ny, int nz, int nxSub, int nySub, int xOffset, int yOffset, 
-  int cutoff, int log2CommSize, clique::symbolic::SymmOrig& S )
+  int cutoff, int log2CommSize, cliq::symbolic::SymmOrig& S )
 {
 #ifndef RELEASE
-    clique::PushCallStack("FillLocalOrigStruct");
+    cliq::PushCallStack("FillLocalOrigStruct");
 #endif
     // First count the depth, resize, and then run the actual fill
     int numSupernodes = 0;
@@ -744,7 +744,7 @@ void FillLocalOrigStruct
         Box box = boxStack.top();
         boxStack.pop();
 
-        clique::symbolic::LocalSymmOrigSupernode& sn = S.local.supernodes[s];
+        cliq::symbolic::LocalSymmOrigSupernode& sn = S.local.supernodes[s];
         sn.parent = box.parentIndex;
         if( sn.parent != -1 )
         {
@@ -934,7 +934,7 @@ void FillLocalOrigStruct
         }
     }
 #ifndef RELEASE
-    clique::PopCallStack();
+    cliq::PopCallStack();
 #endif
 }
 

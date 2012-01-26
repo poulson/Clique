@@ -1,8 +1,7 @@
 /*
    Clique: a scalable implementation of the multifrontal algorithm
 
-   Copyright (C) 2010-2011 Jack Poulson <jack.poulson@gmail.com>
-   Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
+   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
    The University of Texas at Austin
  
    This program is free software: you can redistribute it and/or modify
@@ -27,12 +26,12 @@
 
 #include "clique/config.h"
 
-namespace clique {
+namespace cliq {
 
 typedef unsigned char byte;
  
-typedef std::complex<float> scomplex;
-typedef std::complex<double> dcomplex;
+typedef elem::Complex<float> scomplex;
+typedef elem::Complex<double> dcomplex;
 
 bool Initialized();
 void Initialize( int& argc, char**& argv );
@@ -45,23 +44,23 @@ void DumpCallStack();
 #endif
 
 // Pull in some of Elemental's imported libraries
-namespace blas = elemental::blas;
-namespace lapack = elemental::lapack;
-namespace mpi = elemental::mpi;
+namespace blas = elem::blas;
+namespace lapack = elem::lapack;
+namespace mpi = elem::mpi;
 
 // Pull in a number of useful enums from Elemental
-using namespace elemental::diagonal_wrapper;
-using namespace elemental::distribution_wrapper;
-using namespace elemental::orientation_wrapper;
-using namespace elemental::upper_or_lower_wrapper;
-using namespace elemental::side_wrapper;
+using namespace elem::diagonal_wrapper;
+using namespace elem::distribution_wrapper;
+using namespace elem::orientation_wrapper;
+using namespace elem::upper_or_lower_wrapper;
+using namespace elem::side_wrapper;
 
 // Pull in a few classes from Elemental
-using elemental::DistMatrix;
-using elemental::Grid;
-using elemental::Matrix;
+using elem::Complex;
+using elem::Matrix;
+using elem::Grid;
+using elem::DistMatrix;
 
-} // namespace clique
+} // namespace cliq
 
 #endif /* CLIQUE_CORE_ENVIRONMENT_HPP */
-

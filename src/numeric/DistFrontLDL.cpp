@@ -1,11 +1,11 @@
 /*
    Modification of include/elemental/advanced/LDL.hpp from Elemental.
-   Copyright (c) 2009-2011, Jack Poulson
+   Copyright (c) 2009-2012, Jack Poulson
    All rights reserved.
 
    Clique: a scalable implementation of the multifrontal algorithm
 
-   Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
+   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
    The University of Texas at Austin
  
    This program is free software: you can redistribute it and/or modify
@@ -23,8 +23,10 @@
 */
 #include "clique.hpp"
 
+namespace cliq {
+
 template<typename F> // F represents a real or complex field
-void clique::numeric::DistFrontLDL
+void numeric::DistFrontLDL
 ( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR )
 {
 #ifndef RELEASE
@@ -41,11 +43,11 @@ void clique::numeric::DistFrontLDL
 }
 
 template<typename F> // F represents a real or complex field
-void clique::numeric::internal::DistFrontLDLGeneral
+void numeric::internal::DistFrontLDLGeneral
 ( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR )
 {
 #ifndef RELEASE
-    clique::PushCallStack("numeric::internal::DistFrontLDLGeneral");
+    PushCallStack("numeric::internal::DistFrontLDLGeneral");
     if( ABR.Height() != ABR.Width() )
         throw std::logic_error("ABR must be square");
     if( AL.Height() != AL.Width()+ABR.Height() )
@@ -85,12 +87,12 @@ void clique::numeric::internal::DistFrontLDLGeneral
                           AL22B(g);
 
     // Start the algorithm
-    elemental::PartitionDownDiagonal
+    elem::PartitionDownDiagonal
     ( AL, ALTL, ALTR,
           ALBL, ALBR, 0 );
     while( ALTL.Width() < AL.Width() )
     {
-        elemental::RepartitionDownDiagonal
+        elem::RepartitionDownDiagonal
         ( ALTL, /**/ ALTR,  AL00, /**/ AL01, AL02,
          /***************/ /*********************/
                /**/         AL10, /**/ AL11, AL12,
@@ -102,17 +104,17 @@ void clique::numeric::internal::DistFrontLDLGeneral
         AL21AdjOrTrans_STAR_MR.AlignWith( AL22 );
         //--------------------------------------------------------------------//
         AL11_STAR_STAR = AL11; 
-        elemental::internal::LocalLDL
+        elem::internal::LocalLDL
         ( orientation, AL11_STAR_STAR, d1_STAR_STAR );
         AL11 = AL11_STAR_STAR;
 
         AL21_VC_STAR = AL21;
-        elemental::internal::LocalTrsm
+        elem::internal::LocalTrsm
         ( RIGHT, LOWER, orientation, UNIT, 
           (F)1, AL11_STAR_STAR, AL21_VC_STAR );
 
         S21Trans_STAR_MC.TransposeFrom( AL21_VC_STAR );
-        elemental::DiagonalSolve
+        elem::DiagonalSolve
         ( RIGHT, NORMAL, d1_STAR_STAR, AL21_VC_STAR );
         AL21_VR_STAR = AL21_VC_STAR;
         if( orientation == ADJOINT )
@@ -130,14 +132,14 @@ void clique::numeric::internal::DistFrontLDLGeneral
         PartitionDown
         ( AL22, AL22T,
                 AL22B, AL22.Width() );
-        elemental::internal::LocalTrrk
+        elem::internal::LocalTrrk
         ( LOWER, orientation, (F)-1, leftL, rightL, (F)1, AL22T );
-        elemental::internal::LocalGemm
+        elem::internal::LocalGemm
         ( orientation, NORMAL, (F)-1, leftR, rightL, (F)1, AL22B );
-        elemental::internal::LocalTrrk
+        elem::internal::LocalTrrk
         ( LOWER, orientation, (F)-1, leftR, rightR, (F)1, ABR );
 
-        elemental::DiagonalSolve
+        elem::DiagonalSolve
         ( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
         AL21.TransposeFrom( S21Trans_STAR_MC );
         //--------------------------------------------------------------------//
@@ -146,35 +148,35 @@ void clique::numeric::internal::DistFrontLDLGeneral
         S21Trans_STAR_MC.FreeAlignments();
         AL21AdjOrTrans_STAR_MR.FreeAlignments();
 
-        elemental::SlidePartitionDownDiagonal
+        elem::SlidePartitionDownDiagonal
         ( ALTL, /**/ ALTR,  AL00, AL01, /**/ AL02,
                /**/         AL10, AL11, /**/ AL12,
          /***************/ /*********************/
           ALBL, /**/ ALBR,  AL20, AL21, /**/ AL22 );
     }
 #ifndef RELEASE
-    clique::PopCallStack();
+    PopCallStack();
 #endif
 }
 
 template<typename F> // F represents a real or complex field
-void clique::numeric::internal::DistFrontLDLSquare
+void numeric::internal::DistFrontLDLSquare
 ( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR )
 {
 #ifndef RELEASE
-    clique::PushCallStack("numeric::internal::DistFrontLDLSquare");
+    PushCallStack("numeric::internal::DistFrontLDLSquare");
     if( ABR.Height() != ABR.Width() )
         throw std::logic_error("ABR must be square");
     if( AL.Height() != AL.Width()+ABR.Height() )
-        throw std::logic_error("AL and ABR must have compatible dimensions");
+        throw std::logic_error("AL & ABR must have compatible dimensions");
     if( AL.Grid() != ABR.Grid() )
-        throw std::logic_error("AL and ABR must use the same grid");
+        throw std::logic_error("AL & ABR must use the same grid");
     if( ABR.ColAlignment() !=
         (AL.ColAlignment()+AL.Width()) % AL.Grid().Height() )
-        throw std::logic_error("AL and ABR must have compatible col alignments");
+        throw std::logic_error("AL & ABR must have compatible col alignments");
     if( ABR.RowAlignment() != 
         (AL.RowAlignment()+AL.Width()) % AL.Grid().Width() )
-        throw std::logic_error("AL and ABR must have compatible row alignments");
+        throw std::logic_error("AL & ABR must have compatible row alignments");
     if( orientation == NORMAL )
         throw std::logic_error("DistFrontLDL must be (conjugate-)transposed.");
 #endif
@@ -220,12 +222,12 @@ void clique::numeric::internal::DistFrontLDLSquare
                           AR2B(g);
 
     // Start the algorithm
-    elemental::PartitionDownDiagonal
+    elem::PartitionDownDiagonal
     ( AL, ALTL, ALTR,
           ALBL, ALBR, 0 );
     while( ALTL.Width() < AL.Width() )
     {
-        elemental::RepartitionDownDiagonal
+        elem::RepartitionDownDiagonal
         ( ALTL, /**/ ALTR,  AL00, /**/ AL01, AL02,
          /***************/ /*********************/
                /**/         AL10, /**/ AL11, AL12,
@@ -236,12 +238,12 @@ void clique::numeric::internal::DistFrontLDLSquare
         AL21AdjOrTrans_STAR_MR.AlignWith( AL22 );
         //--------------------------------------------------------------------//
         AL11_STAR_STAR = AL11; 
-        elemental::internal::LocalLDL
+        elem::internal::LocalLDL
         ( orientation, AL11_STAR_STAR, d1_STAR_STAR );
         AL11 = AL11_STAR_STAR;
 
         AL21_VC_STAR = AL21;
-        elemental::internal::LocalTrsm
+        elem::internal::LocalTrsm
         ( RIGHT, LOWER, orientation, UNIT, 
           (F)1, AL11_STAR_STAR, AL21_VC_STAR );
 
@@ -269,10 +271,10 @@ void clique::numeric::internal::DistFrontLDLSquare
                   AL21AdjOrTrans_STAR_MR.LocalBuffer(), 
                   recvSize, transposeRank, 0, g.VCComm() );
             }
-            elemental::DiagonalSolve
+            elem::DiagonalSolve
             ( LEFT, NORMAL, d1_STAR_STAR, AL21AdjOrTrans_STAR_MR );
             if( orientation == ADJOINT )
-                elemental::Conjugate( AL21AdjOrTrans_STAR_MR );
+                elem::Conjugate( AL21AdjOrTrans_STAR_MR );
         }
 
         // Partition the update of the bottom-right corner into three pieces
@@ -285,14 +287,14 @@ void clique::numeric::internal::DistFrontLDLSquare
         PartitionDown
         ( AL22, AL22T,
                 AL22B, AL22.Width() );
-        elemental::internal::LocalTrrk
+        elem::internal::LocalTrrk
         ( LOWER, orientation, (F)-1, leftL, rightL, (F)1, AL22T );
-        elemental::internal::LocalGemm
+        elem::internal::LocalGemm
         ( orientation, NORMAL, (F)-1, leftR, rightL, (F)1, AL22B );
-        elemental::internal::LocalTrrk
+        elem::internal::LocalTrrk
         ( LOWER, orientation, (F)-1, leftR, rightR, (F)1, ABR );
 
-        elemental::DiagonalSolve
+        elem::DiagonalSolve
         ( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
         AL21.TransposeFrom( S21Trans_STAR_MC );
         //--------------------------------------------------------------------//
@@ -300,65 +302,67 @@ void clique::numeric::internal::DistFrontLDLSquare
         S21Trans_STAR_MC.FreeAlignments();
         AL21AdjOrTrans_STAR_MR.FreeAlignments();
 
-        elemental::SlidePartitionDownDiagonal
+        elem::SlidePartitionDownDiagonal
         ( ALTL, /**/ ALTR,  AL00, AL01, /**/ AL02,
                /**/         AL10, AL11, /**/ AL12,
          /***************/ /*********************/
           ALBL, /**/ ALBR,  AL20, AL21, /**/ AL22 );
     }
 #ifndef RELEASE
-    clique::PopCallStack();
+    PopCallStack();
 #endif
 }
 
-template void clique::numeric::DistFrontLDL
+} // namespace cliq
+
+template void cliq::numeric::DistFrontLDL
 ( Orientation orientation, 
   DistMatrix<float,MC,MR>& AL, 
   DistMatrix<float,MC,MR>& ABR );
-template void clique::numeric::internal::DistFrontLDLGeneral
+template void cliq::numeric::internal::DistFrontLDLGeneral
 ( Orientation orientation, 
   DistMatrix<float,MC,MR>& AL, 
   DistMatrix<float,MC,MR>& ABR );
-template void clique::numeric::internal::DistFrontLDLSquare
+template void cliq::numeric::internal::DistFrontLDLSquare
 ( Orientation orientation, 
   DistMatrix<float,MC,MR>& AL, 
   DistMatrix<float,MC,MR>& ABR );
 
-template void clique::numeric::DistFrontLDL
+template void cliq::numeric::DistFrontLDL
 ( Orientation orientation, 
   DistMatrix<double,MC,MR>& AL, 
   DistMatrix<double,MC,MR>& ABR );
-template void clique::numeric::internal::DistFrontLDLGeneral
+template void cliq::numeric::internal::DistFrontLDLGeneral
 ( Orientation orientation, 
   DistMatrix<double,MC,MR>& AL, 
   DistMatrix<double,MC,MR>& ABR );
-template void clique::numeric::internal::DistFrontLDLSquare
+template void cliq::numeric::internal::DistFrontLDLSquare
 ( Orientation orientation, 
   DistMatrix<double,MC,MR>& AL, 
   DistMatrix<double,MC,MR>& ABR );
 
-template void clique::numeric::DistFrontLDL
+template void cliq::numeric::DistFrontLDL
 ( Orientation orientation, 
-  DistMatrix<std::complex<float>,MC,MR>& AL, 
-  DistMatrix<std::complex<float>,MC,MR>& ABR );
-template void clique::numeric::internal::DistFrontLDLGeneral
+  DistMatrix<Complex<float>,MC,MR>& AL, 
+  DistMatrix<Complex<float>,MC,MR>& ABR );
+template void cliq::numeric::internal::DistFrontLDLGeneral
 ( Orientation orientation, 
-  DistMatrix<std::complex<float>,MC,MR>& AL, 
-  DistMatrix<std::complex<float>,MC,MR>& ABR );
-template void clique::numeric::internal::DistFrontLDLSquare
+  DistMatrix<Complex<float>,MC,MR>& AL, 
+  DistMatrix<Complex<float>,MC,MR>& ABR );
+template void cliq::numeric::internal::DistFrontLDLSquare
 ( Orientation orientation, 
-  DistMatrix<std::complex<float>,MC,MR>& AL, 
-  DistMatrix<std::complex<float>,MC,MR>& ABR );
+  DistMatrix<Complex<float>,MC,MR>& AL, 
+  DistMatrix<Complex<float>,MC,MR>& ABR );
 
-template void clique::numeric::DistFrontLDL
+template void cliq::numeric::DistFrontLDL
 ( Orientation orientation, 
-  DistMatrix<std::complex<double>,MC,MR>& AL,
-  DistMatrix<std::complex<double>,MC,MR>& ABR );
-template void clique::numeric::internal::DistFrontLDLGeneral
+  DistMatrix<Complex<double>,MC,MR>& AL,
+  DistMatrix<Complex<double>,MC,MR>& ABR );
+template void cliq::numeric::internal::DistFrontLDLGeneral
 ( Orientation orientation, 
-  DistMatrix<std::complex<double>,MC,MR>& AL,
-  DistMatrix<std::complex<double>,MC,MR>& ABR );
-template void clique::numeric::internal::DistFrontLDLSquare
+  DistMatrix<Complex<double>,MC,MR>& AL,
+  DistMatrix<Complex<double>,MC,MR>& ABR );
+template void cliq::numeric::internal::DistFrontLDLSquare
 ( Orientation orientation, 
-  DistMatrix<std::complex<double>,MC,MR>& AL,
-  DistMatrix<std::complex<double>,MC,MR>& ABR );
+  DistMatrix<Complex<double>,MC,MR>& AL,
+  DistMatrix<Complex<double>,MC,MR>& ABR );

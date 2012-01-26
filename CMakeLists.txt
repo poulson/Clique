@@ -1,8 +1,8 @@
 #
 #  Clique: a scalable implementation of the multifrontal method.
 #
-#  Copyright (C) 2010-2011 Jack Poulson <jack.poulson@gmail.com>
-#  Copyright (C) 2011 Jack Poulson, Lexing Ying, and 
+#  Copyright (C) 2010-2012 Jack Poulson <jack.poulson@gmail.com>
+#  Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
 #  The University of Texas at Austin
 # 
 #  This program is free software: you can redistribute it and/or modify
@@ -116,8 +116,8 @@ endif(BUILD_TESTS)
 #set(RELEASE ${RELEASE} PARENT_SCOPE)
 #set(BLAS_POST ${BLAS_POST} PARENT_SCOPE)
 #set(LAPACK_POST ${LAPACK_POST} PARENT_SCOPE)
+#set(HAVE_F90_INTERFACE ${HAVE_F90_INTERFACE} PARENT_SCOPE)
 #set(WITHOUT_PMRRR ${WITHOUT_PMRRR} PARENT_SCOPE)
-#set(DISABLE_SCALAR_WRAPPER ${DISABLE_SCALAR_WRAPPER} PARENT_SCOPE)
 #set(AVOID_COMPLEX_MPI ${AVOID_COMPLEX_MPI} PARENT_SCOPE)
 #set(HAVE_REDUCE_SCATTER_BLOCK ${HAVE_REDUCE_SCATTER_BLOCK} PARENT_SCOPE)
 #set(REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE ${REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE} PARENT_SCOPE)

@@ -33,7 +33,7 @@
 
 #include "./QR/PanelQR.hpp"
 
-namespace elemental {
+namespace elem {
 
 // On exit, the upper triangle of A is overwritten by R, and the Householder
 // transforms that determine Q are stored below the diagonal of A with an 
@@ -101,15 +101,15 @@ QR( DistMatrix<R,MC,MR>& A )
 
 template<typename R> 
 inline void
-QR( DistMatrix<std::complex<R>,MC,MR  >& A, 
-    DistMatrix<std::complex<R>,MD,STAR>& t )
+QR( DistMatrix<Complex<R>,MC,MR  >& A, 
+    DistMatrix<Complex<R>,MD,STAR>& t )
 {
 #ifndef RELEASE
     PushCallStack("QR");
     if( A.Grid() != t.Grid() )
         throw std::logic_error("{A,s} must be distributed over the same grid");
 #endif
-    typedef std::complex<R> C;
+    typedef Complex<R> C;
     const Grid& g = A.Grid();
 
     if( t.Viewing() )
@@ -187,4 +187,4 @@ QR( DistMatrix<std::complex<R>,MC,MR  >& A,
 #endif
 }
 
-} // namespace elemental
+} // namespace elem

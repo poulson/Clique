@@ -36,15 +36,17 @@
 #include "./HermitianNorm/HermitianMaxNorm.hpp"
 #include "./HermitianNorm/HermitianOneNorm.hpp"
 
-namespace elemental {
+namespace elem {
 
-template<typename R>
-inline R
-HermitianNorm( UpperOrLower uplo, const Matrix<R>& A, NormType type )
+template<typename F>
+inline typename Base<F>::type
+HermitianNorm( UpperOrLower uplo, const Matrix<F>& A, NormType type )
 {
 #ifndef RELEASE
     PushCallStack("HermitianNorm");
 #endif
+    typedef typename Base<F>::type R;
+
     R norm = 0;
     switch( type )
     {
@@ -67,14 +69,15 @@ HermitianNorm( UpperOrLower uplo, const Matrix<R>& A, NormType type )
     return norm;
 }
 
-template<typename R> 
-inline R
-HermitianNorm
-( UpperOrLower uplo, const Matrix<std::complex<R> >& A, NormType type )
+template<typename F>
+inline typename Base<F>::type
+HermitianNorm( UpperOrLower uplo, const DistMatrix<F,MC,MR>& A, NormType type )
 {
 #ifndef RELEASE
     PushCallStack("HermitianNorm");
 #endif
+    typedef typename Base<F>::type R;
+
     R norm = 0;
     switch( type )
     {
@@ -97,63 +100,4 @@ HermitianNorm
     return norm;
 }
 
-template<typename R>
-inline R
-HermitianNorm( UpperOrLower uplo, const DistMatrix<R,MC,MR>& A, NormType type )
-{
-#ifndef RELEASE
-    PushCallStack("HermitianNorm");
-#endif
-    R norm = 0;
-    switch( type )
-    {
-    case INFINITY_NORM:
-        norm = internal::HermitianInfinityNorm( uplo, A );
-        break;
-    case FROBENIUS_NORM: 
-        norm = internal::HermitianFrobeniusNorm( uplo, A );
-        break;
-    case MAX_NORM:
-        norm = internal::HermitianMaxNorm( uplo, A );
-        break;
-    case ONE_NORM:
-        norm = internal::HermitianOneNorm( uplo, A );
-        break;
-    }
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return norm;
-}
-
-template<typename R> 
-inline R
-HermitianNorm
-( UpperOrLower uplo, const DistMatrix<std::complex<R>,MC,MR>& A, NormType type )
-{
-#ifndef RELEASE
-    PushCallStack("HermitianNorm");
-#endif
-    R norm = 0;
-    switch( type )
-    {
-    case INFINITY_NORM:
-        norm = internal::HermitianInfinityNorm( uplo, A );
-        break;
-    case FROBENIUS_NORM: 
-        norm = internal::HermitianFrobeniusNorm( uplo, A );
-        break;
-    case MAX_NORM:
-        norm = internal::HermitianMaxNorm( uplo, A );
-        break;
-    case ONE_NORM:
-        norm = internal::HermitianOneNorm( uplo, A );
-        break;
-    }
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return norm;
-}
-
-} // namespace elemental
+} // namespace elem

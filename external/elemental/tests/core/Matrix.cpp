@@ -31,11 +31,11 @@
    POSSIBILITY OF SUCH DAMAGE.
 */
 #include "elemental.hpp"
-using namespace elemental;
+using namespace elem;
 
 void Usage()
 {
-    std::cout << "Basic tests of the elemental::Matrix class.\n"
+    std::cout << "Basic tests of the elem::Matrix class.\n"
               << "  Matrix <m> <n> <ldim>\n"
               << "    m: height of matrix\n"
               << "    n: width of matrix\n"
@@ -107,7 +107,7 @@ main( int argc, char* argv[] )
             std::cout << "Testing with double-precision complex...";
             std::cout.flush();
         }
-        TestMatrix<dcomplex>( m, n, ldim );
+        TestMatrix<Complex<double> >( m, n, ldim );
     }
     catch( std::exception& e )
     {

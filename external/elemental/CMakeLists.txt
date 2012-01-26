@@ -43,6 +43,7 @@ endif("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
 
 option(BUILD_EXAMPLES "Build the examples" ON)
 option(BUILD_TESTS "Build a collection of test executables" OFF)
+option(BUILD_EXPERIMENTAL "Build experimental code" OFF)
 
 # Do not attempt to build PMRRR if on a Windows platform (it requires pthreads)
 if(WIN32)
@@ -53,12 +54,6 @@ endif(WIN32)
 
 # Bugs in the complex version of MPI routines are quite common
 option(AVOID_COMPLEX_MPI "Avoid complex MPI routines for robustness" ON)
-
-# Bug fix for Darwin g++ compiler throwing an internal compiler error.
-# It seems to have somehow been circumvented after pulling most of the library
-# into header files.
-option(DISABLE_SCALAR_WRAPPER "Avoid pretty-printing of complex numbers" OFF)
-mark_as_advanced(DISABLE_SCALAR_WRAPPER)
 
 # Bug fix for IBM's compiler miscompiling OpenMP a[i] += alpha b[i] statements
 # for complex datatypes
@@ -145,6 +140,20 @@ if(NOT WIN32)
         "CXX optimization flags for pure MPI release build")
   endif(PURE_RELEASE AND NOT CXX_PURE_RELEASE_FLAGS)
 endif(NOT WIN32)
+
+# Go ahead and check for Fortran
+enable_language(Fortran OPTIONAL)  
+set(HAVE_F90_INTERFACE FALSE)
+if(CMAKE_Fortran_COMPILER_SUPPORTS_F90)
+  include(FortranCInterface)
+  FortranCInterface_VERIFY(CXX)
+  if(FortranCInterface_VERIFIED_CXX)
+    set(HAVE_F90_INTERFACE TRUE)
+    FortranCInterface_HEADER(
+      ${CMAKE_CURRENT_BINARY_DIR}/include/elemental/FCMangle.h 
+      MACRO_NAMESPACE "FC_")
+  endif(FortranCInterface_VERIFIED_CXX)
+endif(CMAKE_Fortran_COMPILER_SUPPORTS_F90)
 
 # Make sure that MPI is available
 find_package(MPI)
@@ -603,6 +612,94 @@ if(BUILD_EXAMPLES)
   endforeach(EXAMPLE)
 endif(BUILD_EXAMPLES)
 
+if(BUILD_EXPERIMENTAL AND BUILD_PMRRR AND NOT FAILED_PMRRR)
+  if(NOT MPI_C_FOUND)
+    message(FATAL_ERROR "Could not build C interface without C MPI")
+  endif(NOT MPI_C_FOUND)
+  include_directories(${MPI_C_INCLUDE_PATH})
+  set(CMAKE_C_FLAGS_HYBRIDDEBUG "${MPI_C_COMPILE_FLAGS}")
+  set(CMAKE_C_FLAGS_HYBRIDRELEASE "${MPI_C_COMPILE_FLAGS}")
+  set(CMAKE_C_FLAGS_PUREDEBUG "${MPI_C_COMPILE_FLAGS}")
+  set(CMAKE_C_FLAGS_PURERELEASE "${MPI_C_COMPILE_FLAGS}")
+
+  set(EXPERIMENTAL_DIR ${PROJECT_SOURCE_DIR}/experimental)
+  set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/experimental/c_interface")
+
+  # Build the experimental C interface
+  file(GLOB_RECURSE EXPERIMENTAL_C_CPP RELATIVE ${PROJECT_SOURCE_DIR} 
+       "experimental/c_interface/c_interface.cpp")
+  add_library(experimental-c-interface STATIC ${EXPERIMENTAL_C_CPP})
+
+  add_executable(
+      experimental-c-interface-test
+      ${EXPERIMENTAL_DIR}/c_interface/test.c
+  )
+  target_link_libraries(
+      experimental-c-interface-test experimental-c-interface 
+      elemental cmake-dummy-lib
+  )
+  set_target_properties(
+      experimental-c-interface-test PROPERTIES OUTPUT_NAME c_interface_test
+                                    RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR}
+  )
+  if(MPI_LINK_FLAGS)
+    set_target_properties(
+        experimental-c-interface-test PROPERTIES LINK_FLAGS ${MPI_LINK_FLAGS}
+    )
+  endif(MPI_LINK_FLAGS)
+  install(TARGETS experimental-c-interface-test 
+          DESTINATION bin/experimental/c_interface)  
+  add_custom_command(
+    OUTPUT ${PROJECT_BINARY_DIR}/include/elemental.h
+    COMMAND ${CMAKE_COMMAND} -E copy 
+            ${PROJECT_SOURCE_DIR}/experimental/c_interface/elemental.h
+            ${PROJECT_BINARY_DIR}/include/elemental.h
+    DEPENDS "${PROJECT_SOURCE_DIR}/experimental/c_interface/elemental.h"
+  )
+  install(FILES ${PROJECT_BINARY_DIR}/include/elemental.h 
+          DESTINATION include/elemental.h)
+
+  if(HAVE_F90_INTERFACE)
+    if(NOT MPI_Fortran_FOUND)
+      message(FATAL_ERROR "Could not build F90 interface without Fortran MPI")
+    endif(NOT MPI_Fortran_FOUND)
+    include_directories(${MPI_Fortran_INCLUDE_PATH})
+    set(CMAKE_Fortran_FLAGS_HYBRIDDEBUG "${MPI_Fortran_COMPILE_FLAGS}")
+    set(CMAKE_Fortran_FLAGS_HYBRIDRELEASE "${MPI_Fortran_COMPILE_FLAGS}")
+    set(CMAKE_Fortran_FLAGS_PUREDEBUG "${MPI_Fortran_COMPILE_FLAGS}")
+    set(CMAKE_Fortran_FLAGS_PURERELEASE "${MPI_Fortran_COMPILE_FLAGS}")
+
+    set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/experimental/f90_interface")
+
+    # Build the experimental F90 interface
+    file(GLOB_RECURSE EXPERIMENTAL_F90_CPP RELATIVE ${PROJECT_SOURCE_DIR} 
+         "experimental/f90_interface/f90_interface.cpp")
+    add_library(experimental-f90-interface STATIC ${EXPERIMENTAL_F90_CPP})
+
+    add_executable(
+        experimental-f90-interface-test
+        ${EXPERIMENTAL_DIR}/f90_interface/test.f90
+    )
+    target_link_libraries(
+        experimental-f90-interface-test experimental-f90-interface 
+        elemental cmake-dummy-lib
+    )
+    set_target_properties(
+        experimental-f90-interface-test 
+        PROPERTIES OUTPUT_NAME f90_interface_test
+        RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR}
+    )
+    if(MPI_LINK_FLAGS)
+      set_target_properties(
+          experimental-f90-interface-test 
+          PROPERTIES LINK_FLAGS ${MPI_LINK_FLAGS}
+      )
+    endif(MPI_LINK_FLAGS)
+    install(TARGETS experimental-f90-interface-test 
+            DESTINATION bin/experimental/f90_interface)  
+  endif(HAVE_F90_INTERFACE)
+endif(BUILD_EXPERIMENTAL AND BUILD_PMRRR AND NOT FAILED_PMRRR)
+
 # Simplify the inclusion of Elemental as a subproject in another build system
 set(MPI_C_COMPILER ${MPI_C_COMPILER} PARENT_SCOPE)
 set(MPI_C_INCLUDE_PATH ${MPI_C_INCLUDE_PATH} PARENT_SCOPE)
@@ -619,8 +716,8 @@ set(RESTRICT ${RESTRICT} PARENT_SCOPE)
 set(RELEASE ${RELEASE} PARENT_SCOPE)
 set(BLAS_POST ${BLAS_POST} PARENT_SCOPE)
 set(LAPACK_POST ${LAPACK_POST} PARENT_SCOPE)
+set(HAVE_F90_INTERFACE ${HAVE_F90_INTERFACE} PARENT_SCOPE)
 set(WITHOUT_PMRRR ${WITHOUT_PMRRR} PARENT_SCOPE)
-set(DISABLE_SCALAR_WRAPPER ${DISABLE_SCALAR_WRAPPER} PARENT_SCOPE)
 set(AVOID_COMPLEX_MPI ${AVOID_COMPLEX_MPI} PARENT_SCOPE)
 set(HAVE_REDUCE_SCATTER_BLOCK ${HAVE_REDUCE_SCATTER_BLOCK} PARENT_SCOPE)
 set(REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE ${REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE} PARENT_SCOPE)

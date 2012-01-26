@@ -31,7 +31,7 @@
    POSSIBILITY OF SUCH DAMAGE.
 */
 
-namespace elemental {
+namespace elem {
 
 template<typename R>
 inline void
@@ -140,8 +140,8 @@ internal::HermitianTridiagL( DistMatrix<R,MC,MR>& A )
 template<typename R> 
 inline void
 internal::HermitianTridiagL
-( DistMatrix<std::complex<R>,MC,  MR  >& A,
-  DistMatrix<std::complex<R>,STAR,STAR>& t )
+( DistMatrix<Complex<R>,MC,  MR  >& A,
+  DistMatrix<Complex<R>,STAR,STAR>& t )
 {
 #ifndef RELEASE
     PushCallStack("internal::HermitianTridiagL");
@@ -152,7 +152,7 @@ internal::HermitianTridiagL
     if( t.Viewing() )
         throw std::logic_error("t must not be a view");
 #endif
-    typedef std::complex<R> C;
+    typedef Complex<R> C;
 
     const Grid& g = A.Grid();
     DistMatrix<C,MD,STAR> tDiag(g);
@@ -279,4 +279,4 @@ internal::HermitianTridiagL
 #endif
 }
 
-} // namespace elemental
+} // namespace elem
