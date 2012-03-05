@@ -22,7 +22,16 @@
 
 namespace cliq {
 
-enum SolveMode { FEW_RHS, FEW_RHS_FAST_LDL, MANY_RHS };
+enum SolveMode { NORMAL_1D, NORMAL_2D, FAST_1D_LDL, FAST_2D_LDL };
+
+inline bool 
+ModeIs1d( SolveMode mode )
+{
+    if( mode == NORMAL_1D || mode == FAST_1D_LDL )
+        return true;
+    else
+        return false;
+}
 
 namespace numeric {
 
@@ -48,17 +57,21 @@ struct DistSymmFront
 {
     // The 'SolveMode' member variable of the parent 'DistSymmFrontTree' 
     // determines which of the following fronts is active.
-    //   FEW_RHS  -> front1d
-    //   MANY_RHS -> front2d
+    //   {NORMAL_1D,FAST_1D_LDL} -> front1d
+    //   {NORMAL_2D,FAST_2D_LDL} -> front2d
     //
     // Split each front into a left and right piece such that the right piece
     // is not needed after the factorization (and can be freed).
 
+    // TODO: Think about the fact that almost everything is now mutable...
+
     mutable DistMatrix<F,VC,STAR> front1dL;
     mutable DistMatrix<F,VC,STAR> work1d;
 
-    DistMatrix<F,MC,MR> front2dL;
+    mutable DistMatrix<F,MC,MR> front2dL;
     mutable DistMatrix<F,MC,MR> work2d;
+
+    DistMatrix<F,VC,STAR> diag;
 };
 
 template<typename F>

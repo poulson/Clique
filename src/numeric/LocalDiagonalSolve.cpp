@@ -44,7 +44,7 @@ void numeric::LocalDiagonalSolve
         frontTL.LockedView( frontL, 0, 0, sn.size, sn.size );
         Matrix<F> d;
         frontTL.GetDiagonal( d );
-        LocalFrontDiagonalSolve( d, XSub );
+        elem::DiagonalSolve( LEFT, NORMAL, d, XSub, true );
     }
 #ifndef RELEASE
     PopCallStack();

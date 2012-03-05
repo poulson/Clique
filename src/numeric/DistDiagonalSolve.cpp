@@ -42,13 +42,8 @@ void numeric::DistDiagonalSolve
         Matrix<F> localXT;
         localXT.View( localX, sn.localOffset1d, 0, sn.localSize1d, width );
 
-        // Solve against the s'th supernode using the front
-        DistMatrix<F,VC,STAR> FTL;
-        FTL.LockedView( front.front1dL, 0, 0, sn.size, sn.size );
-        DistMatrix<F,VC,STAR> dTL;
-        FTL.GetDiagonal( dTL );
         elem::DiagonalSolve
-        ( LEFT, NORMAL, dTL.LockedLocalMatrix(), localXT, true );
+        ( LEFT, NORMAL, front.diag.LockedLocalMatrix(), localXT, true );
     }
 #ifndef RELEASE
     PopCallStack();

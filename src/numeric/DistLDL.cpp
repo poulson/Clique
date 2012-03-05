@@ -31,7 +31,7 @@ void numeric::DistLDL
     if( orientation == NORMAL )
         throw std::logic_error("LDL must be (conjugate-)transposed");
 #endif
-    L.dist.mode = MANY_RHS;
+    L.dist.mode = NORMAL_2D;
 
     // The bottom front is already computed, so just view it
     LocalSymmFront<F>& topLocalFront = L.local.fronts.back();
@@ -217,6 +217,12 @@ void numeric::DistLDL
 
         // Now that the frontal matrix is set up, perform the factorization
         DistFrontLDL( orientation, front.front2dL, front.work2d );
+
+        // Store the diagonal in a [VC,* ] distribution
+        DistMatrix<F,MD,STAR> diag( grid );
+        front.front2dL.GetDiagonal( diag );
+        front.diag.SetGrid( grid );
+        front.diag = diag;
     }
     L.local.fronts.back().work.Empty();
     L.dist.fronts.back().work2d.Empty();

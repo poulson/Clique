@@ -34,7 +34,7 @@ void numeric::DistLowerMultiplyNormal
 #endif
     const int numDistSupernodes = S.dist.supernodes.size();
     const int width = localX.Width();
-    if( L.dist.mode == MANY_RHS )
+    if( L.dist.mode != NORMAL_1D )
         throw std::logic_error("This multiply mode is not yet implemented");
     if( width == 0 )
     {
@@ -207,7 +207,7 @@ void numeric::DistLowerMultiplyTranspose
 #endif
     const int numDistSupernodes = S.dist.supernodes.size();
     const int width = localX.Width();
-    if( L.dist.mode == MANY_RHS )
+    if( L.dist.mode != NORMAL_1D )
         throw std::logic_error("This multiply mode is not yet implemented");
     if( width == 0 )
     {

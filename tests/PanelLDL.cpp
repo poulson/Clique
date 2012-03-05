@@ -22,7 +22,7 @@
 void Usage()
 {
     std::cout << "PanelLDL <numPanels> <nx> <ny> <nz> <cutoff> <fact blocksize>"
-                 " <solve blocksize> <write info?>\n"
+                 " <solve blocksize> <useFast1d> <write info?>\n"
               << "<numPanels>: number of panels to factor in memory\n"
               << "<nx>: size of panel in x direction\n"
               << "<ny>: size of panel in y direction\n"
@@ -30,6 +30,7 @@ void Usage()
               << "<cutoff>: minimum required leaf size\n" 
               << "<fact blocksize>: algorithmic blocksize for factorization\n"
               << "<solve blocksize>: algorithm blocksize for solve\n"
+              << "<useFast1d>: use 1d distributions iff != 0\n"
               << "<write info?>: write basic local info to file? [0/1]\n"
               << "<prefix>: prefix for each process's info file\n"
               << std::endl;
@@ -85,7 +86,7 @@ main( int argc, char* argv[] )
         return 0;
     }
 
-    if( argc < 9 )
+    if( argc < 10 )
     {
         if( commRank == 0 )        
             Usage();
@@ -101,6 +102,7 @@ main( int argc, char* argv[] )
     const int cutoff = atoi( argv[argNum++] );
     const int factBlocksize = atoi( argv[argNum++] );
     const int solveBlocksize = atoi( argv[argNum++] );
+    const bool useFast1d = atoi( argv[argNum++] );
     const bool writeInfo = atoi( argv[argNum++] );
     if( writeInfo && argc == 10 )
     {
@@ -223,7 +225,7 @@ main( int argc, char* argv[] )
                 if( writeInfo )
                     frontL.Print( infoFile, "frontL local" );
             }
-            L.dist.mode = cliq::MANY_RHS;
+            L.dist.mode = cliq::NORMAL_2D;
             L.dist.fronts.resize( log2CommSize+1 );
             cliq::numeric::InitializeDistLeaf( S, L );
             for( unsigned s=1; s<log2CommSize+1; ++s )
@@ -257,7 +259,7 @@ main( int argc, char* argv[] )
             elem::Matrix<F> localX( localHeight1d, NUM_RHS );
             localX.SetToRandom();
             elem::Matrix<F> localYLower = localX;
-            cliq::numeric::SetSolveMode( L, cliq::FEW_RHS );
+            cliq::numeric::SetSolveMode( L, cliq::NORMAL_1D );
             cliq::numeric::LowerMultiply
             ( elem::NORMAL, elem::NON_UNIT, -1, S, L, localYLower );
             elem::Matrix<F> localY = localX;
@@ -265,7 +267,7 @@ main( int argc, char* argv[] )
             ( elem::TRANSPOSE, elem::NON_UNIT, 0, S, L, localY );
             elem::Axpy( (F)1, localYLower, localY );
             localYLower.Empty();
-            cliq::numeric::SetSolveMode( L, cliq::MANY_RHS );
+            cliq::numeric::SetSolveMode( L, cliq::NORMAL_2D );
             cliq::mpi::Barrier( comm );
             const double makeRhsStopTime = cliq::mpi::Time();
             if( commRank == 0 )
@@ -293,9 +295,12 @@ main( int argc, char* argv[] )
                           << factStopTime-factStartTime
                           << " secs" << std::endl;
 
-            // Redistribute to 1d for fast solves with few right-hand sides
+            // Invert the diagonal blocks for faster solves
             const double redistStartTime = cliq::mpi::Time();
-            cliq::numeric::SetSolveMode( L, cliq::FEW_RHS_FAST_LDL );
+            if( useFast1d )
+                cliq::numeric::SetSolveMode( L, cliq::FAST_1D_LDL );
+            else
+                cliq::numeric::SetSolveMode( L, cliq::FAST_2D_LDL );
             cliq::mpi::Barrier( comm );
             const double redistStopTime = cliq::mpi::Time();
             if( commRank == 0 )

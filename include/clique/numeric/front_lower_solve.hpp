@@ -46,6 +46,12 @@ void DistFrontFastLowerForwardSolve
   DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
+void DistFrontFastLowerForwardSolve
+( Diagonal diag,
+  DistMatrix<F,MC,MR  >& L,
+  DistMatrix<F,VC,STAR>& X );
+
+template<typename F>
 void DistFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const DistMatrix<F,VC,STAR>& L, 
@@ -56,6 +62,12 @@ template<typename F>
 void DistFrontFastLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   DistMatrix<F,VC,STAR>& L,
+  DistMatrix<F,VC,STAR>& X );
+
+template<typename F>
+void DistFrontFastLowerBackwardSolve
+( Orientation orientation, Diagonal diag,
+  DistMatrix<F,MC,MR  >& L,
   DistMatrix<F,VC,STAR>& X );
 
 } // namespace numeric

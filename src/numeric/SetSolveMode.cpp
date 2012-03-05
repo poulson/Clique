@@ -41,7 +41,7 @@ void numeric::SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
     DistSymmFront<F>& leafFront = L.dist.fronts[0];
     const SolveMode oldMode = L.dist.mode;
 
-    if( mode == FEW_RHS && oldMode == MANY_RHS )
+    if( mode == NORMAL_1D && oldMode == NORMAL_2D )
     {
         leafFront.front1dL.LockedView
         ( leafFront.front2dL.Height(), 
@@ -58,7 +58,23 @@ void numeric::SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
             front.front2dL.Empty();
         }
     }
-    else if( mode == FEW_RHS_FAST_LDL && oldMode == MANY_RHS )
+    else if( mode == FAST_2D_LDL && oldMode == NORMAL_2D )
+    {
+        for( int s=1; s<numDistSupernodes; ++s )
+        {
+            DistSymmFront<F>& front = L.dist.fronts[s];
+            const elem::Grid& grid = front.front2dL.Grid();
+            const int snSize = front.front2dL.Width();
+
+            // Invert the strictly lower portion of the diagonal block, and
+            // then make the strictly upper triangle zero
+            DistMatrix<F> LT( grid );
+            LT.View( front.front2dL, 0, 0, snSize, snSize );
+            elem::TriangularInverse( elem::LOWER, elem::UNIT, LT );
+            LT.MakeTrapezoidal( elem::LEFT, elem::LOWER );
+        }
+    }
+    else if( mode == FAST_1D_LDL && oldMode == NORMAL_2D )
     {
         leafFront.front1dL.LockedView
         ( leafFront.front2dL.Height(), 
@@ -85,7 +101,7 @@ void numeric::SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
             front.front2dL.Empty();
         }
     }
-    else if( mode == MANY_RHS && oldMode == FEW_RHS )
+    else if( mode == NORMAL_2D && oldMode == NORMAL_1D )
     {
         leafFront.front2dL.LockedView
         ( leafFront.front1dL.Height(), 

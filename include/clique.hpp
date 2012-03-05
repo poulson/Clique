@@ -23,7 +23,6 @@
 #include "clique/core/environment.hpp"
 #include "clique/symbolic/symmetric_factorization.hpp"
 
-#include "clique/numeric/front_diagonal_solve.hpp"
 #include "clique/numeric/front_lower_solve.hpp"
 #include "clique/numeric/front_lower_multiply.hpp"
 
