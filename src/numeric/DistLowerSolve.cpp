@@ -99,11 +99,10 @@ void numeric::DistLowerForwardSolve
         std::vector<int> sendCounts(commSize), sendDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int actualSend = sn.numChildSolveSendIndices[proc]*width;
-            const int thisSend = std::max(actualSend,1);
-            sendCounts[proc] = thisSend;
+            const int sendSize = sn.numChildSolveSendIndices[proc]*width;
+            sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
-            sendBufferSize += thisSend;
+            sendBufferSize += sendSize;
         }
         std::vector<F> sendBuffer( sendBufferSize );
 
@@ -133,11 +132,10 @@ void numeric::DistLowerForwardSolve
         std::vector<int> recvCounts(commSize), recvDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int actualRecv = sn.childSolveRecvIndices[proc].size()*width;
-            const int thisRecv = std::max(actualRecv,1);
-            recvCounts[proc] = thisRecv;
+            const int recvSize = sn.childSolveRecvIndices[proc].size()*width;
+            recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
-            recvBufferSize += thisRecv;
+            recvBufferSize += recvSize;
         }
         std::vector<F> recvBuffer( recvBufferSize );
 #ifndef RELEASE
@@ -162,9 +160,42 @@ void numeric::DistLowerForwardSolve
 #endif
 
         // AllToAll to send and receive the child updates
+#ifdef USE_CUSTOM_ALLTOALLV_FOR_SOLVE
+        int numSends=0,numRecvs=0;
+        for( unsigned proc=0; proc<commSize; ++proc )
+        {
+            if( sendCounts[proc] != 0 )
+                ++numSends;
+            if( recvCounts[proc] != 0 )
+                ++numRecvs;
+        }
+        std::vector<mpi::Status> statuses(numSends+numRecvs);
+        std::vector<mpi::Request> requests(numSends+numRecvs);
+        int rCount=0;
+        for( unsigned proc=0; proc<commSize; ++proc )
+        {
+            int count = recvCounts[proc];
+            int displ = recvDispls[proc];
+            if( count != 0 )
+                mpi::IRecv
+                ( &recvBuffer[displ], count, proc, 0, comm, requests[rCount++] );
+        }
+        for( unsigned proc=0; proc<commSize; ++proc )
+        {
+            int count = sendCounts[proc];
+            int displ = sendDispls[proc];
+            if( count != 0 )
+                mpi::ISend
+                ( &sendBuffer[displ], count, proc, 0, comm, requests[rCount++] );
+        }
+        mpi::WaitAll( numSends+numRecvs, &requests[0], &statuses[0] );
+        statuses.clear();
+        requests.clear();
+#else
         mpi::AllToAll
         ( &sendBuffer[0], &sendCounts[0], &sendDispls[0],
           &recvBuffer[0], &recvCounts[0], &recvDispls[0], comm );
+#endif
         sendBuffer.clear();
         sendCounts.clear();
         sendDispls.clear();
@@ -291,12 +322,11 @@ void numeric::DistLowerBackwardSolve
         std::vector<int> sendCounts(parentCommSize), sendDispls(parentCommSize);
         for( int proc=0; proc<parentCommSize; ++proc )
         {
-            const int actualSend = 
+            const int sendSize = 
                 parentSN.childSolveRecvIndices[proc].size()*width;
-            const int thisSend = std::max(actualSend,1);
-            sendCounts[proc] = thisSend;
+            sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
-            sendBufferSize += thisSend;
+            sendBufferSize += sendSize;
         }
         std::vector<F> sendBuffer( sendBufferSize );
 
@@ -324,12 +354,11 @@ void numeric::DistLowerBackwardSolve
         std::vector<int> recvCounts(parentCommSize), recvDispls(parentCommSize);
         for( int proc=0; proc<parentCommSize; ++proc )
         {
-            const int actualRecv = 
+            const int recvSize = 
                 parentSN.numChildSolveSendIndices[proc]*width;
-            const int thisRecv = std::max(actualRecv,1);
-            recvCounts[proc] = thisRecv;
+            recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
-            recvBufferSize += thisRecv;
+            recvBufferSize += recvSize;
         }
         std::vector<F> recvBuffer( recvBufferSize );
 #ifndef RELEASE
@@ -354,9 +383,44 @@ void numeric::DistLowerBackwardSolve
 #endif
 
         // AllToAll to send and recv parent updates
+#ifdef USE_CUSTOM_ALLTOALLV_FOR_SOLVE
+        int numSends=0,numRecvs=0;
+        for( unsigned proc=0; proc<parentCommSize; ++proc )
+        {  
+            if( sendCounts[proc] != 0 )
+                ++numSends;
+            if( recvCounts[proc] != 0 )
+                ++numRecvs;
+        }
+        std::vector<mpi::Status> statuses(numSends+numRecvs);
+        std::vector<mpi::Request> requests(numSends+numRecvs);
+        int rCount=0; 
+        for( unsigned proc=0; proc<parentCommSize; ++proc )
+        {    
+            int count = recvCounts[proc];
+            int displ = recvDispls[proc];
+            if( count != 0 )
+                mpi::IRecv
+                ( &recvBuffer[displ], count, proc, 0, parentComm, 
+                  requests[rCount++] );
+        }
+        for( unsigned proc=0; proc<parentCommSize; ++proc )
+        {
+            int count = sendCounts[proc];
+            int displ = sendDispls[proc];
+            if( count != 0 )
+                mpi::ISend
+                ( &sendBuffer[displ], count, proc, 0, parentComm, 
+                  requests[rCount++] );
+        }
+        mpi::WaitAll( numSends+numRecvs, &requests[0], &statuses[0] );
+        statuses.clear();
+        requests.clear();
+#else
         mpi::AllToAll
         ( &sendBuffer[0], &sendCounts[0], &sendDispls[0],
           &recvBuffer[0], &recvCounts[0], &recvDispls[0], parentComm );
+#endif
         sendBuffer.clear();
         sendCounts.clear();
         sendDispls.clear();

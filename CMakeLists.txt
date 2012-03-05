@@ -25,6 +25,12 @@ set(Clique_VERSION_MAJOR 0)
 set(Clique_VERSION_MINOR 1)
 
 option(BUILD_TESTS "Build a collection of test executables" OFF)
+option(USE_CUSTOM_ALLTOALLV_FOR_FACT 
+       "Avoid MPI_Alltoallv in factorization for performance reasons" ON)
+option(USE_CUSTOM_ALLTOALLV_FOR_MULT
+       "Avoid MPI_Alltoallv in multiplication for performance reasons" ON)
+option(USE_CUSTOM_ALLTOALLV_FOR_SOLVE
+       "Avoid MPI_Alltoallv in solve for performance reasons" ON)
 
 # Add Elemental, but don't worry about the Hermitian eigensolver
 option(BUILD_PMRRR "Build the parallel tridiagonal eigensolver" OFF)

@@ -99,11 +99,11 @@ struct DistSymmFactSupernode
     mutable std::vector<std::deque<int> > childFactRecvIndices;
 
     //
-    // Helpers for 1d solves (few right-hand sides)
+    // Helpers for 1d right-hand sides
     //
+    std::deque<int> leftChildSolveIndices, rightChildSolveIndices;
     int localSize1d, localOffset1d;
     std::vector<int> numChildSolveSendIndices;
-    std::deque<int> leftChildSolveIndices, rightChildSolveIndices;
     std::vector<std::deque<int> > childSolveRecvIndices;
 
     //

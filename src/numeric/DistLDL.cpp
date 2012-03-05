@@ -87,11 +87,10 @@ void numeric::DistLDL
         int sendBufferSize = 0;
         for( unsigned proc=0; proc<commSize; ++proc )
         {
-            const int actualSend = sn.numChildFactSendIndices[proc];
-            const int thisSend = std::max(actualSend,1);
-            sendCounts[proc] = thisSend;
+            const int sendSize = sn.numChildFactSendIndices[proc];
+            sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
-            sendBufferSize += thisSend;
+            sendBufferSize += sendSize;
         }
         std::vector<F> sendBuffer( sendBufferSize );
 
@@ -143,14 +142,13 @@ void numeric::DistLDL
         if( computeFactRecvIndices )
             ComputeFactRecvIndices( sn, childSN );
         std::vector<int> recvCounts(commSize), recvDispls(commSize);
-        int recvBufferSize = 0;
+        int recvBufferSize=0;
         for( unsigned proc=0; proc<commSize; ++proc )
         {
-            const int actualRecv = sn.childFactRecvIndices[proc].size()/2;
-            const int thisRecv = std::max(actualRecv,1);
-            recvCounts[proc] = thisRecv;
+            const int recvSize = sn.childFactRecvIndices[proc].size()/2;
+            recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
-            recvBufferSize += thisRecv;
+            recvBufferSize += recvSize;
         }
         std::vector<F> recvBuffer( recvBufferSize );
 #ifndef RELEASE
@@ -175,9 +173,42 @@ void numeric::DistLDL
 #endif
 
         // AllToAll to send and receive the child updates
+#ifdef USE_CUSTOM_ALLTOALLV_FOR_FACT
+        int numSends=0,numRecvs=0;
+        for( unsigned proc=0; proc<commSize; ++proc )
+        {
+            if( sendCounts[proc] != 0 )
+                ++numSends;
+            if( recvCounts[proc] != 0 )
+                ++numRecvs;
+        }
+        std::vector<mpi::Status> statuses(numSends+numRecvs); 
+        std::vector<mpi::Request> requests(numSends+numRecvs);
+        int rCount=0;
+        for( unsigned proc=0; proc<commSize; ++proc )
+        {
+            int count = recvCounts[proc];
+            int displ = recvDispls[proc];
+            if( count != 0 )
+                mpi::IRecv
+                ( &recvBuffer[displ], count, proc, 0, comm, requests[rCount++] );
+        }
+        for( unsigned proc=0; proc<commSize; ++proc )
+        {
+            int count = sendCounts[proc];
+            int displ = sendDispls[proc];
+            if( count != 0 )
+                mpi::ISend
+                ( &sendBuffer[displ], count, proc, 0, comm, requests[rCount++] );
+        }
+        mpi::WaitAll( numSends+numRecvs, &requests[0], &statuses[0] );
+        statuses.clear();
+        requests.clear();
+#else
         mpi::AllToAll
         ( &sendBuffer[0], &sendCounts[0], &sendDispls[0],
           &recvBuffer[0], &recvCounts[0], &recvDispls[0], comm );
+#endif
         sendBuffer.clear();
         sendCounts.clear();
         sendDispls.clear();
