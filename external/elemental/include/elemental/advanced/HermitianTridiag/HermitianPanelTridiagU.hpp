@@ -182,7 +182,7 @@ internal::HermitianPanelTridiagU
         a01T_MC_STAR.View( a01_MC_STAR, 0, 0, topSize, 1 );
         p01T_MC_STAR.View( p01_MC_STAR, 0, 0, topSize, 1 );
         //--------------------------------------------------------------------//
-        const bool thisIsMyCol = ( g.MRRank() == alpha11.RowAlignment() );
+        const bool thisIsMyCol = ( g.Col() == alpha11.RowAlignment() );
         if( thisIsMyCol )
         {
             if( !firstIteration )
@@ -218,36 +218,32 @@ internal::HermitianPanelTridiagU
             if( thisIsMyCol )
             {
                 // Pack the broadcast buffer with a01 and tau
-                std::memcpy
+                MemCopy
                 ( &rowBroadcastBuffer[0], 
-                  a01.LocalBuffer(), 
-                  a01LocalHeight*sizeof(R) );
+                  a01.LocalBuffer(), a01LocalHeight );
                 rowBroadcastBuffer[a01LocalHeight] = tau;
             }
             // Broadcast a01 and tau across the process row
             mpi::Broadcast
             ( &rowBroadcastBuffer[0], 
-              a01LocalHeight+1, a01.RowAlignment(), g.MRComm() );
+              a01LocalHeight+1, a01.RowAlignment(), g.RowComm() );
             // Store a01[MC,* ] into its DistMatrix class and also store a copy
             // for the next iteration
-            std::memcpy
+            MemCopy
             ( a01_MC_STAR.LocalBuffer(), 
-              &rowBroadcastBuffer[0],
-              a01LocalHeight*sizeof(R) );
+              &rowBroadcastBuffer[0], a01LocalHeight );
             // Store a01[MC,* ] into APan[MC,* ]
-            std::memcpy
+            MemCopy
             ( APan_MC_STAR.LocalBuffer(0,W00.Width()), 
-              &rowBroadcastBuffer[0],
-              a01LocalHeight*sizeof(R) );
+              &rowBroadcastBuffer[0], a01LocalHeight );
             // Store tau
             tau = rowBroadcastBuffer[a01LocalHeight];
             
             a01_MR_STAR = a01_MC_STAR;
             // Store a01[MR,* ]
-            std::memcpy
+            MemCopy
             ( APan_MR_STAR.LocalBuffer(0,W00.Width()),
-              a01_MR_STAR.LocalBuffer(),
-              a01_MR_STAR.LocalHeight()*sizeof(R) );
+              a01_MR_STAR.LocalBuffer(), a01_MR_STAR.LocalHeight() );
         }
         else
         {
@@ -258,50 +254,43 @@ internal::HermitianPanelTridiagU
             if( thisIsMyCol ) 
             {
                 // Pack the broadcast buffer with a01, w01Last, and tau
-                std::memcpy
+                MemCopy
                 ( &rowBroadcastBuffer[0], 
-                  a01.LocalBuffer(),
-                  a01LocalHeight*sizeof(R) );
-                std::memcpy
+                  a01.LocalBuffer(), a01LocalHeight );
+                MemCopy
                 ( &rowBroadcastBuffer[a01LocalHeight], 
-                  &w01LastLocalBuffer[0],
-                  w01LastLocalHeight*sizeof(R) );
+                  &w01LastLocalBuffer[0], w01LastLocalHeight );
                 rowBroadcastBuffer[a01LocalHeight+w01LastLocalHeight] = tau;
             }
             // Broadcast a01, w01Last, and tau across the process row
             mpi::Broadcast
             ( &rowBroadcastBuffer[0], 
               a01LocalHeight+w01LastLocalHeight+1, 
-              a01.RowAlignment(), g.MRComm() );
+              a01.RowAlignment(), g.RowComm() );
             // Store a01[MC,* ] into its DistMatrix class 
-            std::memcpy
+            MemCopy
             ( a01_MC_STAR.LocalBuffer(), 
-              &rowBroadcastBuffer[0],
-              a01LocalHeight*sizeof(R) );
+              &rowBroadcastBuffer[0], a01LocalHeight );
             // Store a01[MC,* ] into APan[MC,* ]
-            std::memcpy
+            MemCopy
             ( APan_MC_STAR.LocalBuffer(0,W00.Width()),
-              &rowBroadcastBuffer[0],
-              a01LocalHeight*sizeof(R) );
+              &rowBroadcastBuffer[0], a01LocalHeight );
             // Store w01Last[MC,* ] into its DistMatrix class
             w01Last_MC_STAR.AlignWith( A00 );
             w01Last_MC_STAR.ResizeTo( a01.Height()+1, 1 );
-            std::memcpy
+            MemCopy
             ( w01Last_MC_STAR.LocalBuffer(), 
-              &rowBroadcastBuffer[a01LocalHeight], 
-              w01LastLocalHeight*sizeof(R) );
+              &rowBroadcastBuffer[a01LocalHeight], w01LastLocalHeight );
             // Store the bottom part of w01Last[MC,* ] into WB[MC,* ] and, 
             // if necessary, w01.
-            std::memcpy
+            MemCopy
             ( W_MC_STAR.LocalBuffer(0,W00.Width()+1),
-              &rowBroadcastBuffer[a01LocalHeight],
-              w01LastLocalHeight*sizeof(R) );
-            if( g.MRRank() == w01Last.RowAlignment() )
+              &rowBroadcastBuffer[a01LocalHeight], w01LastLocalHeight );
+            if( g.Col() == w01Last.RowAlignment() )
             {
-                std::memcpy
+                MemCopy
                 ( w01Last.LocalBuffer(),
-                  &rowBroadcastBuffer[a01LocalHeight],
-                  w01LastLocalHeight*sizeof(R) );
+                  &rowBroadcastBuffer[a01LocalHeight], w01LastLocalHeight );
             }
             // Store tau
             tau = rowBroadcastBuffer[a01LocalHeight+w01LastLocalHeight];
@@ -362,7 +351,7 @@ internal::HermitianPanelTridiagU
             // [MR,* ] <- [VR,* ]
             mpi::AllGather
             ( recvBuf, portionSize,
-              sendBuf, portionSize, g.MCComm() );
+              sendBuf, portionSize, g.ColComm() );
 
             // Unpack
             w01Last_MR_STAR.AlignWith( A00 );
@@ -371,7 +360,7 @@ internal::HermitianPanelTridiagU
             {
                 // Unpack into w01Last[MR,* ]
                 const R* w01Data = &sendBuf[k*portionSize];
-                const int shift = Shift(g.MRRank()+c*k,colAlignDest,p);
+                const int shift = Shift(g.Col()+c*k,colAlignDest,p);
                 const int offset = (shift-colShiftDest) / c;
                 const int w01LocalHeight = LocalLength(height,shift,p);
                 R* w01LastBuffer = w01Last_MR_STAR.LocalBuffer(offset,0);
@@ -386,15 +375,15 @@ internal::HermitianPanelTridiagU
                     a01Buffer[i*r] = a01Data[i];
             }
             // Store w01Last[MR,* ]
-            std::memcpy
+            MemCopy
             ( W_MR_STAR.LocalBuffer(0,W00.Width()+1),
               w01Last_MR_STAR.LocalBuffer(),
-              w01Last_MR_STAR.LocalHeight()*sizeof(R) );
+              w01Last_MR_STAR.LocalHeight() );
             // Store a01[MR,* ]
-            std::memcpy
+            MemCopy
             ( APan_MR_STAR.LocalBuffer(0,W00.Width()),
               a01_MR_STAR.LocalBuffer(),
-              a01_MR_STAR.LocalHeight()*sizeof(R) );
+              a01_MR_STAR.LocalHeight() );
 
             // Update the portion of A00 that is in our current panel with 
             // w01Last and a01Last using two gers. We do not need their bottom
@@ -459,34 +448,29 @@ internal::HermitianPanelTridiagU
             const int reduceSize = x21LocalHeight+y21LocalHeight+q01LocalHeight;
             std::vector<R> colSumSendBuffer(reduceSize);
             std::vector<R> colSumRecvBuffer(reduceSize);
-            std::memcpy
+            MemCopy
             ( &colSumSendBuffer[0], 
-              x21_MR_STAR.LocalBuffer(), 
-              x21LocalHeight*sizeof(R) );
-            std::memcpy
+              x21_MR_STAR.LocalBuffer(), x21LocalHeight );
+            MemCopy
             ( &colSumSendBuffer[x21LocalHeight],
-              y21_MR_STAR.LocalBuffer(), 
-              y21LocalHeight*sizeof(R) );
-            std::memcpy
+              y21_MR_STAR.LocalBuffer(), y21LocalHeight );
+            MemCopy
             ( &colSumSendBuffer[x21LocalHeight+y21LocalHeight],
-              q01_MR_STAR.LocalBuffer(), 
-              q01LocalHeight*sizeof(R) );
+              q01_MR_STAR.LocalBuffer(), q01LocalHeight );
             mpi::AllReduce
             ( &colSumSendBuffer[0], 
               &colSumRecvBuffer[0],
-              reduceSize, mpi::SUM, g.MCComm() );
-            std::memcpy
+              reduceSize, mpi::SUM, g.ColComm() );
+            MemCopy
             ( x21_MR_STAR.LocalBuffer(), 
-              &colSumRecvBuffer[0], 
-              x21LocalHeight*sizeof(R) );
-            std::memcpy
+              &colSumRecvBuffer[0], x21LocalHeight );
+            MemCopy
             ( y21_MR_STAR.LocalBuffer(), 
-              &colSumRecvBuffer[x21LocalHeight], 
-              y21LocalHeight*sizeof(R) );
-            std::memcpy
+              &colSumRecvBuffer[x21LocalHeight], y21LocalHeight );
+            MemCopy
             ( q01_MR_STAR.LocalBuffer(), 
               &colSumRecvBuffer[x21LocalHeight+y21LocalHeight], 
-              q01LocalHeight*sizeof(R) );
+              q01LocalHeight );
         }
 
         Gemv
@@ -510,10 +494,9 @@ internal::HermitianPanelTridiagU
             std::vector<R> reduceToOneRecvBuffer(2*localHeight);
 
             // Pack p01[MC,* ]
-            std::memcpy
+            MemCopy
             ( &reduceToOneSendBuffer[0], 
-              p01_MC_STAR.LocalBuffer(),
-              localHeight*sizeof(R) );
+              p01_MC_STAR.LocalBuffer(), localHeight );
 
             // Fill in contributions to q01[MC,MR] from q01[MR,* ]
             const bool contributing = 
@@ -523,17 +506,14 @@ internal::HermitianPanelTridiagU
             {
                 if( r == c )
                 {
-                    std::memcpy
+                    MemCopy
                     ( &reduceToOneSendBuffer[localHeight],
-                      q01_MR_STAR.LocalBuffer(), 
-                      localHeight*sizeof(R) );
+                      q01_MR_STAR.LocalBuffer(), localHeight );
                 }
                 else
                 {
                     // Zero the entire buffer first
-                    std::memset
-                    ( &reduceToOneSendBuffer[localHeight], 0,
-                      localHeight*sizeof(R) );
+                    MemZero( &reduceToOneSendBuffer[localHeight], localHeight );
                     // Fill in the entries that we contribute to.
                     // We seek to find the minimum s in N such that
                     //   s*c = a0-b0 (mod r)
@@ -571,9 +551,7 @@ internal::HermitianPanelTridiagU
             }
             else
             {
-                std::memset
-                ( &reduceToOneSendBuffer[localHeight], 0, 
-                  localHeight*sizeof(R) );
+                MemZero( &reduceToOneSendBuffer[localHeight], localHeight );
             }
 
             const int nextProcessRow = (alpha11.ColAlignment()+r-1) % r;
@@ -581,8 +559,8 @@ internal::HermitianPanelTridiagU
             mpi::Reduce
             ( &reduceToOneSendBuffer[0], 
               &reduceToOneRecvBuffer[0],
-              2*localHeight, mpi::SUM, nextProcessCol, g.MRComm() );
-            if( g.MRRank() == nextProcessCol )
+              2*localHeight, mpi::SUM, nextProcessCol, g.RowComm() );
+            if( g.Col() == nextProcessCol )
             {
                 // Combine the second half into the first half        
                 for( int i=0; i<localHeight; ++i )
@@ -599,10 +577,10 @@ internal::HermitianPanelTridiagU
                 R sendBuffer[2];
                 R recvBuffer[2];
                 sendBuffer[0] = myDotProduct;
-                sendBuffer[1] = ( g.MCRank()==nextProcessRow ? 
+                sendBuffer[1] = ( g.Row()==nextProcessRow ? 
                                   reduceToOneRecvBuffer[localHeight-1] : 0 );
                 mpi::AllReduce
-                ( sendBuffer, recvBuffer, 2, mpi::SUM, g.MCComm() );
+                ( sendBuffer, recvBuffer, 2, mpi::SUM, g.ColComm() );
                 R dotProduct = recvBuffer[0];
 
                 // Set up for the next iteration by filling in the values for:
@@ -626,10 +604,8 @@ internal::HermitianPanelTridiagU
                            allReduceRecvBuffer(2*localHeight);
 
             // Pack p01[MC,* ]
-            std::memcpy
-            ( &allReduceSendBuffer[0], 
-              p01_MC_STAR.LocalBuffer(),
-              localHeight*sizeof(R) );
+            MemCopy
+            ( &allReduceSendBuffer[0], p01_MC_STAR.LocalBuffer(), localHeight );
 
             // Fill in contributions to q01[MC,* ] from q01[MR,* ]
             const bool contributing = 
@@ -639,17 +615,14 @@ internal::HermitianPanelTridiagU
             {
                 if( r == c )
                 {
-                    std::memcpy
+                    MemCopy
                     ( &allReduceSendBuffer[localHeight],
-                      q01_MR_STAR.LocalBuffer(), 
-                      localHeight*sizeof(R) );
+                      q01_MR_STAR.LocalBuffer(), localHeight );
                 }
                 else
                 {
                     // Zero the entire buffer first
-                    std::memset
-                    ( &allReduceSendBuffer[localHeight], 0, 
-                      localHeight*sizeof(R) );
+                    MemZero( &allReduceSendBuffer[localHeight], localHeight );
                     // Fill in the entries that we contribute to.
                     // We seek to find the minimum s in N such that
                     //   s*c = a0-b0 (mod r)
@@ -687,15 +660,13 @@ internal::HermitianPanelTridiagU
             }
             else
             {
-                std::memset
-                ( &allReduceSendBuffer[localHeight], 0, 
-                  localHeight*sizeof(R) );
+                MemZero( &allReduceSendBuffer[localHeight], localHeight );
             }
 
             mpi::AllReduce
             ( &allReduceSendBuffer[0], 
               &allReduceRecvBuffer[0],
-              2*localHeight, mpi::SUM, g.MRComm() );
+              2*localHeight, mpi::SUM, g.RowComm() );
 
             // Combine the second half into the first half        
             for( int i=0; i<localHeight; ++i )
@@ -708,7 +679,7 @@ internal::HermitianPanelTridiagU
                                a01_MC_STAR_LocalBuffer, 1 );
             R dotProduct;
             mpi::AllReduce
-            ( &myDotProduct, &dotProduct, 1, mpi::SUM, g.MCComm() );
+            ( &myDotProduct, &dotProduct, 1, mpi::SUM, g.ColComm() );
 
             // Grab views into W[MC,* ] and W[MR,* ]
             DistMatrix<R,MC,STAR> w01_MC_STAR(g);
@@ -937,7 +908,7 @@ internal::HermitianPanelTridiagU
         a01T_MC_STAR.View( a01_MC_STAR, 0, 0, topSize, 1 );
         p01T_MC_STAR.View( p01_MC_STAR, 0, 0, topSize, 1 );
         //--------------------------------------------------------------------//
-        const bool thisIsMyCol = ( g.MRRank() == alpha11.RowAlignment() );
+        const bool thisIsMyCol = ( g.Col() == alpha11.RowAlignment() );
         if( thisIsMyCol )
         {
             if( !firstIteration )
@@ -957,7 +928,7 @@ internal::HermitianPanelTridiagU
         {
             // Compute the Householder reflector
             tau = internal::ColReflector( alpha01B, a01T );
-            if( g.MCRank() == alpha01B.ColAlignment() )
+            if( g.Row() == alpha01B.ColAlignment() )
                 tau1.SetLocalEntry(0,0,tau);
         }
         // Store the subdiagonal value and turn a01 into a proper scaled 
@@ -975,36 +946,33 @@ internal::HermitianPanelTridiagU
             if( thisIsMyCol )
             {
                 // Pack the broadcast buffer with a01 and tau
-                std::memcpy
+                MemCopy
                 ( &rowBroadcastBuffer[0], 
-                  a01.LocalBuffer(), 
-                  a01LocalHeight*sizeof(C) );
+                  a01.LocalBuffer(), a01LocalHeight );
                 rowBroadcastBuffer[a01LocalHeight] = tau;
             }
             // Broadcast a01 and tau across the process row
             mpi::Broadcast
             ( &rowBroadcastBuffer[0], 
-              a01LocalHeight+1, a01.RowAlignment(), g.MRComm() );
+              a01LocalHeight+1, a01.RowAlignment(), g.RowComm() );
             // Store a01[MC,* ] into its DistMatrix class and also store a copy
             // for the next iteration
-            std::memcpy
+            MemCopy
             ( a01_MC_STAR.LocalBuffer(), 
-              &rowBroadcastBuffer[0],
-              a01LocalHeight*sizeof(C) );
+              &rowBroadcastBuffer[0], a01LocalHeight );
             // Store a01[MC,* ] into APan[MC,* ]
-            std::memcpy
+            MemCopy
             ( APan_MC_STAR.LocalBuffer(0,W00.Width()), 
-              &rowBroadcastBuffer[0],
-              a01LocalHeight*sizeof(C) );
+              &rowBroadcastBuffer[0], a01LocalHeight );
             // Store tau
             tau = rowBroadcastBuffer[a01LocalHeight];
             
             a01_MR_STAR = a01_MC_STAR;
             // Store a01[MR,* ]
-            std::memcpy
+            MemCopy
             ( APan_MR_STAR.LocalBuffer(0,W00.Width()),
               a01_MR_STAR.LocalBuffer(),
-              a01_MR_STAR.LocalHeight()*sizeof(C) );
+              a01_MR_STAR.LocalHeight() );
         }
         else
         {
@@ -1015,50 +983,43 @@ internal::HermitianPanelTridiagU
             if( thisIsMyCol ) 
             {
                 // Pack the broadcast buffer with a01, w01Last, and tau
-                std::memcpy
+                MemCopy
                 ( &rowBroadcastBuffer[0], 
-                  a01.LocalBuffer(),
-                  a01LocalHeight*sizeof(C) );
-                std::memcpy
+                  a01.LocalBuffer(), a01LocalHeight );
+                MemCopy
                 ( &rowBroadcastBuffer[a01LocalHeight], 
-                  &w01LastLocalBuffer[0],
-                  w01LastLocalHeight*sizeof(C) );
+                  &w01LastLocalBuffer[0], w01LastLocalHeight );
                 rowBroadcastBuffer[a01LocalHeight+w01LastLocalHeight] = tau;
             }
             // Broadcast a01, w01Last, and tau across the process row
             mpi::Broadcast
             ( &rowBroadcastBuffer[0], 
               a01LocalHeight+w01LastLocalHeight+1, 
-              a01.RowAlignment(), g.MRComm() );
+              a01.RowAlignment(), g.RowComm() );
             // Store a01[MC,* ] into its DistMatrix class 
-            std::memcpy
+            MemCopy
             ( a01_MC_STAR.LocalBuffer(), 
-              &rowBroadcastBuffer[0],
-              a01LocalHeight*sizeof(C) );
+              &rowBroadcastBuffer[0], a01LocalHeight );
             // Store a01[MC,* ] into APan[MC,* ]
-            std::memcpy
+            MemCopy
             ( APan_MC_STAR.LocalBuffer(0,W00.Width()), 
-              &rowBroadcastBuffer[0],
-              a01LocalHeight*sizeof(C) );
+              &rowBroadcastBuffer[0], a01LocalHeight );
             // Store w01Last[MC,* ] into its DistMatrix class
             w01Last_MC_STAR.AlignWith( A00 );
             w01Last_MC_STAR.ResizeTo( a01.Height()+1, 1 );
-            std::memcpy
+            MemCopy
             ( w01Last_MC_STAR.LocalBuffer(), 
-              &rowBroadcastBuffer[a01LocalHeight], 
-              w01LastLocalHeight*sizeof(C) );
+              &rowBroadcastBuffer[a01LocalHeight], w01LastLocalHeight );
             // Store the bottom part of w01Last[MC,* ] into WB[MC,* ] and, 
             // if necessary, w01.
-            std::memcpy
+            MemCopy
             ( W_MC_STAR.LocalBuffer(0,W00.Width()+1),
-              &rowBroadcastBuffer[a01LocalHeight],
-              w01LastLocalHeight*sizeof(C) );
-            if( g.MRRank() == w01Last.RowAlignment() )
+              &rowBroadcastBuffer[a01LocalHeight], w01LastLocalHeight );
+            if( g.Col() == w01Last.RowAlignment() )
             {
-                std::memcpy
+                MemCopy
                 ( w01Last.LocalBuffer(),
-                  &rowBroadcastBuffer[a01LocalHeight],
-                  w01LastLocalHeight*sizeof(C) );
+                  &rowBroadcastBuffer[a01LocalHeight], w01LastLocalHeight );
             }
             // Store tau
             tau = rowBroadcastBuffer[a01LocalHeight+w01LastLocalHeight];
@@ -1119,7 +1080,7 @@ internal::HermitianPanelTridiagU
             // [MR,* ] <- [VR,* ]
             mpi::AllGather
             ( recvBuf, portionSize,
-              sendBuf, portionSize, g.MCComm() );
+              sendBuf, portionSize, g.ColComm() );
 
             // Unpack
             w01Last_MR_STAR.AlignWith( A00 );
@@ -1128,7 +1089,7 @@ internal::HermitianPanelTridiagU
             {
                 // Unpack into w01Last[MR,* ]
                 const C* w01Data = &sendBuf[k*portionSize];
-                const int shift = Shift(g.MRRank()+c*k,colAlignDest,p);
+                const int shift = Shift(g.Col()+c*k,colAlignDest,p);
                 const int offset = (shift-colShiftDest) / c;
                 const int w01LocalHeight = LocalLength(height,shift,p);
                 C* w01LastBuffer = w01Last_MR_STAR.LocalBuffer(offset,0);
@@ -1143,15 +1104,15 @@ internal::HermitianPanelTridiagU
                     a01Buffer[i*r] = a01Data[i];
             }
             // Store w01Last[MR,* ]
-            std::memcpy
+            MemCopy
             ( W_MR_STAR.LocalBuffer(0,W00.Width()+1),
               w01Last_MR_STAR.LocalBuffer(),
-              w01Last_MR_STAR.LocalHeight()*sizeof(C) );
+              w01Last_MR_STAR.LocalHeight() );
             // Store a01[MR,* ]
-            std::memcpy
+            MemCopy
             ( APan_MR_STAR.LocalBuffer(0,W00.Width()),
               a01_MR_STAR.LocalBuffer(),
-              a01_MR_STAR.LocalHeight()*sizeof(C) );
+              a01_MR_STAR.LocalHeight() );
 
             // Update the portion of A00 that is in our current panel with 
             // w01Last and a01Last using two gers. We do not need their bottom
@@ -1218,34 +1179,30 @@ internal::HermitianPanelTridiagU
             const int reduceSize = x21LocalHeight+y21LocalHeight+q01LocalHeight;
             std::vector<C> colSumSendBuffer(reduceSize);
             std::vector<C> colSumRecvBuffer(reduceSize);
-            std::memcpy
+            MemCopy
             ( &colSumSendBuffer[0], 
               x21_MR_STAR.LocalBuffer(), 
-              x21LocalHeight*sizeof(C) );
-            std::memcpy
+              x21LocalHeight );
+            MemCopy
             ( &colSumSendBuffer[x21LocalHeight],
-              y21_MR_STAR.LocalBuffer(), 
-              y21LocalHeight*sizeof(C) );
-            std::memcpy
+              y21_MR_STAR.LocalBuffer(), y21LocalHeight );
+            MemCopy
             ( &colSumSendBuffer[x21LocalHeight+y21LocalHeight],
-              q01_MR_STAR.LocalBuffer(), 
-              q01LocalHeight*sizeof(C) );
+              q01_MR_STAR.LocalBuffer(), q01LocalHeight );
             mpi::AllReduce
             ( &colSumSendBuffer[0], 
               &colSumRecvBuffer[0],
-              reduceSize, mpi::SUM, g.MCComm() );
-            std::memcpy
+              reduceSize, mpi::SUM, g.ColComm() );
+            MemCopy
             ( x21_MR_STAR.LocalBuffer(), 
-              &colSumRecvBuffer[0], 
-              x21LocalHeight*sizeof(C) );
-            std::memcpy
+              &colSumRecvBuffer[0], x21LocalHeight );
+            MemCopy
             ( y21_MR_STAR.LocalBuffer(), 
-              &colSumRecvBuffer[x21LocalHeight], 
-              y21LocalHeight*sizeof(C) );
-            std::memcpy
+              &colSumRecvBuffer[x21LocalHeight], y21LocalHeight );
+            MemCopy
             ( q01_MR_STAR.LocalBuffer(), 
               &colSumRecvBuffer[x21LocalHeight+y21LocalHeight], 
-              q01LocalHeight*sizeof(C) );
+              q01LocalHeight );
         }
 
         Gemv
@@ -1269,10 +1226,9 @@ internal::HermitianPanelTridiagU
             std::vector<C> reduceToOneRecvBuffer(2*localHeight);
 
             // Pack p01[MC,* ]
-            std::memcpy
+            MemCopy
             ( &reduceToOneSendBuffer[0], 
-              p01_MC_STAR.LocalBuffer(),
-              localHeight*sizeof(C) );
+              p01_MC_STAR.LocalBuffer(), localHeight );
 
             // Fill in contributions to q01[MC,MR] from q01[MR,* ]
             const bool contributing = 
@@ -1282,17 +1238,14 @@ internal::HermitianPanelTridiagU
             {
                 if( r == c )
                 {
-                    std::memcpy
+                    MemCopy
                     ( &reduceToOneSendBuffer[localHeight],
-                      q01_MR_STAR.LocalBuffer(), 
-                      localHeight*sizeof(C) );
+                      q01_MR_STAR.LocalBuffer(), localHeight );
                 }
                 else
                 {
                     // Zero the entire buffer first
-                    std::memset
-                    ( &reduceToOneSendBuffer[localHeight], 0,
-                      localHeight*sizeof(C) );
+                    MemZero( &reduceToOneSendBuffer[localHeight], localHeight );
                     // Fill in the entries that we contribute to.
                     // We seek to find the minimum s in N such that
                     //   s*c = a0-b0 (mod r)
@@ -1330,9 +1283,7 @@ internal::HermitianPanelTridiagU
             }
             else
             {
-                std::memset
-                ( &reduceToOneSendBuffer[localHeight], 0, 
-                  localHeight*sizeof(C) );
+                MemZero( &reduceToOneSendBuffer[localHeight], localHeight );
             }
 
             const int nextProcessRow = (alpha11.ColAlignment()+r-1) % r;
@@ -1340,8 +1291,8 @@ internal::HermitianPanelTridiagU
             mpi::Reduce
             ( &reduceToOneSendBuffer[0], 
               &reduceToOneRecvBuffer[0],
-              2*localHeight, mpi::SUM, nextProcessCol, g.MRComm() );
-            if( g.MRRank() == nextProcessCol )
+              2*localHeight, mpi::SUM, nextProcessCol, g.RowComm() );
+            if( g.Col() == nextProcessCol )
             {
                 // Combine the second half into the first half        
                 for( int i=0; i<localHeight; ++i )
@@ -1358,10 +1309,10 @@ internal::HermitianPanelTridiagU
                 C sendBuffer[2];
                 C recvBuffer[2];
                 sendBuffer[0] = myDotProduct;
-                sendBuffer[1] = ( g.MCRank()==nextProcessRow ? 
+                sendBuffer[1] = ( g.Row()==nextProcessRow ? 
                                   reduceToOneRecvBuffer[localHeight-1] : 0 );
                 mpi::AllReduce
-                ( sendBuffer, recvBuffer, 2, mpi::SUM, g.MCComm() );
+                ( sendBuffer, recvBuffer, 2, mpi::SUM, g.ColComm() );
                 C dotProduct = recvBuffer[0];
 
                 // Set up for the next iteration by filling in the values for:
@@ -1385,10 +1336,9 @@ internal::HermitianPanelTridiagU
             std::vector<C> allReduceRecvBuffer(2*localHeight);
 
             // Pack p01[MC,* ]
-            std::memcpy
+            MemCopy
             ( &allReduceSendBuffer[0], 
-              p01_MC_STAR.LocalBuffer(),
-              localHeight*sizeof(C) );
+              p01_MC_STAR.LocalBuffer(), localHeight );
 
             // Fill in contributions to q01[MC,* ] from q01[MR,* ]
             const bool contributing = 
@@ -1398,17 +1348,14 @@ internal::HermitianPanelTridiagU
             {
                 if( r == c )
                 {
-                    std::memcpy
+                    MemCopy
                     ( &allReduceSendBuffer[localHeight],
-                      q01_MR_STAR.LocalBuffer(), 
-                      localHeight*sizeof(C) );
+                      q01_MR_STAR.LocalBuffer(), localHeight );
                 }
                 else
                 {
                     // Zero the entire buffer first
-                    std::memset
-                    ( &allReduceSendBuffer[localHeight], 0, 
-                      localHeight*sizeof(C) );
+                    MemZero( &allReduceSendBuffer[localHeight], localHeight );
                     // Fill in the entries that we contribute to.
                     // We seek to find the minimum s in N such that
                     //   s*c = a0-b0 (mod r)
@@ -1446,15 +1393,13 @@ internal::HermitianPanelTridiagU
             }
             else
             {
-                std::memset
-                ( &allReduceSendBuffer[localHeight], 0, 
-                  localHeight*sizeof(C) );
+                MemZero( &allReduceSendBuffer[localHeight], localHeight );
             }
 
             mpi::AllReduce
             ( &allReduceSendBuffer[0], 
               &allReduceRecvBuffer[0],
-              2*localHeight, mpi::SUM, g.MRComm() );
+              2*localHeight, mpi::SUM, g.RowComm() );
 
             // Combine the second half into the first half        
             for( int i=0; i<localHeight; ++i )
@@ -1469,7 +1414,7 @@ internal::HermitianPanelTridiagU
                                a01_MC_STAR_LocalBuffer, 1 );
             C dotProduct;
             mpi::AllReduce
-            ( &myDotProduct, &dotProduct, 1, mpi::SUM, g.MCComm() );
+            ( &myDotProduct, &dotProduct, 1, mpi::SUM, g.ColComm() );
 
             // Grab views into W[MC,* ] and W[MR,* ]
             DistMatrix<C,MC,STAR> w01_MC_STAR(g);

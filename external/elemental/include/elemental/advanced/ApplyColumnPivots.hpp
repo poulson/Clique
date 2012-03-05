@@ -198,7 +198,7 @@ ApplyColumnPivots
     const int c = g.Width();
     const int rowAlignment = A.RowAlignment();
     const int rowShift = A.RowShift();
-    const int myCol = g.MRRank();
+    const int myCol = g.Col();
 
     // Extract the send and recv counts from the image and preimage.
     // This process's sends may be logically partitioned into two sets:
@@ -270,8 +270,7 @@ ApplyColumnPivots
         const int sendCol = preimage[rowShift+jLocal*c];
         const int sendTo = (rowAlignment+sendCol) % c;
         const int offset = sendDispls[sendTo]+offsets[sendTo];
-        std::memcpy
-        ( &sendData[offset], A.LocalBuffer(0,jLocal), localHeight*sizeof(F) );
+        MemCopy( &sendData[offset], A.LocalBuffer(0,jLocal), localHeight );
         offsets[sendTo] += localHeight;
     }
     for( int j=0; j<b; ++j )
@@ -285,9 +284,8 @@ ApplyColumnPivots
                 const int recvTo = (rowAlignment+j) % c;
                 const int jLocal = (recvCol-rowShift) / c;
                 const int offset = sendDispls[recvTo]+offsets[recvTo];
-                std::memcpy
-                ( &sendData[offset], A.LocalBuffer(0,jLocal), 
-                  localHeight*sizeof(F) );
+                MemCopy
+                ( &sendData[offset], A.LocalBuffer(0,jLocal), localHeight );
                 offsets[recvTo] += localHeight;
             }
         }
@@ -297,7 +295,7 @@ ApplyColumnPivots
     std::vector<F> recvData(std::max(1,totalRecv));
     mpi::AllToAll
     ( &sendData[0], &sendCounts[0], &sendDispls[0],
-      &recvData[0], &recvCounts[0], &recvDispls[0], g.MRComm() );
+      &recvData[0], &recvCounts[0], &recvDispls[0], g.RowComm() );
 
     // Unpack the recv data
     for( int k=0; k<c; ++k )
@@ -312,9 +310,8 @@ ApplyColumnPivots
             {
                 const int offset = recvDispls[k]+offsets[k];
                 const int jLocal = (sendCol-rowShift) / c;
-                std::memcpy
-                ( A.LocalBuffer(0,jLocal), &recvData[offset], 
-                  localHeight*sizeof(F) );
+                MemCopy
+                ( A.LocalBuffer(0,jLocal), &recvData[offset], localHeight );
                 offsets[k] += localHeight;
             }
         }
@@ -330,9 +327,8 @@ ApplyColumnPivots
                 const int recvFrom = (rowAlignment+recvCol) % c; 
                 const int jLocal = (j-rowShift) / c;
                 const int offset = recvDispls[recvFrom]+offsets[recvFrom];
-                std::memcpy
-                ( A.LocalBuffer(0,jLocal), &recvData[offset], 
-                  localHeight*sizeof(F) );
+                MemCopy
+                ( A.LocalBuffer(0,jLocal), &recvData[offset], localHeight );
                 offsets[recvFrom] += localHeight;
             }
         }

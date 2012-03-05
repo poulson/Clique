@@ -34,8 +34,8 @@
 
 namespace {
 // Core routines
-bool initializedElemental = false;
-bool elementalInitializedMpi;
+int numElemInits = 0;
+bool elemInitializedMpi;
 std::stack<int> blocksizeStack;
 elem::Grid* defaultGrid = 0;
 
@@ -44,7 +44,7 @@ elem::Grid* defaultGrid = 0;
 std::stack<std::string> callStack;
 #endif
 
-// Tuning paramters for basic routines
+// Tuning parameters for basic routines
 int localHemvFloatBlocksize = 64;
 int localHemvDoubleBlocksize = 64;
 int localHemvComplexFloatBlocksize = 64;
@@ -74,14 +74,17 @@ GridOrder gridOrder = ROW_MAJOR;
 namespace elem {
 
 bool Initialized()
-{ return ::initializedElemental; }
+{ return ::numElemInits > 0; }
 
 void Initialize( int& argc, char**& argv )
 {
-    // If Elemental is currently initialized, then this is a no-op
-    if( ::initializedElemental )
+    if( ::numElemInits > 0 )
+    {
+        ++::numElemInits;
         return;
+    }
 
+    ::numElemInits = 1;
     if( !mpi::Initialized() )
     {
         if( mpi::Finalized() )
@@ -101,11 +104,11 @@ void Initialize( int& argc, char**& argv )
 #else
         mpi::Initialize( argc, argv );
 #endif
-        ::elementalInitializedMpi = true;
+        ::elemInitializedMpi = true;
     }
     else
     {
-        ::elementalInitializedMpi = false;
+        ::elemInitializedMpi = false;
     }
 
     // Queue a default algorithmic blocksize
@@ -131,8 +134,6 @@ void Initialize( int& argc, char**& argv )
     mpi::Broadcast
     ( (byte*)seed.d, 2*sizeof(unsigned), 0, mpi::COMM_WORLD );
     plcg::SeedParallelLcg( rank, size, seed );
-
-    ::initializedElemental = true;
 }
 
 void Finalize()
@@ -140,35 +141,37 @@ void Finalize()
 #ifndef RELEASE
     PushCallStack("Finalize");
 #endif
-    // If Elemental is not currently initialized, then this is a no-op
-    if( !::initializedElemental )
-        return;
+    if( ::numElemInits <= 0 )
+        throw std::logic_error("Finalized Elemental more than initialized");
+    --::numElemInits;
 
     if( mpi::Finalized() )
     {
         std::cerr << "Warning: MPI was finalized before Elemental." 
                   << std::endl;
     }
-    else if( ::elementalInitializedMpi )
+    if( ::numElemInits == 0 )
     {
-        // Destroy the pivot ops needed by the distributed LU
-        internal::DestroyPivotOp<float>();
-        internal::DestroyPivotOp<double>();
-        internal::DestroyPivotOp<Complex<float> >();
-        internal::DestroyPivotOp<Complex<double> >();
+        if( ::elemInitializedMpi )
+        {
+            // Destroy the pivot ops needed by the distributed LU
+            internal::DestroyPivotOp<float>();
+            internal::DestroyPivotOp<double>();
+            internal::DestroyPivotOp<Complex<float> >();
+            internal::DestroyPivotOp<Complex<double> >();
 
-        // Delete the default grid
+            // Delete the default grid
+            delete ::defaultGrid;
+            ::defaultGrid = 0;
+
+            mpi::Finalize();
+        }
+
         delete ::defaultGrid;
         ::defaultGrid = 0;
-
-        mpi::Finalize();
+        while( ! ::blocksizeStack.empty() )
+            ::blocksizeStack.pop();
     }
-
-    delete ::defaultGrid;
-    ::defaultGrid = 0;
-    while( ! ::blocksizeStack.empty() )
-        ::blocksizeStack.pop();
-    ::initializedElemental = false;
 #ifndef RELEASE
     PopCallStack();
 #endif

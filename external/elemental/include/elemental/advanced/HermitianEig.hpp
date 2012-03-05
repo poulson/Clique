@@ -59,8 +59,8 @@ RealToRealInPlaceRedist
     const int r = g.Height();
     const int c = g.Width();
     const int p = r * c;
-    const int row = g.MCRank();
-    const int col = g.MRRank();
+    const int row = g.Row();
+    const int col = g.Col();
     const int rowShift = paddedZ.RowShift();
     const int colAlignment = paddedZ.ColAlignment();
 
@@ -100,7 +100,7 @@ RealToRealInPlaceRedist
     // Communicate
     mpi::AllToAll
     ( sendBuffer, portionSize,
-      recvBuffer, portionSize, g.MCComm() );
+      recvBuffer, portionSize, g.ColComm() );
 
     // Unpack
     const int localHeight = LocalLength(height,row,colAlignment,r);
@@ -123,7 +123,7 @@ RealToRealInPlaceRedist
         {
             const double* dataCol = &(data[j*localHeight]);
             double* thisCol = paddedZ.LocalBuffer(0,thisRowOffset+j*r);
-            std::memcpy( thisCol, dataCol, localHeight*sizeof(double) );
+            MemCopy( thisCol, dataCol, localHeight );
         }
     }
 }
@@ -141,8 +141,8 @@ RealToComplexInPlaceRedist
     const int r = g.Height();
     const int c = g.Width();
     const int p = r * c;
-    const int row = g.MCRank();
-    const int col = g.MRRank();
+    const int row = g.Row();
+    const int col = g.Col();
     const int rowShift = paddedZ.RowShift();
     const int colAlignment = paddedZ.ColAlignment();
 
@@ -182,7 +182,7 @@ RealToComplexInPlaceRedist
     // Communicate
     mpi::AllToAll
     ( sendBuffer, portionSize,
-      recvBuffer, portionSize, g.MCComm() );
+      recvBuffer, portionSize, g.ColComm() );
 
     // Unpack
     const int localHeight = LocalLength(height,row,colAlignment,r);
@@ -1034,7 +1034,6 @@ HermitianEig
 
         // Copy wVector into the distributed matrix w[VR,* ]
         const int k = info.numGlobalEigenvalues;
-        const int kLocal = info.numLocalEigenvalues;
         w.ResizeTo( k, 1 );
         for( int iLocal=0; iLocal<w.LocalHeight(); ++iLocal )
             w.SetLocalEntry(iLocal,0,wVector[iLocal]);

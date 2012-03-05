@@ -150,6 +150,16 @@ DistMatrix<T,STAR,VC,Int>::SetGrid( const elem::Grid& grid )
 }
 
 template<typename T,typename Int>
+inline Int
+DistMatrix<T,STAR,VC,Int>::ColStride() const
+{ return 1; }
+
+template<typename T,typename Int>
+inline Int
+DistMatrix<T,STAR,VC,Int>::RowStride() const
+{ return this->grid_->Size(); }
+
+template<typename T,typename Int>
 template<typename S,typename N>
 inline void
 DistMatrix<T,STAR,VC,Int>::AlignWith( const DistMatrix<S,MC,MR,N>& A )
@@ -458,7 +468,7 @@ DistMatrix<T,STAR,VC,Int>::PrintBase
     PushCallStack("[* ,VC]::PrintBase");
 #endif
     const elem::Grid& g = this->Grid();
-    if( g.VCRank() == 0 && msg != "" )
+    if( g.Rank() == 0 && msg != "" )
         os << msg << std::endl;
 
     const Int height     = this->Height();
@@ -488,14 +498,14 @@ DistMatrix<T,STAR,VC,Int>::PrintBase
 
     // If we are the root, allocate a receive buffer
     std::vector<T> recvBuf;
-    if( g.VCRank() == 0 )
+    if( g.Rank() == 0 )
         recvBuf.resize( height*width );
 
     // Sum the contributions and send to the root
     mpi::Reduce
-    ( &sendBuf[0], &recvBuf[0], height*width, mpi::SUM, 0, g.VCComm() );
+    ( &sendBuf[0], &recvBuf[0], height*width, mpi::SUM, 0, g.Comm() );
 
-    if( g.VCRank() == 0 )
+    if( g.Rank() == 0 )
     {
         // Print the data
         for( Int i=0; i<height; ++i )
@@ -506,7 +516,7 @@ DistMatrix<T,STAR,VC,Int>::PrintBase
         }
         os << std::endl;
     }
-    mpi::Barrier( g.VCComm() );
+    mpi::Barrier( g.Comm() );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -1001,7 +1011,7 @@ DistMatrix<T,STAR,VC,Int>::MakeTrapezoidal
             {
                 Int boundary = std::min( lastZeroRow+1, height );
                 T* thisCol = &thisLocalBuffer[jLocal*thisLDim];
-                std::memset( thisCol, 0, boundary*sizeof(T) );
+                MemZero( thisCol, boundary );
             }
         }
     }
@@ -1021,7 +1031,7 @@ DistMatrix<T,STAR,VC,Int>::MakeTrapezoidal
             if( firstZeroRow < height )
             {
                 T* thisCol = &thisLocalBuffer[firstZeroRow+jLocal*thisLDim];
-                std::memset( thisCol, 0, (height-firstZeroRow)*sizeof(T) );
+                MemZero( thisCol, height-firstZeroRow );
             }
         }
     }
@@ -1269,7 +1279,7 @@ DistMatrix<T,STAR,VC,Int>::operator=( const DistMatrix<T,MR,MC,Int>& A )
         const Int r = g.Height();
         const Int c = g.Width();
         const Int p = g.Size();
-        const Int row = g.MCRank();
+        const Int row = g.Row();
         const Int rowShiftOfA = A.RowShift();
         const Int rowAlignment = this->RowAlignment();
         const Int colAlignmentOfA = A.ColAlignment();
@@ -1311,14 +1321,14 @@ DistMatrix<T,STAR,VC,Int>::operator=( const DistMatrix<T,MR,MC,Int>& A )
             {
                 const T* ACol = &ALocalBuffer[(thisRowOffset+jLocal*c)*ALDim];
                 T* dataCol = &data[jLocal*localHeightOfA];
-                std::memcpy( dataCol, ACol, localHeightOfA*sizeof(T) );
+                MemCopy( dataCol, ACol, localHeightOfA );
             }
         }
 
         // Communicate
         mpi::AllToAll
         ( sendBuffer, portionSize,
-          recvBuffer, portionSize, g.MRComm() );
+          recvBuffer, portionSize, g.RowComm() );
 
         // Unpack
         T* thisLocalBuffer = this->LocalBuffer();
@@ -1346,13 +1356,13 @@ DistMatrix<T,STAR,VC,Int>::operator=( const DistMatrix<T,MR,MC,Int>& A )
     else
     {
 #ifdef UNALIGNED_WARNINGS
-        if( g.VCRank() == 0 )
+        if( g.Rank() == 0 )
             std::cerr << "Unaligned [* ,VC] <- [MR,MC]." << std::endl;
 #endif
         const Int r = g.Height();
         const Int c = g.Width();
         const Int p = g.Size();
-        const Int row = g.MCRank();
+        const Int row = g.Row();
         const Int rowShiftOfA = A.RowShift();
         const Int rowAlignment = this->RowAlignment();
         const Int colAlignmentOfA = A.ColAlignment();
@@ -1398,19 +1408,19 @@ DistMatrix<T,STAR,VC,Int>::operator=( const DistMatrix<T,MR,MC,Int>& A )
             {
                 const T* ACol = &ALocalBuffer[(thisRowOffset+jLocal*c)*ALDim];
                 T* dataCol = &data[jLocal*localHeightOfA];
-                std::memcpy( dataCol, ACol, localHeightOfA*sizeof(T) );
+                MemCopy( dataCol, ACol, localHeightOfA );
             }
         }
 
         // AllToAll to gather all of the unaligned [*,VC] data into firstBuffer
         mpi::AllToAll
         ( secondBuffer, portionSize,
-          firstBuffer,  portionSize, g.MRComm() );
+          firstBuffer,  portionSize, g.RowComm() );
 
         // SendRecv: properly align the [*,VC] via a trade in the column
         mpi::SendRecv
         ( firstBuffer,  portionSize, sendRow, 0,
-          secondBuffer, portionSize, recvRow, mpi::ANY_TAG, g.MCComm() );
+          secondBuffer, portionSize, recvRow, mpi::ANY_TAG, g.ColComm() );
 
         // Unpack
         T* thisLocalBuffer = this->LocalBuffer();
@@ -1508,20 +1518,20 @@ DistMatrix<T,STAR,VC,Int>::operator=( const DistMatrix<T,STAR,MC,Int>& A )
         {
             const T* ACol = &ALocalBuffer[(rowOffset+jLocal*c)*ALDim];
             T* thisCol = &thisLocalBuffer[jLocal*thisLDim];
-            std::memcpy( thisCol, ACol, height*sizeof(T) );
+            MemCopy( thisCol, ACol, height );
         }
     }
     else
     {
 #ifdef UNALIGNED_WARNINGS
-        if( g.VCRank() == 0 )
+        if( g.Rank() == 0 )
             std::cerr << "Unaligned [* ,VC] <- [* ,MC]." << std::endl;
 #endif
         const Int r = g.Height();
         const Int c = g.Width();
         const Int p = g.Size();
-        const Int row = g.MCRank();
-        const Int col = g.MRRank();
+        const Int row = g.Row();
+        const Int col = g.Col();
         const Int rowShiftOfA = A.RowShift();
         const Int rowAlignment = this->RowAlignment();
         const Int rowAlignmentOfA = A.RowAlignment();
@@ -1558,13 +1568,13 @@ DistMatrix<T,STAR,VC,Int>::operator=( const DistMatrix<T,STAR,MC,Int>& A )
         {
             const T* ACol = &ALocalBuffer[(sendRowOffset+jLocal*c)*ALDim];
             T* sendBufferCol = &sendBuffer[jLocal*height];
-            std::memcpy( sendBufferCol, ACol, height*sizeof(T) );
+            MemCopy( sendBufferCol, ACol, height );
         }
 
         // Communicate
         mpi::SendRecv
         ( sendBuffer, sendSize, sendRow, 0,
-          recvBuffer, recvSize, recvRow, mpi::ANY_TAG, g.MCComm() );
+          recvBuffer, recvSize, recvRow, mpi::ANY_TAG, g.ColComm() );
 
         // Unpack
         T* thisLocalBuffer = this->LocalBuffer();
@@ -1576,7 +1586,7 @@ DistMatrix<T,STAR,VC,Int>::operator=( const DistMatrix<T,STAR,MC,Int>& A )
         {
             const T* recvBufferCol = &recvBuffer[jLocal*height];
             T* thisCol = &thisLocalBuffer[jLocal*thisLDim];
-            std::memcpy( thisCol, recvBufferCol, height*sizeof(T) );
+            MemCopy( thisCol, recvBufferCol, height );
         }
         this->auxMemory_.Release();
     }
@@ -1643,7 +1653,7 @@ DistMatrix<T,STAR,VC,Int>::operator=( const DistMatrix<T,STAR,VC,Int>& A )
     else
     {
 #ifdef UNALIGNED_WARNINGS
-        if( g.VCRank() == 0 )
+        if( g.Rank() == 0 )
             std::cerr << "Unaligned [* ,VC] <- [* ,VC]." << std::endl;
 #endif
         const Int rank = g.VCRank();
@@ -1678,7 +1688,7 @@ DistMatrix<T,STAR,VC,Int>::operator=( const DistMatrix<T,STAR,VC,Int>& A )
         {
             const T* ACol = &ALocalBuffer[jLocal*ALDim];
             T* sendBufferCol = &sendBuffer[jLocal*height];
-            std::memcpy( sendBufferCol, ACol, height*sizeof(T) );
+            MemCopy( sendBufferCol, ACol, height );
         }
 
         // Communicate
@@ -1696,7 +1706,7 @@ DistMatrix<T,STAR,VC,Int>::operator=( const DistMatrix<T,STAR,VC,Int>& A )
         {
             const T* recvBufferCol = &recvBuffer[jLocal*height];
             T* thisCol = &thisLocalBuffer[jLocal*thisLDim];
-            std::memcpy( thisCol, recvBufferCol, height*sizeof(T) );
+            MemCopy( thisCol, recvBufferCol, height );
         }
         this->auxMemory_.Release();
     }
@@ -1782,7 +1792,7 @@ DistMatrix<T,STAR,VC,Int>::operator=( const DistMatrix<T,STAR,VR,Int>& A )
     {
         const T* ACol = &ALocalBuffer[jLocal*ALDim];
         T* sendBufferCol = &sendBuffer[jLocal*height];
-        std::memcpy( sendBufferCol, ACol, height*sizeof(T) );
+        MemCopy( sendBufferCol, ACol, height );
     }
 
     // Communicate
@@ -1800,7 +1810,7 @@ DistMatrix<T,STAR,VC,Int>::operator=( const DistMatrix<T,STAR,VR,Int>& A )
     {
         const T* recvBufferCol = &recvBuffer[jLocal*height];
         T* thisCol = &thisLocalBuffer[jLocal*thisLDim];
-        std::memcpy( thisCol, recvBufferCol, height*sizeof(T) );
+        MemCopy( thisCol, recvBufferCol, height );
     }
     this->auxMemory_.Release();
 #ifndef RELEASE
@@ -1840,7 +1850,7 @@ DistMatrix<T,STAR,VC,Int>::operator=( const DistMatrix<T,STAR,STAR,Int>& A )
     {
         const T* ACol = &ALocalBuffer[(rowShift+jLocal*p)*ALDim];
         T* thisCol = &thisLocalBuffer[jLocal*thisLDim];
-        std::memcpy( thisCol, ACol, height*sizeof(T) );
+        MemCopy( thisCol, ACol, height );
     }
 
 #ifndef RELEASE
@@ -1877,7 +1887,7 @@ DistMatrix<T,STAR,VC,Int>::SumScatterFrom( const DistMatrix<T,STAR,MC,Int>& A )
         const Int r = g.Height();
         const Int c = g.Width();
         const Int p = r * c;
-        const Int myRow = g.MCRank();
+        const Int myRow = g.Row();
         const Int rowAlignment = this->RowAlignment();
         const Int rowShiftOfA = A.RowShift();
 
@@ -1914,12 +1924,12 @@ DistMatrix<T,STAR,VC,Int>::SumScatterFrom( const DistMatrix<T,STAR,MC,Int>& A )
             {
                 const T* ACol = &ALocalBuffer[(thisRowOffset+jLocal*c)*ALDim];
                 T* dataCol = &data[jLocal*height];
-                std::memcpy( dataCol, ACol, height*sizeof(T) );
+                MemCopy( dataCol, ACol, height );
             }
         }
 
         // Communicate
-        mpi::ReduceScatter( buffer, recvSize, mpi::SUM, g.MRComm() );
+        mpi::ReduceScatter( buffer, recvSize, mpi::SUM, g.RowComm() );
 
         // Unpack our received data
         T* thisLocalBuffer = this->LocalBuffer();
@@ -1931,7 +1941,7 @@ DistMatrix<T,STAR,VC,Int>::SumScatterFrom( const DistMatrix<T,STAR,MC,Int>& A )
         {
             const T* bufferCol = &buffer[jLocal*height];
             T* thisCol = &thisLocalBuffer[jLocal*thisLDim];
-            std::memcpy( thisCol, bufferCol, height*sizeof(T) );
+            MemCopy( thisCol, bufferCol, height );
         }
         this->auxMemory_.Release();
     }
@@ -1962,7 +1972,7 @@ DistMatrix<T,STAR,VC,Int>::SumScatterUpdate
         const Int r = g.Height();
         const Int c = g.Width();
         const Int p = r * c;
-        const Int myRow = g.MCRank();
+        const Int myRow = g.Row();
         const Int rowAlignment = this->RowAlignment();
         const Int rowShiftOfA = A.RowShift();
 
@@ -1999,12 +2009,12 @@ DistMatrix<T,STAR,VC,Int>::SumScatterUpdate
             {
                 const T* ACol = &ALocalBuffer[(thisRowOffset+jLocal*c)*ALDim];
                 T* dataCol = &data[jLocal*height];
-                std::memcpy( dataCol, ACol, height*sizeof(T) );
+                MemCopy( dataCol, ACol, height );
             }
         }
 
         // Communicate
-        mpi::ReduceScatter( buffer, recvSize, mpi::SUM, g.MRComm() );
+        mpi::ReduceScatter( buffer, recvSize, mpi::SUM, g.RowComm() );
 
         // Unpack our received data
         T* thisLocalBuffer = this->LocalBuffer();

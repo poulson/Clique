@@ -160,7 +160,8 @@ AxpyInterface<T,Int>::HandleEoms()
         if( !sentEomTo_[i] )
         {
             bool shouldSendEom = true;
-            for( Int j=0; j<sendingData_[i].size(); ++j )
+            const Int numSends = sendingData_[i].size();
+            for( Int j=0; j<numSends; ++j )
             {
                 if( sendingData_[i][j] )
                 {
@@ -168,7 +169,8 @@ AxpyInterface<T,Int>::HandleEoms()
                     break;
                 }
             }
-            for( Int j=0; j<sendingRequest_[i].size(); ++j )
+            const Int numRequests = sendingRequest_[i].size();
+            for( Int j=0; j<numRequests; ++j )
             {
                 if( !shouldSendEom || sendingRequest_[i][j] )
                 {
@@ -176,7 +178,8 @@ AxpyInterface<T,Int>::HandleEoms()
                     break;
                 }
             }
-            for( Int j=0; j<sendingReply_[i].size(); ++j )
+            const Int numReplies = sendingReply_[i].size();
+            for( Int j=0; j<numReplies; ++j )
             {
                 if( !shouldSendEom || sendingReply_[i][j] )
                 {
@@ -217,8 +220,8 @@ AxpyInterface<T,Int>::HandleLocalToGlobalData()
     const Grid& g = Y.Grid();
     const Int r = g.Height();
     const Int c = g.Width();
-    const Int myRow = g.MCRank();
-    const Int myCol = g.MRRank();
+    const Int myRow = g.Row();
+    const Int myCol = g.Col();
 
     mpi::Status status;
     if( mpi::IProbe( mpi::ANY_SOURCE, DATA_TAG, g.VCComm(), status ) )
@@ -327,8 +330,8 @@ AxpyInterface<T,Int>::HandleGlobalToLocalRequest()
     const Grid& g = X.Grid();
     const Int r = g.Height();
     const Int c = g.Width();
-    const Int myRow = g.MCRank();
-    const Int myCol = g.MRRank();
+    const Int myRow = g.Row();
+    const Int myCol = g.Col();
 
     mpi::Status status;
     if( mpi::IProbe( mpi::ANY_SOURCE, DATA_REQUEST_TAG, g.VCComm(), status ) )
@@ -380,7 +383,7 @@ AxpyInterface<T,Int>::HandleGlobalToLocalRequest()
         {
             T* sendCol = &sendData[t*localHeight];
             const T* XCol = X.LockedLocalBuffer(iLocalOffset,jLocalOffset+t);
-            std::memcpy( sendCol, XCol, localHeight*sizeof(T) );
+            MemCopy( sendCol, XCol, localHeight );
         }
 
         // Fire off non-blocking send
@@ -498,7 +501,7 @@ AxpyInterface<T,Int>::~AxpyInterface()
                              localToGlobalMat_->Grid() : 
                              globalToLocalMat_->Grid() );
            std::ostringstream os;
-           os << g.VCRank()
+           os << g.Rank()
               << "Uncaught exception detected during AxpyInterface destructor "
                  "that required a call to Detach. Instead of allowing for the "
                  "possibility of Detach throwing another exception and "
@@ -657,8 +660,8 @@ AxpyInterface<T,Int>::AxpyLocalToGlobal
     const Int r = g.Height();
     const Int c = g.Width();
     const Int p = g.Size();
-    const Int myProcessRow = g.MCRank();
-    const Int myProcessCol = g.MRRank();
+    const Int myProcessRow = g.Row();
+    const Int myProcessCol = g.Col();
     const Int colAlignment = (Y.ColAlignment() + i) % r;
     const Int rowAlignment = (Y.RowAlignment() + j) % c;
 
@@ -832,8 +835,6 @@ AxpyInterface<T,Int>::ReadyForSend
 #ifndef RELEASE
     PushCallStack("AxpyInterface::ReadyForSend");
 #endif
-    const Int commRank = mpi::CommRank( mpi::COMM_WORLD );
-
     const Int numCreated = sendVectors.size();
 #ifndef RELEASE
     if( numCreated != requests.size() || numCreated != requestStatuses.size() )
@@ -884,15 +885,18 @@ AxpyInterface<T,Int>::UpdateRequestStatuses()
 
     for( Int i=0; i<p; ++i )
     {
-        for( Int j=0; j<dataSendRequests_[i].size(); ++j )
+        const Int numDataSendRequests = dataSendRequests_[i].size();
+        for( Int j=0; j<numDataSendRequests; ++j )
             if( sendingData_[i][j] )
                 sendingData_[i][j] = 
                     !mpi::Test( dataSendRequests_[i][j] );
-        for( Int j=0; j<requestSendRequests_[i].size(); ++j )
+        const Int numRequestSendRequests = requestSendRequests_[i].size();
+        for( Int j=0; j<numRequestSendRequests; ++j )
             if( sendingRequest_[i][j] )
                 sendingRequest_[i][j] = 
                     !mpi::Test( requestSendRequests_[i][j] );
-        for( Int j=0; j<replySendRequests_[i].size(); ++j )
+        const Int numReplySendRequests = replySendRequests_[i].size();
+        for( Int j=0; j<numReplySendRequests; ++j )
             if( sendingReply_[i][j] )
                 sendingReply_[i][j] = 
                     !mpi::Test( replySendRequests_[i][j] );

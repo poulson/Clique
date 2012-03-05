@@ -168,6 +168,16 @@ DistMatrix<T,MD,STAR,Int>::SetGrid( const elem::Grid& g )
 }
 
 template<typename T,typename Int>
+inline Int
+DistMatrix<T,MD,STAR,Int>::ColStride() const
+{ return this->grid_->LCM(); }
+
+template<typename T,typename Int>
+inline Int
+DistMatrix<T,MD,STAR,Int>::RowStride() const
+{ return 1; }
+
+template<typename T,typename Int>
 inline bool
 DistMatrix<T,MD,STAR,Int>::InDiagonal() const
 { return inDiagonal_; }
@@ -433,7 +443,7 @@ DistMatrix<T,MD,STAR,Int>::PrintBase
     PushCallStack("[MD,* ]::PrintBase");
 #endif
     const elem::Grid& g = this->Grid();
-    if( g.VCRank() == 0 && msg != "" )
+    if( g.Rank() == 0 && msg != "" )
         os << msg << std::endl;
         
     const Int height      = this->Height();
@@ -469,14 +479,14 @@ DistMatrix<T,MD,STAR,Int>::PrintBase
 
         // If we are the root, allocate a receive buffer
         std::vector<T> recvBuf;
-        if( g.VCRank() == 0 )
+        if( g.Rank() == 0 )
             recvBuf.resize( height*width );
 
         // Sum the contributions and send to the root
         mpi::Reduce
-        ( &sendBuf[0], &recvBuf[0], height*width, mpi::SUM, 0, g.VCComm() );
+        ( &sendBuf[0], &recvBuf[0], height*width, mpi::SUM, 0, g.Comm() );
 
-        if( g.VCRank() == 0 )
+        if( g.Rank() == 0 )
         {
             // Print the data
             for( Int i=0; i<height; ++i )
@@ -1103,7 +1113,7 @@ DistMatrix<T,MD,STAR,Int>::MakeTrapezoidal
                     Int boundary = std::min( lastZeroRow+1, height );
                     Int numZeroRows = RawLocalLength( boundary, colShift, lcm );
                     T* thisCol = &thisLocalBuffer[j*thisLDim];
-                    std::memset( thisCol, 0, numZeroRows*sizeof(T) );
+                    MemZero( thisCol, numZeroRows );
                 }
             }
         }
@@ -1123,8 +1133,7 @@ DistMatrix<T,MD,STAR,Int>::MakeTrapezoidal
                 if( numNonzeroRows < localHeight )
                 {
                     T* thisCol = &thisLocalBuffer[numNonzeroRows+j*thisLDim];
-                    std::memset
-                    ( thisCol, 0, (localHeight-numNonzeroRows)*sizeof(T) );
+                    MemZero( thisCol, localHeight-numNonzeroRows );
                 }
             }
         }
@@ -1331,7 +1340,7 @@ DistMatrix<T,MD,STAR,Int>::operator=( const DistMatrix<T,MD,STAR,Int>& A )
     else
     {
 #ifdef UNALIGNED_WARNINGS
-        if( this->Grid().VCRank() == 0 )
+        if( this->Grid().Rank() == 0 )
             std::cerr << "Unaligned [MD,* ] <- [MD,* ]." << std::endl;
 #endif
         throw std::logic_error
