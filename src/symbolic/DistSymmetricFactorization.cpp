@@ -149,9 +149,8 @@ void symbolic::DistSymmetricFactorization
         // Perform the exchange
         sendBuffer.resize( myChildLowerStructSize );
         recvBuffer.resize( theirChildLowerStructSize );
-        std::memcpy
-        ( &sendBuffer[0], &factChildSN.lowerStruct[0], 
-          myChildLowerStructSize*sizeof(int) );
+        elem::MemCopy
+        ( &sendBuffer[0], &factChildSN.lowerStruct[0], myChildLowerStructSize );
         mpi::SendRecv
         ( &sendBuffer[0], myChildLowerStructSize, partner, 0,
           &recvBuffer[0], theirChildLowerStructSize, partner, 0, 
@@ -304,8 +303,7 @@ void symbolic::DistSymmetricFactorization
 
         // Fill numChildFactSendIndices so that we can reuse it for many facts.
         factSN.numChildFactSendIndices.resize( teamSize );
-        std::memset
-        ( &factSN.numChildFactSendIndices[0], 0, teamSize*sizeof(int) );
+        elem::MemZero( &factSN.numChildFactSendIndices[0], teamSize );
         const std::vector<int>& myChildRelIndices = 
             ( onLeft ? factSN.leftChildRelIndices 
                      : factSN.rightChildRelIndices );
@@ -354,8 +352,7 @@ void symbolic::DistSymmetricFactorization
 
         // Fill numChildSolveSendIndices to use for many solves
         factSN.numChildSolveSendIndices.resize( teamSize );
-        std::memset
-        ( &factSN.numChildSolveSendIndices[0], 0, teamSize*sizeof(int) );
+        elem::MemZero( &factSN.numChildSolveSendIndices[0], teamSize );
         {
             const int updateAlignment = myChildSize % childTeamSize;
             const int updateShift = 

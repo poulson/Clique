@@ -31,7 +31,7 @@ void ModifyForTrmm( DistMatrix<F,STAR,STAR>& D, Diagonal diag, int diagOffset )
     for( int j=0; j<height; ++j )
     {
         const int length = std::min(-diagOffset,height-j);
-        std::memset( D.LocalBuffer(j,j), 0, length*sizeof(F) );
+        elem::MemZero( D.LocalBuffer(j,j), length );
         if( diag == UNIT && j-diagOffset < height )
             D.SetLocalEntry( j-diagOffset, j, (F)1 );
     }

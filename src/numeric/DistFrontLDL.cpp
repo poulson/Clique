@@ -255,9 +255,9 @@ void numeric::internal::DistFrontLDLSquare
             if( onDiagonal )
             {
                 const int size = AL21.LocalHeight()*AL11.Width();    
-                memcpy
+                elem::MemCopy
                 ( AL21AdjOrTrans_STAR_MR.LocalBuffer(), 
-                  S21Trans_STAR_MC.LocalBuffer(), size*sizeof(F) );
+                  S21Trans_STAR_MC.LocalBuffer(), size );
             }
             else
             {
