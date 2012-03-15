@@ -41,6 +41,13 @@ if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
   message(FATAL_ERROR "In-source build attempted; please clean the CMake cache and then switch to an out-of-source build, e.g., rm CMakeCache.txt && rm -Rf CMakeFiles/ && mkdir build/ && cd build/ && cmake ..")
 endif("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
 
+option(SHARED_LIBRARIES "Build shared libraries instead of static" OFF)
+if(SHARED_LIBRARIES)
+  set(LIBRARY_TYPE SHARED)
+else(SHARED_LIBRARIES)
+  set(LIBRARY_TYPE STATIC)
+endif(SHARED_LIBRARIES)
+
 option(BUILD_EXAMPLES "Build the examples" ON)
 option(BUILD_TESTS "Build a collection of test executables" OFF)
 option(BUILD_EXPERIMENTAL "Build experimental code" OFF)
@@ -310,8 +317,10 @@ if(NEED_MATH)
         list(APPEND MATH_LIBS ${${NAME}_LIB})
       else(${NAME}_LIB)
         message(STATUS "Could not find ${NAME}_LIB") 
-        set(MATH_LIBS "")
-        set(MKL_FOUND FALSE)
+        if(NOT "${NAME}" STREQUAL "GUIDE")
+          set(MATH_LIBS "")
+          set(MKL_FOUND FALSE)
+        endif(NOT "${NAME}" STREQUAL "GUIDE")
       endif(${NAME}_LIB)
     endforeach(NAME)
     if(MKL_FOUND)
@@ -386,7 +395,7 @@ check_function_exists(mkl_set_num_threads MATH_HAS_MKL)
 
 # Look for MPI_Reduce_scatter_block (and MPI_Reduce_scatter as sanity check)
 set(CMAKE_REQUIRED_FLAGS "${MPI_C_COMPILE_FLAGS} ${MPI_C_LINK_FLAGS}")
-set(CMAKE_REQUIRED_INCLUDE ${MPI_C_INCLUDE_PATH})
+set(CMAKE_REQUIRED_INCLUDES ${MPI_C_INCLUDE_PATH})
 set(CMAKE_REQUIRED_LIBRARIES ${MPI_C_LIBRARIES})
 check_function_exists(MPI_Reduce_scatter HAVE_MPI_REDUCE_SCATTER)
 check_function_exists(MPI_Reduce_scatter_block HAVE_MPI_REDUCE_SCATTER_BLOCK)
@@ -462,13 +471,13 @@ set(ELEMENTAL_SRC "${ELEMENTAL_CPP};${ELEMENTAL_HEADERS}")
 
 # Create a dummy library in order to be able to force the math (and potentially
 # MPI libraries) to be linked last
-add_library(cmake-dummy-lib STATIC cmake/CMakeDummyFunction.cpp)
+add_library(cmake-dummy-lib ${LIBRARY_TYPE} cmake/CMakeDummyFunction.cpp)
 target_link_libraries(cmake-dummy-lib ${MATH_LIBS} ${MPI_CXX_LIBRARIES})
 
 # The main library
 if(BUILD_PMRRR AND NOT FAILED_PMRRR)
-  add_library(elemental STATIC ${ELEMENTAL_SRC})
-  target_link_libraries(elemental pmrrr plcg)
+  add_library(elemental ${LIBRARY_TYPE} ${ELEMENTAL_SRC})
+  target_link_libraries(elemental pmrrr plcg cmake-dummy-lib)
   if(MPI_CXX_LINK_FLAGS AND MPI_C_LINK_FLAGS)
     set(MPI_LINK_FLAGS "${MPI_CXX_LINK_FLAGS} ${MPI_C_LINK_FLAGS}")
   elseif(MPI_CXX_LINK_FLAGS)
@@ -477,8 +486,8 @@ if(BUILD_PMRRR AND NOT FAILED_PMRRR)
     set(MPI_LINK_FLAGS "${MPI_C_LINK_FLAGS}")
   endif(MPI_CXX_LINK_FLAGS AND MPI_C_LINK_FLAGS)
 else(BUILD_PMRRR AND NOT FAILED_PMRRR)
-  add_library(elemental STATIC ${ELEMENTAL_SRC})
-  target_link_libraries(elemental plcg)
+  add_library(elemental ${LIBRARY_TYPE} ${ELEMENTAL_SRC})
+  target_link_libraries(elemental plcg cmake-dummy-lib)
   set(MPI_LINK_FLAGS "${MPI_CXX_LINK_FLAGS}")
 endif(BUILD_PMRRR AND NOT FAILED_PMRRR)
 install(TARGETS elemental DESTINATION lib)
@@ -521,7 +530,7 @@ if(BUILD_TESTS)
   set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/tests/core")
   foreach(TEST ${CORE_TESTS})
     add_executable(tests-core-${TEST} ${TEST_DIR}/core/${TEST}.cpp)
-    target_link_libraries(tests-core-${TEST} elemental cmake-dummy-lib)
+    target_link_libraries(tests-core-${TEST} elemental)
     set_target_properties(tests-core-${TEST} PROPERTIES
                           OUTPUT_NAME ${TEST}
                           RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
@@ -535,7 +544,7 @@ if(BUILD_TESTS)
   set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/tests/basic")
   foreach(TEST ${BASIC_TESTS})
     add_executable(tests-basic-${TEST} ${TEST_DIR}/basic/${TEST}.cpp)
-    target_link_libraries(tests-basic-${TEST} elemental cmake-dummy-lib)
+    target_link_libraries(tests-basic-${TEST} elemental)
     set_target_properties(tests-basic-${TEST} PROPERTIES
                           OUTPUT_NAME ${TEST}
                           RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
@@ -549,7 +558,7 @@ if(BUILD_TESTS)
   set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/tests/advanced")
   foreach(TEST ${ADVANCED_TESTS})
     add_executable(tests-advanced-${TEST} ${TEST_DIR}/advanced/${TEST}.cpp)
-    target_link_libraries(tests-advanced-${TEST} elemental cmake-dummy-lib)
+    target_link_libraries(tests-advanced-${TEST} elemental)
     set_target_properties(tests-advanced-${TEST} PROPERTIES
                           OUTPUT_NAME ${TEST}
                           RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
@@ -582,7 +591,7 @@ if(BUILD_EXAMPLES)
   set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/examples/core")
   foreach(EXAMPLE ${CORE_EXAMPLES})
     add_executable(examples-core-${EXAMPLE} ${EXAMPLE_DIR}/core/${EXAMPLE}.cpp)
-    target_link_libraries(examples-core-${EXAMPLE} elemental cmake-dummy-lib)
+    target_link_libraries(examples-core-${EXAMPLE} elemental)
     set_target_properties(examples-core-${EXAMPLE} PROPERTIES 
                           OUTPUT_NAME ${EXAMPLE} 
                           RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
@@ -598,8 +607,7 @@ if(BUILD_EXAMPLES)
   foreach(EXAMPLE ${ADVANCED_EXAMPLES})
     add_executable(examples-advanced-${EXAMPLE} 
                    ${EXAMPLE_DIR}/advanced/${EXAMPLE}.cpp)
-    target_link_libraries(examples-advanced-${EXAMPLE} 
-                          elemental cmake-dummy-lib)
+    target_link_libraries(examples-advanced-${EXAMPLE} elemental)
     set_target_properties(examples-advanced-${EXAMPLE} PROPERTIES
                           OUTPUT_NAME ${EXAMPLE}
                           RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
@@ -628,15 +636,14 @@ if(BUILD_EXPERIMENTAL AND BUILD_PMRRR AND NOT FAILED_PMRRR)
   # Build the experimental C interface
   file(GLOB_RECURSE EXPERIMENTAL_C_CPP RELATIVE ${PROJECT_SOURCE_DIR} 
        "experimental/c_interface/c_interface.cpp")
-  add_library(experimental-c-interface STATIC ${EXPERIMENTAL_C_CPP})
+  add_library(experimental-c-interface ${LIBRARY_TYPE} ${EXPERIMENTAL_C_CPP})
 
   add_executable(
       experimental-c-interface-test
       ${EXPERIMENTAL_DIR}/c_interface/test.c
   )
   target_link_libraries(
-      experimental-c-interface-test experimental-c-interface 
-      elemental cmake-dummy-lib
+      experimental-c-interface-test experimental-c-interface elemental
   )
   set_target_properties(
       experimental-c-interface-test PROPERTIES OUTPUT_NAME c_interface_test
@@ -663,6 +670,27 @@ if(BUILD_EXPERIMENTAL AND BUILD_PMRRR AND NOT FAILED_PMRRR)
     if(NOT MPI_Fortran_FOUND)
       message(FATAL_ERROR "Could not build F90 interface without Fortran MPI")
     endif(NOT MPI_Fortran_FOUND)
+
+    # We cannot simply use check_function_exists, since MPI_Comm_f2c is 
+    # a macro in some MPI implementations
+    set(MPI_COMM_F2C_CODE
+    "#include \"mpi.h\"
+     int main( int argc, char* argv[] )
+     {
+         MPI_Init( &argc, &argv );
+         MPI_Fint fint;
+         MPI_Comm comm = MPI_Comm_f2c( fint );
+         MPI_Finalize();
+         return 0;
+     }
+    ")
+    include(CheckCSourceCompiles)
+    check_c_source_compiles("${MPI_COMM_F2C_CODE}" HAVE_MPI_COMM_F2C)
+    if(NOT HAVE_MPI_COMM_F2C)  
+      message(WARNING 
+        "Could not find MPI_Comm_f2c, but it is needed for the F90 interface")
+    endif(NOT HAVE_MPI_COMM_F2C)
+
     include_directories(${MPI_Fortran_INCLUDE_PATH})
     set(CMAKE_Fortran_FLAGS_HYBRIDDEBUG "${MPI_Fortran_COMPILE_FLAGS}")
     set(CMAKE_Fortran_FLAGS_HYBRIDRELEASE "${MPI_Fortran_COMPILE_FLAGS}")
@@ -674,15 +702,14 @@ if(BUILD_EXPERIMENTAL AND BUILD_PMRRR AND NOT FAILED_PMRRR)
     # Build the experimental F90 interface
     file(GLOB_RECURSE EXPERIMENTAL_F90_CPP RELATIVE ${PROJECT_SOURCE_DIR} 
          "experimental/f90_interface/f90_interface.cpp")
-    add_library(experimental-f90-interface STATIC ${EXPERIMENTAL_F90_CPP})
+    add_library(experimental-f90-interface ${LIBRARY_TYPE} ${EXPERIMENTAL_F90_CPP})
 
     add_executable(
         experimental-f90-interface-test
         ${EXPERIMENTAL_DIR}/f90_interface/test.f90
     )
     target_link_libraries(
-        experimental-f90-interface-test experimental-f90-interface 
-        elemental cmake-dummy-lib
+        experimental-f90-interface-test experimental-f90-interface elemental
     )
     set_target_properties(
         experimental-f90-interface-test 
@@ -701,6 +728,7 @@ if(BUILD_EXPERIMENTAL AND BUILD_PMRRR AND NOT FAILED_PMRRR)
 endif(BUILD_EXPERIMENTAL AND BUILD_PMRRR AND NOT FAILED_PMRRR)
 
 # Simplify the inclusion of Elemental as a subproject in another build system
+set(LIBRARY_TYPE ${LIBRARY_TYPE} PARENT_SCOPE)
 set(MPI_C_COMPILER ${MPI_C_COMPILER} PARENT_SCOPE)
 set(MPI_C_INCLUDE_PATH ${MPI_C_INCLUDE_PATH} PARENT_SCOPE)
 set(MPI_C_COMPILE_FLAGS ${MPI_C_COMPILE_FLAGS} PARENT_SCOPE)

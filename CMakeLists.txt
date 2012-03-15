@@ -38,9 +38,12 @@ add_subdirectory(external/elemental)
 include_directories("${PROJECT_BINARY_DIR}/external/elemental/include")
 include_directories(${MPI_CXX_INCLUDE_PATH})
 
-# Add ParMetis
-add_subdirectory(external/parmetis)
-include_directories("${PROJECT_BINARY_DIR}/external/parmetis/include")
+# We do not yet need ParMetis
+option(BUILD_PARMETIS "Build the parallel metis library" OFF)
+if(BUILD_PARMETIS)
+  add_subdirectory(external/parmetis)
+  include_directories("${PROJECT_BINARY_DIR}/external/parmetis/include")
+endif(BUILD_PARMETIS)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")
 
@@ -60,8 +63,12 @@ file(GLOB_RECURSE CLIQUE_HEADERS RELATIVE ${PROJECT_SOURCE_DIR}
 set(CLIQUE_SRC "${CLIQUE_CPP};${CLIQUE_HEADERS}")
 
 # The main library
-add_library(clique STATIC ${CLIQUE_SRC})
-target_link_libraries(clique elemental parmetis)
+add_library(clique ${LIBRARY_TYPE} ${CLIQUE_SRC})
+if(BUILD_PARMETIS)
+  target_link_libraries(clique elemental parmetis)
+else(BUILD_PARMETIS)
+  target_link_libraries(clique elemental)
+endif(BUILD_PARMETIS)
 set(MPI_LINK_FLAGS "${MPI_CXX_LINK_FLAGS}")
 install(TARGETS clique DESTINATION lib)
 
