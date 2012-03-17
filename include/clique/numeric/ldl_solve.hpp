@@ -35,7 +35,7 @@ void LDLSolve
 //----------------------------------------------------------------------------//
 
 template<typename F>
-void LDLSolve
+inline void LDLSolve
 ( Orientation orientation,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
@@ -62,4 +62,4 @@ void LDLSolve
 } // namespace numeric
 } // namespace cliq
 
-#endif /* CLIQUE_NUMERIC_LDL_SOLVE_HPP */
+#endif // CLIQUE_NUMERIC_LDL_SOLVE_HPP

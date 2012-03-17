@@ -20,75 +20,7 @@
 #ifndef CLIQUE_NUMERIC_FRONT_LOWER_MULTIPLY_HPP
 #define CLIQUE_NUMERIC_FRONT_LOWER_MULTIPLY_HPP 1
 
-namespace cliq {
-namespace numeric {
+#include "clique/numeric/local_front_lower_multiply.hpp"
+#include "clique/numeric/dist_front_lower_multiply.hpp"
 
-template<typename F>
-void LocalFrontLowerMultiply
-( Orientation orientation, Diagonal diag, int diagOffset,
-  const Matrix<F>& L, Matrix<F>& X );
-template<typename F>
-void DistFrontLowerMultiply
-( Orientation orientation, Diagonal diag, int diagOffset,
-  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
-
-template<typename F>
-void LocalFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset, const Matrix<F>& L, Matrix<F>& X );
-template<typename F>
-void DistFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset, 
-  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
-
-// Handles the TRANSPOSE and ADJOINT cases
-template<typename F>
-void LocalFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset, 
-  const Matrix<F>& L, Matrix<F>& X );
-template<typename F>
-void DistFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset,
-  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
-
-//----------------------------------------------------------------------------//
-// Implementation begins here                                                 //
-//----------------------------------------------------------------------------//
-
-template<typename F>
-void LocalFrontLowerMultiply
-( Orientation orientation, Diagonal diag, int diagOffset,
-  const Matrix<F>& L, Matrix<F>& X )
-{
-#ifndef RELEASE
-    PushCallStack("numeric::LocalFrontLowerMultiply");
-#endif
-    if( orientation == NORMAL )
-        LocalFrontLowerMultiplyNormal( diag, diagOffset, L, X );
-    else
-        LocalFrontLowerMultiplyTranspose( orientation, diag, diagOffset, L, X );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
-template<typename F>
-void DistFrontLowerMultiply
-( Orientation orientation, Diagonal diag, int diagOffset, 
-  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
-{
-#ifndef RELEASE
-    PushCallStack("numeric::DistFrontLowerMultiply");
-#endif
-    if( orientation == NORMAL )
-        DistFrontLowerMultiplyNormal( diag, diagOffset, L, X );
-    else
-        DistFrontLowerMultiplyTranspose( orientation, diag, diagOffset, L, X );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
-} // namespace numeric
-} // namespace cliq
-
-#endif /* CLIQUE_NUMERIC_FRONT_LOWER_MULTIPLY_HPP */
+#endif // CLIQUE_NUMERIC_FRONT_LOWER_MULTIPLY_HPP 

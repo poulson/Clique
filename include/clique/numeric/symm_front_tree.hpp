@@ -94,4 +94,6 @@ void SetSolveMode( SymmFrontTree<F>& L, SolveMode solveMode );
 } // namespace numeric
 } // namespace cliq
 
-#endif /* CLIQUE_SYMM_FRONT_TREE_HPP */
+#include "clique/numeric/set_solve_mode.hpp"
+
+#endif // CLIQUE_SYMM_FRONT_TREE_HPP

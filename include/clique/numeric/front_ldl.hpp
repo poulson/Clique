@@ -20,29 +20,7 @@
 #ifndef CLIQUE_NUMERIC_FRONT_LDL_HPP
 #define CLIQUE_NUMERIC_FRONT_LDL_HPP 1
 
-namespace cliq {
-namespace numeric {
+#include "clique/numeric/local_front_ldl.hpp"
+#include "clique/numeric/dist_front_ldl.hpp"
 
-template<typename F>
-void LocalFrontLDL
-( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR );
-
-template<typename F>
-void DistFrontLDL
-( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR );
-
-namespace internal {
-template<typename F>
-void DistFrontLDLGeneral
-( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR );
-
-template<typename F>
-void DistFrontLDLSquare
-( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR );
-} // namespace internal
-
-} // namespace numeric
-} // namespace cliq
-
-#endif /* CLIQUE_NUMERIC_FRONT_LDL_HPP */
-
+#endif // CLIQUE_NUMERIC_FRONT_LDL_HPP 

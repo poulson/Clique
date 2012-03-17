@@ -21,29 +21,24 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "clique.hpp"
+#ifndef CLIQUE_NUMERIC_DIST_FRONT_LDL_HPP
+#define CLIQUE_NUMERIC_DIST_FRONT_LDL_HPP 1
 
 namespace cliq {
+namespace numeric {
 
-template<typename F> // F represents a real or complex field
-void numeric::DistFrontLDL
-( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR )
-{
-#ifndef RELEASE
-    PushCallStack("numeric::DistFrontLDL");
-#endif
-    const Grid& grid = AL.Grid();
-    if( grid.Height() == grid.Width() )
-        internal::DistFrontLDLSquare( orientation, AL, ABR );
-    else
-        internal::DistFrontLDLGeneral( orientation, AL, ABR );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
+template<typename F> 
+void DistFrontLDL
+( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR );
 
-template<typename F> // F represents a real or complex field
-void numeric::internal::DistFrontLDLGeneral
+//----------------------------------------------------------------------------//
+// Implementation begins here                                                 //
+//----------------------------------------------------------------------------//
+
+namespace internal {
+
+template<typename F> 
+inline void DistFrontLDLGeneral
 ( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR )
 {
 #ifndef RELEASE
@@ -159,8 +154,8 @@ void numeric::internal::DistFrontLDLGeneral
 #endif
 }
 
-template<typename F> // F represents a real or complex field
-void numeric::internal::DistFrontLDLSquare
+template<typename F>
+inline void DistFrontLDLSquare
 ( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR )
 {
 #ifndef RELEASE
@@ -313,56 +308,26 @@ void numeric::internal::DistFrontLDLSquare
 #endif
 }
 
+} // namespace internal
+
+template<typename F> 
+inline void DistFrontLDL
+( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR )
+{
+#ifndef RELEASE
+    PushCallStack("numeric::DistFrontLDL");
+#endif
+    const Grid& grid = AL.Grid();
+    if( grid.Height() == grid.Width() )
+        internal::DistFrontLDLSquare( orientation, AL, ABR );
+    else
+        internal::DistFrontLDLGeneral( orientation, AL, ABR );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+} // namespace numeric
 } // namespace cliq
 
-template void cliq::numeric::DistFrontLDL
-( Orientation orientation, 
-  DistMatrix<float,MC,MR>& AL, 
-  DistMatrix<float,MC,MR>& ABR );
-template void cliq::numeric::internal::DistFrontLDLGeneral
-( Orientation orientation, 
-  DistMatrix<float,MC,MR>& AL, 
-  DistMatrix<float,MC,MR>& ABR );
-template void cliq::numeric::internal::DistFrontLDLSquare
-( Orientation orientation, 
-  DistMatrix<float,MC,MR>& AL, 
-  DistMatrix<float,MC,MR>& ABR );
-
-template void cliq::numeric::DistFrontLDL
-( Orientation orientation, 
-  DistMatrix<double,MC,MR>& AL, 
-  DistMatrix<double,MC,MR>& ABR );
-template void cliq::numeric::internal::DistFrontLDLGeneral
-( Orientation orientation, 
-  DistMatrix<double,MC,MR>& AL, 
-  DistMatrix<double,MC,MR>& ABR );
-template void cliq::numeric::internal::DistFrontLDLSquare
-( Orientation orientation, 
-  DistMatrix<double,MC,MR>& AL, 
-  DistMatrix<double,MC,MR>& ABR );
-
-template void cliq::numeric::DistFrontLDL
-( Orientation orientation, 
-  DistMatrix<Complex<float>,MC,MR>& AL, 
-  DistMatrix<Complex<float>,MC,MR>& ABR );
-template void cliq::numeric::internal::DistFrontLDLGeneral
-( Orientation orientation, 
-  DistMatrix<Complex<float>,MC,MR>& AL, 
-  DistMatrix<Complex<float>,MC,MR>& ABR );
-template void cliq::numeric::internal::DistFrontLDLSquare
-( Orientation orientation, 
-  DistMatrix<Complex<float>,MC,MR>& AL, 
-  DistMatrix<Complex<float>,MC,MR>& ABR );
-
-template void cliq::numeric::DistFrontLDL
-( Orientation orientation, 
-  DistMatrix<Complex<double>,MC,MR>& AL,
-  DistMatrix<Complex<double>,MC,MR>& ABR );
-template void cliq::numeric::internal::DistFrontLDLGeneral
-( Orientation orientation, 
-  DistMatrix<Complex<double>,MC,MR>& AL,
-  DistMatrix<Complex<double>,MC,MR>& ABR );
-template void cliq::numeric::internal::DistFrontLDLSquare
-( Orientation orientation, 
-  DistMatrix<Complex<double>,MC,MR>& AL,
-  DistMatrix<Complex<double>,MC,MR>& ABR );
+#endif // CLIQUE_NUMERIC_DIST_FRONT_LDL_HPP

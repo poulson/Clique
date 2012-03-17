@@ -17,12 +17,32 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "clique.hpp"
+#ifndef CLIQUE_NUMERIC_DIST_LOWER_SOLVE_HPP
+#define CLIQUE_NUMERIC_DIST_LOWER_SOLVE_HPP 1
 
 namespace cliq {
+namespace numeric {
 
 template<typename F> 
-void numeric::DistLowerForwardSolve
+void DistLowerForwardSolve
+( Diagonal diag,
+  const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<F>& L, 
+        Matrix<F>& localX );
+
+template<typename F>
+void DistLowerBackwardSolve
+( Orientation orientation, Diagonal diag,
+  const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<F>& L,
+        Matrix<F>& localX );
+
+//----------------------------------------------------------------------------//
+// Implementation begins here                                                 //
+//----------------------------------------------------------------------------//
+
+template<typename F> 
+inline void DistLowerForwardSolve
 ( Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L, 
@@ -238,7 +258,7 @@ void numeric::DistLowerForwardSolve
 }
 
 template<typename F>
-void numeric::DistLowerBackwardSolve
+inline void DistLowerBackwardSolve
 ( Orientation orientation, Diagonal diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
@@ -465,48 +485,7 @@ void numeric::DistLowerBackwardSolve
 #endif
 }
 
+} // namespace numeric
 } // namespace cliq
 
-template void cliq::numeric::DistLowerForwardSolve
-( Diagonal diag,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<float>& L,
-        Matrix<float>& localX );
-template void cliq::numeric::DistLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<float>& L,
-        Matrix<float>& localX );
-
-template void cliq::numeric::DistLowerForwardSolve
-( Diagonal diag,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<double>& L,
-        Matrix<double>& localX );
-template void cliq::numeric::DistLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<double>& L,
-        Matrix<double>& localX );
-
-template void cliq::numeric::DistLowerForwardSolve
-( Diagonal diag,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<Complex<float> >& L,
-        Matrix<Complex<float> >& localX );
-template void cliq::numeric::DistLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<Complex<float> >& L,
-        Matrix<Complex<float> >& localX );
-
-template void cliq::numeric::DistLowerForwardSolve
-( Diagonal diag,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<Complex<double> >& L,
-        Matrix<Complex<double> >& localX );
-template void cliq::numeric::DistLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<Complex<double> >& L,
-        Matrix<Complex<double> >& localX );
+#endif // CLIQUE_NUMERIC_DIST_LOWER_SOLVE_HPP

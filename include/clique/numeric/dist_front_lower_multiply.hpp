@@ -17,10 +17,34 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "clique.hpp"
+#ifndef CLIQUE_NUMERIC_DIST_FRONT_LOWER_MULTIPLY_HPP
+#define CLIQUE_NUMERIC_DIST_FRONT_LOWER_MULTIPLY_HPP 1
 
-namespace {
+namespace cliq {
+namespace numeric {
+
+template<typename F>
+void DistFrontLowerMultiply
+( Orientation orientation, Diagonal diag, int diagOffset,
+  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
+
+template<typename F>
+void DistFrontLowerMultiplyNormal
+( Diagonal diag, int diagOffset,
+  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
+
+template<typename F>
+void DistFrontLowerMultiplyTranspose
+( Orientation orientation, Diagonal diag, int diagOffset,
+  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
+
+//----------------------------------------------------------------------------//
+// Implementation begins here                                                 //
+//----------------------------------------------------------------------------//
+
+namespace internal {
 using namespace elem;
+
 template<typename F>
 void ModifyForTrmm( DistMatrix<F,STAR,STAR>& D, Diagonal diag, int diagOffset )
 {
@@ -31,7 +55,7 @@ void ModifyForTrmm( DistMatrix<F,STAR,STAR>& D, Diagonal diag, int diagOffset )
     for( int j=0; j<height; ++j )
     {
         const int length = std::min(-diagOffset,height-j);
-        elem::MemZero( D.LocalBuffer(j,j), length );
+        MemZero( D.LocalBuffer(j,j), length );
         if( diag == UNIT && j-diagOffset < height )
             D.SetLocalEntry( j-diagOffset, j, (F)1 );
     }
@@ -39,12 +63,28 @@ void ModifyForTrmm( DistMatrix<F,STAR,STAR>& D, Diagonal diag, int diagOffset )
     cliq::PopCallStack();
 #endif
 }
-} // anonymous namespace
 
-namespace cliq {
+} // namespace internal
 
 template<typename F>
-void numeric::DistFrontLowerMultiplyNormal
+inline void DistFrontLowerMultiply
+( Orientation orientation, Diagonal diag, int diagOffset,
+  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
+{
+#ifndef RELEASE
+    PushCallStack("numeric::DistFrontLowerMultiply");
+#endif
+    if( orientation == NORMAL )
+        DistFrontLowerMultiplyNormal( diag, diagOffset, L, X );
+    else
+        DistFrontLowerMultiplyTranspose( orientation, diag, diagOffset, L, X );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename F>
+inline void DistFrontLowerMultiplyNormal
 ( Diagonal diag, int diagOffset,
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
@@ -117,7 +157,7 @@ void numeric::DistFrontLowerMultiplyNormal
         else
         {
             L11_STAR_STAR = L11;
-            ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
+            internal::ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
             elem::internal::LocalTrmm
             ( LEFT, LOWER, NORMAL, NON_UNIT, 
               (F)1, L11_STAR_STAR, X1_STAR_STAR );
@@ -143,7 +183,7 @@ void numeric::DistFrontLowerMultiplyNormal
 }
 
 template<typename F>
-void numeric::DistFrontLowerMultiplyTranspose
+inline void DistFrontLowerMultiplyTranspose
 ( Orientation orientation, Diagonal diag, int diagOffset,
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
@@ -215,7 +255,7 @@ void numeric::DistFrontLowerMultiplyTranspose
         }
         else
         {
-            ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
+            internal::ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
             elem::internal::LocalTrmm
             ( LEFT, LOWER, orientation, NON_UNIT, 
               (F)1, L11_STAR_STAR, X1_STAR_STAR );
@@ -245,40 +285,7 @@ void numeric::DistFrontLowerMultiplyTranspose
 #endif
 }
 
+} // namespace numeric
 } // namespace cliq
 
-template void cliq::numeric::DistFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset, 
-  const DistMatrix<float,VC,STAR>& L,
-        DistMatrix<float,VC,STAR>& X );
-template void cliq::numeric::DistFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset,
-  const DistMatrix<float,VC,STAR>& L,
-        DistMatrix<float,VC,STAR>& X );
-
-template void cliq::numeric::DistFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset, 
-  const DistMatrix<double,VC,STAR>& L, 
-        DistMatrix<double,VC,STAR>& X );
-template void cliq::numeric::DistFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset,
-  const DistMatrix<double,VC,STAR>& L,
-        DistMatrix<double,VC,STAR>& X );
-
-template void cliq::numeric::DistFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset, 
-  const DistMatrix<Complex<float>,VC,STAR>& L, 
-        DistMatrix<Complex<float>,VC,STAR>& X );
-template void cliq::numeric::DistFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset, 
-  const DistMatrix<Complex<float>,VC,STAR>& L, 
-        DistMatrix<Complex<float>,VC,STAR>& X );
-
-template void cliq::numeric::DistFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset, 
-  const DistMatrix<Complex<double>,VC,STAR>& L, 
-        DistMatrix<Complex<double>,VC,STAR>& X );
-template void cliq::numeric::DistFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset, 
-  const DistMatrix<Complex<double>,VC,STAR>& L,
-        DistMatrix<Complex<double>,VC,STAR>& X );
+#endif // CLIQUE_NUMERIC_DIST_FRONT_LOWER_MULTIPLY_HPP

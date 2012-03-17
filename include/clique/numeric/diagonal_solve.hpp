@@ -48,7 +48,66 @@ void DistDiagonalSolve
 //----------------------------------------------------------------------------//
 
 template<typename F>
-void DiagonalSolve
+inline void LocalDiagonalSolve
+( const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<F>& L,
+        Matrix<F>& X )
+{
+    using namespace symbolic;
+#ifndef RELEASE
+    PushCallStack("numeric::LocalDiagonalSolve");
+#endif
+    const int numLocalSupernodes = S.local.supernodes.size();
+    const int width = X.Width();
+    Matrix<F> XSub;
+    for( int s=0; s<numLocalSupernodes; ++s )
+    {
+        const LocalSymmFactSupernode& sn = S.local.supernodes[s];
+        const Matrix<F>& frontL = L.local.fronts[s].frontL;
+        XSub.View( X, sn.myOffset, 0, sn.size, width );
+
+        Matrix<F> frontTL;
+        frontTL.LockedView( frontL, 0, 0, sn.size, sn.size );
+        Matrix<F> d;
+        frontTL.GetDiagonal( d );
+        elem::DiagonalSolve( LEFT, NORMAL, d, XSub, true );
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename F> 
+void DistDiagonalSolve
+( const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<F>& L,
+        Matrix<F>& localX )
+{
+    using namespace symbolic;
+#ifndef RELEASE
+    PushCallStack("numeric::DistDiagonalSolve");
+#endif
+    const int numDistSupernodes = S.dist.supernodes.size();
+    const int width = localX.Width();
+
+    for( int s=1; s<numDistSupernodes; ++s )
+    {
+        const DistSymmFactSupernode& sn = S.dist.supernodes[s];
+        const DistSymmFront<F>& front = L.dist.fronts[s];
+
+        Matrix<F> localXT;
+        localXT.View( localX, sn.localOffset1d, 0, sn.localSize1d, width );
+
+        elem::DiagonalSolve
+        ( LEFT, NORMAL, front.diag.LockedLocalMatrix(), localXT, true );
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename F>
+inline void DiagonalSolve
 ( const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX )
@@ -66,4 +125,4 @@ void DiagonalSolve
 } // namespace numeric
 } // namespace cliq
 
-#endif /* CLIQUE_NUMERIC_DIAGONAL_SOLVE_HPP */
+#endif // CLIQUE_NUMERIC_DIAGONAL_SOLVE_HPP 

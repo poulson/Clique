@@ -17,12 +17,23 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "clique.hpp"
+#ifndef CLIQUE_NUMERIC_DIST_LDL_HPP 
+#define CLIQUE_NUMERIC_DIST_LDL_HPP 1
 
 namespace cliq {
+namespace numeric {
 
 template<typename F> 
-void numeric::DistLDL
+void DistLDL
+( Orientation orientation, 
+  symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L );
+
+//----------------------------------------------------------------------------//
+// Implementation begins here                                                 //
+//----------------------------------------------------------------------------//
+
+template<typename F> 
+inline void DistLDL
 ( Orientation orientation, symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L )
 {
     using namespace symbolic;
@@ -262,20 +273,7 @@ void numeric::DistLDL
 #endif
 }
 
+} // namespace numeric
 } // namespace cliq
 
-template void cliq::numeric::DistLDL
-( Orientation orientation,
-  symbolic::SymmFact& S, numeric::SymmFrontTree<float>& L );
-
-template void cliq::numeric::DistLDL
-( Orientation orientation,
-  symbolic::SymmFact& S, numeric::SymmFrontTree<double>& L );
-
-template void cliq::numeric::DistLDL
-( Orientation orientation,
-  symbolic::SymmFact& S, numeric::SymmFrontTree<Complex<float> >& L );
-
-template void cliq::numeric::DistLDL
-( Orientation orientation,
-  symbolic::SymmFact& S, numeric::SymmFrontTree<Complex<double> >& L );
+#endif // CLIQUE_NUMERIC_DIST_LDL_HPP

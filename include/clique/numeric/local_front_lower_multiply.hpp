@@ -17,10 +17,33 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "clique.hpp"
+#ifndef CLIQUE_NUMERIC_LOCAL_FRONT_LOWER_MULTIPLY_HPP
+#define CLIQUE_NUMERIC_LOCAL_FRONT_LOWER_MULTIPLY_HPP 1
 
-namespace {
+namespace cliq {
+namespace numeric {
+
+template<typename F>
+void LocalFrontLowerMultiply
+( Orientation orientation, Diagonal diag, int diagOffset,
+  const Matrix<F>& L, Matrix<F>& X );
+
+template<typename F>
+void LocalFrontLowerMultiplyNormal
+( Diagonal diag, int diagOffset, const Matrix<F>& L, Matrix<F>& X );
+
+template<typename F>
+void LocalFrontLowerMultiplyTranspose
+( Orientation orientation, Diagonal diag, int diagOffset,
+  const Matrix<F>& L, Matrix<F>& X );
+
+//----------------------------------------------------------------------------//
+// Implementation begins here                                                 //
+//----------------------------------------------------------------------------//
+
+namespace internal {
 using namespace elem;
+
 template<typename F> 
 void ModifyForTrmm
 ( Matrix<F>& D, Diagonal diag, int diagOffset, 
@@ -84,12 +107,28 @@ void ReplaceAfterTrmm
     PopCallStack();
 #endif
 }
-} // anonymous namespace
 
-namespace cliq {
+} // namespace internal
 
 template<typename F>
-void numeric::LocalFrontLowerMultiplyNormal
+inline void LocalFrontLowerMultiply
+( Orientation orientation, Diagonal diag, int diagOffset,
+  const Matrix<F>& L, Matrix<F>& X )
+{
+#ifndef RELEASE
+    PushCallStack("numeric::LocalFrontLowerMultiply");
+#endif
+    if( orientation == NORMAL )
+        LocalFrontLowerMultiplyNormal( diag, diagOffset, L, X );
+    else
+        LocalFrontLowerMultiplyTranspose( orientation, diag, diagOffset, L, X );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename F>
+inline void LocalFrontLowerMultiplyNormal
 ( Diagonal diag, int diagOffset, const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
@@ -127,9 +166,9 @@ void numeric::LocalFrontLowerMultiplyNormal
     else
     {
         std::vector<Matrix<F> > diagonals;
-        ModifyForTrmm( LT, diag, diagOffset, diagonals );
+        internal::ModifyForTrmm( LT, diag, diagOffset, diagonals );
         elem::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, (F)1, LT, XT );
-        ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
+        internal::ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -137,7 +176,7 @@ void numeric::LocalFrontLowerMultiplyNormal
 }
 
 template<typename F>
-void numeric::LocalFrontLowerMultiplyTranspose
+inline void LocalFrontLowerMultiplyTranspose
 ( Orientation orientation, Diagonal diag, int diagOffset,
   const Matrix<F>& L, Matrix<F>& X )
 {
@@ -176,9 +215,9 @@ void numeric::LocalFrontLowerMultiplyTranspose
     else
     {
         std::vector<Matrix<F> > diagonals;
-        ModifyForTrmm( LT, diag, diagOffset, diagonals );
+        internal::ModifyForTrmm( LT, diag, diagOffset, diagonals );
         elem::Trmm( LEFT, LOWER, orientation, NON_UNIT, (F)1, LT, XT );
-        ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
+        internal::ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
     }
 
     elem::Gemm( orientation, NORMAL, (F)1, LB, XB, (F)1, XT );
@@ -187,32 +226,7 @@ void numeric::LocalFrontLowerMultiplyTranspose
 #endif
 }
 
+} // namespace numeric
 } // namespace cliq
 
-template void cliq::numeric::LocalFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset, 
-  const Matrix<float>& L, Matrix<float>& X );
-template void cliq::numeric::LocalFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset, 
-  const Matrix<float>& L, Matrix<float>& X );
-
-template void cliq::numeric::LocalFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset,
-  const Matrix<double>& L, Matrix<double>& X );
-template void cliq::numeric::LocalFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset, 
-  const Matrix<double>& L, Matrix<double>& X );
-
-template void cliq::numeric::LocalFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset, 
-  const Matrix<Complex<float> >& L, Matrix<Complex<float> >& X );
-template void cliq::numeric::LocalFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset, 
-  const Matrix<Complex<float> >& L, Matrix<Complex<float> >& X );
-
-template void cliq::numeric::LocalFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset, 
-  const Matrix<Complex<double> >& L, Matrix<Complex<double> >& X );
-template void cliq::numeric::LocalFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset, 
-  const Matrix<Complex<double> >& L, Matrix<Complex<double> >& X );
+#endif // CLIQUE_NUMERIC_LOCAL_FRONT_LOWER_MULTIPLY_HPP

@@ -20,57 +20,8 @@
 #ifndef CLIQUE_NUMERIC_FRONT_LOWER_SOLVE_HPP
 #define CLIQUE_NUMERIC_FRONT_LOWER_SOLVE_HPP 1
 
-namespace cliq {
-namespace numeric {
+#include "clique/numeric/local_front_lower_solve.hpp"
+#include "clique/numeric/dist_front_lower_solve.hpp"
+#include "clique/numeric/dist_front_fast_lower_solve.hpp"
 
-template<typename F>
-void LocalFrontLowerForwardSolve
-( Diagonal diag, const Matrix<F>& L, Matrix<F>& X );
-
-template<typename F>
-void LocalFrontLowerBackwardSolve
-( Orientation orientation, Diagonal diag, 
-  const Matrix<F>& L, Matrix<F>& X );
-
-template<typename F>
-void DistFrontLowerForwardSolve
-( Diagonal diag, 
-  const DistMatrix<F,VC,STAR>& L, 
-        DistMatrix<F,VC,STAR>& X,
-        bool singleL11AllGather=true );
-
-template<typename F>
-void DistFrontFastLowerForwardSolve
-( Diagonal diag,
-  DistMatrix<F,VC,STAR>& L,
-  DistMatrix<F,VC,STAR>& X );
-
-template<typename F>
-void DistFrontFastLowerForwardSolve
-( Diagonal diag,
-  DistMatrix<F,MC,MR  >& L,
-  DistMatrix<F,VC,STAR>& X );
-
-template<typename F>
-void DistFrontLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  const DistMatrix<F,VC,STAR>& L, 
-        DistMatrix<F,VC,STAR>& X,
-        bool singleL11AllGather=true );
-
-template<typename F>
-void DistFrontFastLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  DistMatrix<F,VC,STAR>& L,
-  DistMatrix<F,VC,STAR>& X );
-
-template<typename F>
-void DistFrontFastLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  DistMatrix<F,MC,MR  >& L,
-  DistMatrix<F,VC,STAR>& X );
-
-} // namespace numeric
-} // namespace cliq
-
-#endif /* CLIQUE_NUMERIC_FRONT_LOWER_SOLVE_HPP */
+#endif // CLIQUE_NUMERIC_FRONT_LOWER_SOLVE_HPP

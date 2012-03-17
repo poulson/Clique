@@ -22,12 +22,36 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "clique.hpp"
+#ifndef CLIQUE_NUMERIC_DIST_FRONT_FAST_LOWER_SOLVE_HPP
+#define CLIQUE_NUMERIC_DIST_FRONT_FAST_LOWER_SOLVE_HPP 1
 
 namespace cliq {
+namespace numeric {
 
 template<typename F>
-void numeric::DistFrontFastLowerForwardSolve
+void DistFrontFastLowerForwardSolve
+( Diagonal diag, DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
+
+template<typename F>
+void DistFrontFastLowerForwardSolve
+( Diagonal diag, DistMatrix<F,MC,MR>& L, DistMatrix<F,VC,STAR>& X );
+
+template<typename F>
+void DistFrontFastLowerBackwardSolve
+( Orientation orientation, Diagonal diag, 
+  DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
+
+template<typename F>
+void DistFrontFastLowerBackwardSolve
+( Orientation orientation, Diagonal diag, 
+  DistMatrix<F,MC,MR>& L, DistMatrix<F,VC,STAR>& X );
+
+//----------------------------------------------------------------------------//
+// Implementation begins here                                                 //
+//----------------------------------------------------------------------------//
+
+template<typename F>
+inline void DistFrontFastLowerForwardSolve
 ( Diagonal diag, DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
@@ -122,7 +146,7 @@ void numeric::DistFrontFastLowerForwardSolve
 }
 
 template<typename F>
-void numeric::DistFrontFastLowerForwardSolve
+inline void DistFrontFastLowerForwardSolve
 ( Diagonal diag, DistMatrix<F,MC,MR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
@@ -216,7 +240,7 @@ void numeric::DistFrontFastLowerForwardSolve
 }
 
 template<typename F>
-void numeric::DistFrontFastLowerBackwardSolve
+inline void DistFrontFastLowerBackwardSolve
 ( Orientation orientation, Diagonal diag, 
   DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
@@ -309,7 +333,7 @@ void numeric::DistFrontFastLowerBackwardSolve
 }
 
 template<typename F>
-void numeric::DistFrontFastLowerBackwardSolve
+inline void DistFrontFastLowerBackwardSolve
 ( Orientation orientation, Diagonal diag, 
   DistMatrix<F,MC,MR>& L, DistMatrix<F,VC,STAR>& X )
 {
@@ -410,72 +434,7 @@ void numeric::DistFrontFastLowerBackwardSolve
 #endif
 }
 
+} // namespace numeric
 } // namespace cliq
 
-template void cliq::numeric::DistFrontFastLowerForwardSolve
-( Diagonal diag, 
-  DistMatrix<float,VC,STAR>& L,
-  DistMatrix<float,VC,STAR>& X );
-template void cliq::numeric::DistFrontFastLowerForwardSolve
-( Diagonal diag, 
-  DistMatrix<float,MC,MR  >& L,
-  DistMatrix<float,VC,STAR>& X );
-template void cliq::numeric::DistFrontFastLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  DistMatrix<float,VC,STAR>& L,
-  DistMatrix<float,VC,STAR>& X );
-template void cliq::numeric::DistFrontFastLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  DistMatrix<float,MC,MR  >& L,
-  DistMatrix<float,VC,STAR>& X );
-
-template void cliq::numeric::DistFrontFastLowerForwardSolve
-( Diagonal diag,
-  DistMatrix<double,VC,STAR>& L, 
-  DistMatrix<double,VC,STAR>& X );
-template void cliq::numeric::DistFrontFastLowerForwardSolve
-( Diagonal diag,
-  DistMatrix<double,MC,MR  >& L, 
-  DistMatrix<double,VC,STAR>& X );
-template void cliq::numeric::DistFrontFastLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  DistMatrix<double,VC,STAR>& L,
-  DistMatrix<double,VC,STAR>& X );
-template void cliq::numeric::DistFrontFastLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  DistMatrix<double,MC,MR  >& L,
-  DistMatrix<double,VC,STAR>& X );
-
-template void cliq::numeric::DistFrontFastLowerForwardSolve
-( Diagonal diag,
-  DistMatrix<Complex<float>,VC,STAR>& L, 
-  DistMatrix<Complex<float>,VC,STAR>& X );
-template void cliq::numeric::DistFrontFastLowerForwardSolve
-( Diagonal diag,
-  DistMatrix<Complex<float>,MC,MR  >& L, 
-  DistMatrix<Complex<float>,VC,STAR>& X );
-template void cliq::numeric::DistFrontFastLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  DistMatrix<Complex<float>,VC,STAR>& L, 
-  DistMatrix<Complex<float>,VC,STAR>& X );
-template void cliq::numeric::DistFrontFastLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  DistMatrix<Complex<float>,MC,MR  >& L, 
-  DistMatrix<Complex<float>,VC,STAR>& X );
-
-template void cliq::numeric::DistFrontFastLowerForwardSolve
-( Diagonal diag,
-  DistMatrix<Complex<double>,VC,STAR>& L, 
-  DistMatrix<Complex<double>,VC,STAR>& X );
-template void cliq::numeric::DistFrontFastLowerForwardSolve
-( Diagonal diag,
-  DistMatrix<Complex<double>,MC,MR  >& L, 
-  DistMatrix<Complex<double>,VC,STAR>& X );
-template void cliq::numeric::DistFrontFastLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  DistMatrix<Complex<double>,VC,STAR>& L,
-  DistMatrix<Complex<double>,VC,STAR>& X );
-template void cliq::numeric::DistFrontFastLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  DistMatrix<Complex<double>,MC,MR  >& L,
-  DistMatrix<Complex<double>,VC,STAR>& X );
+#endif // CLIQUE_NUMERIC_DIST_FRONT_FAST_LOWER_SOLVE_HPP

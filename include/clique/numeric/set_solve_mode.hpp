@@ -17,14 +17,23 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "clique.hpp"
+#ifndef CLIQUE_NUMERIC_SET_SOLVE_MODE_HPP
+#define CLIQUE_NUMERIC_SET_SOLVE_MODE_HPP 1
 
 namespace cliq {
+namespace numeric {
+
+template<typename F>
+void SetSolveMode( SymmFrontTree<F>& L, SolveMode mode );
+
+//----------------------------------------------------------------------------//
+// Implementation begins here                                                 //
+//----------------------------------------------------------------------------//
 
 // This routine could be modified later so that it uses much less memory
 // by replacing the '=' redistributions with piece-by-piece redistributions.
 template<typename F>
-void numeric::SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
+inline void SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
 {
 #ifndef RELEASE
     PushCallStack("numeric::SetSolveMode");
@@ -126,16 +135,7 @@ void numeric::SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
 #endif
 }
 
+} // namespace numeric
 } // namespace cliq
 
-template void cliq::numeric::SetSolveMode
-( SymmFrontTree<float>& L, SolveMode mode );
-
-template void cliq::numeric::SetSolveMode
-( SymmFrontTree<double>& L, SolveMode mode );
-
-template void cliq::numeric::SetSolveMode
-( SymmFrontTree<Complex<float> >& L, SolveMode mode );
-
-template void cliq::numeric::SetSolveMode
-( SymmFrontTree<Complex<double> >& L, SolveMode mode );
+#endif // CLIQUE_NUMERIC_SET_SOLVE_MODE_HPP

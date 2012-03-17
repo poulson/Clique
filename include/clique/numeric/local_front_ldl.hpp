@@ -21,12 +21,21 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "clique.hpp"
+#ifndef CLIQUE_NUMERIC_LOCAL_FRONT_LDL_HPP
+#define CLIQUE_NUMERIC_LOCAL_FRONT_LDL_HPP 1
 
 namespace cliq {
+namespace numeric {
 
 template<typename F> 
-void numeric::LocalFrontLDL
+void LocalFrontLDL( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR );
+
+//----------------------------------------------------------------------------//
+// Implementation begins here                                                 //
+//----------------------------------------------------------------------------//
+
+template<typename F> 
+inline void LocalFrontLDL
 ( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR )
 {
 #ifndef RELEASE
@@ -94,20 +103,7 @@ void numeric::LocalFrontLDL
 #endif
 }
 
+} // namespace numeric
 } // namespace cliq
 
-template void cliq::numeric::LocalFrontLDL
-( Orientation orientation, 
-  Matrix<float>& AL, Matrix<float>& ABR);
-
-template void cliq::numeric::LocalFrontLDL
-( Orientation orientation, 
-  Matrix<double>& AL, Matrix<double>& ABR );
-
-template void cliq::numeric::LocalFrontLDL
-( Orientation orientation, 
-  Matrix<Complex<float> >& AL, Matrix<Complex<float> >& ABR );
-
-template void cliq::numeric::LocalFrontLDL
-( Orientation orientation, 
-  Matrix<Complex<double> >& AL, Matrix<Complex<double> >& ABR );
+#endif // CLIQUE_NUMERIC_LOCAL_FRONT_LDL_HPP

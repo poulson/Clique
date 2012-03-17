@@ -17,12 +17,32 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "clique.hpp"
+#ifndef CLIQUE_NUMERIC_DIST_LOWER_MULTIPLY
+#define CLIQUE_NUMERIC_DIST_LOWER_MULTIPLY 1
 
 namespace cliq {
+namespace numeric {
 
 template<typename F> 
-void numeric::DistLowerMultiplyNormal
+void DistLowerMultiplyNormal
+( Diagonal diag, int diagOffset,
+  const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<F>& L,
+        Matrix<F>& localX );
+
+template<typename F> 
+void DistLowerMultiplyTranspose
+( Orientation orientation, Diagonal diag, int diagOffset,
+  const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<F>& L,
+        Matrix<F>& localX );
+
+//----------------------------------------------------------------------------//
+// Implementation begins here                                                 //
+//----------------------------------------------------------------------------//
+
+template<typename F> 
+inline void DistLowerMultiplyNormal
 ( Diagonal diag, int diagOffset,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
@@ -226,7 +246,7 @@ void numeric::DistLowerMultiplyNormal
 }
 
 template<typename F> // F represents a real or complex field
-void numeric::DistLowerMultiplyTranspose
+inline void DistLowerMultiplyTranspose
 ( Orientation orientation, Diagonal diag, int diagOffset,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
@@ -444,48 +464,7 @@ void numeric::DistLowerMultiplyTranspose
 #endif
 }
 
+} // namespace numeric
 } // namespace cliq
 
-template void cliq::numeric::DistLowerMultiplyNormal
-( Diagonal diag, int diagOffset,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<float>& L,
-        Matrix<float>& localX );
-template void cliq::numeric::DistLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<float>& L,
-        Matrix<float>& localX );
-
-template void cliq::numeric::DistLowerMultiplyNormal
-( Diagonal diag, int diagOffset, 
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<double>& L,
-        Matrix<double>& localX );
-template void cliq::numeric::DistLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<double>& L,
-        Matrix<double>& localX );
-
-template void cliq::numeric::DistLowerMultiplyNormal
-( Diagonal diag, int diagOffset,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<Complex<float> >& L,
-        Matrix<Complex<float> >& localX );
-template void cliq::numeric::DistLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<Complex<float> >& L,
-        Matrix<Complex<float> >& localX );
-
-template void cliq::numeric::DistLowerMultiplyNormal
-( Diagonal diag, int diagOffset,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<Complex<double> >& L,
-        Matrix<Complex<double> >& localX );
-template void cliq::numeric::DistLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<Complex<double> >& L,
-        Matrix<Complex<double> >& localX );
+#endif // CLIQUE_NUMERIC_DIST_LOWER_MULTIPLY

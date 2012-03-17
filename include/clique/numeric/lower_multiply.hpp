@@ -30,39 +30,21 @@ void LowerMultiply
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX );
 
-template<typename F>
-void LocalLowerMultiplyNormal
-( Diagonal diag, int diagOffset,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX );
-template<typename F>
-void DistLowerMultiplyNormal
-( Diagonal diag, int diagOffset,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX );
-
-// Handles the TRANSPOSE and ADJOINT cases
-template<typename F>
-void LocalLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX );
-template<typename F>
-void DistLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX );
+} // namespace numeric
+} // namespace cliq
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
+#include "clique/numeric/local_lower_multiply.hpp"
+#include "clique/numeric/dist_lower_multiply.hpp"
+
+namespace cliq {
+namespace numeric {
+
 template<typename F>
-void LowerMultiply
+inline void LowerMultiply
 ( Orientation orientation, Diagonal diag, int diagOffset,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
@@ -91,4 +73,4 @@ void LowerMultiply
 } // namespace numeric
 } // namespace cliq
 
-#endif /* CLIQUE_NUMERIC_LOWER_MULTIPLY_HPP */
+#endif // CLIQUE_NUMERIC_LOWER_MULTIPLY_HPP

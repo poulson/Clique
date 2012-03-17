@@ -30,42 +30,21 @@ void LowerSolve
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX );
 
-// Helpers
-
-template<typename F>
-void LocalLowerForwardSolve
-( Diagonal diag,
-  const symbolic::SymmFact& S, 
-  const numeric::SymmFrontTree<F>& L, 
-        Matrix<F>& localX );
-
-template<typename F>
-void DistLowerForwardSolve
-( Diagonal diag,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX );
-
-template<typename F>
-void LocalLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  const symbolic::SymmFact& S, 
-  const numeric::SymmFrontTree<F>& L, 
-        Matrix<F>& localX );
-
-template<typename F>
-void DistLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX );
+} // namespace numeric
+} // namespace cliq
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
+#include "clique/numeric/local_lower_solve.hpp"
+#include "clique/numeric/dist_lower_solve.hpp"
+
+namespace cliq {
+namespace numeric {
+
 template<typename F>
-void LowerSolve
+inline void LowerSolve
 ( Orientation orientation, Diagonal diag, 
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
@@ -92,4 +71,4 @@ void LowerSolve
 } // namespace numeric
 } // namespace cliq
 
-#endif /* CLIQUE_NUMERIC_LOWER_SOLVE_HPP */
+#endif // CLIQUE_NUMERIC_LOWER_SOLVE_HPP 

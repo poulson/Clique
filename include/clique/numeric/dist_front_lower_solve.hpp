@@ -22,13 +22,32 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "clique.hpp"
+#ifndef CLIQUE_NUMERIC_DIST_FRONT_LOWER_SOLVE_HPP
+#define CLIQUE_NUMERIC_DIST_FRONT_LOWER_SOLVE_HPP 1
 
-namespace {
+namespace cliq {
+namespace numeric {
+
+template<typename F>
+void DistFrontLowerForwardSolve
+( Diagonal diag, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
+  bool singleL11AllGather=true );
+
+template<typename F>
+inline void DistFrontLowerBackwardSolve
+( Orientation orientation, Diagonal diag, 
+  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
+  bool singleL11AllGather=true );
+
+//----------------------------------------------------------------------------//
+// Implementation begins here                                                 //
+//----------------------------------------------------------------------------//
+
+namespace internal {
 using namespace elem;
 
 template<typename F>
-void ForwardMany
+inline void ForwardMany
 ( Diagonal diag, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
     const Grid& g = L.Grid();
@@ -78,12 +97,12 @@ void ForwardMany
         X1_STAR_STAR = X1;   // X1[* ,* ] <- X1[VC,* ]
 
         // X1[* ,* ] := (L11[* ,* ])^-1 X1[* ,* ]
-        internal::LocalTrsm
+        elem::internal::LocalTrsm
         ( LEFT, LOWER, NORMAL, diag, (F)1, L11_STAR_STAR, X1_STAR_STAR, true );
         X1 = X1_STAR_STAR;
 
         // X2[VC,* ] -= L21[VC,* ] X1[* ,* ]
-        internal::LocalGemm
+        elem::internal::LocalGemm
         ( NORMAL, NORMAL, (F)-1, L21, X1_STAR_STAR, (F)1, X2 );
         //--------------------------------------------------------------------//
 
@@ -252,13 +271,13 @@ void ForwardSingle
         AccumulateRHS( X1, X1_STAR_STAR ); // X1[* ,* ] <- X1[VC,* ]
 
         // X1[* ,* ] := (L11[* ,* ])^-1 X1[* ,* ]
-        internal::LocalTrsm
+        elem::internal::LocalTrsm
         ( LEFT, UPPER, TRANSPOSE, diag, (F)1, L11Trans_STAR_STAR, X1_STAR_STAR,
           true );
         X1 = X1_STAR_STAR;
 
         // X2[VC,* ] -= L21[VC,* ] X1[* ,* ]
-        internal::LocalGemm
+        elem::internal::LocalGemm
         ( NORMAL, NORMAL, (F)-1, L21, X1_STAR_STAR, (F)1, X2 );
         //--------------------------------------------------------------------//
 
@@ -282,7 +301,7 @@ void BackwardMany
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
     // TODO: Replace this with modified inline code?
-    internal::TrsmLLTSmall( orientation, diag, (F)1, L, X, true );
+    elem::internal::TrsmLLTSmall( orientation, diag, (F)1, L, X, true );
 }
 
 template<typename F>
@@ -345,13 +364,13 @@ void BackwardSingle
         //--------------------------------------------------------------------//
         // X1 -= L21' X2
         Z1_STAR_STAR.ResizeTo( X1.Height(), X1.Width() );
-        internal::LocalGemm
+        elem::internal::LocalGemm
         ( orientation, NORMAL, (F)-1, L21, X2, (F)0, Z1_STAR_STAR );
-        internal::AddInLocalData( X1, Z1_STAR_STAR );
+        elem::internal::AddInLocalData( X1, Z1_STAR_STAR );
         Z1_STAR_STAR.SumOverGrid();
 
         // X1 := L11^-1 X1
-        internal::LocalTrsm
+        elem::internal::LocalTrsm
         ( LEFT, UPPER, NORMAL, UNIT, 
           (F)1, L11AdjOrTrans_STAR_STAR, Z1_STAR_STAR );
         X1 = Z1_STAR_STAR;
@@ -373,12 +392,10 @@ void BackwardSingle
     }
 }
 
-} // anonymous namespace
-
-namespace cliq {
+} // namespace internal
 
 template<typename F>
-void numeric::DistFrontLowerForwardSolve
+inline void DistFrontLowerForwardSolve
 ( Diagonal diag, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
   bool singleL11AllGather )
 {
@@ -399,16 +416,16 @@ void numeric::DistFrontLowerForwardSolve
         throw std::logic_error("L and X are assumed to be aligned");
 #endif
     if( singleL11AllGather )
-        ForwardSingle( diag, L, X );
+        internal::ForwardSingle( diag, L, X );
     else
-        ForwardMany( diag, L, X );
+        internal::ForwardMany( diag, L, X );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
 template<typename F>
-void numeric::DistFrontLowerBackwardSolve
+inline void DistFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag, 
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
   bool singleL11AllGather )
@@ -465,56 +482,15 @@ void numeric::DistFrontLowerBackwardSolve
     }
 
     if( singleL11AllGather )
-        BackwardSingle( orientation, diag, LT, XT );
+        internal::BackwardSingle( orientation, diag, LT, XT );
     else
-        BackwardMany( orientation, diag, LT, XT );
+        internal::BackwardMany( orientation, diag, LT, XT );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
+} // namespace numeric
 } // namespace cliq
 
-template void cliq::numeric::DistFrontLowerForwardSolve
-( Diagonal diag, 
-  const DistMatrix<float,VC,STAR>& L,
-        DistMatrix<float,VC,STAR>& X,
-        bool singleL11AllGather );
-template void cliq::numeric::DistFrontLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  const DistMatrix<float,VC,STAR>& L,
-        DistMatrix<float,VC,STAR>& X,
-        bool singleL11AllGather );
-
-template void cliq::numeric::DistFrontLowerForwardSolve
-( Diagonal diag,
-  const DistMatrix<double,VC,STAR>& L, 
-        DistMatrix<double,VC,STAR>& X,
-        bool singleL11AllGather );
-template void cliq::numeric::DistFrontLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  const DistMatrix<double,VC,STAR>& L,
-        DistMatrix<double,VC,STAR>& X,
-        bool singleL11AllGather );
-
-template void cliq::numeric::DistFrontLowerForwardSolve
-( Diagonal diag,
-  const DistMatrix<Complex<float>,VC,STAR>& L, 
-        DistMatrix<Complex<float>,VC,STAR>& X,
-        bool singleL11AllGather );
-template void cliq::numeric::DistFrontLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  const DistMatrix<Complex<float>,VC,STAR>& L, 
-        DistMatrix<Complex<float>,VC,STAR>& X,
-        bool singleL11AllGather );
-
-template void cliq::numeric::DistFrontLowerForwardSolve
-( Diagonal diag,
-  const DistMatrix<Complex<double>,VC,STAR>& L, 
-        DistMatrix<Complex<double>,VC,STAR>& X,
-        bool singleL11AllGather );
-template void cliq::numeric::DistFrontLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  const DistMatrix<Complex<double>,VC,STAR>& L,
-        DistMatrix<Complex<double>,VC,STAR>& X,
-        bool singleL11AllGather );
+#endif // CLIQUE_NUMERIC_DIST_FRONT_LOWER_SOLVE_HPP

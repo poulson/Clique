@@ -35,22 +35,21 @@ void LDL
 ( Orientation orientation, 
   symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L );
 
-template<typename F>
-void LocalLDL
-( Orientation orientation, 
-  symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L );
-
-template<typename F>
-void DistLDL
-( Orientation orientation, 
-  symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L );
+} // namespace numeric
+} // namespace cliq
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
+#include "clique/numeric/local_ldl.hpp"
+#include "clique/numeric/dist_ldl.hpp"
+
+namespace cliq {
+namespace numeric {
+
 template<typename F>
-void InitializeDistLeaf
+inline void InitializeDistLeaf
 ( const symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L )
 {
 #ifndef RELEASE
@@ -70,7 +69,7 @@ void InitializeDistLeaf
 }
 
 template<typename F>
-void LDL
+inline void LDL
 ( Orientation orientation, 
   symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L )
 {

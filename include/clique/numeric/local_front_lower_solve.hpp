@@ -22,12 +22,26 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "clique.hpp"
+#ifndef CLIQUE_NUMERIC_LOCAL_FRONT_LOWER_SOLVE_HPP
+#define CLIQUE_NUMERIC_LOCAL_FRONT_LOWER_SOLVE_HPP 1
 
 namespace cliq {
+namespace numeric {
 
 template<typename F>
-void numeric::LocalFrontLowerForwardSolve
+void LocalFrontLowerForwardSolve
+( Diagonal diag, const Matrix<F>& L, Matrix<F>& X );
+
+template<typename F>
+void LocalFrontLowerBackwardSolve
+( Orientation orientation, Diagonal diag, const Matrix<F>& L, Matrix<F>& X );
+
+//----------------------------------------------------------------------------//
+// Implementation begins here                                                 //
+//----------------------------------------------------------------------------//
+
+template<typename F>
+inline void LocalFrontLowerForwardSolve
 ( Diagonal diag, const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
@@ -61,7 +75,7 @@ void numeric::LocalFrontLowerForwardSolve
 }
 
 template<typename F>
-void numeric::LocalFrontLowerBackwardSolve
+inline void LocalFrontLowerBackwardSolve
 ( Orientation orientation, Diagonal diag, 
   const Matrix<F>& L, Matrix<F>& X )
 {
@@ -97,32 +111,7 @@ void numeric::LocalFrontLowerBackwardSolve
 #endif
 }
 
+} // namespace numeric
 } // namespace cliq
 
-template void cliq::numeric::LocalFrontLowerForwardSolve
-( Diagonal diag, 
-  const Matrix<float>& L, Matrix<float>& X );
-template void cliq::numeric::LocalFrontLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  const Matrix<float>& L, Matrix<float>& X );
-
-template void cliq::numeric::LocalFrontLowerForwardSolve
-( Diagonal diag, 
-  const Matrix<double>& L, Matrix<double>& X );
-template void cliq::numeric::LocalFrontLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  const Matrix<double>& L, Matrix<double>& X );
-
-template void cliq::numeric::LocalFrontLowerForwardSolve
-( Diagonal diag,
-  const Matrix<Complex<float> >& L, Matrix<Complex<float> >& X );
-template void cliq::numeric::LocalFrontLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  const Matrix<Complex<float> >& L, Matrix<Complex<float> >& X );
-
-template void cliq::numeric::LocalFrontLowerForwardSolve
-( Diagonal diag,
-  const Matrix<Complex<double> >& L, Matrix<Complex<double> >& X );
-template void cliq::numeric::LocalFrontLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  const Matrix<Complex<double> >& L, Matrix<Complex<double> >& X );
+#endif // CLIQUE_NUMERIC_LOCAL_FRONT_LOWER_SOLVE_HPP

@@ -17,20 +17,40 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "clique.hpp"
+#ifndef CLIQUE_NUMERIC_LOCAL_LOWER_MULTIPLY
+#define CLIQUE_NUMERIC_LOCAL_LOWER_MULTIPLY 1
 
 namespace cliq {
+namespace numeric {
+
+template<typename F>
+void LocalLowerMultiplyNormal
+( Diagonal diag, int diagOffset,
+  const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<F>& L,
+        Matrix<F>& X );
+
+template<typename F>
+void LocalLowerMultiplyTranspose
+( Orientation orientation, Diagonal diag, int diagOffset,
+  const symbolic::SymmFact& S, 
+  const numeric::SymmFrontTree<F>& L,
+        Matrix<F>& X );
+
+//----------------------------------------------------------------------------//
+// Implementation begins here                                                 //
+//----------------------------------------------------------------------------//
 
 template<typename F> 
-void numeric::LocalLowerForwardSolve
-( Diagonal diag, 
+inline void LocalLowerMultiplyNormal
+( Diagonal diag, int diagOffset,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& X )
 {
     using namespace symbolic;
 #ifndef RELEASE
-    PushCallStack("numeric::LocalLowerForwardSolve");
+    PushCallStack("numeric::LocalLowerMultiplyNormal");
 #endif
     const int numLocalSupernodes = S.local.supernodes.size();
     const int width = X.Width();
@@ -53,6 +73,10 @@ void numeric::LocalLowerForwardSolve
         WT = XT;
         WB.SetToZero();
 
+        // Multiply this block column of L against the supernode portion of the
+        // right-hand side and set W equal to the result
+        LocalFrontLowerMultiply( NORMAL, diag, diagOffset, frontL, W );
+
         // Update using the children (if they exist)
         const int numChildren = sn.children.size();
         if( numChildren == 2 )
@@ -72,7 +96,7 @@ void numeric::LocalLowerForwardSolve
             ( leftWork, leftSupernodeSize, 0, leftUpdateSize, width );
             for( int iChild=0; iChild<leftUpdateSize; ++iChild )
             {
-                const int iFront = sn.leftChildRelIndices[iChild]; 
+                const int iFront = sn.leftChildRelIndices[iChild];
                 for( int j=0; j<width; ++j )
                     W.Update( iFront, j, leftUpdate.Get(iChild,j) );
             }
@@ -90,10 +114,7 @@ void numeric::LocalLowerForwardSolve
             }
             rightWork.Empty();
         }
-        // else numChildren == 0
-
-        // Solve against this front
-        LocalFrontLowerForwardSolve( diag, frontL, W );
+        // else numChildren == 0 
 
         // Store the supernode portion of the result
         XT = WT;
@@ -104,15 +125,15 @@ void numeric::LocalLowerForwardSolve
 }
 
 template<typename F> 
-void numeric::LocalLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
+inline void LocalLowerMultiplyTranspose
+( Orientation orientation, Diagonal diag, int diagOffset,
   const symbolic::SymmFact& S, 
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& X )
 {
     using namespace symbolic;
 #ifndef RELEASE
-    PushCallStack("numeric::LocalLowerBackwardSolve");
+    PushCallStack("numeric::LocalLowerMultiplyTranspose");
 #endif
     const int numLocalSupernodes = S.local.supernodes.size();
     const int width = X.Width();
@@ -124,7 +145,7 @@ void numeric::LocalLowerBackwardSolve
         return;
     }
 
-    // Pull in the top local information from the bottom distributed information
+    // Pull in the top local information from the bottom distributed infomation
     L.local.fronts.back().work.LockedView
     ( L.dist.fronts[0].work1d.LocalMatrix() );
 
@@ -146,24 +167,24 @@ void numeric::LocalLowerBackwardSolve
         XT.View( X, sn.myOffset, 0, sn.size, width );
         WT = XT;
 
-        // Update using the parent
+        // Update using the parent's portion of the RHS
         const int parent = sn.parent;
-        Matrix<F>& parentWork = L.local.fronts[parent].work;
         const LocalSymmFactSupernode& parentSN = S.local.supernodes[parent];
+        Matrix<F>& parentWork = L.local.fronts[parent].work;
         const int currentUpdateSize = WB.Height();
         const std::vector<int>& parentRelIndices = 
-          ( sn.isLeftChild ? 
-            parentSN.leftChildRelIndices :
-            parentSN.rightChildRelIndices );
+            ( sn.isLeftChild ? 
+              parentSN.leftChildRelIndices :
+              parentSN.rightChildRelIndices );
         for( int iCurrent=0; iCurrent<currentUpdateSize; ++iCurrent )
         {
-            const int iParent = parentRelIndices[iCurrent];
+            const int iParent = parentRelIndices[iCurrent]; 
             for( int j=0; j<width; ++j )
                 WB.Set( iCurrent, j, parentWork.Get(iParent,j) );
         }
 
-        // The left child is numbered lower than the right child, so 
-        // we can safely free the parent's work if we are the left child
+        // The left child is numbered lower than the right child, so we can 
+        // safely free the parent's work if this node is the left child
         if( sn.isLeftChild )
         {
             parentWork.Empty();
@@ -171,64 +192,29 @@ void numeric::LocalLowerBackwardSolve
                 L.dist.fronts[0].work1d.Empty();
         }
 
-        // Solve against this front
-        LocalFrontLowerBackwardSolve( orientation, diag, frontL, W );
+        // Make a copy of the unmodified RHS
+        Matrix<F> XNode = W;
+
+        // Multiply the (conjugate-)transpose of this block column of L against
+        // the supernode portion of the right-hand side.
+        LocalFrontLowerMultiply( orientation, diag, diagOffset, frontL, XNode );
 
         // Store the supernode portion of the result
-        XT = WT;
+        Matrix<F> XNodeT, XNodeB;
+        elem::PartitionDown
+        ( XNode, XNodeT,
+                 XNodeB, sn.size );
+        XT = XNodeT;
+        XNode.Empty();
     }
-
-    // Ensure that all of the temporary buffers are freed (this is overkill)
     L.dist.fronts[0].work1d.Empty();
-    for( int s=0; s<numLocalSupernodes; ++s )
-        L.local.fronts[s].work.Empty();
+    L.local.fronts.front().work.Empty();
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
+} // namespace numeric
 } // namespace cliq
 
-template void cliq::numeric::LocalLowerForwardSolve
-( Diagonal diag,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<float>& L,
-        Matrix<float>& X );
-template void cliq::numeric::LocalLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<float>& L,
-        Matrix<float>& X );
-
-template void cliq::numeric::LocalLowerForwardSolve
-( Diagonal diag,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<double>& L,
-        Matrix<double>& X );
-template void cliq::numeric::LocalLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<double>& L,
-        Matrix<double>& X );
-
-template void cliq::numeric::LocalLowerForwardSolve
-( Diagonal diag,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<Complex<float> >& L,
-        Matrix<Complex<float> >& X );
-template void cliq::numeric::LocalLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<Complex<float> >& L,
-        Matrix<Complex<float> >& X );
-
-template void cliq::numeric::LocalLowerForwardSolve
-( Diagonal diag,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<Complex<double> >& L,
-        Matrix<Complex<double> >& X );
-template void cliq::numeric::LocalLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<Complex<double> >& L,
-        Matrix<Complex<double> >& X );
+#endif // CLIQUE_NUMERIC_LOCAL_LOWER_MULTIPLY
