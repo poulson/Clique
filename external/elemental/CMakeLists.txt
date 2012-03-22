@@ -574,11 +574,12 @@ endif(BUILD_TESTS)
 if(BUILD_EXAMPLES)
   set(EXAMPLE_DIR ${PROJECT_SOURCE_DIR}/examples)
 
-  set(CORE_EXAMPLES Identity Random)
+  set(CORE_EXAMPLES Constructors Identity Random)
   set(ADVANCED_EXAMPLES GaussianElimination)
 
   if(BUILD_PMRRR AND NOT FAILED_PMRRR)
     list(APPEND ADVANCED_EXAMPLES HermitianEig 
+                                  HermitianEigFromSequential
                                   ComplexHermitianFunction 
                                   RealHermitianFunction
                                   HermitianPseudoinverse
