@@ -49,11 +49,11 @@ namespace lapack = elem::lapack;
 namespace mpi = elem::mpi;
 
 // Pull in a number of useful enums from Elemental
-using namespace elem::diagonal_wrapper;
+using namespace elem::unit_or_non_unit_wrapper;
 using namespace elem::distribution_wrapper;
 using namespace elem::orientation_wrapper;
 using namespace elem::upper_or_lower_wrapper;
-using namespace elem::side_wrapper;
+using namespace elem::left_or_right_wrapper;
 
 // Pull in a few classes from Elemental
 using elem::Complex;

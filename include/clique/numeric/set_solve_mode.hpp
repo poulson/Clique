@@ -80,7 +80,7 @@ inline void SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
             DistMatrix<F> LT( grid );
             LT.View( front.front2dL, 0, 0, snSize, snSize );
             elem::TriangularInverse( elem::LOWER, elem::UNIT, LT );
-            LT.MakeTrapezoidal( elem::LEFT, elem::LOWER );
+            elem::MakeTrapezoidal( elem::LEFT, elem::LOWER, 0, LT );
         }
     }
     else if( mode == FAST_1D_LDL && oldMode == NORMAL_2D )
@@ -106,8 +106,8 @@ inline void SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
             front.front1dL.Empty();
             front.front1dL.SetGrid( grid );
             front.front1dL = front.front2dL;
-            front.front1dL.MakeTrapezoidal( elem::LEFT, elem::LOWER );
             front.front2dL.Empty();
+            elem::MakeTrapezoidal( elem::LEFT, elem::LOWER, 0, front.front1dL );
         }
     }
     else if( mode == NORMAL_2D && oldMode == NORMAL_1D )

@@ -34,42 +34,58 @@ cmake_minimum_required(VERSION 2.8.5)
 
 project(Elemental)
 set(Elemental_VERSION_MAJOR 0)
-set(Elemental_VERSION_MINOR 72)
+set(Elemental_VERSION_MINOR 74)
 
-# Complain if an in-source build was attempted
-if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
-  message(FATAL_ERROR "In-source build attempted; please clean the CMake cache and then switch to an out-of-source build, e.g., rm CMakeCache.txt && rm -Rf CMakeFiles/ && mkdir build/ && cd build/ && cmake ..")
-endif("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
+################################################################################
+# Common build options                                                         #
+################################################################################
 
-option(SHARED_LIBRARIES "Build shared libraries instead of static" OFF)
-if(SHARED_LIBRARIES)
-  set(LIBRARY_TYPE SHARED)
-else(SHARED_LIBRARIES)
-  set(LIBRARY_TYPE STATIC)
-endif(SHARED_LIBRARIES)
+# By default, Elemental builds static libraries, but shared libraries are 
+# also supported through this option.
+option(SHARED_LIBRARIES "Switch to shared libraries" OFF)
 
-option(BUILD_EXAMPLES "Build the examples" ON)
-option(BUILD_TESTS "Build a collection of test executables" OFF)
+# Whether or not to build a collection of simple example drivers.
+option(BUILD_EXAMPLES "A collection of simple examples" ON)
+
+# Whether or not to build a collection of performance and correctness tests
+option(BUILD_TESTS "A collection of performance and correctness tests" OFF)
+
+# Whether or not to build current 'experimental' code, such as:
+# 1) prototype C and F90 interfaces
+# 2) Martin's 3D Gemm code
 option(BUILD_EXPERIMENTAL "Build experimental code" OFF)
 
-# Do not attempt to build PMRRR if on a Windows platform (it requires pthreads)
+# Petschow and Bientinesi's Parallel Multiple Relatively Robust 
+# Representations (PMRRR) is used at the heart of all of Elemental's current 
+# eigensolvers. Since it makes use of pthreads, Windows builds cannot use 
+# PMRRR.
 if(WIN32)
   option(BUILD_PMRRR "Build and link against eigensolver PMRRR" OFF)
 else(WIN32)
   option(BUILD_PMRRR "Build and link against eigensolver PMRRR" ON)
 endif(WIN32)
 
-# Bugs in the complex version of MPI routines are quite common
-option(AVOID_COMPLEX_MPI "Avoid complex MPI routines for robustness" ON)
+################################################################################
+# Advanced build options                                                       #
+################################################################################
 
-# Bug fix for IBM's compiler miscompiling OpenMP a[i] += alpha b[i] statements
-# for complex datatypes
+# Since MPI libraries frequently mishandle complex data, Elemental defaults
+# to using routines designed for real datatypes whenever it does not result
+# in a significant performance loss.
+option(AVOID_COMPLEX_MPI "Avoid potentially buggy complex MPI routines" ON)
+mark_as_advanced(AVOID_COMPLEX_MPI)
+
+# At one point, a bug was found in IBM's C++ compiler for Blue Gene/P, 
+# where OpenMP statements of the form a[i] += alpha b[i], with complex data,
+# would segfault and/or return incorrect results
 option(AVOID_OMP_FMA "Avoid a bug in the IBM compilers." ON)
 mark_as_advanced(AVOID_OMP_FMA)
 
-# Treat the data for MPI_Allgather as unsigned char's in order to avoid known 
-# performance bugs
-option(USE_BYTE_ALLGATHERS "Avoid BG/P Allgather performance bug." ON)
+# Due to a subtle flaw in the Blue Gene/P extensions for MPICH2, treating 
+# floating-point data as a collection of byte-sized objects results in a 
+# better algorithm being chosen for MPI_Allgather. This should not effect
+# performance on most machines.
+option(USE_BYTE_ALLGATHERS "Avoid BG/P allgather performance bug." ON)
 mark_as_advanced(USE_BYTE_ALLGATHERS)
 
 # If MPI_Reduce_scatter_block doesn't exist, perform it by composing 
@@ -82,13 +98,70 @@ mark_as_advanced(REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE)
 option(POOL_MEMORY "Make Memory class accumulate memory until destruction" OFF)
 mark_as_advanced(POOL_MEMORY)
 
-# These are mainly useful for library developers
+################################################################################
+# Elemental-development build options                                          #
+################################################################################
+
+# Print a warning any time a redistribution is performed which unpacks a 
+# large amount of data with a non-unit stride
 option(CACHE_WARNINGS "Warns when using cache-unfriendly routines" OFF)
-option(UNALIGNED_WARNINGS "Warn when performing unaligned redistributions" OFF)
-option(VECTOR_WARNINGS "Warn when vector redistribution chances are missed" OFF)
 mark_as_advanced(CACHE_WARNINGS)
+
+# Print a warning when an improperly aligned redistribution is performed, 
+# i.e., if an unnecessary permutation communication stage must take place
+option(UNALIGNED_WARNINGS "Warn when performing unaligned redistributions" OFF)
 mark_as_advanced(UNALIGNED_WARNINGS)
-mark_as_advanced(VECTOR_WARNINGS)
+
+# Print a warning if an opportunity was missed to implement a redistribution
+# approach specifically for vectors (instead of matrices)
+option(VECTOR_WARNINGS "Warn when vector redistribution chances are missed" OFF)
+mark_as_advanced(CACHE_WARNINGS UNALIGNED_WARNINGS VECTOR_WARNINGS)
+
+################################################################################
+# Significant command-line variable definitions                                #
+################################################################################
+
+# "CMAKE_BUILD_TYPE"
+#   Elemental requires it to be one of the following choices:
+#     1. "PureDebug": Vanilla MPI build meant for development and debugging
+#     2. "PureRelease": Vanilla MPI build meant for production runs
+#     3. "HybridDebug": MPI+OpenMP build meant for development and debugging
+#     4. "HybridRelease": MPI+OpenMP build meant for production runs
+#   If "CMAKE_BUILD_TYPE" is not defined, the default is "PureRelease".
+
+# "CXX_PURE_DEBUG_FLAGS"/"CXX_PURE_RELEASE_FLAGS"/
+# "CXX_HYBRID_DEBUG_FLAGS"/"CXX_HYBRID_RELEASE_FLAGS"
+#   Override the default optimization (and debugging/symbol) flags
+
+# "OpenMP_CXX_FLAGS"
+#   Overrides the default compile flags for adding OpenMP support to CXX code
+
+# TODO: Add list of MPI variables here, such as "MPI_CXX_COMPILE_FLAGS"
+
+# TODO: Add list of MKL-specific optional variables, "INTEL_ROOT" and "MKL_ROOT"
+
+# TODO: Add discussion of "MATH_LIBS"
+
+# TODO: Add discussion of "REFERENCE_ROOT"
+
+# TODO: Check to see if there are any others...
+
+################################################################################
+# The build logic starts here                                                  #
+################################################################################
+
+# Elemental must be built "out-of-source", so we start by ensuring that the
+# source and build directories are different.
+if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
+  message(FATAL_ERROR "In-source build attempted; please clean the CMake cache and then switch to an out-of-source build, e.g., rm CMakeCache.txt && rm -Rf CMakeFiles/ && mkdir build/ && cd build/ && cmake ..")
+endif("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
+
+# Set the library type from the 'SHARED_LIBRARIES' option
+if(SHARED_LIBRARIES)
+  set(LIBRARY_TYPE SHARED)
+else(SHARED_LIBRARIES)
+  set(LIBRARY_TYPE STATIC)
+endif(SHARED_LIBRARIES)
 
 # Ensure that we have a valid build type
 if(NOT CMAKE_BUILD_TYPE)
@@ -206,157 +279,154 @@ set(CMAKE_CXX_FLAGS_PURERELEASE
 include(CheckTypeSize)
 if(NOT SIZEOF_VOID_P)
   check_type_size("void*" SIZEOF_VOID_P)
-  if(${SIZEOF_VOID_P} EQUAL 4)
-    set(32_BIT_SYSTEM TRUE)
-  else(${SIZEOF_VOID_P} EQUAL 4)
-    set(32_BIT_SYSTEM FALSE)    
-  endif(${SIZEOF_VOID_P} EQUAL 4)
 endif(NOT SIZEOF_VOID_P)
+set(32_BIT_SYSTEM FALSE)
+if(${SIZEOF_VOID_P} EQUAL 4)
+  set(32_BIT_SYSTEM TRUE)
+endif(${SIZEOF_VOID_P} EQUAL 4)
 
 # Since the CMake find_blas for some reason requires a Fortran compiler, we
 # must build our own.
+if(PURE)
+  set(MATH_DESC "Unthreaded BLAS/LAPACK link flags")
+else(PURE)
+  set(MATH_DESC "Threaded BLAS/LAPACK link flags")
+endif(PURE)
 if(MATH_LIBS)
-  set(NEED_MATH FALSE)
+  set(MISSING_MATH FALSE)
   message(STATUS "Using user-defined MATH_LIBS=${MATH_LIBS}")
 else(MATH_LIBS)
-  set(NEED_MATH TRUE)
-endif(MATH_LIBS)
-if(NEED_MATH)
-  if(PURE)
-    set(MATH_DESC "Unthreaded BLAS/LAPACK link flags")
-  else(PURE)
-    set(MATH_DESC "Threaded BLAS/LAPACK link flags")
-  endif(PURE)
   if(APPLE)
-    if(NEED_MATH)
-      set(MATH_LIBS "-framework vecLib" CACHE STRING ${MATH_DESC})
-      message(STATUS "Using Apple vecLib framework.")
-    endif(NEED_MATH)
+    set(MATH_LIBS "-framework vecLib" CACHE STRING ${MATH_DESC})
+    message(STATUS "Using Apple vecLib framework.")
+    set(MISSING_MATH FALSE)
   else(APPLE)
-    set(FOUND_MATH_LIBS FALSE)
-    # Look for MKL first
-    if(32_BIT_SYSTEM)
-      set(INTEL_ARCH_SUBDIRS 32/lib lib/32)
-      set(MKL_ARCH_SUBDIRS 32/lib lib/32)
-    else(32_BIT_SYSTEM)
-      set(INTEL_ARCH_SUBDIRS em64t/lib intel64/lib lib/em64t lib/intel64)
-      set(MKL_ARCH_SUBDIRS em64t/lib intel64/lib lib/em64t lib/intel64 
-          mkl/em64t/lib mkl/intel64/lib mkl/lib/em64t mkl/lib/intel64)
-    endif(32_BIT_SYSTEM)
-    if(INTEL_ROOT)
-      message(STATUS "Will also search INTEL_ROOT=${INTEL_ROOT} for MKL")
-      message(STATUS "INTEL_ARCH_SUBDIRS=${INTEL_ARCH_SUBDIRS}")
-    endif(INTEL_ROOT)
-    if(MKL_ROOT)
-      message(STATUS "Will also search MKL_ROOT=${MKL_ROOT} for MKL")
-      message(STATUS "MKL_ARCH_SUBDIRS=${INTEL_ARCH_SUBDIRS}")
-    endif(MKL_ROOT)
-    # There is a cyclic dependency between MKL_CORE and 
-    # MKL_SEQUENTIAL/MKL_INTEL_THREAD with some versions of MKL
-    if(NOT WIN32)
-      find_library(PTHREAD_LIB pthread DOC "Pthreads library")
-    endif(NOT WIN32)
+    set(MISSING_MATH TRUE)
+  endif(APPLE)
+endif(MATH_LIBS)
+if(MISSING_MATH)
+  # Look for MKL first (no promises that this will work...)
+  if(32_BIT_SYSTEM)
+    set(INTEL_ARCH_SUBDIRS 32/lib lib/32)
+    set(MKL_ARCH_SUBDIRS 32/lib lib/32)
+  else(32_BIT_SYSTEM)
+    set(INTEL_ARCH_SUBDIRS em64t/lib intel64/lib lib/em64t lib/intel64)
+    set(MKL_ARCH_SUBDIRS em64t/lib intel64/lib lib/em64t lib/intel64 
+        mkl/em64t/lib mkl/intel64/lib mkl/lib/em64t mkl/lib/intel64)
+  endif(32_BIT_SYSTEM)
+  if(INTEL_ROOT)
+    message(STATUS "Will also search INTEL_ROOT=${INTEL_ROOT} for MKL")
+    message(STATUS "INTEL_ARCH_SUBDIRS=${INTEL_ARCH_SUBDIRS}")
+  endif(INTEL_ROOT)
+  if(MKL_ROOT)
+    message(STATUS "Will also search MKL_ROOT=${MKL_ROOT} for MKL")
+    message(STATUS "MKL_ARCH_SUBDIRS=${INTEL_ARCH_SUBDIRS}")
+  endif(MKL_ROOT)
+  # There is a cyclic dependency between MKL_CORE and 
+  # MKL_SEQUENTIAL/MKL_INTEL_THREAD with some versions of MKL
+  if(NOT WIN32)
+    find_library(PTHREAD_LIB pthread DOC "Pthreads library")
+  endif(NOT WIN32)
+  find_library(
+    CMATH_LIB
+    NAMES m libmmd.lib
+    PATHS ${INTEL_ROOT} 
+    PATH_SUFFIXES ${INTEL_ARCH_SUBDIRS}
+    DOC "C math library"
+  )
+  find_library(
+    IOMP5_LIB
+    NAMES libiomp5.a libiomp5md.lib
+    PATHS ${INTEL_ROOT} 
+    PATH_SUFFIXES ${INTEL_ARCH_SUBDIRS}
+  )
+  find_library(
+    GUIDE_LIB
+    NAMES libguide.a libguide.lib
+    PATHS ${INTEL_ROOT}
+    PATH_SUFFIXES ${INTEL_ARCH_SUBDIRS}
+  )
+  find_library(
+    MKL_CORE_LIB
+    NAMES libmkl_core.a mkl_core.lib 
+    PATHS ${MKL_ROOT}
+    PATH_SUFFIXES ${MKL_ARCH_SUBDIRS}
+  )
+  find_library(
+    MKL_INTEL_LIB
+    NAMES libmkl_intel_lp64.a mkl_intel_lp64.lib 
+    PATHS ${MKL_ROOT}
+    PATH_SUFFIXES ${MKL_ARCH_SUBDIRS}
+  )
+  if(PURE)
     find_library(
-      CMATH_LIB
-      NAMES m libmmd.lib
-      PATHS ${INTEL_ROOT} 
-      PATH_SUFFIXES ${INTEL_ARCH_SUBDIRS}
-      DOC "C math library"
-    )
-    find_library(
-      IOMP5_LIB
-      NAMES libiomp5.a libiomp5md.lib
-      PATHS ${INTEL_ROOT} 
-      PATH_SUFFIXES ${INTEL_ARCH_SUBDIRS}
-    )
-    find_library(
-      GUIDE_LIB
-      NAMES libguide.a libguide.lib
-      PATHS ${INTEL_ROOT}
-      PATH_SUFFIXES ${INTEL_ARCH_SUBDIRS}
-    )
-    find_library(
-      MKL_CORE_LIB
-      NAMES libmkl_core.a mkl_core.lib 
+      MKL_SEQUENTIAL_LIB
+      NAMES libmkl_sequential.a mkl_sequential.lib
       PATHS ${MKL_ROOT}
       PATH_SUFFIXES ${MKL_ARCH_SUBDIRS}
     )
+    set(MKL_REQUIRED MKL_INTEL MKL_SEQUENTIAL MKL_CORE MKL_SEQUENTIAL CMATH
+                     GUIDE IOMP5)
+  else(PURE)
     find_library(
-      MKL_INTEL_LIB
-      NAMES libmkl_intel_lp64.a mkl_intel_lp64.lib 
+      MKL_INTEL_THREAD_LIB
+      NAMES libmkl_intel_thread.a mkl_intel_thread.lib
       PATHS ${MKL_ROOT}
       PATH_SUFFIXES ${MKL_ARCH_SUBDIRS}
     )
-    if(PURE)
-      find_library(
-        MKL_SEQUENTIAL_LIB
-        NAMES libmkl_sequential.a mkl_sequential.lib
-        PATHS ${MKL_ROOT}
-        PATH_SUFFIXES ${MKL_ARCH_SUBDIRS}
-      )
-      set(MKL_REQUIRED MKL_INTEL MKL_SEQUENTIAL MKL_CORE MKL_SEQUENTIAL CMATH
-                       GUIDE IOMP5)
-    else(PURE)
-      find_library(
-        MKL_INTEL_THREAD_LIB
-        NAMES libmkl_intel_thread.a mkl_intel_thread.lib
-        PATHS ${MKL_ROOT}
-        PATH_SUFFIXES ${MKL_ARCH_SUBDIRS}
-      )
-      set(MKL_REQUIRED MKL_INTEL MKL_INTEL_THREAD MKL_CORE MKL_INTEL_THREAD 
-                       CMATH GUIDE IOMP5)
-    endif(PURE)
-    if(NOT WIN32)
-      list(APPEND MKL_REQUIRED PTHREAD)
-    endif(NOT WIN32)
-    set(MKL_FOUND TRUE)
-    set(MATH_LIBS "")
-    foreach(NAME ${MKL_REQUIRED})
+    set(MKL_REQUIRED MKL_INTEL MKL_INTEL_THREAD MKL_CORE MKL_INTEL_THREAD 
+                     CMATH GUIDE IOMP5)
+  endif(PURE)
+  if(NOT WIN32)
+    list(APPEND MKL_REQUIRED PTHREAD)
+  endif(NOT WIN32)
+  set(MKL_FOUND TRUE)
+  set(MATH_LIBS "")
+  foreach(NAME ${MKL_REQUIRED})
+    if(${NAME}_LIB)
+      message(STATUS "Found ${NAME}_LIB: ${${NAME}_LIB}")
+      list(APPEND MATH_LIBS ${${NAME}_LIB})
+    else(${NAME}_LIB)
+      message(STATUS "Could not find ${NAME}_LIB") 
+      if(NOT "${NAME}" STREQUAL "GUIDE")
+        set(MATH_LIBS "")
+        set(MKL_FOUND FALSE)
+      endif(NOT "${NAME}" STREQUAL "GUIDE")
+    endif(${NAME}_LIB)
+  endforeach(NAME)
+  if(MKL_FOUND)
+    message(STATUS "Using MKL math libraries.")
+    message(STATUS "MATH_LIBS=${MATH_LIBS}")
+    set(MISSING_MATH FALSE)
+  endif(MKL_FOUND)
+  if(MISSING_MATH)
+    # Look for default BLAS and LAPACK
+    if(REFERENCE_ROOT)
+      message(STATUS 
+        "Will search REFERENCE_ROOT=${REFERENCE_ROOT} for math libs")
+    endif(REFERENCE_ROOT)
+    set(REFERENCE_REQUIRED LAPACK BLAS)
+    find_library(BLAS_LIB NAMES blas PATHS ${REFERENCE_ROOT})
+    find_library(LAPACK_LIB NAMES lapack reflapack PATHS ${REFERENCE_ROOT}) 
+    set(REFERENCE_FOUND TRUE)
+    foreach(NAME ${REFERENCE_REQUIRED})
       if(${NAME}_LIB)
         message(STATUS "Found ${NAME}_LIB: ${${NAME}_LIB}")
         list(APPEND MATH_LIBS ${${NAME}_LIB})
       else(${NAME}_LIB)
-        message(STATUS "Could not find ${NAME}_LIB") 
-        if(NOT "${NAME}" STREQUAL "GUIDE")
-          set(MATH_LIBS "")
-          set(MKL_FOUND FALSE)
-        endif(NOT "${NAME}" STREQUAL "GUIDE")
+        message(STATUS "Could not find ${NAME}_LIB")
+        set(MATH_LIBS "")
+        set(REFERENCE_FOUND FALSE)
       endif(${NAME}_LIB)
     endforeach(NAME)
-    if(MKL_FOUND)
-      message(STATUS "Using MKL's math libraries.")
-      message(STATUS "MATH_LIBS=${MATH_LIBS}")
-      set(NEED_MATH FALSE)
-    endif(MKL_FOUND)
-    if(NEED_MATH)
-      # Look for default BLAS and LAPACK
-      if(REFERENCE_ROOT)
-        message(STATUS 
-          "Will search REFERENCE_ROOT=${REFERENCE_ROOT} for math libs")
-      endif(REFERENCE_ROOT)
-      set(REFERENCE_REQUIRED LAPACK BLAS)
-      find_library(BLAS_LIB NAMES blas PATHS ${REFERENCE_ROOT})
-      find_library(LAPACK_LIB NAMES lapack reflapack PATHS ${REFERENCE_ROOT}) 
-      set(REFERENCE_FOUND TRUE)
-      foreach(NAME ${REFERENCE_REQUIRED})
-        if(${NAME}_LIB)
-          message(STATUS "Found ${NAME}_LIB: ${${NAME}_LIB}")
-          list(APPEND MATH_LIBS ${${NAME}_LIB})
-        else(${NAME}_LIB)
-          message(STATUS "Could not find ${NAME}_LIB")
-          set(MATH_LIBS "")
-          set(REFERENCE_FOUND FALSE)
-        endif(${NAME}_LIB)
-      endforeach(NAME)
-      if(REFERENCE_FOUND)
-        message(WARNING "Using reference BLAS/LAPACK.")
-      else(REFERENCE_FOUND) 
-        message(FATAL_ERROR 
-          "Could not find BLAS/LAPACK libraries. Please specify MATH_LIBS")
-      endif(REFERENCE_FOUND)
-    endif(NEED_MATH)
-  endif(APPLE)
-endif(NEED_MATH)
+    if(REFERENCE_FOUND)
+      message(WARNING "Using reference BLAS/LAPACK.")
+    else(REFERENCE_FOUND) 
+      message(FATAL_ERROR 
+        "Could not find BLAS/LAPACK libraries. Please specify MATH_LIBS")
+    endif(REFERENCE_FOUND)
+  endif(MISSING_MATH)
+endif(MISSING_MATH)
 
 # Attempt to detect the BLAS and LAPACK underscore conventions. 
 # We currently only handle whether or not there is an underscore appended.
@@ -540,33 +610,33 @@ if(BUILD_TESTS)
     endif(MPI_LINK_FLAGS)
     install(TARGETS tests-core-${TEST} DESTINATION bin/tests/core)
   endforeach(TEST)
-  # Build the basic tests
-  set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/tests/basic")
+  # Build the BLAS-like tests
+  set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/tests/blas-like")
   foreach(TEST ${BASIC_TESTS})
-    add_executable(tests-basic-${TEST} ${TEST_DIR}/basic/${TEST}.cpp)
-    target_link_libraries(tests-basic-${TEST} elemental)
-    set_target_properties(tests-basic-${TEST} PROPERTIES
+    add_executable(tests-blas-${TEST} ${TEST_DIR}/blas-like/${TEST}.cpp)
+    target_link_libraries(tests-blas-${TEST} elemental)
+    set_target_properties(tests-blas-${TEST} PROPERTIES
                           OUTPUT_NAME ${TEST}
                           RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
     if(MPI_LINK_FLAGS)
-      set_target_properties(tests-basic-${TEST} PROPERTIES
+      set_target_properties(tests-blas-${TEST} PROPERTIES
                             LINK_FLAGS ${MPI_LINK_FLAGS})
     endif(MPI_LINK_FLAGS)
-    install(TARGETS tests-basic-${TEST} DESTINATION bin/tests/basic)
+    install(TARGETS tests-blas-${TEST} DESTINATION bin/tests/blas-like)
   endforeach(TEST)
-  # Build the advanced tests
-  set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/tests/advanced")
+  # Build the LAPACK-like tests
+  set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/tests/lapack-like")
   foreach(TEST ${ADVANCED_TESTS})
-    add_executable(tests-advanced-${TEST} ${TEST_DIR}/advanced/${TEST}.cpp)
-    target_link_libraries(tests-advanced-${TEST} elemental)
-    set_target_properties(tests-advanced-${TEST} PROPERTIES
+    add_executable(tests-lapack-${TEST} ${TEST_DIR}/lapack-like/${TEST}.cpp)
+    target_link_libraries(tests-lapack-${TEST} elemental)
+    set_target_properties(tests-lapack-${TEST} PROPERTIES
                           OUTPUT_NAME ${TEST}
                           RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
     if(MPI_LINK_FLAGS)
-      set_target_properties(tests-advanced-${TEST} PROPERTIES
+      set_target_properties(tests-lapack-${TEST} PROPERTIES
                             LINK_FLAGS ${MPI_LINK_FLAGS})
     endif(MPI_LINK_FLAGS)
-    install(TARGETS tests-advanced-${TEST} DESTINATION bin/tests/advanced)
+    install(TARGETS tests-lapack-${TEST} DESTINATION bin/tests/lapack-like)
   endforeach(TEST)
 endif(BUILD_TESTS)
 
@@ -574,8 +644,11 @@ endif(BUILD_TESTS)
 if(BUILD_EXAMPLES)
   set(EXAMPLE_DIR ${PROJECT_SOURCE_DIR}/examples)
 
-  set(CORE_EXAMPLES Constructors Identity Random)
+  set(CORE_EXAMPLES Constructors)
   set(ADVANCED_EXAMPLES GaussianElimination)
+  set(SPECIAL_EXAMPLES Cauchy CauchyLike Circulant Diagonal DiscreteFourier 
+                       Hankel Hilbert Identity Ones OneTwoOne Toeplitz 
+                       UniformRandom Walsh Wilkinson Zeros)
 
   if(BUILD_PMRRR AND NOT FAILED_PMRRR)
     list(APPEND ADVANCED_EXAMPLES HermitianEig 
@@ -584,11 +657,11 @@ if(BUILD_EXAMPLES)
                                   RealHermitianFunction
                                   HermitianPseudoinverse
                                   HPSDCholesky
-                                  SquareRoot)
+                                  HPSDSquareRoot)
     list(APPEND ADVANCED_EXAMPLES SymmetricEig RealSymmetricFunction)
   endif(BUILD_PMRRR AND NOT FAILED_PMRRR)
 
-  # Build the core test(s)
+  # Build the core tests
   set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/examples/core")
   foreach(EXAMPLE ${CORE_EXAMPLES})
     add_executable(examples-core-${EXAMPLE} ${EXAMPLE_DIR}/core/${EXAMPLE}.cpp)
@@ -603,24 +676,65 @@ if(BUILD_EXAMPLES)
     install(TARGETS examples-core-${EXAMPLE} DESTINATION bin/examples/core)
   endforeach(EXAMPLE)
 
-  # Build the advanced test(s)
-  set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/examples/advanced")
+  # Build the LAPACK-like tests
+  set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/examples/lapack-like")
   foreach(EXAMPLE ${ADVANCED_EXAMPLES})
-    add_executable(examples-advanced-${EXAMPLE} 
-                   ${EXAMPLE_DIR}/advanced/${EXAMPLE}.cpp)
-    target_link_libraries(examples-advanced-${EXAMPLE} elemental)
-    set_target_properties(examples-advanced-${EXAMPLE} PROPERTIES
+    add_executable(examples-lapack-${EXAMPLE} 
+                   ${EXAMPLE_DIR}/lapack-like/${EXAMPLE}.cpp)
+    target_link_libraries(examples-lapack-${EXAMPLE} elemental)
+    set_target_properties(examples-lapack-${EXAMPLE} PROPERTIES
                           OUTPUT_NAME ${EXAMPLE}
                           RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
     if(MPI_LINK_FLAGS)
-      set_target_properties(examples-advanced-${EXAMPLE} PROPERTIES
+      set_target_properties(examples-lapack-${EXAMPLE} PROPERTIES
                             LINK_FLAGS ${MPI_LINK_FLAGS})
     endif(MPI_LINK_FLAGS)
-    install(TARGETS examples-advanced-${EXAMPLE} 
-            DESTINATION bin/examples/advanced)
+    install(TARGETS examples-lapack-${EXAMPLE} 
+            DESTINATION bin/examples/lapack-like)
+  endforeach(EXAMPLE)
+
+  # Build the special matrix test(s)
+  set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/examples/special_matrices")
+  foreach(EXAMPLE ${SPECIAL_EXAMPLES})
+    add_executable(examples-special-${EXAMPLE}
+                   ${EXAMPLE_DIR}/special_matrices/${EXAMPLE}.cpp)
+    target_link_libraries(examples-special-${EXAMPLE} elemental)
+    set_target_properties(examples-special-${EXAMPLE} PROPERTIES
+                          OUTPUT_NAME ${EXAMPLE}
+                          RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
+    if(MPI_LINK_FLAGS)
+      set_target_properties(examples-special-${EXAMPLE} PROPERTIES
+                            LINK_FLAGS ${MPI_LINK_FLAGS})
+    endif(MPI_LINK_FLAGS)
+    install(TARGETS examples-special-${EXAMPLE}
+            DESTINATION bin/examples/special_matrices)
   endforeach(EXAMPLE)
 endif(BUILD_EXAMPLES)
 
+# Build experimental drivers that do not require an eigensolver
+if(BUILD_EXPERIMENTAL)
+  set(EXPERIMENTAL_DIR ${PROJECT_SOURCE_DIR}/experimental)
+
+  set(G3D_EXPERS G3DGemm)
+
+  # Build the G3D example(s)
+  set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/experimental/g3d")
+  foreach(EXPER ${G3D_EXPERS})
+    add_executable(experimental-g3d-${EXPER} 
+                   ${EXPERIMENTAL_DIR}/g3d/${EXPER}.cpp)
+    target_link_libraries(experimental-g3d-${EXPER} elemental)
+    set_target_properties(experimental-g3d-${EXPER} PROPERTIES 
+                          OUTPUT_NAME ${EXPER} 
+                          RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
+    if(MPI_LINK_FLAGS)
+      set_target_properties(experimental-g3d-${EXPER} PROPERTIES
+                            LINK_FLAGS ${MPI_LINK_FLAGS})
+    endif(MPI_LINK_FLAGS)
+    install(TARGETS experimental-g3d-${EXPER} DESTINATION bin/experimental/g3d)
+  endforeach(EXPER)
+endif(BUILD_EXPERIMENTAL)
+
+# Build experimental drivers that DO require an eigensolver
 if(BUILD_EXPERIMENTAL AND BUILD_PMRRR AND NOT FAILED_PMRRR)
   if(NOT MPI_C_FOUND)
     message(FATAL_ERROR "Could not build C interface without C MPI")
@@ -728,7 +842,9 @@ if(BUILD_EXPERIMENTAL AND BUILD_PMRRR AND NOT FAILED_PMRRR)
   endif(HAVE_F90_INTERFACE)
 endif(BUILD_EXPERIMENTAL AND BUILD_PMRRR AND NOT FAILED_PMRRR)
 
-# Simplify the inclusion of Elemental as a subproject in another build system
+################################################################################
+# Uncomment if including Elemental as a subproject in another build system     #
+################################################################################
 set(LIBRARY_TYPE ${LIBRARY_TYPE} PARENT_SCOPE)
 set(MPI_C_COMPILER ${MPI_C_COMPILER} PARENT_SCOPE)
 set(MPI_C_INCLUDE_PATH ${MPI_C_INCLUDE_PATH} PARENT_SCOPE)

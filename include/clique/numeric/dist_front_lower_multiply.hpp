@@ -25,17 +25,17 @@ namespace numeric {
 
 template<typename F>
 void DistFrontLowerMultiply
-( Orientation orientation, Diagonal diag, int diagOffset,
+( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
 void DistFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset,
+( UnitOrNonUnit diag, int diagOffset,
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
 void DistFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset,
+( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
 
 //----------------------------------------------------------------------------//
@@ -46,7 +46,8 @@ namespace internal {
 using namespace elem;
 
 template<typename F>
-void ModifyForTrmm( DistMatrix<F,STAR,STAR>& D, Diagonal diag, int diagOffset )
+void ModifyForTrmm
+( DistMatrix<F,STAR,STAR>& D, UnitOrNonUnit diag, int diagOffset )
 {
 #ifndef RELEASE
     cliq::PushCallStack("ModifyForTrmm");
@@ -68,7 +69,7 @@ void ModifyForTrmm( DistMatrix<F,STAR,STAR>& D, Diagonal diag, int diagOffset )
 
 template<typename F>
 inline void DistFrontLowerMultiply
-( Orientation orientation, Diagonal diag, int diagOffset,
+( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
@@ -85,7 +86,7 @@ inline void DistFrontLowerMultiply
 
 template<typename F>
 inline void DistFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset,
+( UnitOrNonUnit diag, int diagOffset,
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
@@ -184,7 +185,7 @@ inline void DistFrontLowerMultiplyNormal
 
 template<typename F>
 inline void DistFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset,
+( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE

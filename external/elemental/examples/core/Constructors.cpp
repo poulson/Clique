@@ -33,6 +33,13 @@
 #include "elemental.hpp"
 using namespace elem;
 
+void Usage()
+{
+    std::cout << "Constructors <n>\n"
+              << "  n: the height and width of the matrices to build\n"
+              << std::endl;
+}
+
 int 
 main( int argc, char* argv[] )
 {
@@ -40,7 +47,15 @@ main( int argc, char* argv[] )
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
     const int commSize = mpi::CommSize( comm );
-    const int n = 14;
+
+    if( argc < 2 )
+    {
+        if( commRank == 0 )
+            Usage();
+        Finalize();
+        return 0;
+    }
+    const int n = atoi( argv[1] );
 
     try
     {
@@ -57,11 +72,11 @@ main( int argc, char* argv[] )
                       << std::endl;
         }
 
-        // Automatic
+        // Built-in
         {
-            DistMatrix<double> X( n, n, grid );
-            X.SetToIdentity();
-            X.Print("Automatic identity");
+            DistMatrix<double> X(grid);
+            Identity( n, n, X );
+            X.Print("Built-in identity");
         }
 
         // Local buffers

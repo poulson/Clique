@@ -25,14 +25,14 @@ namespace numeric {
 
 template<typename F> 
 void LocalLowerForwardSolve
-( Diagonal diag, 
+( UnitOrNonUnit diag, 
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& X );
 
 template<typename F> 
 void LocalLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
+( Orientation orientation, UnitOrNonUnit diag,
   const symbolic::SymmFact& S, 
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& X );
@@ -43,7 +43,7 @@ void LocalLowerBackwardSolve
 
 template<typename F> 
 inline void LocalLowerForwardSolve
-( Diagonal diag, 
+( UnitOrNonUnit diag, 
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& X )
@@ -71,7 +71,7 @@ inline void LocalLowerForwardSolve
         Matrix<F> XT;
         XT.View( X, sn.myOffset, 0, sn.size, width );
         WT = XT;
-        WB.SetToZero();
+        elem::MakeZeros( WB );
 
         // Update using the children (if they exist)
         const int numChildren = sn.children.size();
@@ -125,7 +125,7 @@ inline void LocalLowerForwardSolve
 
 template<typename F> 
 inline void LocalLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
+( Orientation orientation, UnitOrNonUnit diag,
   const symbolic::SymmFact& S, 
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& X )

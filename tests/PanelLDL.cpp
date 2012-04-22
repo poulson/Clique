@@ -220,8 +220,7 @@ main( int argc, char* argv[] )
                 elem::Matrix<F>& frontL = L.local.fronts[s].frontL;
 
                 const int frontSize = sn.size+sn.lowerStruct.size();
-                frontL.ResizeTo( frontSize, sn.size );
-                frontL.SetToRandom();
+                elem::UniformRandom( frontSize, sn.size, frontL );
                 if( writeInfo )
                     frontL.Print( infoFile, "frontL local" );
             }
@@ -238,8 +237,7 @@ main( int argc, char* argv[] )
                 front2dL.SetGrid( *sn.grid );
                 const int frontSize = sn.size+sn.lowerStruct.size();
                 front2dL.Align( 0, 0 );
-                front2dL.ResizeTo( frontSize, sn.size );
-                front2dL.SetToRandom();
+                elem::UniformRandom( frontSize, sn.size, front2dL );
                 if( writeInfo )
                     front2dL.Print( infoFile, "frontL dist" );
             }
@@ -256,8 +254,8 @@ main( int argc, char* argv[] )
             const int localHeight1d = 
                 S.dist.supernodes.back().localOffset1d + 
                 S.dist.supernodes.back().localSize1d;
-            elem::Matrix<F> localX( localHeight1d, NUM_RHS );
-            localX.SetToRandom();
+            elem::Matrix<F> localX;
+            elem::UniformRandom( localHeight1d, NUM_RHS, localX );
             elem::Matrix<F> localYLower = localX;
             cliq::numeric::SetSolveMode( L, cliq::NORMAL_1D );
             cliq::numeric::LowerMultiply

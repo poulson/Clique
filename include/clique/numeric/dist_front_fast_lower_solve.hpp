@@ -30,20 +30,20 @@ namespace numeric {
 
 template<typename F>
 void DistFrontFastLowerForwardSolve
-( Diagonal diag, DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
+( UnitOrNonUnit diag, DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
 void DistFrontFastLowerForwardSolve
-( Diagonal diag, DistMatrix<F,MC,MR>& L, DistMatrix<F,VC,STAR>& X );
+( UnitOrNonUnit diag, DistMatrix<F,MC,MR>& L, DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
 void DistFrontFastLowerBackwardSolve
-( Orientation orientation, Diagonal diag, 
+( Orientation orientation, UnitOrNonUnit diag, 
   DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
 void DistFrontFastLowerBackwardSolve
-( Orientation orientation, Diagonal diag, 
+( Orientation orientation, UnitOrNonUnit diag, 
   DistMatrix<F,MC,MR>& L, DistMatrix<F,VC,STAR>& X );
 
 //----------------------------------------------------------------------------//
@@ -52,7 +52,7 @@ void DistFrontFastLowerBackwardSolve
 
 template<typename F>
 inline void DistFrontFastLowerForwardSolve
-( Diagonal diag, DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
+( UnitOrNonUnit diag, DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
     PushCallStack("numeric::DistFrontFastLowerForwardSolve");
@@ -147,7 +147,7 @@ inline void DistFrontFastLowerForwardSolve
 
 template<typename F>
 inline void DistFrontFastLowerForwardSolve
-( Diagonal diag, DistMatrix<F,MC,MR>& L, DistMatrix<F,VC,STAR>& X )
+( UnitOrNonUnit diag, DistMatrix<F,MC,MR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
     PushCallStack("numeric::DistFrontFastLowerForwardSolve");
@@ -241,7 +241,7 @@ inline void DistFrontFastLowerForwardSolve
 
 template<typename F>
 inline void DistFrontFastLowerBackwardSolve
-( Orientation orientation, Diagonal diag, 
+( Orientation orientation, UnitOrNonUnit diag, 
   DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
@@ -334,7 +334,7 @@ inline void DistFrontFastLowerBackwardSolve
 
 template<typename F>
 inline void DistFrontFastLowerBackwardSolve
-( Orientation orientation, Diagonal diag, 
+( Orientation orientation, UnitOrNonUnit diag, 
   DistMatrix<F,MC,MR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE

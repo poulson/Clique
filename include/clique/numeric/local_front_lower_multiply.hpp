@@ -25,16 +25,16 @@ namespace numeric {
 
 template<typename F>
 void LocalFrontLowerMultiply
-( Orientation orientation, Diagonal diag, int diagOffset,
+( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
   const Matrix<F>& L, Matrix<F>& X );
 
 template<typename F>
 void LocalFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset, const Matrix<F>& L, Matrix<F>& X );
+( UnitOrNonUnit diag, int diagOffset, const Matrix<F>& L, Matrix<F>& X );
 
 template<typename F>
 void LocalFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset,
+( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
   const Matrix<F>& L, Matrix<F>& X );
 
 //----------------------------------------------------------------------------//
@@ -46,7 +46,7 @@ using namespace elem;
 
 template<typename F> 
 void ModifyForTrmm
-( Matrix<F>& D, Diagonal diag, int diagOffset, 
+( Matrix<F>& D, UnitOrNonUnit diag, int diagOffset, 
   std::vector<Matrix<F> >& diagonals )
 {
 #ifndef RELEASE
@@ -88,7 +88,7 @@ void ModifyForTrmm
 
 template<typename F> // represents a real or complex ring
 void ReplaceAfterTrmm
-( Matrix<F>& D, Diagonal diag, int diagOffset, 
+( Matrix<F>& D, UnitOrNonUnit diag, int diagOffset, 
   const std::vector<Matrix<F> >& diagonals )
 {
 #ifndef RELEASE
@@ -112,7 +112,7 @@ void ReplaceAfterTrmm
 
 template<typename F>
 inline void LocalFrontLowerMultiply
-( Orientation orientation, Diagonal diag, int diagOffset,
+( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
   const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
@@ -129,7 +129,7 @@ inline void LocalFrontLowerMultiply
 
 template<typename F>
 inline void LocalFrontLowerMultiplyNormal
-( Diagonal diag, int diagOffset, const Matrix<F>& L, Matrix<F>& X )
+( UnitOrNonUnit diag, int diagOffset, const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
     PushCallStack("numeric::LocalFrontLowerMultiplyNormal");
@@ -177,7 +177,7 @@ inline void LocalFrontLowerMultiplyNormal
 
 template<typename F>
 inline void LocalFrontLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset,
+( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
   const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE

@@ -25,14 +25,14 @@ namespace numeric {
 
 template<typename F> 
 void DistLowerMultiplyNormal
-( Diagonal diag, int diagOffset,
+( UnitOrNonUnit diag, int diagOffset,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX );
 
 template<typename F> 
 void DistLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset,
+( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX );
@@ -43,7 +43,7 @@ void DistLowerMultiplyTranspose
 
 template<typename F> 
 inline void DistLowerMultiplyNormal
-( Diagonal diag, int diagOffset,
+( UnitOrNonUnit diag, int diagOffset,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX )
@@ -101,7 +101,7 @@ inline void DistLowerMultiplyNormal
         Matrix<F> localXT;
         localXT.View( localX, sn.localOffset1d, 0, sn.localSize1d, width );
         WT.LocalMatrix() = localXT;
-        WB.SetToZero();
+        elem::MakeZeros( WB );
 
         // Now that the right-hand side is set up, perform the multiply
         DistFrontLowerMultiply( NORMAL, diag, diagOffset, front.front1dL, W );
@@ -247,7 +247,7 @@ inline void DistLowerMultiplyNormal
 
 template<typename F> // F represents a real or complex field
 inline void DistLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset,
+( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX )

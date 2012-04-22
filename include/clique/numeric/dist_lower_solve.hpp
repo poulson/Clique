@@ -25,14 +25,14 @@ namespace numeric {
 
 template<typename F> 
 void DistLowerForwardSolve
-( Diagonal diag,
+( UnitOrNonUnit diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L, 
         Matrix<F>& localX );
 
 template<typename F>
 void DistLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
+( Orientation orientation, UnitOrNonUnit diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX );
@@ -43,7 +43,7 @@ void DistLowerBackwardSolve
 
 template<typename F> 
 inline void DistLowerForwardSolve
-( Diagonal diag,
+( UnitOrNonUnit diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L, 
         Matrix<F>& localX )
@@ -108,7 +108,7 @@ inline void DistLowerForwardSolve
         Matrix<F> localXT;
         localXT.View( localX, sn.localOffset1d, 0, sn.localSize1d, width );
         WT.LocalMatrix() = localXT;
-        WB.SetToZero();
+        elem::MakeZeros( WB );
 
         // Pack our child's update
         DistMatrix<F,VC,STAR>& childW = childFront.work1d;
@@ -259,7 +259,7 @@ inline void DistLowerForwardSolve
 
 template<typename F>
 inline void DistLowerBackwardSolve
-( Orientation orientation, Diagonal diag,
+( Orientation orientation, UnitOrNonUnit diag,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX )

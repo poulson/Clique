@@ -57,8 +57,7 @@ inline void LocalLDL
 #endif
 
         // Add updates from children (if they exist)
-        frontBR.ResizeTo( updateSize, updateSize );
-        frontBR.SetToZero();
+        elem::Zeros( updateSize, updateSize, frontBR );
         const int numChildren = sn.children.size();
         if( numChildren == 2 )
         {

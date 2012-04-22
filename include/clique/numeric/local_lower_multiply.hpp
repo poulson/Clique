@@ -25,14 +25,14 @@ namespace numeric {
 
 template<typename F>
 void LocalLowerMultiplyNormal
-( Diagonal diag, int diagOffset,
+( UnitOrNonUnit diag, int diagOffset,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& X );
 
 template<typename F>
 void LocalLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset,
+( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
   const symbolic::SymmFact& S, 
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& X );
@@ -43,7 +43,7 @@ void LocalLowerMultiplyTranspose
 
 template<typename F> 
 inline void LocalLowerMultiplyNormal
-( Diagonal diag, int diagOffset,
+( UnitOrNonUnit diag, int diagOffset,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& X )
@@ -71,7 +71,7 @@ inline void LocalLowerMultiplyNormal
         Matrix<F> XT;
         XT.View( X, sn.myOffset, 0, sn.size, width );
         WT = XT;
-        WB.SetToZero();
+        elem::MakeZeros( WB );
 
         // Multiply this block column of L against the supernode portion of the
         // right-hand side and set W equal to the result
@@ -126,7 +126,7 @@ inline void LocalLowerMultiplyNormal
 
 template<typename F> 
 inline void LocalLowerMultiplyTranspose
-( Orientation orientation, Diagonal diag, int diagOffset,
+( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
   const symbolic::SymmFact& S, 
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& X )

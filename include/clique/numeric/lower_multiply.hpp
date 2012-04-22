@@ -25,7 +25,7 @@ namespace numeric {
 
 template<typename F>
 void LowerMultiply
-( Orientation orientation, Diagonal diag, int diagOffset,
+( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX );
@@ -45,7 +45,7 @@ namespace numeric {
 
 template<typename F>
 inline void LowerMultiply
-( Orientation orientation, Diagonal diag, int diagOffset,
+( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX )

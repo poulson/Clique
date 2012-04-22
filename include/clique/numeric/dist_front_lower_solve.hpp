@@ -30,12 +30,12 @@ namespace numeric {
 
 template<typename F>
 void DistFrontLowerForwardSolve
-( Diagonal diag, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
+( UnitOrNonUnit diag, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
   bool singleL11AllGather=true );
 
 template<typename F>
 inline void DistFrontLowerBackwardSolve
-( Orientation orientation, Diagonal diag, 
+( Orientation orientation, UnitOrNonUnit diag, 
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
   bool singleL11AllGather=true );
 
@@ -48,7 +48,7 @@ using namespace elem;
 
 template<typename F>
 inline void ForwardMany
-( Diagonal diag, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
+( UnitOrNonUnit diag, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
@@ -196,8 +196,7 @@ void AccumulateRHS
     const int height = X.Height();
     const int width = X.Width();
     Z.Empty();
-    Z.ResizeTo( height, width );
-    Z.SetToZero();
+    elem::Zeros( height, width, Z );
 
     const int localHeight = X.LocalHeight();
     const int colShift = X.ColShift();
@@ -217,7 +216,7 @@ void AccumulateRHS
 
 template<typename F>
 void ForwardSingle
-( Diagonal diag, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
+( UnitOrNonUnit diag, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
@@ -297,7 +296,7 @@ void ForwardSingle
 
 template<typename F>
 void BackwardMany
-( Orientation orientation, Diagonal diag, 
+( Orientation orientation, UnitOrNonUnit diag, 
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
     // TODO: Replace this with modified inline code?
@@ -306,7 +305,7 @@ void BackwardMany
 
 template<typename F>
 void BackwardSingle
-( Orientation orientation, Diagonal diag, 
+( Orientation orientation, UnitOrNonUnit diag, 
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
     const Grid& g = L.Grid();
@@ -396,7 +395,7 @@ void BackwardSingle
 
 template<typename F>
 inline void DistFrontLowerForwardSolve
-( Diagonal diag, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
+( UnitOrNonUnit diag, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
   bool singleL11AllGather )
 {
 #ifndef RELEASE
@@ -426,7 +425,7 @@ inline void DistFrontLowerForwardSolve
 
 template<typename F>
 inline void DistFrontLowerBackwardSolve
-( Orientation orientation, Diagonal diag, 
+( Orientation orientation, UnitOrNonUnit diag, 
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
   bool singleL11AllGather )
 {

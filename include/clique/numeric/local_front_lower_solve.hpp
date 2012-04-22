@@ -30,11 +30,12 @@ namespace numeric {
 
 template<typename F>
 void LocalFrontLowerForwardSolve
-( Diagonal diag, const Matrix<F>& L, Matrix<F>& X );
+( UnitOrNonUnit diag, const Matrix<F>& L, Matrix<F>& X );
 
 template<typename F>
 void LocalFrontLowerBackwardSolve
-( Orientation orientation, Diagonal diag, const Matrix<F>& L, Matrix<F>& X );
+( Orientation orientation, UnitOrNonUnit diag, 
+  const Matrix<F>& L, Matrix<F>& X );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -42,7 +43,7 @@ void LocalFrontLowerBackwardSolve
 
 template<typename F>
 inline void LocalFrontLowerForwardSolve
-( Diagonal diag, const Matrix<F>& L, Matrix<F>& X )
+( UnitOrNonUnit diag, const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
     PushCallStack("numeric::LocalFrontLowerForwardSolve");
@@ -76,7 +77,7 @@ inline void LocalFrontLowerForwardSolve
 
 template<typename F>
 inline void LocalFrontLowerBackwardSolve
-( Orientation orientation, Diagonal diag, 
+( Orientation orientation, UnitOrNonUnit diag, 
   const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE

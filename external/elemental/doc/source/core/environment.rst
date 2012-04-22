@@ -59,11 +59,11 @@ Blocksize manipulation
 Scalar manipulation
 -------------------
 
-.. cpp:function:: Z Abs( Z alpha )
+.. cpp:function:: Z Abs( const Z& alpha )
 
-   Return the absolute value of non-complex :math:`\alpha`.
+   Return the absolute value of the real variable :math:`\alpha`.
 
-.. cpp:function:: Z Abs( Complex<Z> alpha )
+.. cpp:function:: Z Abs( const Complex<Z>& alpha )
 
    Return the absolute value of complex :math:`\alpha`: 
 
@@ -71,11 +71,11 @@ Scalar manipulation
 
       |\alpha| = \sqrt{|\mathcal{R}(\alpha)|^2+|\mathcal{I}(\alpha)|^2}
 
-.. cpp:function:: Z FastAbs( Z alpha )
+.. cpp:function:: Z FastAbs( const Z& alpha )
 
-   Same as :cpp:function::Abs: for non-complex :math:`\alpha`.
+   Same as :cpp:function::Abs: for real :math:`\alpha`.
 
-.. cpp:function:: Z FastAbs( Complex<Z> alpha )
+.. cpp:function:: Z FastAbs( const Complex<Z>& alpha )
 
    Return a cheaper norm of the complex :math:`\alpha`:
 
@@ -83,12 +83,30 @@ Scalar manipulation
    
       |\alpha|_{\mbox{fast}} = |\mathcal{R}(\alpha)| + |\mathcal{I}(\alpha)|
 
-.. cpp:function:: Z Conj( Z alpha )
+.. cpp:function:: Z Real( const Z& alpha )
 
-   Return the complex conjugate of the non-complex variable :math:`\alpha`,
+   Return the real part of the real variable :math:`\alpha`, which is 
+   :math:`\alpha` itself. 
+
+.. cpp:function:: Z Real( const Complex<Z>& alpha )
+
+   Return the real part of the complex variable :math:`\alpha`.
+
+.. cpp:function:: Z Imag( const Z& alpha )
+
+   Return the imaginary part of the real variable :math:`\alpha`, which is 
+   trivially zero.
+
+.. cpp:function:: Z Imag( const Complex<Z>& alpha )
+
+   Return the imaginary part of the complex variable :math:`\alpha`.
+
+.. cpp:function:: Z Conj( const Z& alpha )
+
+   Return the complex conjugate of the real variable :math:`\alpha`,
    which is simply :math:`\alpha`.
 
-.. cpp:function:: Complex<Z> Conj( Complex<Z> alpha )
+.. cpp:function:: Complex<Z> Conj( const Complex<Z>& alpha )
 
    Return the complex conjugate of the complex variable :math:`\alpha`,
 
@@ -274,10 +292,11 @@ Custom datatypes
 
    ``typedef Complex<double> dcomplex;``
 
-.. cpp:type:: Diagonal
+.. cpp:type:: UnitOrNonUnit
 
-   An enum specifying whether a triangular matrix's diagonal is explicitly stored 
-   (``NON_UNIT``) or is implicitly unit diaognal (``UNIT``).
+   An enum for specifying either ``UNIT`` or ``NON_UNIT``; typically used for 
+   stating whether or not a triangular matrix's diagonal is explicitly stored
+   (``NON_UNIT``) or is implicitly unit-diagonal (``UNIT``).
 
 .. cpp:type:: Orientation
 
@@ -285,7 +304,7 @@ Custom datatypes
    treated as :math:`A` (``NORMAL``), :math:`A^H` (``ADJOINT``), or :math:`A^T`
    (``TRANSPOSE``).
 
-.. cpp:type:: Side
+.. cpp:type:: LeftOrRight
 
    An enum for specifying ``LEFT`` or ``RIGHT``.
 
@@ -297,7 +316,7 @@ Custom datatypes
 
    An enum for specifying ``LOWER`` or ``UPPER`` (triangular).
 
-.. cpp:type:: VectorDirection
+.. cpp:type:: VerticalOrHorizontal
 
    An enum for specifying ``VERTICAL`` or ``HORIZONTAL``.
 
