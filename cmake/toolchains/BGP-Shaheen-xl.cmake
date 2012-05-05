@@ -1,14 +1,18 @@
 set(CMAKE_SYSTEM_NAME BlueGeneP-static)
 
 # The serial XL compilers
-set(CMAKE_C_COMPILER       /usr/bin/bgxlc_r)
-set(CMAKE_CXX_COMPILER     /usr/bin/bgxlC_r)
+set(BGXLC_BASE /usr)
+set(BGXLF_BASE /usr)
+set(CMAKE_C_COMPILER       ${BGXLC_BASE}/bin/bgxlc_r)
+set(CMAKE_CXX_COMPILER     ${BGXLC_BASE}/bin/bgxlC_r)
+set(CMAKE_Fortran_COMPILER ${BGXLF_BASE}/bin/bgxlf_r)
 
 # The MPI wrappers for the XL C and C++ compilers
-set(MPI_C_COMPILER   /bgsys/drivers/ppcfloor/comm/bin/mpixlc_r)
-set(MPI_CXX_COMPILER /bgsys/drivers/ppcfloor/comm/bin/mpixlcxx_r)
+set(BGMPI_BASE /bgsys/drivers/ppcfloor/comm)
+set(MPI_C_COMPILER   ${BGMPI_BASE}/bin/mpixlc_r)
+set(MPI_CXX_COMPILER ${BGMPI_BASE}/bin/mpixlcxx_r)
 
-set(CXX_FLAGS "-g -O2 -DBGP")
+set(CXX_FLAGS "-g -O2")
 
 set(ESSL_BASE "/opt/share/ibmmath")
 set(IBMCMP_BASE "/opt/ibmcmp")
