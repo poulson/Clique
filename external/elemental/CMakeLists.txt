@@ -647,12 +647,14 @@ if(BUILD_EXAMPLES)
   set(CORE_EXAMPLES Constructors)
   set(ADVANCED_EXAMPLES GaussianElimination)
   set(SPECIAL_EXAMPLES Cauchy CauchyLike Circulant Diagonal DiscreteFourier 
-                       Hankel Hilbert Identity Ones OneTwoOne Toeplitz 
-                       UniformRandom Walsh Wilkinson Zeros)
+                       Hankel HermitianUniformSpectrum Hilbert Identity 
+                       NormalUniformSpectrum Ones OneTwoOne Toeplitz Uniform 
+                       Walsh Wilkinson Zeros)
 
   if(BUILD_PMRRR AND NOT FAILED_PMRRR)
     list(APPEND ADVANCED_EXAMPLES HermitianEig 
                                   HermitianEigFromSequential
+                                  HermitianSVD
                                   ComplexHermitianFunction 
                                   RealHermitianFunction
                                   HermitianPseudoinverse
@@ -844,7 +846,7 @@ endif(BUILD_EXPERIMENTAL AND BUILD_PMRRR AND NOT FAILED_PMRRR)
 
 ################################################################################
 # Uncomment if including Elemental as a subproject in another build system     #
-################################################################################
+###############################################################################
 set(LIBRARY_TYPE ${LIBRARY_TYPE} PARENT_SCOPE)
 set(MPI_C_COMPILER ${MPI_C_COMPILER} PARENT_SCOPE)
 set(MPI_C_INCLUDE_PATH ${MPI_C_INCLUDE_PATH} PARENT_SCOPE)

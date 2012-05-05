@@ -31,48 +31,47 @@
    POSSIBILITY OF SUCH DAMAGE.
 */
 #include "elemental.hpp"
-using namespace std;
 using namespace elem;
 
-// Typedef our real and complex types to 'R' and 'C' for convenience
-typedef double R;
-typedef Complex<R> C;
+void Usage()
+{
+    std::cout << "Uniform <m> <n>\n"
+              << "  m: height of random matrix\n"
+              << "  n: width of random matrix\n"
+              << std::endl;
+}
 
-int
+int 
 main( int argc, char* argv[] )
 {
     Initialize( argc, argv );
-
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
+    const int commSize = mpi::CommSize( comm );
 
-    try 
+    if( argc < 3 )
     {
-        Grid g( comm );
-    
-        const int n = 6; // choose a small problem size since we will print
-        DistMatrix<C,MC,MR> L(g), A(g);
-        Uniform( n, n, L );
-        MakeTrapezoidal( LEFT, LOWER, -1, L );
-        Zeros( n, n, A );
-        Herk( LOWER, NORMAL, (C)1, L, (C)0, A );
-
-        // Print our matrix.
-        A.Print("A");
-
-        // Replace A with its matrix square root
-        HPSDSquareRoot( LOWER, A );
-
-        // Print the pseudoinverse
-        A.Print("sqrt(A)");
+        if( commRank == 0 )
+            Usage();
+        Finalize();
+        return 0;
     }
-    catch( exception& e )
+    const int m = atoi( argv[1] );
+    const int n = atoi( argv[2] );
+
+    try
     {
-        cerr << "Process " << commRank << " caught exception with message: "
-             << e.what() << endl;
+        DistMatrix<double> X;
+        Uniform( m, n, X );
+        X.Print("X");
+    }
+    catch( std::exception& e )
+    {
 #ifndef RELEASE
         DumpCallStack();
 #endif
+        std::cerr << "Process " << commRank << " caught error message:\n"
+                  << e.what() << std::endl;
     }
 
     Finalize();

@@ -35,9 +35,10 @@ using namespace elem;
 
 void Usage()
 {
-    std::cout << "UniformRandom <m> <n>\n"
-              << "  m: height of random matrix\n"
-              << "  n: width of random matrix\n"
+    std::cout << "HermitianUniformSpectrum <n> <lower> <upper>\n"
+              << "  n: height of random Hermitian matrix\n"
+              << "  lower: (non-inclusive) lower bound on spectrum\n"
+              << "  upper: (inclusive) upper bound on spectrum\n"
               << std::endl;
 }
 
@@ -49,20 +50,21 @@ main( int argc, char* argv[] )
     const int commRank = mpi::CommRank( comm );
     const int commSize = mpi::CommSize( comm );
 
-    if( argc < 3 )
+    if( argc < 4 )
     {
         if( commRank == 0 )
             Usage();
         Finalize();
         return 0;
     }
-    const int m = atoi( argv[1] );
-    const int n = atoi( argv[2] );
+    const int n = atoi( argv[1] );
+    const double lower = atof( argv[2] );
+    const double upper = atof( argv[3] );
 
     try
     {
         DistMatrix<double> X;
-        UniformRandom( m, n, X );
+        HermitianUniformSpectrum( n, X, lower, upper );
         X.Print("X");
     }
     catch( std::exception& e )

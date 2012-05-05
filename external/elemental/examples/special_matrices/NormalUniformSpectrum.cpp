@@ -31,48 +31,53 @@
    POSSIBILITY OF SUCH DAMAGE.
 */
 #include "elemental.hpp"
-using namespace std;
 using namespace elem;
 
-// Typedef our real and complex types to 'R' and 'C' for convenience
-typedef double R;
-typedef Complex<R> C;
+void Usage()
+{
+    std::cout << "NormalUniformSpectrum <n> <real center> <imag center>"
+                 " <radius>\n"
+              << "  n: height of random Hermitian matrix\n"
+              << "  real center: real coordinate of center of spectrum dist\n"
+              << "  imag center: imag coordinate of center of spectrum dist\n"
+              << "  radius: radius of spectrum distribution\n"
+              << std::endl;
+}
 
-int
+int 
 main( int argc, char* argv[] )
 {
     Initialize( argc, argv );
-
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
+    const int commSize = mpi::CommSize( comm );
 
-    try 
+    if( argc < 5 )
     {
-        Grid g( comm );
-    
-        const int n = 6; // choose a small problem size since we will print
-        DistMatrix<C,MC,MR> L(g), A(g);
-        Uniform( n, n, L );
-        MakeTrapezoidal( LEFT, LOWER, -1, L );
-        Zeros( n, n, A );
-        Herk( LOWER, NORMAL, (C)1, L, (C)0, A );
-
-        // Print our matrix.
-        A.Print("A");
-
-        // Replace A with its matrix square root
-        HPSDSquareRoot( LOWER, A );
-
-        // Print the pseudoinverse
-        A.Print("sqrt(A)");
+        if( commRank == 0 )
+            Usage();
+        Finalize();
+        return 0;
     }
-    catch( exception& e )
+    const int n = atoi( argv[1] );
+    const double realCenter = atof( argv[2] );
+    const double imagCenter = atof( argv[3] );
+    const double radius = atof( argv[4] );
+
+    try
     {
-        cerr << "Process " << commRank << " caught exception with message: "
-             << e.what() << endl;
+        const Complex<double> center( realCenter, imagCenter );
+        DistMatrix<Complex<double> > X;
+        NormalUniformSpectrum( n, X, center, radius );
+        X.Print("X");
+    }
+    catch( std::exception& e )
+    {
 #ifndef RELEASE
         DumpCallStack();
 #endif
+        std::cerr << "Process " << commRank << " caught error message:\n"
+                  << e.what() << std::endl;
     }
 
     Finalize();

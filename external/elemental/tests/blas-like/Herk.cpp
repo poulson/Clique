@@ -59,10 +59,10 @@ void TestHerk
     DistMatrix<T,MC,MR> A(g), C(g);
 
     if( orientation == NORMAL )
-        UniformRandom( m, k, A );
+        Uniform( m, k, A );
     else
-        UniformRandom( k, m, A );
-    HPDUniformRandom( m, C );
+        Uniform( k, m, A );
+    HermitianUniformSpectrum( m, C, 1, 10 );
     if( printMatrices )
     {
         A.Print("A");

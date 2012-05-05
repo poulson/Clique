@@ -62,10 +62,10 @@ void TestTrsm
     DistMatrix<F,MC,MR> A(g), X(g);
 
     if( side == LEFT )
-        HPDUniformRandom( m, A );
+        HermitianUniformSpectrum( m, A, 1, 10 );
     else
-        HPDUniformRandom( n, A );
-    UniformRandom( m, n, X );
+        HermitianUniformSpectrum( n, A, 1, 10 );
+    Uniform( m, n, X );
 
     if( printMatrices )
     {

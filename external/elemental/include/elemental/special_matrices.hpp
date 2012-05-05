@@ -155,14 +155,14 @@ void MakeOnes( DistMatrix<T,U,V>& A );
 // which is tridiagonal with a diagonal of all twos and sub- and super-diagonals
 // of all ones.
 template<typename T>
-void OneTwoOne( int k, Matrix<T>& A );
+void OneTwoOne( int n, Matrix<T>& A );
 template<typename T,Distribution U,Distribution V>
-void OneTwoOne( int k, DistMatrix<T,U,V>& A );
+void OneTwoOne( int n, DistMatrix<T,U,V>& A );
 // Turn the existing matrix into a 1-2-1 matrix.
 template<typename T>
-void MakeOneTwoOne( int k, Matrix<T>& A );
+void MakeOneTwoOne( int n, Matrix<T>& A );
 template<typename T,Distribution U,Distribution V>
-void MakeOneTwoOne( int k, DistMatrix<T,U,V>& A );
+void MakeOneTwoOne( int n, DistMatrix<T,U,V>& A );
 
 // Generate an m x n Toeplitz matrix, i.e.,
 //
@@ -218,37 +218,59 @@ void MakeZeros( DistMatrix<T,U,V>& A );
 // Generate an m x n matrix of samples from the uniform PDF over the 
 // closed unit ball.
 template<typename T>
-void UniformRandom( int m, int n, Matrix<T>& A );
+void Uniform
+( int m, int n, Matrix<T>& A, 
+  T center=0, typename Base<T>::type radius=1 );
 template<typename T,Distribution U,Distribution V>
-void UniformRandom( int m, int n, DistMatrix<T,U,V>& A );
+void Uniform
+( int m, int n, DistMatrix<T,U,V>& A, 
+  T center=0, typename Base<T>::type radius=1 );
 // Turn the existing matrix into a uniform random matrix
 template<typename T>
-void MakeUniformRandom( Matrix<T>& A );
+void MakeUniform
+( Matrix<T>& A, T center=0, typename Base<T>::type radius=1 );
 template<typename T,Distribution U,Distribution V>
-void MakeUniformRandom( DistMatrix<T,U,V>& A );
+void MakeUniform
+( DistMatrix<T,U,V>& A, T center=0, typename Base<T>::type radius=1 );
 
-// Same as UniformRandom, but the diagonal is forced to be real-valued
-template<typename T>
-void HermitianUniformRandom( int n, Matrix<T>& A );
-template<typename T,Distribution U,Distribution V>
-void HermitianUniformRandom( int n, DistMatrix<T,U,V>& A );
-// Turn the existing matrix into an (implicitly) Hermitian uniform random matrix
-template<typename T>
-void MakeHermitianUniformRandom( Matrix<T>& A );
-template<typename T,Distribution U,Distribution V>
-void MakeHermitianUniformRandom( DistMatrix<T,U,V>& A );
+// Choose the spectrum from a uniform distribution over the specified 
+// half-open interval, (lower,upper], and then perform a random Householder
+// similarity transformation
+template<typename F>
+void HermitianUniformSpectrum
+( int n, Matrix<F>& A, 
+  typename Base<F>::type lower=0, typename Base<F>::type upper=1 );
+template<typename F,Distribution U,Distribution V>
+void HermitianUniformSpectrum
+( int n, DistMatrix<F,U,V>& A, 
+  typename Base<F>::type lower=0, typename Base<F>::type upper=1 );
+// Turn the existing matrix into a Hermitian uniform random matrix
+template<typename F>
+void MakeHermitianUniformSpectrum
+( Matrix<F>& A, 
+  typename Base<F>::type lower=0, typename Base<F>::type upper=1 );
+template<typename F,Distribution U,Distribution V>
+void MakeHermitianUniformSpectrum
+( DistMatrix<F,U,V>& A, 
+  typename Base<F>::type lower=0, typename Base<F>::type upper=1 );
 
-// Same as UniformRandom, but the diagonal is forced to be real-valued and 
-// the diagonal is shifted up by n in order to ensure that the matrix is HPD.
-template<typename T>
-void HPDUniformRandom( int n, Matrix<T>& A );
-template<typename T,Distribution U,Distribution V>
-void HPDUniformRandom( int n, DistMatrix<T,U,V>& A );
-// Turn the existing matrix into an (implicitly) HPD uniform random matrix
-template<typename T>
-void MakeHPDUniformRandom( Matrix<T>& A );
-template<typename T,Distribution U,Distribution V>
-void MakeHPDUniformRandom( DistMatrix<T,U,V>& A );
+// Choose the spectrum from a uniform distribution over the specified 
+// ball, B_radius(center), and then perform a random Householder
+// similarity transformation
+template<typename R>
+void NormalUniformSpectrum
+( int n, Matrix<Complex<R> >& A, 
+  Complex<R> center=0, R radius=1 );
+template<typename R,Distribution U,Distribution V>
+void NormalUniformSpectrum
+( int n, DistMatrix<Complex<R>,U,V>& A, Complex<R> center=0, R radius=1 );
+// Turn the existing matrix into a normal uniform random matrix
+template<typename R>
+void MakeNormalUniformSpectrum
+( Matrix<Complex<R> >& A, Complex<R> center=0, R radius=1 );
+template<typename R,Distribution U,Distribution V>
+void MakeNormalUniformSpectrum
+( DistMatrix<Complex<R>,U,V>& A, Complex<R> center=0, R radius=1 );
 
 // TODO: Gaussian random matrices
 
@@ -281,9 +303,9 @@ void MakeHPDUniformRandom( DistMatrix<T,U,V>& A );
 // Random
 //
 
-#include "./special_matrices/UniformRandom.hpp"
-#include "./special_matrices/HermitianUniformRandom.hpp"
-#include "./special_matrices/HPDUniformRandom.hpp"
+#include "./special_matrices/Uniform.hpp"
+#include "./special_matrices/HermitianUniformSpectrum.hpp"
+#include "./special_matrices/NormalUniformSpectrum.hpp"
 
 // TODO: Gaussian
 
