@@ -12,7 +12,7 @@ set(BGMPI_BASE /bgsys/drivers/ppcfloor/comm)
 set(MPI_C_COMPILER   ${BGMPI_BASE}/bin/mpixlc_r)
 set(MPI_CXX_COMPILER ${BGMPI_BASE}/bin/mpixlcxx_r)
 
-set(CXX_FLAGS "-g -O2")
+set(CXX_FLAGS "-g -O3")
 
 set(ESSL_BASE "/opt/share/ibmmath")
 set(IBMCMP_BASE "/opt/ibmcmp")
