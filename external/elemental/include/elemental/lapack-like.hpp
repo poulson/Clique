@@ -597,22 +597,25 @@ void HermitianSVD
 //----------------------------------------------------------------------------//
 // HouseholderSolve:                                                          //
 //                                                                            //
-// Overwrite B with the solution of inv(A) B or inv(A)^H B, where A need not  //
-// be square. NOTE: If the system is underdetermined, then B should be the    //
-// size of the solution and the input RHS should be stored in the top m rows  //
-// of B, if the underdetermined matrix is m x n.                              //
+// Form X as the minimum norm solution of                                     //
+//    || op(A) X - B ||_2                                                     //
+// using Householder based QR or LQ factorizations, where op(A) can be either //
+// A or A^H, depending on the value or 'orientation'.                         //
 //----------------------------------------------------------------------------//
 
 // TODO: Serial version
 
 template<typename R>
 void HouseholderSolve
-( Orientation orientation, DistMatrix<R,MC,MR>& A, DistMatrix<R,MC,MR>& B );
+( Orientation orientation, 
+  DistMatrix<R,MC,MR>& A, const DistMatrix<R,MC,MR>& B,
+                                DistMatrix<R,MC,MR>& X );
 template<typename R>
 void HouseholderSolve
 ( Orientation orientation, 
   DistMatrix<Complex<R>,MC,MR>& A,
-  DistMatrix<Complex<R>,MC,MR>& B );
+  const DistMatrix<Complex<R>,MC,MR>& B,
+        DistMatrix<Complex<R>,MC,MR>& X );
 
 //----------------------------------------------------------------------------//
 // HPDInverse:                                                                //
@@ -1031,6 +1034,16 @@ void SetHermitianTridiagGridOrder( GridOrder order );
 GridOrder GetHermitianTridiagGridOrder();
 
 //----------------------------------------------------------------------------//
+// SVD                                                                        //
+//----------------------------------------------------------------------------//
+
+template<typename F>
+void SVD
+( DistMatrix<F,                     MC,MR  >& A, 
+  DistMatrix<typename Base<F>::type,VR,STAR>& s, 
+  DistMatrix<F,                     MC,MR  >& V );
+
+//----------------------------------------------------------------------------//
 // Trace                                                                      //
 //                                                                            //
 // Returns the sum of the diagonal entries of a square matrix.                //
@@ -1096,6 +1109,7 @@ void TriangularInverse
 #include "./lapack-like/Reflector.hpp"
 #include "./lapack-like/SkewHermitianEig.hpp"
 #include "./lapack-like/SortEig.hpp"
+#include "./lapack-like/SVD.hpp"
 #include "./lapack-like/Trace.hpp"
 #include "./lapack-like/TriangularInverse.hpp"
 

@@ -113,7 +113,9 @@ if(BUILD_TESTS)
   endforeach(TEST)
 endif(BUILD_TESTS)
 
-# Simplify the inclusion of Clique as a subproject in another build system
+################################################################################
+# Uncomment if including Clique as a subproject in another build system        #
+################################################################################
 #set(USE_CUSTOM_ALLTOALLV_FOR_FACT ${USE_CUSTOM_ALLTOALLV_FOR_FACT} PARENT_SCOPE)
 #set(USE_CUSTOM_ALLTOALLV_FOR_MULT ${USE_CUSTOM_ALLTOALLV_FOR_MULT} PARENT_SCOPE)
 #set(USE_CUSTOM_ALLTOALLV_FOR_SOLVE ${USE_CUSTOM_ALLTOALLV_FOR_SOLVE} PARENT_SCOPE)

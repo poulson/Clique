@@ -33,6 +33,24 @@
 
 namespace elem {
 
+//
+// Since applying Householder transforms from vectors stored right-to-left
+// implies that we will be forming a generalization of 
+//
+//   (I - tau_1 v_1^H v_1) (I - tau_0 v_0^H v_0) = 
+//   I - tau_0 v_0^H v_0 - tau_1 v_1^H v_1 + (tau_0 tau_1 v_1 v_0^H) v_1^H v_0 =
+//   I - [ v_0^H, v_1^H ] [  tau_0,                 0     ] [ v_0 ]
+//                        [ -tau_0 tau_1 v_1 v_0^H, tau_1 ] [ v_1 ],
+//
+// which has a lower-triangular center matrix, say S, we will form S as 
+// the inverse of a matrix T, which can easily be formed as
+// 
+//   tril(T) = triu( V V^H ),  diag(T) = 1/t or 1/conj(t),
+//
+// where V is the matrix of Householder vectors and t is the vector of scalars.
+// V is stored row-wise in the matrix.
+//
+
 template<typename R> 
 inline void
 internal::ApplyPackedReflectorsRUHB
@@ -47,7 +65,7 @@ internal::ApplyPackedReflectorsRUHB
     if( offset > H.Width() )
         throw std::logic_error("Transforms out of bounds");
     if( offset < 0 )
-        throw std::logic_error("Transforms cannot extend below matrix");
+        throw std::logic_error("Transforms out of bounds");
     if( H.Width() != A.Width() )
         throw std::logic_error
         ("Length of transforms must equal width of target matrix");
@@ -72,7 +90,7 @@ internal::ApplyPackedReflectorsRUHB
     LockedPartitionUpDiagonal
     ( H, HTL, HTR,
          HBL, HBR, 0 );
-    PartitionLeft( A, AL, AR, std::max(0,A.Width()-A.Height()) );
+    PartitionLeft( A, AL, AR, std::max(0,H.Width()-H.Height()) );
     while( HBR.Height() < H.Height() && HBR.Width() < H.Width() )
     {
         LockedRepartitionUpDiagonal
@@ -88,7 +106,7 @@ internal::ApplyPackedReflectorsRUHB
 
         RepartitionLeft
         ( AL,     /**/ AR,
-          A0, A1, /**/ A2, HPanHeight );
+          A0, A1, /**/ A2 );
 
         ARight.View1x2( A1, A2 );
 
@@ -159,9 +177,9 @@ internal::ApplyPackedReflectorsRUHB
         throw std::logic_error
         ("{H,t,A} must be distributed over the same grid");
     if( offset < 0 )
-        throw std::logic_error("Transforms cannot extend below matrix");
+        throw std::logic_error("Transforms out of bounds");
     if( offset > H.Width() )
-        throw std::logic_error("Transform offset is out of bounds");
+        throw std::logic_error("Transforms out of bounds");
     if( H.Width() != A.Width() )
         throw std::logic_error
         ("Length of transforms must equal width of target matrix");
@@ -200,7 +218,7 @@ internal::ApplyPackedReflectorsRUHB
     ( t, tT,
          tB, 0 );
     PartitionLeft
-    ( A, AL, AR, std::max(0,A.Width()-A.Height()) );
+    ( A, AL, AR, std::max(0,H.Width()-H.Height()) );
     while( HBR.Height() < H.Height() && HBR.Width() < H.Width() )
     {
         LockedRepartitionUpDiagonal
@@ -222,7 +240,7 @@ internal::ApplyPackedReflectorsRUHB
 
         RepartitionLeft
         ( AL,     /**/ AR,
-          A0, A1, /**/ A2, HPanHeight );
+          A0, A1, /**/ A2 );
 
         ARight.View1x2( A1, A2 );
 

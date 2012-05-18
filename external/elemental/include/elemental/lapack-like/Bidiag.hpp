@@ -31,7 +31,6 @@
    POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #include "./Bidiag/LocalBidiag.hpp"
 #include "./Bidiag/PanelBidiagL.hpp"
 #include "./Bidiag/PanelBidiagU.hpp"

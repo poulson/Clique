@@ -37,6 +37,34 @@
 
 namespace elem {
 
+//
+// Follows the LAPACK convention of defining tau such that
+//
+//   H = I - tau [1; w] [1, w'],
+//
+// but adjoint(H) [chi; y] = [beta; 0]. 
+//
+// In our case, y=x^T, and w=v^T, so that 
+//
+//   (I - conj(tau) [1; v^T] [1, conj(v)]) [chi; x^T] = [beta; 0],
+//
+// and thus
+//
+//   [chi, x] (I - conj(tau) [1; v^H] [1, v]) = [beta, 0].
+//
+// In the case of real data, everything simplifies to
+//
+//   [chi, x] (I - tau [1; v^T] [1, v]) = [beta, 0].
+//
+// On exit, chi is overwritten with beta, and x is overwritten with v.
+//
+// The major difference from LAPACK is in the treatment of the special case 
+// of x=0, where LAPACK would put H := I, which is not a valid Householder 
+// reflector. We instead follow the FLAME convention of defining H such that 
+//    adjoint(H) [chi; 0] = [-chi; 0],
+// which is accomplished by setting tau=2, and v^T=0.
+//
+
 template<typename R> 
 inline R
 internal::RowReflector( DistMatrix<R,MC,MR>& chi, DistMatrix<R,MC,MR>& x )
@@ -61,7 +89,12 @@ internal::RowReflector( DistMatrix<R,MC,MR>& chi, DistMatrix<R,MC,MR>& x )
     const int gridWidth = grid.Width();
     const int rowAlignment = chi.RowAlignment();
 
-    if( x.Width() == 0 )
+    std::vector<R> localNorms(gridWidth);
+    R localNorm = Nrm2( x.LockedLocalMatrix() ); 
+    mpi::AllGather( &localNorm, 1, &localNorms[0], 1, rowComm );
+    R norm = blas::Nrm2( gridWidth, &localNorms[0], 1 );
+
+    if( norm == 0 )
     {
         if( gridCol == rowAlignment )
             chi.SetLocalEntry(0,0,-chi.GetLocalEntry(0,0));
@@ -70,11 +103,6 @@ internal::RowReflector( DistMatrix<R,MC,MR>& chi, DistMatrix<R,MC,MR>& x )
 #endif
         return (R)2;
     }
-
-    std::vector<R> localNorms(gridWidth);
-    R localNorm = Nrm2( x.LockedLocalMatrix() ); 
-    mpi::AllGather( &localNorm, 1, &localNorms[0], 1, rowComm );
-    R norm = blas::Nrm2( gridWidth, &localNorms[0], 1 );
 
     R alpha;
     if( gridCol == rowAlignment )

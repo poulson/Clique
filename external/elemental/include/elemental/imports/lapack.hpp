@@ -164,6 +164,23 @@ void TriangularInverse
 void TriangularInverse
 ( char uplo, char diag, int n, const dcomplex* A, int lda );
 
+//
+// Compute the SVD of a bidiagonal matrix using the QR algorithm
+//
+
+void BidiagQRAlg
+( char uplo, int n, int numColsVTrans, int numRowsU,
+  float* d, float* e, float* VTrans, int ldVTrans, float* U, int ldU );
+void BidiagQRAlg
+( char uplo, int n, int numColsVTrans, int numRowsU, 
+  double* d, double* e, double* VTrans, int ldVTrans, double* U, int ldU );
+void BidiagQRAlg
+( char uplo, int n, int numColsVAdj, int numRowsU,
+  float* d, float* e, scomplex* VAdj, int ldVAdj, scomplex* U, int ldU );
+void BidiagQRAlg
+( char uplo, int n, int numColsVAdj, int numRowsU, 
+  double* d, double* e, dcomplex* VAdj, int ldVAdj, dcomplex* U, int ldU );
+
 } // namespace lapack
 } // namespace elem
 
@@ -255,6 +272,27 @@ void LAPACK(ctrtri)
 void LAPACK(ztrtri)
 ( const char* uplo, const char* diag,
   const int* n, const elem::dcomplex* A, const int* lda, int* info );
+
+// Bidiagonal QR
+void LAPACK(sbdsqr)
+( const char* uplo, const int* n, const int* numColsVTrans, const int* numRowsU,
+  const int* numColsC, float* d, float* e, float* VTrans, const int* ldVTrans,
+  float* U, const int* ldU, float* C, const int* ldC, float* work, int* info );
+void LAPACK(dbdsqr)
+( const char* uplo, const int* n, const int* numColsVTrans, const int* numRowsU,
+  const int* numColsC, double* d, double* e, 
+  double* VTrans, const int* ldVTrans, double* U, const int* ldU, 
+  double* C, const int* ldC, double* work, int* info );
+void LAPACK(cbdsqr)
+( const char* uplo, const int* n, const int* numColsVAdj, const int* numRowsU,
+  const int* numColsC, float* d, float* e,
+  elem::scomplex* VAdj, const int* ldVAdj, elem::scomplex* U, const int* ldU,
+  elem::scomplex* C, const int* ldC, float* work, int* info );
+void LAPACK(zbdsqr)
+( const char* uplo, const int* n, const int* numColsVAdj, const int* numRowsU,
+  const int* numColsC, double* d, double* e,
+  elem::dcomplex* VAdj, const int* ldVAdj, elem::dcomplex* U, const int* ldU,
+  elem::dcomplex* C, const int* ldC, double* work, int* info );
 
 } // extern "C"
 

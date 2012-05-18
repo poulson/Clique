@@ -34,7 +34,7 @@ cmake_minimum_required(VERSION 2.8.5)
 
 project(Elemental)
 set(Elemental_VERSION_MAJOR 0)
-set(Elemental_VERSION_MINOR 74)
+set(Elemental_VERSION_MINOR 75-dev)
 
 ################################################################################
 # Common build options                                                         #
@@ -587,13 +587,13 @@ if(BUILD_TESTS)
   set(TEST_DIR ${PROJECT_SOURCE_DIR}/tests)
 
   set(CORE_TESTS AxpyInterface Complex DifferentGrids DistMatrix Matrix)
-  set(BASIC_TESTS Gemm Hemm Her2k Herk Symm Symv Syr2k Syrk Trmm Trsm)
-  set(ADVANCED_TESTS ApplyPackedReflectors Cholesky Hegst HermitianTridiag LDL 
-                     LU LQ QR TriangularInverse)
+  set(BLAS_TESTS Gemm Hemm Her2k Herk Symm Symv Syr2k Syrk Trmm Trsm)
+  set(LAPACK_TESTS ApplyPackedReflectors Cholesky Hegst HermitianTridiag LDL 
+                   LU LQ QR TriangularInverse)
 
   if(BUILD_PMRRR AND NOT FAILED_PMRRR)
-    list(APPEND ADVANCED_TESTS HermitianGenDefiniteEig)
-    list(APPEND ADVANCED_TESTS HermitianEig)
+    list(APPEND LAPACK_TESTS HermitianGenDefiniteEig)
+    list(APPEND LAPACK_TESTS HermitianEig)
   endif(BUILD_PMRRR AND NOT FAILED_PMRRR)
 
   # Build the core tests
@@ -612,7 +612,7 @@ if(BUILD_TESTS)
   endforeach(TEST)
   # Build the BLAS-like tests
   set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/tests/blas-like")
-  foreach(TEST ${BASIC_TESTS})
+  foreach(TEST ${BLAS_TESTS})
     add_executable(tests-blas-${TEST} ${TEST_DIR}/blas-like/${TEST}.cpp)
     target_link_libraries(tests-blas-${TEST} elemental)
     set_target_properties(tests-blas-${TEST} PROPERTIES
@@ -626,7 +626,7 @@ if(BUILD_TESTS)
   endforeach(TEST)
   # Build the LAPACK-like tests
   set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/tests/lapack-like")
-  foreach(TEST ${ADVANCED_TESTS})
+  foreach(TEST ${LAPACK_TESTS})
     add_executable(tests-lapack-${TEST} ${TEST_DIR}/lapack-like/${TEST}.cpp)
     target_link_libraries(tests-lapack-${TEST} elemental)
     set_target_properties(tests-lapack-${TEST} PROPERTIES
@@ -645,22 +645,22 @@ if(BUILD_EXAMPLES)
   set(EXAMPLE_DIR ${PROJECT_SOURCE_DIR}/examples)
 
   set(CORE_EXAMPLES Constructors)
-  set(ADVANCED_EXAMPLES GaussianElimination)
+  set(LAPACK_EXAMPLES GaussianElimination HouseholderSolve SVD)
   set(SPECIAL_EXAMPLES Cauchy CauchyLike Circulant Diagonal DiscreteFourier 
                        Hankel HermitianUniformSpectrum Hilbert Identity 
-                       NormalUniformSpectrum Ones OneTwoOne Toeplitz Uniform 
+                       NormalUniformSpectrum Ones OneTwoOne Toeplitz Uniform
                        Walsh Wilkinson Zeros)
 
   if(BUILD_PMRRR AND NOT FAILED_PMRRR)
-    list(APPEND ADVANCED_EXAMPLES HermitianEig 
-                                  HermitianEigFromSequential
-                                  HermitianSVD
-                                  ComplexHermitianFunction 
-                                  RealHermitianFunction
-                                  HermitianPseudoinverse
-                                  HPSDCholesky
-                                  HPSDSquareRoot)
-    list(APPEND ADVANCED_EXAMPLES SymmetricEig RealSymmetricFunction)
+    list(APPEND LAPACK_EXAMPLES HermitianEig 
+                                HermitianEigFromSequential
+                                HermitianSVD
+                                ComplexHermitianFunction 
+                                RealHermitianFunction
+                                HermitianPseudoinverse
+                                HPSDCholesky
+                                HPSDSquareRoot)
+    list(APPEND LAPACK_EXAMPLES SymmetricEig RealSymmetricFunction)
   endif(BUILD_PMRRR AND NOT FAILED_PMRRR)
 
   # Build the core tests
@@ -680,7 +680,7 @@ if(BUILD_EXAMPLES)
 
   # Build the LAPACK-like tests
   set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/examples/lapack-like")
-  foreach(EXAMPLE ${ADVANCED_EXAMPLES})
+  foreach(EXAMPLE ${LAPACK_EXAMPLES})
     add_executable(examples-lapack-${EXAMPLE} 
                    ${EXAMPLE_DIR}/lapack-like/${EXAMPLE}.cpp)
     target_link_libraries(examples-lapack-${EXAMPLE} elemental)
@@ -846,7 +846,7 @@ endif(BUILD_EXPERIMENTAL AND BUILD_PMRRR AND NOT FAILED_PMRRR)
 
 ################################################################################
 # Uncomment if including Elemental as a subproject in another build system     #
-###############################################################################
+################################################################################
 set(LIBRARY_TYPE ${LIBRARY_TYPE} PARENT_SCOPE)
 set(MPI_C_COMPILER ${MPI_C_COMPILER} PARENT_SCOPE)
 set(MPI_C_INCLUDE_PATH ${MPI_C_INCLUDE_PATH} PARENT_SCOPE)
