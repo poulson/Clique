@@ -31,62 +31,40 @@
    POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef WITHOUT_PMRRR
-
 namespace elem {
 
 //
-// Invert the sufficiently large eigenvalues of A.
+// Compute the polar decomposition of A, A = Q P, where Q is unitary and P is 
+// Hermitian positive semi-definite. On exit, A is overwritten with Q.
 //
 
 template<typename F>
 inline void
-HermitianPseudoinverse
-( UpperOrLower uplo, DistMatrix<F,MC,MR>& A )
+Polar( DistMatrix<F,MC,MR>& A, DistMatrix<F,MC,MR>& P )
 {
 #ifndef RELEASE
-    PushCallStack("HermitianPseudoinverse");
+    PushCallStack("Polar");
 #endif
     typedef typename Base<F>::type R;
-
-    // Get the EVD of A
     const Grid& g = A.Grid();
-    DistMatrix<R,VR,STAR> w(g);
-    DistMatrix<F,MC,MR> Z(g);
-    HermitianEig( uplo, A, w, Z );
+    const int n = A.Width();
 
-    // Compute the two-norm of A as the maximum absolute value of its
-    // eigenvalues
-    R maxLocalAbsEig = 0;
-    const int numLocalEigs = w.LocalHeight();
-    for( int iLocal=0; iLocal<numLocalEigs; ++iLocal )
-    {
-        const R omega = w.GetLocalEntry(iLocal,0);
-        maxLocalAbsEig = std::max(maxLocalAbsEig,Abs(omega));
-    }
-    R twoNorm;
-    mpi::AllReduce( &maxLocalAbsEig, &twoNorm, 1, mpi::MAX, g.VCComm() );
+    // Get the SVD of A
+    DistMatrix<R,VR,STAR> s(g);
+    DistMatrix<F,MC,MR  > U(g), V(g);
+    U = A;
+    SVD( U, s, V );
 
-    // Set the tolerance equal to n ||A||_2 eps, and invert values above it
-    const int n = A.Height();
-    const R eps = lapack::MachineEpsilon<R>();
-    const R tolerance = n*twoNorm*eps;
-    for( int iLocal=0; iLocal<numLocalEigs; ++iLocal )
-    {
-        const R omega = w.GetLocalEntry(iLocal,0);
-        if( Abs(omega) < tolerance )
-            w.SetLocalEntry(iLocal,0,0);
-        else
-            w.SetLocalEntry(iLocal,0,1/omega);
-    }
+    // Form Q := U V^H in A
+    MakeZeros( A );
+    Gemm( NORMAL, ADJOINT, (F)1, U, V, (F)0, A );
 
-    // Form the pseudoinverse
-    hermitian_function::ReformHermitianMatrix( uplo, A, w, Z );
+    // Form P := V Sigma V^H in P
+    Zeros( n, n, P );
+    hermitian_function::ReformHermitianMatrix( LOWER, P, s, V );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
 } // namespace elem
-
-#endif // WITHOUT_PMRRR

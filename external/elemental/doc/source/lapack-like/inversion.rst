@@ -35,8 +35,8 @@ Computes the pseudoinverse of a Hermitian matrix through a customized version of
    :nowrap:
 
    \[
-   f(\omega_i) = \left\{\begin{array}{cc} 
-     1/\omega_i, & |\omega_i| \ge \epsilon \, n \, ||A||_2 \\
+   f(\omega) = \left\{\begin{array}{cc} 
+     1/\omega, & |\omega| \ge \epsilon \, n \, ||A||_2 \\
          0,      & \mbox{otherwise}
    \end{array}\right.,
    \]
@@ -45,15 +45,10 @@ where :math:`\epsilon` is the relative machine precision,
 :math:`n` is the height of :math:`A`, and :math:`||A||_2` can be computed
 as the maximum absolute value of the eigenvalues of :math:`A`.
 
-.. cpp:function:: HermitianPseudoinverse( UpperOrLower uplo, DistMatrix<R,MC,MR>& A )
+.. cpp:function:: HermitianPseudoinverse( UpperOrLower uplo, DistMatrix<F,MC,MR>& A )
 
-   Computes the pseudoinverse of a distributed real symmetric matrix with data
+   Computes the pseudoinverse of a distributed Hermitian matrix with data
    stored in the `uplo` triangle.
-
-.. cpp:function:: HermitianPseudoinverse( UpperOrLower uplo, DistMatrix<Complex<R>,MC,MR>& A )
-
-   Computes the pseudoinverse of a distributed complex Hermitian matrix with
-   data stored in the `uplo` triangle.
 
 HPD inversion
 -------------
@@ -86,6 +81,28 @@ If the matrix is found to not be HPD, then a ``NonHPDMatrixException`` is thrown
 
    Same as above, but for a distributed matrix.
 
+Pseudoinverse
+-------------
+Computes the pseudoinverse of a general matrix through computing its SVD,
+modifying the singular values with the function
+
+.. math::
+   :nowrap:
+
+   \[
+   f(\sigma) = \left\{\begin{array}{cc} 
+     1/\sigma, & \sigma \ge \epsilon \, n \, ||A||_2 \\
+         0,      & \mbox{otherwise}
+   \end{array}\right.,
+   \]
+
+where :math:`\epsilon` is the relative machine precision,
+:math:`n` is the height of :math:`A`, and :math:`||A||_2` is the maximum 
+singular value.
+
+.. cpp:function:: Pseudoinverse( DistMatrix<F,MC,MR>& A )
+
+   Replaces `A` with its pseudoinverse.
 
 Triangular inversion
 --------------------

@@ -552,19 +552,13 @@ void HermitianEig
 //----------------------------------------------------------------------------//
 
 #ifndef WITHOUT_PMRRR
-template<typename R,class RealFunctor>
+template<typename F,class RealFunctor>
 void RealHermitianFunction
-( UpperOrLower uplo, 
-  DistMatrix<R,MC,MR>& A, const RealFunctor& f );
-template<typename R,class RealFunctor>
-void RealHermitianFunction
-( UpperOrLower uplo, 
-  DistMatrix<Complex<R>,MC,MR>& A, const RealFunctor& f );
+( UpperOrLower uplo, DistMatrix<F,MC,MR>& A, const RealFunctor& f );
 
 template<typename R,class ComplexFunctor>
 void ComplexHermitianFunction
-( UpperOrLower uplo, 
-  DistMatrix<Complex<R>,MC,MR>& A, const ComplexFunctor& f );
+( UpperOrLower uplo, DistMatrix<Complex<R>,MC,MR>& A, const ComplexFunctor& f );
 #endif // WITHOUT_PMRRR
 
 //----------------------------------------------------------------------------//
@@ -574,12 +568,8 @@ void ComplexHermitianFunction
 //----------------------------------------------------------------------------//
 
 #ifndef WITHOUT_PMRRR
-template<typename R>
-void HermitianPseudoinverse( UpperOrLower uplo, DistMatrix<R,MC,MR>& A );
-
-template<typename R>
-void HermitianPseudoinverse
-( UpperOrLower uplo, DistMatrix<Complex<R>,MC,MR>& A );
+template<typename F>
+void HermitianPseudoinverse( UpperOrLower uplo, DistMatrix<F,MC,MR>& A );
 #endif // WITHOUT_PMRRR
 
 //----------------------------------------------------------------------------//
@@ -592,6 +582,11 @@ void HermitianSVD
 ( UpperOrLower uplo, 
   DistMatrix<F,MC,MR>& A, DistMatrix<typename Base<F>::type,VR,STAR>& s, 
   DistMatrix<F,MC,MR>& U, DistMatrix<F,MC,MR>& V );
+
+template<typename F>
+void HermitianSingularValues
+( UpperOrLower uplo, 
+  DistMatrix<F,MC,MR>& A, DistMatrix<typename Base<F>::type,VR,STAR>& s );
 #endif // WITHOUT_PMRRR
 
 //----------------------------------------------------------------------------//
@@ -647,6 +642,15 @@ void HPSDCholesky( UpperOrLower uplo, DistMatrix<Complex<R>,MC,MR>& A );
 #endif // WITHOUT_PMRRR
 
 //----------------------------------------------------------------------------//
+// Pseudoinverse                                                              //
+//                                                                            //
+// Uses a Singular Value Decomposition to form the pseudoinverse of A.        //
+//----------------------------------------------------------------------------//
+
+template<typename F>
+void Pseudoinverse( DistMatrix<F,MC,MR>& A );
+
+//----------------------------------------------------------------------------//
 // SquareRoot                                                                 //
 //                                                                            //
 // Compute the square-root of a Hermitian positive semi-definite matrix       //
@@ -655,11 +659,8 @@ void HPSDCholesky( UpperOrLower uplo, DistMatrix<Complex<R>,MC,MR>& A );
 //----------------------------------------------------------------------------//
 
 #ifndef WITHOUT_PMRRR
-template<typename R>
-void HPSDSquareRoot( UpperOrLower uplo, DistMatrix<R,MC,MR>& A );
-
-template<typename R>
-void HPSDSquareRoot( UpperOrLower uplo, DistMatrix<Complex<R>,MC,MR>& A );
+template<typename F>
+void HPSDSquareRoot( UpperOrLower uplo, DistMatrix<F,MC,MR>& A );
 #endif // WITHOUT_PMRRR
 
 //----------------------------------------------------------------------------//
@@ -1034,6 +1035,13 @@ void SetHermitianTridiagGridOrder( GridOrder order );
 GridOrder GetHermitianTridiagGridOrder();
 
 //----------------------------------------------------------------------------//
+// Polar decomposition                                                        //
+//----------------------------------------------------------------------------//
+
+template<typename F>
+void Polar( DistMatrix<F,MC,MR>& A, DistMatrix<F,MC,MR>& P );
+
+//----------------------------------------------------------------------------//
 // SVD                                                                        //
 //----------------------------------------------------------------------------//
 
@@ -1042,6 +1050,11 @@ void SVD
 ( DistMatrix<F,                     MC,MR  >& A, 
   DistMatrix<typename Base<F>::type,VR,STAR>& s, 
   DistMatrix<F,                     MC,MR  >& V );
+
+template<typename F>
+void SingularValues
+( DistMatrix<F,                     MC,MR  >& A,
+  DistMatrix<typename Base<F>::type,VR,STAR>& s );
 
 //----------------------------------------------------------------------------//
 // Trace                                                                      //
@@ -1105,6 +1118,8 @@ void TriangularInverse
 #include "./lapack-like/LU.hpp"
 #include "./lapack-like/Norm.hpp"
 #include "./lapack-like/PivotParity.hpp"
+#include "./lapack-like/Polar.hpp"
+#include "./lapack-like/Pseudoinverse.hpp"
 #include "./lapack-like/QR.hpp"
 #include "./lapack-like/Reflector.hpp"
 #include "./lapack-like/SkewHermitianEig.hpp"

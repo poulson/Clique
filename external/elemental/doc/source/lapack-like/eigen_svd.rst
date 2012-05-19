@@ -148,22 +148,13 @@ matrix and the latter in a normal (in fact, unitary) matrix.
    Since Elemental currently depends on PMRRR for its tridiagonal 
    eigensolver, only double-precision results are supported as of now.
 
-.. cpp:function:: void RealHermitianFunction( UpperOrLower uplo, DistMatrix<R,MC,MR>& A, const RealFunctor& f )
+.. cpp:function:: void RealHermitianFunction( UpperOrLower uplo, DistMatrix<F,MC,MR>& A, const RealFunctor& f )
 
-   Modifies the eigenvalues of the passed-in real symmetric matrix by replacing 
+   Modifies the eigenvalues of the passed-in Hermitian matrix by replacing 
    each eigenvalue :math:`\omega_i` with :math:`f(\omega_i) \in \mathbb{R}`. 
    ``RealFunctor`` is any 
    class which has the member function ``R operator()( R omega ) const``.
-   See `examples/lapack-like/RealSymmetricFunction.cpp <../../../../examples/lapack-like/RealSymmetricFunction.cpp>`_ for an example usage.
-
-.. cpp:function:: void RealHermitianFunction( UpperOrLower uplo, DistMatrix<Complex<R>,MC,MR>& A, const RealFunctor& f )
-
-   Modifies the eigenvalues of the passed-in complex Hermitian matrix by 
-   replacing each eigenvalue :math:`\omega_i` with 
-   :math:`f(\omega_i) \in \mathbb{R}`. 
-   ``RealFunctor`` can be any class which has the member function 
-   ``R operator()( R omega ) const``.
-   See `examples/lapack-like/RealHermitianFunction.cpp <../../../../examples/lapack-like/RealHermitianFunction.cpp>`_ for an example usage.
+   See `examples/lapack-like/RealSymmetricFunction.cpp <../../../../examples/lapack-like/RealHermitianFunction.cpp>`_ for an example usage.
 
 .. cpp:function:: void ComplexHermitianFunction( UpperOrLower uplo, DistMatrix<Complex<R>,MC,MR>& A, const ComplexFunctor& f )
 
@@ -391,7 +382,7 @@ Not yet written, will likely be based on Angelika Bunse-Gerstner et al.'s
 Jacobi-like method for simultaneous diagonalization of the commuting Hermitian 
 and skew-Hermitian portions of the matrix.
 
-General eigensolver
+Schur decomposition
 -------------------
 Not yet written, will likely eventually include Greg Henry et al.'s and 
 Robert Granat et al.'s approaches.
@@ -417,8 +408,25 @@ where the columns of :math:`U` equal the columns of :math:`V`, modulo sign flips
 
    Return a vector of singular values, :math:`s`, and the left and right singular vector matrices, :math:`U` and :math:`V`, such that :math:`A=U \mathrm{diag}(s) V^H`.
 
-General SVD
+.. cpp:function:: void HermitianSingularValues( UpperOrLower uplo, DistMatrix<F,MC,MR>& A, DistMatrix<typename Base<F>::type,VR,STAR>& s )
+
+   Return the singular values of :math:`A` in `s`. Note that the appropriate triangle of `A` is overwritten during computation.
+
+Square root
 -----------
+Hermitian matrices with non-negative eigenvalues have a
+natural matrix square root through their eigenvalue decomposition. This routine
+attempts to compute said matrix square root and throws a
+``NonHPSDMatrixException`` if any sufficiently negative eigenvalues are
+computed.
+
+.. cpp:function:: void HPSDSquareRoot( UpperOrLower uplo, DistMatrix<F,MC,MR>& A )
+
+   Overwrites the Hermitian positive semi-definite distributed matrix `A` with
+   its matrix square root.
+
+SVD
+---
 Given a general matrix :math:`A`, the *Singular Value Decomposition* is the 
 triplet :math:`(U,\Sigma,V)` such that
 
@@ -436,4 +444,28 @@ non-negative entries.
    .. note:: 
 
       This routine has not yet been designed to efficiently handle cases where 
-      the matrix is not close to square.
+      the matrix is not close to square. It is also far from the most efficient 
+      possible algorithm, as it currently uses the QR algorithm for the
+      bidiagonal SVD (as opposed to a Divide and Conquer algorithm) and 
+      does not apply Householder reflectors in the most efficient manner 
+      possible.
+
+.. cpp:function:: void SingularValues( DistMatrix<F,MC,MR>& A, DistMatrix<typename Base<F>::type,VR,STAR>& s )
+
+   Forms the singular values of :math:`A` in `s`. Note that `A` is overwritten in order to compute the singular values.
+
+   .. note::
+
+      This routine has not yet been designed to efficiently handle cases where
+      the matrix is not close to square. It is also far from the most efficient
+      possible algorithm, as it currently uses the QR algorithm for the 
+      bidiagonal SVD (as opposed to bisection).
+
+Polar decomposition
+-------------------
+Every matrix :math:`A` can be written as :math:`A=QP`, where :math:`Q` is unitary and :math:`P` is Hermitian and positive semi-definite. This is known as the *polar decomposition* of :math:`A` and can be constructed as :math:`Q := U V^H` and :math:`P := V \Sigma V^H`, where :math:`A = U \Sigma V^H` is the SVD of :math:`A`.
+
+.. cpp:function:: void Polar( DistMatrix<F,MC,MR>& A, DistMatrix<F,MC,MR>& P )
+
+   Compute the polar decomposition of :math:`A`, :math:`A=QP`, returning 
+   :math:`Q` within `A` and :math:`P` within `P`.
