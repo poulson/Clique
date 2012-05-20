@@ -23,17 +23,17 @@
 #include "clique/core/environment.hpp"
 #include "clique/symbolic/symmetric_factorization.hpp"
 
-#include "clique/numeric/front_lower_solve.hpp"
-#include "clique/numeric/front_lower_multiply.hpp"
-
 #include "clique/numeric/symm_front_tree.hpp"
 
 #include "clique/numeric/diagonal_solve.hpp"
 #include "clique/numeric/lower_multiply.hpp"
 #include "clique/numeric/lower_solve.hpp"
 
-#include "clique/numeric/front_ldl.hpp"
 #include "clique/numeric/ldl.hpp"
+#include "clique/numeric/block_ldl.hpp"
+
 #include "clique/numeric/ldl_solve.hpp"
+// TODO: 
+//#include "clique/numeric/block_ldl_solve.hpp"
 
 #endif /* CLIQUE_HPP */

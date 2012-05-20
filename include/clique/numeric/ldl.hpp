@@ -42,6 +42,9 @@ void LDL
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
+#include "clique/numeric/local_front_ldl.hpp"
+#include "clique/numeric/dist_front_ldl.hpp"
+
 #include "clique/numeric/local_ldl.hpp"
 #include "clique/numeric/dist_ldl.hpp"
 

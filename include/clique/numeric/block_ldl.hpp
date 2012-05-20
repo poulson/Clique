@@ -17,18 +17,19 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_LOWER_SOLVE_HPP
-#define CLIQUE_NUMERIC_LOWER_SOLVE_HPP 1
+#ifndef CLIQUE_NUMERIC_BLOCK_LDL_HPP
+#define CLIQUE_NUMERIC_BLOCK_LDL_HPP 1
 
 namespace cliq {
 namespace numeric {
 
+// All fronts of L are required to be initialized to the expansions of the 
+// original sparse matrix before calling the following factorizations.
+
 template<typename F>
-void LowerSolve
-( Orientation orientation, UnitOrNonUnit diag,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX );
+void BlockLDL
+( Orientation orientation, 
+  symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L );
 
 } // namespace numeric
 } // namespace cliq
@@ -37,36 +38,25 @@ void LowerSolve
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
-#include "clique/numeric/local_front_lower_solve.hpp"
-#include "clique/numeric/dist_front_lower_solve.hpp"
-#include "clique/numeric/dist_front_fast_lower_solve.hpp"
+#include "clique/numeric/local_front_block_ldl.hpp"
+#include "clique/numeric/dist_front_block_ldl.hpp"
 
-#include "clique/numeric/local_lower_solve.hpp"
-#include "clique/numeric/dist_lower_solve.hpp"
+#include "clique/numeric/local_block_ldl.hpp"
+#include "clique/numeric/dist_block_ldl.hpp"
 
 namespace cliq {
 namespace numeric {
 
 template<typename F>
-inline void LowerSolve
-( Orientation orientation, UnitOrNonUnit diag, 
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX )
+inline void BlockLDL
+( Orientation orientation, 
+  symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::LowerSolve");
+    PushCallStack("numeric::BlockLDL");
 #endif
-    if( orientation == NORMAL )
-    {
-        LocalLowerForwardSolve( diag, S, L, localX );
-        DistLowerForwardSolve( diag, S, L, localX );
-    }
-    else
-    {
-        DistLowerBackwardSolve( orientation, diag, S, L, localX );
-        LocalLowerBackwardSolve( orientation, diag, S, L, localX );
-    }
+    LocalBlockLDL( orientation, S, L );
+    DistBlockLDL( orientation, S, L );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -75,4 +65,4 @@ inline void LowerSolve
 } // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_LOWER_SOLVE_HPP 
+#endif /* CLIQUE_NUMERIC_BLOCK_LDL_HPP */

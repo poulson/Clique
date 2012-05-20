@@ -37,6 +37,9 @@ void LowerMultiply
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
+#include "clique/numeric/local_front_lower_multiply.hpp"
+#include "clique/numeric/dist_front_lower_multiply.hpp"
+
 #include "clique/numeric/local_lower_multiply.hpp"
 #include "clique/numeric/dist_lower_multiply.hpp"
 
