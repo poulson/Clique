@@ -240,18 +240,23 @@ inline void DistFrontBlockLowerBackwardSolve
     ( X, XT,
          XB, snSize );
 
+    if( XB.Height() == 0 )
+    {
+#ifndef RELEASE
+        PopCallStack();
+#endif
+        return;
+    }
+
     // YT := LB^{T/H} XB
     DistMatrix<F,VC,STAR> YT(g);
     YT.AlignWith( XT );
     Zeros( XT.Height(), XT.Width(), YT );
     DistMatrix<F,STAR,STAR> Z( g );
     Zeros( snSize, XT.Width(), Z );
-    if( XB.Height() != 0 )
-    {
-        elem::internal::LocalGemm
-        ( orientation, NORMAL, (F)1, LB, XB, (F)0, Z );
-        YT.SumScatterFrom( Z );
-    }
+    elem::internal::LocalGemm
+    ( orientation, NORMAL, (F)1, LB, XB, (F)0, Z );
+    YT.SumScatterFrom( Z );
 
     // XT := XT - inv(ATL) YT
     elem::internal::LocalGemm( NORMAL, NORMAL, (F)1, LT, YT, (F)0, Z );
@@ -306,6 +311,14 @@ inline void DistFrontBlockLowerBackwardSolve
     ( X, XT,
          XB, snSize );
 
+    if( XB.Height() == 0 )
+    {
+#ifndef RELEASE
+        PopCallStack();
+#endif
+        return;
+    }
+
     // Create space for YT[VC,* ]
     DistMatrix<F,VC,STAR> YT(g);
     YT.AlignWith( XT );
@@ -317,7 +330,6 @@ inline void DistFrontBlockLowerBackwardSolve
     ZT_MR_STAR.AlignWith( LB );
     Zeros( snSize, XT.Width(), ZT_MR_STAR );
 
-    if( XB.Height() != 0 )
     {
         // ZT[MR,* ] := (LB[MC,MR])^{T/H} XB[MC,* ]
         DistMatrix<F,MC,STAR> XB_MC_STAR( g );
