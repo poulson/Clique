@@ -200,16 +200,17 @@ inline void DistFrontFastLowerForwardSolve
     // Get ready for the local multiply
     DistMatrix<F,MR,STAR> XT_MR_STAR(g);
     XT_MR_STAR.AlignWith( LT );
-    XT_MR_STAR = XT;
 
-    // ZT[MC,* ] := LT[MC,MR] XT[MR,* ], 
-    // XT[VC,* ].SumScatterFrom( ZT[MC,* ] )
     {
+        // ZT[MC,* ] := LT[MC,MR] XT[MR,* ], 
         DistMatrix<F,MC,STAR> ZT_MC_STAR(g);
         ZT_MC_STAR.AlignWith( LT );
-        ZT_MC_STAR.ResizeTo( LT.Height(), XT.Width() );
+        Zeros( LT.Height(), XT.Width(), ZT_MC_STAR );
+        XT_MR_STAR = XT;
         elem::internal::LocalGemm
         ( NORMAL, NORMAL, (F)1, LT, XT_MR_STAR, (F)0, ZT_MC_STAR );
+
+        // XT[VC,* ].SumScatterFrom( ZT[MC,* ] )
         XT.SumScatterFrom( ZT_MC_STAR );
     }
 
@@ -227,6 +228,8 @@ inline void DistFrontFastLowerForwardSolve
         ZB_MC_STAR.ResizeTo( LB.Height(), XT.Width() );
         elem::internal::LocalGemm
         ( NORMAL, NORMAL, (F)-1, LB, XT_MR_STAR, (F)0, ZB_MC_STAR );
+
+        // XB[VC,* ] += ZB[MC,* ]
         XB.SumScatterUpdate( (F)1, ZB_MC_STAR );
     }
 #ifndef RELEASE
@@ -373,26 +376,28 @@ inline void DistFrontFastLowerBackwardSolve
     ( X, XT,
          XB, snSize );
 
-    // ZT[MR,* ] := -(LB[MC,MR])^{T/H} XB[MC,* ]
-    // ZT[VR,* ].SumScatterFrom( ZT[MR,* ] )
-    // ZT[VC,* ] := ZT[VR,* ]
-    // XT[VC,* ] += ZT[VC,* ]
     DistMatrix<F,MR,STAR> ZT_MR_STAR( g );
     DistMatrix<F,VR,STAR> ZT_VR_STAR( g );
     ZT_MR_STAR.AlignWith( LB );
-    ZT_MR_STAR.ResizeTo( snSize, XT.Width() );
+    Zeros( snSize, XT.Width(), ZT_MR_STAR );
     if( XB.Height() != 0 )
     {
+        // ZT[MR,* ] := -(LB[MC,MR])^{T/H} XB[MC,* ]
         DistMatrix<F,MC,STAR> XB_MC_STAR( g );
         XB_MC_STAR.AlignWith( LB );
         XB_MC_STAR = XB;
         elem::internal::LocalGemm
         ( orientation, NORMAL, (F)-1, LB, XB_MC_STAR, (F)0, ZT_MR_STAR );
 
+        // ZT[VR,* ].SumScatterFrom( ZT[MR,* ] )
         ZT_VR_STAR.SumScatterFrom( ZT_MR_STAR );
+
+        // ZT[VC,* ] := ZT[VR,* ]
         DistMatrix<F,VC,STAR> ZT_VC_STAR( g );
         ZT_VC_STAR.AlignWith( XT );
         ZT_VC_STAR = ZT_VR_STAR;
+
+        // XT[VC,* ] += ZT[VC,* ]
         elem::Axpy( (F)1, ZT_VC_STAR, XT );
     }
 
@@ -409,16 +414,18 @@ inline void DistFrontFastLowerBackwardSolve
         LT.SetDiagonal( dTReplacement );
     }
 
-    // ZT[MR,* ] := (LT[MC,MR])^{T/H} XT[MC,* ]
-    // ZT[VR,* ].SumScatterFrom( ZT[MR,* ] )
-    // XT[VC,* ] := ZT[VR,* ]
     {
+        // ZT[MR,* ] := (LT[MC,MR])^{T/H} XT[MC,* ]
         DistMatrix<F,MC,STAR> XT_MC_STAR( g );
         XT_MC_STAR.AlignWith( LT );
         XT_MC_STAR = XT;
         elem::internal::LocalGemm
         ( orientation, NORMAL, (F)1, LT, XT_MC_STAR, (F)0, ZT_MR_STAR );
+
+        // ZT[VR,* ].SumScatterFrom( ZT[MR,* ] )
         ZT_VR_STAR.SumScatterFrom( ZT_MR_STAR );
+
+        // XT[VC,* ] := ZT[VR,* ]
         XT = ZT_VR_STAR;
     }
 

@@ -63,8 +63,9 @@ inline void DistFrontBlockLDL
     DistMatrix<F,MD,STAR> ones(g);
     ones.AlignWith( d );
     Ones( d.Height(), d.Width(), ones );
+    DistMatrix<F,STAR,STAR> d_STAR_STAR( d );
     ATL.SetDiagonal( ones );
-    elem::DiagonalSolve( LEFT, NORMAL, d, ATL );
+    elem::DiagonalSolve( LEFT, NORMAL, d_STAR_STAR, ATL );
     elem::Trsm( LEFT, LOWER, orientation, UNIT, (F)1, LTL, ATL );
 #ifndef RELEASE
     PopCallStack();

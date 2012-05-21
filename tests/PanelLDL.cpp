@@ -285,7 +285,8 @@ main( int argc, char* argv[] )
             // Call the numerical factorization routine
             elem::SetBlocksize( factBlocksize );
             const double factStartTime = cliq::mpi::Time();
-            cliq::numeric::LDL( elem::TRANSPOSE, S, L );
+            //cliq::numeric::LDL( elem::TRANSPOSE, S, L );
+            cliq::numeric::BlockLDL( elem::TRANSPOSE, S, L );
             cliq::mpi::Barrier( comm );
             const double factStopTime = cliq::mpi::Time();
             if( commRank == 0 )
@@ -294,6 +295,7 @@ main( int argc, char* argv[] )
                           << " secs" << std::endl;
 
             // Invert the diagonal blocks for faster solves
+            /*
             const double redistStartTime = cliq::mpi::Time();
             if( useFast1d )
                 cliq::numeric::SetSolveMode( L, cliq::FAST_1D_LDL );
@@ -305,12 +307,14 @@ main( int argc, char* argv[] )
                 std::cout << "Redistribution time: " 
                           << redistStopTime-redistStartTime 
                           << " secs" << std::endl;
+            */
 
             // Solve
             elem::SetBlocksize( solveBlocksize );
             cliq::mpi::Barrier( comm );
             const double solveStartTime = cliq::mpi::Time();
-            cliq::numeric::LDLSolve( cliq::TRANSPOSE, S, L, localY );
+            //cliq::numeric::LDLSolve( cliq::TRANSPOSE, S, L, localY );
+            cliq::numeric::BlockLDLSolve( cliq::TRANSPOSE, S, L, localY );
             cliq::mpi::Barrier( comm );
             const double solveStopTime = cliq::mpi::Time();
             if( commRank == 0 )

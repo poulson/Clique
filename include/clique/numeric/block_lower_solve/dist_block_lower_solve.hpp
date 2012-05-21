@@ -53,8 +53,7 @@ inline void DistBlockLowerForwardSolve
     const int numDistSupernodes = S.dist.supernodes.size();
     const int width = localX.Width();
     const SolveMode mode = L.dist.mode;
-    const bool modeIs1d = ModeIs1d( mode );
-    if( mode != NORMAL_1D && mode != FAST_1D_LDL && mode != FAST_2D_LDL )
+    if( mode != NORMAL_2D )
         throw std::logic_error("This solve mode is not yet implemented");
     if( width == 0 )
     {
@@ -67,8 +66,7 @@ inline void DistBlockLowerForwardSolve
     // Copy the information from the local portion into the distributed leaf
     const LocalSymmFront<F>& localRootFront = L.local.fronts.back();
     const DistSymmFront<F>& distLeafFront = L.dist.fronts[0];
-    const Grid& leafGrid = ( modeIs1d ? distLeafFront.front1dL.Grid() 
-                                      : distLeafFront.front2dL.Grid() );
+    const Grid& leafGrid = distLeafFront.front2dL.Grid();
     distLeafFront.work1d.LockedView
     ( localRootFront.work.Height(), localRootFront.work.Width(), 0,
       localRootFront.work.LockedBuffer(), localRootFront.work.LDim(), 
@@ -81,17 +79,14 @@ inline void DistBlockLowerForwardSolve
         const DistSymmFactSupernode& sn = S.dist.supernodes[s];
         const DistSymmFront<F>& childFront = L.dist.fronts[s-1];
         const DistSymmFront<F>& front = L.dist.fronts[s];
-        const Grid& childGrid = ( modeIs1d ? childFront.front1dL.Grid()
-                                           : childFront.front2dL.Grid() );
-        const Grid& grid = ( modeIs1d ? front.front1dL.Grid()
-                                      : front.front2dL.Grid() );
+        const Grid& childGrid = childFront.front2dL.Grid();
+        const Grid& grid = front.front2dL.Grid();
         mpi::Comm comm = grid.VCComm();
         mpi::Comm childComm = childGrid.VCComm();
         const int commSize = mpi::CommSize( comm );
         const int commRank = mpi::CommRank( comm );
         const int childCommSize = mpi::CommSize( childComm );
-        const int frontHeight = ( modeIs1d ? front.front1dL.Height()
-                                           : front.front2dL.Height() );
+        const int frontHeight = front.front2dL.Height();
 
         // Set up a workspace
         DistMatrix<F,VC,STAR>& W = front.work1d;
@@ -238,12 +233,7 @@ inline void DistBlockLowerForwardSolve
         recvDispls.clear();
 
         // Now that the RHS is set up, perform this supernode's solve
-        if( mode == NORMAL_1D )
-            DistFrontBlockLowerForwardSolve( front.front1dL, W );
-        else if( mode == FAST_1D_LDL )
-            DistFrontBlockLowerForwardSolve( front.front1dL, W );
-        else // mode == FAST_2D_LDL
-            DistFrontBlockLowerForwardSolve( front.front2dL, W );
+        DistFrontBlockLowerForwardSolve( front.front2dL, W );
 
         // Store the supernode portion of the result
         localXT = WT.LocalMatrix();
@@ -269,8 +259,7 @@ inline void DistBlockLowerBackwardSolve
     const int numDistSupernodes = S.dist.supernodes.size();
     const int width = localX.Width();
     const SolveMode mode = L.dist.mode;
-    const bool modeIs1d = ModeIs1d( mode );
-    if( mode != NORMAL_1D && mode != FAST_1D_LDL && mode != FAST_2D_LDL )
+    if( mode != NORMAL_2D )
         throw std::logic_error("This solve mode is not yet implemented");
     if( width == 0 )
     {
@@ -283,20 +272,12 @@ inline void DistBlockLowerBackwardSolve
     // Directly operate on the root separator's portion of the right-hand sides
     const DistSymmFactSupernode& rootSN = S.dist.supernodes.back();
     const DistSymmFront<F>& rootFront = L.dist.fronts.back();
-    const Grid& rootGrid = ( modeIs1d ? rootFront.front1dL.Grid() 
-                                      : rootFront.front2dL.Grid() );
+    const Grid& rootGrid = rootFront.front2dL.Grid();
     rootFront.work1d.View
     ( rootSN.size, width, 0,
       localX.Buffer(rootSN.localOffset1d,0), localX.LDim(), rootGrid );
-    if( mode == NORMAL_1D )
-        DistFrontBlockLowerBackwardSolve
-        ( orientation, rootFront.front1dL, rootFront.work1d );
-    else if( mode == FAST_1D_LDL )
-        DistFrontBlockLowerBackwardSolve
-        ( orientation, rootFront.front1dL, rootFront.work1d );
-    else // mode == FAST_2D_LDL
-        DistFrontBlockLowerBackwardSolve
-        ( orientation, rootFront.front2dL, rootFront.work1d );
+    DistFrontBlockLowerBackwardSolve
+    ( orientation, rootFront.front2dL, rootFront.work1d );
 
     std::vector<int>::const_iterator it;
     for( int s=numDistSupernodes-2; s>=0; --s )
@@ -305,17 +286,14 @@ inline void DistBlockLowerBackwardSolve
         const DistSymmFactSupernode& sn = S.dist.supernodes[s];
         const DistSymmFront<F>& parentFront = L.dist.fronts[s+1];
         const DistSymmFront<F>& front = L.dist.fronts[s];
-        const Grid& grid = ( modeIs1d ? front.front1dL.Grid() 
-                                      : front.front2dL.Grid() );
-        const Grid& parentGrid = ( modeIs1d ? parentFront.front1dL.Grid()
-                                            : parentFront.front2dL.Grid() );
+        const Grid& grid = front.front2dL.Grid();
+        const Grid& parentGrid = parentFront.front2dL.Grid();
         mpi::Comm comm = grid.VCComm(); 
         mpi::Comm parentComm = parentGrid.VCComm();
         const int commSize = mpi::CommSize( comm );
         const int parentCommSize = mpi::CommSize( parentComm );
         const int parentCommRank = mpi::CommRank( parentComm );
-        const int frontHeight = ( modeIs1d ? front.front1dL.Height()
-                                           : front.front2dL.Height() );
+        const int frontHeight = front.front2dL.Height();
 
         // Set up a workspace
         DistMatrix<F,VC,STAR>& W = front.work1d;
@@ -465,12 +443,7 @@ inline void DistBlockLowerBackwardSolve
         recvDispls.clear();
 
         // Call the custom supernode backward solve
-        if( mode == NORMAL_1D )
-            DistFrontBlockLowerBackwardSolve( orientation, front.front1dL, W );
-        else if( mode == FAST_1D_LDL )
-            DistFrontBlockLowerBackwardSolve( orientation, front.front1dL, W );
-        else // mode == FAST_2D_LDL
-            DistFrontBlockLowerBackwardSolve( orientation, front.front2dL, W );
+        DistFrontBlockLowerBackwardSolve( orientation, front.front2dL, W );
 
         // Store the supernode portion of the result
         localXT = WT.LocalMatrix();
