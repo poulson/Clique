@@ -1,8 +1,4 @@
 /*
-   Modification of include/elemental/advanced/LDL.hpp from Elemental.
-   Copyright (c) 2009-2012, Jack Poulson
-   All rights reserved.
-
    Clique: a scalable implementation of the multifrontal algorithm
 
    Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
@@ -21,49 +17,51 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_LOCAL_FRONT_BLOCK_LDL_HPP
-#define CLIQUE_NUMERIC_LOCAL_FRONT_BLOCK_LDL_HPP 1
+#ifndef CLIQUE_NUMERIC_DIST_FRONT_BLOCK_LDL_HPP
+#define CLIQUE_NUMERIC_DIST_FRONT_BLOCK_LDL_HPP 1
 
 namespace cliq {
 namespace numeric {
 
 template<typename F> 
-void LocalFrontBlockLDL
-( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR );
+void DistFrontBlockLDL
+( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
 template<typename F> 
-inline void LocalFrontBlockLDL
-( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR )
+inline void DistFrontBlockLDL
+( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::LocalFrontBlockLDL");
+    PushCallStack("numeric::internal::DistFrontBlockLDL");
 #endif
-    Matrix<F> ATL,
-              ABL;
+    const Grid& g = AL.Grid();
+    DistMatrix<F,MC,MR> ATL(g),
+                        ABL(g);
     elem::PartitionDown
     ( AL, ATL,
           ABL, AL.Width() );
-    
+
     // Make a copy of the original contents of ABL
-    Matrix<F> BBL( ABL );
+    DistMatrix<F,MC,MR> BBL( ABL );
 
     // Call the standard routine
-    LocalFrontLDL( orientation, AL, ABR );
+    DistFrontLDL( orientation, AL, ABR );
 
     // Copy the original contents of ABL back
     ABL = BBL;
 
-    // Overwrite ATL with inv(L D L^[T/H]) = L^[-T/H] D^{-1} L^{-1}
-    Matrix<F> LTL( ATL );
+    // Overwrite ATL with inv(L D L^{T/H}) = L^{-T/H} D^{-1} L^{-1}
+    DistMatrix<F,MC,MR> LTL( ATL );
     elem::TriangularInverse( LOWER, UNIT, ATL );
     elem::MakeTrapezoidal( LEFT, LOWER, 0, ATL );
-    Matrix<F> d;
+    DistMatrix<F,MD,STAR> d(g);
     ATL.GetDiagonal( d );
-    Matrix<F> ones;
+    DistMatrix<F,MD,STAR> ones(g);
+    ones.AlignWith( d );
     Ones( d.Height(), d.Width(), ones );
     ATL.SetDiagonal( ones );
     elem::DiagonalSolve( LEFT, NORMAL, d, ATL );
@@ -76,4 +74,4 @@ inline void LocalFrontBlockLDL
 } // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_LOCAL_FRONT_BLOCK_LDL_HPP
+#endif // CLIQUE_NUMERIC_DIST_FRONT_BLOCK_LDL_HPP

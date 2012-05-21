@@ -38,11 +38,11 @@ void BlockLDL
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
-#include "clique/numeric/local_front_block_ldl.hpp"
-#include "clique/numeric/dist_front_block_ldl.hpp"
+#include "./block_ldl/local_front_block_ldl.hpp"
+#include "./block_ldl/dist_front_block_ldl.hpp"
 
-#include "clique/numeric/local_block_ldl.hpp"
-#include "clique/numeric/dist_block_ldl.hpp"
+#include "./block_ldl/local_block_ldl.hpp"
+#include "./block_ldl/dist_block_ldl.hpp"
 
 namespace cliq {
 namespace numeric {

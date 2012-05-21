@@ -17,56 +17,40 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_LOWER_SOLVE_HPP
-#define CLIQUE_NUMERIC_LOWER_SOLVE_HPP 1
+#ifndef CLIQUE_NUMERIC_BLOCK_LDL_SOLVE_HPP
+#define CLIQUE_NUMERIC_BLOCK_LDL_SOLVE_HPP 1
 
 namespace cliq {
 namespace numeric {
 
 template<typename F>
-void LowerSolve
-( Orientation orientation, UnitOrNonUnit diag,
+void BlockLDLSolve
+( Orientation orientation,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX );
-
-} // namespace numeric
-} // namespace cliq
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
-#include "./lower_solve/local_front_lower_solve.hpp"
-#include "./lower_solve/dist_front_lower_solve.hpp"
-#include "./lower_solve/dist_front_fast_lower_solve.hpp"
-
-#include "./lower_solve/local_lower_solve.hpp"
-#include "./lower_solve/dist_lower_solve.hpp"
-
-namespace cliq {
-namespace numeric {
-
 template<typename F>
-inline void LowerSolve
-( Orientation orientation, UnitOrNonUnit diag, 
+inline void BlockLDLSolve
+( Orientation orientation,
   const symbolic::SymmFact& S,
   const numeric::SymmFrontTree<F>& L,
         Matrix<F>& localX )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::LowerSolve");
-#endif
+    PushCallStack("numeric::BlockLDLSolve");
     if( orientation == NORMAL )
-    {
-        LocalLowerForwardSolve( diag, S, L, localX );
-        DistLowerForwardSolve( diag, S, L, localX );
-    }
-    else
-    {
-        DistLowerBackwardSolve( orientation, diag, S, L, localX );
-        LocalLowerBackwardSolve( orientation, diag, S, L, localX );
-    }
+        throw std::logic_error("Invalid orientation for BlockLDL");
+#endif
+    // Solve against block diagonal factor, L D
+    BlockLowerSolve( NORMAL, S, L, localX );
+
+    // Solve against the (conjugate-)transpose of the block unit diagonal L
+    BlockLowerSolve( orientation, S, L, localX );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -75,4 +59,4 @@ inline void LowerSolve
 } // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_LOWER_SOLVE_HPP 
+#endif // CLIQUE_NUMERIC_BLOCK_LDL_SOLVE_HPP

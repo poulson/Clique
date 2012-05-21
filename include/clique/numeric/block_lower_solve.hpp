@@ -17,23 +17,18 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_LDL_HPP
-#define CLIQUE_NUMERIC_LDL_HPP 1
+#ifndef CLIQUE_NUMERIC_BLOCK_LOWER_SOLVE_HPP
+#define CLIQUE_NUMERIC_BLOCK_LOWER_SOLVE_HPP 1
 
 namespace cliq {
 namespace numeric {
 
-// All fronts of L are required to be initialized to the expansions of the 
-// original sparse matrix before calling the following factorizations.
-
 template<typename F>
-void InitializeDistLeaf
-( const symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L );
-
-template<typename F>
-void LDL
+void BlockLowerSolve
 ( Orientation orientation, 
-  symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L );
+  const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<F>& L,
+        Matrix<F>& localX );
 
 } // namespace numeric
 } // namespace cliq
@@ -42,45 +37,35 @@ void LDL
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
-#include "./ldl/local_front_ldl.hpp"
-#include "./ldl/dist_front_ldl.hpp"
+#include "./block_lower_solve/local_front_block_lower_solve.hpp"
+#include "./block_lower_solve/dist_front_block_lower_solve.hpp"
 
-#include "./ldl/local_ldl.hpp"
-#include "./ldl/dist_ldl.hpp"
+#include "./block_lower_solve/local_block_lower_solve.hpp"
+#include "./block_lower_solve/dist_block_lower_solve.hpp"
 
 namespace cliq {
 namespace numeric {
 
 template<typename F>
-inline void InitializeDistLeaf
-( const symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L )
+inline void BlockLowerSolve
+( Orientation orientation,
+  const symbolic::SymmFact& S,
+  const numeric::SymmFrontTree<F>& L,
+        Matrix<F>& localX )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::InitializeDistLeaf");
+    PushCallStack("numeric::BlockLowerSolve");
 #endif
-    const symbolic::DistSymmFactSupernode& sn = S.dist.supernodes[0];
-    Matrix<F>& topLocalFrontL = L.local.fronts.back().frontL;
-    DistMatrix<F,MC,MR>& front2dL = L.dist.fronts[0].front2dL;
-
-    front2dL.LockedView
-    ( topLocalFrontL.Height(), topLocalFrontL.Width(), 0, 0,
-      topLocalFrontL.LockedBuffer(), topLocalFrontL.LDim(), 
-      *sn.grid );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
-template<typename F>
-inline void LDL
-( Orientation orientation, 
-  symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L )
-{
-#ifndef RELEASE
-    PushCallStack("numeric::LDL");
-#endif
-    LocalLDL( orientation, S, L );
-    DistLDL( orientation, S, L );
+    if( orientation == NORMAL )
+    {
+        LocalBlockLowerForwardSolve( S, L, localX );
+        DistBlockLowerForwardSolve( S, L, localX );
+    }
+    else
+    {
+        DistBlockLowerBackwardSolve( orientation, S, L, localX );
+        LocalBlockLowerBackwardSolve( orientation, S, L, localX );
+    }
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -89,4 +74,4 @@ inline void LDL
 } // namespace numeric
 } // namespace cliq
 
-#endif /* CLIQUE_NUMERIC_LDL_HPP */
+#endif // CLIQUE_NUMERIC_BLOCK_LOWER_SOLVE_HPP 

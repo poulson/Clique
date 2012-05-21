@@ -1,9 +1,4 @@
 /*
-   Modification of include/elemental/basic/level3/Trsm/TrsmLLN.hpp 
-   from Elemental.
-   Copyright (c) 2009-2012, Jack Poulson
-   All rights reserved.
-
    Clique: a scalable implementation of the multifrontal algorithm
 
    Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
@@ -22,31 +17,30 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_LOCAL_FRONT_LOWER_SOLVE_HPP
-#define CLIQUE_NUMERIC_LOCAL_FRONT_LOWER_SOLVE_HPP 1
+#ifndef CLIQUE_NUMERIC_LOCAL_FRONT_BLOCK_LOWER_SOLVE_HPP
+#define CLIQUE_NUMERIC_LOCAL_FRONT_BLOCK_LOWER_SOLVE_HPP 1
 
 namespace cliq {
 namespace numeric {
 
 template<typename F>
-void LocalFrontLowerForwardSolve
-( UnitOrNonUnit diag, const Matrix<F>& L, Matrix<F>& X );
+void LocalFrontBlockLowerForwardSolve
+( const Matrix<F>& L, Matrix<F>& X );
 
 template<typename F>
-void LocalFrontLowerBackwardSolve
-( Orientation orientation, UnitOrNonUnit diag, 
-  const Matrix<F>& L, Matrix<F>& X );
+void LocalFrontBlockLowerBackwardSolve
+( Orientation orientation, const Matrix<F>& L, Matrix<F>& X );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
 template<typename F>
-inline void LocalFrontLowerForwardSolve
-( UnitOrNonUnit diag, const Matrix<F>& L, Matrix<F>& X )
+inline void LocalFrontBlockLowerForwardSolve
+( const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::LocalFrontLowerForwardSolve");
+    PushCallStack("numeric::LocalFrontBlockLowerForwardSolve");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
@@ -68,7 +62,11 @@ inline void LocalFrontLowerForwardSolve
     ( X, XT,
          XB, L.Width() );
 
-    elem::Trsm( LEFT, LOWER, NORMAL, diag, (F)1, LT, XT, true );
+    // XT := inv(ATL) XT
+    Matrix<F> YT( XT );
+    elem::Gemm( NORMAL, NORMAL, (F)1, LT, YT, (F)0, XT );
+
+    // XB := XB - LB XT
     elem::Gemm( NORMAL, NORMAL, (F)-1, LB, XT, (F)1, XB );
 #ifndef RELEASE
     PopCallStack();
@@ -76,12 +74,11 @@ inline void LocalFrontLowerForwardSolve
 }
 
 template<typename F>
-inline void LocalFrontLowerBackwardSolve
-( Orientation orientation, UnitOrNonUnit diag, 
-  const Matrix<F>& L, Matrix<F>& X )
+inline void LocalFrontBlockLowerBackwardSolve
+( Orientation orientation, const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::LocalFrontLowerBackwardSolve");
+    PushCallStack("numeric::LocalFrontBlockLowerBackwardSolve");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
@@ -105,8 +102,13 @@ inline void LocalFrontLowerBackwardSolve
     ( X, XT,
          XB, L.Width() );
 
-    elem::Gemm( orientation, NORMAL, (F)-1, LB, XB, (F)1, XT );
-    elem::Trsm( LEFT, LOWER, orientation, diag, (F)1, LT, XT, true );
+    // YT := LB^[T/H] XB
+    Matrix<F> YT;
+    Zeros( XT.Height(), XT.Width(), YT );
+    elem::Gemm( orientation, NORMAL, (F)1, LB, XB, (F)0, YT );
+
+    // XT := XT - inv(ATL) YT
+    elem::Gemm( NORMAL, NORMAL, (F)-1, LT, YT, (F)1, XT );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -115,4 +117,4 @@ inline void LocalFrontLowerBackwardSolve
 } // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_LOCAL_FRONT_LOWER_SOLVE_HPP
+#endif // CLIQUE_NUMERIC_LOCAL_FRONT_BLOCK_LOWER_SOLVE_HPP
