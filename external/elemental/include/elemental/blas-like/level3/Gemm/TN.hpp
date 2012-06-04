@@ -32,14 +32,15 @@
 */
 
 namespace elem {
+namespace internal {
 
 template<typename T>
 inline void
-internal::GemmTN
+GemmTN
 ( Orientation orientationOfA,
-  T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C )
+  T alpha, const DistMatrix<T>& A,
+           const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C )
 {
 #ifndef RELEASE
     PushCallStack("internal::GemmTN");
@@ -56,15 +57,15 @@ internal::GemmTN
 
     if( m <= n && weightTowardsC*m <= k )
     {
-        internal::GemmTNB( orientationOfA, alpha, A, B, beta, C );
+        GemmTNB( orientationOfA, alpha, A, B, beta, C );
     }
     else if( n <= m && weightTowardsC*n <= k )
     {
-        internal::GemmTNA( orientationOfA, alpha, A, B, beta, C );
+        GemmTNA( orientationOfA, alpha, A, B, beta, C );
     }
     else
     {
-        internal::GemmTNC( orientationOfA, alpha, A, B, beta, C );
+        GemmTNC( orientationOfA, alpha, A, B, beta, C );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -74,11 +75,11 @@ internal::GemmTN
 // Transpose Normal Gemm that avoids communicating the matrix A.
 template<typename T> 
 inline void
-internal::GemmTNA
+GemmTNA
 ( Orientation orientationOfA,
-  T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C )
+  T alpha, const DistMatrix<T>& A,
+           const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C )
 {
 #ifndef RELEASE
     PushCallStack("internal::GemmTNA");    
@@ -102,20 +103,20 @@ internal::GemmTNA
     const Grid& g = A.Grid();
 
     // Matrix views
-    DistMatrix<T,MC,MR> BL(g), BR(g),
-                        B0(g), B1(g), B2(g);
+    DistMatrix<T> BL(g), BR(g),
+                  B0(g), B1(g), B2(g);
 
-    DistMatrix<T,MC,MR> CL(g), CR(g),
-                        C0(g), C1(g), C2(g);
+    DistMatrix<T> CL(g), CR(g),
+                  C0(g), C1(g), C2(g);
 
     // Temporary distributions
     DistMatrix<T,MC,STAR> B1_MC_STAR(g);
     DistMatrix<T,MR,STAR> D1_MR_STAR(g);
     DistMatrix<T,MR,MC  > D1_MR_MC(g);
-    DistMatrix<T,MC,MR  > D1(g);
+    DistMatrix<T> D1(g);
 
     // Start the algorithm
-    Scal( beta, C );
+    Scale( beta, C );
     LockedPartitionRight( B, BL, BR, 0 );
     PartitionRight( C, CL, CR, 0 );
     while( BR.Width() > 0 )
@@ -137,7 +138,7 @@ internal::GemmTNA
 
         // D1[MR,*] := alpha (A1[MC,MR])^T B1[MC,*]
         //           = alpha (A1^T)[MR,MC] B1[MC,*]
-        internal::LocalGemm
+        LocalGemm
         ( orientationOfA, NORMAL, alpha, A, B1_MC_STAR, (T)0, D1_MR_STAR );
 
         // C1[MC,MR] += scattered & transposed D1[MR,*] summed over grid cols
@@ -165,11 +166,11 @@ internal::GemmTNA
 // Transpose Normal Gemm that avoids communicating the matrix B.
 template<typename T> 
 inline void
-internal::GemmTNB
+GemmTNB
 ( Orientation orientationOfA,
-  T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C )
+  T alpha, const DistMatrix<T>& A,
+           const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C )
 {
 #ifndef RELEASE
     PushCallStack("internal::GemmTNB");
@@ -193,19 +194,19 @@ internal::GemmTNB
     const Grid& g = A.Grid();
 
     // Matrix views
-    DistMatrix<T,MC,MR> AL(g), AR(g),
-                        A0(g), A1(g), A2(g);
+    DistMatrix<T> AL(g), AR(g),
+                  A0(g), A1(g), A2(g);
 
-    DistMatrix<T,MC,MR> CT(g),  C0(g),
-                        CB(g),  C1(g),
-                                C2(g);
+    DistMatrix<T> CT(g),  C0(g),
+                  CB(g),  C1(g),
+                          C2(g);
 
     // Temporary distributions
     DistMatrix<T,MC,STAR> A1_MC_STAR(g);
     DistMatrix<T,STAR,MR> D1_STAR_MR(g);
 
     // Start the algorithm
-    Scal( beta, C );
+    Scale( beta, C );
     LockedPartitionRight( A, AL, AR, 0 );
     PartitionDown
     ( C, CT,
@@ -230,7 +231,7 @@ internal::GemmTNB
 
         // D1[*,MR] := alpha (A1[MC,*])^T B[MC,MR]
         //           = alpha (A1^T)[*,MC] B[MC,MR]
-        internal::LocalGemm
+        LocalGemm
         ( orientationOfA, NORMAL, alpha, A1_MC_STAR, B, (T)0, D1_STAR_MR );
 
         // C1[MC,MR] += scattered result of D1[*,MR] summed over grid cols
@@ -257,11 +258,11 @@ internal::GemmTNB
 // Transpose Normal Gemm that avoids communicating the matrix C.
 template<typename T> 
 inline void
-internal::GemmTNC
+GemmTNC
 ( Orientation orientationOfA,
-  T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C )
+  T alpha, const DistMatrix<T>& A,
+           const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C )
 {
 #ifndef RELEASE
     PushCallStack("internal::GemmTNC");
@@ -285,20 +286,20 @@ internal::GemmTNC
     const Grid& g = A.Grid();
 
     // Matrix views
-    DistMatrix<T,MC,MR> AT(g),  A0(g),
-                        AB(g),  A1(g),
-                                A2(g);
+    DistMatrix<T> AT(g),  A0(g),
+                  AB(g),  A1(g),
+                          A2(g);
 
-    DistMatrix<T,MC,MR> BT(g),  B0(g),
-                        BB(g),  B1(g),
-                                B2(g);
+    DistMatrix<T> BT(g),  B0(g),
+                  BB(g),  B1(g),
+                          B2(g);
 
     // Temporary distributions
     DistMatrix<T,STAR,MC> A1_STAR_MC(g);
     DistMatrix<T,STAR,MR> B1_STAR_MR(g);
 
     // Start the algorithm
-    Scal( beta, C );
+    Scale( beta, C );
     LockedPartitionDown
     ( A, AT,
          AB, 0 );
@@ -327,7 +328,7 @@ internal::GemmTNC
 
         // C[MC,MR] += alpha (A1[*,MC])^T B1[*,MR]
         //           = alpha (A1^T)[MC,*] B1[*,MR]
-        internal::LocalGemm
+        LocalGemm
         ( orientationOfA, NORMAL, alpha, A1_STAR_MC, B1_STAR_MR, (T)1, C );
         //--------------------------------------------------------------------//
         A1_STAR_MC.FreeAlignments();
@@ -350,4 +351,5 @@ internal::GemmTNC
 #endif
 }
 
+} // namespace internal
 } // namespace elem

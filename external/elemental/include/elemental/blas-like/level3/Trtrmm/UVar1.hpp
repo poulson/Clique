@@ -32,13 +32,54 @@
 */
 
 namespace elem {
+namespace internal {
 
 template<typename T>
 inline void
-internal::HetrmmUVar1( DistMatrix<T,MC,MR>& U )
+TrtrmmUVar1( Orientation orientation, Matrix<T>& U )
 {
 #ifndef RELEASE
-    PushCallStack("internal::HetrmmUVar1");
+    PushCallStack("internal::TrtrmmUVar1");
+#endif
+     Matrix<T>
+        UTL, UTR,  U00, U01, U02,
+        UBL, UBR,  U10, U11, U12,
+                   U20, U21, U22;
+
+    PartitionDownDiagonal
+    ( U, UTL, UTR,
+         UBL, UBR, 0 );
+    while( UTL.Height() < U.Height() && UTL.Width() < U.Height() )
+    {
+        RepartitionDownDiagonal
+        ( UTL, /**/ UTR,  U00, /**/ U01, U02,
+         /*************/ /******************/
+               /**/       U10, /**/ U11, U12,
+          UBL, /**/ UBR,  U20, /**/ U21, U22 );
+
+        //--------------------------------------------------------------------/
+        Trrk( UPPER, NORMAL, orientation, (T)1, U01, U01, (T)1, U00 );
+        Trmm( RIGHT, UPPER, orientation, NON_UNIT, (T)1, U11, U01 );
+        TrtrmmUUnblocked( orientation, U11 );
+        //--------------------------------------------------------------------/
+
+        SlidePartitionDownDiagonal
+        ( UTL, /**/ UTR,  U00, U01, /**/ U02,
+               /**/       U10, U11, /**/ U12,
+         /*************/ /******************/
+          UBL, /**/ UBR,  U20, U21, /**/ U22 );
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename T>
+inline void
+TrtrmmUVar1( Orientation orientation, DistMatrix<T,MC,MR>& U )
+{
+#ifndef RELEASE
+    PushCallStack("internal::TrtrmmUVar1");
     if( U.Height() != U.Width() )
         throw std::logic_error("U must be square");
 #endif
@@ -54,7 +95,7 @@ internal::HetrmmUVar1( DistMatrix<T,MC,MR>& U )
     DistMatrix<T,MC,  STAR> U01_MC_STAR(g);
     DistMatrix<T,VC,  STAR> U01_VC_STAR(g);
     DistMatrix<T,VR,  STAR> U01_VR_STAR(g);
-    DistMatrix<T,STAR,MR  > U01Adj_STAR_MR(g);
+    DistMatrix<T,STAR,MR  > U01AdjOrTrans_STAR_MR(g);
     DistMatrix<T,STAR,STAR> U11_STAR_STAR(g);
 
     PartitionDownDiagonal
@@ -71,24 +112,27 @@ internal::HetrmmUVar1( DistMatrix<T,MC,MR>& U )
         U01_MC_STAR.AlignWith( U00 );
         U01_VC_STAR.AlignWith( U00 );
         U01_VR_STAR.AlignWith( U00 );
-        U01Adj_STAR_MR.AlignWith( U00 );
+        U01AdjOrTrans_STAR_MR.AlignWith( U00 );
         //--------------------------------------------------------------------//
         U01_MC_STAR = U01;
         U01_VC_STAR = U01_MC_STAR;
         U01_VR_STAR = U01_VC_STAR;
-        U01Adj_STAR_MR.AdjointFrom( U01_VR_STAR );
-        internal::LocalTrrk
-        ( UPPER, (T)1, U01_MC_STAR, U01Adj_STAR_MR, (T)1, U00 );
+        if( orientation == ADJOINT )
+            U01AdjOrTrans_STAR_MR.AdjointFrom( U01_VR_STAR );
+        else
+            U01AdjOrTrans_STAR_MR.TransposeFrom( U01_VR_STAR );
+        LocalTrrk( UPPER, (T)1, U01_MC_STAR, U01AdjOrTrans_STAR_MR, (T)1, U00 );
 
         U11_STAR_STAR = U11;
-        internal::LocalTrmm
-        ( RIGHT, UPPER, ADJOINT, NON_UNIT, (T)1, U11_STAR_STAR, U01_VC_STAR );
+        LocalTrmm
+        ( RIGHT, UPPER, orientation, NON_UNIT, 
+          (T)1, U11_STAR_STAR, U01_VC_STAR );
         U01 = U01_VC_STAR;
 
-        internal::LocalHetrmm( UPPER, U11_STAR_STAR );
+        LocalTrtrmm( orientation, UPPER, U11_STAR_STAR );
         U11 = U11_STAR_STAR;
         //--------------------------------------------------------------------//
-        U01Adj_STAR_MR.FreeAlignments();
+        U01AdjOrTrans_STAR_MR.FreeAlignments();
         U01_VR_STAR.FreeAlignments();
         U01_VC_STAR.FreeAlignments();
         U01_MC_STAR.FreeAlignments();
@@ -104,4 +148,5 @@ internal::HetrmmUVar1( DistMatrix<T,MC,MR>& U )
 #endif
 }
 
+} // namespace internal
 } // namespace elem

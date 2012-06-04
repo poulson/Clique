@@ -54,16 +54,23 @@ inline void LocalFrontBlockLDL
     ABL = BBL;
 
     // Overwrite ATL with inv(L D L^[T/H]) = L^[-T/H] D^{-1} L^{-1}
-    Matrix<F> LTL( ATL );
     elem::TriangularInverse( LOWER, UNIT, ATL );
-    elem::MakeTrapezoidal( LEFT, LOWER, 0, ATL );
-    Matrix<F> d;
-    ATL.GetDiagonal( d );
-    Matrix<F> ones;
-    Ones( d.Height(), d.Width(), ones );
-    ATL.SetDiagonal( ones );
-    elem::DiagonalSolve( LEFT, NORMAL, d, ATL );
-    elem::Trsm( LEFT, LOWER, orientation, UNIT, (F)1, LTL, ATL );
+    elem::Trdtrmm( orientation, LOWER, ATL );
+    elem::MakeTrapezoidal( elem::LEFT, elem::LOWER, 0, ATL );
+    if( orientation == TRANSPOSE )
+    {
+        elem::Matrix<F> ATLTrans;
+        elem::Transpose( ATL, ATLTrans );
+        elem::MakeTrapezoidal( elem::LEFT, elem::UPPER, 1, ATLTrans );
+        elem::Axpy( (F)1, ATLTrans, ATL );
+    }
+    else
+    {
+        elem::Matrix<F> ATLAdj;
+        elem::Adjoint( ATL, ATLAdj );
+        elem::MakeTrapezoidal( elem::LEFT, elem::UPPER, 1, ATLAdj );
+        elem::Axpy( (F)1, ATLAdj, ATL );
+    }
 #ifndef RELEASE
     PopCallStack();
 #endif

@@ -31,24 +31,43 @@
    POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "./Hetrmm/LVar1.hpp"
-#include "./Hetrmm/UVar1.hpp"
+#include "./Trtrmm/Unblocked.hpp"
+#include "./Trtrmm/LVar1.hpp"
+#include "./Trtrmm/UVar1.hpp"
 
 namespace elem {
 
 template<typename T>
 inline void
-Hetrmm( UpperOrLower uplo, DistMatrix<T,MC,MR>& A )
+Trtrmm( Orientation orientation, UpperOrLower uplo, Matrix<T>& A )
 {
 #ifndef RELEASE
-    PushCallStack("Hetrmm");
+    PushCallStack("Trtrmm");
     if( A.Height() != A.Width() )
         throw std::logic_error("A must be square");
 #endif
     if( uplo == LOWER )
-        internal::HetrmmLVar1( A );
+        internal::TrtrmmLVar1( orientation, A );
     else
-        internal::HetrmmUVar1( A );
+        internal::TrtrmmUVar1( orientation, A );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename T>
+inline void
+Trtrmm( Orientation orientation, UpperOrLower uplo, DistMatrix<T,MC,MR>& A )
+{
+#ifndef RELEASE
+    PushCallStack("Trtrmm");
+    if( A.Height() != A.Width() )
+        throw std::logic_error("A must be square");
+#endif
+    if( uplo == LOWER )
+        internal::TrtrmmLVar1( orientation, A );
+    else
+        internal::TrtrmmUVar1( orientation, A );
 #ifndef RELEASE
     PopCallStack();
 #endif

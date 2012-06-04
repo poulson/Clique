@@ -29,7 +29,7 @@ namespace numeric {
 
 template<typename F> 
 void DistFrontLDL
-( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR );
+( Orientation orientation, DistMatrix<F>& AL, DistMatrix<F>& ABR );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -39,7 +39,7 @@ namespace internal {
 
 template<typename F> 
 inline void DistFrontLDLGeneral
-( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR )
+( Orientation orientation, DistMatrix<F>& AL, DistMatrix<F>& ABR )
 {
 #ifndef RELEASE
     PushCallStack("numeric::internal::DistFrontLDLGeneral");
@@ -63,7 +63,7 @@ inline void DistFrontLDLGeneral
     const Grid& g = AL.Grid();
 
     // Matrix views
-    DistMatrix<F,MC,MR>
+    DistMatrix<F>
         ALTL(g), ALTR(g),  AL00(g), AL01(g), AL02(g),
         ALBL(g), ALBR(g),  AL10(g), AL11(g), AL12(g),
                            AL20(g), AL21(g), AL22(g);
@@ -78,8 +78,8 @@ inline void DistFrontLDLGeneral
 
     DistMatrix<F,STAR,MC> leftL(g), leftR(g);
     DistMatrix<F,STAR,MR> rightL(g), rightR(g);
-    DistMatrix<F,MC,  MR> AL22T(g), 
-                          AL22B(g);
+    DistMatrix<F> AL22T(g), 
+                  AL22B(g);
 
     // Start the algorithm
     elem::PartitionDownDiagonal
@@ -156,7 +156,7 @@ inline void DistFrontLDLGeneral
 
 template<typename F>
 inline void DistFrontLDLSquare
-( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR )
+( Orientation orientation, DistMatrix<F>& AL, DistMatrix<F>& ABR )
 {
 #ifndef RELEASE
     PushCallStack("numeric::internal::DistFrontLDLSquare");
@@ -197,7 +197,7 @@ inline void DistFrontLDLSquare
     const bool onDiagonal = ( transposeRank == g.VCRank() );
 
     // Matrix views
-    DistMatrix<F,MC,MR>
+    DistMatrix<F>
         ALTL(g), ALTR(g),  AL00(g), AL01(g), AL02(g),
         ALBL(g), ALBR(g),  AL10(g), AL11(g), AL12(g),
                            AL20(g), AL21(g), AL22(g);
@@ -211,10 +211,10 @@ inline void DistFrontLDLSquare
 
     DistMatrix<F,STAR,MC> leftL(g), leftR(g);
     DistMatrix<F,STAR,MR> rightL(g), rightR(g);
-    DistMatrix<F,MC,  MR> AL22T(g), 
-                          AL22B(g);
-    DistMatrix<F,MC,  MR> AR2T(g), 
-                          AR2B(g);
+    DistMatrix<F> AL22T(g), 
+                  AL22B(g);
+    DistMatrix<F> AR2T(g), 
+                  AR2B(g);
 
     // Start the algorithm
     elem::PartitionDownDiagonal
@@ -312,7 +312,7 @@ inline void DistFrontLDLSquare
 
 template<typename F> 
 inline void DistFrontLDL
-( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR )
+( Orientation orientation, DistMatrix<F>& AL, DistMatrix<F>& ABR )
 {
 #ifndef RELEASE
     PushCallStack("numeric::DistFrontLDL");

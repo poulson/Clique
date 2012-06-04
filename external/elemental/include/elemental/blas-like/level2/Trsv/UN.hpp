@@ -32,13 +32,14 @@
 */
 
 namespace elem {
+namespace internal {
 
 template<typename F>
 inline void
-internal::TrsvUN
+TrsvUN
 ( UnitOrNonUnit diag, 
-  const DistMatrix<F,MC,MR>& U, 
-        DistMatrix<F,MC,MR>& x )
+  const DistMatrix<F>& U, 
+        DistMatrix<F>& x )
 {
 #ifndef RELEASE
     PushCallStack("internal::TrsvUN");
@@ -57,12 +58,12 @@ internal::TrsvUN
     if( x.Width() == 1 )
     {
         // Matrix views 
-        DistMatrix<F,MC,MR> 
+        DistMatrix<F> 
             UTL(g), UTR(g),  U00(g), U01(g), U02(g),
             UBL(g), UBR(g),  U10(g), U11(g), U12(g),
                              U20(g), U21(g), U22(g);
 
-        DistMatrix<F,MC,MR> 
+        DistMatrix<F> 
             xT(g),  x0(g),
             xB(g),  x1(g),
                     x2(g);
@@ -133,12 +134,12 @@ internal::TrsvUN
     else
     {
         // Matrix views 
-        DistMatrix<F,MC,MR> 
+        DistMatrix<F> 
             UTL(g), UTR(g),  U00(g), U01(g), U02(g),
             UBL(g), UBR(g),  U10(g), U11(g), U12(g),
                              U20(g), U21(g), U22(g);
 
-        DistMatrix<F,MC,MR> 
+        DistMatrix<F> 
             xL(g), xR(g),
             x0(g), x1(g), x2(g);
 
@@ -148,7 +149,7 @@ internal::TrsvUN
         DistMatrix<F,STAR,MR  > x1_STAR_MR(g);
         DistMatrix<F,STAR,MC  > z0_STAR_MC(g);
         DistMatrix<F,MR,  MC  > z0_MR_MC(g);
-        DistMatrix<F,MC,  MR  > z0(g);
+        DistMatrix<F> z0(g);
 
         // Start the algorithm
         LockedPartitionUpDiagonal
@@ -210,4 +211,5 @@ internal::TrsvUN
 #endif
 }
 
+} // namespace internal
 } // namespace elem

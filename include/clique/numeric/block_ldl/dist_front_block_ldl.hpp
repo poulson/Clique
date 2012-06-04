@@ -25,7 +25,7 @@ namespace numeric {
 
 template<typename F> 
 void DistFrontBlockLDL
-( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR );
+( Orientation orientation, DistMatrix<F>& AL, DistMatrix<F>& ABR );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -33,20 +33,20 @@ void DistFrontBlockLDL
 
 template<typename F> 
 inline void DistFrontBlockLDL
-( Orientation orientation, DistMatrix<F,MC,MR>& AL, DistMatrix<F,MC,MR>& ABR )
+( Orientation orientation, DistMatrix<F>& AL, DistMatrix<F>& ABR )
 {
 #ifndef RELEASE
     PushCallStack("numeric::internal::DistFrontBlockLDL");
 #endif
     const Grid& g = AL.Grid();
-    DistMatrix<F,MC,MR> ATL(g),
+    DistMatrix<F> ATL(g),
                         ABL(g);
     elem::PartitionDown
     ( AL, ATL,
           ABL, AL.Width() );
 
     // Make a copy of the original contents of ABL
-    DistMatrix<F,MC,MR> BBL( ABL );
+    DistMatrix<F> BBL( ABL );
 
     // Call the standard routine
     DistFrontLDL( orientation, AL, ABR );
@@ -55,18 +55,24 @@ inline void DistFrontBlockLDL
     ABL = BBL;
 
     // Overwrite ATL with inv(L D L^{T/H}) = L^{-T/H} D^{-1} L^{-1}
-    DistMatrix<F,MC,MR> LTL( ATL );
+    // Overwrite ATL with inv(L D L^[T/H]) = L^[-T/H] D^{-1} L^{-1}
     elem::TriangularInverse( LOWER, UNIT, ATL );
-    elem::MakeTrapezoidal( LEFT, LOWER, 0, ATL );
-    DistMatrix<F,MD,STAR> d(g);
-    ATL.GetDiagonal( d );
-    DistMatrix<F,MD,STAR> ones(g);
-    ones.AlignWith( d );
-    Ones( d.Height(), d.Width(), ones );
-    DistMatrix<F,STAR,STAR> d_STAR_STAR( d );
-    ATL.SetDiagonal( ones );
-    elem::DiagonalSolve( LEFT, NORMAL, d_STAR_STAR, ATL );
-    elem::Trsm( LEFT, LOWER, orientation, UNIT, (F)1, LTL, ATL );
+    elem::Trdtrmm( orientation, LOWER, ATL );
+    elem::MakeTrapezoidal( elem::LEFT, elem::LOWER, 0, ATL );
+    if( orientation == TRANSPOSE )
+    {
+        elem::DistMatrix<F> ATLTrans( g );
+        elem::Transpose( ATL, ATLTrans );
+        elem::MakeTrapezoidal( elem::LEFT, elem::UPPER, 1, ATLTrans );
+        elem::Axpy( (F)1, ATLTrans, ATL );
+    }
+    else
+    {
+        elem::DistMatrix<F> ATLAdj( g );
+        elem::Adjoint( ATL, ATLAdj );
+        elem::MakeTrapezoidal( elem::LEFT, elem::UPPER, 1, ATLAdj );
+        elem::Axpy( (F)1, ATLAdj, ATL );
+    }
 #ifndef RELEASE
     PopCallStack();
 #endif

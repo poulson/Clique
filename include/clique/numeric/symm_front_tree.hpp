@@ -68,8 +68,8 @@ struct DistSymmFront
     mutable DistMatrix<F,VC,STAR> front1dL;
     mutable DistMatrix<F,VC,STAR> work1d;
 
-    mutable DistMatrix<F,MC,MR> front2dL;
-    mutable DistMatrix<F,MC,MR> work2d;
+    mutable DistMatrix<F> front2dL;
+    mutable DistMatrix<F> work2d;
 
     DistMatrix<F,VC,STAR> diag;
 };

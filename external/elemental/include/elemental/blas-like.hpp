@@ -105,13 +105,17 @@ template<> int LocalTrr2kBlocksize<dcomplex>();
 
 // Serial version
 template<typename T>
-void
-Axpy( T alpha, const Matrix<T>& X, Matrix<T>& Y );
+void Axpy( T alpha, const Matrix<T>& X, Matrix<T>& Y );
+template<typename T>
+void Axpy( typename Base<T>::type alpha, const Matrix<T>& X, Matrix<T>& Y );
 
 // Parallel version
 template<typename T, Distribution U, Distribution V>
-void
-Axpy( T alpha, const DistMatrix<T,U,V>& X, DistMatrix<T,U,V>& Y );
+void Axpy( T alpha, const DistMatrix<T,U,V>& X, DistMatrix<T,U,V>& Y );
+template<typename T, Distribution U, Distribution V>
+void Axpy
+( typename Base<T>::type alpha, 
+  const DistMatrix<T,U,V>& X, DistMatrix<T,U,V>& Y );
 
 //
 // Copy:
@@ -266,24 +270,13 @@ Dotu( const DistMatrix<T,U,V>& x, const DistMatrix<T,W,Z>& y );
 // || x ||_2 = sqrt( x^H x ).
 //
 
-// Serial version for real datatypes
-template<typename R>
-R Nrm2( const Matrix<R>& x ); 
-
-// Serial version for complex datatypes
-template<typename R>
-R Nrm2( const Matrix<Complex<R> >& x );
-
-// Parallel version for real datatypes
-template<typename R>
-R Nrm2( const DistMatrix<R,MC,MR>& x );
-
-// Parallel version for complex datatypes
-template<typename R>
-R Nrm2( const DistMatrix<Complex<R>, MC, MR >& x );
+template<typename F>
+typename Base<F>::type Nrm2( const Matrix<F>& x );
+template<typename F>
+typename Base<F>::type Nrm2( const DistMatrix<F>& x );
 
 // 
-// Scal:
+// Scale (also Scal for legacy reasons):
 //
 // X := alpha X
 //
@@ -291,10 +284,22 @@ R Nrm2( const DistMatrix<Complex<R>, MC, MR >& x );
 // Serial version
 template<typename T>
 void Scal( T alpha, Matrix<T>& X );
-    
+template<typename T>
+void Scale( T alpha, Matrix<T>& X );
+template<typename T>
+void Scal( typename Base<T>::type alpha, Matrix<T>& X );
+template<typename T>
+void Scale( typename Base<T>::type alpha, Matrix<T>& X );
+   
 // Parallel version
-template<typename T, Distribution U, Distribution V>
+template<typename T,Distribution U,Distribution V>
 void Scal( T alpha, DistMatrix<T,U,V>& X );
+template<typename T,Distribution U,Distribution V>
+void Scale( T alpha, DistMatrix<T,U,V>& X );
+template<typename T,Distribution U,Distribution V>
+void Scal( typename Base<T>::type alpha, DistMatrix<T,U,V>& X );
+template<typename T,Distribution U,Distribution V>
+void Scale( typename Base<T>::type alpha, DistMatrix<T,U,V>& X );
     
 //----------------------------------------------------------------------------//
 // Level 1 BLAS-like extensions                                               //
@@ -312,8 +317,8 @@ void Adjoint( const Matrix<T>& A, Matrix<T>& B );
 
 // Parallel version
 template<typename T, 
-         Distribution U, Distribution V,
-         Distribution W, Distribution Z>
+         Distribution U,Distribution V,
+         Distribution W,Distribution Z>
 void Adjoint( const DistMatrix<T,U,V>& A, DistMatrix<T,W,Z>& B );
 
 
@@ -334,7 +339,7 @@ template<typename Z>
 void Conjugate( Matrix<Complex<Z> >& A );
 
 // In-place parallel version
-template<typename T, Distribution U, Distribution V>
+template<typename T,Distribution U,Distribution V>
 void Conjugate( DistMatrix<T,U,V>& A );
 
 // Out-of-place serial version.
@@ -343,8 +348,8 @@ void Conjugate( const Matrix<T>& A, Matrix<T>& B );
 
 // Out-of-place parallel version.
 template<typename T, 
-         Distribution U, Distribution V,
-         Distribution W, Distribution Z>
+         Distribution U,Distribution V,
+         Distribution W,Distribution Z>
 void Conjugate( const DistMatrix<T,U,V>& A, DistMatrix<T,W,Z>& B );
 
 //
@@ -391,8 +396,8 @@ void Transpose( const Matrix<T>& A, Matrix<T>& B );
 
 // Parallel version
 template<typename T, 
-         Distribution U, Distribution V,
-         Distribution W, Distribution Z>
+         Distribution U,Distribution V,
+         Distribution W,Distribution Z>
 void Transpose( const DistMatrix<T,U,V>& A, DistMatrix<T,W,Z>& B );
 
 //
@@ -424,8 +429,8 @@ void Gemv
 template<typename T>
 void Gemv
 ( Orientation orientationOfA,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& x,
-  T beta,        DistMatrix<T,MC,MR>& y );
+  T alpha, const DistMatrix<T>& A, const DistMatrix<T>& x,
+  T beta,        DistMatrix<T>& y );
 
 //
 // Ger (GEneral Rank-one update):
@@ -440,8 +445,8 @@ void Ger( T alpha, const Matrix<T>& x, const Matrix<T>& y, Matrix<T>& A );
 // Parallel version
 template<typename T>
 void Ger
-( T alpha, const DistMatrix<T,MC,MR>& x, const DistMatrix<T,MC,MR>& y,
-                 DistMatrix<T,MC,MR>& A );
+( T alpha, const DistMatrix<T>& x, const DistMatrix<T>& y,
+                 DistMatrix<T>& A );
 
 //
 // Gerc (GEneral Rank-one Conjugated update):
@@ -459,8 +464,8 @@ void Gerc( T alpha, const Matrix<T>& x, const Matrix<T>& y, Matrix<T>& A );
 // Parallel version
 template<typename T>
 void Gerc
-( T alpha, const DistMatrix<T,MC,MR>& x, const DistMatrix<T,MC,MR>& y,
-                 DistMatrix<T,MC,MR>& A );
+( T alpha, const DistMatrix<T>& x, const DistMatrix<T>& y,
+                 DistMatrix<T>& A );
 
 //
 // Geru (GEneral Rank-one Unconjugated update):
@@ -475,8 +480,8 @@ void Geru( T alpha, const Matrix<T>& x, const Matrix<T>& y, Matrix<T>& A );
 // Parallel version
 template<typename T>
 void Geru
-( T alpha, const DistMatrix<T,MC,MR>& x, const DistMatrix<T,MC,MR>& y,
-                 DistMatrix<T,MC,MR>& A );
+( T alpha, const DistMatrix<T>& x, const DistMatrix<T>& y,
+                 DistMatrix<T>& A );
 
 //
 // Hemv (HErmitian Matrix-Vector multiply):
@@ -496,8 +501,8 @@ void Hemv
 template<typename T>
 void Hemv
 ( UpperOrLower uplo,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& x,
-  T beta,        DistMatrix<T,MC,MR>& y );
+  T alpha, const DistMatrix<T>& A, const DistMatrix<T>& x,
+  T beta,        DistMatrix<T>& y );
 
 //
 // Her (HErmitian Rank-one update):
@@ -514,8 +519,7 @@ void Her( UpperOrLower uplo, T alpha, const Matrix<T>& x, Matrix<T>& A );
 // Parallel version
 template<typename T>
 void Her
-( UpperOrLower uplo, 
-  T alpha, const DistMatrix<T,MC,MR>& x, DistMatrix<T,MC,MR>& A );
+( UpperOrLower uplo, T alpha, const DistMatrix<T>& x, DistMatrix<T>& A );
 
 //
 // Her2 (HErmitian Rank-2 update):
@@ -535,8 +539,8 @@ void Her2
 template<typename T>
 void Her2
 ( UpperOrLower uplo,
-  T alpha, const DistMatrix<T,MC,MR>& x, const DistMatrix<T,MC,MR>& y,
-                 DistMatrix<T,MC,MR>& A );
+  T alpha, const DistMatrix<T>& x, const DistMatrix<T>& y,
+                 DistMatrix<T>& A );
 
 //
 // Symv (SYmmetric Matrix-Vector multiply):
@@ -557,8 +561,8 @@ void Symv
 template<typename T>
 void Symv
 ( UpperOrLower uplo,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& x,
-  T beta,        DistMatrix<T,MC,MR>& y );
+  T alpha, const DistMatrix<T>& A, const DistMatrix<T>& x,
+  T beta,        DistMatrix<T>& y );
 
 //
 // Syr (SYmmetric Rank-one update):
@@ -575,8 +579,7 @@ void Syr( UpperOrLower uplo, T alpha, const Matrix<T>& x, Matrix<T>& A );
 // Parallel version
 template<typename T>
 void Syr
-( UpperOrLower uplo,
-  T alpha, const DistMatrix<T,MC,MR>& x, DistMatrix<T,MC,MR>& A );
+( UpperOrLower uplo, T alpha, const DistMatrix<T>& x, DistMatrix<T>& A );
 
 //
 // Syr2 (SYmmetric Rank-2 update):
@@ -596,8 +599,8 @@ void Syr2
 template<typename T>
 void Syr2
 ( UpperOrLower uplo,
-  T alpha, const DistMatrix<T,MC,MR>& x, const DistMatrix<T,MC,MR>& y,
-                 DistMatrix<T,MC,MR>& A );
+  T alpha, const DistMatrix<T>& x, const DistMatrix<T>& y,
+                 DistMatrix<T>& A );
 
 //
 // Trmv (TRiangular Matrix-Vector multiply):
@@ -619,7 +622,7 @@ void Trmv
 template<typename T>
 void Trmv
 ( UpperOrLower uplo, Orientation orientation, UnitOrNonUnit diag,
-  const DistMatrix<T,MC,MR>& A, DistMatrix<T,MC,MR>& x );
+  const DistMatrix<T>& A, DistMatrix<T>& x );
 
 //
 // Trsv (TRiangular Solve with a Vector):
@@ -641,7 +644,7 @@ void Trsv
 template<typename F>
 void Trsv
 ( UpperOrLower uplo, Orientation orientation, UnitOrNonUnit diag,
-  const DistMatrix<F,MC,MR>& A, DistMatrix<F,MC,MR>& x );
+  const DistMatrix<F>& A, DistMatrix<F>& x );
 
 //----------------------------------------------------------------------------//
 // Level 3 BLAS-like routines                                                 //
@@ -663,8 +666,8 @@ void Gemm
 template<typename T>
 void Gemm
 ( Orientation orientationOfA, Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
+  T alpha, const DistMatrix<T>& A, const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C );
 
 //
 // Hemm (HErmitian Matrix-Matrix multiplication):
@@ -687,8 +690,8 @@ void Hemm
 template<typename T>
 void Hemm
 ( LeftOrRight side, UpperOrLower uplo,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
+  T alpha, const DistMatrix<T>& A, const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C );
 
 //
 // Her2k (HErmitian Rank-2K update):
@@ -710,8 +713,8 @@ void Her2k
 template<typename T>
 void Her2k
 ( UpperOrLower uplo, Orientation orientation,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
+  T alpha, const DistMatrix<T>& A, const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C );
 
 //
 // Herk (HErmitian Rank-K update):
@@ -733,25 +736,7 @@ void Herk
 template<typename T>
 void Herk
 ( UpperOrLower uplo, Orientation orientation,
-  T alpha, const DistMatrix<T,MC,MR>& A, T beta, DistMatrix<T,MC,MR>& C );
-
-//
-// Hetrmm (HErmitian TRiangular Matrix-Matrix multiply):
-//
-// Either L := tril(L' L) or U := triu(U U')
-//
-// NOTE: This is not a standard BLAS routine and is in fact the same operation
-//       as the LAPACK routine ?LAUUM. Since it is similar in spirit to many
-//       other BLAS routines, I have instead placed it here.
-//
-
-// Serial version
-template<typename T>
-void Hetrmm( UpperOrLower uplo, Matrix<T>& A );
-
-// Parallel version
-template<typename T>
-void Hetrmm( UpperOrLower uplo, DistMatrix<T,MC,MR>& A );
+  T alpha, const DistMatrix<T>& A, T beta, DistMatrix<T>& C );
 
 //
 // Symm (SYmmetric Matrix-Matrix multiplication):
@@ -774,8 +759,8 @@ void Symm
 template<typename T>
 void Symm
 ( LeftOrRight side, UpperOrLower uplo,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
+  T alpha, const DistMatrix<T>& A, const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C );
 
 //
 // Syr2k (SYmmetric Rank-2K update):
@@ -797,8 +782,8 @@ void Syr2k
 template<typename T>
 void Syr2k
 ( UpperOrLower uplo, Orientation orientation,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
+  T alpha, const DistMatrix<T>& A, const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C );
 
 //
 // Syrk (SYmmetric Rank-K update):
@@ -820,7 +805,7 @@ void Syrk
 template<typename T>
 void Syrk
 ( UpperOrLower uplo, Orientation orientation,
-  T alpha, const DistMatrix<T,MC,MR>& A, T beta, DistMatrix<T,MC,MR>& C );
+  T alpha, const DistMatrix<T>& A, T beta, DistMatrix<T>& C );
 
 //
 // Trmm (TRiangular Matrix-Matrix multiplication):
@@ -846,7 +831,7 @@ template<typename T>
 void Trmm
 ( LeftOrRight side, UpperOrLower uplo, 
   Orientation orientation, UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& A, DistMatrix<T,MC,MR>& B );
+  T alpha, const DistMatrix<T>& A, DistMatrix<T>& B );
 
 //
 // Trr2k (TRiangular Rank-2K update):
@@ -867,9 +852,9 @@ void Trr2k
 ( UpperOrLower uplo, 
   Orientation orientationOfA, Orientation orientationOfB,
   Orientation orientationOfC, Orientation orientationOfD,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B, 
-           const DistMatrix<T,MC,MR>& C, const DistMatrix<T,MC,MR>& D,
-  T beta,        DistMatrix<T,MC,MR>& E );
+  T alpha, const DistMatrix<T>& A, const DistMatrix<T>& B, 
+           const DistMatrix<T>& C, const DistMatrix<T>& D,
+  T beta,        DistMatrix<T>& E );
 
 //
 // Trrk (TRiangular Rank-K update):
@@ -893,8 +878,8 @@ void Trrk
 template<typename T>
 void Trrk
 ( UpperOrLower uplo, Orientation orientationOfA, Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B, 
-  T beta,        DistMatrix<T,MC,MR>& C );
+  T alpha, const DistMatrix<T>& A, const DistMatrix<T>& B, 
+  T beta,        DistMatrix<T>& C );
 
 //
 // Trsm (TRiangular Solve with Multiple right-hand sides):
@@ -921,8 +906,40 @@ template<typename F>
 void Trsm
 ( LeftOrRight side, UpperOrLower uplo, 
   Orientation orientation, UnitOrNonUnit diag,
-  F alpha, const DistMatrix<F,MC,MR>& A, DistMatrix<F,MC,MR>& B,
+  F alpha, const DistMatrix<F>& A, DistMatrix<F>& B,
   bool checkIfSingular=false );
+
+// Trtrmm (TRiangular TRiangular Matrix-Matrix multiply):
+//
+// Either L := tril(L^[T/H] L) or U := triu(U U^[T/H])
+//
+// NOTE: This is not a standard BLAS routine and is similar to the LAPACK
+//       routine ?LAUUM. 
+//
+
+// Serial version
+template<typename T>
+void Trtrmm( Orientation orientation, UpperOrLower uplo, Matrix<T>& A );
+
+// Parallel version
+template<typename T>
+void Trtrmm( Orientation orientation, UpperOrLower uplo, DistMatrix<T>& A );
+
+// Trdtrmm (TRiangular Diagonal TRiangular Matrix-Matrix multiply):
+//
+// Either L := tril(L^T inv(D) L) or U := triu(U inv(D) U^T)
+//
+// NOTE: This is not a standard BLAS routine and is similar to the LAPACK
+//       routine ?LAUUM. 
+//
+
+// Serial version
+template<typename F>
+void Trdtrmm( Orientation orientation, UpperOrLower uplo, Matrix<F>& A );
+
+// Parallel version
+template<typename F>
+void Trdtrmm( Orientation orientation, UpperOrLower uplo, DistMatrix<F>& A );
 
 } // namespace elem
 
@@ -1008,6 +1025,11 @@ Axpy( T alpha, const Matrix<T>& X, Matrix<T>& Y )
     PopCallStack();
 #endif
 }
+
+template<typename T>
+inline void
+Axpy( typename Base<T>::type alpha, const Matrix<T>& X, Matrix<T>& Y )
+{ Axpy( (T)alpha, X, Y ); }
 
 template<typename T>
 inline void
@@ -1338,35 +1360,17 @@ Dotu( const Matrix<T>& x, const Matrix<T>& y )
     return dotProduct;
 }
 
-template<typename R>
-inline R
-Nrm2( const Matrix<R>& x )
+template<typename F>
+inline typename Base<F>::type
+Nrm2( const Matrix<F>& x )
 {
 #ifndef RELEASE
     PushCallStack("Nrm2");
     if( x.Height() != 1 && x.Width() != 1 )
         throw std::logic_error("Expected vector input");
 #endif
-    R norm;
-    if( x.Width() == 1 )
-        norm = blas::Nrm2( x.Height(), x.LockedBuffer(), 1 );
-    else
-        norm = blas::Nrm2( x.Width(), x.LockedBuffer(), x.LDim() );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return norm;
-}
+    typedef typename Base<F>::type R;
 
-template<typename R>
-inline R
-Nrm2( const Matrix<Complex<R> >& x )
-{
-#ifndef RELEASE
-    PushCallStack("Nrm2");
-    if( x.Height() != 1 && x.Width() != 1 )
-        throw std::logic_error("Expected vector input");
-#endif
     R norm;
     if( x.Width() == 1 )
         norm = blas::Nrm2( x.Height(), x.LockedBuffer(), 1 );
@@ -1380,10 +1384,10 @@ Nrm2( const Matrix<Complex<R> >& x )
 
 template<typename T>
 inline void
-Scal( T alpha, Matrix<T>& X )
+Scale( T alpha, Matrix<T>& X )
 {
 #ifndef RELEASE
-    PushCallStack("Scal");
+    PushCallStack("Scale");
 #endif
     if( alpha != (T)1 )
     {
@@ -1399,6 +1403,21 @@ Scal( T alpha, Matrix<T>& X )
     PopCallStack();
 #endif
 }
+
+template<typename T>
+inline void
+Scale( typename Base<T>::type alpha, Matrix<T>& X )
+{ Scale( (T)alpha, X ); }
+
+template<typename T>
+inline void
+Scal( T alpha, Matrix<T>& X )
+{ Scale( alpha, X ); }
+
+template<typename T>
+inline void
+Scal( typename Base<T>::type alpha, Matrix<T>& X )
+{ Scale( (T)alpha, X ); }
 
 //----------------------------------------------------------------------------//
 // Local BLAS-like routines: Level 1 (extensions)                             //
@@ -1718,7 +1737,7 @@ Gemv
     }
     else
     {
-        Scal( beta, y );
+        Scale( beta, y );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -2095,7 +2114,7 @@ Gemm
     }
     else
     {
-        Scal( beta, C );
+        Scale( beta, C );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -2188,20 +2207,6 @@ Herk
     ( uploChar, transChar, C.Height(), k, 
       alpha, A.LockedBuffer(), A.LDim(), 
       beta,  C.Buffer(),       C.LDim() );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
-template<typename T>
-inline void
-Hetrmm( UpperOrLower uplo, Matrix<T>& A )
-{
-#ifndef RELEASE
-    PushCallStack("Hetrmm");
-#endif
-    const char uploChar = UpperOrLowerToChar( uplo );
-    blas::Hetrmm( uploChar, A.Height(), A.Buffer(), A.LDim() );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -2397,6 +2402,13 @@ Axpy( T alpha, const DistMatrix<T,U,V>& X, DistMatrix<T,U,V>& Y )
     PopCallStack();
 #endif
 }
+
+template<typename T,Distribution U,Distribution V>
+inline void
+Axpy
+( typename Base<T>::type alpha, 
+  const DistMatrix<T,U,V>& X, DistMatrix<T,U,V>& Y )
+{ Axpy( (T)alpha, X, Y ); }
 
 template<typename T,Distribution U,Distribution V,
                     Distribution W,Distribution Z>
@@ -2629,16 +2641,23 @@ Dotc( const DistMatrix<T,U,V>& x, const DistMatrix<T,W,Z>& y )
 
 template<typename T,Distribution U,Distribution V>
 inline void
+Scale( T alpha, DistMatrix<T,U,V>& A )
+{ Scale( alpha, A.LocalMatrix() ); }
+
+template<typename T,Distribution U,Distribution V>
+inline void
+Scale( typename Base<T>::type alpha, DistMatrix<T,U,V>& A )
+{ Scale( (T)alpha, A.LocalMatrix() ); }
+
+template<typename T,Distribution U,Distribution V>
+inline void
 Scal( T alpha, DistMatrix<T,U,V>& A )
-{
-#ifndef RELEASE
-    PushCallStack("Scal");
-#endif
-    Scal( alpha, A.LocalMatrix() );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
+{ Scale( alpha, A ); }
+
+template<typename T,Distribution U,Distribution V>
+inline void
+Scal( typename Base<T>::type alpha, DistMatrix<T,U,V>& A )
+{ Scale( (T)alpha, A ); }
 
 //----------------------------------------------------------------------------//
 // Distributed BLAS-like routines: Level 1 (extensions)                       //
@@ -2906,9 +2925,9 @@ Zero( DistMatrix<T,U,V>& A )
 template<typename T>
 inline void
 Gerc
-( T alpha, const DistMatrix<T,MC,MR>& x,
-           const DistMatrix<T,MC,MR>& y,
-                 DistMatrix<T,MC,MR>& A )
+( T alpha, const DistMatrix<T>& x,
+           const DistMatrix<T>& y,
+                 DistMatrix<T>& A )
 {
 #ifndef RELEASE
     PushCallStack("Gerc");

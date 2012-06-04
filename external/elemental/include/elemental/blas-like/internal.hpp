@@ -37,12 +37,34 @@ namespace elem {
 namespace internal {
 
 //----------------------------------------------------------------------------//
+// Local BLAS-like: Level 2                                                   //
+//----------------------------------------------------------------------------//
+
+template<typename T,Distribution AColDist,Distribution ARowDist,
+                    Distribution xColDist,Distribution xRowDist,
+                    Distribution yColDist,Distribution yRowDist>
+void LocalGemv
+( Orientation orientation, 
+  T alpha, const DistMatrix<T,AColDist,ARowDist>& A, 
+           const DistMatrix<T,xColDist,xRowDist>& x,
+  T beta,        DistMatrix<T,yColDist,yRowDist>& y );
+
+template<typename T,Distribution xColDist,Distribution xRowDist,
+                    Distribution yColDist,Distribution yRowDist,
+                    Distribution AColDist,Distribution ARowDist>
+inline void LocalGer
+( T alpha, const DistMatrix<T,xColDist,xRowDist>& x, 
+           const DistMatrix<T,yColDist,yRowDist>& y,
+                 DistMatrix<T,AColDist,ARowDist>& A );
+
+
+//----------------------------------------------------------------------------//
 // Local BLAS-like: Level 3                                                   //
 //----------------------------------------------------------------------------//
 
 template<typename T,Distribution AColDist,Distribution ARowDist,
-                     Distribution BColDist,Distribution BRowDist,
-                     Distribution CColDist,Distribution CRowDist>
+                    Distribution BColDist,Distribution BRowDist,
+                    Distribution CColDist,Distribution CRowDist>
 void LocalGemm
 ( Orientation orientationOfA, Orientation orientationOfB,
   T alpha, const DistMatrix<T,AColDist,ARowDist>& A, 
@@ -50,7 +72,12 @@ void LocalGemm
   T beta,        DistMatrix<T,CColDist,CRowDist>& C );
 
 template<typename T>
-void LocalHetrmm( UpperOrLower uplo, DistMatrix<T,STAR,STAR>& A );
+void LocalTrtrmm
+( Orientation orientation, UpperOrLower uplo, DistMatrix<T,STAR,STAR>& A );
+
+template<typename T>
+void LocalTrdtrmm
+( Orientation orientation, UpperOrLower uplo, DistMatrix<T,STAR,STAR>& A );
 
 template<typename T,Distribution BColDist,Distribution BRowDist>
 void LocalTrmm
@@ -70,118 +97,9 @@ void LocalTrsm
 // TODO: Finish adding wrappers for Local BLAS-like routines
 
 //----------------------------------------------------------------------------//
-// Distributed BLAS-like helpers: Level 1                                     //
-//----------------------------------------------------------------------------//
-            
-// Pseudo-partial-specializations of Dot
-template<typename T,Distribution U,Distribution V>
-T Dot
-( const DistMatrix<T,U,V>& x, const DistMatrix<T,MC,MR>& y );
-
-template<typename T,Distribution U,Distribution V>
-T Dot
-( const DistMatrix<T,U,V>& x, const DistMatrix<T,MC,STAR>& y );
-
-template<typename T,Distribution U,Distribution V>
-T Dot
-( const DistMatrix<T,U,V>& x, const DistMatrix<T,STAR,MR>& y );
-            
-template<typename T,Distribution U,Distribution V>
-T Dot
-( const DistMatrix<T,U,V>& x, const DistMatrix<T,MR,MC>& y );
-            
-template<typename T,Distribution U,Distribution V>
-T Dot
-( const DistMatrix<T,U,V>& x, const DistMatrix<T,MR,STAR>& y );
-
-template<typename T,Distribution U,Distribution V>
-T Dot
-( const DistMatrix<T,U,V>& x, const DistMatrix<T,STAR,MC>& y );
-
-template<typename T,Distribution U,Distribution V>
-T Dot
-( const DistMatrix<T,U,V>& x, const DistMatrix<T,VC,STAR>& y );
-
-template<typename T,Distribution U,Distribution V>
-T Dot
-( const DistMatrix<T,U,V>& x, const DistMatrix<T,STAR,VC>& y );
-
-template<typename T,Distribution U,Distribution V>
-T Dot
-( const DistMatrix<T,U,V>& x, const DistMatrix<T,VR,STAR>& y );
-
-template<typename T,Distribution U,Distribution V>
-T Dot
-( const DistMatrix<T,U,V>& x, const DistMatrix<T,STAR,VR>& y );
-            
-template<typename T,Distribution U,Distribution V>
-T Dot
-( const DistMatrix<T,U,V>& x, const DistMatrix<T,STAR,STAR>& y );
-
-// Pseudo-partial-specializations of Dotu
-template<typename T,Distribution U,Distribution V>
-T Dotu
-( const DistMatrix<T,U,V>& x, const DistMatrix<T,MC,MR>& y );
-
-template<typename T,Distribution U,Distribution V>
-T Dotu
-( const DistMatrix<T,U,V>& x, const DistMatrix<T,MC,STAR>& y );
-
-template<typename T,Distribution U,Distribution V>
-T Dotu
-( const DistMatrix<T,U,V>& x, const DistMatrix<T,STAR,MR>& y );
-            
-template<typename T,Distribution U,Distribution V>
-T Dotu
-( const DistMatrix<T,U,V>& x, const DistMatrix<T,MR,MC>& y );
-            
-template<typename T,Distribution U,Distribution V>
-T Dotu
-( const DistMatrix<T,U,V>& x, const DistMatrix<T,MR,STAR>& y );
-
-template<typename T,Distribution U,Distribution V>
-T Dotu
-( const DistMatrix<T,U,V>& x, const DistMatrix<T,STAR,MC>& y );
-
-template<typename T,Distribution U,Distribution V>
-T Dotu
-( const DistMatrix<T,U,V>& x, const DistMatrix<T,VC,STAR>& y );
-
-template<typename T,Distribution U,Distribution V>
-T Dotu
-( const DistMatrix<T,U,V>& x, const DistMatrix<T,STAR,VC>& y );
-
-template<typename T,Distribution U,Distribution V>
-T Dotu
-( const DistMatrix<T,U,V>& x, const DistMatrix<T,VR,STAR>& y );
-
-template<typename T,Distribution U,Distribution V>
-T Dotu
-( const DistMatrix<T,U,V>& x, const DistMatrix<T,STAR,VR>& y );
-            
-template<typename T,Distribution U,Distribution V>
-T Dotu
-( const DistMatrix<T,U,V>& x, const DistMatrix<T,STAR,STAR>& y );
-
-//----------------------------------------------------------------------------//
 // Distributed BLAS-like helpers: Level 2                                     //
 //----------------------------------------------------------------------------//
             
-// Gemv where A is not transposed
-template<typename T>
-void GemvN
-( T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& x,
-  T beta,        DistMatrix<T,MC,MR>& y );
-
-// Gemv where A is (conjugate) transposed
-template<typename T>
-void GemvT
-( Orientation orientation,
-  T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& x,
-  T beta,        DistMatrix<T,MC,MR>& y );
-
 // This is for the case where x is a column vector and A is lower.
 //
 // Returns the unreduced components z[MC,* ] and z[MR,* ]:
@@ -190,7 +108,7 @@ void GemvT
 template<typename T>
 void LocalHemvColAccumulateL
 ( T alpha, 
-  const DistMatrix<T,MC,MR  >& A,
+  const DistMatrix<T>& A,
   const DistMatrix<T,MC,STAR>& x_MC_STAR,
   const DistMatrix<T,MR,STAR>& x_MR_STAR,
         DistMatrix<T,MC,STAR>& z_MC_STAR,
@@ -205,7 +123,7 @@ void LocalHemvColAccumulateL
 template<typename T>
 void LocalHemvColAccumulateU
 ( T alpha, 
-  const DistMatrix<T,MC,MR  >& A,
+  const DistMatrix<T>& A,
   const DistMatrix<T,MC,STAR>& x_MC_STAR,
   const DistMatrix<T,MR,STAR>& x_MR_STAR,
         DistMatrix<T,MC,STAR>& z_MC_STAR,
@@ -220,7 +138,7 @@ void LocalHemvColAccumulateU
 template<typename T>
 void LocalHemvRowAccumulateL
 ( T alpha, 
-  const DistMatrix<T,MC,  MR>& A,
+  const DistMatrix<T>& A,
   const DistMatrix<T,STAR,MC>& x_STAR_MC,
   const DistMatrix<T,STAR,MR>& x_STAR_MR,
         DistMatrix<T,STAR,MC>& z_STAR_MC,
@@ -235,7 +153,7 @@ void LocalHemvRowAccumulateL
 template<typename T>
 void LocalHemvRowAccumulateU
 ( T alpha, 
-  const DistMatrix<T,MC,  MR>& A,
+  const DistMatrix<T>& A,
   const DistMatrix<T,STAR,MC>& x_STAR_MC,
   const DistMatrix<T,STAR,MR>& x_STAR_MR,
         DistMatrix<T,STAR,MC>& z_STAR_MC,
@@ -250,7 +168,7 @@ void LocalHemvRowAccumulateU
 template<typename T>
 void LocalSymvColAccumulateL
 ( T alpha, 
-  const DistMatrix<T,MC,MR  >& A,
+  const DistMatrix<T>& A,
   const DistMatrix<T,MC,STAR>& x_MC_STAR,
   const DistMatrix<T,MR,STAR>& x_MR_STAR,
         DistMatrix<T,MC,STAR>& z_MC_STAR,
@@ -265,7 +183,7 @@ void LocalSymvColAccumulateL
 template<typename T>
 void LocalSymvColAccumulateU
 ( T alpha, 
-  const DistMatrix<T,MC,MR  >& A,
+  const DistMatrix<T>& A,
   const DistMatrix<T,MC,STAR>& x_MC_STAR,
   const DistMatrix<T,MR,STAR>& x_MR_STAR,
         DistMatrix<T,MC,STAR>& z_MC_STAR,
@@ -280,7 +198,7 @@ void LocalSymvColAccumulateU
 template<typename T>
 void LocalSymvRowAccumulateL
 ( T alpha, 
-  const DistMatrix<T,MC,  MR>& A,
+  const DistMatrix<T>& A,
   const DistMatrix<T,STAR,MC>& x_STAR_MC,
   const DistMatrix<T,STAR,MR>& x_STAR_MR,
         DistMatrix<T,STAR,MC>& z_STAR_MC,
@@ -295,481 +213,112 @@ void LocalSymvRowAccumulateL
 template<typename T>
 void LocalSymvRowAccumulateU
 ( T alpha, 
-  const DistMatrix<T,MC,  MR>& A,
+  const DistMatrix<T>& A,
   const DistMatrix<T,STAR,MC>& x_STAR_MC,
   const DistMatrix<T,STAR,MR>& x_STAR_MR,
         DistMatrix<T,STAR,MC>& z_STAR_MC,
         DistMatrix<T,STAR,MR>& z_STAR_MR
 );
 
-template<typename F>
-void TrsvLN
-( UnitOrNonUnit diag, const DistMatrix<F,MC,MR>& L, DistMatrix<F,MC,MR>& x );
-
-template<typename F>
-void TrsvLT
-( Orientation orientation, UnitOrNonUnit diag,
-  const DistMatrix<F,MC,MR>& L, DistMatrix<F,MC,MR>& x );
-
-template<typename F>
-void TrsvUN
-( UnitOrNonUnit diag, const DistMatrix<F,MC,MR>& U, DistMatrix<F,MC,MR>& x );
-
-template<typename F>
-void TrsvUT
-( Orientation orientation, UnitOrNonUnit diag,
-  const DistMatrix<F,MC,MR>& U, DistMatrix<F,MC,MR>& x );
-
 //----------------------------------------------------------------------------//
 // Distributed BLAS-like helpers: Level 3                                     //
 //----------------------------------------------------------------------------//
 
-// Gemm where we avoid redistributing A.
-template<typename T>
-void GemmA
-( Orientation orientationOfA, Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Gemm where we avoid redistributing B.
-template<typename T>
-void GemmB
-( Orientation orientationOfA, Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Gemm where we avoid redistributing C.
-template<typename T>
-void GemmC
-( Orientation orientationOfA, Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Gemm for panel-panel dot products.
-template<typename T>
-void GemmDot
-( Orientation orientationOfA, Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Normal Normal Gemm.
-template<typename T>
-void GemmNN
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Normal Normal Gemm where we avoid redistributing A.
-template<typename T>
-void GemmNNA
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Normal Normal Gemm where we avoid redistributing B.
-template<typename T>
-void GemmNNB
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Normal Normal Gemm where we avoid redistributing C.
-template<typename T>
-void GemmNNC
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Normal Normal Gemm for panel-panel dot product
-template<typename T>
-void GemmNNDot
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Normal (Conjugate)Transpose Gemm.
-template<typename T>
-void GemmNT
-( Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Normal (Conjugate)Transpose Gemm where we avoid redistributing A.
-template<typename T>
-void GemmNTA
-( Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Normal (Conjugate)Transpose Gemm where we avoid redistributing B.
-template<typename T>
-void GemmNTB
-( Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Normal (Conjugate)Transpose Gemm where we avoid redistributing C.
-template<typename T>
-void GemmNTC
-( Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Normal (Conjugate)Transpose Gemm for panel-panel dot product
-template<typename T>
-void GemmNTDot
-( Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
- 
-// (Conjugate)Transpose Normal Gemm.
-template<typename T>
-void GemmTN
-( Orientation orientationOfA,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// (Conjugate)Transpose Normal Gemm where we avoid redistributing A.
-template<typename T>
-void GemmTNA
-( Orientation orientationOfA,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// (Conjugate)Transpose Normal Gemm where we avoid redistributing B.
-template<typename T>
-void GemmTNB
-( Orientation orientationOfA,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// (Conjugate)Transpose Normal Gemm where we avoid redistributing C.
-template<typename T>
-void GemmTNC
-( Orientation orientationOfA,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// (Conjugate)Transpose Normal Gemm for panel-panel dot product
-template<typename T>
-void GemmTNDot
-( Orientation orientationOfA,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// (Conjugate)Transpose (Conjugate)Transpose Gemm.
-template<typename T>
-void GemmTT
-( Orientation orientationOfA, Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// (Conjugate)Transpose (Conjugate)Transpose Gemm where we avoid 
-// redistributing A.
-template<typename T>
-void GemmTTA
-( Orientation orientationOfA, Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// (Conjugate)Transpose (Conjugate)Transpose Gemm where we avoid 
-// redistributing B.
-template<typename T>
-void GemmTTB
-( Orientation orientationOfA, Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// (Conjugate)Transpose (Conjugate)Transpose Gemm where we avoid 
-// redistributing C.
-template<typename T>
-void GemmTTC
-( Orientation orientationOfA, Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// (Conjugate)Transpose (Conjugate)Transpose Gemm for panel-panel
-// dot product
-template<typename T>
-void GemmTTDot
-( Orientation orientationOfA, Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Left Lower Hemm
-template<typename T>
-void HemmLL
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Left Lower Hemm where we avoid redistributing A
-template<typename T>
-void HemmLLA
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Left Lower Hemm where we avoid redistributing C
-template<typename T>
-void HemmLLC
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
 template<typename T>
 void LocalSymmetricAccumulateLL
 ( Orientation orientation, T alpha, 
-  const DistMatrix<T,MC,  MR  >& A,
+  const DistMatrix<T>& A,
   const DistMatrix<T,MC,  STAR>& B_MC_STAR,
   const DistMatrix<T,STAR,MR  >& BHermOrTrans_STAR_MR,
         DistMatrix<T,MC,  STAR>& Z_MC_STAR,
         DistMatrix<T,MR,  STAR>& Z_MR_STAR
 );
-
-// Left Upper Hemm
-template<typename T>
-void HemmLU
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Left Upper Hemm where we avoid redistributing A
-template<typename T>
-void HemmLUA
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Left Upper Hemm where we avoid redistributing C
-template<typename T>
-void HemmLUC
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
 
 template<typename T>
 void LocalSymmetricAccumulateLU
 ( Orientation orientation, T alpha, 
-  const DistMatrix<T,MC,  MR  >& A,
+  const DistMatrix<T>& A,
   const DistMatrix<T,MC,  STAR>& B_MC_STAR,
   const DistMatrix<T,STAR,MR  >& BHermOrTrans_STAR_MR,
         DistMatrix<T,MC,  STAR>& Z_MC_STAR,
         DistMatrix<T,MR,  STAR>& Z_MR_STAR
 );
 
-// Right Lower Hemm
-template<typename T>
-void HemmRL
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Right Lower Hemm where we avoid redistributing A
-template<typename T>
-void HemmRLA
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Right Lower Hemm where we avoid redistributing C
-template<typename T>
-void HemmRLC
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
 template<typename T>
 void LocalSymmetricAccumulateRL
 ( Orientation orientation, T alpha, 
-  const DistMatrix<T,MC,  MR  >& A,
+  const DistMatrix<T>& A,
   const DistMatrix<T,STAR,MC  >& B_STAR_MC,
   const DistMatrix<T,MR,  STAR>& BHermOrTrans_MR_STAR,
         DistMatrix<T,MC,  STAR>& ZHermOrTrans_MC_STAR,
         DistMatrix<T,MR,  STAR>& ZHermOrTrans_MR_STAR
 );
-
-// Right Upper Hemm
-template<typename T>
-void HemmRU
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Right Upper Hemm where we avoid redistributing A
-template<typename T>
-void HemmRUA
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Right Upper Hemm where we avoid redistributing C
-template<typename T>
-void HemmRUC
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
 
 template<typename T>
 void LocalSymmetricAccumulateRU
 ( Orientation orientation, T alpha, 
-  const DistMatrix<T,MC,  MR  >& A,
+  const DistMatrix<T>& A,
   const DistMatrix<T,STAR,MC  >& B_STAR_MC,
   const DistMatrix<T,MR,  STAR>& BHermOrTrans_MR_STAR,
         DistMatrix<T,MC,  STAR>& ZHermOrTrans_MC_STAR,
         DistMatrix<T,MR,  STAR>& ZHermOrTrans_MR_STAR
 );
 
-// Lower, Normal Her2k
 template<typename T>
-void Her2kLN
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
+void LocalTrmmAccumulateLLN
+( Orientation orientation, UnitOrNonUnit diag, T alpha, 
+  const DistMatrix<T>& L,
+  const DistMatrix<T,STAR,MR  >& XHermOrTrans_STAR_MR,
+        DistMatrix<T,MC,  STAR>& Z_MC_STAR );
 
-// Lower, Adjoint Her2k
 template<typename T>
-void Her2kLC
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
+void LocalTrmmAccumulateLLT
+( Orientation orientation, UnitOrNonUnit diag, T alpha, 
+  const DistMatrix<T>& L,
+  const DistMatrix<T,MC,  STAR>& X_MC_STAR,
+        DistMatrix<T,MR,  STAR>& Z_MR_STAR );
 
-// Upper, Normal Her2k
 template<typename T>
-void Her2kUN
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
+void LocalTrmmAccumulateLUN
+( Orientation orientation, UnitOrNonUnit diag, T alpha, 
+  const DistMatrix<T>& U,
+  const DistMatrix<T,STAR,MR  >& XHermOrTrans_STAR_MR,
+        DistMatrix<T,MC,  STAR>& Z_MC_STAR );
 
-// Upper, Adjoint Her2k
 template<typename T>
-void Her2kUC
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
+void LocalTrmmAccumulateLUT
+( Orientation orientation, UnitOrNonUnit diag, T alpha, 
+  const DistMatrix<T>& U,
+  const DistMatrix<T,MC,  STAR>& X_MC_STAR,
+        DistMatrix<T,MR,  STAR>& Z_MR_STAR );
 
-// Lower, Normal Herk
 template<typename T>
-void HerkLN
-( T alpha, const DistMatrix<T,MC,MR>& A, T beta, DistMatrix<T,MC,MR>& C );
+void LocalTrmmAccumulateRLN
+( Orientation orientation, UnitOrNonUnit diag, T alpha, 
+  const DistMatrix<T>& L,
+  const DistMatrix<T,STAR,MC  >& X_STAR_MC,
+        DistMatrix<T,MR,  STAR>& ZHermOrTrans_MR_STAR );
 
-// Lower, Adjoint Herk
 template<typename T>
-void HerkLC
-( T alpha, const DistMatrix<T,MC,MR>& A, T beta, DistMatrix<T,MC,MR>& C );
+void LocalTrmmAccumulateRLT
+( Orientation orientation, UnitOrNonUnit diag, T alpha, 
+  const DistMatrix<T>& L,
+  const DistMatrix<T,MR,  STAR>& XHermOrTrans_MR_STAR,
+        DistMatrix<T,MC,  STAR>& ZHermOrTrans_MC_STAR );
 
-// Upper, Normal Herk
 template<typename T>
-void HerkUN
-( T alpha, const DistMatrix<T,MC,MR>& A, T beta, DistMatrix<T,MC,MR>& C );
+void LocalTrmmAccumulateRUN
+( Orientation orientation, UnitOrNonUnit diag, T alpha, 
+  const DistMatrix<T>& U,
+  const DistMatrix<T,STAR,MC  >& X_STAR_MC,
+        DistMatrix<T,MR,  STAR>& ZHermOrTrans_MR_STAR );
 
-// Upper, Adjoint Herk
 template<typename T>
-void HerkUC
-( T alpha, const DistMatrix<T,MC,MR>& A, T beta, DistMatrix<T,MC,MR>& C );
-
-// Lower Variant 1 Hetrmm
-template<typename T>
-void HetrmmLVar1( DistMatrix<T,MC,MR>& L );
-
-// Upper Variant 1 Hetrmm
-template<typename T>
-void HetrmmUVar1( DistMatrix<T,MC,MR>& U );
-
-// Left Lower Symm
-template<typename T>
-void SymmLL
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Left Lower Symm where we avoid redistributing A
-template<typename T>
-void SymmLLA
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Left Lower Symm where we avoid redistributing C
-template<typename T>
-void SymmLLC
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Left Upper Symm
-template<typename T>
-void SymmLU
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Left Upper Symm where we avoid redistributing A
-template<typename T>
-void SymmLUA
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Left Upper Symm where we avoid redistributing C
-template<typename T>
-void SymmLUC
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Right Lower Symm
-template<typename T>
-void SymmRL
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Right Lower Symm where we avoid redistributing A
-template<typename T>
-void SymmRLA
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Right Lower Symm where we avoid redistributing C
-template<typename T>
-void SymmRLC
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Right Upper Symm
-template<typename T>
-void SymmRU
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Right Upper Symm where we avoid redistributing A
-template<typename T>
-void SymmRUA
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Right Upper Symm where we avoid redistributing C
-template<typename T>
-void SymmRUC
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Lower, Normal Syr2k
-template<typename T>
-void Syr2kLN
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Lower, Transpose Syr2k
-template<typename T>
-void Syr2kLT
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Upper, Normal Syr2k
-template<typename T>
-void Syr2kUN
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Upper, Transpose Syr2k
-template<typename T>
-void Syr2kUT
-( T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-// Lower, Normal Syrk
-template<typename T>
-void SyrkLN
-( T alpha, const DistMatrix<T,MC,MR>& A, T beta, DistMatrix<T,MC,MR>& C );
-
-// Lower, Transpose Syrk
-template<typename T>
-void SyrkLT
-( T alpha, const DistMatrix<T,MC,MR>& A, T beta, DistMatrix<T,MC,MR>& C );
-
-// Upper, Normal Syrk
-template<typename T>
-void SyrkUN
-( T alpha, const DistMatrix<T,MC,MR>& A, T beta, DistMatrix<T,MC,MR>& C );
-
-// Upper, Transpose Syrk
-template<typename T>
-void SyrkUT
-( T alpha, const DistMatrix<T,MC,MR>& A, T beta, DistMatrix<T,MC,MR>& C );
+void LocalTrmmAccumulateRUT
+( Orientation orientation, UnitOrNonUnit diag, T alpha, 
+  const DistMatrix<T>& U,
+  const DistMatrix<T,MR,  STAR>& XHermOrTrans_MR_STAR,
+        DistMatrix<T,MC,  STAR>& ZHermOrTrans_MC_STAR );
 
 // Triangular rank-k Update:
 // tril(C) := alpha tril( A B ) + beta tril(C)
@@ -777,22 +326,10 @@ void SyrkUT
 // triu(C) := alpha triu( A B ) + beta triu(C)
 
 template<typename T>
-void TrrkNN
-( UpperOrLower uplo,
-  T alpha, const Matrix<T>& A, const Matrix<T>& B,
-  T beta,        Matrix<T>& C );
-
-template<typename T>
-void TrrkNN
-( UpperOrLower uplo,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-template<typename T>
 void LocalTrrk
 ( UpperOrLower uplo,
   T alpha, const DistMatrix<T,MC,STAR>& A, const DistMatrix<T,STAR,MR>& B,
-  T beta,        DistMatrix<T,MC,MR  >& C );
+  T beta,        DistMatrix<T>& C );
 
 // Triangular rank-k Update:
 // tril(C) := alpha tril( A B^{T/H} ) + beta tril(C)
@@ -800,25 +337,11 @@ void LocalTrrk
 // triu(C) := alpha triu( A B^{T/H} ) + beta triu(C)
 
 template<typename T>
-void TrrkNT
-( UpperOrLower uplo,
-  Orientation orientationOfB,
-  T alpha, const Matrix<T>& A, const Matrix<T>& B,
-  T beta,        Matrix<T>& C );
-
-template<typename T>
-void TrrkNT
-( UpperOrLower uplo,
-  Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-template<typename T>
 void LocalTrrk
 ( UpperOrLower uplo,
   Orientation orientationOfB,
   T alpha, const DistMatrix<T,MC,STAR>& A, const DistMatrix<T,MR,STAR>& B,
-  T beta,        DistMatrix<T,MC,  MR>& C );
+  T beta,        DistMatrix<T>& C );
 
 // Triangular rank-k Update:
 // tril(C) := alpha tril( A^{T/H} B ) + beta tril(C)
@@ -826,25 +349,11 @@ void LocalTrrk
 // triu(C) := alpha triu( A^{T/H} B ) + beta triu(C)
 
 template<typename T>
-void TrrkTN
-( UpperOrLower uplo,
-  Orientation orientationOfA,
-  T alpha, const Matrix<T>& A, const Matrix<T>& B,
-  T beta,        Matrix<T>& C );
-
-template<typename T>
-void TrrkTN
-( UpperOrLower uplo,
-  Orientation orientationOfA,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-template<typename T>
 void LocalTrrk
 ( UpperOrLower uplo,
   Orientation orientationOfA,
   T alpha, const DistMatrix<T,STAR,MC>& A, const DistMatrix<T,STAR,MR>& B,
-  T beta,        DistMatrix<T,MC,  MR>& C );
+  T beta,        DistMatrix<T>& C );
 
 // Triangular rank-k Update:
 // tril(C) := alpha tril( A^{T/H} B^{T/H} ) + beta tril(C)
@@ -852,25 +361,11 @@ void LocalTrrk
 // triu(C) := alpha triu( A^{T/H} B^{T/H} ) + beta triu(C)
 
 template<typename T>
-void TrrkTT
-( UpperOrLower uplo,
-  Orientation orientationOfA, Orientation orientationOfB,
-  T alpha, const Matrix<T>& A, const Matrix<T>& B,
-  T beta,        Matrix<T>& C );
-
-template<typename T>
-void TrrkTT
-( UpperOrLower uplo,
-  Orientation orientationOfA, Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C );
-
-template<typename T>
 void LocalTrrk
 ( UpperOrLower uplo,
   Orientation orientationOfA, Orientation orientationOfB,
   T alpha, const DistMatrix<T,STAR,MC>& A, const DistMatrix<T,MR,STAR>& B,
-  T beta,        DistMatrix<T,MC,  MR>& C );
+  T beta,        DistMatrix<T>& C );
 
 // Triangular rank-2k Update:
 // tril(E) := alpha tril( A B + C D ) + beta tril(E)
@@ -878,18 +373,11 @@ void LocalTrrk
 // triu(E) := alpha triu( A B + C D ) + beta triu(E)
 
 template<typename T>
-void Trr2kNNNN
-( UpperOrLower uplo,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-           const DistMatrix<T,MC,MR>& C, const DistMatrix<T,MC,MR>& D,
-  T beta,        DistMatrix<T,MC,MR>& E );
-
-template<typename T>
 void LocalTrr2k
 ( UpperOrLower uplo,
   T alpha, const DistMatrix<T,MC,STAR>& A, const DistMatrix<T,STAR,MR>& B, 
            const DistMatrix<T,MC,STAR>& C, const DistMatrix<T,STAR,MR>& D,
-  T beta,        DistMatrix<T,MC,  MR>& E );
+  T beta,        DistMatrix<T>& E );
 
 // Triangular rank-2k Update:
 // tril(E) := alpha tril( A B + C D^{T/H} ) + beta tril(E)
@@ -897,20 +385,12 @@ void LocalTrr2k
 // triu(E) := alpha triu( A B + C D^{T/H} ) + beta triu(E)
 
 template<typename T>
-void Trr2kNNNT
-( UpperOrLower uplo,
-  Orientation orientationOfD,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-           const DistMatrix<T,MC,MR>& C, const DistMatrix<T,MC,MR>& D,
-  T beta,        DistMatrix<T,MC,MR>& E );
-
-template<typename T>
 void LocalTrr2k
 ( UpperOrLower uplo,
   Orientation orientationOfD,
   T alpha, const DistMatrix<T,MC,STAR>& A, const DistMatrix<T,STAR,MR>& B,
            const DistMatrix<T,MC,STAR>& C, const DistMatrix<T,MR,STAR>& D,
-  T beta,        DistMatrix<T,MC,MR  >& E );
+  T beta,        DistMatrix<T>& E );
 
 // Triangular rank-2k Update:
 // tril(E) := alpha tril( A B + C^{T/H} D ) + beta tril(E)
@@ -918,33 +398,17 @@ void LocalTrr2k
 // triu(E) := alpha triu( A B + C^{T/H} D ) + beta triu(E)
 
 template<typename T>
-void Trr2kNNTN
-( UpperOrLower uplo,
-  Orientation orientationOfC,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-           const DistMatrix<T,MC,MR>& C, const DistMatrix<T,MC,MR>& D,
-  T beta,        DistMatrix<T,MC,MR>& E );
-
-template<typename T>
 void LocalTrr2k
 ( UpperOrLower uplo,
   Orientation orientationOfC,
   T alpha, const DistMatrix<T,MC,STAR>& A, const DistMatrix<T,STAR,MR>& B,
            const DistMatrix<T,STAR,MC>& C, const DistMatrix<T,STAR,MR>& D,
-  T beta,        DistMatrix<T,MC,  MR>& E );
+  T beta,        DistMatrix<T>& E );
 
 // Triangular rank-2k Update:
 // tril(E) := alpha tril( A B + C^{T/H} D^{T/H} ) + beta tril(E)
 //   or
 // triu(E) := alpha triu( A B + C^{T/H} D^{T/H} ) + beta triu(E)
-
-template<typename T>
-void Trr2kNNTT
-( UpperOrLower uplo,
-  Orientation orientationOfC, Orientation orientationOfD,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-           const DistMatrix<T,MC,MR>& C, const DistMatrix<T,MC,MR>& D,
-  T beta,        DistMatrix<T,MC,MR>& E );
 
 template<typename T>
 void LocalTrr2k
@@ -953,7 +417,7 @@ void LocalTrr2k
   Orientation orientationOfD,
   T alpha, const DistMatrix<T,MC,STAR>& A, const DistMatrix<T,STAR,MR>& B,
            const DistMatrix<T,STAR,MC>& C, const DistMatrix<T,MR,STAR>& D,
-  T beta,        DistMatrix<T,MC,  MR>& E );
+  T beta,        DistMatrix<T>& E );
 
 // Triangular rank-2k Update:
 // tril(E) := alpha tril( A B^{T/H} + C D ) + beta tril(E)
@@ -961,33 +425,17 @@ void LocalTrr2k
 // triu(E) := alpha triu( A B^{T/H} + C D ) + beta triu(E)
 
 template<typename T>
-void Trr2kNTNN
-( UpperOrLower uplo,
-  Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-           const DistMatrix<T,MC,MR>& C, const DistMatrix<T,MC,MR>& D,
-  T beta,        DistMatrix<T,MC,MR>& E );
-
-template<typename T>
 void LocalTrr2k
 ( UpperOrLower uplo,
   Orientation orientationOfB,
   T alpha, const DistMatrix<T,MC,STAR>& A, const DistMatrix<T,MR,STAR>& B,
            const DistMatrix<T,MC,STAR>& C, const DistMatrix<T,STAR,MR>& D,
-  T beta,        DistMatrix<T,MC,MR  >& E );
+  T beta,        DistMatrix<T>& E );
 
 // Triangular rank-2k Update:
 // tril(E) := alpha tril( A B^{T/H} + C D^{T/H} ) + beta tril(E)
 //   or
 // triu(E) := alpha triu( A B^{T/H} + C D^{T/H} ) + beta triu(E)
-
-template<typename T>
-void Trr2kNTNT
-( UpperOrLower uplo,
-  Orientation orientationOfB, Orientation orientationOfD,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-           const DistMatrix<T,MC,MR>& C, const DistMatrix<T,MC,MR>& D,
-  T beta,        DistMatrix<T,MC,MR>& E );
 
 template<typename T>
 void LocalTrr2k
@@ -996,20 +444,12 @@ void LocalTrr2k
   Orientation orientationOfD,
   T alpha, const DistMatrix<T,MC,STAR>& A, const DistMatrix<T,MR,STAR>& B,
            const DistMatrix<T,MC,STAR>& C, const DistMatrix<T,MR,STAR>& D,
-  T beta,        DistMatrix<T,MC,MR  >& E );
+  T beta,        DistMatrix<T>& E );
 
 // Triangular rank-2k Update:
 // tril(E) := alpha tril( A B^{T/H} + C^{T/H} D ) + beta tril(E)
 //   or
 // triu(E) := alpha triu( A B^{T/H} + C^{T/H} D ) + beta triu(E)
-
-template<typename T>
-void Trr2kNTTN
-( UpperOrLower uplo,
-  Orientation orientationOfB, Orientation orientationOfC,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-           const DistMatrix<T,MC,MR>& C, const DistMatrix<T,MC,MR>& D,
-  T beta,        DistMatrix<T,MC,MR>& E );
 
 template<typename T>
 void LocalTrr2k
@@ -1018,21 +458,12 @@ void LocalTrr2k
   Orientation orientationOfC,
   T alpha, const DistMatrix<T,MC,STAR>& A, const DistMatrix<T,MR,STAR>& B,
            const DistMatrix<T,STAR,MC>& C, const DistMatrix<T,STAR,MR>& D,
-  T beta,        DistMatrix<T,MC,  MR>& E );
+  T beta,        DistMatrix<T>& E );
 
 // Triangular rank-2k Update:
 // tril(E) := alpha tril( A B^{T/H} + C^{T/H} D^{T/H} ) + beta tril(E)
 //   or
 // triu(E) := alpha triu( A B^{T/H} + C^{T/H} D^{T/H} ) + beta triu(E)
-
-template<typename T>
-void Trr2kNTTT
-( UpperOrLower uplo,
-  Orientation orientationOfB,
-  Orientation orientationOfC, Orientation orientationOfD,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-           const DistMatrix<T,MC,MR>& C, const DistMatrix<T,MC,MR>& D,
-  T beta,        DistMatrix<T,MC,MR>& E );
 
 template<typename T>
 void LocalTrr2k
@@ -1042,7 +473,7 @@ void LocalTrr2k
   Orientation orientationOfD,
   T alpha, const DistMatrix<T,MC,STAR>& A, const DistMatrix<T,MR,STAR>& B,
            const DistMatrix<T,STAR,MC>& C, const DistMatrix<T,MR,STAR>& D,
-  T beta,        DistMatrix<T,MC,MR  >& E );
+  T beta,        DistMatrix<T>& E );
 
 // Triangular rank-2k Update:
 // tril(E) := alpha tril( A^{T/H} B + C D ) + beta tril(E)
@@ -1050,33 +481,17 @@ void LocalTrr2k
 // triu(E) := alpha triu( A^{T/H} B + C D ) + beta triu(E)
 
 template<typename T>
-void Trr2kTNNN
-( UpperOrLower uplo,
-  Orientation orientationOfA,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-           const DistMatrix<T,MC,MR>& C, const DistMatrix<T,MC,MR>& D,
-  T beta,        DistMatrix<T,MC,MR>& E );
-
-template<typename T>
 void LocalTrr2k
 ( UpperOrLower uplo,
   Orientation orientationOfA,
   T alpha, const DistMatrix<T,STAR,MC>& A, const DistMatrix<T,STAR,MR>& B,
            const DistMatrix<T,MC,STAR>& C, const DistMatrix<T,STAR,MR>& D,
-  T beta,        DistMatrix<T,MC,  MR>& E );
+  T beta,        DistMatrix<T>& E );
 
 // Triangular rank-2k Update:
 // tril(E) := alpha tril( A^{T/H} B + C D^{T/H} ) + beta tril(E)
 //   or
 // triu(E) := alpha triu( A^{T/H} B + C D^{T/H} ) + beta triu(E)
-
-template<typename T>
-void Trr2kTNNT
-( UpperOrLower uplo,
-  Orientation orientationOfA, Orientation orientationOfD,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-           const DistMatrix<T,MC,MR>& C, const DistMatrix<T,MC,MR>& D,
-  T beta,        DistMatrix<T,MC,MR>& E );
 
 template<typename T>
 void LocalTrr2k
@@ -1085,20 +500,12 @@ void LocalTrr2k
   Orientation orientationOfD,
   T alpha, const DistMatrix<T,STAR,MC  >& A, const DistMatrix<T,STAR,MR  >& B,
            const DistMatrix<T,MC,  STAR>& C, const DistMatrix<T,MR,  STAR>& D,
-  T beta,        DistMatrix<T,MC,  MR>& E );
+  T beta,        DistMatrix<T>& E );
 
 // Triangular rank-2k Update:
 // tril(E) := alpha tril( A^{T/H} B + C^{T/H} D ) + beta tril(E)
 //   or
 // triu(E) := alpha triu( A^{T/H} B + C^{T/H} D ) + beta triu(E)
-
-template<typename T>
-void Trr2kTNTN
-( UpperOrLower uplo,
-  Orientation orientationOfA, Orientation orientationOfC,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-           const DistMatrix<T,MC,MR>& C, const DistMatrix<T,MC,MR>& D,
-  T beta,        DistMatrix<T,MC,MR>& E );
 
 template<typename T>
 void LocalTrr2k
@@ -1107,21 +514,12 @@ void LocalTrr2k
   Orientation orientationOfC,
   T alpha, const DistMatrix<T,STAR,MC>& A, const DistMatrix<T,STAR,MR>& B,
            const DistMatrix<T,STAR,MC>& C, const DistMatrix<T,STAR,MR>& D,
-  T beta,        DistMatrix<T,MC,  MR>& E );
+  T beta,        DistMatrix<T>& E );
 
 // Triangular rank-2k Update:
 // tril(E) := alpha tril( A^{T/H} B + C^{T/H} D^{T/H} ) + beta tril(E)
 //   or
 // triu(E) := alpha triu( A^{T/H} B + C^{T/H} D^{T/H} ) + beta triu(E)
-
-template<typename T>
-void Trr2kTNTT
-( UpperOrLower uplo,
-  Orientation orientationOfA,
-  Orientation orientationOfC, Orientation orientationOfD,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-           const DistMatrix<T,MC,MR>& C, const DistMatrix<T,MC,MR>& D,
-  T beta,        DistMatrix<T,MC,MR>& E );
 
 template<typename T>
 void LocalTrr2k
@@ -1131,20 +529,12 @@ void LocalTrr2k
   Orientation orientationOfD,
   T alpha, const DistMatrix<T,STAR,MC>& A, const DistMatrix<T,STAR,MR>& B,
            const DistMatrix<T,STAR,MC>& C, const DistMatrix<T,MR,STAR>& D,
-  T beta,        DistMatrix<T,MC,  MR>& E );
+  T beta,        DistMatrix<T>& E );
 
 // Triangular rank-2k Update:
 // tril(E) := alpha tril( A^{T/H} B^{T/H} + C D ) + beta tril(E)
 //   or
 // triu(E) := alpha triu( A^{T/H} B^{T/H} + C D ) + beta triu(E)
-
-template<typename T>
-void Trr2kTTNN
-( UpperOrLower uplo,
-  Orientation orientationOfA, Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-           const DistMatrix<T,MC,MR>& C, const DistMatrix<T,MC,MR>& D,
-  T beta,        DistMatrix<T,MC,MR>& E );
 
 template<typename T>
 void LocalTrr2k
@@ -1153,21 +543,12 @@ void LocalTrr2k
   Orientation orientationOfB,
   T alpha, const DistMatrix<T,STAR,MC>& A, const DistMatrix<T,MR,STAR>& B,
            const DistMatrix<T,MC,STAR>& C, const DistMatrix<T,STAR,MR>& D,
-  T beta,        DistMatrix<T,MC,  MR>& E );
+  T beta,        DistMatrix<T>& E );
 
 // Triangular rank-2k Update:
 // tril(E) := alpha tril( A^{T/H} B^{T/H} + C D^{T/H} ) + beta tril(E)
 //   or
 // triu(E) := alpha triu( A^{T/H} B^{T/H} + C D^{T/H} ) + beta triu(E)
-
-template<typename T>
-void Trr2kTTNT
-( UpperOrLower uplo,
-  Orientation orientationOfA, Orientation orientationOfB,
-  Orientation orientationOfD,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-           const DistMatrix<T,MC,MR>& C, const DistMatrix<T,MC,MR>& D,
-  T beta,        DistMatrix<T,MC,MR>& E );
 
 template<typename T>
 void LocalTrr2k
@@ -1177,21 +558,12 @@ void LocalTrr2k
   Orientation orientationOfD,
   T alpha, const DistMatrix<T,STAR,MC>& A, const DistMatrix<T,MR,STAR>& B,
            const DistMatrix<T,MC,STAR>& C, const DistMatrix<T,MR,STAR>& D,
-  T beta,        DistMatrix<T,MC,MR  >& E );
+  T beta,        DistMatrix<T>& E );
 
 // Triangular rank-2k Update:
 // tril(E) := alpha tril( A^{T/H} B^{T/H} + C^{T/H} D ) + beta tril(E)
 //   or
 // triu(E) := alpha triu( A^{T/H} B^{T/H} + C^{T/H} D ) + beta triu(E)
-
-template<typename T>
-void Trr2kTTTN
-( UpperOrLower uplo,
-  Orientation orientationOfA, Orientation orientationOfB,
-  Orientation orientationOfC, 
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-           const DistMatrix<T,MC,MR>& C, const DistMatrix<T,MC,MR>& D,
-  T beta,        DistMatrix<T,MC,MR>& E );
 
 template<typename T>
 void LocalTrr2k
@@ -1201,21 +573,12 @@ void LocalTrr2k
   Orientation orientationOfC,
   T alpha, const DistMatrix<T,STAR,MC>& A, const DistMatrix<T,MR,STAR>& B,
            const DistMatrix<T,STAR,MC>& C, const DistMatrix<T,STAR,MR>& D,
-  T beta,        DistMatrix<T,MC,  MR>& E );
+  T beta,        DistMatrix<T>& E );
 
 // Triangular rank-2k Update:
 // tril(E) := alpha tril( A^{T/H} B^{T/H} + C^{T/H} D^{T/H} ) + beta tril(E)
 //   or
 // triu(E) := alpha triu( A^{T/H} B^{T/H} + C^{T/H} D^{T/H} ) + beta triu(E)
-
-template<typename T>
-void Trr2kTTTT
-( UpperOrLower uplo,
-  Orientation orientationOfA, Orientation orientationOfB,
-  Orientation orientationOfC, Orientation orientationOfD,
-  T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
-           const DistMatrix<T,MC,MR>& C, const DistMatrix<T,MC,MR>& D,
-  T beta,        DistMatrix<T,MC,MR>& E );
 
 template<typename T>
 void LocalTrr2k
@@ -1226,202 +589,18 @@ void LocalTrr2k
   Orientation orientationOfD,
   T alpha, const DistMatrix<T,STAR,MC>& A, const DistMatrix<T,MR,STAR>& B, 
            const DistMatrix<T,STAR,MC>& C, const DistMatrix<T,MR,STAR>& D,
-  T beta,        DistMatrix<T,MC,  MR>& E );
-
-// Left, Lower, Normal Trmm
-template<typename T>
-void TrmmLLN
-( UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& L, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void TrmmLLNA
-( UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& L, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void TrmmLLNC
-( UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& L, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void LocalTrmmAccumulateLLN
-( Orientation orientation, UnitOrNonUnit diag, T alpha, 
-  const DistMatrix<T,MC,  MR  >& L,
-  const DistMatrix<T,STAR,MR  >& XHermOrTrans_STAR_MR,
-        DistMatrix<T,MC,  STAR>& Z_MC_STAR );
-
-// Left, Lower, (Conjugate)Transpose Trmm
-template<typename T>
-void TrmmLLT
-( Orientation orientation, UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& L, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void TrmmLLTA
-( Orientation orientation, UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& L, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void TrmmLLTC
-( Orientation orientation, UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& L, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void LocalTrmmAccumulateLLT
-( Orientation orientation, UnitOrNonUnit diag, T alpha, 
-  const DistMatrix<T,MC,  MR  >& L,
-  const DistMatrix<T,MC,  STAR>& X_MC_STAR,
-        DistMatrix<T,MR,  STAR>& Z_MR_STAR );
-
-// Left, Upper, Normal Trmm
-template<typename T>
-void TrmmLUN
-( UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& U, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void TrmmLUNA
-( UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& U, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void TrmmLUNC
-( UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& U, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void LocalTrmmAccumulateLUN
-( Orientation orientation, UnitOrNonUnit diag, T alpha, 
-  const DistMatrix<T,MC,  MR  >& U,
-  const DistMatrix<T,STAR,MR  >& XHermOrTrans_STAR_MR,
-        DistMatrix<T,MC,  STAR>& Z_MC_STAR );
-
-// Left, Upper, (Conjugate)Transpose Trmm
-template<typename T>
-void TrmmLUT
-( Orientation orientation, UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& U, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void TrmmLUTA
-( Orientation orientation, UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& U, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void TrmmLUTC
-( Orientation orientation, UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& U, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void LocalTrmmAccumulateLUT
-( Orientation orientation, UnitOrNonUnit diag, T alpha, 
-  const DistMatrix<T,MC,  MR  >& U,
-  const DistMatrix<T,MC,  STAR>& X_MC_STAR,
-        DistMatrix<T,MR,  STAR>& Z_MR_STAR );
-
-// Right, Lower, Normal Trmm
-template<typename T>
-void TrmmRLN
-( UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& L, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void TrmmRLNA
-( UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& L, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void TrmmRLNC
-( UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& L, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void LocalTrmmAccumulateRLN
-( Orientation orientation, UnitOrNonUnit diag, T alpha, 
-  const DistMatrix<T,MC,  MR  >& L,
-  const DistMatrix<T,STAR,MC  >& X_STAR_MC,
-        DistMatrix<T,MR,  STAR>& ZHermOrTrans_MR_STAR );
-
-// Right, Lower, (Conjugate)Transpose Trmm
-template<typename T>
-void TrmmRLT
-( Orientation orientation, UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& L, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void TrmmRLTA
-( Orientation orientation, UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& L, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void TrmmRLTC
-( Orientation orientation, UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& L, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void LocalTrmmAccumulateRLT
-( Orientation orientation, UnitOrNonUnit diag, T alpha, 
-  const DistMatrix<T,MC,  MR  >& L,
-  const DistMatrix<T,MR,  STAR>& XHermOrTrans_MR_STAR,
-        DistMatrix<T,MC,  STAR>& ZHermOrTrans_MC_STAR );
-
-// Right, Upper, Normal Trmm
-template<typename T>
-void TrmmRUN
-( UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& U, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void TrmmRUNA
-( UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& U, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void TrmmRUNC
-( UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& U, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void LocalTrmmAccumulateRUN
-( Orientation orientation, UnitOrNonUnit diag, T alpha, 
-  const DistMatrix<T,MC,  MR  >& U,
-  const DistMatrix<T,STAR,MC  >& X_STAR_MC,
-        DistMatrix<T,MR,  STAR>& ZHermOrTrans_MR_STAR );
-
-// Right, Upper, (Conjugate)Transpose Trmm
-template<typename T>
-void TrmmRUT
-( Orientation orientation, UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& U, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void TrmmRUTA
-( Orientation orientation, UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& U, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void TrmmRUTC
-( Orientation orientation, UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& U, DistMatrix<T,MC,MR>& X );
-
-template<typename T>
-void LocalTrmmAccumulateRUT
-( Orientation orientation, UnitOrNonUnit diag, T alpha, 
-  const DistMatrix<T,MC,  MR  >& U,
-  const DistMatrix<T,MR,  STAR>& XHermOrTrans_MR_STAR,
-        DistMatrix<T,MC,  STAR>& ZHermOrTrans_MC_STAR );
+  T beta,        DistMatrix<T>& E );
 
 // Left, Lower, Normal Trsm
 template<typename F>
 void TrsmLLNLarge
 ( UnitOrNonUnit diag,
-  F alpha, const DistMatrix<F,MC,MR>& L, DistMatrix<F,MC,MR>& X,
+  F alpha, const DistMatrix<F>& L, DistMatrix<F>& X,
   bool checkIfSingular=false );
 template<typename F>
 void TrsmLLNMedium
 ( UnitOrNonUnit diag,
-  F alpha, const DistMatrix<F,MC,MR>& L, DistMatrix<F,MC,MR>& X,
+  F alpha, const DistMatrix<F>& L, DistMatrix<F>& X,
   bool checkIfSingular=false );
 template<typename F>
 void TrsmLLNSmall
@@ -1433,12 +612,12 @@ void TrsmLLNSmall
 template<typename F>
 void TrsmLLTLarge
 ( Orientation orientation, UnitOrNonUnit diag,
-  F alpha, const DistMatrix<F,MC,MR>& L, DistMatrix<F,MC,MR>& X,
+  F alpha, const DistMatrix<F>& L, DistMatrix<F>& X,
   bool checkIfSingular=false );
 template<typename F>
 void TrsmLLTMedium
 ( Orientation orientation, UnitOrNonUnit diag,
-  F alpha, const DistMatrix<F,MC,MR>& L, DistMatrix<F,MC,MR>& X,
+  F alpha, const DistMatrix<F>& L, DistMatrix<F>& X,
   bool checkIfSingular=false );
 template<typename F>
 void TrsmLLTSmall
@@ -1455,12 +634,12 @@ void TrsmLLTSmall
 template<typename F>
 void TrsmLUNLarge
 ( UnitOrNonUnit diag,
-  F alpha, const DistMatrix<F,MC,MR>& U, DistMatrix<F,MC,MR>& X,
+  F alpha, const DistMatrix<F>& U, DistMatrix<F>& X,
   bool checkIfSingular=false );
 template<typename F>
 void TrsmLUNMedium
 ( UnitOrNonUnit diag,
-  F alpha, const DistMatrix<F,MC,MR>& U, DistMatrix<F,MC,MR>& X,
+  F alpha, const DistMatrix<F>& U, DistMatrix<F>& X,
   bool checkIfSingular=false );
 template<typename F>
 void TrsmLUNSmall
@@ -1472,45 +651,17 @@ void TrsmLUNSmall
 template<typename F>
 void TrsmLUTLarge
 ( Orientation orientation, UnitOrNonUnit diag,
-  F alpha, const DistMatrix<F,MC,MR>& U, DistMatrix<F,MC,MR>& X,
+  F alpha, const DistMatrix<F>& U, DistMatrix<F>& X,
   bool checkIfSingular=false );
 template<typename F>
 void TrsmLUTMedium
 ( Orientation orientation, UnitOrNonUnit diag,
-  F alpha, const DistMatrix<F,MC,MR>& U, DistMatrix<F,MC,MR>& X,
+  F alpha, const DistMatrix<F>& U, DistMatrix<F>& X,
   bool checkIfSingular=false );
 template<typename F>
 void TrsmLUTSmall
 ( Orientation orientation, UnitOrNonUnit diag,
   F alpha, const DistMatrix<F,STAR,VR>& U, DistMatrix<F,VR,STAR>& X,
-  bool checkIfSingular=false );
-
-// Right, Lower, Normal Trsm
-template<typename F>
-void TrsmRLN
-( UnitOrNonUnit diag,
-  F alpha, const DistMatrix<F,MC,MR>& L, DistMatrix<F,MC,MR>& X,
-  bool checkIfSingular=false );
-
-// Right, Lower, (Conjugate)Transpose Trsm
-template<typename F>
-void TrsmRLT
-( Orientation orientation, UnitOrNonUnit diag,
-  F alpha, const DistMatrix<F,MC,MR>& L, DistMatrix<F,MC,MR>& X,
-  bool checkIfSingular=false );
-
-// Right, Upper, Normal Trsm
-template<typename F>
-void TrsmRUN
-( UnitOrNonUnit diag,
-  F alpha, const DistMatrix<F,MC,MR>& U, DistMatrix<F,MC,MR>& X,
-  bool checkIfSingular=false );
-
-// Right, Upper, (Conjugate)Transpose Trsm
-template<typename F>
-void TrsmRUT
-( Orientation orientation, UnitOrNonUnit diag,
-  F alpha, const DistMatrix<F,MC,MR>& U, DistMatrix<F,MC,MR>& X,
   bool checkIfSingular=false );
 
 //----------------------------------------------------------------------------//
@@ -1544,10 +695,6 @@ double
 HerkGFlops
 ( int m, int k, double seconds );
 
-template<typename T>
-double
-HetrmmGFlops( int m, double seconds );
-            
 template<typename T>
 double
 SymmGFlops
@@ -1584,12 +731,56 @@ namespace elem {
 namespace internal {
 
 //
+// Level 2 Local BLAS-like routines
+//
+
+template<typename T,Distribution AColDist,Distribution ARowDist,
+                    Distribution xColDist,Distribution xRowDist,
+                    Distribution yColDist,Distribution yRowDist>
+inline void LocalGemv
+( Orientation orientation, 
+  T alpha, const DistMatrix<T,AColDist,ARowDist>& A, 
+           const DistMatrix<T,xColDist,xRowDist>& x,
+  T beta,        DistMatrix<T,yColDist,yRowDist>& y )
+{
+#ifndef RELEASE
+    PushCallStack("internal::LocalGemv");
+    // TODO: Add error checking here
+#endif
+    Gemv
+    ( orientation , 
+      alpha, A.LockedLocalMatrix(), x.LockedLocalMatrix(),
+      beta,                         y.LocalMatrix() );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename T,Distribution xColDist,Distribution xRowDist,
+                    Distribution yColDist,Distribution yRowDist,
+                    Distribution AColDist,Distribution ARowDist>
+inline void LocalGer
+( T alpha, const DistMatrix<T,xColDist,xRowDist>& x, 
+           const DistMatrix<T,yColDist,yRowDist>& y,
+                 DistMatrix<T,AColDist,ARowDist>& A )
+{
+#ifndef RELEASE
+    PushCallStack("internal::LocalGer");
+    // TODO: Add error checking here
+#endif
+    Ger( alpha, x.LockedLocalMatrix(), y.LockedLocalMatrix(), A.LocalMatrix() );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+//
 // Level 3 Local BLAS-like routines
 //
 
 template<typename T,Distribution AColDist,Distribution ARowDist,
-                     Distribution BColDist,Distribution BRowDist,
-                     Distribution CColDist,Distribution CRowDist>
+                    Distribution BColDist,Distribution BRowDist,
+                    Distribution CColDist,Distribution CRowDist>
 inline void LocalGemm
 ( Orientation orientationOfA, Orientation orientationOfB,
   T alpha, const DistMatrix<T,AColDist,ARowDist>& A, 
@@ -1706,12 +897,27 @@ inline void LocalGemm
 
 template<typename T>
 inline void 
-LocalHetrmm( UpperOrLower uplo, DistMatrix<T,STAR,STAR>& A )
+LocalTrtrmm
+( Orientation orientation, UpperOrLower uplo, DistMatrix<T,STAR,STAR>& A )
 {
 #ifndef RELEASE
-    PushCallStack("internal::LocalHetrmm");
+    PushCallStack("internal::LocalTrtrmm");
 #endif
-    Hetrmm( uplo, A.LocalMatrix() );
+    Trtrmm( orientation, uplo, A.LocalMatrix() );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename T>
+inline void 
+LocalTrdtrmm
+( Orientation orientation, UpperOrLower uplo, DistMatrix<T,STAR,STAR>& A )
+{
+#ifndef RELEASE
+    PushCallStack("internal::LocalTrdtrmm");
+#endif
+    Trdtrmm( orientation, uplo, A.LocalMatrix() );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -1897,26 +1103,6 @@ HerkGFlops<dcomplex>
 ( int m, int k, double seconds )
 { return 4.*HerkGFlops<float>(m,k,seconds); }
 
-template<>
-inline double
-HetrmmGFlops<float>( int n, double seconds )
-{ return (1./3.*n*n*n)/(1.e9*seconds); }
-
-template<>
-inline double
-HetrmmGFlops<double>( int n, double seconds )
-{ return HetrmmGFlops<float>( n, seconds ); }
-
-template<>
-inline double
-HetrmmGFlops<scomplex>( int n, double seconds )
-{ return 4.*HetrmmGFlops<float>( n, seconds ); }
-
-template<>
-inline double
-HetrmmGFlops<dcomplex>( int n, double seconds )
-{ return 4.*HetrmmGFlops<double>( n, seconds ); }
-            
 template<>
 inline double
 SymmGFlops<float>

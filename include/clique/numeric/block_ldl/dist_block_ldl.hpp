@@ -95,7 +95,7 @@ inline void DistBlockLDL
         const unsigned childGridWidth = childGrid.Width();
 
         // Pack our child's update
-        const DistMatrix<F,MC,MR>& childUpdate = childFront.work2d;
+        const DistMatrix<F>& childUpdate = childFront.work2d;
         const bool isLeftChild = ( commRank < commSize/2 );
         std::vector<int> sendCounts(commSize), sendDispls(commSize);
         int sendBufferSize = 0;

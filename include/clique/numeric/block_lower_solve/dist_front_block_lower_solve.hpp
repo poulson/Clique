@@ -29,7 +29,7 @@ void DistFrontBlockLowerForwardSolve
 
 template<typename F>
 void DistFrontBlockLowerForwardSolve
-( DistMatrix<F,MC,MR>& L, DistMatrix<F,VC,STAR>& X );
+( DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
 void DistFrontBlockLowerBackwardSolve
@@ -37,7 +37,7 @@ void DistFrontBlockLowerBackwardSolve
 
 template<typename F>
 void DistFrontBlockLowerBackwardSolve
-( Orientation orientation, DistMatrix<F,MC,MR>& L, DistMatrix<F,VC,STAR>& X );
+( Orientation orientation, DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -112,7 +112,7 @@ inline void DistFrontBlockLowerForwardSolve
 
 template<typename F>
 inline void DistFrontBlockLowerForwardSolve
-( DistMatrix<F,MC,MR>& L, DistMatrix<F,VC,STAR>& X )
+( DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
     PushCallStack("numeric::DistFrontBlockLowerForwardSolve");
@@ -143,8 +143,8 @@ inline void DistFrontBlockLowerForwardSolve
 
     // Separate the top and bottom portions of X and L
     const int snSize = L.Width();
-    DistMatrix<F,MC,MR> LT(g),
-                        LB(g);
+    DistMatrix<F> LT(g),
+                  LB(g);
     PartitionDown
     ( L, LT, 
          LB, snSize );
@@ -268,7 +268,7 @@ inline void DistFrontBlockLowerBackwardSolve
 
 template<typename F>
 inline void DistFrontBlockLowerBackwardSolve
-( Orientation orientation, DistMatrix<F,MC,MR>& L, DistMatrix<F,VC,STAR>& X )
+( Orientation orientation, DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
     PushCallStack("numeric::DistFrontBlockLowerBackwardSolve");
@@ -300,8 +300,8 @@ inline void DistFrontBlockLowerBackwardSolve
     }
 
     const int snSize = L.Width();
-    DistMatrix<F,MC,MR> LT(g),
-                        LB(g);
+    DistMatrix<F> LT(g),
+                  LB(g);
     elem::PartitionDown
     ( L, LT,
          LB, snSize );

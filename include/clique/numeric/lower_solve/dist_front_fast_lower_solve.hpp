@@ -29,7 +29,7 @@ void DistFrontFastLowerForwardSolve
 
 template<typename F>
 void DistFrontFastLowerForwardSolve
-( UnitOrNonUnit diag, DistMatrix<F,MC,MR>& L, DistMatrix<F,VC,STAR>& X );
+( UnitOrNonUnit diag, DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
 void DistFrontFastLowerBackwardSolve
@@ -39,7 +39,7 @@ void DistFrontFastLowerBackwardSolve
 template<typename F>
 void DistFrontFastLowerBackwardSolve
 ( Orientation orientation, UnitOrNonUnit diag, 
-  DistMatrix<F,MC,MR>& L, DistMatrix<F,VC,STAR>& X );
+  DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -142,7 +142,7 @@ inline void DistFrontFastLowerForwardSolve
 
 template<typename F>
 inline void DistFrontFastLowerForwardSolve
-( UnitOrNonUnit diag, DistMatrix<F,MC,MR>& L, DistMatrix<F,VC,STAR>& X )
+( UnitOrNonUnit diag, DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
     PushCallStack("numeric::DistFrontFastLowerForwardSolve");
@@ -173,8 +173,8 @@ inline void DistFrontFastLowerForwardSolve
 
     // Separate the top and bottom portions of X and L
     const int snSize = L.Width();
-    DistMatrix<F,MC,MR> LT(g),
-                        LB(g);
+    DistMatrix<F> LT(g),
+                  LB(g);
     PartitionDown
     ( L, LT, 
          LB, snSize );
@@ -333,7 +333,7 @@ inline void DistFrontFastLowerBackwardSolve
 template<typename F>
 inline void DistFrontFastLowerBackwardSolve
 ( Orientation orientation, UnitOrNonUnit diag, 
-  DistMatrix<F,MC,MR>& L, DistMatrix<F,VC,STAR>& X )
+  DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
     PushCallStack("numeric::DistFrontFastLowerBackwardSolve");
@@ -365,8 +365,8 @@ inline void DistFrontFastLowerBackwardSolve
     }
 
     const int snSize = L.Width();
-    DistMatrix<F,MC,MR> LT(g),
-                        LB(g);
+    DistMatrix<F> LT(g),
+                  LB(g);
     elem::PartitionDown
     ( L, LT,
          LB, snSize );

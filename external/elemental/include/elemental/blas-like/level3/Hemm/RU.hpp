@@ -32,22 +32,23 @@
 */
 
 namespace elem {
+namespace internal {
 
 template<typename T>
 inline void
-internal::HemmRU
-( T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C )
+HemmRU
+( T alpha, const DistMatrix<T>& A,
+           const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C )
 {
 #ifndef RELEASE
     PushCallStack("internal::HemmRU");
 #endif
     // TODO: Come up with a better routing mechanism
     if( A.Height() > 5*B.Height() )
-        internal::HemmRUA( alpha, A, B, beta, C );
+        HemmRUA( alpha, A, B, beta, C );
     else
-        internal::HemmRUC( alpha, A, B, beta, C );
+        HemmRUC( alpha, A, B, beta, C );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -55,10 +56,10 @@ internal::HemmRU
 
 template<typename T>
 inline void
-internal::HemmRUA
-( T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C )
+HemmRUA
+( T alpha, const DistMatrix<T>& A,
+           const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C )
 {
 #ifndef RELEASE
     PushCallStack("internal::HemmRUA");
@@ -68,12 +69,12 @@ internal::HemmRUA
 #endif
     const Grid& g = A.Grid();
 
-    DistMatrix<T,MC,MR>
+    DistMatrix<T>
         BT(g),  B0(g),
         BB(g),  B1(g),
                 B2(g);
 
-    DistMatrix<T,MC,MR>
+    DistMatrix<T>
         CT(g),  C0(g),
         CB(g),  C1(g),
                 C2(g);
@@ -83,12 +84,12 @@ internal::HemmRUA
     DistMatrix<T,STAR,MC  > B1_STAR_MC(g);
     DistMatrix<T,MC,  STAR> Z1Adj_MC_STAR(g);
     DistMatrix<T,MR,  STAR> Z1Adj_MR_STAR(g);
-    DistMatrix<T,MC,  MR  > Z1Adj(g);
     DistMatrix<T,MR,  MC  > Z1Adj_MR_MC(g);
+    DistMatrix<T> Z1Adj(g);
 
     Matrix<T> Z1Local;
 
-    Scal( beta, C );
+    Scale( beta, C );
     LockedPartitionDown
     ( B, BT,
          BB, 0 );
@@ -123,7 +124,7 @@ internal::HemmRUA
         B1_STAR_MC.AdjointFrom( B1Adj_VC_STAR );
         Zero( Z1Adj_MC_STAR );
         Zero( Z1Adj_MR_STAR );
-        internal::LocalSymmetricAccumulateRU
+        LocalSymmetricAccumulateRU
         ( ADJOINT, alpha, A, B1_STAR_MC, B1Adj_MR_STAR, 
           Z1Adj_MC_STAR, Z1Adj_MR_STAR );
 
@@ -159,10 +160,10 @@ internal::HemmRUA
 
 template<typename T>
 inline void
-internal::HemmRUC
-( T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C )
+HemmRUC
+( T alpha, const DistMatrix<T>& A,
+           const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C )
 {
 #ifndef RELEASE
     PushCallStack("internal::HemmRUC");
@@ -172,17 +173,17 @@ internal::HemmRUC
     const Grid& g = A.Grid();
 
     // Matrix views
-    DistMatrix<T,MC,MR> 
+    DistMatrix<T> 
         ATL(g), ATR(g),  A00(g), A01(g), A02(g),  AColPan(g),
         ABL(g), ABR(g),  A10(g), A11(g), A12(g),  ARowPan(g),
                          A20(g), A21(g), A22(g);
 
-    DistMatrix<T,MC,MR> BL(g), BR(g),
-                        B0(g), B1(g), B2(g);
+    DistMatrix<T> BL(g), BR(g),
+                  B0(g), B1(g), B2(g);
 
-    DistMatrix<T,MC,MR> CL(g), CR(g),
-                        C0(g), C1(g), C2(g),
-                        CLeft(g), CRight(g);
+    DistMatrix<T> CL(g), CR(g),
+                  C0(g), C1(g), C2(g),
+                  CLeft(g), CRight(g);
 
     // Temporary distributions
     DistMatrix<T,MC,STAR> B1_MC_STAR(g);
@@ -191,7 +192,7 @@ internal::HemmRUC
     DistMatrix<T,MR,  STAR> ARowPanAdj_MR_STAR(g);
 
     // Start the algorithm
-    Scal( beta, C );
+    Scale( beta, C );
     LockedPartitionDownDiagonal
     ( A, ATL, ATR,
          ABL, ABR, 0 );
@@ -236,11 +237,11 @@ internal::HemmRUC
         MakeTrapezoidal( LEFT,  LOWER,  0, ARowPanAdj_MR_STAR );
         MakeTrapezoidal( RIGHT, LOWER, -1, AColPanAdj_STAR_MR );
 
-        internal::LocalGemm
+        LocalGemm
         ( NORMAL, ADJOINT, 
           alpha, B1_MC_STAR, ARowPanAdj_MR_STAR, (T)1, CRight );
 
-        internal::LocalGemm
+        LocalGemm
         ( NORMAL, NORMAL,
           alpha, B1_MC_STAR, AColPanAdj_STAR_MR, (T)1, CLeft );
         //--------------------------------------------------------------------//
@@ -270,7 +271,7 @@ internal::HemmRUC
 
 template<typename T>
 inline void
-internal::LocalSymmetricAccumulateRU
+LocalSymmetricAccumulateRU
 ( Orientation orientation, T alpha,
   const DistMatrix<T,MC,  MR  >& A,
   const DistMatrix<T,STAR,MC  >& B_STAR_MC,
@@ -317,12 +318,12 @@ internal::LocalSymmetricAccumulateRU
     const Grid& g = A.Grid();
 
     // Matrix views
-    DistMatrix<T,MC,MR>
+    DistMatrix<T>
         ATL(g), ATR(g),  A00(g), A01(g), A02(g),
         ABL(g), ABR(g),  A10(g), A11(g), A12(g),
                          A20(g), A21(g), A22(g);
 
-    DistMatrix<T,MC,MR> D11(g);
+    DistMatrix<T> D11(g);
 
     DistMatrix<T,STAR,MC>
         BL_STAR_MC(g), BR_STAR_MC(g),
@@ -393,20 +394,20 @@ internal::LocalSymmetricAccumulateRU
         //--------------------------------------------------------------------//
         D11 = A11;
         MakeTrapezoidal( LEFT, UPPER, 0, D11 );
-        internal::LocalGemm
+        LocalGemm
         ( orientation, orientation,
           alpha, D11, B1_STAR_MC, (T)1, Z1AdjOrTrans_MR_STAR );
         MakeTrapezoidal( LEFT, UPPER, 1, D11 );
 
-        internal::LocalGemm
+        LocalGemm
         ( NORMAL, NORMAL, alpha, D11, B1AdjOrTrans_MR_STAR, 
           (T)1, Z1AdjOrTrans_MC_STAR );
 
-        internal::LocalGemm
+        LocalGemm
         ( orientation, orientation,
           alpha, A12, B1_STAR_MC, (T)1, Z2AdjOrTrans_MR_STAR );
 
-        internal::LocalGemm
+        LocalGemm
         ( NORMAL, NORMAL, alpha, A12, B2AdjOrTrans_MR_STAR, 
           (T)1, Z1AdjOrTrans_MC_STAR );
         //--------------------------------------------------------------------//
@@ -446,4 +447,5 @@ internal::LocalSymmetricAccumulateRU
 #endif
 }
 
+} // namespace internal
 } // namespace elem

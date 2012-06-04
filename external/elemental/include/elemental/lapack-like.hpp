@@ -35,15 +35,7 @@
 
 namespace elem {
 
-//
-// We ensure that all enums are lifted into the elemental namespace so that
-// they can be conveniently used as function arguments, e.g., 
-//
-// using namespace elem;
-// Matrix<double> A;
-// ...
-// double norm = Norm( A, ONE_NORM );
-//
+// TODO: Better organize this file
 
 namespace norm_type_wrapper {
 enum NormType
@@ -122,25 +114,23 @@ template<typename R>
 void ApplyPackedReflectors
 ( LeftOrRight side, UpperOrLower uplo, 
   VerticalOrHorizontal dir, ForwardOrBackward order,
-  int offset,
-  const DistMatrix<R,MC,MR>& H, 
-        DistMatrix<R,MC,MR>& A );
+  int offset, const DistMatrix<R>& H, DistMatrix<R>& A );
 template<typename R>
 void ApplyPackedReflectors
 ( LeftOrRight side, UpperOrLower uplo,
   VerticalOrHorizontal dir, ForwardOrBackward order, Conjugation conjugation,
   int offset,
-  const DistMatrix<Complex<R>,MC,  MR  >& H,
-  const DistMatrix<Complex<R>,MD,  STAR>& t,
-        DistMatrix<Complex<R>,MC,  MR  >& A );
+  const DistMatrix<Complex<R> >& H,
+  const DistMatrix<Complex<R>,MD,STAR>& t,
+        DistMatrix<Complex<R> >& A );
 template<typename R>
 void ApplyPackedReflectors
 ( LeftOrRight side, UpperOrLower uplo, 
   VerticalOrHorizontal dir, ForwardOrBackward order, Conjugation conjugation,
   int offset,
-  const DistMatrix<Complex<R>,MC,  MR  >& H,
+  const DistMatrix<Complex<R> >& H,
   const DistMatrix<Complex<R>,STAR,STAR>& t,
-        DistMatrix<Complex<R>,MC,  MR  >& A );
+        DistMatrix<Complex<R> >& A );
 
 //----------------------------------------------------------------------------//
 // Apply[Inverse]ColumnPivots/Apply[Inverse]RowPivots                         //
@@ -163,48 +153,48 @@ void ApplyInverseRowPivots( Matrix<F>& A, const Matrix<int>& p );
 
 template<typename F>
 void ApplyColumnPivots
-(       DistMatrix<F,  MC,MR  >& A,
+(       DistMatrix<F>& A,
   const DistMatrix<int,VC,STAR>& p );
 template<typename F>
 void ApplyInverseColumnPivots
-(       DistMatrix<F,  MC,MR  >& A,
+(       DistMatrix<F>& A,
   const DistMatrix<int,VC,STAR>& p );
 
 template<typename F>
 void ApplyRowPivots
-(       DistMatrix<F,  MC,MR  >& A,
+(       DistMatrix<F>& A,
   const DistMatrix<int,VC,STAR>& p );
 template<typename F>
 void ApplyInverseRowPivots
-(       DistMatrix<F,  MC,MR  >& A,
+(       DistMatrix<F>& A,
   const DistMatrix<int,VC,STAR>& p );
 
 template<typename F>
 void ApplyColumnPivots
-(       DistMatrix<F,  MC,  MR  >& A,
+(       DistMatrix<F>& A,
   const DistMatrix<int,STAR,STAR>& p );
 template<typename F>
 void ApplyInverseColumnPivots
-(       DistMatrix<F,  MC,  MR  >& A,
+(       DistMatrix<F>& A,
   const DistMatrix<int,STAR,STAR>& p );
 
 template<typename F>
 void ApplyRowPivots
-(       DistMatrix<F,  MC,  MR  >& A,
+(       DistMatrix<F>& A,
   const DistMatrix<int,STAR,STAR>& p );
 template<typename F>
 void ApplyInverseRowPivots
-(       DistMatrix<F,  MC,  MR  >& A,
+(       DistMatrix<F>& A,
   const DistMatrix<int,STAR,STAR>& p );
 
 template<typename F>
 void ApplyColumnPivots
-(       DistMatrix<F,MC,MR>& A,
+(       DistMatrix<F>& A,
   const std::vector<int>& image,
   const std::vector<int>& preimage );
 template<typename F>
 void ApplyRowPivots
-(       DistMatrix<F,MC,MR>& A,
+(       DistMatrix<F>& A,
   const std::vector<int>& image,
   const std::vector<int>& preimage );
 
@@ -227,7 +217,7 @@ template<typename F>
 void Cholesky( UpperOrLower uplo, Matrix<F>& A );
 
 template<typename F>
-void Cholesky( UpperOrLower uplo, DistMatrix<F,MC,MR>& A );
+void Cholesky( UpperOrLower uplo, DistMatrix<F>& A );
 
 //----------------------------------------------------------------------------//
 // CholeskySolve:                                                             //
@@ -239,8 +229,7 @@ void Cholesky( UpperOrLower uplo, DistMatrix<F,MC,MR>& A );
 // TODO: Serial version
 
 template<typename F>
-void CholeskySolve
-( UpperOrLower uplo, DistMatrix<F,MC,MR>& A, DistMatrix<F,MC,MR>& B );
+void CholeskySolve( UpperOrLower uplo, DistMatrix<F>& A, DistMatrix<F>& B );
 
 //----------------------------------------------------------------------------//
 // ComposePivots                                                              //
@@ -284,9 +273,9 @@ template<typename F>
 SafeProduct<F> SafeDeterminant( Matrix<F>& A );
 
 template<typename F>
-F Determinant( DistMatrix<F,MC,MR>& A );
+F Determinant( DistMatrix<F>& A );
 template<typename F>
-SafeProduct<F> SafeDeterminant( DistMatrix<F,MC,MR>& A );
+SafeProduct<F> SafeDeterminant( DistMatrix<F>& A );
 
 // TODO
 /*
@@ -296,9 +285,9 @@ template<typename F>
 SafeProduct<F> SafeHPDDeterminant( UpperOrLower uplo, Matrix<F>& A );
 
 template<typename F>
-F HPDDeterminant( UpperOrLower uplo, DistMatrix<F,MC,MR>& A );
+F HPDDeterminant( UpperOrLower uplo, DistMatrix<F>& A );
 template<typename F>
-SafeProduct<F> SafeHPDDeterminant( UpperOrLower uplo, DistMatrix<F,MC,MR>& A );
+SafeProduct<F> SafeHPDDeterminant( UpperOrLower uplo, DistMatrix<F>& A );
 */
 
 //----------------------------------------------------------------------------//
@@ -310,7 +299,7 @@ SafeProduct<F> SafeHPDDeterminant( UpperOrLower uplo, DistMatrix<F,MC,MR>& A );
 // TODO: Serial version
 
 template<typename F>
-void GaussianElimination( DistMatrix<F,MC,MR>& A, DistMatrix<F,MC,MR>& B );
+void GaussianElimination( DistMatrix<F>& A, DistMatrix<F>& B );
 
 //----------------------------------------------------------------------------//
 // HermitianGenDefiniteEig (Hermitian Generalized-Definite Eigensolver)       //
@@ -321,10 +310,10 @@ void GaussianElimination( DistMatrix<F,MC,MR>& A, DistMatrix<F,MC,MR>& B );
 template<typename R>
 void HermitianGenDefiniteEig
 ( HermitianGenDefiniteEigType type, UpperOrLower uplo, 
-  DistMatrix<R,MC,  MR>& A, 
-  DistMatrix<R,MC,  MR>& B, 
+  DistMatrix<R>& A, 
+  DistMatrix<R>& B, 
   DistMatrix<R,VR,STAR>& w,
-  DistMatrix<R,MC,  MR>& X );
+  DistMatrix<R>& X );
 // Grab a partial set of eigenpairs. 
 // The partial set is determined by the inclusive zero-indexed range 
 //   a,a+1,...,b    ; a >= 0, b < n  
@@ -332,27 +321,75 @@ void HermitianGenDefiniteEig
 template<typename R>
 void HermitianGenDefiniteEig
 ( HermitianGenDefiniteEigType type, UpperOrLower uplo,
-  DistMatrix<R,MC,  MR>& A,
-  DistMatrix<R,MC,  MR>& B,
+  DistMatrix<R>& A,
+  DistMatrix<R>& B,
   DistMatrix<R,VR,STAR>& w,
-  DistMatrix<R,MC,  MR>& X,
+  DistMatrix<R>& X,
   int a, int b );
 // Grab a partial set of eigenpairs.
 // The partial set is determined by the half-open interval (a,b]
 template<typename R>
 void HermitianGenDefiniteEig
 ( HermitianGenDefiniteEigType type, UpperOrLower uplo,
-  DistMatrix<R,MC,  MR>& A,
-  DistMatrix<R,MC,  MR>& B,
-  DistMatrix<R,VR,STAR>& w,
-  DistMatrix<R,MC,  MR>& X,
-  R a, R b );
+  DistMatrix<R>& A, DistMatrix<R>& B, DistMatrix<R,VR,STAR>& w,
+  DistMatrix<R>& X, R a, R b );
 // Grab the full set of eigenvalues of real symmetric A and SPD B
 template<typename R>
 void HermitianGenDefiniteEig
 ( HermitianGenDefiniteEigType type, UpperOrLower uplo, 
-  DistMatrix<R,MC,  MR>& A, 
-  DistMatrix<R,MC,  MR>& B, 
+  DistMatrix<R>& A, DistMatrix<R>& B, DistMatrix<R,VR,STAR>& w );
+// Grab a partial set of eigenvalues. 
+// The partial set is determined by the inclusive zero-indexed range 
+//   a,a+1,...,b    ; a >= 0, b < n  
+// of the n eigenpairs sorted from smallest to largest eigenvalues.  
+template<typename R>
+void HermitianGenDefiniteEig
+( HermitianGenDefiniteEigType type, UpperOrLower uplo,
+  DistMatrix<R>& A, DistMatrix<R>& B, DistMatrix<R,VR,STAR>& w,
+  int a, int b );
+// Grab a partial set of eigenvalues.
+// The partial set is determined by the half-open interval (a,b]
+template<typename R>
+void HermitianGenDefiniteEig
+( HermitianGenDefiniteEigType type, UpperOrLower uplo,
+  DistMatrix<R>& A, DistMatrix<R>& B, DistMatrix<R,VR,STAR>& w,
+  R a, R b );
+// Grab the full set of eigenpairs of complex Hermitian A and HPD B
+template<typename R>
+void HermitianGenDefiniteEig    
+( HermitianGenDefiniteEigType type, UpperOrLower uplo,
+  DistMatrix<Complex<R> >& A,
+  DistMatrix<Complex<R> >& B,
+  DistMatrix<R,VR,STAR>& w,
+  DistMatrix<Complex<R> >& X );
+// Grab a partial set of eigenpairs. 
+// The partial set is determined by the inclusive zero-indexed range 
+//   a,a+1,...,b    ; a >= 0, b < n  
+// of the n eigenpairs sorted from smallest to largest eigenvalues.  
+template<typename R>
+void HermitianGenDefiniteEig
+( HermitianGenDefiniteEigType type, UpperOrLower uplo,
+  DistMatrix<Complex<R> >& A,
+  DistMatrix<Complex<R> >& B,
+  DistMatrix<R,VR,STAR>& w,
+  DistMatrix<Complex<R> >& X,
+  int a, int b );
+// Grab a partial set of eigenpairs.
+// The partial set is determined by the half-open interval (a,b]
+template<typename R>
+void HermitianGenDefiniteEig
+( HermitianGenDefiniteEigType type, UpperOrLower uplo,
+  DistMatrix<Complex<R> >& A,
+  DistMatrix<Complex<R> >& B,
+  DistMatrix<R,VR,STAR>& w,
+  DistMatrix<Complex<R> >& X,
+  R a, R b );
+// Grab the full set of eigenvalues of complex Hermitian A and HPD B
+template<typename R>
+void HermitianGenDefiniteEig    
+( HermitianGenDefiniteEigType type, UpperOrLower uplo,
+  DistMatrix<Complex<R> >& A,
+  DistMatrix<Complex<R> >& B,
   DistMatrix<R,VR,STAR>& w );
 // Grab a partial set of eigenvalues. 
 // The partial set is determined by the inclusive zero-indexed range 
@@ -361,8 +398,8 @@ void HermitianGenDefiniteEig
 template<typename R>
 void HermitianGenDefiniteEig
 ( HermitianGenDefiniteEigType type, UpperOrLower uplo,
-  DistMatrix<R,MC,  MR>& A,
-  DistMatrix<R,MC,  MR>& B,
+  DistMatrix<Complex<R> >& A,
+  DistMatrix<Complex<R> >& B,
   DistMatrix<R,VR,STAR>& w,
   int a, int b );
 // Grab a partial set of eigenvalues.
@@ -370,66 +407,9 @@ void HermitianGenDefiniteEig
 template<typename R>
 void HermitianGenDefiniteEig
 ( HermitianGenDefiniteEigType type, UpperOrLower uplo,
-  DistMatrix<R,MC,  MR>& A,
-  DistMatrix<R,MC,  MR>& B,
+  DistMatrix<Complex<R> >& A,
+  DistMatrix<Complex<R> >& B,
   DistMatrix<R,VR,STAR>& w,
-  R a, R b );
-// Grab the full set of eigenpairs of complex Hermitian A and HPD B
-template<typename R>
-void HermitianGenDefiniteEig    
-( HermitianGenDefiniteEigType type, UpperOrLower uplo,
-  DistMatrix<Complex<R>,MC,  MR>& A,
-  DistMatrix<Complex<R>,MC,  MR>& B,
-  DistMatrix<        R, VR,STAR>& w,
-  DistMatrix<Complex<R>,MC,  MR>& X );
-// Grab a partial set of eigenpairs. 
-// The partial set is determined by the inclusive zero-indexed range 
-//   a,a+1,...,b    ; a >= 0, b < n  
-// of the n eigenpairs sorted from smallest to largest eigenvalues.  
-template<typename R>
-void HermitianGenDefiniteEig
-( HermitianGenDefiniteEigType type, UpperOrLower uplo,
-  DistMatrix<Complex<R>,MC,  MR>& A,
-  DistMatrix<Complex<R>,MC,  MR>& B,
-  DistMatrix<        R, VR,STAR>& w,
-  DistMatrix<Complex<R>,MC,  MR>& X,
-  int a, int b );
-// Grab a partial set of eigenpairs.
-// The partial set is determined by the half-open interval (a,b]
-template<typename R>
-void HermitianGenDefiniteEig
-( HermitianGenDefiniteEigType type, UpperOrLower uplo,
-  DistMatrix<Complex<R>,MC,  MR>& A,
-  DistMatrix<Complex<R>,MC,  MR>& B,
-  DistMatrix<        R, VR,STAR>& w,
-  DistMatrix<Complex<R>,MC,  MR>& X,
-  R a, R b );
-// Grab the full set of eigenvalues of complex Hermitian A and HPD B
-template<typename R>
-void HermitianGenDefiniteEig    
-( HermitianGenDefiniteEigType type, UpperOrLower uplo,
-  DistMatrix<Complex<R>,MC,  MR>& A,
-  DistMatrix<Complex<R>,MC,  MR>& B,
-  DistMatrix<        R, VR,STAR>& w );
-// Grab a partial set of eigenvalues. 
-// The partial set is determined by the inclusive zero-indexed range 
-//   a,a+1,...,b    ; a >= 0, b < n  
-// of the n eigenpairs sorted from smallest to largest eigenvalues.  
-template<typename R>
-void HermitianGenDefiniteEig
-( HermitianGenDefiniteEigType type, UpperOrLower uplo,
-  DistMatrix<Complex<R>,MC,  MR>& A,
-  DistMatrix<Complex<R>,MC,  MR>& B,
-  DistMatrix<        R, VR,STAR>& w,
-  int a, int b );
-// Grab a partial set of eigenvalues.
-// The partial set is determined by the half-open interval (a,b]
-template<typename R>
-void HermitianGenDefiniteEig
-( HermitianGenDefiniteEigType type, UpperOrLower uplo,
-  DistMatrix<Complex<R>,MC,  MR>& A,
-  DistMatrix<Complex<R>,MC,  MR>& B,
-  DistMatrix<        R, VR,STAR>& w,
   R a, R b );
 #endif // WITHOUT_PMRRR
 
@@ -455,7 +435,7 @@ void Hegst
 template<typename F>
 void Hegst
 ( LeftOrRight side, UpperOrLower uplo, 
-  DistMatrix<F,MC,MR>& A, const DistMatrix<F,MC,MR>& B );
+  DistMatrix<F>& A, const DistMatrix<F>& B );
 
 //----------------------------------------------------------------------------//
 // HermitianEig (Hermitian Eigensolver)                                       //
@@ -465,31 +445,31 @@ void Hegst
 // Grab the full set of eigenpairs of the real, symmetric matrix A
 void HermitianEig
 ( UpperOrLower uplo, 
-  DistMatrix<double,MC,  MR>& A, 
+  DistMatrix<double>& A, 
   DistMatrix<double,VR,STAR>& w,
-  DistMatrix<double,MC,  MR>& Z );
+  DistMatrix<double>& Z );
 // Grab a partial set of eigenpairs of the real, symmetric n x n matrix A. 
 // The partial set is determined by the inclusive zero-indexed range 
 //   a,a+1,...,b    ; a >= 0, b < n  
 // of the n eigenpairs sorted from smallest to largest eigenvalues.  
 void HermitianEig
 ( UpperOrLower uplo,
-  DistMatrix<double,MC,  MR>& A,
+  DistMatrix<double>& A,
   DistMatrix<double,VR,STAR>& w,
-  DistMatrix<double,MC,  MR>& Z,
+  DistMatrix<double>& Z,
   int a, int b );
 // Grab a partial set of eigenpairs of the real, symmetric n x n matrix A. 
 // The partial set is determined by the half-open interval (a,b]
 void HermitianEig
 ( UpperOrLower uplo,
-  DistMatrix<double,MC,  MR>& A,
+  DistMatrix<double>& A,
   DistMatrix<double,VR,STAR>& w,
-  DistMatrix<double,MC,  MR>& Z,
+  DistMatrix<double>& Z,
   double a, double b );
 // Grab the full set of eigenvalues of the real, symmetric matrix A
 void HermitianEig
 ( UpperOrLower uplo,
-  DistMatrix<double,MC,  MR>& A,
+  DistMatrix<double>& A,
   DistMatrix<double,VR,STAR>& w );
 // Grab a partial set of eigenvalues of the real, symmetric n x n matrix A. 
 // The partial set is determined by the inclusive zero-indexed range 
@@ -497,60 +477,60 @@ void HermitianEig
 // of the n eigenpairs sorted from smallest to largest eigenvalues.  
 void HermitianEig
 ( UpperOrLower uplo,
-  DistMatrix<double,MC,  MR>& A,
+  DistMatrix<double>& A,
   DistMatrix<double,VR,STAR>& w,
   int a, int b );
 // Grab a partial set of eigenvalues of the real, symmetric n x n matrix A. 
 // The partial set is determined by the half-open interval (a,b]
 void HermitianEig
 ( UpperOrLower uplo,
-  DistMatrix<double,MC,  MR>& A,
+  DistMatrix<double>& A,
   DistMatrix<double,VR,STAR>& w,
   double a, double b );
 // Grab the full set of eigenpairs of the complex, Hermitian matrix A
 void HermitianEig    
 ( UpperOrLower uplo,
-  DistMatrix<Complex<double>,MC,  MR>& A,
-  DistMatrix<        double, VR,STAR>& w,
-  DistMatrix<Complex<double>,MC,  MR>& Z );
+  DistMatrix<Complex<double> >& A,
+  DistMatrix<double,VR,STAR>& w,
+  DistMatrix<Complex<double> >& Z );
 // Grab a partial set of eigenpairs of the complex, Hermitian n x n matrix A. 
 // The partial set is determined by the inclusive zero-indexed range 
 //   a,a+1,...,b    ; a >= 0, b < n  
 // of the n eigenpairs sorted from smallest to largest eigenvalues.  
 void HermitianEig
 ( UpperOrLower uplo,
-  DistMatrix<Complex<double>,MC,  MR>& A,
-  DistMatrix<        double, VR,STAR>& w,
-  DistMatrix<Complex<double>,MC,  MR>& Z,
+  DistMatrix<Complex<double> >& A,
+  DistMatrix<double,VR,STAR>& w,
+  DistMatrix<Complex<double> >& Z,
   int a, int b );
 // Grab a partial set of eigenpairs of the complex, Hermitian n x n matrix A. 
 // The partial set is determined by the half-open interval (a,b]
 void HermitianEig
 ( UpperOrLower uplo,
-  DistMatrix<Complex<double>,MC,  MR>& A,
-  DistMatrix<        double, VR,STAR>& w,
-  DistMatrix<Complex<double>,MC,  MR>& Z,
+  DistMatrix<Complex<double> >& A,
+  DistMatrix<double,VR,STAR>& w,
+  DistMatrix<Complex<double> >& Z,
   double a, double b );
 // Grab the full set of eigenvalues of the complex, Hermitian matrix A
 void HermitianEig
 ( UpperOrLower uplo,
-  DistMatrix<Complex<double>,MC,  MR>& A,
-  DistMatrix<        double, VR,STAR>& w );
+  DistMatrix<Complex<double> >& A,
+  DistMatrix<double,VR,STAR>& w );
 // Grab a partial set of eigenvalues of the complex, Hermitian n x n matrix A. 
 // The partial set is determined by the inclusive zero-indexed range 
 //   a,a+1,...,b    ; a >= 0, b < n  
 // of the n eigenpairs sorted from smallest to largest eigenvalues.  
 void HermitianEig
 ( UpperOrLower uplo,
-  DistMatrix<Complex<double>,MC,  MR>& A,
-  DistMatrix<        double, VR,STAR>& w,
+  DistMatrix<Complex<double> >& A,
+  DistMatrix<double,VR,STAR>& w,
   int a, int b );
 // Grab a partial set of eigenvalues of the complex, Hermitian n x n matrix A. 
 // The partial set is determined by the half-open interval (a,b]
 void HermitianEig
 ( UpperOrLower uplo,
-  DistMatrix<Complex<double>,MC,  MR>& A,
-  DistMatrix<        double, VR,STAR>& w,
+  DistMatrix<Complex<double> >& A,
+  DistMatrix<double,VR,STAR>& w,
   double a, double b );
 #endif // WITHOUT_PMRRR
 
@@ -568,11 +548,11 @@ void HermitianEig
 #ifndef WITHOUT_PMRRR
 template<typename F,class RealFunctor>
 void RealHermitianFunction
-( UpperOrLower uplo, DistMatrix<F,MC,MR>& A, const RealFunctor& f );
+( UpperOrLower uplo, DistMatrix<F>& A, const RealFunctor& f );
 
 template<typename R,class ComplexFunctor>
 void ComplexHermitianFunction
-( UpperOrLower uplo, DistMatrix<Complex<R>,MC,MR>& A, const ComplexFunctor& f );
+( UpperOrLower uplo, DistMatrix<Complex<R> >& A, const ComplexFunctor& f );
 #endif // WITHOUT_PMRRR
 
 //----------------------------------------------------------------------------//
@@ -583,7 +563,7 @@ void ComplexHermitianFunction
 
 #ifndef WITHOUT_PMRRR
 template<typename F>
-void HermitianPseudoinverse( UpperOrLower uplo, DistMatrix<F,MC,MR>& A );
+void HermitianPseudoinverse( UpperOrLower uplo, DistMatrix<F>& A );
 #endif // WITHOUT_PMRRR
 
 //----------------------------------------------------------------------------//
@@ -594,13 +574,13 @@ void HermitianPseudoinverse( UpperOrLower uplo, DistMatrix<F,MC,MR>& A );
 template<typename F>
 void HermitianSVD
 ( UpperOrLower uplo, 
-  DistMatrix<F,MC,MR>& A, DistMatrix<typename Base<F>::type,VR,STAR>& s, 
-  DistMatrix<F,MC,MR>& U, DistMatrix<F,MC,MR>& V );
+  DistMatrix<F>& A, DistMatrix<typename Base<F>::type,VR,STAR>& s, 
+  DistMatrix<F>& U, DistMatrix<F>& V );
 
 template<typename F>
 void HermitianSingularValues
 ( UpperOrLower uplo, 
-  DistMatrix<F,MC,MR>& A, DistMatrix<typename Base<F>::type,VR,STAR>& s );
+  DistMatrix<F>& A, DistMatrix<typename Base<F>::type,VR,STAR>& s );
 #endif // WITHOUT_PMRRR
 
 //----------------------------------------------------------------------------//
@@ -617,14 +597,13 @@ void HermitianSingularValues
 template<typename R>
 void HouseholderSolve
 ( Orientation orientation, 
-  DistMatrix<R,MC,MR>& A, const DistMatrix<R,MC,MR>& B,
-                                DistMatrix<R,MC,MR>& X );
+  DistMatrix<R>& A, const DistMatrix<R>& B, DistMatrix<R>& X );
 template<typename R>
 void HouseholderSolve
 ( Orientation orientation, 
-  DistMatrix<Complex<R>,MC,MR>& A,
-  const DistMatrix<Complex<R>,MC,MR>& B,
-        DistMatrix<Complex<R>,MC,MR>& X );
+        DistMatrix<Complex<R> >& A,
+  const DistMatrix<Complex<R> >& B, 
+        DistMatrix<Complex<R> >& X );
 
 //----------------------------------------------------------------------------//
 // HPDInverse:                                                                //
@@ -635,7 +614,7 @@ void HouseholderSolve
 // TODO: Serial version
 
 template<typename F>
-void HPDInverse( UpperOrLower uplo, DistMatrix<F,MC,MR>& A );
+void HPDInverse( UpperOrLower uplo, DistMatrix<F>& A );
 
 //----------------------------------------------------------------------------//
 // HPSDCholesky                                                               //
@@ -649,10 +628,10 @@ void HPDInverse( UpperOrLower uplo, DistMatrix<F,MC,MR>& A );
 
 #ifndef WITHOUT_PMRRR
 template<typename R>
-void HPSDCholesky( UpperOrLower uplo, DistMatrix<R,MC,MR>& A );
+void HPSDCholesky( UpperOrLower uplo, DistMatrix<R>& A );
 
 template<typename R>
-void HPSDCholesky( UpperOrLower uplo, DistMatrix<Complex<R>,MC,MR>& A );
+void HPSDCholesky( UpperOrLower uplo, DistMatrix<Complex<R> >& A );
 #endif // WITHOUT_PMRRR
 
 //----------------------------------------------------------------------------//
@@ -662,7 +641,7 @@ void HPSDCholesky( UpperOrLower uplo, DistMatrix<Complex<R>,MC,MR>& A );
 //----------------------------------------------------------------------------//
 
 template<typename F>
-void Pseudoinverse( DistMatrix<F,MC,MR>& A );
+void Pseudoinverse( DistMatrix<F>& A );
 
 //----------------------------------------------------------------------------//
 // SquareRoot                                                                 //
@@ -674,7 +653,7 @@ void Pseudoinverse( DistMatrix<F,MC,MR>& A );
 
 #ifndef WITHOUT_PMRRR
 template<typename F>
-void HPSDSquareRoot( UpperOrLower uplo, DistMatrix<F,MC,MR>& A );
+void HPSDSquareRoot( UpperOrLower uplo, DistMatrix<F>& A );
 #endif // WITHOUT_PMRRR
 
 //----------------------------------------------------------------------------//
@@ -687,7 +666,7 @@ template<typename F>
 void Inverse( Matrix<F>& A );
 
 template<typename F>
-void Inverse( DistMatrix<F,MC,MR>& A );
+void Inverse( DistMatrix<F>& A );
 
 //----------------------------------------------------------------------------//
 // LDLH (LDL^H factorization):                                                //
@@ -700,10 +679,14 @@ void Inverse( DistMatrix<F,MC,MR>& A );
 
 // NOTE: Currently unblocked
 template<typename F>
+void LDLH( Matrix<F>& A );
+template<typename F>
 void LDLH( Matrix<F>& A, Matrix<F>& d );
 
 template<typename F>
-void LDLH( DistMatrix<F,MC,MR>& A, DistMatrix<F,MC,STAR>& d );
+void LDLH( DistMatrix<F>& A );
+template<typename F>
+void LDLH( DistMatrix<F>& A, DistMatrix<F,MC,STAR>& d );
 
 //----------------------------------------------------------------------------//
 // LDLT (LDL^T factorization):                                                //
@@ -716,10 +699,14 @@ void LDLH( DistMatrix<F,MC,MR>& A, DistMatrix<F,MC,STAR>& d );
 
 // NOTE: Currently unblocked
 template<typename F>
+void LDLT( Matrix<F>& A );
+template<typename F>
 void LDLT( Matrix<F>& A, Matrix<F>& d );
 
 template<typename F>
-void LDLT( DistMatrix<F,MC,MR>& A, DistMatrix<F,MC,STAR>& d );
+void LDLT( DistMatrix<F>& A );
+template<typename F>
+void LDLT( DistMatrix<F>& A, DistMatrix<F,MC,STAR>& d );
 
 //----------------------------------------------------------------------------//
 // LU (LU factorization):                                                     //
@@ -742,7 +729,7 @@ template<typename F>
 void LU( Matrix<F>& A );
 
 template<typename F>
-void LU( DistMatrix<F,MC,MR>& A );
+void LU( DistMatrix<F>& A );
 
 //
 // LU with partial pivoting
@@ -752,7 +739,7 @@ template<typename F>
 void LU( Matrix<F>& A, Matrix<int>& p );
 
 template<typename F>
-void LU( DistMatrix<F,MC,MR>& A, DistMatrix<int,VC,STAR>& p );
+void LU( DistMatrix<F>& A, DistMatrix<int,VC,STAR>& p );
 
 //----------------------------------------------------------------------------//
 // LQ (LQ factorization):                                                     //
@@ -761,16 +748,31 @@ void LU( DistMatrix<F,MC,MR>& A, DistMatrix<int,VC,STAR>& p );
 // matrix.                                                                    //
 //----------------------------------------------------------------------------//
 
-template<typename R>
-void LQ( Matrix<R>& A );
-template<typename R>
-void LQ( Matrix<Complex<R> >& A, Matrix<Complex<R> >& t );
+// Implementations which overwrite A with both L and Q (with Q implicitly 
+// represented as the product of Householder reflectors).
+template<typename Real>
+void LQ( Matrix<Real>& A );
+template<typename Real>
+void LQ( DistMatrix<Real>& A );
+template<typename Real>
+void LQ( Matrix<Complex<Real> >& A, 
+         Matrix<Complex<Real> >& t );
+template<typename Real>
+void LQ( DistMatrix<Complex<Real> >& A, 
+         DistMatrix<Complex<Real>,MD,STAR>& t );
 
-template<typename R>
-void LQ( DistMatrix<R,MC,MR>& A );
-template<typename R>
-void LQ
-( DistMatrix<Complex<R>,MC,MR  >& A, DistMatrix<Complex<R>,MD,STAR>& t );
+// Implementations which return the explicit Q from the LQ decomposition
+template<typename F>
+void ExplicitLQ( Matrix<F>& A );
+template<typename F>
+void ExplicitLQ( DistMatrix<F>& A );
+
+// Implementations which return the explicit LQ decomposition, with 
+// Q overwriting A on exit
+template<typename F>
+void ExplicitLQ( Matrix<F>& L, Matrix<F>& A );
+template<typename F>
+void ExplicitLQ( DistMatrix<F>& L, DistMatrix<F>& A );
 
 //----------------------------------------------------------------------------//
 // Norm                                                                       //
@@ -782,7 +784,7 @@ Norm( const Matrix<F>& A, NormType type=FROBENIUS_NORM );
 
 template<typename F>
 typename Base<F>::type 
-Norm( const DistMatrix<F,MC,MR>& A, NormType type=FROBENIUS_NORM );
+Norm( const DistMatrix<F>& A, NormType type=FROBENIUS_NORM );
 
 //----------------------------------------------------------------------------//
 // HermitianNorm                                                              //
@@ -796,8 +798,7 @@ HermitianNorm
 template<typename F>
 typename Base<F>::type
 HermitianNorm
-( UpperOrLower uplo, const DistMatrix<F,MC,MR>& A, 
-  NormType type=FROBENIUS_NORM );
+( UpperOrLower uplo, const DistMatrix<F>& A, NormType type=FROBENIUS_NORM );
 
 //----------------------------------------------------------------------------//
 // SymmetricNorm                                                              //
@@ -811,8 +812,7 @@ SymmetricNorm
 template<typename F>
 typename Base<F>::type 
 SymmetricNorm
-( UpperOrLower uplo, const DistMatrix<F,MC,MR>& A, 
-  NormType type=FROBENIUS_NORM );
+( UpperOrLower uplo, const DistMatrix<F>& A, NormType type=FROBENIUS_NORM );
 
 //----------------------------------------------------------------------------//
 // QR (QR factorization):                                                     //
@@ -844,16 +844,31 @@ SymmetricNorm
 // transform / UT transform to be computed mainly with Level 3 BLAS.          //
 //----------------------------------------------------------------------------//
 
-template<typename R>
-void QR( Matrix<R>& A );
-template<typename R>
-void QR( Matrix<Complex<R> >& A, Matrix<Complex<R> >& t );
+// Implementations which overwrite A with both Q and R (with Q implicitly 
+// represented as the product of Householder reflectors).
+template<typename Real>
+void QR( Matrix<Real>& A );
+template<typename Real>
+void QR( DistMatrix<Real>& A );
+template<typename Real>
+void QR( Matrix<Complex<Real> >& A, 
+         Matrix<Complex<Real> >& t );
+template<typename Real>
+void QR( DistMatrix<Complex<Real> >& A, 
+         DistMatrix<Complex<Real>,MD,STAR>& t );
 
-template<typename R>
-void QR( DistMatrix<R,MC,MR>& A );
-template<typename R>
-void QR
-( DistMatrix<Complex<R>,MC,MR  >& A, DistMatrix<Complex<R>,MD,STAR>& t );
+// Implementations which return the explicit Q from the QR decomposition
+template<typename F>
+void ExplicitQR( Matrix<F>& A );
+template<typename F>
+void ExplicitQR( DistMatrix<F>& A );
+
+// Implementations which return the explicit QR decomposition, with 
+// Q overwriting A on exit
+template<typename F>
+void ExplicitQR( Matrix<F>& A, Matrix<F>& R );
+template<typename F>
+void ExplicitQR( DistMatrix<F>& A, DistMatrix<F>& R );
 
 //----------------------------------------------------------------------------//
 // Reflector (Householder reflector):                                         //
@@ -867,7 +882,7 @@ Complex<R>
 Reflector( Matrix<Complex<R> >& chi, Matrix<Complex<R> >& x );
 
 template<typename F>
-F Reflector( DistMatrix<F,MC,MR>& chi, DistMatrix<F,MC,MR>& x );
+F Reflector( DistMatrix<F>& chi, DistMatrix<F>& x );
 
 //----------------------------------------------------------------------------//
 // SkewHermitianEig (Skew-Hermitian Eigensolver)                              //
@@ -877,31 +892,31 @@ F Reflector( DistMatrix<F,MC,MR>& chi, DistMatrix<F,MC,MR>& x );
 // Grab the full set of eigenpairs of the real, skew-symmetric matrix G
 void SkewHermitianEig
 ( UpperOrLower uplo, 
-  DistMatrix<double,         MC,  MR>& G, 
-  DistMatrix<double,         VR,STAR>& wImag,
-  DistMatrix<Complex<double>,MC,  MR>& Z );
+  DistMatrix<double>& G, 
+  DistMatrix<double,VR,STAR>& wImag,
+  DistMatrix<Complex<double> >& Z );
 // Grab a partial set of eigenpairs of the real, skew-symmetric n x n matrix G. 
 // The partial set is determined by the inclusive zero-indexed range 
 //   a,a+1,...,b    ; a >= 0, b < n  
 // of the n eigenpairs sorted from smallest to largest eigenvalues.  
 void SkewHermitianEig
 ( UpperOrLower uplo,
-  DistMatrix<double,         MC,  MR>& G,
-  DistMatrix<double,         VR,STAR>& wImag,
-  DistMatrix<Complex<double>,MC,  MR>& Z,
+  DistMatrix<double>& G,
+  DistMatrix<double,VR,STAR>& wImag,
+  DistMatrix<Complex<double> >& Z,
   int a, int b );
 // Grab a partial set of eigenpairs of the real, skew-symmetric n x n matrix G. 
 // The partial set is determined by the half-open imaginary interval (a,b]
 void SkewHermitianEig
 ( UpperOrLower uplo,
-  DistMatrix<double,         MC,  MR>& G,
-  DistMatrix<double,         VR,STAR>& wImag,
-  DistMatrix<Complex<double>,MC,  MR>& Z,
+  DistMatrix<double>& G,
+  DistMatrix<double,VR,STAR>& wImag,
+  DistMatrix<Complex<double> >& Z,
   double a, double b );
 // Grab the full set of eigenvalues of the real, skew-symmetric matrix G 
 void SkewHermitianEig
 ( UpperOrLower uplo,
-  DistMatrix<double,MC,  MR>& G,
+  DistMatrix<double>& G,
   DistMatrix<double,VR,STAR>& wImag );
 // Grab a partial set of eigenvalues of the real, skew-symmetric n x n matrix G.
 // The partial set is determined by the inclusive zero-indexed range 
@@ -909,61 +924,61 @@ void SkewHermitianEig
 // of the n eigenpairs sorted from smallest to largest eigenvalues.  
 void SkewHermitianEig
 ( UpperOrLower uplo,
-  DistMatrix<double,MC,  MR>& G,
+  DistMatrix<double>& G,
   DistMatrix<double,VR,STAR>& wImag,
   int a, int b );
 // Grab a partial set of eigenvalues of the real, skew-symmetric n x n matrix G.
 // The partial set is determined by the half-open imaginary interval (a,b]
 void SkewHermitianEig
 ( UpperOrLower uplo,
-  DistMatrix<double,MC,  MR>& G,
+  DistMatrix<double>& G,
   DistMatrix<double,VR,STAR>& wImag,
   double a, double b );
 
 // Grab the full set of eigenpairs of the complex, skew-Hermitian matrix G 
 void SkewHermitianEig    
 ( UpperOrLower uplo,
-  DistMatrix<Complex<double>,MC,  MR>& G,
-  DistMatrix<double,         VR,STAR>& wImag,
-  DistMatrix<Complex<double>,MC,  MR>& Z );
+  DistMatrix<Complex<double> >& G,
+  DistMatrix<double,VR,STAR>& wImag,
+  DistMatrix<Complex<double> >& Z );
 // Grab a partial set of eigenpairs of the complex, skew-Hermitian n x n matrix
 // G. The partial set is determined by the inclusive zero-indexed range 
 //   a,a+1,...,b    ; a >= 0, b < n  
 // of the n eigenpairs sorted from smallest to largest eigenvalues.  
 void SkewHermitianEig
 ( UpperOrLower uplo,
-  DistMatrix<Complex<double>,MC,  MR>& G,
-  DistMatrix<double,         VR,STAR>& wImag,
-  DistMatrix<Complex<double>,MC,  MR>& Z,
+  DistMatrix<Complex<double> >& G,
+  DistMatrix<double,VR,STAR>& wImag,
+  DistMatrix<Complex<double> >& Z,
   int a, int b );
 // Grab a partial set of eigenpairs of the complex, skew-Hermitian n x n matrix
 // G. The partial set is determined by the half-open interval (a,b]
 void SkewHermitianEig
 ( UpperOrLower uplo,
-  DistMatrix<Complex<double>,MC,  MR>& G,
-  DistMatrix<double,         VR,STAR>& wImag,
-  DistMatrix<Complex<double>,MC,  MR>& Z,
+  DistMatrix<Complex<double> >& G,
+  DistMatrix<double,VR,STAR>& wImag,
+  DistMatrix<Complex<double> >& Z,
   double a, double b );
 // Grab the full set of eigenvalues of the complex, skew-Hermitian matrix G 
 void SkewHermitianEig
 ( UpperOrLower uplo,
-  DistMatrix<Complex<double>,MC,  MR>& G,
-  DistMatrix<double,         VR,STAR>& wImag );
+  DistMatrix<Complex<double> >& G,
+  DistMatrix<double,VR,STAR>& wImag );
 // Grab a partial set of eigenvalues of the complex, skew-Hermitian n x n matrix
 // G. The partial set is determined by the inclusive zero-indexed range 
 //   a,a+1,...,b    ; a >= 0, b < n  
 // of the n eigenpairs sorted from smallest to largest eigenvalues.  
 void SkewHermitianEig
 ( UpperOrLower uplo,
-  DistMatrix<Complex<double>,MC,  MR>& G,
-  DistMatrix<double,         VR,STAR>& wImag,
+  DistMatrix<Complex<double> >& G,
+  DistMatrix<double,VR,STAR>& wImag,
   int a, int b );
 // Grab a partial set of eigenvalues of the complex, skew-Hermitian n x n matrix
 // G. The partial set is determined by the half-open imaginary interval (a,b]
 void SkewHermitianEig
 ( UpperOrLower uplo,
-  DistMatrix<Complex<double>,MC,  MR>& G,
-  DistMatrix<double,         VR,STAR>& wImag,
+  DistMatrix<Complex<double> >& G,
+  DistMatrix<double,VR,STAR>& wImag,
   double a, double b );
 #endif // WITHOUT_PMRRR
 
@@ -975,10 +990,10 @@ template<typename R>
 void SortEig( DistMatrix<R,VR,STAR>& w );
 
 template<typename R>
-void SortEig( DistMatrix<R,VR,STAR>& w, DistMatrix<R,MC,MR>& Z );
+void SortEig( DistMatrix<R,VR,STAR>& w, DistMatrix<R>& Z );
 
 template<typename R>
-void SortEig( DistMatrix<R,VR,STAR>& w, DistMatrix<Complex<R>,MC,MR>& Z );
+void SortEig( DistMatrix<R,VR,STAR>& w, DistMatrix<Complex<R> >& Z );
 
 //----------------------------------------------------------------------------//
 // Bidiag (Reduce general matrix to bidiagonal form):                         //
@@ -998,12 +1013,12 @@ void Bidiag
 
 // WARNING: Not yet finished
 template<typename R>
-void Bidiag( DistMatrix<R,MC,MR>& A );
+void Bidiag( DistMatrix<R>& A );
 
 // WARNING: Not yet finished
 template<typename R>
 void Bidiag
-( DistMatrix<Complex<R>,MC,MR>& A,
+( DistMatrix<Complex<R> >& A,
   DistMatrix<Complex<R>,STAR,STAR>& tP,
   DistMatrix<Complex<R>,STAR,STAR>& tQ );
 
@@ -1033,12 +1048,12 @@ void HermitianTridiag
 ( UpperOrLower uplo, Matrix<Complex<R> >& A, Matrix<Complex<R> >& t );
 
 template<typename R>
-void HermitianTridiag( UpperOrLower uplo, DistMatrix<R,MC,MR>& A );
+void HermitianTridiag( UpperOrLower uplo, DistMatrix<R>& A );
 
 template<typename R>
 void HermitianTridiag
 ( UpperOrLower uplo,
-  DistMatrix<Complex<R>,MC,  MR  >& A,
+  DistMatrix<Complex<R> >& A,
   DistMatrix<Complex<R>,STAR,STAR>& t );
 
 void SetHermitianTridiagApproach( HermitianTridiagApproach approach );
@@ -1055,7 +1070,7 @@ GridOrder GetHermitianTridiagGridOrder();
 //----------------------------------------------------------------------------//
 
 template<typename F>
-void Polar( DistMatrix<F,MC,MR>& A, DistMatrix<F,MC,MR>& P );
+void Polar( DistMatrix<F>& A, DistMatrix<F>& P );
 
 //----------------------------------------------------------------------------//
 // SVD                                                                        //
@@ -1066,16 +1081,16 @@ void SVD
 ( Matrix<F>& A, Matrix<typename Base<F>::type>& s, Matrix<F>& V );
 template<typename F>
 void SVD
-( DistMatrix<F,                     MC,MR  >& A, 
+( DistMatrix<F>& A, 
   DistMatrix<typename Base<F>::type,VR,STAR>& s, 
-  DistMatrix<F,                     MC,MR  >& V );
+  DistMatrix<F>& V );
 
 template<typename F>
 void SingularValues
 ( Matrix<F>& A, Matrix<typename Base<F>::type>& s );
 template<typename F>
 void SingularValues
-( DistMatrix<F,                     MC,MR  >& A,
+( DistMatrix<F>& A,
   DistMatrix<typename Base<F>::type,VR,STAR>& s );
 
 //----------------------------------------------------------------------------//
@@ -1088,7 +1103,7 @@ template<typename F>
 F Trace( const Matrix<F>& A );
 
 template<typename F>
-F Trace( const DistMatrix<F,MC,MR>& A );
+F Trace( const DistMatrix<F>& A );
 
 //----------------------------------------------------------------------------//
 // TriangularInverse                                                          //
@@ -1104,7 +1119,27 @@ void TriangularInverse
 
 template<typename F>
 void TriangularInverse
-( UpperOrLower uplo, UnitOrNonUnit diag, DistMatrix<F,MC,MR>& A  );
+( UpperOrLower uplo, UnitOrNonUnit diag, DistMatrix<F>& A  );
+
+//----------------------------------------------------------------------------//
+// QR-based Halley iteration for the polar decomposition                      //
+//----------------------------------------------------------------------------//
+
+template<typename F>
+int QDWH
+( Matrix<F>& A, 
+  typename Base<F>::type lowerBound, 
+  typename Base<F>::type twoNormEstimate );
+template<typename F>
+int QDWH
+( DistMatrix<F>& A, 
+  typename Base<F>::type lowerBound, 
+  typename Base<F>::type twoNormEstimate );
+
+template<typename F>
+int Halley( Matrix<F>& A, typename Base<F>::type twoNormEstimate );
+template<typename F>
+int Halley( DistMatrix<F>& A, typename Base<F>::type twoNormEstimate );
 
 } // namespace elem
 
@@ -1121,7 +1156,10 @@ void TriangularInverse
 #include "./lapack-like/CholeskySolve.hpp"
 #include "./lapack-like/ComposePivots.hpp"
 #include "./lapack-like/Determinant.hpp"
+#include "./lapack-like/ExplicitLQ.hpp"
+#include "./lapack-like/ExplicitQR.hpp"
 #include "./lapack-like/GaussianElimination.hpp"
+#include "./lapack-like/Halley.hpp"
 #include "./lapack-like/Hegst.hpp"
 #include "./lapack-like/HermitianEig.hpp"
 #include "./lapack-like/HermitianFunction.hpp"
@@ -1142,6 +1180,7 @@ void TriangularInverse
 #include "./lapack-like/PivotParity.hpp"
 #include "./lapack-like/Polar.hpp"
 #include "./lapack-like/Pseudoinverse.hpp"
+#include "./lapack-like/QDWH.hpp"
 #include "./lapack-like/QR.hpp"
 #include "./lapack-like/Reflector.hpp"
 #include "./lapack-like/SkewHermitianEig.hpp"
@@ -1231,7 +1270,7 @@ SymmetricNorm( UpperOrLower uplo, const Matrix<F>& A, NormType type )
 template<typename F>
 inline typename Base<F>::type
 SymmetricNorm
-( UpperOrLower uplo, const DistMatrix<F,MC,MR>& A, NormType type )
+( UpperOrLower uplo, const DistMatrix<F>& A, NormType type )
 { 
 #ifndef RELEASE
     PushCallStack("SymmetricNorm");

@@ -32,15 +32,16 @@
 */
 
 namespace elem {
+namespace internal {
 
 template<typename T>
 inline void
-internal::GemmTT
+GemmTT
 ( Orientation orientationOfA, 
   Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C )
+  T alpha, const DistMatrix<T>& A,
+           const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C )
 {
 #ifndef RELEASE
     PushCallStack("internal::GemmTT");
@@ -57,18 +58,15 @@ internal::GemmTT
 
     if( m <= n && weightTowardsC*m <= k )
     {
-        internal::GemmTTB
-        ( orientationOfA, orientationOfB, alpha, A, B, beta, C );
+        GemmTTB( orientationOfA, orientationOfB, alpha, A, B, beta, C );
     }
     else if( n <= m && weightTowardsC*n <= k )
     {
-        internal::GemmTTA
-        ( orientationOfA, orientationOfB, alpha, A, B, beta, C );
+        GemmTTA( orientationOfA, orientationOfB, alpha, A, B, beta, C );
     }
     else
     {
-        internal::GemmTTC
-        ( orientationOfA, orientationOfB, alpha, A, B, beta, C );
+        GemmTTC( orientationOfA, orientationOfB, alpha, A, B, beta, C );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -78,12 +76,12 @@ internal::GemmTT
 // Transpose Transpose Gemm that avoids communicating the matrix A.
 template<typename T>
 inline void
-internal::GemmTTA
+GemmTTA
 ( Orientation orientationOfA, 
   Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C )
+  T alpha, const DistMatrix<T>& A,
+           const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C )
 {
 #ifndef RELEASE
     PushCallStack("internal::GemmTTA");
@@ -108,21 +106,21 @@ internal::GemmTTA
     const Grid& g = A.Grid();
 
     // Matrix views
-    DistMatrix<T,MC,MR> BT(g),  B0(g),
-                        BB(g),  B1(g),
-                                B2(g);
+    DistMatrix<T> BT(g),  B0(g),
+                  BB(g),  B1(g),
+                          B2(g);
 
-    DistMatrix<T,MC,MR> CL(g), CR(g),
-                        C0(g), C1(g), C2(g);
+    DistMatrix<T> CL(g), CR(g),
+                  C0(g), C1(g), C2(g);
 
     // Temporary distributions
     DistMatrix<T,STAR,MC  > B1_STAR_MC(g);
     DistMatrix<T,MR,  STAR> D1_MR_STAR(g);
     DistMatrix<T,MR,  MC  > D1_MR_MC(g);
-    DistMatrix<T,MC,  MR  > D1(g);
+    DistMatrix<T> D1(g);
 
     // Start the algorithm
-    Scal( beta, C );
+    Scale( beta, C );
     LockedPartitionDown
     ( B, BT,
          BB, 0 );
@@ -148,7 +146,7 @@ internal::GemmTTA
 
         // D1[MR,*] := alpha (A[MC,MR])^T (B1[*,MC])^T
         //           = alpha (A^T)[MR,MC] (B1^T)[MC,*]
-        internal::LocalGemm
+        LocalGemm
         ( orientationOfA, orientationOfB, 
           alpha, A, B1_STAR_MC, (T)0, D1_MR_STAR );
 
@@ -179,12 +177,12 @@ internal::GemmTTA
 // Transpose Transpose Gemm that avoids communicating the matrix B.
 template<typename T>
 inline void
-internal::GemmTTB
+GemmTTB
 ( Orientation orientationOfA, 
   Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C )
+  T alpha, const DistMatrix<T>& A,
+           const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C )
 {
 #ifndef RELEASE
     PushCallStack("internal::GemmTTB");
@@ -209,21 +207,21 @@ internal::GemmTTB
     const Grid& g = A.Grid();
 
     // Matrix views
-    DistMatrix<T,MC,MR> AL(g), AR(g),
-                        A0(g), A1(g), A2(g);
+    DistMatrix<T> AL(g), AR(g),
+                  A0(g), A1(g), A2(g);
 
-    DistMatrix<T,MC,MR> CT(g),  C0(g),
-                        CB(g),  C1(g),
-                                C2(g);
+    DistMatrix<T> CT(g),  C0(g),
+                  CB(g),  C1(g),
+                          C2(g);
 
     // Temporary distributions
     DistMatrix<T,MR,  STAR> A1_MR_STAR(g);
     DistMatrix<T,STAR,MC  > D1_STAR_MC(g);
     DistMatrix<T,MR,  MC  > D1_MR_MC(g);
-    DistMatrix<T,MC,  MR  > D1(g);
+    DistMatrix<T> D1(g);
 
     // Start the algorithm 
-    Scal( beta, C );
+    Scale( beta, C );
     LockedPartitionRight( A, AL, AR, 0 );
     PartitionDown
     ( C, CT,
@@ -249,7 +247,7 @@ internal::GemmTTB
  
         // D1[*,MC] := alpha (A1[MR,*])^T (B[MC,MR])^T
         //           = alpha (A1^T)[*,MR] (B^T)[MR,MC]
-        internal::LocalGemm
+        LocalGemm
         ( orientationOfA, orientationOfB, 
           alpha, A1_MR_STAR, B, (T)0, D1_STAR_MC );
 
@@ -280,12 +278,12 @@ internal::GemmTTB
 // Transpose Transpose Gemm that avoids communicating the matrix C.
 template<typename T>
 inline void
-internal::GemmTTC
+GemmTTC
 ( Orientation orientationOfA, 
   Orientation orientationOfB,
-  T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C )
+  T alpha, const DistMatrix<T>& A,
+           const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C )
 {
 #ifndef RELEASE
     PushCallStack("internal::GemmTTC");
@@ -310,19 +308,19 @@ internal::GemmTTC
     const Grid& g = A.Grid();
 
     // Matrix views
-    DistMatrix<T,MC,MR> AT(g),  A0(g),
-                        AB(g),  A1(g),
-                                A2(g);
+    DistMatrix<T> AT(g),  A0(g),
+                  AB(g),  A1(g),
+                          A2(g);
 
-    DistMatrix<T,MC,MR> BL(g), BR(g),
-                        B0(g), B1(g), B2(g);
+    DistMatrix<T> BL(g), BR(g),
+                  B0(g), B1(g), B2(g);
 
     // Temporary distributions
     DistMatrix<T,STAR,MC> A1_STAR_MC(g);
     DistMatrix<T,MR,STAR> B1_MR_STAR(g);
     
     // Start the algorithm    
-    Scal( beta, C );
+    Scale( beta, C );
     LockedPartitionDown
     ( A, AT,
          AB, 0 ); 
@@ -347,7 +345,7 @@ internal::GemmTTC
 
         // C[MC,MR] += alpha (A1[*,MC])^T (B1[MR,*])^T
         //           = alpha (A1^T)[MC,*] (B1^T)[*,MR]
-        internal::LocalGemm
+        LocalGemm
         ( orientationOfA, orientationOfB, 
           alpha, A1_STAR_MC, B1_MR_STAR, (T)1, C );
         //--------------------------------------------------------------------//
@@ -369,4 +367,5 @@ internal::GemmTTC
 #endif
 }
 
+} // namespace internal
 } // namespace elem

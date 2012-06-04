@@ -34,6 +34,7 @@
 #include "./Bidiag/Local.hpp"
 #include "./Bidiag/PanelL.hpp"
 #include "./Bidiag/PanelU.hpp"
+#include "./Bidiag/UnblockedL.hpp"
 #include "./Bidiag/UnblockedU.hpp"
 #include "./Bidiag/L.hpp"
 #include "./Bidiag/U.hpp"
@@ -41,7 +42,7 @@
 namespace elem {
 
 template<typename R> 
-inline void Bidiag( DistMatrix<R,MC,MR>& A )
+inline void Bidiag( DistMatrix<R>& A )
 {
 #ifndef RELEASE
     PushCallStack("Bidiag");
@@ -59,7 +60,7 @@ inline void Bidiag( DistMatrix<R,MC,MR>& A )
 
 template<typename R> 
 inline void Bidiag
-( DistMatrix<Complex<R>,MC,  MR  >& A,
+( DistMatrix<Complex<R> >& A,
   DistMatrix<Complex<R>,STAR,STAR>& tP,
   DistMatrix<Complex<R>,STAR,STAR>& tQ )
 {

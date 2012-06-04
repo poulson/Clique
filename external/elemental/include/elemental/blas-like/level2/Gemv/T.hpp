@@ -38,9 +38,9 @@ template<typename T>
 inline void
 GemvT
 ( Orientation orientation,
-  T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& x,
-  T beta,        DistMatrix<T,MC,MR>& y )
+  T alpha, const DistMatrix<T>& A,
+           const DistMatrix<T>& x,
+  T beta,        DistMatrix<T>& y )
 {
 #ifndef RELEASE
     PushCallStack("internal::GemvT");
@@ -69,10 +69,10 @@ GemvT
         DistMatrix<T,MC,STAR> x_MC_STAR(g);
         DistMatrix<T,MR,STAR> z_MR_STAR(g);
         DistMatrix<T,MR,MC  > z_MR_MC(g);
-        DistMatrix<T,MC,MR  > z(g);
+        DistMatrix<T> z(g);
 
         // Start the algorithm
-        Scal( beta, y );
+        Scale( beta, y );
         x_MC_STAR.AlignWith( A );
         z_MR_STAR.AlignWith( A );
         z_MR_STAR.ResizeTo( A.Width(), 1 );
@@ -100,10 +100,10 @@ GemvT
         DistMatrix<T,MC,STAR> x_MC_STAR(g);
         DistMatrix<T,MR,STAR> z_MR_STAR(g);
         DistMatrix<T,MR,MC  > z_MR_MC(g);
-        DistMatrix<T,MC,MR  > zTrans(g);
+        DistMatrix<T> zTrans(g);
 
         // Start the algorithm
-        Scal( beta, y );
+        Scale( beta, y );
         x_MC_STAR.AlignWith( A );
         z_MR_STAR.AlignWith( A );
         z_MR_STAR.ResizeTo( A.Width(), 1 );
@@ -131,10 +131,10 @@ GemvT
         DistMatrix<T,STAR,MC  > x_STAR_MC(g);
         DistMatrix<T,MR,  STAR> z_MR_STAR(g);
         DistMatrix<T,MR,  MC  > z_MR_MC(g);
-        DistMatrix<T,MC,  MR  > z(g);
+        DistMatrix<T> z(g);
 
         // Start the algorithm
-        Scal( beta, y );
+        Scale( beta, y );
         x_STAR_MC.AlignWith( A );
         z_MR_STAR.AlignWith( A );
         z_MR_STAR.ResizeTo( A.Width(), 1 );
@@ -162,10 +162,10 @@ GemvT
         DistMatrix<T,STAR,MC  > x_STAR_MC(g);
         DistMatrix<T,MR,  STAR> z_MR_STAR(g);
         DistMatrix<T,MR,  MC  > z_MR_MC(g);
-        DistMatrix<T,MC,  MR  > zTrans(g);
+        DistMatrix<T> zTrans(g);
 
         // Start the algorithm
-        Scal( beta, y );
+        Scale( beta, y );
         x_STAR_MC.AlignWith( A );
         z_MR_STAR.AlignWith( A );
         z_MR_STAR.ResizeTo( A.Width(), 1 );

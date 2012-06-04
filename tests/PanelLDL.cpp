@@ -231,8 +231,7 @@ main( int argc, char* argv[] )
             {
                 const cliq::symbolic::DistSymmFactSupernode& sn = 
                     S.dist.supernodes[s];
-                elem::DistMatrix<F,elem::MC,elem::MR>& front2dL =
-                    L.dist.fronts[s].front2dL;
+                elem::DistMatrix<F>& front2dL = L.dist.fronts[s].front2dL;
 
                 front2dL.SetGrid( *sn.grid );
                 const int frontSize = sn.size+sn.lowerStruct.size();

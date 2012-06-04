@@ -51,8 +51,8 @@ void Usage()
 template<typename R> // represents a real number
 void TestCorrectness
 ( bool printMatrices,
-  const DistMatrix<R,MC,MR>& A,
-        DistMatrix<R,MC,MR>& AOrig )
+  const DistMatrix<R>& A,
+        DistMatrix<R>& AOrig )
 {
     const Grid& g = A.Grid();
     const int m = A.Height();
@@ -62,22 +62,22 @@ void TestCorrectness
     if( g.Rank() == 0 )
         cout << "  Testing orthogonality of Q..." << endl;
 
-    // Form Z := Q^H Q as an approximation to identity
-    DistMatrix<R,MC,MR> Z(m,n,g);
+    // Form Z := Q Q^H as an approximation to identity
+    DistMatrix<R> Z(m,n,g);
     MakeIdentity( Z );
     ApplyPackedReflectors
     ( RIGHT, UPPER, HORIZONTAL, BACKWARD, 0, A, Z );
     ApplyPackedReflectors
     ( RIGHT, UPPER, HORIZONTAL, FORWARD, 0, A, Z );
 
-    DistMatrix<R,MC,MR> ZUpper(g);
+    DistMatrix<R> ZUpper(g);
     ZUpper.View( Z, 0, 0, minDim, minDim );
 
     // Form Identity
-    DistMatrix<R,MC,MR> X(minDim,minDim,g);
+    DistMatrix<R> X(minDim,minDim,g);
     MakeIdentity( X );
 
-    // Form X := I - Q^H Q
+    // Form X := I - Q Q^H
     Axpy( (R)-1, ZUpper, X );
 
     R oneNormOfError = Norm( X, ONE_NORM );
@@ -85,9 +85,9 @@ void TestCorrectness
     R frobNormOfError = Norm( X, FROBENIUS_NORM );
     if( g.Rank() == 0 )
     {
-        cout << "    ||Q^H Q - I||_1  = " << oneNormOfError << "\n"
-             << "    ||Q^H Q - I||_oo = " << infNormOfError << "\n"
-             << "    ||Q^H Q - I||_F  = " << frobNormOfError << endl;
+        cout << "    ||Q Q^H - I||_1  = " << oneNormOfError << "\n"
+             << "    ||Q Q^H - I||_oo = " << infNormOfError << "\n"
+             << "    ||Q Q^H - I||_F  = " << frobNormOfError << endl;
     }
 
     if( g.Rank() == 0 )
@@ -96,7 +96,7 @@ void TestCorrectness
     }
 
     // Form L Q
-    DistMatrix<R,MC,MR> L( A );
+    DistMatrix<R> L( A );
     MakeTrapezoidal( LEFT, LOWER, 0, L );
     ApplyPackedReflectors
     ( RIGHT, UPPER, HORIZONTAL, BACKWARD, 0, A, L );
@@ -124,9 +124,9 @@ void TestCorrectness
 template<typename R> // represents a real number
 void TestCorrectness
 ( bool printMatrices,
-  const DistMatrix<Complex<R>,MC,MR  >& A,
+  const DistMatrix<Complex<R> >& A,
   const DistMatrix<Complex<R>,MD,STAR>& t,
-        DistMatrix<Complex<R>,MC,MR  >& AOrig )
+        DistMatrix<Complex<R> >& AOrig )
 {
     typedef Complex<R> C;
 
@@ -138,22 +138,22 @@ void TestCorrectness
     if( g.Rank() == 0 )
         cout << "  Testing orthogonality of Q..." << endl;
 
-    // Form Z := Q^H Q as an approximation to identity
-    DistMatrix<C,MC,MR> Z(m,n,g);
+    // Form Z := Q Q^H as an approximation to identity
+    DistMatrix<C> Z(m,n,g);
     MakeIdentity( Z );
     ApplyPackedReflectors
     ( RIGHT, UPPER, HORIZONTAL, BACKWARD, UNCONJUGATED, 0, A, t, Z );
     ApplyPackedReflectors
     ( RIGHT, UPPER, HORIZONTAL, FORWARD, CONJUGATED, 0, A, t, Z );
     
-    DistMatrix<C,MC,MR> ZUpper(g);
+    DistMatrix<C> ZUpper(g);
     ZUpper.View( Z, 0, 0, minDim, minDim );
 
     // Form Identity
-    DistMatrix<C,MC,MR> X(minDim,minDim,g);
+    DistMatrix<C> X(minDim,minDim,g);
     MakeIdentity( X );
 
-    // Form X := I - Q^H Q
+    // Form X := I - Q Q^H
     Axpy( (C)-1, ZUpper, X );
 
     R oneNormOfError = Norm( X, ONE_NORM );
@@ -161,16 +161,16 @@ void TestCorrectness
     R frobNormOfError = Norm( X, FROBENIUS_NORM );
     if( g.Rank() == 0 )
     {
-        cout << "    ||Q^H Q - I||_1  = " << oneNormOfError << "\n"
-             << "    ||Q^H Q - I||_oo = " << infNormOfError << "\n"
-             << "    ||Q^H Q - I||_F  = " << frobNormOfError << endl;
+        cout << "    ||Q Q^H - I||_1  = " << oneNormOfError << "\n"
+             << "    ||Q Q^H - I||_oo = " << infNormOfError << "\n"
+             << "    ||Q Q^H - I||_F  = " << frobNormOfError << endl;
     }
 
     if( g.Rank() == 0 )
         cout << "  Testing if A = LQ..." << endl;
 
     // Form L Q
-    DistMatrix<C,MC,MR> L( A );
+    DistMatrix<C> L( A );
     MakeTrapezoidal( LEFT, LOWER, 0, L );
     ApplyPackedReflectors
     ( RIGHT, UPPER, HORIZONTAL, BACKWARD, UNCONJUGATED, 0, A, t, L );
@@ -208,7 +208,7 @@ void TestLQ<double>
     typedef double R;
 
     double startTime, endTime, runTime, gFlops;
-    DistMatrix<R,MC,MR> A(g), AOrig(g);
+    DistMatrix<R> A(g), AOrig(g);
     Uniform( m, n, A );
 
     if( testCorrectness )
@@ -257,7 +257,7 @@ void TestLQ<Complex<double> >
     typedef Complex<double> C;
 
     double startTime, endTime, runTime, gFlops;
-    DistMatrix<C,MC,MR  > A(g), AOrig(g);
+    DistMatrix<C> A(g), AOrig(g);
     Uniform( m, n, A );
 
     if( testCorrectness )

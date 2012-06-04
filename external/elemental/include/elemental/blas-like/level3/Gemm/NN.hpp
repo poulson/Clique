@@ -32,13 +32,14 @@
 */
 
 namespace elem {
+namespace internal {
 
 template<typename T>
 inline void
-internal::GemmNN
-( T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C )
+GemmNN
+( T alpha, const DistMatrix<T>& A,
+           const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C )
 {
 #ifndef RELEASE
     PushCallStack("internal::GemmNN");
@@ -54,19 +55,19 @@ internal::GemmNN
 
     if( weightAwayFromDot*m <= k && weightAwayFromDot*n <= k )
     {
-        internal::GemmNNDot( alpha, A, B, beta, C );
+        GemmNNDot( alpha, A, B, beta, C );
     }
     else if( m <= n && weightTowardsC*m <= k )
     {
-        internal::GemmNNB( alpha, A, B, beta, C );    
+        GemmNNB( alpha, A, B, beta, C );    
     }
     else if( n <= m && weightTowardsC*n <= k )
     {
-        internal::GemmNNA( alpha, A, B, beta, C );
+        GemmNNA( alpha, A, B, beta, C );
     }
     else
     {
-        internal::GemmNNC( alpha, A, B, beta, C );
+        GemmNNC( alpha, A, B, beta, C );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -76,10 +77,10 @@ internal::GemmNN
 // Normal Normal Gemm that avoids communicating the matrix A.
 template<typename T>
 inline void
-internal::GemmNNA
-( T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C )
+GemmNNA
+( T alpha, const DistMatrix<T>& A,
+           const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C )
 {
 #ifndef RELEASE
     PushCallStack("internal::GemmNNA");
@@ -101,10 +102,10 @@ internal::GemmNNA
     const Grid& g = A.Grid();
 
     // Matrix views
-    DistMatrix<T,MC,MR> BL(g), BR(g),
-                        B0(g), B1(g), B2(g);
-    DistMatrix<T,MC,MR> CL(g), CR(g),
-                        C0(g), C1(g), C2(g);
+    DistMatrix<T> BL(g), BR(g),
+                  B0(g), B1(g), B2(g);
+    DistMatrix<T> CL(g), CR(g),
+                  C0(g), C1(g), C2(g);
 
     // Temporary distributions
     DistMatrix<T,VR,STAR> B1_VR_STAR(g);
@@ -112,7 +113,7 @@ internal::GemmNNA
     DistMatrix<T,MC,STAR> D1_MC_STAR(g);
 
     // Start the algorithm
-    Scal( beta, C );
+    Scale( beta, C );
     LockedPartitionRight( B, BL, BR, 0 );
     PartitionRight( C, CL, CR, 0 );
     while( BR.Width() > 0 )
@@ -134,7 +135,7 @@ internal::GemmNNA
         B1Trans_STAR_MR.TransposeFrom( B1_VR_STAR );
 
         // D1[MC,*] := alpha A[MC,MR] B1[MR,*]
-        internal::LocalGemm
+        LocalGemm
         ( NORMAL, TRANSPOSE, alpha, A, B1Trans_STAR_MR, (T)0, D1_MC_STAR );
 
         // C1[MC,MR] += scattered result of D1[MC,*] summed over grid rows
@@ -160,10 +161,10 @@ internal::GemmNNA
 // Normal Normal Gemm that avoids communicating the matrix B.
 template<typename T>
 inline void 
-internal::GemmNNB
-( T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C )
+GemmNNB
+( T alpha, const DistMatrix<T>& A,
+           const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C )
 {
 #ifndef RELEASE
     PushCallStack("internal::GemmNNB");
@@ -185,19 +186,19 @@ internal::GemmNNB
     const Grid& g = A.Grid();
 
     // Matrix views
-    DistMatrix<T,MC,MR> AT(g),  A0(g),
-                        AB(g),  A1(g),
-                                A2(g);
-    DistMatrix<T,MC,MR> CT(g),  C0(g),
-                        CB(g),  C1(g),
-                                C2(g);
+    DistMatrix<T> AT(g),  A0(g),
+                  AB(g),  A1(g),
+                          A2(g);
+    DistMatrix<T> CT(g),  C0(g),
+                  CB(g),  C1(g),
+                          C2(g);
 
     // Temporary distributions
     DistMatrix<T,STAR,MC> A1_STAR_MC(g);
     DistMatrix<T,STAR,MR> D1_STAR_MR(g);
 
     // Start the algorithm
-    Scal( beta, C );
+    Scale( beta, C );
     LockedPartitionDown
     ( A, AT,
          AB, 0 );
@@ -225,8 +226,7 @@ internal::GemmNNB
         A1_STAR_MC = A1; // A1[*,MC] <- A1[MC,MR]
 
         // D1[*,MR] := alpha A1[*,MC] B[MC,MR]
-        internal::LocalGemm
-        ( NORMAL, NORMAL, alpha, A1_STAR_MC, B, (T)0, D1_STAR_MR );
+        LocalGemm( NORMAL, NORMAL, alpha, A1_STAR_MC, B, (T)0, D1_STAR_MR );
 
         // C1[MC,MR] += scattered result of D1[*,MR] summed over grid cols
         C1.SumScatterUpdate( (T)1, D1_STAR_MR );
@@ -254,10 +254,10 @@ internal::GemmNNB
 // Normal Normal Gemm that avoids communicating the matrix C.
 template<typename T>
 inline void 
-internal::GemmNNC
-( T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C )
+GemmNNC
+( T alpha, const DistMatrix<T>& A,
+           const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C )
 {
 #ifndef RELEASE
     PushCallStack("internal::GemmNNC");
@@ -279,19 +279,19 @@ internal::GemmNNC
     const Grid& g = A.Grid();
 
     // Matrix views
-    DistMatrix<T,MC,MR> AL(g), AR(g),
-                        A0(g), A1(g), A2(g);         
+    DistMatrix<T> AL(g), AR(g),
+                  A0(g), A1(g), A2(g);         
 
-    DistMatrix<T,MC,MR> BT(g),  B0(g),
-                        BB(g),  B1(g),
-                                B2(g);
+    DistMatrix<T> BT(g),  B0(g),
+                  BB(g),  B1(g),
+                          B2(g);
 
     // Temporary distributions
     DistMatrix<T,MC,STAR> A1_MC_STAR(g);
     DistMatrix<T,MR,STAR> B1Trans_MR_STAR(g); 
 
     // Start the algorithm
-    Scal( beta, C );
+    Scale( beta, C );
     LockedPartitionRight( A, AL, AR, 0 ); 
     LockedPartitionDown
     ( B, BT, 
@@ -314,7 +314,7 @@ internal::GemmNNC
 
         // C[MC,MR] += alpha A1[MC,*] (B1^T[MR,*])^T
         //           = alpha A1[MC,*] B1[*,MR]
-        internal::LocalGemm
+        LocalGemm
         ( NORMAL, TRANSPOSE, alpha, A1_MC_STAR, B1Trans_MR_STAR, (T)1, C );
         //--------------------------------------------------------------------//
         A1_MC_STAR.FreeAlignments();
@@ -336,10 +336,10 @@ internal::GemmNNC
 // Normal Normal Gemm for panel-panel dot products. 
 template<typename T>
 inline void 
-internal::GemmNNDot
-( T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C )
+GemmNNDot
+( T alpha, const DistMatrix<T>& A,
+           const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C )
 {
 #ifndef RELEASE
     PushCallStack("internal::GemmNNDot");
@@ -363,16 +363,16 @@ internal::GemmNNDot
     if( A.Height() > B.Width() )
     {
         // Matrix views
-        DistMatrix<T,MC,MR> AT(g), AB(g),
-                            A0(g), A1(g), A2(g);         
+        DistMatrix<T> AT(g), AB(g),
+                      A0(g), A1(g), A2(g);         
 
-        DistMatrix<T,MC,MR> BL(g),  B0(g),
-                            BR(g),  B1(g),
-                                    B2(g);
+        DistMatrix<T> BL(g),  B0(g),
+                      BR(g),  B1(g),
+                              B2(g);
 
-        DistMatrix<T,MC,MR> CT(g), C0(g), C1L(g), C1R(g),
-                            CB(g), C1(g), C10(g), C11(g), C12(g),
-                                   C2(g);
+        DistMatrix<T> CT(g), C0(g), C1L(g), C1R(g),
+                      CB(g), C1(g), C10(g), C11(g), C12(g),
+                             C2(g);
 
         // Temporary distributions
         DistMatrix<T,STAR,VC> A1_STAR_VC(g);
@@ -380,7 +380,7 @@ internal::GemmNNDot
         DistMatrix<T,STAR,STAR> C11_STAR_STAR(g);
 
         // Star the algorithm
-        Scal( beta, C );
+        Scale( beta, C );
         LockedPartitionDown
         ( A, AT,
              AB, 0 );
@@ -422,7 +422,7 @@ internal::GemmNNDot
                 C11_STAR_STAR.ResizeTo( C11.Height(), C11.Width() );
                 //------------------------------------------------------------//
                 B1_VC_STAR = B1;
-                internal::LocalGemm
+                LocalGemm
                 ( NORMAL, NORMAL, 
                   alpha, A1_STAR_VC, B1_VC_STAR, (T)0, C11_STAR_STAR );
                 C11.SumScatterUpdate( (T)1, C11_STAR_STAR );
@@ -455,14 +455,14 @@ internal::GemmNNDot
     else
     {
         // Matrix views
-        DistMatrix<T,MC,MR> AT(g), AB(g),
-                            A0(g), A1(g), A2(g);         
+        DistMatrix<T> AT(g), AB(g),
+                      A0(g), A1(g), A2(g);         
 
-        DistMatrix<T,MC,MR> BL(g),  B0(g),
-                            BR(g),  B1(g),
-                                    B2(g);
+        DistMatrix<T> BL(g),  B0(g),
+                      BR(g),  B1(g),
+                              B2(g);
 
-        DistMatrix<T,MC,MR> 
+        DistMatrix<T> 
             CL(g), CR(g),         C1T(g),  C01(g),
             C0(g), C1(g), C2(g),  C1B(g),  C11(g),
                                            C21(g);
@@ -473,7 +473,7 @@ internal::GemmNNDot
         DistMatrix<T,STAR,STAR> C11_STAR_STAR(g);
 
         // Star the algorithm
-        Scal( beta, C );
+        Scale( beta, C );
         LockedPartitionRight( B, BL, BR, 0 );
         PartitionRight( C, CL, CR, 0 );
         while( BR.Width() > 0 )
@@ -515,7 +515,7 @@ internal::GemmNNDot
                 C11_STAR_STAR.ResizeTo( C11.Height(), C11.Width() );
                 //------------------------------------------------------------//
                 A1_STAR_VR = A1;
-                internal::LocalGemm
+                LocalGemm
                 ( NORMAL, NORMAL, 
                   alpha, A1_STAR_VR, B1_VR_STAR, (T)0, C11_STAR_STAR );
                 C11.SumScatterUpdate( (T)1, C11_STAR_STAR );
@@ -550,4 +550,5 @@ internal::GemmNNDot
 #endif
 }
 
+} // namespace internal
 } // namespace elem

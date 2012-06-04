@@ -32,12 +32,13 @@
 */
 
 namespace elem {
+namespace internal {
 
 template<typename T>
 inline void
-internal::LocalSymvColAccumulateU
+LocalSymvColAccumulateU
 ( T alpha, 
-  const DistMatrix<T,MC,MR  >& A,
+  const DistMatrix<T>& A,
   const DistMatrix<T,MC,STAR>& x_MC_STAR,
   const DistMatrix<T,MR,STAR>& x_MR_STAR,
         DistMatrix<T,MC,STAR>& z_MC_STAR,
@@ -82,12 +83,12 @@ internal::LocalSymvColAccumulateU
     const Grid& g = A.Grid();
 
     // Matrix views
-    DistMatrix<T,MC,MR> 
+    DistMatrix<T> 
         ATL(g), ATR(g),  A00(g), A01(g), A02(g),
         ABL(g), ABR(g),  A10(g), A11(g), A12(g),
                          A20(g), A21(g), A22(g);
 
-    DistMatrix<T,MC,MR> D11(g);
+    DistMatrix<T> D11(g);
 
     DistMatrix<T,MC,STAR> 
         xT_MC_STAR(g),  x0_MC_STAR(g),
@@ -232,9 +233,9 @@ internal::LocalSymvColAccumulateU
 
 template<typename T>
 inline void
-internal::LocalSymvRowAccumulateU
+LocalSymvRowAccumulateU
 ( T alpha, 
-  const DistMatrix<T,MC,  MR>& A,
+  const DistMatrix<T>& A,
   const DistMatrix<T,STAR,MC>& x_STAR_MC,
   const DistMatrix<T,STAR,MR>& x_STAR_MR,
         DistMatrix<T,STAR,MC>& z_STAR_MC,
@@ -279,12 +280,12 @@ internal::LocalSymvRowAccumulateU
     const Grid& g = A.Grid();
 
     // Matrix views
-    DistMatrix<T,MC,MR> 
+    DistMatrix<T> 
         ATL(g), ATR(g),  A00(g), A01(g), A02(g),
         ABL(g), ABR(g),  A10(g), A11(g), A12(g),
                          A20(g), A21(g), A22(g);
 
-    DistMatrix<T,MC,MR> D11(g);
+    DistMatrix<T> D11(g);
 
     DistMatrix<T,STAR,MC> 
         xL_STAR_MC(g), xR_STAR_MC(g),
@@ -396,4 +397,5 @@ internal::LocalSymvRowAccumulateU
 #endif
 }
 
+} // namespace internal
 } // namespace elem

@@ -60,7 +60,7 @@ inline void InitializeDistLeaf
 #endif
     const symbolic::DistSymmFactSupernode& sn = S.dist.supernodes[0];
     Matrix<F>& topLocalFrontL = L.local.fronts.back().frontL;
-    DistMatrix<F,MC,MR>& front2dL = L.dist.fronts[0].front2dL;
+    DistMatrix<F>& front2dL = L.dist.fronts[0].front2dL;
 
     front2dL.LockedView
     ( topLocalFrontL.Height(), topLocalFrontL.Width(), 0, 0,

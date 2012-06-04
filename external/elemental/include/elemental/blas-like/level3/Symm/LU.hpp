@@ -32,10 +32,11 @@
 */
 
 namespace elem {
+namespace internal {
 
 template<typename T>
 inline void
-internal::SymmLU
+SymmLU
 ( T alpha, const DistMatrix<T,MC,MR>& A,
            const DistMatrix<T,MC,MR>& B,
   T beta,        DistMatrix<T,MC,MR>& C )
@@ -45,9 +46,9 @@ internal::SymmLU
 #endif
     // TODO: Come up with a better routing mechanism
     if( A.Height() > 5*B.Width() )
-        internal::SymmLUA( alpha, A, B, beta, C );
+        SymmLUA( alpha, A, B, beta, C );
     else
-        internal::SymmLUC( alpha, A, B, beta, C );
+        SymmLUC( alpha, A, B, beta, C );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -55,7 +56,7 @@ internal::SymmLU
 
 template<typename T>
 inline void
-internal::SymmLUA
+SymmLUA
 ( T alpha, const DistMatrix<T,MC,MR>& A,
            const DistMatrix<T,MC,MR>& B,
   T beta,        DistMatrix<T,MC,MR>& C )
@@ -84,7 +85,7 @@ internal::SymmLUA
     DistMatrix<T,MR,STAR> Z1_MR_STAR(g);
     DistMatrix<T,MR,MC  > Z1_MR_MC(g);
 
-    Scal( beta, C );
+    Scale( beta, C );
     LockedPartitionRight
     ( B, BL, BR, 0 );
     PartitionRight
@@ -113,7 +114,7 @@ internal::SymmLUA
         B1Trans_STAR_MR.TransposeFrom( B1_VR_STAR );
         Zero( Z1_MC_STAR );
         Zero( Z1_MR_STAR );
-        internal::LocalSymmetricAccumulateLU
+        LocalSymmetricAccumulateLU
         ( TRANSPOSE,
           alpha, A, B1_MC_STAR, B1Trans_STAR_MR, Z1_MC_STAR, Z1_MR_STAR );
 
@@ -144,7 +145,7 @@ internal::SymmLUA
 
 template<typename T>
 inline void
-internal::SymmLUC
+SymmLUC
 ( T alpha, const DistMatrix<T,MC,MR>& A,
            const DistMatrix<T,MC,MR>& B,
   T beta,        DistMatrix<T,MC,MR>& C )
@@ -177,7 +178,7 @@ internal::SymmLUC
     DistMatrix<T,MR,  STAR> B1Trans_MR_STAR(g);
 
     // Start the algorithm
-    Scal( beta, C );
+    Scale( beta, C );
     LockedPartitionDownDiagonal
     ( A, ATL, ATR,
          ABL, ABR, 0 );
@@ -232,11 +233,11 @@ internal::SymmLUC
 
         B1Trans_MR_STAR.TransposeFrom( B1 );
 
-        internal::LocalGemm
+        LocalGemm
         ( NORMAL, TRANSPOSE, 
           alpha, AColPan_MC_STAR, B1Trans_MR_STAR, (T)1, CAbove );
 
-        internal::LocalGemm
+        LocalGemm
         ( TRANSPOSE, TRANSPOSE, 
           alpha, ARowPan_STAR_MC, B1Trans_MR_STAR, (T)1, CBelow );
         //--------------------------------------------------------------------//
@@ -267,4 +268,5 @@ internal::SymmLUC
 #endif
 }
 
+} // namespace internal
 } // namespace elem

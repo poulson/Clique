@@ -32,11 +32,12 @@
 */
 
 namespace elem {
+namespace internal {
 
 // Distributed E := alpha (A^{T/H} B + C D^{T/H}) + beta E
 template<typename T>
 inline void
-internal::Trr2kTNNT
+Trr2kTNNT
 ( UpperOrLower uplo,
   Orientation orientationOfA, Orientation orientationOfD,
   T alpha, const DistMatrix<T,MC,MR>& A, const DistMatrix<T,MC,MR>& B,
@@ -46,11 +47,12 @@ internal::Trr2kTNNT
 #ifndef RELEASE
     PushCallStack("internal::Trr2kTNNT");
 #endif
-    internal::Trr2kNTTN
+    Trr2kNTTN
     ( uplo, orientationOfD, orientationOfA, alpha, C, D, A, B, beta, E );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
+} // namespace internal
 } // namespace elem
