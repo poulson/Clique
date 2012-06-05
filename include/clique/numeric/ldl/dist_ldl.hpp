@@ -230,7 +230,7 @@ inline void DistLDL
         elem::Zeros( updateSize, updateSize, front.work2d );
         const int leftLocalWidth = front.front2dL.LocalWidth();
         const int topLocalHeight = 
-            elem::LocalLength<int>( sn.size, grid.MCRank(), gridHeight );
+            LocalLength<int>( sn.size, grid.MCRank(), gridHeight );
         for( unsigned proc=0; proc<commSize; ++proc )
         {
             const F* recvValues = &recvBuffer[recvDispls[proc]];

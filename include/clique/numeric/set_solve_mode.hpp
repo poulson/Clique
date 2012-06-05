@@ -72,15 +72,15 @@ inline void SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
         for( int s=1; s<numDistSupernodes; ++s )
         {
             DistSymmFront<F>& front = L.dist.fronts[s];
-            const elem::Grid& grid = front.front2dL.Grid();
+            const Grid& grid = front.front2dL.Grid();
             const int snSize = front.front2dL.Width();
 
             // Invert the strictly lower portion of the diagonal block, and
             // then make the strictly upper triangle zero
             DistMatrix<F> LT( grid );
             LT.View( front.front2dL, 0, 0, snSize, snSize );
-            elem::TriangularInverse( elem::LOWER, elem::UNIT, LT );
-            elem::MakeTrapezoidal( elem::LEFT, elem::LOWER, 0, LT );
+            elem::TriangularInverse( LOWER, UNIT, LT );
+            elem::MakeTrapezoidal( LEFT, LOWER, 0, LT );
         }
     }
     else if( mode == FAST_1D_LDL && oldMode == NORMAL_2D )
@@ -94,20 +94,20 @@ inline void SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
         for( int s=1; s<numDistSupernodes; ++s )
         {
             DistSymmFront<F>& front = L.dist.fronts[s];
-            const elem::Grid& grid = front.front2dL.Grid();
+            const Grid& grid = front.front2dL.Grid();
             const int snSize = front.front2dL.Width();
 
             // Invert the strictly lower portion of the diagonal block 
             DistMatrix<F> LT( grid );
             LT.View( front.front2dL, 0, 0, snSize, snSize );
-            elem::TriangularInverse( elem::LOWER, elem::UNIT, LT );
+            elem::TriangularInverse( LOWER, UNIT, LT );
 
             // Copy the data and make the strictly upper triangle zero
             front.front1dL.Empty();
             front.front1dL.SetGrid( grid );
             front.front1dL = front.front2dL;
             front.front2dL.Empty();
-            elem::MakeTrapezoidal( elem::LEFT, elem::LOWER, 0, front.front1dL );
+            elem::MakeTrapezoidal( LEFT, LOWER, 0, front.front1dL );
         }
     }
     else if( mode == NORMAL_2D && oldMode == NORMAL_1D )

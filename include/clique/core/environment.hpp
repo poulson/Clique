@@ -30,9 +30,6 @@ namespace cliq {
 
 typedef unsigned char byte;
  
-typedef elem::Complex<float> scomplex;
-typedef elem::Complex<double> dcomplex;
-
 bool Initialized();
 void Initialize( int& argc, char**& argv );
 void Finalize();
@@ -60,6 +57,10 @@ using elem::Complex;
 using elem::Matrix;
 using elem::Grid;
 using elem::DistMatrix;
+
+// Pull in a few indexing routines
+using elem::Shift;
+using elem::LocalLength;
 
 } // namespace cliq
 

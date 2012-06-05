@@ -58,19 +58,19 @@ inline void DistFrontBlockLDL
     // Overwrite ATL with inv(L D L^[T/H]) = L^[-T/H] D^{-1} L^{-1}
     elem::TriangularInverse( LOWER, UNIT, ATL );
     elem::Trdtrmm( orientation, LOWER, ATL );
-    elem::MakeTrapezoidal( elem::LEFT, elem::LOWER, 0, ATL );
+    elem::MakeTrapezoidal( LEFT, LOWER, 0, ATL );
     if( orientation == TRANSPOSE )
     {
-        elem::DistMatrix<F> ATLTrans( g );
+        DistMatrix<F> ATLTrans( g );
         elem::Transpose( ATL, ATLTrans );
-        elem::MakeTrapezoidal( elem::LEFT, elem::UPPER, 1, ATLTrans );
+        elem::MakeTrapezoidal( LEFT, UPPER, 1, ATLTrans );
         elem::Axpy( (F)1, ATLTrans, ATL );
     }
     else
     {
-        elem::DistMatrix<F> ATLAdj( g );
+        DistMatrix<F> ATLAdj( g );
         elem::Adjoint( ATL, ATLAdj );
-        elem::MakeTrapezoidal( elem::LEFT, elem::UPPER, 1, ATLAdj );
+        elem::MakeTrapezoidal( LEFT, UPPER, 1, ATLAdj );
         elem::Axpy( (F)1, ATLAdj, ATL );
     }
 #ifndef RELEASE

@@ -125,7 +125,7 @@ void symbolic::DistSymmetricFactorization
 
         // Set some offset and size information for this supernode
         factSN.localSize1d = 
-            elem::LocalLength<int>( origSN.size, teamRank, teamSize );
+            LocalLength<int>( origSN.size, teamRank, teamSize );
         factSN.localOffset1d = localOffset1d;
 
         // Retrieve the child grid information
@@ -312,17 +312,13 @@ void symbolic::DistSymmetricFactorization
             const int updateColAlignment = myChildSize % childGridHeight;
             const int updateRowAlignment = myChildSize % childGridWidth;
             const int updateColShift = 
-                elem::Shift<int>
-                ( childGridRow, updateColAlignment, childGridHeight );
+                Shift<int>( childGridRow, updateColAlignment, childGridHeight );
             const int updateRowShift = 
-                elem::Shift<int>
-                ( childGridCol, updateRowAlignment, childGridWidth );
+                Shift<int>( childGridCol, updateRowAlignment, childGridWidth );
             const int updateLocalHeight = 
-                elem::LocalLength<int>
-                ( updateSize, updateColShift, childGridHeight );
+                LocalLength<int>( updateSize, updateColShift, childGridHeight );
             const int updateLocalWidth = 
-                elem::LocalLength<int>
-                ( updateSize, updateRowShift, childGridWidth );
+                LocalLength<int>( updateSize, updateRowShift, childGridWidth );
             for( int jChildLocal=0; 
                      jChildLocal<updateLocalWidth; ++jChildLocal )
             {
@@ -356,11 +352,9 @@ void symbolic::DistSymmetricFactorization
         {
             const int updateAlignment = myChildSize % childTeamSize;
             const int updateShift = 
-                elem::Shift<int>
-                ( childTeamRank, updateAlignment, childTeamSize );
+                Shift<int>( childTeamRank, updateAlignment, childTeamSize );
             const int updateLocalHeight = 
-                elem::LocalLength<int>
-                ( updateSize, updateShift, childTeamSize );
+                LocalLength<int>( updateSize, updateShift, childTeamSize );
             for( int iChildLocal=0; 
                      iChildLocal<updateLocalHeight; ++iChildLocal )
             {
