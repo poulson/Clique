@@ -58,7 +58,7 @@ void ModifyForTrmm
         const int length = std::min(-diagOffset,height-j);
         MemZero( D.LocalBuffer(j,j), length );
         if( diag == UNIT && j-diagOffset < height )
-            D.SetLocalEntry( j-diagOffset, j, (F)1 );
+            D.SetLocal( j-diagOffset, j, (F)1 );
     }
 #ifndef RELEASE
     cliq::PopCallStack();

@@ -132,7 +132,7 @@ inline void DistBlockLowerForwardSolve
             const int destRank = myChildRelIndices[iChild] % commSize;
             F* packBuf = &sendBuffer[packOffsets[destRank]];
             for( int jChild=0; jChild<width; ++jChild )
-                packBuf[jChild] = childUpdate.GetLocalEntry(iChildLocal,jChild);
+                packBuf[jChild] = childUpdate.GetLocal(iChildLocal,jChild);
             packOffsets[destRank] += width;
         }
         packOffsets.clear();
@@ -435,7 +435,7 @@ inline void DistBlockLowerBackwardSolve
             const int startRank = myRelIndices[iUpdate] % parentCommSize;
             const F* recvBuf = &recvBuffer[recvDispls[startRank]];
             for( int j=0; j<width; ++j )
-                WB.SetLocalEntry(iUpdateLocal,j,recvBuf[j]);
+                WB.SetLocal(iUpdateLocal,j,recvBuf[j]);
             recvDispls[startRank] += width;
         }
         recvBuffer.clear();

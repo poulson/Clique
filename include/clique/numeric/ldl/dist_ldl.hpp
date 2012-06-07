@@ -133,7 +133,7 @@ inline void DistLDL
 
                 const int destRank = destGridRow + destGridCol*gridHeight;
                 sendBuffer[packOffsets[destRank]++] = 
-                    childUpdate.GetLocalEntry(iChildLocal,jChildLocal);
+                    childUpdate.GetLocal(iChildLocal,jChildLocal);
             }
         }
 #ifndef RELEASE
@@ -242,10 +242,10 @@ inline void DistLDL
                 const int jFrontLocal = recvIndices[2*k+1];
                 const F value = recvValues[k];
                 if( jFrontLocal < leftLocalWidth )
-                    front.front2dL.UpdateLocalEntry
+                    front.front2dL.UpdateLocal
                     ( iFrontLocal, jFrontLocal, value );
                 else
-                    front.work2d.UpdateLocalEntry
+                    front.work2d.UpdateLocal
                     ( iFrontLocal-topLocalHeight, 
                       jFrontLocal-leftLocalWidth, value );
             }

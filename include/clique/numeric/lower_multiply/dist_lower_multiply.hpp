@@ -135,7 +135,7 @@ inline void DistLowerMultiplyNormal
             const int destRank = myChildRelIndices[iChild] % commSize;
             F* packBuf = &sendBuffer[packOffsets[destRank]];
             for( int jChild=0; jChild<width; ++jChild )
-                packBuf[jChild] = childUpdate.GetLocalEntry(iChildLocal,jChild);
+                packBuf[jChild] = childUpdate.GetLocal(iChildLocal,jChild);
             packOffsets[destRank] += width;
         }
         packOffsets.clear();
@@ -437,7 +437,7 @@ inline void DistLowerMultiplyTranspose
             const int startRank = myRelIndices[iUpdate] % parentCommSize;
             const F* recvBuf = &recvBuffer[recvDispls[startRank]];
             for( int jUpdate=0; jUpdate<width; ++jUpdate )
-                WB.SetLocalEntry(iUpdateLocal,jUpdate,recvBuf[jUpdate]);
+                WB.SetLocal(iUpdateLocal,jUpdate,recvBuf[jUpdate]);
             recvDispls[startRank] += width;
         }
         recvBuffer.clear();

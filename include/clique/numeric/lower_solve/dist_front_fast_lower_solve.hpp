@@ -193,7 +193,7 @@ inline void DistFrontFastLowerForwardSolve
         dTReplacement.AlignWith( dTOrig );
         dTReplacement.ResizeTo( dTOrig.Height(), 1 );
         for( int iLocal=0; iLocal<localHeight; ++iLocal )
-            dTReplacement.SetLocalEntry( iLocal, 0, (F)1 );
+            dTReplacement.SetLocal( iLocal, 0, (F)1 );
         LT.SetDiagonal( dTReplacement );
     }
 
@@ -410,7 +410,7 @@ inline void DistFrontFastLowerBackwardSolve
         dTReplacement.ResizeTo( dTOrig.Height(), 1 );
         const int localHeight = dTOrig.LocalHeight();
         for( int iLocal=0; iLocal<localHeight; ++iLocal )
-            dTReplacement.SetLocalEntry( iLocal, 0, (F)1 );
+            dTReplacement.SetLocal( iLocal, 0, (F)1 );
         LT.SetDiagonal( dTReplacement );
     }
 
