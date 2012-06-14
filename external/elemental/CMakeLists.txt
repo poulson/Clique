@@ -232,6 +232,8 @@ if(CMAKE_Fortran_COMPILER_SUPPORTS_F90)
     FortranCInterface_HEADER(
       ${CMAKE_CURRENT_BINARY_DIR}/include/elemental/FCMangle.h 
       MACRO_NAMESPACE "FC_")
+    install(FILES ${PROJECT_BINARY_DIR}/include/elemental/FCMangle.h
+            DESTINATION include/elemental/)
   endif(FortranCInterface_VERIFIED_CXX)
 endif(CMAKE_Fortran_COMPILER_SUPPORTS_F90)
 
@@ -547,6 +549,7 @@ set(ELEMENTAL_SRC "${ELEMENTAL_CPP};${ELEMENTAL_HEADERS}")
 # MPI libraries) to be linked last
 add_library(cmake-dummy-lib ${LIBRARY_TYPE} cmake/CMakeDummyFunction.cpp)
 target_link_libraries(cmake-dummy-lib ${MATH_LIBS} ${MPI_CXX_LIBRARIES})
+install(TARGETS cmake-dummy-lib DESTINATION lib)
 
 # The main library
 if(BUILD_PMRRR AND NOT FAILED_PMRRR)
@@ -649,8 +652,10 @@ if(BUILD_EXAMPLES)
   set(EXAMPLE_DIR ${PROJECT_SOURCE_DIR}/examples)
 
   set(CORE_EXAMPLES Constructors)
+  set(BLAS_EXAMPLES Gemv)
   set(LAPACK_EXAMPLES GaussianElimination HouseholderSolve HPDInverse LDL 
-                      LDLInverse Polar Pseudoinverse QDWH SequentialSVD SVD)
+                      LDLInverse Polar Pseudoinverse QDWH SequentialQR 
+                      SequentialSVD SVD)
   set(SPECIAL_EXAMPLES Cauchy CauchyLike Circulant Diagonal DiscreteFourier 
                        Hankel HermitianUniformSpectrum Hilbert Identity 
                        NormalUniformSpectrum Ones OneTwoOne Toeplitz Uniform
@@ -681,6 +686,23 @@ if(BUILD_EXAMPLES)
                             LINK_FLAGS ${MPI_LINK_FLAGS})
     endif(MPI_LINK_FLAGS)
     install(TARGETS examples-core-${EXAMPLE} DESTINATION bin/examples/core)
+  endforeach(EXAMPLE)
+
+  # Build the BLAS-like tests
+  set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/examples/blas-like")
+  foreach(EXAMPLE ${BLAS_EXAMPLES})
+    add_executable(examples-blas-${EXAMPLE} 
+                   ${EXAMPLE_DIR}/blas-like/${EXAMPLE}.cpp)
+    target_link_libraries(examples-blas-${EXAMPLE} elemental)
+    set_target_properties(examples-blas-${EXAMPLE} PROPERTIES
+                          OUTPUT_NAME ${EXAMPLE}
+                          RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
+    if(MPI_LINK_FLAGS)
+      set_target_properties(examples-blas-${EXAMPLE} PROPERTIES
+                            LINK_FLAGS ${MPI_LINK_FLAGS})
+    endif(MPI_LINK_FLAGS)
+    install(TARGETS examples-blas-${EXAMPLE} 
+            DESTINATION bin/examples/blas-like)
   endforeach(EXAMPLE)
 
   # Build the LAPACK-like tests

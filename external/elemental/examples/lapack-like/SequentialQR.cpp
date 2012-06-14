@@ -30,69 +30,68 @@
    ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
    POSSIBILITY OF SUCH DAMAGE.
 */
+#include "elemental.hpp"
+using namespace std;
+using namespace elem;
 
-namespace elem {
+typedef double R;
+typedef Complex<R> C;
 
-//
-// Compute the polar decomposition of A, A = Q P, where Q is unitary and P is 
-// Hermitian positive semi-definite. On exit, A is overwritten with Q.
-//
-
-template<typename F>
-inline void
-Polar( Matrix<F>& A, Matrix<F>& P )
+void Usage()
 {
-#ifndef RELEASE
-    PushCallStack("Polar");
-#endif
-    typedef typename Base<F>::type R;
-    const int n = A.Width();
-
-    // Get the SVD of A
-    Matrix<R> s;
-    Matrix<F> U, V;
-    U = A;
-    SVD( U, s, V );
-
-    // Form Q := U V^H in A
-    MakeZeros( A );
-    Gemm( NORMAL, ADJOINT, (F)1, U, V, (F)0, A );
-
-    // Form P := V Sigma V^H in P
-    Zeros( n, n, P );
-    hermitian_function::ReformHermitianMatrix( LOWER, P, s, V );
-#ifndef RELEASE
-    PopCallStack();
-#endif
+    cout << "QR <m> <n>\n"
+         << "  <m>: height of random matrix to test QR on\n"
+         << "  <n>: width of random matrix to test QR on\n"
+         << endl;
 }
 
-template<typename F>
-inline void
-Polar( DistMatrix<F>& A, DistMatrix<F>& P )
+int
+main( int argc, char* argv[] )
 {
+    Initialize( argc, argv );
+
+    mpi::Comm comm = mpi::COMM_WORLD;
+    const int commRank = mpi::CommRank( comm );
+
+    if( argc < 3 )
+    {
+        if( commRank == 0 )
+            Usage();
+        Finalize();
+        return 0;
+    }
+    const int m = atoi( argv[1] );
+    const int n = atoi( argv[2] );
+
+    try 
+    {
+        Matrix<C> A;
+        Uniform( m, n, A );
+
+        // Compute the QR decomposition of A, but do not overwrite A
+        Matrix<C> B( A );
+        Matrix<C> t;
+        SetBlocksize( 3 );
+        QR( B, t );
+
+        A.Print("A");
+        B.Print("B := qr(A)");
+        t.Print("t");
+
+        ExpandPackedReflectors( LOWER, VERTICAL, UNCONJUGATED, 0, B, t );
+
+        B.Print("Q");
+    }
+    catch( exception& e )
+    {
+        cerr << "Process " << commRank << " caught exception with message: "
+             << e.what() << endl;
 #ifndef RELEASE
-    PushCallStack("Polar");
+        DumpCallStack();
 #endif
-    typedef typename Base<F>::type R;
-    const Grid& g = A.Grid();
-    const int n = A.Width();
+    }
 
-    // Get the SVD of A
-    DistMatrix<R,VR,STAR> s(g);
-    DistMatrix<F> U(g), V(g);
-    U = A;
-    SVD( U, s, V );
-
-    // Form Q := U V^H in A
-    MakeZeros( A );
-    Gemm( NORMAL, ADJOINT, (F)1, U, V, (F)0, A );
-
-    // Form P := V Sigma V^H in P
-    Zeros( n, n, P );
-    hermitian_function::ReformHermitianMatrix( LOWER, P, s, V );
-#ifndef RELEASE
-    PopCallStack();
-#endif
+    Finalize();
+    return 0;
 }
 
-} // namespace elem
