@@ -37,12 +37,12 @@ void LowerSolve
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
-#include "./lower_solve/local_front_lower_solve.hpp"
-#include "./lower_solve/dist_front_lower_solve.hpp"
-#include "./lower_solve/dist_front_fast_lower_solve.hpp"
+#include "./lower_solve/local_front.hpp"
+#include "./lower_solve/dist_front.hpp"
+#include "./lower_solve/dist_front_fast.hpp"
 
-#include "./lower_solve/local_lower_solve.hpp"
-#include "./lower_solve/dist_lower_solve.hpp"
+#include "./lower_solve/local.hpp"
+#include "./lower_solve/dist.hpp"
 
 namespace cliq {
 namespace numeric {

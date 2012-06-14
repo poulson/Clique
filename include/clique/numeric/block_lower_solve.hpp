@@ -37,11 +37,11 @@ void BlockLowerSolve
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
-#include "./block_lower_solve/local_front_block_lower_solve.hpp"
-#include "./block_lower_solve/dist_front_block_lower_solve.hpp"
+#include "./block_lower_solve/local_front.hpp"
+#include "./block_lower_solve/dist_front.hpp"
 
-#include "./block_lower_solve/local_block_lower_solve.hpp"
-#include "./block_lower_solve/dist_block_lower_solve.hpp"
+#include "./block_lower_solve/local.hpp"
+#include "./block_lower_solve/dist.hpp"
 
 namespace cliq {
 namespace numeric {

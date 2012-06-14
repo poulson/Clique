@@ -42,11 +42,11 @@ void LDL
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
-#include "./ldl/local_front_ldl.hpp"
-#include "./ldl/dist_front_ldl.hpp"
+#include "./ldl/local_front.hpp"
+#include "./ldl/dist_front.hpp"
 
-#include "./ldl/local_ldl.hpp"
-#include "./ldl/dist_ldl.hpp"
+#include "./ldl/local.hpp"
+#include "./ldl/dist.hpp"
 
 namespace cliq {
 namespace numeric {
