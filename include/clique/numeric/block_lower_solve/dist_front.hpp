@@ -92,7 +92,7 @@ inline void DistFrontBlockLowerForwardSolve
     // Get a copy of all of XT
     DistMatrix<F,STAR,STAR> XT_STAR_STAR( XT );
 
-    // XT := LT XT
+    // XT := inv(ATL) XT
     elem::internal::LocalGemm
     ( NORMAL, NORMAL, (F)1, LT, XT_STAR_STAR, (F)0, XT );
 
