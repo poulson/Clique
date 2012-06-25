@@ -62,6 +62,74 @@ using elem::DistMatrix;
 using elem::Shift;
 using elem::LocalLength;
 
+inline void
+VerifySendsAndRecvs
+( const std::vector<int>& sendCounts,
+  const std::vector<int>& recvCounts, mpi::Comm comm )
+{
+    const int commSize = mpi::CommSize( comm );
+    std::vector<int> actualRecvCounts(commSize);
+    mpi::AllToAll
+    ( &sendCounts[0],       1,
+      &actualRecvCounts[0], 1, comm );
+    for( int proc=0; proc<commSize; ++proc )
+    {
+        if( actualRecvCounts[proc] != recvCounts[proc] )
+        {
+            std::ostringstream msg;
+            msg << "Expected recv count of " << recvCounts[proc]
+                << " but recv'd " << actualRecvCounts[proc]
+                << " from process " << proc << "\n";
+            throw std::logic_error( msg.str().c_str() );
+        }
+    }
+    actualRecvCounts.clear();
+}
+
+template<typename T>
+inline void
+SparseAllToAll
+( const std::vector<T>& sendBuffer,
+  const std::vector<int>& sendCounts, const std::vector<int>& sendDispls,
+        std::vector<T>& recvBuffer,
+  const std::vector<int>& recvCounts, const std::vector<int>& recvDispls,
+        mpi::Comm comm )
+{
+    const int commSize = mpi::CommSize( comm );
+    int numSends=0,numRecvs=0;
+    for( unsigned proc=0; proc<commSize; ++proc )
+    {
+        if( sendCounts[proc] != 0 )
+            ++numSends;
+        if( recvCounts[proc] != 0 )
+            ++numRecvs;
+    }
+    std::vector<mpi::Status> statuses(numSends+numRecvs);
+    std::vector<mpi::Request> requests(numSends+numRecvs);
+    int rCount=0;
+    for( unsigned proc=0; proc<commSize; ++proc )
+    {
+        int count = recvCounts[proc];
+        int displ = recvDispls[proc];
+        if( count != 0 )
+            mpi::IRecv
+            ( &recvBuffer[displ], count, proc, 0, comm,
+              requests[rCount++] );
+    }
+    for( unsigned proc=0; proc<commSize; ++proc )
+    {
+        int count = sendCounts[proc];
+        int displ = sendDispls[proc];
+        if( count != 0 )
+            mpi::ISend
+            ( &sendBuffer[displ], count, proc, 0, comm,
+              requests[rCount++] );
+    }
+    mpi::WaitAll( numSends+numRecvs, &requests[0], &statuses[0] );
+    statuses.clear();
+    requests.clear();
+}
+
 } // namespace cliq
 
 #endif /* CLIQUE_CORE_ENVIRONMENT_HPP */
