@@ -95,6 +95,7 @@ SparseAllToAll
   const std::vector<int>& recvCounts, const std::vector<int>& recvDispls,
         mpi::Comm comm )
 {
+#ifdef USE_CUSTOM_ALLTOALLV
     const int commSize = mpi::CommSize( comm );
     int numSends=0,numRecvs=0;
     for( unsigned proc=0; proc<commSize; ++proc )
@@ -128,6 +129,11 @@ SparseAllToAll
     mpi::WaitAll( numSends+numRecvs, &requests[0], &statuses[0] );
     statuses.clear();
     requests.clear();
+#else
+    mpi::AllToAll
+    ( &sendBuffer[0], &sendCounts[0], &sendDispls[0],
+      &recvBuffer[0], &recvCounts[0], &recvDispls[0], comm );
+#endif
 }
 
 } // namespace cliq

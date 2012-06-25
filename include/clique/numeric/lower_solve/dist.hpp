@@ -58,13 +58,6 @@ inline void DistLowerForwardSolve
     const bool modeIs1d = ModeIs1d( mode );
     if( mode != NORMAL_1D && mode != FAST_1D_LDL && mode != FAST_2D_LDL )
         throw std::logic_error("This solve mode is not yet implemented");
-    if( width == 0 )
-    {
-#ifndef RELEASE
-        PopCallStack();
-#endif
-        return;
-    }
 
     // Copy the information from the local portion into the distributed leaf
     const LocalSymmFront<F>& localRootFront = L.local.fronts.back();
@@ -163,15 +156,9 @@ inline void DistLowerForwardSolve
 #endif
 
         // AllToAll to send and receive the child updates
-#ifdef USE_CUSTOM_ALLTOALLV_FOR_SOLVE
         SparseAllToAll
         ( sendBuffer, sendCounts, sendDispls,
           recvBuffer, recvCounts, recvDispls, comm );
-#else
-        mpi::AllToAll
-        ( &sendBuffer[0], &sendCounts[0], &sendDispls[0],
-          &recvBuffer[0], &recvCounts[0], &recvDispls[0], comm );
-#endif
         sendBuffer.clear();
         sendCounts.clear();
         sendDispls.clear();
@@ -230,13 +217,6 @@ inline void DistLowerBackwardSolve
     const bool modeIs1d = ModeIs1d( mode );
     if( mode != NORMAL_1D && mode != FAST_1D_LDL && mode != FAST_2D_LDL )
         throw std::logic_error("This solve mode is not yet implemented");
-    if( width == 0 )
-    {
-#ifndef RELEASE
-        PopCallStack();
-#endif
-        return;
-    }
 
     // Directly operate on the root separator's portion of the right-hand sides
     const DistSymmFactSupernode& rootSN = S.dist.supernodes.back();
@@ -341,15 +321,9 @@ inline void DistLowerBackwardSolve
 #endif
 
         // AllToAll to send and recv parent updates
-#ifdef USE_CUSTOM_ALLTOALLV_FOR_SOLVE
         SparseAllToAll
         ( sendBuffer, sendCounts, sendDispls,
           recvBuffer, recvCounts, recvDispls, parentComm );
-#else
-        mpi::AllToAll
-        ( &sendBuffer[0], &sendCounts[0], &sendDispls[0],
-          &recvBuffer[0], &recvCounts[0], &recvDispls[0], parentComm );
-#endif
         sendBuffer.clear();
         sendCounts.clear();
         sendDispls.clear();

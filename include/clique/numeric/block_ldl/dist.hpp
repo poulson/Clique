@@ -170,15 +170,9 @@ inline void DistBlockLDL
 #endif
 
         // AllToAll to send and receive the child updates
-#ifdef USE_CUSTOM_ALLTOALLV_FOR_FACT
         SparseAllToAll
         ( sendBuffer, sendCounts, sendDispls,
           recvBuffer, recvCounts, recvDispls, comm );
-#else
-        mpi::AllToAll
-        ( &sendBuffer[0], &sendCounts[0], &sendDispls[0],
-          &recvBuffer[0], &recvCounts[0], &recvDispls[0], comm );
-#endif
         sendBuffer.clear();
         sendCounts.clear();
         sendDispls.clear();
