@@ -153,14 +153,14 @@ public:
     // logically apply to real data.
     //
 
-    virtual typename Base<T>::type GetReal( Int i, Int j ) const;
-    virtual typename Base<T>::type GetImag( Int i, Int j ) const;
-    virtual void SetReal( Int i, Int j, typename Base<T>::type u );
+    virtual typename Base<T>::type GetRealPart( Int i, Int j ) const;
+    virtual typename Base<T>::type GetImagPart( Int i, Int j ) const;
+    virtual void SetRealPart( Int i, Int j, typename Base<T>::type u );
     // Only valid for complex data
-    virtual void SetImag( Int i, Int j, typename Base<T>::type u );
-    virtual void UpdateReal( Int i, Int j, typename Base<T>::type u );
+    virtual void SetImagPart( Int i, Int j, typename Base<T>::type u );
+    virtual void UpdateRealPart( Int i, Int j, typename Base<T>::type u );
     // Only valid for complex data
-    virtual void UpdateImag( Int i, Int j, typename Base<T>::type u );
+    virtual void UpdateImagPart( Int i, Int j, typename Base<T>::type u );
 
     //-----------------------------------------------------------------------//
     // Routines specific to [MC,MR] distribution                             //
@@ -315,29 +315,35 @@ public:
     void AdjointFrom( const DistMatrix<T,MR,STAR,Int>& A );
     void TransposeFrom( const DistMatrix<T,STAR,MC,Int>& A );
     void TransposeFrom( const DistMatrix<T,MR,STAR,Int>& A );
+    void AdjointSumScatterFrom( const DistMatrix<T,MR,STAR,Int>& A );
+    void AdjointSumScatterUpdate
+    ( T alpha, const DistMatrix<T,MR,STAR,Int>& A );
+    void TransposeSumScatterFrom( const DistMatrix<T,MR,STAR,Int>& A );
+    void TransposeSumScatterUpdate
+    ( T alpha, const DistMatrix<T,MR,STAR,Int>& A );
 
     //
     // Though the following routines are meant for complex data, all but two
     // logically apply to real data.
     //
 
-    void GetRealDiagonal
+    void GetRealPartOfDiagonal
     ( DistMatrix<typename Base<T>::type,MD,STAR,Int>& d, Int offset=0 ) const;
-    void GetImagDiagonal
+    void GetImagPartOfDiagonal
     ( DistMatrix<typename Base<T>::type,MD,STAR,Int>& d, Int offset=0 ) const;
-    void GetRealDiagonal
+    void GetRealPartOfDiagonal
     ( DistMatrix<typename Base<T>::type,STAR,MD,Int>& d, Int offset=0 ) const;
-    void GetImagDiagonal
+    void GetImagPartOfDiagonal
     ( DistMatrix<typename Base<T>::type,STAR,MD,Int>& d, Int offset=0 ) const;
-    void SetRealDiagonal
+    void SetRealPartOfDiagonal
     ( const DistMatrix<typename Base<T>::type,MD,STAR,Int>& d, Int offset=0 );
     // Only valid for complex datatypes
-    void SetImagDiagonal
+    void SetImagPartOfDiagonal
     ( const DistMatrix<typename Base<T>::type,MD,STAR,Int>& d, Int offset=0 );
-    void SetRealDiagonal
+    void SetRealPartOfDiagonal
     ( const DistMatrix<typename Base<T>::type,STAR,MD,Int>& d, Int offset=0 );
     // Only valid for complex datatypes
-    void SetImagDiagonal
+    void SetImagPartOfDiagonal
     ( const DistMatrix<typename Base<T>::type,STAR,MD,Int>& d, Int offset=0 );
 
 private:

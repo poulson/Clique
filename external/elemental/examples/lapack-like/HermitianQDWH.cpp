@@ -40,9 +40,8 @@ typedef Complex<R> C;
 
 void Usage()
 {
-    cout << "QDWH <m> <n>\n"
-         << "  <m>: height of random matrix to test polar decomp. on\n"
-         << "  <n>: width of random matrix to test polar decomp. on\n"
+    cout << "HermitianQDWH <n>\n"
+         << "  <n>: size of random matrix to test polar decomp. on\n"
          << endl;
 }
 
@@ -54,22 +53,21 @@ main( int argc, char* argv[] )
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
 
-    if( argc < 3 )
+    if( argc < 2 )
     {
         if( commRank == 0 )
             Usage();
         Finalize();
         return 0;
     }
-    const int m = atoi( argv[1] );
-    const int n = atoi( argv[2] );
+    const int n = atoi( argv[1] );
 
     try 
     {
         Grid g( comm );
         DistMatrix<C> A( g ), Q( g ), P( g );
-        Uniform( m, n, A );
-        const R lowerBound = 1e-7;
+        HermitianUniformSpectrum( n, A, 1, 2 );
+        const R lowerBound = 1.0;
         const R frobA = Norm( A, FROBENIUS_NORM );
         const R upperBound = TwoNormUpperBound( A );
         if( g.Rank() == 0 )
@@ -82,7 +80,8 @@ main( int argc, char* argv[] )
         // Compute the polar decomp of A using a QR-based Dynamically Weighted
         // Halley (QDWH) iteration
         Q = A;
-        const int numItsQDWH = QDWH( Q, lowerBound, upperBound );
+        const int numItsQDWH = 
+            HermitianQDWH( LOWER, Q, lowerBound, upperBound );
         Zeros( n, n, P );
         Gemm( ADJOINT, NORMAL, (C)1, Q, A, (C)0, P );
 
@@ -106,7 +105,7 @@ main( int argc, char* argv[] )
         // Compute the polar decomp of A using a standard QR-based Halley
         // iteration
         Q = A;
-        const int numItsHalley = Halley( Q, upperBound );
+        const int numItsHalley = HermitianHalley( LOWER, Q, upperBound );
         Zeros( n, n, P );
         Gemm( ADJOINT, NORMAL, (C)1, Q, A, (C)0, P );
 

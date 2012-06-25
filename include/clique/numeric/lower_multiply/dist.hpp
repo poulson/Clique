@@ -202,7 +202,8 @@ inline void DistLowerMultiplyNormal
             int displ = sendDispls[proc];
             if( count != 0 )
                 mpi::ISend
-                ( &sendBuffer[displ], count, proc, 0, comm, requests[rCount++] );
+                ( &sendBuffer[displ], count, proc, 0, comm, 
+                  requests[rCount++] );
         }
         mpi::WaitAll( numSends+numRecvs, &requests[0], &statuses[0] );
         statuses.clear();
@@ -280,7 +281,6 @@ inline void DistLowerMultiplyTranspose
     DistFrontLowerMultiply
     ( orientation, diag, diagOffset, rootFront.front1dL, XRoot );
 
-    std::vector<int>::const_iterator it;
     for( int s=numDistSupernodes-2; s>=0; --s )
     {
         const DistSymmFactSupernode& parentSN = S.dist.supernodes[s+1];

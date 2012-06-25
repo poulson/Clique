@@ -57,9 +57,9 @@ using namespace norm_type_wrapper;
 template<typename F>
 typename Base<F>::type 
 Norm( const Matrix<F>& A, NormType type=FROBENIUS_NORM );
-template<typename F>
+template<typename F,Distribution U,Distribution V>
 typename Base<F>::type 
-Norm( const DistMatrix<F>& A, NormType type=FROBENIUS_NORM );
+Norm( const DistMatrix<F,U,V>& A, NormType type=FROBENIUS_NORM );
 
 // TODO: provide an option to compute more accurate estimates
 template<typename F>
@@ -826,11 +826,19 @@ void Polar( Matrix<F>& A, Matrix<F>& P );
 template<typename F>
 void Polar( DistMatrix<F>& A, DistMatrix<F>& P );
 
-// QR-based Halley iteration for the polar decomposition 
+// QR-based Halley iteration 
 template<typename F>
 int Halley( Matrix<F>& A, typename Base<F>::type upperBound );
 template<typename F>
 int Halley( DistMatrix<F>& A, typename Base<F>::type upperBound );
+template<typename F>
+int HermitianHalley
+( UpperOrLower uplo, Matrix<F>& A, typename Base<F>::type upperBound );
+template<typename F>
+int HermitianHalley
+( UpperOrLower uplo, DistMatrix<F>& A, typename Base<F>::type upperBound );
+
+// Dynamically-weighted QR-based Halley iteration
 template<typename F>
 int QDWH
 ( Matrix<F>& A, 
@@ -839,9 +847,22 @@ template<typename F>
 int QDWH
 ( DistMatrix<F>& A, 
   typename Base<F>::type lowerBound, typename Base<F>::type upperBound );
+template<typename F>
+int HermitianQDWH
+( UpperOrLower uplo, Matrix<F>& A,
+  typename Base<F>::type lowerBound, typename Base<F>::type upperBound );
+template<typename F>
+int HermitianQDWH
+( UpperOrLower uplo, DistMatrix<F>& A,
+  typename Base<F>::type lowerBound, typename Base<F>::type upperBound );
 
 //
-// SVD
+// SVD: Given A, find (U,s,V) such that A = U diag(s) V^H, where U and V are 
+//      unitary. In particular, A is overwritten with U.
+//
+// Note: If max(m,n) / min(m,n) > heightRatio, then a QR or LQ factorization
+//       is performed in order to reduce the amount of work required for the
+//       bidiagonalization.
 //
 template<typename F>
 void SVD
@@ -851,14 +872,16 @@ template<typename F>
 void SVD
 ( DistMatrix<F>& A, 
   DistMatrix<typename Base<F>::type,VR,STAR>& s, 
-  DistMatrix<F>& V );
+  DistMatrix<F>& V,
+  double heightRatio=1.5 );
 template<typename F>
 void SingularValues
 ( Matrix<F>& A, Matrix<typename Base<F>::type>& s );
 template<typename F>
 void SingularValues
 ( DistMatrix<F>& A,
-  DistMatrix<typename Base<F>::type,VR,STAR>& s );
+  DistMatrix<typename Base<F>::type,VR,STAR>& s,
+  double heightRatio=1.2 );
 
 //
 // Pseudoinverse:
@@ -1058,8 +1081,6 @@ void ExpandPackedReflectors
 ( UpperOrLower uplo, VerticalOrHorizontal dir, Conjugation conjugation, 
   int offset, Matrix<Complex<R> >& H, const Matrix<Complex<R> >& t );
 
-// None of the underlying routines are written yet
-/*
 template<typename R>
 void ExpandPackedReflectors
 ( UpperOrLower uplo, VerticalOrHorizontal dir, int offset,
@@ -1074,7 +1095,6 @@ void ExpandPackedReflectors
 ( UpperOrLower uplo, VerticalOrHorizontal dir, Conjugation conjugation,
   int offset,
   DistMatrix<Complex<R> >& H, const DistMatrix<Complex<R>,STAR,STAR>& t );
-*/
 
 //
 // Hegst (HErmitian GEneralized to STandard eigenvalue problem):  
@@ -1145,8 +1165,10 @@ GridOrder GetHermitianTridiagGridOrder();
 #include "./lapack-like/HermitianEig.hpp"
 #include "./lapack-like/HermitianFunction.hpp"
 #include "./lapack-like/HermitianGenDefiniteEig.hpp"
+#include "./lapack-like/HermitianHalley.hpp"
 #include "./lapack-like/HermitianNorm.hpp"
 #include "./lapack-like/HermitianPseudoinverse.hpp"
+#include "./lapack-like/HermitianQDWH.hpp"
 #include "./lapack-like/HermitianSVD.hpp"
 #include "./lapack-like/HermitianTridiag.hpp"
 #include "./lapack-like/HouseholderSolve.hpp"

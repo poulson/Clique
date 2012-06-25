@@ -39,7 +39,7 @@ typedef Complex<Real> C;
 
 void Usage()
 {
-    cout << "SequentialQR <m> <n>\n"
+    cout << "QR <m> <n>\n"
          << "  <m>: height of random matrix to test QR on\n"
          << "  <n>: width of random matrix to test QR on\n"
          << endl;
@@ -66,17 +66,16 @@ main( int argc, char* argv[] )
     try 
     {
         const Grid g( comm );
-
-        Matrix<C> A;
+        DistMatrix<C> A(g);
         Uniform( m, n, A );
         const Real frobA = Norm( A, FROBENIUS_NORM );
 
         // Compute the QR decomposition of A, but do not overwrite A
-        Matrix<C> Q( A ), R;
+        DistMatrix<C> Q( A ), R(g);
         ExplicitQR( Q, R );
 
         // Check the error in the QR factorization, || A - Q R ||_F / || A ||_F
-        Matrix<C> E( A );
+        DistMatrix<C> E( A );
         Gemm( NORMAL, NORMAL, (C)-1, Q, R, (C)1, E );
         const Real frobQR = Norm( E, FROBENIUS_NORM );
 
@@ -84,12 +83,12 @@ main( int argc, char* argv[] )
         const int k = std::min(m,n);
         Identity( k, k, E );
         Herk( LOWER, ADJOINT, (C)-1, Q, (C)1, E );
-        const Real frobOrthog = HermitianNorm( LOWER, E, FROBENIUS_NORM );
+        const Real frobOrthog = HermitianNorm( LOWER, E, FROBENIUS_NORM ); 
 
         if( g.Rank() == 0 )
         {
             std::cout << "|| A ||_F = " << frobA << "\n"
-                      << "|| A - Q R ||_F / || A ||_F   = "
+                      << "|| A - Q R ||_F / || A ||_F   = " 
                       << frobQR/frobA << "\n"
                       << "|| I - Q^H Q ||_F / || A ||_F = "
                       << frobOrthog/frobA << "\n"

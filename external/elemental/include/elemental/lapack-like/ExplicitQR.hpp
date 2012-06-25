@@ -40,12 +40,7 @@ inline void
 ExplicitQRHelper( Matrix<Real>& A )
 {
     QR( A );
-
-    // TODO: Replace this with an in-place expansion of Q
-    Matrix<Real> Q;
-    Identity( A.Height(), A.Width(), Q );
-    ApplyPackedReflectors( LEFT, LOWER, VERTICAL, BACKWARD, 0, A, Q );
-    A = Q;
+    ExpandPackedReflectors( LOWER, VERTICAL, 0, A );
 }
 
 template<typename Real>
@@ -53,14 +48,7 @@ inline void
 ExplicitQRHelper( DistMatrix<Real>& A )
 {
     QR( A );
-
-    // TODO: Replace this with an in-place expansion of Q
-    const Grid& g = A.Grid();
-    DistMatrix<Real> Q( g );
-    Q.AlignWith( A );
-    Identity( A.Height(), A.Width(), Q );
-    ApplyPackedReflectors( LEFT, LOWER, VERTICAL, BACKWARD, 0, A, Q );
-    A = Q;
+    ExpandPackedReflectors( LOWER, VERTICAL, 0, A );
 }
 
 template<typename Real>
@@ -69,13 +57,7 @@ ExplicitQRHelper( Matrix<Complex<Real> >& A )
 {
     Matrix<Complex<Real> > t;
     QR( A, t );
-
-    // TODO: Replace this with an in-place expansion of Q
-    Matrix<Complex<Real> > Q;
-    Identity( A.Height(), A.Width(), Q );
-    ApplyPackedReflectors
-    ( LEFT, LOWER, VERTICAL, BACKWARD, UNCONJUGATED, 0, A, t, Q );
-    A = Q;
+    ExpandPackedReflectors( LOWER, VERTICAL, UNCONJUGATED, 0, A, t );
 }
 
 template<typename Real>
@@ -85,14 +67,7 @@ ExplicitQRHelper( DistMatrix<Complex<Real> >& A )
     const Grid& g = A.Grid();
     DistMatrix<Complex<Real>,MD,STAR> t( g );
     QR( A, t );
-
-    // TODO: Replace this with an in-place expansion of Q
-    DistMatrix<Complex<Real> > Q( g );
-    Q.AlignWith( A );
-    Identity( A.Height(), A.Width(), Q );
-    ApplyPackedReflectors
-    ( LEFT, LOWER, VERTICAL, BACKWARD, UNCONJUGATED, 0, A, t, Q );
-    A = Q;
+    ExpandPackedReflectors( LOWER, VERTICAL, UNCONJUGATED, 0, A, t );
 }
 
 template<typename Real>
@@ -100,30 +75,30 @@ inline void
 ExplicitQRHelper( Matrix<Real>& A, Matrix<Real>& R )
 {
     QR( A );
-    R = A;
+    Matrix<Real> AT,
+                 AB;
+    PartitionDown
+    ( A, AT,
+         AB, std::min(A.Height(),A.Width()) );
+    R = AT;
     MakeTrapezoidal( LEFT, UPPER, 0, R );
-
-    // TODO: Replace this with an in-place expansion of Q
-    Matrix<Real> Q;
-    Identity( A.Height(), A.Width(), Q );
-    ApplyPackedReflectors( LEFT, LOWER, VERTICAL, BACKWARD, 0, A, Q );
-    A = Q;
+    ExpandPackedReflectors( LOWER, VERTICAL, 0, A );
 }
 
 template<typename Real>
 inline void
 ExplicitQRHelper( DistMatrix<Real>& A, DistMatrix<Real>& R )
 {
-    QR( A );
-    R = A;
-    MakeTrapezoidal( LEFT, UPPER, 0, R );
-
-    // TODO: Replace this with an in-place expansion of Q
     const Grid& g = A.Grid();
-    DistMatrix<Real> Q( g );
-    Identity( A.Height(), A.Width(), Q );
-    ApplyPackedReflectors( LEFT, LOWER, VERTICAL, BACKWARD, 0, A, Q );
-    A = Q;
+    QR( A );
+    DistMatrix<Real> AT(g),
+                     AB(g);
+    PartitionDown
+    ( A, AT,
+         AB, std::min(A.Height(),A.Width()) );
+    R = AT;
+    MakeTrapezoidal( LEFT, UPPER, 0, R );
+    ExpandPackedReflectors( LOWER, VERTICAL, 0, A );
 }
 
 template<typename Real>
@@ -132,15 +107,14 @@ ExplicitQRHelper( Matrix<Complex<Real> >& A, Matrix<Complex<Real> >& R )
 {
     Matrix<Complex<Real> > t;
     QR( A, t );
-    R = A;
+    Matrix<Complex<Real> > AT,
+                           AB;
+    PartitionDown
+    ( A, AT,
+         AB, std::min(A.Height(),A.Width()) );
+    R = AT;
     MakeTrapezoidal( LEFT, UPPER, 0, R );
-
-    // TODO: Replace this with an in-place expansion of Q
-    Matrix<Complex<Real> > Q;
-    Identity( A.Height(), A.Width(), Q );
-    ApplyPackedReflectors
-    ( LEFT, LOWER, VERTICAL, BACKWARD, UNCONJUGATED, 0, A, t, Q );
-    A = Q;
+    ExpandPackedReflectors( LOWER, VERTICAL, UNCONJUGATED, 0, A, t );
 }
 
 template<typename Real>
@@ -151,15 +125,14 @@ ExplicitQRHelper
     const Grid& g = A.Grid();
     DistMatrix<Complex<Real>,MD,STAR> t( g );
     QR( A, t );
-    R = A;
+    DistMatrix<Complex<Real> > AT(g),
+                               AB(g);
+    PartitionDown
+    ( A, AT,
+         AB, std::min(A.Height(),A.Width()) );
+    R = AT;
     MakeTrapezoidal( LEFT, UPPER, 0, R );
-
-    // TODO: Replace this with an in-place expansion of Q
-    DistMatrix<Complex<Real> > Q( g );
-    Identity( A.Height(), A.Width(), Q );
-    ApplyPackedReflectors
-    ( LEFT, LOWER, VERTICAL, BACKWARD, UNCONJUGATED, 0, A, t, Q );
-    A = Q;
+    ExpandPackedReflectors( LOWER, VERTICAL, UNCONJUGATED, 0, A, t );
 }
 
 } // namespace internal
