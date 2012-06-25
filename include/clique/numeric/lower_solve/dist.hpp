@@ -220,21 +220,33 @@ inline void DistLowerBackwardSolve
 
     // Directly operate on the root separator's portion of the right-hand sides
     const DistSymmFactSupernode& rootSN = S.dist.supernodes.back();
-    const DistSymmFront<F>& rootFront = L.dist.fronts.back();
-    const Grid& rootGrid = ( modeIs1d ? rootFront.front1dL.Grid() 
-                                      : rootFront.front2dL.Grid() );
-    rootFront.work1d.View
-    ( rootSN.size, width, 0,
-      localX.Buffer(rootSN.localOffset1d,0), localX.LDim(), rootGrid );
-    if( mode == NORMAL_1D )
-        DistFrontLowerBackwardSolve
-        ( orientation, diag, rootFront.front1dL, rootFront.work1d );
-    else if( mode == FAST_1D_LDL )
-        DistFrontFastLowerBackwardSolve
-        ( orientation, diag, rootFront.front1dL, rootFront.work1d );
-    else // mode == FAST_2D_LDL
-        DistFrontFastLowerBackwardSolve
-        ( orientation, diag, rootFront.front2dL, rootFront.work1d );
+    const LocalSymmFront<F>& localRootFront = L.local.fronts.back();
+    if( numDistSupernodes == 1 )
+    {
+        localRootFront.work.View
+        ( rootSN.size, width, 
+          localX.Buffer(rootSN.localOffset1d,0), localX.LDim() );
+        LocalFrontLowerBackwardSolve
+        ( orientation, diag, localRootFront.frontL, localRootFront.work );
+    }
+    else
+    {
+        const DistSymmFront<F>& rootFront = L.dist.fronts.back();
+        const Grid& rootGrid = ( modeIs1d ? rootFront.front1dL.Grid() 
+                                          : rootFront.front2dL.Grid() );
+        rootFront.work1d.View
+        ( rootSN.size, width, 0,
+          localX.Buffer(rootSN.localOffset1d,0), localX.LDim(), rootGrid );
+        if( mode == NORMAL_1D )
+            DistFrontLowerBackwardSolve
+            ( orientation, diag, rootFront.front1dL, rootFront.work1d );
+        else if( mode == FAST_1D_LDL )
+            DistFrontFastLowerBackwardSolve
+            ( orientation, diag, rootFront.front1dL, rootFront.work1d );
+        else // mode == FAST_2D_LDL
+            DistFrontFastLowerBackwardSolve
+            ( orientation, diag, rootFront.front2dL, rootFront.work1d );
+    }
 
     for( int s=numDistSupernodes-2; s>=0; --s )
     {
@@ -350,15 +362,23 @@ inline void DistLowerBackwardSolve
         recvDispls.clear();
 
         // Call the custom supernode backward solve
-        if( mode == NORMAL_1D )
-            DistFrontLowerBackwardSolve
-            ( orientation, diag, front.front1dL, W );
-        else if( mode == FAST_1D_LDL )
-            DistFrontFastLowerBackwardSolve
-            ( orientation, diag, front.front1dL, W );
-        else // mode == FAST_2D_LDL
-            DistFrontFastLowerBackwardSolve
-            ( orientation, diag, front.front2dL, W );
+        if( s > 0 )
+        {
+            if( mode == NORMAL_1D )
+                DistFrontLowerBackwardSolve
+                ( orientation, diag, front.front1dL, W );
+            else if( mode == FAST_1D_LDL )
+                DistFrontFastLowerBackwardSolve
+                ( orientation, diag, front.front1dL, W );
+            else // mode == FAST_2D_LDL
+                DistFrontFastLowerBackwardSolve
+                ( orientation, diag, front.front2dL, W );
+        }
+        else
+        {
+            LocalFrontLowerBackwardSolve
+            ( orientation, diag, localRootFront.frontL, W.LocalMatrix() );
+        }
 
         // Store the supernode portion of the result
         localXT = WT.LocalMatrix();

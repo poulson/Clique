@@ -207,13 +207,25 @@ inline void DistBlockLowerBackwardSolve
 
     // Directly operate on the root separator's portion of the right-hand sides
     const DistSymmFactSupernode& rootSN = S.dist.supernodes.back();
-    const DistSymmFront<F>& rootFront = L.dist.fronts.back();
-    const Grid& rootGrid = rootFront.front2dL.Grid();
-    rootFront.work1d.View
-    ( rootSN.size, width, 0,
-      localX.Buffer(rootSN.localOffset1d,0), localX.LDim(), rootGrid );
-    DistFrontBlockLowerBackwardSolve
-    ( orientation, rootFront.front2dL, rootFront.work1d );
+    const LocalSymmFront<F>& localRootFront = L.local.fronts.back();
+    if( numDistSupernodes == 1 )
+    {
+        localRootFront.work.View
+        ( rootSN.size, width,
+          localX.Buffer(rootSN.localOffset1d,0), localX.LDim() );
+        LocalFrontBlockLowerBackwardSolve
+        ( orientation, localRootFront.frontL, localRootFront.work );
+    }
+    else
+    {
+        const DistSymmFront<F>& rootFront = L.dist.fronts.back();
+        const Grid& rootGrid = rootFront.front2dL.Grid();
+        rootFront.work1d.View
+        ( rootSN.size, width, 0,
+          localX.Buffer(rootSN.localOffset1d,0), localX.LDim(), rootGrid );
+        DistFrontBlockLowerBackwardSolve
+        ( orientation, rootFront.front2dL, rootFront.work1d );
+    }
 
     for( int s=numDistSupernodes-2; s>=0; --s )
     {
@@ -326,7 +338,11 @@ inline void DistBlockLowerBackwardSolve
         recvDispls.clear();
 
         // Call the custom supernode backward solve
-        DistFrontBlockLowerBackwardSolve( orientation, front.front2dL, W );
+        if( s > 0 )
+            DistFrontBlockLowerBackwardSolve( orientation, front.front2dL, W );
+        else
+            LocalFrontBlockLowerBackwardSolve
+            ( orientation, localRootFront.frontL, W.LocalMatrix() );
 
         // Store the supernode portion of the result
         localXT = WT.LocalMatrix();

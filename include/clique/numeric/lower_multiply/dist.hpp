@@ -206,15 +206,29 @@ inline void DistLowerMultiplyTranspose
 
     // Directly operate on the root separator's portion of the right-hand sides
     const DistSymmFactSupernode& rootSN = S.dist.supernodes.back();
-    const DistSymmFront<F>& rootFront = L.dist.fronts.back();
-    const Grid& rootGrid = rootFront.front1dL.Grid();
-    DistMatrix<F,VC,STAR> XRoot(rootGrid);
-    XRoot.View
-    ( rootSN.size, width, 0,
-      localX.Buffer(rootSN.localOffset1d,0), localX.LDim(), rootGrid );
-    rootFront.work1d = XRoot; // store the RHS for use by the children
-    DistFrontLowerMultiply
-    ( orientation, diag, diagOffset, rootFront.front1dL, XRoot );
+    const LocalSymmFront<F>& localRootFront = L.local.fronts.back();
+    if( numDistSupernodes == 1 )
+    {
+        Matrix<F> XRoot;
+        XRoot.View
+        ( rootSN.size, width, 
+          localX.Buffer(rootSN.localOffset1d,0), localX.LDim() );
+        localRootFront.work = XRoot;
+        LocalFrontLowerMultiply
+        ( orientation, diag, diagOffset, localRootFront.frontL, XRoot );
+    }
+    else
+    {
+        const DistSymmFront<F>& rootFront = L.dist.fronts.back();
+        const Grid& rootGrid = rootFront.front1dL.Grid();
+        DistMatrix<F,VC,STAR> XRoot(rootGrid);
+        XRoot.View
+        ( rootSN.size, width, 0,
+          localX.Buffer(rootSN.localOffset1d,0), localX.LDim(), rootGrid );
+        rootFront.work1d = XRoot; // store the RHS for use by the children
+        DistFrontLowerMultiply
+        ( orientation, diag, diagOffset, rootFront.front1dL, XRoot );
+    }
 
     for( int s=numDistSupernodes-2; s>=0; --s )
     {
@@ -331,8 +345,13 @@ inline void DistLowerMultiplyTranspose
         DistMatrix<F,VC,STAR> XNode( front.work1d );
 
         // Perform the multiply for this front
-        DistFrontLowerMultiply
-        ( orientation, diag, diagOffset, front.front1dL, XNode );
+        if( s > 0 )
+            DistFrontLowerMultiply
+            ( orientation, diag, diagOffset, front.front1dL, XNode );
+        else
+            LocalFrontLowerMultiply
+            ( orientation, diag, diagOffset, 
+              localRootFront.frontL, XNode.LocalMatrix() );
 
         // Store the supernode portion of the result
         DistMatrix<F,VC,STAR> XNodeT(grid), XNodeB(grid);
