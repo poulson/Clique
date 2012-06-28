@@ -376,8 +376,9 @@ inline void DistLowerBackwardSolve
         }
         else
         {
+            localRootFront.work.View( W.LocalMatrix() );
             LocalFrontLowerBackwardSolve
-            ( orientation, diag, localRootFront.frontL, W.LocalMatrix() );
+            ( orientation, diag, localRootFront.frontL, localRootFront.work );
         }
 
         // Store the supernode portion of the result
