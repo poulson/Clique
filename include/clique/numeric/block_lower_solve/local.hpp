@@ -134,13 +134,6 @@ inline void LocalBlockLowerBackwardSolve
 #endif
     const int numLocalSupernodes = S.local.supernodes.size();
     const int width = X.Width();
-    if( width == 0 )
-    {
-#ifndef RELEASE
-        PopCallStack();
-#endif
-        return;
-    }
 
     // Pull in the top local information from the bottom distributed information
     L.local.fronts.back().work.LockedView
