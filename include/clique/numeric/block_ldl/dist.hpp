@@ -17,19 +17,17 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_DIST_BLOCK_LDL_HPP 
-#define CLIQUE_NUMERIC_DIST_BLOCK_LDL_HPP 1
+#ifndef CLIQUE_DIST_BLOCK_LDL_HPP 
+#define CLIQUE_DIST_BLOCK_LDL_HPP 1
 
 // NOTE: This routine is almost identical to DistLDL, so perhaps it could
 //       be partially merged.
 
 namespace cliq {
-namespace numeric {
 
 template<typename F> 
 void DistBlockLDL
-( Orientation orientation, 
-  symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L );
+( Orientation orientation, SymmInfo& info, SymmFrontTree<F>& L );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -37,11 +35,10 @@ void DistBlockLDL
 
 template<typename F> 
 inline void DistBlockLDL
-( Orientation orientation, symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L )
+( Orientation orientation, SymmInfo& info, SymmFrontTree<F>& L )
 {
-    using namespace symbolic;
 #ifndef RELEASE
-    PushCallStack("numeric::DistBlockLDL");
+    PushCallStack("DistBlockLDL");
     if( orientation == NORMAL )
         throw std::logic_error("LDL must be (conjugate-)transposed");
 #endif
@@ -50,7 +47,7 @@ inline void DistBlockLDL
     // The bottom front is already computed, so just view it
     LocalSymmFront<F>& topLocalFront = L.local.fronts.back();
     DistSymmFront<F>& bottomDistFront = L.dist.fronts[0];
-    const Grid& bottomGrid = *S.dist.supernodes[0].grid;
+    const Grid& bottomGrid = *info.dist.nodes[0].grid;
     bottomDistFront.front2dL.Empty();
     bottomDistFront.front2dL.LockedView
     ( topLocalFront.frontL.Height(), topLocalFront.frontL.Width(), 0, 0, 
@@ -63,23 +60,23 @@ inline void DistBlockLDL
       bottomGrid );
 
     // Perform the distributed portion of the factorization
-    const unsigned numDistSupernodes = S.dist.supernodes.size();
-    for( unsigned s=1; s<numDistSupernodes; ++s )
+    const unsigned numDistNodes = info.dist.nodes.size();
+    for( unsigned s=1; s<numDistNodes; ++s )
     {
-        const DistSymmFactSupernode& childSN = S.dist.supernodes[s-1];
-        const DistSymmFactSupernode& sn = S.dist.supernodes[s];
-        const int updateSize = sn.lowerStruct.size();
+        const DistSymmNodeInfo& childNode = info.dist.nodes[s-1];
+        const DistSymmNodeInfo& node = info.dist.nodes[s];
+        const int updateSize = node.lowerStruct.size();
         DistSymmFront<F>& childFront = L.dist.fronts[s-1];
         DistSymmFront<F>& front = L.dist.fronts[s];
         front.work2d.Empty();
 #ifndef RELEASE
-        if( front.front2dL.Height() != sn.size+updateSize ||
-            front.front2dL.Width() != sn.size )
+        if( front.front2dL.Height() != node.size+updateSize ||
+            front.front2dL.Width() != node.size )
             throw std::logic_error("Front was not the proper size");
 #endif
 
         const bool computeFactRecvIndices = 
-            ( sn.childFactRecvIndices.size() == 0 );
+            ( node.childFactRecvIndices.size() == 0 );
 
         // Grab this front's grid information
         const Grid& grid = front.front2dL.Grid();
@@ -101,7 +98,7 @@ inline void DistBlockLDL
         int sendBufferSize = 0;
         for( unsigned proc=0; proc<commSize; ++proc )
         {
-            const int sendSize = sn.numChildFactSendIndices[proc];
+            const int sendSize = node.numChildFactSendIndices[proc];
             sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += sendSize;
@@ -109,8 +106,8 @@ inline void DistBlockLDL
         std::vector<F> sendBuffer( sendBufferSize );
 
         const std::vector<int>& myChildRelIndices = 
-            ( isLeftChild ? sn.leftChildRelIndices
-                          : sn.rightChildRelIndices );
+            ( isLeftChild ? node.leftChildRelIndices
+                          : node.rightChildRelIndices );
         const int updateColShift = childUpdate.ColShift();
         const int updateRowShift = childUpdate.RowShift();
         const int updateLocalHeight = childUpdate.LocalHeight();
@@ -143,7 +140,7 @@ inline void DistBlockLDL
         for( unsigned proc=0; proc<commSize; ++proc )
         {
             if( packOffsets[proc]-sendDispls[proc] != 
-                sn.numChildFactSendIndices[proc] )
+                node.numChildFactSendIndices[proc] )
                 throw std::logic_error("Error in packing stage");
         }
 #endif
@@ -154,12 +151,12 @@ inline void DistBlockLDL
 
         // Set up the recv buffer for the AllToAll
         if( computeFactRecvIndices )
-            ComputeFactRecvIndices( sn, childSN );
+            ComputeFactRecvIndices( node, childNode );
         std::vector<int> recvCounts(commSize), recvDispls(commSize);
         int recvBufferSize=0;
         for( unsigned proc=0; proc<commSize; ++proc )
         {
-            const int recvSize = sn.childFactRecvIndices[proc].size()/2;
+            const int recvSize = node.childFactRecvIndices[proc].size()/2;
             recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += recvSize;
@@ -179,15 +176,17 @@ inline void DistBlockLDL
 
         // Unpack the child udpates (with an Axpy)
         front.work2d.SetGrid( front.front2dL.Grid() );
-        front.work2d.Align( sn.size%grid.Height(), sn.size%grid.Width() );
+        front.work2d.Align
+        ( node.size % grid.Height(), node.size % grid.Width() );
         elem::Zeros( updateSize, updateSize, front.work2d );
         const int leftLocalWidth = front.front2dL.LocalWidth();
         const int topLocalHeight = 
-            LocalLength<int>( sn.size, grid.MCRank(), gridHeight );
+            LocalLength<int>( node.size, grid.MCRank(), gridHeight );
         for( unsigned proc=0; proc<commSize; ++proc )
         {
             const F* recvValues = &recvBuffer[recvDispls[proc]];
-            const std::deque<int>& recvIndices = sn.childFactRecvIndices[proc];
+            const std::deque<int>& recvIndices = 
+                node.childFactRecvIndices[proc];
             const int numRecvIndexPairs = recvIndices.size()/2;
             for( int k=0; k<numRecvIndexPairs; ++k )
             {
@@ -207,7 +206,7 @@ inline void DistBlockLDL
         recvCounts.clear();
         recvDispls.clear();
         if( computeFactRecvIndices )
-            sn.childFactRecvIndices.clear();
+            node.childFactRecvIndices.clear();
 
         // Now that the frontal matrix is set up, perform the factorization
         DistFrontBlockLDL( orientation, front.front2dL, front.work2d );
@@ -225,7 +224,6 @@ inline void DistBlockLDL
 #endif
 }
 
-} // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_DIST_BLOCK_LDL_HPP
+#endif // CLIQUE_DIST_BLOCK_LDL_HPP

@@ -17,11 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_LOCAL_FRONT_LOWER_MULTIPLY_HPP
-#define CLIQUE_NUMERIC_LOCAL_FRONT_LOWER_MULTIPLY_HPP 1
+#ifndef CLIQUE_LOCAL_FRONT_LOWER_MULTIPLY_HPP
+#define CLIQUE_LOCAL_FRONT_LOWER_MULTIPLY_HPP 1
 
 namespace cliq {
-namespace numeric {
 
 template<typename F>
 void LocalFrontLowerMultiply
@@ -116,7 +115,7 @@ inline void LocalFrontLowerMultiply
   const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::LocalFrontLowerMultiply");
+    PushCallStack("LocalFrontLowerMultiply");
 #endif
     if( orientation == NORMAL )
         LocalFrontLowerMultiplyNormal( diag, diagOffset, L, X );
@@ -132,7 +131,7 @@ inline void LocalFrontLowerMultiplyNormal
 ( UnitOrNonUnit diag, int diagOffset, const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::LocalFrontLowerMultiplyNormal");
+    PushCallStack("LocalFrontLowerMultiplyNormal");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
@@ -181,7 +180,7 @@ inline void LocalFrontLowerMultiplyTranspose
   const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::LocalFrontLowerMultiplyTranspose");
+    PushCallStack("LocalFrontLowerMultiplyTranspose");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
@@ -226,7 +225,6 @@ inline void LocalFrontLowerMultiplyTranspose
 #endif
 }
 
-} // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_LOCAL_FRONT_LOWER_MULTIPLY_HPP
+#endif // CLIQUE_LOCAL_FRONT_LOWER_MULTIPLY_HPP

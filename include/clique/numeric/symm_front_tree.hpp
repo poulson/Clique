@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_SYMM_FRONT_TREE_HPP
-#define CLIQUE_NUMERIC_SYMM_FRONT_TREE_HPP 1
+#ifndef CLIQUE_SYMM_FRONT_TREE_HPP
+#define CLIQUE_SYMM_FRONT_TREE_HPP 1
 
 namespace cliq {
 
@@ -32,8 +32,6 @@ ModeIs1d( SolveMode mode )
     else
         return false;
 }
-
-namespace numeric {
 
 // Only keep track of the left and bottom-right piece of the fronts
 // (with the bottom-right piece stored in workspace) since only the left side
@@ -91,7 +89,6 @@ struct SymmFrontTree
 template<typename F>
 void SetSolveMode( SymmFrontTree<F>& L, SolveMode solveMode );
 
-} // namespace numeric
 } // namespace cliq
 
 #endif // CLIQUE_SYMM_FRONT_TREE_HPP

@@ -21,11 +21,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_DIST_FRONT_LDL_HPP
-#define CLIQUE_NUMERIC_DIST_FRONT_LDL_HPP 1
+#ifndef CLIQUE_DIST_FRONT_LDL_HPP
+#define CLIQUE_DIST_FRONT_LDL_HPP 1
 
 namespace cliq {
-namespace numeric {
 
 template<typename F> 
 void DistFrontLDL
@@ -42,7 +41,7 @@ inline void DistFrontLDLGeneral
 ( Orientation orientation, DistMatrix<F>& AL, DistMatrix<F>& ABR )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::internal::DistFrontLDLGeneral");
+    PushCallStack("internal::DistFrontLDLGeneral");
     if( ABR.Height() != ABR.Width() )
         throw std::logic_error("ABR must be square");
     if( AL.Height() != AL.Width()+ABR.Height() )
@@ -159,7 +158,7 @@ inline void DistFrontLDLSquare
 ( Orientation orientation, DistMatrix<F>& AL, DistMatrix<F>& ABR )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::internal::DistFrontLDLSquare");
+    PushCallStack("internal::DistFrontLDLSquare");
     if( ABR.Height() != ABR.Width() )
         throw std::logic_error("ABR must be square");
     if( AL.Height() != AL.Width()+ABR.Height() )
@@ -315,7 +314,7 @@ inline void DistFrontLDL
 ( Orientation orientation, DistMatrix<F>& AL, DistMatrix<F>& ABR )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::DistFrontLDL");
+    PushCallStack("DistFrontLDL");
 #endif
     const Grid& grid = AL.Grid();
     if( grid.Height() == grid.Width() )
@@ -327,7 +326,6 @@ inline void DistFrontLDL
 #endif
 }
 
-} // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_DIST_FRONT_LDL_HPP
+#endif // CLIQUE_DIST_FRONT_LDL_HPP

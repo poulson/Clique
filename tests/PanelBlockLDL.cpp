@@ -46,19 +46,19 @@ int ReorderedIndex
   int minBalancedDepth, int cutoff );
 
 void CountLocalTreeSize
-( int nxSub, int nySub, int nz, int cutoff, int& numSupernodes );
+( int nxSub, int nySub, int nz, int cutoff, int& numNodes );
 
-void FillOrigStruct
+void FillElimTree
 ( int nx, int ny, int nz, int cutoff, mpi::Comm comm, int log2CommSize,
-  symbolic::SymmOrig& S );
+  SymmElimTree& eTree );
 
-void FillDistOrigStruct
+void FillDistElimTree
 ( int nx, int ny, int nz, int& nxSub, int& nySub, int& xOffset, int& yOffset, 
-  int cutoff, mpi::Comm comm, int log2CommSize, symbolic::SymmOrig& S );
+  int cutoff, mpi::Comm comm, int log2CommSize, SymmElimTree& eTree );
 
-void FillLocalOrigStruct
+void FillLocalElimTree
 ( int nx, int ny, int nz, int nxSub, int nySub, int xOffset, int yOffset, 
-  int cutoff, int log2CommSize, symbolic::SymmOrig& S );
+  int cutoff, int log2CommSize, SymmElimTree& eTree );
 
 int
 main( int argc, char* argv[] )
@@ -122,8 +122,8 @@ main( int argc, char* argv[] )
         // Fill the distributed portion of the original structure
         mpi::Barrier( comm );
         const double initStartTime = mpi::Time();
-        symbolic::SymmOrig SOrig;
-        FillOrigStruct( nx, ny, nz, cutoff, comm, log2CommSize, SOrig );
+        SymmElimTree eTree;
+        FillElimTree( nx, ny, nz, cutoff, comm, log2CommSize, eTree );
         mpi::Barrier( comm );
         const double initStopTime = mpi::Time();
         if( commRank == 0 )
@@ -132,63 +132,56 @@ main( int argc, char* argv[] )
 
         if( writeInfo )
         {
-            const int numLocalSupernodes = SOrig.local.supernodes.size();
-            const int numDistSupernodes = SOrig.dist.supernodes.size();
+            const int numLocalNodes = eTree.local.nodes.size();
+            const int numDistNodes = eTree.dist.nodes.size();
             infoFile << "Local original structure sizes:\n";
-            for( int s=0; s<numLocalSupernodes; ++s )
-                infoFile << "  " << s << ": supernode=" 
-                         << SOrig.local.supernodes[s].size << ", "
-                         << " lower=" 
-                         << SOrig.local.supernodes[s].lowerStruct.size() 
-                         << "\n";
-            infoFile << "\n"
-                     << "Dist original structure sizes:\n";
-            for( int s=0; s<numDistSupernodes; ++s )
-                infoFile << "  " << s << ": supernode="
-                         << SOrig.dist.supernodes[s].size << ", "
-                         << " lower="
-                         << SOrig.dist.supernodes[s].lowerStruct.size() << "\n";
+            for( int s=0; s<numLocalNodes; ++s )
+                infoFile << "  " << s << ": node=" 
+                         << eTree.local.nodes[s].size << ", lower="
+                         << eTree.local.nodes[s].lowerStruct.size() << "\n";
+            infoFile << "\nDist original structure sizes:\n";
+            for( int s=0; s<numDistNodes; ++s )
+                infoFile << "  " << s << ": node="
+                         << eTree.dist.nodes[s].size << ", lower="
+                         << eTree.dist.nodes[s].lowerStruct.size() << "\n";
             infoFile << std::endl;
         }
 
         // Call the symbolic factorization routine
-        const double symbFactStartTime = mpi::Time();
-        symbolic::SymmFact S;
-        symbolic::SymmetricFactorization( SOrig, S, true );
+        const double analysisStartTime = mpi::Time();
+        SymmInfo info;
+        SymmetricAnalysis( eTree, info, true );
         mpi::Barrier( comm );
-        const double symbFactStopTime = mpi::Time();
+        const double analysisStopTime = mpi::Time();
         if( commRank == 0 )
-            std::cout << "Symbolic factorization time: " 
-                      << symbFactStopTime-symbFactStartTime << " secs"
+            std::cout << "Analysis time: " 
+                      << analysisStopTime-analysisStartTime << " secs"
                       << std::endl;
 
         if( writeInfo )
         {
-            const int numLocalSupernodes = S.local.supernodes.size();
-            const int numDistSupernodes = S.dist.supernodes.size();
+            const int numLocalNodes = info.local.nodes.size();
+            const int numDistNodes = info.dist.nodes.size();
             infoFile << "Local factor structure sizes:\n";
-            for( int s=0; s<numLocalSupernodes; ++s )
-                infoFile << "  " << s << ": supernode=" 
-                         << S.local.supernodes[s].size << ", "
-                         << " lower=" 
-                         << S.local.supernodes[s].lowerStruct.size() << "\n";
-            infoFile << "\n"
-                     << "Dist factor structure sizes:\n";
-            for( int s=0; s<numDistSupernodes; ++s )
-                infoFile << "  " << s << ": supernode="
-                         << S.dist.supernodes[s].size << ", "
-                         << " lower="
-                         << S.dist.supernodes[s].lowerStruct.size() << "\n";
+            for( int s=0; s<numLocalNodes; ++s )
+                infoFile << "  " << s << ": node=" 
+                         << info.local.nodes[s].size << ", lower="
+                         << info.local.nodes[s].lowerStruct.size() << "\n";
+            infoFile << "\nDist factor structure sizes:\n";
+            for( int s=0; s<numDistNodes; ++s )
+                infoFile << "  " << s << ": node="
+                         << info.dist.nodes[s].size << ", lower="
+                         << info.dist.nodes[s].lowerStruct.size() << "\n";
             infoFile << std::endl;
 
             infoFile << "\n"
                      << "Local height 1d: " 
-                     << S.dist.supernodes.back().localOffset1d + 
-                        S.dist.supernodes.back().localSize1d << std::endl;
+                     << info.dist.nodes.back().localOffset1d + 
+                        info.dist.nodes.back().localSize1d << std::endl;
         }
 
         const int numPanels = 10;
-        std::vector<numeric::SymmFrontTree<F>*> symmFrontTrees;
+        std::vector<SymmFrontTree<F>*> symmFrontTrees;
         for( int panel=0; panel<numPanels; ++panel )
         {
             if( commRank == 0 )
@@ -200,33 +193,31 @@ main( int argc, char* argv[] )
             // Directly initialize the frontal matrices with the original 
             // sparse matrix (for now, use an original matrix equal to identity)
             const double fillStartTime = mpi::Time();
-            symmFrontTrees.push_back( new numeric::SymmFrontTree<F> );
-            numeric::SymmFrontTree<F>& L = *symmFrontTrees.back();
-            L.local.fronts.resize( S.local.supernodes.size() );
-            for( unsigned s=0; s<S.local.supernodes.size(); ++s )
+            symmFrontTrees.push_back( new SymmFrontTree<F> );
+            SymmFrontTree<F>& L = *symmFrontTrees.back();
+            L.local.fronts.resize( info.local.nodes.size() );
+            for( unsigned s=0; s<info.local.nodes.size(); ++s )
             {
-                const symbolic::LocalSymmFactSupernode& sn =
-                    S.local.supernodes[s];
+                const LocalSymmNodeInfo& node = info.local.nodes[s];
                 Matrix<F>& frontL = L.local.fronts[s].frontL;
 
-                const int frontSize = sn.size+sn.lowerStruct.size();
-                elem::Uniform( frontSize, sn.size, frontL );
+                const int frontSize = node.size+node.lowerStruct.size();
+                elem::Uniform( frontSize, node.size, frontL );
                 if( writeInfo )
                     frontL.Print( infoFile, "frontL local" );
             }
             L.dist.mode = NORMAL_2D;
             L.dist.fronts.resize( log2CommSize+1 );
-            numeric::InitializeDistLeaf( S, L );
+            InitializeDistLeaf( info, L );
             for( unsigned s=1; s<log2CommSize+1; ++s )
             {
-                const symbolic::DistSymmFactSupernode& sn = 
-                    S.dist.supernodes[s];
+                const DistSymmNodeInfo& node = info.dist.nodes[s];
                 DistMatrix<F>& front2dL = L.dist.fronts[s].front2dL;
 
-                front2dL.SetGrid( *sn.grid );
-                const int frontSize = sn.size+sn.lowerStruct.size();
+                front2dL.SetGrid( *node.grid );
+                const int frontSize = node.size+node.lowerStruct.size();
                 front2dL.Align( 0, 0 );
-                elem::Uniform( frontSize, sn.size, front2dL );
+                elem::Uniform( frontSize, node.size, front2dL );
                 if( writeInfo )
                     front2dL.Print( infoFile, "frontL dist" );
             }
@@ -241,18 +232,18 @@ main( int argc, char* argv[] )
             const int NUM_RHS = 1;
             const double makeRhsStartTime = mpi::Time();
             const int localHeight1d = 
-                S.dist.supernodes.back().localOffset1d + 
-                S.dist.supernodes.back().localSize1d;
+                info.dist.nodes.back().localOffset1d + 
+                info.dist.nodes.back().localSize1d;
             Matrix<F> localX;
             elem::Uniform( localHeight1d, NUM_RHS, localX );
             Matrix<F> localYLower = localX;
-            numeric::SetSolveMode( L, NORMAL_1D );
-            numeric::LowerMultiply( NORMAL, NON_UNIT, -1, S, L, localYLower );
+            SetSolveMode( L, NORMAL_1D );
+            LowerMultiply( NORMAL, NON_UNIT, -1, info, L, localYLower );
             Matrix<F> localY = localX;
-            numeric::LowerMultiply( TRANSPOSE, NON_UNIT, 0, S, L, localY );
+            LowerMultiply( TRANSPOSE, NON_UNIT, 0, info, L, localY );
             elem::Axpy( (F)1, localYLower, localY );
             localYLower.Empty();
-            numeric::SetSolveMode( L, NORMAL_2D );
+            SetSolveMode( L, NORMAL_2D );
             mpi::Barrier( comm );
             const double makeRhsStopTime = mpi::Time();
             if( commRank == 0 )
@@ -271,7 +262,7 @@ main( int argc, char* argv[] )
             // Call the numerical factorization routine
             elem::SetBlocksize( factBlocksize );
             const double factStartTime = mpi::Time();
-            numeric::BlockLDL( TRANSPOSE, S, L );
+            BlockLDL( TRANSPOSE, info, L );
             mpi::Barrier( comm );
             const double factStopTime = mpi::Time();
             if( commRank == 0 )
@@ -283,7 +274,7 @@ main( int argc, char* argv[] )
             elem::SetBlocksize( solveBlocksize );
             mpi::Barrier( comm );
             const double solveStartTime = mpi::Time();
-            numeric::BlockLDLSolve( TRANSPOSE, S, L, localY );
+            BlockLDLSolve( TRANSPOSE, info, L, localY );
             mpi::Barrier( comm );
             const double solveStopTime = mpi::Time();
             if( commRank == 0 )
@@ -330,7 +321,7 @@ int ReorderedIndexRecursion
     const int size = nx*ny*nz;
 #ifndef RELEASE
     if( stepsLeft != 0 && size == 0 )
-        throw std::logic_error("Null supernode in the upper tree");
+        throw std::logic_error("Null node in the upper tree");
 #endif
     if( stepsLeft == 0 && size <= cutoff )
     {
@@ -396,47 +387,60 @@ int ReorderedIndex
     return index;
 }
 
-void FillOrigStruct
+void FillElimTree
 ( int nx, int ny, int nz, int cutoff, mpi::Comm comm, int log2CommSize,
-  symbolic::SymmOrig& SOrig )
+  SymmElimTree& eTree )
 {
 #ifndef RELEASE
-    cliq::PushCallStack("FillOrigStruct");
+    cliq::PushCallStack("FillElimTree");
 #endif
     int nxSub=nx, nySub=ny, xOffset=0, yOffset=0;
-    FillDistOrigStruct
+    FillDistElimTree
     ( nx, ny, nz, nxSub, nySub, xOffset, yOffset, cutoff, 
-      comm, log2CommSize, SOrig );
-    FillLocalOrigStruct
+      comm, log2CommSize, eTree );
+    FillLocalElimTree
     ( nx, ny, nz, nxSub, nySub, xOffset, yOffset, cutoff, 
-      log2CommSize, SOrig );
+      log2CommSize, eTree );
 #ifndef RELEASE
     cliq::PopCallStack();
 #endif
 }
   
-void FillDistOrigStruct
+void FillDistElimTree
 ( int nx, int ny, int nz, int& nxSub, int& nySub, int& xOffset, int& yOffset, 
-  int cutoff, mpi::Comm comm, int log2CommSize, symbolic::SymmOrig& S )
+  int cutoff, mpi::Comm comm, int log2CommSize, SymmElimTree& eTree )
 {
 #ifndef RELEASE
-    cliq::PushCallStack("FillDistOrigStruct");
+    cliq::PushCallStack("FillDistElimTree");
 #endif
-    const int commRank = mpi::CommRank( comm );
-    S.dist.comm = comm;
-    S.dist.supernodes.resize( log2CommSize+1 );
+    // TODO: Generalize this for non power-of-two numbers of processes
+    const int numDistNodes = log2CommSize+1;
+
+    eTree.dist.nodes.resize( numDistNodes );
+    mpi::CommDup( comm, eTree.dist.nodes.back().comm );
+
     // Fill the distributed nodes
     for( int s=log2CommSize; s>0; --s )
     {
-        symbolic::DistSymmOrigSupernode& sn = S.dist.supernodes[s];
-        const int powerOfTwo = 1u<<(s-1);
-        const bool onLeft = (commRank&powerOfTwo) == 0;
+        DistSymmNode& node = eTree.dist.nodes[s];
+        DistSymmNode& childNode = eTree.dist.nodes[s-1];
+
+        const int nodeCommRank = mpi::CommRank( node.comm );
+        const int nodeCommSize = mpi::CommSize( node.comm );
+        const int rightTeamSize = nodeCommSize/2;
+        const int leftTeamSize = nodeCommSize - rightTeamSize;
+
+        const bool onLeft = ( nodeCommRank < nodeCommSize/2 );
+        const int childNodeCommRank = 
+            ( onLeft ? nodeCommRank : nodeCommRank-leftTeamSize );
+        mpi::CommSplit( node.comm, onLeft, childNodeCommRank, childNode.comm );
+
         if( nxSub >= nySub )
         {
             // Form the structure of a partition of the X dimension
             const int middle = (nxSub-1)/2;
-            sn.size = nySub*nz;
-            sn.offset = 
+            node.size = nySub*nz;
+            node.offset = 
                 ReorderedIndex
                 ( xOffset+middle, yOffset, 0, nx, ny, nz, 
                   log2CommSize, cutoff );
@@ -447,14 +451,14 @@ void FillDistOrigStruct
                 ++numJoins;
             if( yOffset+nySub < ny )
                 ++numJoins;
-            sn.lowerStruct.resize( numJoins*nz );
+            node.lowerStruct.resize( numJoins*nz );
 
             // Fill the (unsorted) lower structure
             int joinOffset = 0;
             if( yOffset-1 >= 0 )
             {
                 for( int i=0; i<nz; ++i )
-                    sn.lowerStruct[i] = ReorderedIndex
+                    node.lowerStruct[i] = ReorderedIndex
                     ( xOffset+middle, yOffset-1, i, nx, ny, nz, 
                       log2CommSize, cutoff );
                 joinOffset += nz;
@@ -462,13 +466,13 @@ void FillDistOrigStruct
             if( yOffset+nySub < ny )
             {
                 for( int i=0; i<nz; ++i )
-                    sn.lowerStruct[joinOffset+i] = ReorderedIndex
+                    node.lowerStruct[joinOffset+i] = ReorderedIndex
                     ( xOffset+middle, yOffset+nySub, i, nx, ny, nz, 
                       log2CommSize, cutoff );
             }
 
             // Sort the lower structure
-            std::sort( sn.lowerStruct.begin(), sn.lowerStruct.end() );
+            std::sort( node.lowerStruct.begin(), node.lowerStruct.end() );
             
             // Pick the new offsets and sizes based upon our rank
             if( onLeft )
@@ -486,8 +490,8 @@ void FillDistOrigStruct
         {
             // Form the structure of a partition of the Y dimension
             const int middle = (nySub-1)/2;
-            sn.size = nxSub*nz;
-            sn.offset = 
+            node.size = nxSub*nz;
+            node.offset = 
                 ReorderedIndex
                 ( xOffset, yOffset+middle, 0, nx, ny, nz, 
                   log2CommSize, cutoff );
@@ -498,14 +502,14 @@ void FillDistOrigStruct
                 ++numJoins;
             if( xOffset+nxSub < nx )
                 ++numJoins;
-            sn.lowerStruct.resize( numJoins*nz );
+            node.lowerStruct.resize( numJoins*nz );
 
             // Fill the (unsorted) lower structure
             int joinOffset = 0;
             if( xOffset-1 >= 0 )
             {
                 for( int i=0; i<nz; ++i )
-                    sn.lowerStruct[i] = ReorderedIndex
+                    node.lowerStruct[i] = ReorderedIndex
                     ( xOffset-1, yOffset+middle, i, nx, ny, nz, 
                       log2CommSize, cutoff );
                 joinOffset += nz;
@@ -513,13 +517,13 @@ void FillDistOrigStruct
             if( xOffset+nxSub < nx )
             {
                 for( int i=0; i<nz; ++i )
-                    sn.lowerStruct[joinOffset+i] = ReorderedIndex
+                    node.lowerStruct[joinOffset+i] = ReorderedIndex
                     ( xOffset+nxSub, yOffset+middle, i, nx, ny, nz,
                       log2CommSize, cutoff );
             }
 
             // Sort the lower structure
-            std::sort( sn.lowerStruct.begin(), sn.lowerStruct.end() );
+            std::sort( node.lowerStruct.begin(), node.lowerStruct.end() );
 
             // Pick the new offsets and sizes based upon our rank
             if( onLeft )
@@ -536,11 +540,11 @@ void FillDistOrigStruct
     }
 
     // Fill the bottom node, which is only owned by a single process
-    symbolic::DistSymmOrigSupernode& sn = S.dist.supernodes[0];
+    DistSymmNode& node = eTree.dist.nodes[0];
     if( nxSub*nySub*nz <= cutoff )
     {
-        sn.size = nxSub*nySub*nz;
-        sn.offset = ReorderedIndex
+        node.size = nxSub*nySub*nz;
+        node.offset = ReorderedIndex
             ( xOffset, yOffset, 0, nx, ny, nz, log2CommSize, cutoff );
 
         // Count, allocate, and fill the lower struct
@@ -553,14 +557,14 @@ void FillDistOrigStruct
             joinSize += nxSub*nz;
         if( yOffset+nySub < ny )
             joinSize += nxSub*nz;
-        sn.lowerStruct.resize( joinSize );
+        node.lowerStruct.resize( joinSize );
 
         int joinOffset = 0;
         if( xOffset-1 >= 0 )
         {
             for( int i=0; i<nz; ++i )
                 for( int j=0; j<nySub; ++j )
-                    sn.lowerStruct[i*nySub+j] = ReorderedIndex
+                    node.lowerStruct[i*nySub+j] = ReorderedIndex
                     ( xOffset-1, yOffset+j, i, 
                       nx, ny, nz, log2CommSize, cutoff );
             joinOffset += nySub*nz;
@@ -569,7 +573,7 @@ void FillDistOrigStruct
         {
             for( int i=0; i<nz; ++i )
                 for( int j=0; j<nySub; ++j )
-                    sn.lowerStruct[joinOffset+i*nySub+j] = ReorderedIndex
+                    node.lowerStruct[joinOffset+i*nySub+j] = ReorderedIndex
                     ( xOffset+nxSub, yOffset+j, i, 
                       nx, ny, nz, log2CommSize, cutoff );
             joinOffset += nySub*nz;
@@ -578,7 +582,7 @@ void FillDistOrigStruct
         {
             for( int i=0; i<nz; ++i )
                 for( int j=0; j<nxSub; ++j )
-                    sn.lowerStruct[joinOffset+i*nxSub+j] = ReorderedIndex
+                    node.lowerStruct[joinOffset+i*nxSub+j] = ReorderedIndex
                     ( xOffset+j, yOffset-1, i, 
                       nx, ny, nz, log2CommSize, cutoff );
             joinOffset += nxSub*nz;
@@ -587,20 +591,20 @@ void FillDistOrigStruct
         {
             for( int i=0; i<nz; ++i )
                 for( int j=0; j<nxSub; ++j )
-                    sn.lowerStruct[joinOffset+i*nxSub+j] = ReorderedIndex
+                    node.lowerStruct[joinOffset+i*nxSub+j] = ReorderedIndex
                     ( xOffset+j, yOffset+nySub, i, 
                       nx, ny, nz, log2CommSize, cutoff );
         }
 
         // Sort the lower structure
-        std::sort( sn.lowerStruct.begin(), sn.lowerStruct.end() );
+        std::sort( node.lowerStruct.begin(), node.lowerStruct.end() );
     }
     else if( nxSub >= nySub )
     {
         // Form the structure of a partition of the X dimension
         const int middle = (nxSub-1)/2;
-        sn.size = nySub*nz;
-        sn.offset = 
+        node.size = nySub*nz;
+        node.offset = 
             ReorderedIndex
             ( xOffset+middle, yOffset, 0, nx, ny, nz, log2CommSize, cutoff );
 
@@ -610,14 +614,14 @@ void FillDistOrigStruct
             ++numJoins;
         if( yOffset+nySub < ny )
             ++numJoins;
-        sn.lowerStruct.resize( numJoins*nz );
+        node.lowerStruct.resize( numJoins*nz );
 
         // Fill the (unsorted) lower structure
         int joinOffset = 0;
         if( yOffset-1 >= 0 )
         {
             for( int i=0; i<nz; ++i )
-                sn.lowerStruct[i] = ReorderedIndex
+                node.lowerStruct[i] = ReorderedIndex
                 ( xOffset+middle, yOffset-1, i, nx, ny, nz, 
                   log2CommSize, cutoff );
             joinOffset += nz;
@@ -625,20 +629,20 @@ void FillDistOrigStruct
         if( yOffset+nySub < ny )
         {
             for( int i=0; i<nz; ++i )
-                sn.lowerStruct[joinOffset+i] = ReorderedIndex
+                node.lowerStruct[joinOffset+i] = ReorderedIndex
                 ( xOffset+middle, yOffset+nySub, i, nx, ny, nz, 
                   log2CommSize, cutoff );
         }
 
         // Sort the lower structure
-        std::sort( sn.lowerStruct.begin(), sn.lowerStruct.end() );
+        std::sort( node.lowerStruct.begin(), node.lowerStruct.end() );
     }
     else
     {
         // Form the structure of a partition of the Y dimension
         const int middle = (nySub-1)/2;
-        sn.size = nxSub*nz;
-        sn.offset = 
+        node.size = nxSub*nz;
+        node.offset = 
             ReorderedIndex
             ( xOffset, yOffset+middle, 0, nx, ny, nz, log2CommSize, cutoff );
 
@@ -648,14 +652,14 @@ void FillDistOrigStruct
             ++numJoins;
         if( xOffset+nxSub < nx )
             ++numJoins;
-        sn.lowerStruct.resize( numJoins*nz );
+        node.lowerStruct.resize( numJoins*nz );
 
         // Fill the (unsorted) lower structure
         int joinOffset = 0;
         if( xOffset-1 >= 0 )
         {
             for( int i=0; i<nz; ++i )
-                sn.lowerStruct[i] = ReorderedIndex
+                node.lowerStruct[i] = ReorderedIndex
                 ( xOffset-1, yOffset+middle, i, nx, ny, nz, 
                   log2CommSize, cutoff );
             joinOffset += nz;
@@ -663,13 +667,13 @@ void FillDistOrigStruct
         if( xOffset+nxSub < nx )
         {
             for( int i=0; i<nz; ++i )
-                sn.lowerStruct[joinOffset+i] = ReorderedIndex
+                node.lowerStruct[joinOffset+i] = ReorderedIndex
                 ( xOffset+nxSub, yOffset+middle, i, nx, ny, nz,
                   log2CommSize, cutoff );
         }
 
         // Sort the lower structure
-        std::sort( sn.lowerStruct.begin(), sn.lowerStruct.end() );
+        std::sort( node.lowerStruct.begin(), node.lowerStruct.end() );
     }
 #ifndef RELEASE
     cliq::PopCallStack();
@@ -687,17 +691,17 @@ struct Box
     bool leftChild;
 };
 
-void FillLocalOrigStruct
+void FillLocalElimTree
 ( int nx, int ny, int nz, int nxSub, int nySub, int xOffset, int yOffset, 
-  int cutoff, int log2CommSize, symbolic::SymmOrig& S )
+  int cutoff, int log2CommSize, SymmElimTree& eTree )
 {
 #ifndef RELEASE
-    cliq::PushCallStack("FillLocalOrigStruct");
+    cliq::PushCallStack("FillLocalElimTree");
 #endif
     // First count the depth, resize, and then run the actual fill
-    int numSupernodes = 0;
-    CountLocalTreeSize( nxSub, nySub, nz, cutoff, numSupernodes );
-    S.local.supernodes.resize( numSupernodes );
+    int numNodes = 0;
+    CountLocalTreeSize( nxSub, nySub, nz, cutoff, numNodes );
+    eTree.local.nodes.resize( numNodes );
     
     // Initialize with the root's box
     std::stack<Box> boxStack;
@@ -713,28 +717,28 @@ void FillLocalOrigStruct
     }
 
     // Fill the local tree
-    for( int s=numSupernodes-1; s>=0; --s )
+    for( int s=numNodes-1; s>=0; --s )
     {
         Box box = boxStack.top();
         boxStack.pop();
 
-        symbolic::LocalSymmOrigSupernode& sn = S.local.supernodes[s];
-        sn.parent = box.parentIndex;
-        if( sn.parent != -1 )
+        LocalSymmNode& node = eTree.local.nodes[s];
+        node.parent = box.parentIndex;
+        if( node.parent != -1 )
         {
             if( box.leftChild )
-                S.local.supernodes[sn.parent].children[0] = s;
+                eTree.local.nodes[node.parent].children[0] = s;
             else
-                S.local.supernodes[sn.parent].children[1] = s;
+                eTree.local.nodes[node.parent].children[1] = s;
         }
 
         if( box.nx*box.ny*nz <= cutoff )
         {
-            sn.size = box.nx*box.ny*nz;
-            sn.offset = ReorderedIndex
+            node.size = box.nx*box.ny*nz;
+            node.offset = ReorderedIndex
                 ( box.xOffset, box.yOffset, 0, nx, ny, nz, 
                   log2CommSize, cutoff );
-            sn.children.clear();
+            node.children.clear();
 
             // Count, allocate, and fill the lower struct
             int joinSize = 0;
@@ -746,14 +750,14 @@ void FillLocalOrigStruct
                 joinSize += box.nx*nz;
             if( box.yOffset+box.ny < ny )
                 joinSize += box.nx*nz;
-            sn.lowerStruct.resize( joinSize );
+            node.lowerStruct.resize( joinSize );
 
             int joinOffset = 0;
             if( box.xOffset-1 >= 0 )
             {
                 for( int i=0; i<nz; ++i )
                     for( int j=0; j<box.ny; ++j )
-                        sn.lowerStruct[i*box.ny+j] = ReorderedIndex
+                        node.lowerStruct[i*box.ny+j] = ReorderedIndex
                         ( box.xOffset-1, box.yOffset+j, i, 
                           nx, ny, nz, log2CommSize, cutoff );
                 joinOffset += box.ny*nz;
@@ -762,7 +766,7 @@ void FillLocalOrigStruct
             {
                 for( int i=0; i<nz; ++i )
                     for( int j=0; j<box.ny; ++j )
-                        sn.lowerStruct[joinOffset+i*box.ny+j] = ReorderedIndex
+                        node.lowerStruct[joinOffset+i*box.ny+j] = ReorderedIndex
                         ( box.xOffset+box.nx, box.yOffset+j, i, 
                           nx, ny, nz, log2CommSize, cutoff );
                 joinOffset += box.ny*nz;
@@ -771,7 +775,7 @@ void FillLocalOrigStruct
             {
                 for( int i=0; i<nz; ++i )
                     for( int j=0; j<box.nx; ++j )
-                        sn.lowerStruct[joinOffset+i*box.nx+j] = ReorderedIndex
+                        node.lowerStruct[joinOffset+i*box.nx+j] = ReorderedIndex
                         ( box.xOffset+j, box.yOffset-1, i, 
                           nx, ny, nz, log2CommSize, cutoff );
                 joinOffset += box.nx*nz;
@@ -780,23 +784,23 @@ void FillLocalOrigStruct
             {
                 for( int i=0; i<nz; ++i )
                     for( int j=0; j<box.nx; ++j )
-                        sn.lowerStruct[joinOffset+i*box.nx+j] = ReorderedIndex
+                        node.lowerStruct[joinOffset+i*box.nx+j] = ReorderedIndex
                         ( box.xOffset+j, box.yOffset+box.ny, i,
                           nx, ny, nz, log2CommSize, cutoff );
             }
 
             // Sort the lower structure
-            std::sort( sn.lowerStruct.begin(), sn.lowerStruct.end() );
+            std::sort( node.lowerStruct.begin(), node.lowerStruct.end() );
         }
         else
         {
-            sn.children.resize(2);
+            node.children.resize(2);
             if( box.nx >= box.ny )
             {
                 // Partition the X dimension (this is the separator)
                 const int middle = (box.nx-1)/2;
-                sn.size = box.ny*nz;
-                sn.offset = ReorderedIndex
+                node.size = box.ny*nz;
+                node.offset = ReorderedIndex
                     ( box.xOffset+middle, box.yOffset, 0, nx, ny, nz,
                       log2CommSize, cutoff );
 
@@ -806,13 +810,13 @@ void FillLocalOrigStruct
                     ++numJoins;
                 if( box.yOffset+box.ny < ny )
                     ++numJoins;
-                sn.lowerStruct.resize( numJoins*nz );
+                node.lowerStruct.resize( numJoins*nz );
 
                 int joinOffset = 0;
                 if( box.yOffset-1 >= 0 )
                 {
                     for( int i=0; i<nz; ++i )
-                        sn.lowerStruct[i] = ReorderedIndex
+                        node.lowerStruct[i] = ReorderedIndex
                         ( box.xOffset+middle, box.yOffset-1, i, nx, ny, nz,
                           log2CommSize, cutoff );
                     joinOffset += nz;
@@ -820,13 +824,13 @@ void FillLocalOrigStruct
                 if( box.yOffset+box.ny < ny )
                 {
                     for( int i=0; i<nz; ++i )
-                        sn.lowerStruct[joinOffset+i] = ReorderedIndex
+                        node.lowerStruct[joinOffset+i] = ReorderedIndex
                         ( box.xOffset+middle, box.yOffset+box.ny, i, nx, ny, nz,
                           log2CommSize, cutoff );
                 }
 
                 // Sort the lower structure
-                std::sort( sn.lowerStruct.begin(), sn.lowerStruct.end() );
+                std::sort( node.lowerStruct.begin(), node.lowerStruct.end() );
 
                 // Push the left child box onto the stack
                 Box leftBox;
@@ -852,8 +856,8 @@ void FillLocalOrigStruct
             {
                 // Partition the Y dimension (this is the separator)
                 const int middle = (box.ny-1)/2;
-                sn.size = box.nx*nz;
-                sn.offset = ReorderedIndex
+                node.size = box.nx*nz;
+                node.offset = ReorderedIndex
                     ( box.xOffset, box.yOffset+middle, 0, nx, ny, nz,
                       log2CommSize, cutoff );
 
@@ -863,13 +867,13 @@ void FillLocalOrigStruct
                     ++numJoins;
                 if( box.xOffset+box.nx < nx )
                     ++numJoins;
-                sn.lowerStruct.resize( numJoins*nz );
+                node.lowerStruct.resize( numJoins*nz );
 
                 int joinOffset = 0;
                 if( box.xOffset-1 >= 0 )
                 {
                     for( int i=0; i<nz; ++i )
-                        sn.lowerStruct[i] = ReorderedIndex
+                        node.lowerStruct[i] = ReorderedIndex
                         ( box.xOffset-1, box.yOffset+middle, i, nx, ny, nz,
                           log2CommSize, cutoff );
                     joinOffset += nz;
@@ -877,13 +881,13 @@ void FillLocalOrigStruct
                 if( box.xOffset+box.nx < nx )
                 {
                     for( int i=0; i<nz; ++i )
-                        sn.lowerStruct[joinOffset+i] = ReorderedIndex
+                        node.lowerStruct[joinOffset+i] = ReorderedIndex
                         ( box.xOffset+box.nx, box.yOffset+middle, i, nx, ny, nz,
                           log2CommSize, cutoff );
                 }
 
                 // Sort the lower structure
-                std::sort( sn.lowerStruct.begin(), sn.lowerStruct.end() );
+                std::sort( node.lowerStruct.begin(), node.lowerStruct.end() );
 
                 // Push the left child box onto the stack
                 Box leftBox;
@@ -913,9 +917,9 @@ void FillLocalOrigStruct
 }
 
 void CountLocalTreeSize
-( int nx, int ny, int nz, int cutoff, int& numSupernodes )
+( int nx, int ny, int nz, int cutoff, int& numNodes )
 {
-    ++numSupernodes;
+    ++numNodes;
     const int size = nx*ny*nz;
     if( size <= cutoff )
     {
@@ -927,11 +931,11 @@ void CountLocalTreeSize
         const int middle = (nx-1)/2;
 
         // Recurse on the left partition
-        CountLocalTreeSize( middle, ny, nz, cutoff, numSupernodes );
+        CountLocalTreeSize( middle, ny, nz, cutoff, numNodes );
 
         // Recurse on the right partition
         CountLocalTreeSize
-        ( std::max(nx-middle-1,0), ny, nz, cutoff, numSupernodes );
+        ( std::max(nx-middle-1,0), ny, nz, cutoff, numNodes );
     }
     else
     {
@@ -939,11 +943,11 @@ void CountLocalTreeSize
         const int middle = (ny-1)/2;
 
         // Recurse on the top partition
-        CountLocalTreeSize( nx, middle, nz, cutoff, numSupernodes );
+        CountLocalTreeSize( nx, middle, nz, cutoff, numNodes );
 
         // Recurse on the bottom partition
         CountLocalTreeSize
-        ( nx, std::max(ny-middle-1,0), nz, cutoff, numSupernodes );
+        ( nx, std::max(ny-middle-1,0), nz, cutoff, numNodes );
     }
 }
 

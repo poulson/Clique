@@ -21,11 +21,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_LOCAL_FRONT_LDL_HPP
-#define CLIQUE_NUMERIC_LOCAL_FRONT_LDL_HPP 1
+#ifndef CLIQUE_LOCAL_FRONT_LDL_HPP
+#define CLIQUE_LOCAL_FRONT_LDL_HPP 1
 
 namespace cliq {
-namespace numeric {
 
 template<typename F> 
 void LocalFrontLDL( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR );
@@ -39,7 +38,7 @@ inline void LocalFrontLDL
 ( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::LocalFrontLDL");
+    PushCallStack("LocalFrontLDL");
     if( ABR.Height() != ABR.Width() )
         throw std::logic_error("ABR must be square");
     if( AL.Height() != AL.Width() + ABR.Width() )
@@ -103,7 +102,6 @@ inline void LocalFrontLDL
 #endif
 }
 
-} // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_LOCAL_FRONT_LDL_HPP
+#endif // CLIQUE_LOCAL_FRONT_LDL_HPP

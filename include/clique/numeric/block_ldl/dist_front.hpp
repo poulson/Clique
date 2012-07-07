@@ -17,11 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_DIST_FRONT_BLOCK_LDL_HPP
-#define CLIQUE_NUMERIC_DIST_FRONT_BLOCK_LDL_HPP 1
+#ifndef CLIQUE_DIST_FRONT_BLOCK_LDL_HPP
+#define CLIQUE_DIST_FRONT_BLOCK_LDL_HPP 1
 
 namespace cliq {
-namespace numeric {
 
 template<typename F> 
 void DistFrontBlockLDL
@@ -36,7 +35,7 @@ inline void DistFrontBlockLDL
 ( Orientation orientation, DistMatrix<F>& AL, DistMatrix<F>& ABR )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::internal::DistFrontBlockLDL");
+    PushCallStack("internal::DistFrontBlockLDL");
 #endif
     const Grid& g = AL.Grid();
     DistMatrix<F> ATL(g),
@@ -78,7 +77,6 @@ inline void DistFrontBlockLDL
 #endif
 }
 
-} // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_DIST_FRONT_BLOCK_LDL_HPP
+#endif // CLIQUE_DIST_FRONT_BLOCK_LDL_HPP

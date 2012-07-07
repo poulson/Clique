@@ -17,11 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_LOCAL_FRONT_LOWER_SOLVE_HPP
-#define CLIQUE_NUMERIC_LOCAL_FRONT_LOWER_SOLVE_HPP 1
+#ifndef CLIQUE_LOCAL_FRONT_LOWER_SOLVE_HPP
+#define CLIQUE_LOCAL_FRONT_LOWER_SOLVE_HPP 1
 
 namespace cliq {
-namespace numeric {
 
 template<typename F>
 void LocalFrontLowerForwardSolve
@@ -41,7 +40,7 @@ inline void LocalFrontLowerForwardSolve
 ( UnitOrNonUnit diag, const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::LocalFrontLowerForwardSolve");
+    PushCallStack("LocalFrontLowerForwardSolve");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
@@ -76,7 +75,7 @@ inline void LocalFrontLowerBackwardSolve
   const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::LocalFrontLowerBackwardSolve");
+    PushCallStack("LocalFrontLowerBackwardSolve");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
@@ -107,7 +106,6 @@ inline void LocalFrontLowerBackwardSolve
 #endif
 }
 
-} // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_LOCAL_FRONT_LOWER_SOLVE_HPP
+#endif // CLIQUE_LOCAL_FRONT_LOWER_SOLVE_HPP

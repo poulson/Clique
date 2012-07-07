@@ -17,19 +17,17 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_LOCAL_BLOCK_LDL_HPP
-#define CLIQUE_NUMERIC_LOCAL_BLOCK_LDL_HPP 1
+#ifndef CLIQUE_LOCAL_BLOCK_LDL_HPP
+#define CLIQUE_LOCAL_BLOCK_LDL_HPP 1
 
 // NOTE: This routine is almost identical to LocalLDL, so perhaps it could
 //       be partially merged.
 
 namespace cliq {
-namespace numeric {
 
 template<typename F> 
 void LocalBlockLDL
-( Orientation orientation, 
-  symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L );
+( Orientation orientation, SymmInfo& info, SymmFrontTree<F>& L );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -37,35 +35,34 @@ void LocalBlockLDL
 
 template<typename F> 
 inline void LocalBlockLDL
-( Orientation orientation, symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L )
+( Orientation orientation, SymmInfo& info, SymmFrontTree<F>& L )
 {
-    using namespace symbolic;
 #ifndef RELEASE
-    PushCallStack("numeric::LocalBlockLDL");
+    PushCallStack("LocalBlockLDL");
     if( orientation == NORMAL )
         throw std::logic_error("LDL must be (conjugate-)transposed");
 #endif
-    const int numLocalSupernodes = S.local.supernodes.size();
-    for( int s=0; s<numLocalSupernodes; ++s )
+    const int numLocalNodes = info.local.nodes.size();
+    for( int s=0; s<numLocalNodes; ++s )
     {
-        LocalSymmFactSupernode& sn = S.local.supernodes[s];
-        const int updateSize = sn.lowerStruct.size();
+        LocalSymmNodeInfo& node = info.local.nodes[s];
+        const int updateSize = node.lowerStruct.size();
         Matrix<F>& frontL = L.local.fronts[s].frontL;
         Matrix<F>& frontBR = L.local.fronts[s].work;
         frontBR.Empty();
 #ifndef RELEASE
-        if( frontL.Height() != sn.size+updateSize ||
-            frontL.Width() != sn.size )
+        if( frontL.Height() != node.size+updateSize ||
+            frontL.Width() != node.size )
             throw std::logic_error("Front was not the proper size");
 #endif
 
         // Add updates from children (if they exist)
         elem::Zeros( updateSize, updateSize, frontBR );
-        const int numChildren = sn.children.size();
+        const int numChildren = node.children.size();
         if( numChildren == 2 )
         {
-            const int leftIndex = sn.children[0];
-            const int rightIndex = sn.children[1];
+            const int leftIndex = node.children[0];
+            const int rightIndex = node.children[1];
             Matrix<F>& leftUpdate = L.local.fronts[leftIndex].work;
             Matrix<F>& rightUpdate = L.local.fronts[rightIndex].work;
 
@@ -73,15 +70,16 @@ inline void LocalBlockLDL
             const int leftUpdateSize = leftUpdate.Height();
             for( int jChild=0; jChild<leftUpdateSize; ++jChild )
             {
-                const int jFront = sn.leftChildRelIndices[jChild];
+                const int jFront = node.leftChildRelIndices[jChild];
                 for( int iChild=0; iChild<leftUpdateSize; ++iChild )
                 {
-                    const int iFront = sn.leftChildRelIndices[iChild];
+                    const int iFront = node.leftChildRelIndices[iChild];
                     const F value = leftUpdate.Get(iChild,jChild);
-                    if( jFront < sn.size )
+                    if( jFront < node.size )
                         frontL.Update( iFront, jFront, value );
-                    else if( iFront >= sn.size )
-                        frontBR.Update( iFront-sn.size, jFront-sn.size, value );
+                    else if( iFront >= node.size )
+                        frontBR.Update
+                        ( iFront-node.size, jFront-node.size, value );
                 }
             }
             leftUpdate.Empty();
@@ -90,15 +88,16 @@ inline void LocalBlockLDL
             const int rightUpdateSize = rightUpdate.Height();
             for( int jChild=0; jChild<rightUpdateSize; ++jChild )
             {
-                const int jFront = sn.rightChildRelIndices[jChild];
+                const int jFront = node.rightChildRelIndices[jChild];
                 for( int iChild=0; iChild<rightUpdateSize; ++iChild )
                 {
-                    const int iFront = sn.rightChildRelIndices[iChild];
+                    const int iFront = node.rightChildRelIndices[iChild];
                     const F value = rightUpdate.Get(iChild,jChild);
-                    if( jFront < sn.size )
+                    if( jFront < node.size )
                         frontL.Update( iFront, jFront, value );
-                    else if( iFront >= sn.size )
-                        frontBR.Update( iFront-sn.size, jFront-sn.size, value );
+                    else if( iFront >= node.size )
+                        frontBR.Update
+                        ( iFront-node.size, jFront-node.size, value );
                 }
             }
             rightUpdate.Empty();
@@ -112,7 +111,6 @@ inline void LocalBlockLDL
 #endif
 }
 
-} // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_LOCAL_BLOCK_LDL_HPP
+#endif // CLIQUE_LOCAL_BLOCK_LDL_HPP

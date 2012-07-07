@@ -17,18 +17,15 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_LDL_SOLVE_HPP
-#define CLIQUE_NUMERIC_LDL_SOLVE_HPP 1
+#ifndef CLIQUE_LDL_SOLVE_HPP
+#define CLIQUE_LDL_SOLVE_HPP 1
 
 namespace cliq {
-namespace numeric {
 
 template<typename F>
 void LDLSolve
 ( Orientation orientation,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX );
+  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -37,29 +34,26 @@ void LDLSolve
 template<typename F>
 inline void LDLSolve
 ( Orientation orientation,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX )
+  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::LDLSolve");
+    PushCallStack("LDLSolve");
     if( orientation == NORMAL )
         throw std::logic_error("Invalid orientation for LDL");
 #endif
     // Solve against unit diagonal L
-    LowerSolve( NORMAL, UNIT, S, L, localX );
+    LowerSolve( NORMAL, UNIT, info, L, localX );
 
     // Solve against diagonal
-    DiagonalSolve( S, L, localX );
+    DiagonalSolve( info, L, localX );
 
     // Solve against the (conjugate-)transpose of the unit diagonal L
-    LowerSolve( orientation, UNIT, S, L, localX );
+    LowerSolve( orientation, UNIT, info, L, localX );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
-} // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_LDL_SOLVE_HPP
+#endif // CLIQUE_LDL_SOLVE_HPP

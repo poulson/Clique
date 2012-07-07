@@ -17,11 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_SET_SOLVE_MODE_HPP
-#define CLIQUE_NUMERIC_SET_SOLVE_MODE_HPP 1
+#ifndef CLIQUE_SET_SOLVE_MODE_HPP
+#define CLIQUE_SET_SOLVE_MODE_HPP 1
 
 namespace cliq {
-namespace numeric {
 
 template<typename F>
 void SetSolveMode( SymmFrontTree<F>& L, SolveMode mode );
@@ -36,7 +35,7 @@ template<typename F>
 inline void SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::SetSolveMode");
+    PushCallStack("SetSolveMode");
 #endif
     // Check if this call can be a no-op
     if( mode == L.dist.mode ) 
@@ -46,7 +45,7 @@ inline void SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
 #endif
         return;
     }
-    const int numDistSupernodes = L.dist.fronts.size();    
+    const int numDistNodes = L.dist.fronts.size();    
     DistSymmFront<F>& leafFront = L.dist.fronts[0];
     const SolveMode oldMode = L.dist.mode;
 
@@ -58,7 +57,7 @@ inline void SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
           leafFront.front2dL.LockedLocalBuffer(), 
           leafFront.front2dL.LocalLDim(),
           leafFront.front2dL.Grid() );
-        for( int s=1; s<numDistSupernodes; ++s )
+        for( int s=1; s<numDistNodes; ++s )
         {
             DistSymmFront<F>& front = L.dist.fronts[s];
             front.front1dL.Empty();
@@ -69,7 +68,7 @@ inline void SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
     }
     else if( mode == FAST_2D_LDL && oldMode == NORMAL_2D )
     {
-        for( int s=1; s<numDistSupernodes; ++s )
+        for( int s=1; s<numDistNodes; ++s )
         {
             DistSymmFront<F>& front = L.dist.fronts[s];
             const Grid& grid = front.front2dL.Grid();
@@ -91,7 +90,7 @@ inline void SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
           leafFront.front2dL.LockedLocalBuffer(), 
           leafFront.front2dL.LocalLDim(),
           leafFront.front2dL.Grid() );
-        for( int s=1; s<numDistSupernodes; ++s )
+        for( int s=1; s<numDistNodes; ++s )
         {
             DistSymmFront<F>& front = L.dist.fronts[s];
             const Grid& grid = front.front2dL.Grid();
@@ -118,7 +117,7 @@ inline void SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
           leafFront.front1dL.LockedLocalBuffer(), 
           leafFront.front1dL.LocalLDim(),
           leafFront.front1dL.Grid() );
-        for( int s=1; s<numDistSupernodes; ++s )
+        for( int s=1; s<numDistNodes; ++s )
         {
             DistSymmFront<F>& front = L.dist.fronts[s];
             front.front2dL.Empty();
@@ -135,7 +134,6 @@ inline void SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
 #endif
 }
 
-} // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_SET_SOLVE_MODE_HPP
+#endif // CLIQUE_SET_SOLVE_MODE_HPP

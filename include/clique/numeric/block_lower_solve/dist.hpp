@@ -17,24 +17,19 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_DIST_BLOCK_LOWER_SOLVE_HPP
-#define CLIQUE_NUMERIC_DIST_BLOCK_LOWER_SOLVE_HPP 1
+#ifndef CLIQUE_DIST_BLOCK_LOWER_SOLVE_HPP
+#define CLIQUE_DIST_BLOCK_LOWER_SOLVE_HPP 1
 
 namespace cliq {
-namespace numeric {
 
 template<typename F> 
 void DistBlockLowerForwardSolve
-( const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L, 
-        Matrix<F>& localX );
+( const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX );
 
 template<typename F>
 void DistBlockLowerBackwardSolve
 ( Orientation orientation, 
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX );
+  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -42,15 +37,12 @@ void DistBlockLowerBackwardSolve
 
 template<typename F> 
 inline void DistBlockLowerForwardSolve
-( const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L, 
-        Matrix<F>& localX )
+( const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX )
 {
-    using namespace symbolic;
 #ifndef RELEASE
-    PushCallStack("numeric::DistBlockLowerForwardSolve");
+    PushCallStack("DistBlockLowerForwardSolve");
 #endif
-    const int numDistSupernodes = S.dist.supernodes.size();
+    const int numDistNodes = info.dist.nodes.size();
     const int width = localX.Width();
     const SolveMode mode = L.dist.mode;
     if( mode != NORMAL_2D )
@@ -66,12 +58,12 @@ inline void DistBlockLowerForwardSolve
       leafGrid );
     
     // Perform the distributed portion of the forward solve
-    for( int s=1; s<numDistSupernodes; ++s )
+    for( int s=1; s<numDistNodes; ++s )
     {
-        const DistSymmFactSupernode& childSN = S.dist.supernodes[s-1];
-        const DistSymmFactSupernode& sn = S.dist.supernodes[s];
-        const DistSymmFront<F>& childFront = L.dist.fronts[s-1];
+        const DistSymmNodeInfo& node = info.dist.nodes[s];
         const DistSymmFront<F>& front = L.dist.fronts[s];
+        const DistSymmNodeInfo& childNode = info.dist.nodes[s-1];
+        const DistSymmFront<F>& childFront = L.dist.fronts[s-1];
         const Grid& childGrid = childFront.front2dL.Grid();
         const Grid& grid = front.front2dL.Grid();
         mpi::Comm comm = grid.VCComm();
@@ -88,24 +80,24 @@ inline void DistBlockLowerForwardSolve
         DistMatrix<F,VC,STAR> WT(grid), WB(grid);
         elem::PartitionDown
         ( W, WT,
-             WB, sn.size );
+             WB, node.size );
 
         // Pull in the relevant information from the RHS
         Matrix<F> localXT;
-        localXT.View( localX, sn.localOffset1d, 0, sn.localSize1d, width );
+        localXT.View( localX, node.localOffset1d, 0, node.localSize1d, width );
         WT.LocalMatrix() = localXT;
         elem::MakeZeros( WB );
 
         // Pack our child's update
         DistMatrix<F,VC,STAR>& childW = childFront.work1d;
-        const int updateSize = childW.Height()-childSN.size;
+        const int updateSize = childW.Height()-childNode.size;
         DistMatrix<F,VC,STAR> childUpdate;
-        childUpdate.LockedView( childW, childSN.size, 0, updateSize, width );
+        childUpdate.LockedView( childW, childNode.size, 0, updateSize, width );
         int sendBufferSize = 0;
         std::vector<int> sendCounts(commSize), sendDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int sendSize = sn.numChildSolveSendIndices[proc]*width;
+            const int sendSize = node.numChildSolveSendIndices[proc]*width;
             sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += sendSize;
@@ -114,8 +106,8 @@ inline void DistBlockLowerForwardSolve
 
         const bool isLeftChild = ( commRank < commSize/2 );
         const std::vector<int>& myChildRelIndices = 
-            ( isLeftChild ? sn.leftChildRelIndices
-                          : sn.rightChildRelIndices );
+            ( isLeftChild ? node.leftChildRelIndices
+                          : node.rightChildRelIndices );
         const int updateColShift = childUpdate.ColShift();
         const int updateLocalHeight = childUpdate.LocalHeight();
         std::vector<int> packOffsets = sendDispls;
@@ -138,7 +130,7 @@ inline void DistBlockLowerForwardSolve
         std::vector<int> recvCounts(commSize), recvDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int recvSize = sn.childSolveRecvIndices[proc].size()*width;
+            const int recvSize = node.childSolveRecvIndices[proc].size()*width;
             recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += recvSize;
@@ -160,7 +152,8 @@ inline void DistBlockLowerForwardSolve
         for( int proc=0; proc<commSize; ++proc )
         {
             const F* recvValues = &recvBuffer[recvDispls[proc]];
-            const std::deque<int>& recvIndices = sn.childSolveRecvIndices[proc];
+            const std::deque<int>& recvIndices = 
+                node.childSolveRecvIndices[proc];
             for( unsigned k=0; k<recvIndices.size(); ++k )
             {
                 const int iFrontLocal = recvIndices[k];
@@ -175,10 +168,10 @@ inline void DistBlockLowerForwardSolve
         recvCounts.clear();
         recvDispls.clear();
 
-        // Now that the RHS is set up, perform this supernode's solve
+        // Now that the RHS is set up, perform this node's solve
         DistFrontBlockLowerForwardSolve( front.front2dL, W );
 
-        // Store the supernode portion of the result
+        // Store this node's portion of the result
         localXT = WT.LocalMatrix();
     }
     L.local.fronts.back().work.Empty();
@@ -191,28 +184,25 @@ inline void DistBlockLowerForwardSolve
 template<typename F>
 inline void DistBlockLowerBackwardSolve
 ( Orientation orientation, 
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX )
+  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX )
 {
-    using namespace symbolic;
 #ifndef RELEASE
-    PushCallStack("numeric::DistBlockLowerBackwardSolve");
+    PushCallStack("DistBlockLowerBackwardSolve");
 #endif
-    const int numDistSupernodes = S.dist.supernodes.size();
+    const int numDistNodes = info.dist.nodes.size();
     const int width = localX.Width();
     const SolveMode mode = L.dist.mode;
     if( mode != NORMAL_2D )
         throw std::logic_error("This solve mode is not yet implemented");
 
     // Directly operate on the root separator's portion of the right-hand sides
-    const DistSymmFactSupernode& rootSN = S.dist.supernodes.back();
+    const DistSymmNodeInfo& rootNode = info.dist.nodes.back();
     const LocalSymmFront<F>& localRootFront = L.local.fronts.back();
-    if( numDistSupernodes == 1 )
+    if( numDistNodes == 1 )
     {
         localRootFront.work.View
-        ( rootSN.size, width,
-          localX.Buffer(rootSN.localOffset1d,0), localX.LDim() );
+        ( rootNode.size, width,
+          localX.Buffer(rootNode.localOffset1d,0), localX.LDim() );
         LocalFrontBlockLowerBackwardSolve
         ( orientation, localRootFront.frontL, localRootFront.work );
     }
@@ -221,16 +211,16 @@ inline void DistBlockLowerBackwardSolve
         const DistSymmFront<F>& rootFront = L.dist.fronts.back();
         const Grid& rootGrid = rootFront.front2dL.Grid();
         rootFront.work1d.View
-        ( rootSN.size, width, 0,
-          localX.Buffer(rootSN.localOffset1d,0), localX.LDim(), rootGrid );
+        ( rootNode.size, width, 0,
+          localX.Buffer(rootNode.localOffset1d,0), localX.LDim(), rootGrid );
         DistFrontBlockLowerBackwardSolve
         ( orientation, rootFront.front2dL, rootFront.work1d );
     }
 
-    for( int s=numDistSupernodes-2; s>=0; --s )
+    for( int s=numDistNodes-2; s>=0; --s )
     {
-        const DistSymmFactSupernode& parentSN = S.dist.supernodes[s+1];
-        const DistSymmFactSupernode& sn = S.dist.supernodes[s];
+        const DistSymmNodeInfo& parentNode = info.dist.nodes[s+1];
+        const DistSymmNodeInfo& node = info.dist.nodes[s];
         const DistSymmFront<F>& parentFront = L.dist.fronts[s+1];
         const DistSymmFront<F>& front = L.dist.fronts[s];
         const Grid& grid = front.front2dL.Grid();
@@ -249,11 +239,11 @@ inline void DistBlockLowerBackwardSolve
         DistMatrix<F,VC,STAR> WT(grid), WB(grid);
         elem::PartitionDown
         ( W, WT,
-             WB, sn.size );
+             WB, node.size );
 
         // Pull in the relevant information from the RHS
         Matrix<F> localXT;
-        localXT.View( localX, sn.localOffset1d, 0, sn.localSize1d, width );
+        localXT.View( localX, node.localOffset1d, 0, node.localSize1d, width );
         WT.LocalMatrix() = localXT;
 
         //
@@ -266,7 +256,7 @@ inline void DistBlockLowerBackwardSolve
         for( int proc=0; proc<parentCommSize; ++proc )
         {
             const int sendSize = 
-                parentSN.childSolveRecvIndices[proc].size()*width;
+                parentNode.childSolveRecvIndices[proc].size()*width;
             sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += sendSize;
@@ -278,7 +268,7 @@ inline void DistBlockLowerBackwardSolve
         {
             F* sendValues = &sendBuffer[sendDispls[proc]];
             const std::deque<int>& recvIndices = 
-                parentSN.childSolveRecvIndices[proc];
+                parentNode.childSolveRecvIndices[proc];
             for( unsigned k=0; k<recvIndices.size(); ++k )
             {
                 const int iFrontLocal = recvIndices[k];
@@ -298,7 +288,7 @@ inline void DistBlockLowerBackwardSolve
         for( int proc=0; proc<parentCommSize; ++proc )
         {
             const int recvSize = 
-                parentSN.numChildSolveSendIndices[proc]*width;
+                parentNode.numChildSolveSendIndices[proc]*width;
             recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += recvSize;
@@ -319,8 +309,8 @@ inline void DistBlockLowerBackwardSolve
         // Unpack the updates using the send approach from the forward solve
         const bool isLeftChild = ( parentCommRank < parentCommSize/2 );
         const std::vector<int>& myRelIndices = 
-            ( isLeftChild ? parentSN.leftChildRelIndices
-                          : parentSN.rightChildRelIndices );
+            ( isLeftChild ? parentNode.leftChildRelIndices
+                          : parentNode.rightChildRelIndices );
         const int updateColShift = WB.ColShift();
         const int updateLocalHeight = WB.LocalHeight();
         for( int iUpdateLocal=0; 
@@ -337,7 +327,7 @@ inline void DistBlockLowerBackwardSolve
         recvCounts.clear();
         recvDispls.clear();
 
-        // Call the custom supernode backward solve
+        // Call the custom node backward solve
         if( s > 0 )
             DistFrontBlockLowerBackwardSolve( orientation, front.front2dL, W );
         else
@@ -347,7 +337,7 @@ inline void DistBlockLowerBackwardSolve
             ( orientation, localRootFront.frontL, localRootFront.work );
         }
 
-        // Store the supernode portion of the result
+        // Store this node's portion of the result
         localXT = WT.LocalMatrix();
     }
 #ifndef RELEASE
@@ -355,7 +345,6 @@ inline void DistBlockLowerBackwardSolve
 #endif
 }
 
-} // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_DIST_BLOCK_LOWER_SOLVE_HPP
+#endif // CLIQUE_DIST_BLOCK_LOWER_SOLVE_HPP

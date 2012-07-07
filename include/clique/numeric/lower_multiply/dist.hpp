@@ -17,25 +17,20 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_DIST_LOWER_MULTIPLY
-#define CLIQUE_NUMERIC_DIST_LOWER_MULTIPLY 1
+#ifndef CLIQUE_DIST_LOWER_MULTIPLY
+#define CLIQUE_DIST_LOWER_MULTIPLY 1
 
 namespace cliq {
-namespace numeric {
 
 template<typename F> 
 void DistLowerMultiplyNormal
 ( UnitOrNonUnit diag, int diagOffset,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX );
+  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX );
 
 template<typename F> 
 void DistLowerMultiplyTranspose
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX );
+  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -44,15 +39,12 @@ void DistLowerMultiplyTranspose
 template<typename F> 
 inline void DistLowerMultiplyNormal
 ( UnitOrNonUnit diag, int diagOffset,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX )
+  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX )
 {
-    using namespace symbolic;
 #ifndef RELEASE
-    PushCallStack("numeric::DistLowerMultiplyNormal");
+    PushCallStack("DistLowerMultiplyNormal");
 #endif
-    const int numDistSupernodes = S.dist.supernodes.size();
+    const int numDistNodes = info.dist.nodes.size();
     const int width = localX.Width();
     if( L.dist.mode != NORMAL_1D )
         throw std::logic_error("This multiply mode is not yet implemented");
@@ -66,10 +58,10 @@ inline void DistLowerMultiplyNormal
       distLeafFront.front1dL.Grid() );
     
     // Perform the distributed portion of the forward multiply
-    for( int s=1; s<numDistSupernodes; ++s )
+    for( int s=1; s<numDistNodes; ++s )
     {
-        const DistSymmFactSupernode& childSN = S.dist.supernodes[s-1];
-        const DistSymmFactSupernode& sn = S.dist.supernodes[s];
+        const DistSymmNodeInfo& childNode = info.dist.nodes[s-1];
+        const DistSymmNodeInfo& node = info.dist.nodes[s];
         const DistSymmFront<F>& childFront = L.dist.fronts[s-1];
         const DistSymmFront<F>& front = L.dist.fronts[s];
         const Grid& childGrid = childFront.front1dL.Grid();
@@ -88,11 +80,11 @@ inline void DistLowerMultiplyNormal
         DistMatrix<F,VC,STAR> WT(grid), WB(grid);
         elem::PartitionDown
         ( W, WT,
-             WB, sn.size );
+             WB, node.size );
 
         // Pull in the relevant information from the RHS
         Matrix<F> localXT;
-        localXT.View( localX, sn.localOffset1d, 0, sn.localSize1d, width );
+        localXT.View( localX, node.localOffset1d, 0, node.localSize1d, width );
         WT.LocalMatrix() = localXT;
         elem::MakeZeros( WB );
 
@@ -101,14 +93,14 @@ inline void DistLowerMultiplyNormal
 
         // Pack our child's update
         DistMatrix<F,VC,STAR>& childW = childFront.work1d;
-        const int updateSize = childW.Height()-childSN.size;
+        const int updateSize = childW.Height()-childNode.size;
         DistMatrix<F,VC,STAR> childUpdate;
-        childUpdate.LockedView( childW, childSN.size, 0, updateSize, width );
+        childUpdate.LockedView( childW, childNode.size, 0, updateSize, width );
         int sendBufferSize = 0;
         std::vector<int> sendCounts(commSize), sendDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int sendSize = sn.numChildSolveSendIndices[proc]*width;
+            const int sendSize = node.numChildSolveSendIndices[proc]*width;
             sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += sendSize;
@@ -117,8 +109,8 @@ inline void DistLowerMultiplyNormal
 
         const bool isLeftChild = ( commRank < commSize/2 );
         const std::vector<int>& myChildRelIndices = 
-            ( isLeftChild ? sn.leftChildRelIndices
-                          : sn.rightChildRelIndices );
+            ( isLeftChild ? node.leftChildRelIndices
+                          : node.rightChildRelIndices );
         const int updateColShift = childUpdate.ColShift();
         const int updateLocalHeight = childUpdate.LocalHeight();
         std::vector<int> packOffsets = sendDispls;
@@ -141,7 +133,7 @@ inline void DistLowerMultiplyNormal
         std::vector<int> recvCounts(commSize), recvDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int recvSize = sn.childSolveRecvIndices[proc].size()*width;
+            const int recvSize = node.childSolveRecvIndices[proc].size()*width;
             recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += recvSize;
@@ -163,7 +155,8 @@ inline void DistLowerMultiplyNormal
         for( int proc=0; proc<commSize; ++proc )
         {
             const F* recvValues = &recvBuffer[recvDispls[proc]];
-            const std::deque<int>& recvIndices = sn.childSolveRecvIndices[proc];
+            const std::deque<int>& recvIndices = 
+                node.childSolveRecvIndices[proc];
             for( int k=0; k<recvIndices.size(); ++k )
             {
                 const int iFrontLocal = recvIndices[k];
@@ -178,7 +171,7 @@ inline void DistLowerMultiplyNormal
         recvCounts.clear();
         recvDispls.clear();
 
-        // Store the supernode portion of the result
+        // Store this node's portion of the result
         localXT = WT.LocalMatrix();
     }
     L.local.fronts.back().work.Empty();
@@ -188,31 +181,28 @@ inline void DistLowerMultiplyNormal
 #endif
 }
 
-template<typename F> // F represents a real or complex field
+template<typename F> 
 inline void DistLowerMultiplyTranspose
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX )
+  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX )
 {
-    using namespace symbolic;
 #ifndef RELEASE
-    PushCallStack("numeric::DistLowerMultiplyTranspose");
+    PushCallStack("DistLowerMultiplyTranspose");
 #endif
-    const int numDistSupernodes = S.dist.supernodes.size();
+    const int numDistNodes = info.dist.nodes.size();
     const int width = localX.Width();
     if( L.dist.mode != NORMAL_1D )
         throw std::logic_error("This multiply mode is not yet implemented");
 
     // Directly operate on the root separator's portion of the right-hand sides
-    const DistSymmFactSupernode& rootSN = S.dist.supernodes.back();
+    const DistSymmNodeInfo& rootNode = info.dist.nodes.back();
     const LocalSymmFront<F>& localRootFront = L.local.fronts.back();
-    if( numDistSupernodes == 1 )
+    if( numDistNodes == 1 )
     {
         Matrix<F> XRoot;
         XRoot.View
-        ( rootSN.size, width, 
-          localX.Buffer(rootSN.localOffset1d,0), localX.LDim() );
+        ( rootNode.size, width, 
+          localX.Buffer(rootNode.localOffset1d,0), localX.LDim() );
         localRootFront.work = XRoot;
         LocalFrontLowerMultiply
         ( orientation, diag, diagOffset, localRootFront.frontL, XRoot );
@@ -223,17 +213,17 @@ inline void DistLowerMultiplyTranspose
         const Grid& rootGrid = rootFront.front1dL.Grid();
         DistMatrix<F,VC,STAR> XRoot(rootGrid);
         XRoot.View
-        ( rootSN.size, width, 0,
-          localX.Buffer(rootSN.localOffset1d,0), localX.LDim(), rootGrid );
+        ( rootNode.size, width, 0,
+          localX.Buffer(rootNode.localOffset1d,0), localX.LDim(), rootGrid );
         rootFront.work1d = XRoot; // store the RHS for use by the children
         DistFrontLowerMultiply
         ( orientation, diag, diagOffset, rootFront.front1dL, XRoot );
     }
 
-    for( int s=numDistSupernodes-2; s>=0; --s )
+    for( int s=numDistNodes-2; s>=0; --s )
     {
-        const DistSymmFactSupernode& parentSN = S.dist.supernodes[s+1];
-        const DistSymmFactSupernode& sn = S.dist.supernodes[s];
+        const DistSymmNodeInfo& parentNode = info.dist.nodes[s+1];
+        const DistSymmNodeInfo& node = info.dist.nodes[s];
         const DistSymmFront<F>& parentFront = L.dist.fronts[s+1];
         const DistSymmFront<F>& front = L.dist.fronts[s];
         const Grid& grid = front.front1dL.Grid();
@@ -252,11 +242,11 @@ inline void DistLowerMultiplyTranspose
         DistMatrix<F,VC,STAR> WT(grid), WB(grid);
         elem::PartitionDown
         ( W, WT,
-             WB, sn.size );
+             WB, node.size );
 
         // Pull in the relevant information from the RHS
         Matrix<F> localXT;
-        localXT.View( localX, sn.localOffset1d, 0, sn.localSize1d, width );
+        localXT.View( localX, node.localOffset1d, 0, node.localSize1d, width );
         WT.LocalMatrix() = localXT;
 
         //
@@ -270,7 +260,7 @@ inline void DistLowerMultiplyTranspose
         for( int proc=0; proc<parentCommSize; ++proc )
         {
             const int sendSize = 
-                parentSN.childSolveRecvIndices[proc].size()*width;
+                parentNode.childSolveRecvIndices[proc].size()*width;
             sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += sendSize;
@@ -282,7 +272,7 @@ inline void DistLowerMultiplyTranspose
         {
             F* sendValues = &sendBuffer[sendDispls[proc]];
             const std::deque<int>& recvIndices = 
-                parentSN.childSolveRecvIndices[proc];
+                parentNode.childSolveRecvIndices[proc];
             for( int k=0; k<recvIndices.size(); ++k )
             {
                 const int iFrontLocal = recvIndices[k];
@@ -302,7 +292,7 @@ inline void DistLowerMultiplyTranspose
         for( int proc=0; proc<parentCommSize; ++proc )
         {
             const int recvSize = 
-                parentSN.numChildSolveSendIndices[proc]*width;
+                parentNode.numChildSolveSendIndices[proc]*width;
             recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += recvSize;
@@ -323,8 +313,8 @@ inline void DistLowerMultiplyTranspose
         // Unpack the updates using the send approach from the forward solve
         const bool isLeftChild = ( parentCommRank < parentCommSize/2 );
         const std::vector<int>& myRelIndices = 
-            ( isLeftChild ? parentSN.leftChildRelIndices
-                          : parentSN.rightChildRelIndices );
+            ( isLeftChild ? parentNode.leftChildRelIndices
+                          : parentNode.rightChildRelIndices );
         const int updateColShift = WB.ColShift();
         const int updateLocalHeight = WB.LocalHeight();
         for( int iUpdateLocal=0; 
@@ -342,22 +332,25 @@ inline void DistLowerMultiplyTranspose
         recvDispls.clear();
 
         // Make a copy of the unmodified RHS
-        DistMatrix<F,VC,STAR> XNode( front.work1d );
+        DistMatrix<F,VC,STAR> XNode( W );
 
         // Perform the multiply for this front
         if( s > 0 )
             DistFrontLowerMultiply
             ( orientation, diag, diagOffset, front.front1dL, XNode );
         else
+        {
+            localRootFront.work = W.LocalMatrix();
             LocalFrontLowerMultiply
             ( orientation, diag, diagOffset, 
               localRootFront.frontL, XNode.LocalMatrix() );
+        }
 
         // Store the supernode portion of the result
         DistMatrix<F,VC,STAR> XNodeT(grid), XNodeB(grid);
         elem::PartitionDown
         ( XNode, XNodeT,
-                 XNodeB, sn.size );
+                 XNodeB, node.size );
         localXT = XNodeT.LocalMatrix();
         XNode.Empty();
     }
@@ -366,7 +359,6 @@ inline void DistLowerMultiplyTranspose
 #endif
 }
 
-} // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_DIST_LOWER_MULTIPLY
+#endif // CLIQUE_DIST_LOWER_MULTIPLY

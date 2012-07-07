@@ -17,11 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_DIST_FRONT_FAST_LOWER_SOLVE_HPP
-#define CLIQUE_NUMERIC_DIST_FRONT_FAST_LOWER_SOLVE_HPP 1
+#ifndef CLIQUE_DIST_FRONT_FAST_LOWER_SOLVE_HPP
+#define CLIQUE_DIST_FRONT_FAST_LOWER_SOLVE_HPP 1
 
 namespace cliq {
-namespace numeric {
 
 template<typename F>
 void DistFrontFastLowerForwardSolve
@@ -50,7 +49,7 @@ inline void DistFrontFastLowerForwardSolve
 ( UnitOrNonUnit diag, DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::DistFrontFastLowerForwardSolve");
+    PushCallStack("DistFrontFastLowerForwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -70,7 +69,7 @@ inline void DistFrontFastLowerForwardSolve
     const int commSize = g.Size();
     if( commSize == 1 )
     {
-        numeric::LocalFrontLowerForwardSolve
+        LocalFrontLowerForwardSolve
         ( diag, L.LockedLocalMatrix(), X.LocalMatrix() );
 #ifndef RELEASE
         PopCallStack();
@@ -145,7 +144,7 @@ inline void DistFrontFastLowerForwardSolve
 ( UnitOrNonUnit diag, DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::DistFrontFastLowerForwardSolve");
+    PushCallStack("DistFrontFastLowerForwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -163,7 +162,7 @@ inline void DistFrontFastLowerForwardSolve
     const int commSize = g.Size();
     if( commSize == 1 )
     {
-        numeric::LocalFrontLowerForwardSolve
+        LocalFrontLowerForwardSolve
         ( diag, L.LockedLocalMatrix(), X.LocalMatrix() );
 #ifndef RELEASE
         PopCallStack();
@@ -243,7 +242,7 @@ inline void DistFrontFastLowerBackwardSolve
   DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::DistFrontFastLowerBackwardSolve");
+    PushCallStack("DistFrontFastLowerBackwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -336,7 +335,7 @@ inline void DistFrontFastLowerBackwardSolve
   DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::DistFrontFastLowerBackwardSolve");
+    PushCallStack("DistFrontFastLowerBackwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -436,7 +435,6 @@ inline void DistFrontFastLowerBackwardSolve
 #endif
 }
 
-} // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_DIST_FRONT_FAST_LOWER_SOLVE_HPP
+#endif // CLIQUE_DIST_FRONT_FAST_LOWER_SOLVE_HPP

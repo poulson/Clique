@@ -17,11 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_LOCAL_FRONT_BLOCK_LDL_HPP
-#define CLIQUE_NUMERIC_LOCAL_FRONT_BLOCK_LDL_HPP 1
+#ifndef CLIQUE_LOCAL_FRONT_BLOCK_LDL_HPP
+#define CLIQUE_LOCAL_FRONT_BLOCK_LDL_HPP 1
 
 namespace cliq {
-namespace numeric {
 
 template<typename F> 
 void LocalFrontBlockLDL
@@ -36,7 +35,7 @@ inline void LocalFrontBlockLDL
 ( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::LocalFrontBlockLDL");
+    PushCallStack("LocalFrontBlockLDL");
 #endif
     Matrix<F> ATL,
               ABL;
@@ -76,7 +75,6 @@ inline void LocalFrontBlockLDL
 #endif
 }
 
-} // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_LOCAL_FRONT_BLOCK_LDL_HPP
+#endif // CLIQUE_LOCAL_FRONT_BLOCK_LDL_HPP

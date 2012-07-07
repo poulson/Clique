@@ -17,69 +17,53 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_SYMBOLIC_SYMM_FACT_HPP
-#define CLIQUE_SYMBOLIC_SYMM_FACT_HPP 1
+#ifndef CLIQUE_SYMM_ANALYSIS_HPP
+#define CLIQUE_SYMM_ANALYSIS_HPP 1
 
 namespace cliq {
-namespace symbolic {
 
-struct LocalSymmOrigSupernode
+struct LocalSymmNodeInfo
 {
-    int size, offset;
+    //
+    // This is known before analysis
+    //
+    int size, offset; 
     int parent; // -1 if root separator
     std::vector<int> children;
-    std::vector<int> lowerStruct;
-};
+    std::vector<int> origLowerStruct;
 
-struct LocalSymmOrig
-{
-    std::vector<LocalSymmOrigSupernode> supernodes;
-};
-
-struct DistSymmOrigSupernode
-{
-    int size, offset;
-    std::vector<int> lowerStruct;
-};
-
-struct DistSymmOrig
-{
-    mpi::Comm comm;
-    std::vector<DistSymmOrigSupernode> supernodes;
-};
-
-struct SymmOrig
-{
-    LocalSymmOrig local;
-    DistSymmOrig dist;
-};
-
-struct LocalSymmFactSupernode
-{
+    //
+    // The following is computed during analysis
+    //
     bool isLeftChild;
-    int size, offset, myOffset;
-    int parent; // -1 if root separator
-    std::vector<int> children;
-
-    std::vector<int> lowerStruct, origLowerStruct;
+    int myOffset;
+    std::vector<int> lowerStruct;
     std::vector<int> origLowerRelIndices;
+    // The relative indices of the left and right children
+    // (maps from the child update indices to our frontal indices).
     std::vector<int> leftChildRelIndices, rightChildRelIndices;
 };
 
-struct LocalSymmFact
+struct LocalSymmInfo
 {
-    std::vector<LocalSymmFactSupernode> supernodes;
+    std::vector<LocalSymmNodeInfo> nodes;
 };
 
-struct DistSymmFactSupernode
+struct DistSymmNodeInfo
 {
+    //
+    // This is known before analysis
+    //
+    int size, offset;
+    std::vector<int> origLowerStruct;
     mpi::Comm comm;
+
+    //
+    // The following is computed during analysis
+    //
     Grid* grid;
-
-    int size, offset, myOffset, leftChildSize, rightChildSize;
-    std::vector<int> lowerStruct, origLowerStruct;
-
-    // Useful for expanding sparse matrices into this frontal matrix
+    int myOffset, leftChildSize, rightChildSize;
+    std::vector<int> lowerStruct;
     std::vector<int> origLowerRelIndices;
 
     // The relative indices of the left and right children
@@ -88,9 +72,7 @@ struct DistSymmFactSupernode
     // submatrices of the child updates.
     std::vector<int> leftChildRelIndices, rightChildRelIndices;
 
-    //
     // Helpers for the factorization
-    //
     std::vector<int> numChildFactSendIndices;
     std::deque<int> leftChildFactColIndices, leftChildFactRowIndices,
                     rightChildFactColIndices, rightChildFactRowIndices;
@@ -98,61 +80,55 @@ struct DistSymmFactSupernode
     // computed from the above information (albeit somewhat expensively).
     mutable std::vector<std::deque<int> > childFactRecvIndices;
 
-    //
-    // Helpers for 1d right-hand sides
-    //
+    // Helpers for solving with 1d right-hand sides
     std::deque<int> leftChildSolveIndices, rightChildSolveIndices;
     int localSize1d, localOffset1d;
     std::vector<int> numChildSolveSendIndices;
     std::vector<std::deque<int> > childSolveRecvIndices;
-
-    //
-    // Helpers for 2d solves (many right-hand sides)
-    //
-    // TODO
 };
 
-struct DistSymmFact
+struct DistSymmInfo
 {
-    std::vector<DistSymmFactSupernode> supernodes;
+    std::vector<DistSymmNodeInfo> nodes;
 };
 
-struct SymmFact
+struct SymmInfo
 {
-    LocalSymmFact local;
-    DistSymmFact dist;
+    LocalSymmInfo local;
+    DistSymmInfo dist;
 };
 
-void SymmetricFactorization
-( const SymmOrig& orig, SymmFact& fact, bool storeFactRecvIndices=true );
-
-void LocalSymmetricFactorization( const SymmOrig& orig, SymmFact& fact );
-
-void DistSymmetricFactorization
-( const SymmOrig& orig, SymmFact& fact, bool storeFactRecvIndices=true );
-
-void ComputeFactRecvIndices
-( const DistSymmFactSupernode& factSN,
-  const DistSymmFactSupernode& factChildSN );
+void SymmetricAnalysis
+( const SymmElimTree& eTree, SymmInfo& info, 
+  bool storeFactRecvIndices=true );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
-inline void SymmetricFactorization
-( const SymmOrig& orig, SymmFact& fact, bool storeFactRecvIndices )
+void LocalSymmetricAnalysis
+( const SymmElimTree& eTree, SymmInfo& info );
+void DistSymmetricAnalysis
+( const SymmElimTree& eTree, SymmInfo& info, 
+  bool storeFactRecvIndices=true );
+
+void ComputeFactRecvIndices
+( const DistSymmNodeInfo& node,
+  const DistSymmNodeInfo& childNode );
+
+inline void SymmetricAnalysis
+( const SymmElimTree& eTree, SymmInfo& info, bool storeFactRecvIndices )
 {
 #ifndef RELEASE
-    PushCallStack("symbolic::SymmetricFactorization");
+    PushCallStack("SymmetricAnalysis");
 #endif
-    LocalSymmetricFactorization( orig, fact );
-    DistSymmetricFactorization( orig, fact, storeFactRecvIndices );
+    LocalSymmetricAnalysis( eTree, info );
+    DistSymmetricAnalysis( eTree, info, storeFactRecvIndices );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
-} // namespace symbolic
 } // namespace cliq
 
-#endif /* CLIQUE_SYMBOLIC_SYMM_FACT_HPP */
+#endif /* CLIQUE_SYMM_ANALYSIS_HPP */

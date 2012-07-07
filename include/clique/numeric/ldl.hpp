@@ -17,25 +17,20 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_LDL_HPP
-#define CLIQUE_NUMERIC_LDL_HPP 1
+#ifndef CLIQUE_LDL_HPP
+#define CLIQUE_LDL_HPP 1
 
 namespace cliq {
-namespace numeric {
 
 // All fronts of L are required to be initialized to the expansions of the 
 // original sparse matrix before calling the following factorizations.
 
 template<typename F>
-void InitializeDistLeaf
-( const symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L );
+void InitializeDistLeaf( const SymmInfo& info, SymmFrontTree<F>& L );
 
 template<typename F>
-void LDL
-( Orientation orientation, 
-  symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L );
+void LDL( Orientation orientation, SymmInfo& info, SymmFrontTree<F>& L );
 
-} // namespace numeric
 } // namespace cliq
 
 //----------------------------------------------------------------------------//
@@ -49,44 +44,39 @@ void LDL
 #include "./ldl/dist.hpp"
 
 namespace cliq {
-namespace numeric {
 
 template<typename F>
-inline void InitializeDistLeaf
-( const symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L )
+inline void InitializeDistLeaf( const SymmInfo& info, SymmFrontTree<F>& L )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::InitializeDistLeaf");
+    PushCallStack("InitializeDistLeaf");
 #endif
-    const symbolic::DistSymmFactSupernode& sn = S.dist.supernodes[0];
+    const DistSymmNodeInfo& node = info.dist.nodes[0];
     Matrix<F>& topLocalFrontL = L.local.fronts.back().frontL;
     DistMatrix<F>& front2dL = L.dist.fronts[0].front2dL;
 
     front2dL.LockedView
     ( topLocalFrontL.Height(), topLocalFrontL.Width(), 0, 0,
       topLocalFrontL.LockedBuffer(), topLocalFrontL.LDim(), 
-      *sn.grid );
+      *node.grid );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
 template<typename F>
-inline void LDL
-( Orientation orientation, 
-  symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L )
+inline void LDL( Orientation orientation, SymmInfo& info, SymmFrontTree<F>& L )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::LDL");
+    PushCallStack("LDL");
 #endif
-    LocalLDL( orientation, S, L );
-    DistLDL( orientation, S, L );
+    LocalLDL( orientation, info, L );
+    DistLDL( orientation, info, L );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
-} // namespace numeric
 } // namespace cliq
 
-#endif /* CLIQUE_NUMERIC_LDL_HPP */
+#endif /* CLIQUE_LDL_HPP */

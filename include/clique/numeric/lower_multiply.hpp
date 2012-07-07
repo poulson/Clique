@@ -17,20 +17,16 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_LOWER_MULTIPLY_HPP
-#define CLIQUE_NUMERIC_LOWER_MULTIPLY_HPP 1
+#ifndef CLIQUE_LOWER_MULTIPLY_HPP
+#define CLIQUE_LOWER_MULTIPLY_HPP 1
 
 namespace cliq {
-namespace numeric {
 
 template<typename F>
 void LowerMultiply
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX );
+  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX );
 
-} // namespace numeric
 } // namespace cliq
 
 //----------------------------------------------------------------------------//
@@ -44,36 +40,32 @@ void LowerMultiply
 #include "./lower_multiply/dist.hpp"
 
 namespace cliq {
-namespace numeric {
 
 template<typename F>
 inline void LowerMultiply
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX )
+  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::LowerMultiply");
+    PushCallStack("LowerMultiply");
 #endif
     if( orientation == NORMAL )
     {
-        LocalLowerMultiplyNormal( diag, diagOffset, S, L, localX );
-        DistLowerMultiplyNormal( diag, diagOffset, S, L, localX );
+        LocalLowerMultiplyNormal( diag, diagOffset, info, L, localX );
+        DistLowerMultiplyNormal( diag, diagOffset, info, L, localX );
     }
     else
     {
         DistLowerMultiplyTranspose
-        ( orientation, diag, diagOffset, S, L, localX );
+        ( orientation, diag, diagOffset, info, L, localX );
         LocalLowerMultiplyTranspose
-        ( orientation, diag, diagOffset, S, L, localX );
+        ( orientation, diag, diagOffset, info, L, localX );
     }
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
-} // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_LOWER_MULTIPLY_HPP
+#endif // CLIQUE_LOWER_MULTIPLY_HPP

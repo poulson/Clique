@@ -17,20 +17,16 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_LOWER_SOLVE_HPP
-#define CLIQUE_NUMERIC_LOWER_SOLVE_HPP 1
+#ifndef CLIQUE_LOWER_SOLVE_HPP
+#define CLIQUE_LOWER_SOLVE_HPP 1
 
 namespace cliq {
-namespace numeric {
 
 template<typename F>
 void LowerSolve
 ( Orientation orientation, UnitOrNonUnit diag,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX );
+  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX );
 
-} // namespace numeric
 } // namespace cliq
 
 //----------------------------------------------------------------------------//
@@ -45,34 +41,30 @@ void LowerSolve
 #include "./lower_solve/dist.hpp"
 
 namespace cliq {
-namespace numeric {
 
 template<typename F>
 inline void LowerSolve
 ( Orientation orientation, UnitOrNonUnit diag, 
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX )
+  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::LowerSolve");
+    PushCallStack("LowerSolve");
 #endif
     if( orientation == NORMAL )
     {
-        LocalLowerForwardSolve( diag, S, L, localX );
-        DistLowerForwardSolve( diag, S, L, localX );
+        LocalLowerForwardSolve( diag, info, L, localX );
+        DistLowerForwardSolve( diag, info, L, localX );
     }
     else
     {
-        DistLowerBackwardSolve( orientation, diag, S, L, localX );
-        LocalLowerBackwardSolve( orientation, diag, S, L, localX );
+        DistLowerBackwardSolve( orientation, diag, info, L, localX );
+        LocalLowerBackwardSolve( orientation, diag, info, L, localX );
     }
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
-} // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_LOWER_SOLVE_HPP 
+#endif // CLIQUE_LOWER_SOLVE_HPP 

@@ -17,21 +17,17 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_BLOCK_LDL_HPP
-#define CLIQUE_NUMERIC_BLOCK_LDL_HPP 1
+#ifndef CLIQUE_BLOCK_LDL_HPP
+#define CLIQUE_BLOCK_LDL_HPP 1
 
 namespace cliq {
-namespace numeric {
 
 // All fronts of L are required to be initialized to the expansions of the 
 // original sparse matrix before calling the following factorizations.
 
 template<typename F>
-void BlockLDL
-( Orientation orientation, 
-  symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L );
+void BlockLDL( Orientation orientation, SymmInfo& info, SymmFrontTree<F>& L );
 
-} // namespace numeric
 } // namespace cliq
 
 //----------------------------------------------------------------------------//
@@ -45,24 +41,21 @@ void BlockLDL
 #include "./block_ldl/dist.hpp"
 
 namespace cliq {
-namespace numeric {
 
 template<typename F>
 inline void BlockLDL
-( Orientation orientation, 
-  symbolic::SymmFact& S, numeric::SymmFrontTree<F>& L )
+( Orientation orientation, SymmInfo& info, SymmFrontTree<F>& L )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::BlockLDL");
+    PushCallStack("BlockLDL");
 #endif
-    LocalBlockLDL( orientation, S, L );
-    DistBlockLDL( orientation, S, L );
+    LocalBlockLDL( orientation, info, L );
+    DistBlockLDL( orientation, info, L );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
-} // namespace numeric
 } // namespace cliq
 
-#endif /* CLIQUE_NUMERIC_BLOCK_LDL_HPP */
+#endif /* CLIQUE_BLOCK_LDL_HPP */

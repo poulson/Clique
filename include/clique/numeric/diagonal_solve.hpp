@@ -17,57 +17,45 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_DIAGONAL_SOLVE_HPP
-#define CLIQUE_NUMERIC_DIAGONAL_SOLVE_HPP 1
+#ifndef CLIQUE_DIAGONAL_SOLVE_HPP
+#define CLIQUE_DIAGONAL_SOLVE_HPP 1
 
 namespace cliq {
-namespace numeric {
 
 template<typename F>
 void DiagonalSolve
-( const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX );
-
-// Helpers
-
-template<typename F>
-void LocalDiagonalSolve
-( const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L, 
-        Matrix<F>& localX );
-
-template<typename F>
-void DistDiagonalSolve
-( const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX );
+( const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
 template<typename F>
+void LocalDiagonalSolve
+( const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX );
+
+template<typename F>
+void DistDiagonalSolve
+( const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX );
+
+template<typename F>
 inline void LocalDiagonalSolve
-( const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& X )
+( const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& X )
 {
-    using namespace symbolic;
 #ifndef RELEASE
-    PushCallStack("numeric::LocalDiagonalSolve");
+    PushCallStack("LocalDiagonalSolve");
 #endif
-    const int numLocalSupernodes = S.local.supernodes.size();
+    const int numLocalNodes = info.local.nodes.size();
     const int width = X.Width();
     Matrix<F> XSub;
-    for( int s=0; s<numLocalSupernodes; ++s )
+    for( int s=0; s<numLocalNodes; ++s )
     {
-        const LocalSymmFactSupernode& sn = S.local.supernodes[s];
+        const LocalSymmNodeInfo& node = info.local.nodes[s];
         const Matrix<F>& frontL = L.local.fronts[s].frontL;
-        XSub.View( X, sn.myOffset, 0, sn.size, width );
+        XSub.View( X, node.myOffset, 0, node.size, width );
 
         Matrix<F> frontTL;
-        frontTL.LockedView( frontL, 0, 0, sn.size, sn.size );
+        frontTL.LockedView( frontL, 0, 0, node.size, node.size );
         Matrix<F> d;
         frontTL.GetDiagonal( d );
         elem::DiagonalSolve( LEFT, NORMAL, d, XSub, true );
@@ -79,24 +67,21 @@ inline void LocalDiagonalSolve
 
 template<typename F> 
 void DistDiagonalSolve
-( const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX )
+( const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX )
 {
-    using namespace symbolic;
 #ifndef RELEASE
-    PushCallStack("numeric::DistDiagonalSolve");
+    PushCallStack("DistDiagonalSolve");
 #endif
-    const int numDistSupernodes = S.dist.supernodes.size();
+    const int numDistNodes = info.dist.nodes.size();
     const int width = localX.Width();
 
-    for( int s=1; s<numDistSupernodes; ++s )
+    for( int s=1; s<numDistNodes; ++s )
     {
-        const DistSymmFactSupernode& sn = S.dist.supernodes[s];
+        const DistSymmNodeInfo& node = info.dist.nodes[s];
         const DistSymmFront<F>& front = L.dist.fronts[s];
 
         Matrix<F> localXT;
-        localXT.View( localX, sn.localOffset1d, 0, sn.localSize1d, width );
+        localXT.View( localX, node.localOffset1d, 0, node.localSize1d, width );
 
         elem::DiagonalSolve
         ( LEFT, NORMAL, front.diag.LockedLocalMatrix(), localXT, true );
@@ -108,21 +93,18 @@ void DistDiagonalSolve
 
 template<typename F>
 inline void DiagonalSolve
-( const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX )
+( const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::DiagonalSolve");
+    PushCallStack("DiagonalSolve");
 #endif
-    cliq::numeric::LocalDiagonalSolve( S, L, localX );
-    cliq::numeric::DistDiagonalSolve( S, L, localX );
+    LocalDiagonalSolve( info, L, localX );
+    DistDiagonalSolve( info, L, localX );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
-} // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_DIAGONAL_SOLVE_HPP 
+#endif // CLIQUE_DIAGONAL_SOLVE_HPP 

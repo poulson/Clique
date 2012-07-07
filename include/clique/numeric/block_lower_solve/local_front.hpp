@@ -17,15 +17,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_LOCAL_FRONT_BLOCK_LOWER_SOLVE_HPP
-#define CLIQUE_NUMERIC_LOCAL_FRONT_BLOCK_LOWER_SOLVE_HPP 1
+#ifndef CLIQUE_LOCAL_FRONT_BLOCK_LOWER_SOLVE_HPP
+#define CLIQUE_LOCAL_FRONT_BLOCK_LOWER_SOLVE_HPP 1
 
 namespace cliq {
-namespace numeric {
 
 template<typename F>
-void LocalFrontBlockLowerForwardSolve
-( const Matrix<F>& L, Matrix<F>& X );
+void LocalFrontBlockLowerForwardSolve( const Matrix<F>& L, Matrix<F>& X );
 
 template<typename F>
 void LocalFrontBlockLowerBackwardSolve
@@ -36,11 +34,10 @@ void LocalFrontBlockLowerBackwardSolve
 //----------------------------------------------------------------------------//
 
 template<typename F>
-inline void LocalFrontBlockLowerForwardSolve
-( const Matrix<F>& L, Matrix<F>& X )
+inline void LocalFrontBlockLowerForwardSolve( const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::LocalFrontBlockLowerForwardSolve");
+    PushCallStack("LocalFrontBlockLowerForwardSolve");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
@@ -78,7 +75,7 @@ inline void LocalFrontBlockLowerBackwardSolve
 ( Orientation orientation, const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::LocalFrontBlockLowerBackwardSolve");
+    PushCallStack("LocalFrontBlockLowerBackwardSolve");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
@@ -114,7 +111,6 @@ inline void LocalFrontBlockLowerBackwardSolve
 #endif
 }
 
-} // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_LOCAL_FRONT_BLOCK_LOWER_SOLVE_HPP
+#endif // CLIQUE_LOCAL_FRONT_BLOCK_LOWER_SOLVE_HPP

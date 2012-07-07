@@ -22,11 +22,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_DIST_FRONT_LOWER_SOLVE_HPP
-#define CLIQUE_NUMERIC_DIST_FRONT_LOWER_SOLVE_HPP 1
+#ifndef CLIQUE_DIST_FRONT_LOWER_SOLVE_HPP
+#define CLIQUE_DIST_FRONT_LOWER_SOLVE_HPP 1
 
 namespace cliq {
-namespace numeric {
 
 template<typename F>
 void DistFrontLowerForwardSolve
@@ -53,7 +52,7 @@ inline void ForwardMany
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
     {
-        cliq::numeric::LocalFrontLowerForwardSolve
+        LocalFrontLowerForwardSolve
         ( diag, L.LockedLocalMatrix(), X.LocalMatrix() );
         return;
     }
@@ -221,7 +220,7 @@ void ForwardSingle
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
     {
-        cliq::numeric::LocalFrontLowerForwardSolve
+        LocalFrontLowerForwardSolve
         ( diag, L.LockedLocalMatrix(), X.LocalMatrix() );
         return;
     }
@@ -399,7 +398,7 @@ inline void DistFrontLowerForwardSolve
   bool singleL11AllGather )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::DistFrontLowerForwardSolve");
+    PushCallStack("DistFrontLowerForwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -430,7 +429,7 @@ inline void DistFrontLowerBackwardSolve
   bool singleL11AllGather )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::DistFrontLowerBackwardSolve");
+    PushCallStack("DistFrontLowerBackwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -489,7 +488,6 @@ inline void DistFrontLowerBackwardSolve
 #endif
 }
 
-} // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_DIST_FRONT_LOWER_SOLVE_HPP
+#endif // CLIQUE_DIST_FRONT_LOWER_SOLVE_HPP

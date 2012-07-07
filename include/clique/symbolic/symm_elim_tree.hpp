@@ -17,23 +17,45 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_HPP
-#define CLIQUE_HPP 1
+#ifndef CLIQUE_SYMM_ELIM_TREE_HPP
+#define CLIQUE_SYMM_ELIM_TREE_HPP 1
 
-#include "clique/core/environment.hpp"
-#include "clique/symbolic/symm_elim_tree.hpp"
-#include "clique/symbolic/symm_analysis.hpp"
-#include "clique/numeric/symm_front_tree.hpp"
-#include "clique/numeric/set_solve_mode.hpp"
+namespace cliq {
 
-#include "clique/numeric/ldl.hpp"
-#include "clique/numeric/ldl_solve.hpp"
-#include "clique/numeric/lower_solve.hpp"
-#include "clique/numeric/diagonal_solve.hpp"
-#include "clique/numeric/lower_multiply.hpp"
+// 'Supernode' should perhaps be preferred to 'node', but since we will always
+// use supernodes, the extra verbage is unnecessarily cumbersome.
 
-#include "clique/numeric/block_lower_solve.hpp"
-#include "clique/numeric/block_ldl.hpp"
-#include "clique/numeric/block_ldl_solve.hpp"
+struct LocalSymmNode
+{
+    int size, offset; 
+    int parent; // -1 if root separator
+    std::vector<int> children;
+    std::vector<int> lowerStruct;
+};
 
-#endif /* CLIQUE_HPP */
+struct LocalSymmElimTree
+{
+    std::vector<LocalSymmNode> nodes;
+};
+
+struct DistSymmNode
+{
+    int size, offset;
+    std::vector<int> lowerStruct;
+    mpi::Comm comm;
+};
+
+struct DistSymmElimTree
+{
+    std::vector<DistSymmNode> nodes;
+};
+
+struct SymmElimTree
+{
+    LocalSymmElimTree local;
+    DistSymmElimTree dist;
+};
+
+} // namespace cliq
+
+#endif /* CLIQUE_SYMM_ELIM_TREE_HPP */

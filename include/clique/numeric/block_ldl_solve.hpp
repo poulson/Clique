@@ -17,18 +17,15 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_BLOCK_LDL_SOLVE_HPP
-#define CLIQUE_NUMERIC_BLOCK_LDL_SOLVE_HPP 1
+#ifndef CLIQUE_BLOCK_LDL_SOLVE_HPP
+#define CLIQUE_BLOCK_LDL_SOLVE_HPP 1
 
 namespace cliq {
-namespace numeric {
 
 template<typename F>
 void BlockLDLSolve
 ( Orientation orientation,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX );
+  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -37,26 +34,23 @@ void BlockLDLSolve
 template<typename F>
 inline void BlockLDLSolve
 ( Orientation orientation,
-  const symbolic::SymmFact& S,
-  const numeric::SymmFrontTree<F>& L,
-        Matrix<F>& localX )
+  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::BlockLDLSolve");
+    PushCallStack("BlockLDLSolve");
     if( orientation == NORMAL )
         throw std::logic_error("Invalid orientation for BlockLDL");
 #endif
     // Solve against block diagonal factor, L D
-    BlockLowerSolve( NORMAL, S, L, localX );
+    BlockLowerSolve( NORMAL, info, L, localX );
 
     // Solve against the (conjugate-)transpose of the block unit diagonal L
-    BlockLowerSolve( orientation, S, L, localX );
+    BlockLowerSolve( orientation, info, L, localX );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
-} // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_BLOCK_LDL_SOLVE_HPP
+#endif // CLIQUE_BLOCK_LDL_SOLVE_HPP

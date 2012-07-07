@@ -17,11 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NUMERIC_DIST_FRONT_LOWER_MULTIPLY_HPP
-#define CLIQUE_NUMERIC_DIST_FRONT_LOWER_MULTIPLY_HPP 1
+#ifndef CLIQUE_DIST_FRONT_LOWER_MULTIPLY_HPP
+#define CLIQUE_DIST_FRONT_LOWER_MULTIPLY_HPP 1
 
 namespace cliq {
-namespace numeric {
 
 template<typename F>
 void DistFrontLowerMultiply
@@ -73,7 +72,7 @@ inline void DistFrontLowerMultiply
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::DistFrontLowerMultiply");
+    PushCallStack("DistFrontLowerMultiply");
 #endif
     if( orientation == NORMAL )
         DistFrontLowerMultiplyNormal( diag, diagOffset, L, X );
@@ -90,7 +89,7 @@ inline void DistFrontLowerMultiplyNormal
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::DistFrontLowerMultiplyNormal");
+    PushCallStack("DistFrontLowerMultiplyNormal");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -189,7 +188,7 @@ inline void DistFrontLowerMultiplyTranspose
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("numeric::DistFrontLowerMultiplyTranspose");
+    PushCallStack("DistFrontLowerMultiplyTranspose");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -286,7 +285,6 @@ inline void DistFrontLowerMultiplyTranspose
 #endif
 }
 
-} // namespace numeric
 } // namespace cliq
 
-#endif // CLIQUE_NUMERIC_DIST_FRONT_LOWER_MULTIPLY_HPP
+#endif // CLIQUE_DIST_FRONT_LOWER_MULTIPLY_HPP

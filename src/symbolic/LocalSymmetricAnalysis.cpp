@@ -21,43 +21,41 @@
 
 namespace cliq {
 
-void symbolic::LocalSymmetricFactorization
-( const SymmOrig& orig, SymmFact& fact )
+void LocalSymmetricAnalysis( const SymmElimTree& eTree, SymmInfo& info )
 {
 #ifndef RELEASE
-    PushCallStack("symbolic::LocalSymmetricFactorization");
+    PushCallStack("LocalSymmetricAnalysis");
 #endif
-    const int numSupernodes = orig.local.supernodes.size();
-    fact.local.supernodes.resize( numSupernodes );
+    const int numNodes = eTree.local.nodes.size();
+    info.local.nodes.resize( numNodes );
 
     // Perform the symbolic factorization
     int myOffset = 0;
     std::vector<int>::iterator it;
-    std::vector<int> childrenStruct, partialStruct, fullStruct,
-                     supernodeIndices;
-    for( int s=0; s<numSupernodes; ++s )
+    std::vector<int> childrenStruct, partialStruct, fullStruct, nodeIndices;
+    for( int s=0; s<numNodes; ++s )
     {
-        const LocalSymmOrigSupernode& origSN = orig.local.supernodes[s];
-        LocalSymmFactSupernode& factSN = fact.local.supernodes[s];
-        factSN.size = origSN.size;
-        factSN.offset = origSN.offset;
-        factSN.myOffset = myOffset;
-        factSN.parent = origSN.parent;
-        factSN.children = origSN.children;
-        factSN.origLowerStruct = origSN.lowerStruct;
+        const LocalSymmNode& node = eTree.local.nodes[s];
+        LocalSymmNodeInfo& nodeInfo = info.local.nodes[s];
+        nodeInfo.size = node.size;
+        nodeInfo.offset = node.offset;
+        nodeInfo.myOffset = myOffset;
+        nodeInfo.parent = node.parent;
+        nodeInfo.children = node.children;
+        nodeInfo.origLowerStruct = node.lowerStruct;
 
-        const int numChildren = origSN.children.size();
-        const int numOrigLowerIndices = origSN.lowerStruct.size();
+        const int numChildren = node.children.size();
+        const int numOrigLowerIndices = node.lowerStruct.size();
 #ifndef RELEASE
         if( numChildren != 0 && numChildren != 2 )
             throw std::logic_error("Tree must be built from bisections");
 #endif
         if( numChildren == 2 )
         {
-            const int left = origSN.children[0];
-            const int right = origSN.children[1];
-            LocalSymmFactSupernode& leftChild = fact.local.supernodes[left];
-            LocalSymmFactSupernode& rightChild = fact.local.supernodes[right];
+            const int left = node.children[0];
+            const int right = node.children[1];
+            LocalSymmNodeInfo& leftChild = info.local.nodes[left];
+            LocalSymmNodeInfo& rightChild = info.local.nodes[right];
             leftChild.isLeftChild = true;
             rightChild.isLeftChild = false;
 
@@ -95,16 +93,14 @@ void symbolic::LocalSymmetricFactorization
             const int childrenStructSize = int(it-childrenStruct.begin());
             childrenStruct.resize( childrenStructSize );
 
-            // Union the lower structure of this supernode
-
+            // Union the lower structure of this node
 #ifndef RELEASE
             for( int i=1; i<numOrigLowerIndices; ++i )
             {
-                if( origSN.lowerStruct[i] <= origSN.lowerStruct[i-1] )
+                if( node.lowerStruct[i] <= node.lowerStruct[i-1] )
                 {
                     std::ostringstream msg;
-                    msg << "Original struct was not sorted for s=" << s
-                        << "\n";
+                    msg << "Original struct not sorted for s=" << s << "\n";
                     throw std::logic_error( msg.str().c_str() );
                 }
             }
@@ -113,69 +109,69 @@ void symbolic::LocalSymmetricFactorization
                 childrenStructSize + numOrigLowerIndices;
             partialStruct.resize( partialStructMaxSize );
             it = std::set_union
-            ( origSN.lowerStruct.begin(), origSN.lowerStruct.end(),
+            ( node.lowerStruct.begin(), node.lowerStruct.end(),
               childrenStruct.begin(), childrenStruct.end(),
               partialStruct.begin() );
             const int partialStructSize = int(it-partialStruct.begin());
             partialStruct.resize( partialStructSize );
 
-            // Union again with the supernode indices
-            supernodeIndices.resize( origSN.size );
-            for( int i=0; i<origSN.size; ++i )
-                supernodeIndices[i] = origSN.offset + i;
-            fullStruct.resize( origSN.size + partialStructSize );
+            // Union again with the node indices
+            nodeIndices.resize( node.size );
+            for( int i=0; i<node.size; ++i )
+                nodeIndices[i] = node.offset + i;
+            fullStruct.resize( node.size + partialStructSize );
             it = std::set_union
             ( partialStruct.begin(), partialStruct.end(),
-              supernodeIndices.begin(), supernodeIndices.end(),
+              nodeIndices.begin(), nodeIndices.end(),
               fullStruct.begin() );
             fullStruct.resize( int(it-fullStruct.begin()) );
 
             // Construct the relative indices of the original lower structure
             it = fullStruct.begin();
-            factSN.origLowerRelIndices.resize( numOrigLowerIndices );
+            nodeInfo.origLowerRelIndices.resize( numOrigLowerIndices );
             for( int i=0; i<numOrigLowerIndices; ++i )
             {
-                const int index = origSN.lowerStruct[i];
+                const int index = node.lowerStruct[i];
                 it = std::lower_bound ( it, fullStruct.end(), index );
-                factSN.origLowerRelIndices[i] = int(it-fullStruct.begin());
+                nodeInfo.origLowerRelIndices[i] = int(it-fullStruct.begin());
             }
 
             // Construct the relative indices of the children
-            factSN.leftChildRelIndices.resize( numLeftIndices );
+            nodeInfo.leftChildRelIndices.resize( numLeftIndices );
             it = fullStruct.begin();
             for( int i=0; i<numLeftIndices; ++i )
             {
                 const int index = leftChild.lowerStruct[i];
                 it = std::lower_bound( it, fullStruct.end(), index );
-                factSN.leftChildRelIndices[i] = int(it-fullStruct.begin());
+                nodeInfo.leftChildRelIndices[i] = int(it-fullStruct.begin());
             }
-            factSN.rightChildRelIndices.resize( numRightIndices );
+            nodeInfo.rightChildRelIndices.resize( numRightIndices );
             it = fullStruct.begin();
             for( int i=0; i<numRightIndices; ++i )
             {
                 const int index = rightChild.lowerStruct[i];
                 it = std::lower_bound( it, fullStruct.end(), index );
-                factSN.rightChildRelIndices[i] = int(it-fullStruct.begin());
+                nodeInfo.rightChildRelIndices[i] = int(it-fullStruct.begin());
             }
 
-            // Form lower struct of this supernode by removing supernode indices
-            // (which take up the first origSN.size indices of fullStruct)
-            const int lowerStructSize = fullStruct.size()-origSN.size;
-            factSN.lowerStruct.resize( lowerStructSize );
+            // Form lower struct of this node by removing node indices
+            // (which take up the first node.size indices of fullStruct)
+            const int lowerStructSize = fullStruct.size()-node.size;
+            nodeInfo.lowerStruct.resize( lowerStructSize );
             for( int i=0; i<lowerStructSize; ++i )
-                factSN.lowerStruct[i] = fullStruct[origSN.size+i];
+                nodeInfo.lowerStruct[i] = fullStruct[node.size+i];
         }
-        else // numChildren == 0, so this is a leaf supernode 
+        else // numChildren == 0, so this is a leaf node 
         {
-            factSN.lowerStruct = origSN.lowerStruct;
+            nodeInfo.lowerStruct = node.lowerStruct;
             
             // Construct the trivial relative indices of the original structure
-            factSN.origLowerRelIndices.resize( numOrigLowerIndices );
+            nodeInfo.origLowerRelIndices.resize( numOrigLowerIndices );
             for( int i=0; i<numOrigLowerIndices; ++i )
-                factSN.origLowerRelIndices[i] = i + factSN.size;
+                nodeInfo.origLowerRelIndices[i] = i + nodeInfo.size;
         }
 
-        myOffset += factSN.size;
+        myOffset += nodeInfo.size;
     }
 #ifndef RELEASE
     PopCallStack();

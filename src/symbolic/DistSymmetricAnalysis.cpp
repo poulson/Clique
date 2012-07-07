@@ -21,29 +21,30 @@
 
 namespace cliq {
 
-// This is the part of the symbolic factorization that requires fine-grain 
-// parallelism: we assume that the upper floor(log2(commSize)) levels of the
-// tree are balanced.
 //
-// TODO: Generalize so that the depth can be less than or equal to 
-// floor(log2(commSize)). This would allow for the use of more processes in the
-// factorization.
+// This is the part of the analysis that requires fine-grain parallelism.
+// For now, we will assume that the distributed part of the elimination 
+// tree is balanced. The current implementation requires a power of two 
+// number of processes, so the first log2(commSize) levels must be balanced.
 //
 // TODO: Generalize to support more than just a power-of-two number of 
 //       processes. This should be relatively straightforward.
-void symbolic::DistSymmetricFactorization
-( const SymmOrig& orig, SymmFact& fact, bool storeFactRecvIndices )
+//
+void DistSymmetricAnalysis
+( const SymmElimTree& eTree, SymmInfo& info, 
+  bool storeFactRecvIndices )
 {
 #ifndef RELEASE
-    PushCallStack("symbolic::DistSymmetricFactorization");
+    PushCallStack("DistSymmetricAnalysis");
 #endif
-    const unsigned numSupernodes = orig.dist.supernodes.size();
-    fact.dist.supernodes.resize( numSupernodes );
-    if( numSupernodes == 0 )
+    const unsigned numNodes = eTree.dist.nodes.size();
+    info.dist.nodes.resize( numNodes );
+    if( numNodes == 0 )
         return;
 
-    const unsigned commRank = mpi::CommRank( orig.dist.comm );
-    const unsigned commSize = mpi::CommSize( orig.dist.comm );
+    mpi::Comm comm = eTree.dist.nodes.back().comm;
+    const unsigned commRank = mpi::CommRank( comm );
+    const unsigned commSize = mpi::CommSize( comm );
 #ifndef RELEASE
     // Use the naive algorithm for finding floor(log2(commSize)) since it
     // will be an ignorable portion of the overhead and will be more easily
@@ -52,109 +53,98 @@ void symbolic::DistSymmetricFactorization
     unsigned log2CommSize = 0;
     while( temp >>= 1 )
         ++log2CommSize;
-    if( log2CommSize+1 != numSupernodes )
-        throw std::runtime_error("Invalid distributed tree depth");
     if( 1u<<log2CommSize != commSize )
         throw std::runtime_error
         ("Power-of-two number of procs currently required");
 #endif
 
-    // The bottom node is already computed, so just copy it over
-    const LocalSymmFactSupernode& topLocalSN = fact.local.supernodes.back();
-    DistSymmFactSupernode& bottomDistSN = fact.dist.supernodes[0];
-    mpi::CommSplit( orig.dist.comm, commRank, 0, bottomDistSN.comm );
-    bottomDistSN.grid = new Grid( bottomDistSN.comm, 1, 1 );
-    bottomDistSN.size = topLocalSN.size;
-    bottomDistSN.localSize1d = topLocalSN.size;
-    bottomDistSN.offset = topLocalSN.offset;
-    bottomDistSN.myOffset = topLocalSN.myOffset;
-    bottomDistSN.localOffset1d = topLocalSN.myOffset;
-    bottomDistSN.lowerStruct = topLocalSN.lowerStruct;
-    bottomDistSN.origLowerStruct = topLocalSN.origLowerStruct;
-    bottomDistSN.origLowerRelIndices = topLocalSN.origLowerRelIndices;
-    bottomDistSN.leftChildRelIndices = topLocalSN.leftChildRelIndices;
-    bottomDistSN.rightChildRelIndices = topLocalSN.rightChildRelIndices;
-    bottomDistSN.leftChildSize = -1; // not needed, could compute though
-    bottomDistSN.rightChildSize = -1; // not needed, could compute though
-    bottomDistSN.leftChildFactColIndices.clear();
-    bottomDistSN.leftChildFactRowIndices.clear();
-    bottomDistSN.rightChildFactColIndices.clear();
-    bottomDistSN.rightChildFactRowIndices.clear();
-    bottomDistSN.numChildFactSendIndices.clear();
-    bottomDistSN.childFactRecvIndices.clear();
-    bottomDistSN.localOffset1d = topLocalSN.myOffset;
-    bottomDistSN.leftChildSolveIndices.clear();
-    bottomDistSN.rightChildSolveIndices.clear();
-    bottomDistSN.childSolveRecvIndices.clear();
+    // The bottom node was analyzed locally, so just copy its results over
+    const LocalSymmNodeInfo& topLocal = info.local.nodes.back();
+    DistSymmNodeInfo& bottomDist = info.dist.nodes[0];
+    mpi::CommDup( eTree.dist.nodes[0].comm, bottomDist.comm );
+    bottomDist.grid = new Grid( bottomDist.comm );
+    bottomDist.size = topLocal.size;
+    bottomDist.localSize1d = topLocal.size;
+    bottomDist.offset = topLocal.offset;
+    bottomDist.myOffset = topLocal.myOffset;
+    bottomDist.localOffset1d = topLocal.myOffset;
+    bottomDist.lowerStruct = topLocal.lowerStruct;
+    bottomDist.origLowerStruct = topLocal.origLowerStruct;
+    bottomDist.origLowerRelIndices = topLocal.origLowerRelIndices;
+    bottomDist.leftChildRelIndices = topLocal.leftChildRelIndices;
+    bottomDist.rightChildRelIndices = topLocal.rightChildRelIndices;
+    bottomDist.leftChildSize = -1; // not needed, could compute though
+    bottomDist.rightChildSize = -1; // not needed, could compute though
+    bottomDist.leftChildFactColIndices.clear();
+    bottomDist.leftChildFactRowIndices.clear();
+    bottomDist.rightChildFactColIndices.clear();
+    bottomDist.rightChildFactRowIndices.clear();
+    bottomDist.numChildFactSendIndices.clear();
+    bottomDist.childFactRecvIndices.clear();
+    bottomDist.localOffset1d = topLocal.myOffset;
+    bottomDist.leftChildSolveIndices.clear();
+    bottomDist.rightChildSolveIndices.clear();
+    bottomDist.childSolveRecvIndices.clear();
 
     // Perform the distributed part of the symbolic factorization
-    int myOffset = bottomDistSN.myOffset + bottomDistSN.size;
-    int localOffset1d = bottomDistSN.localOffset1d + bottomDistSN.size;
+    int myOffset = bottomDist.myOffset + bottomDist.size;
+    int localOffset1d = bottomDist.localOffset1d + bottomDist.size;
     std::vector<int>::iterator it;
     std::vector<int> sendBuffer, recvBuffer;
-    std::vector<int> childrenStruct, partialStruct, fullStruct,
-                    supernodeIndices;
-    for( unsigned s=1; s<numSupernodes; ++s )
+    std::vector<int> childrenStruct, partialStruct, fullStruct, nodeIndices;
+    for( unsigned s=1; s<numNodes; ++s )
     {
-        const DistSymmOrigSupernode& origSN = orig.dist.supernodes[s];
-        const DistSymmFactSupernode& factChildSN = fact.dist.supernodes[s-1];
-        DistSymmFactSupernode& factSN = fact.dist.supernodes[s];
-        factSN.size = origSN.size;
-        factSN.offset = origSN.offset;
-        factSN.myOffset = myOffset;
-        factSN.origLowerStruct = origSN.lowerStruct;
+        const DistSymmNode& node = eTree.dist.nodes[s];
+        const DistSymmNode& childNode = eTree.dist.nodes[s-1];
+        const DistSymmNodeInfo& childNodeInfo = info.dist.nodes[s-1];
+        DistSymmNodeInfo& nodeInfo = info.dist.nodes[s];
+        nodeInfo.size = node.size;
+        nodeInfo.offset = node.offset;
+        nodeInfo.myOffset = myOffset;
+        nodeInfo.origLowerStruct = node.lowerStruct;
 
-        // Determine our partner based upon the bits of 'commRank'
-        const unsigned powerOfTwo = 1u << (s-1);
-        const unsigned partner = commRank ^ powerOfTwo; // flip the s-1'th bit
-        const bool onLeft = ( commRank < partner );
+        // Determine our partner's rank for this exchange in node's 
+        // communicator
+        const int teamRank = mpi::CommRank( node.comm );
+        const int teamSize = mpi::CommSize( node.comm );
+        const bool onLeft = ( teamRank < teamSize/2 );
+        const int rightChildTeamSize = teamSize/2;
+        const int leftChildTeamSize = teamSize - rightChildTeamSize;
+        const int partner = 
+            ( onLeft ? teamRank+leftChildTeamSize 
+                     : teamRank-leftChildTeamSize );
+        // TODO: Switch to only exchanging between the two roots and then 
+        //       broadcasting to the rest of the team as a means of generalizing
+        //       to non-powers-of-two numbers of processes
+        //const int otherRoot = ( onLeft ? leftTeamSize : 0 );
 
-        // Create this level's communicator
-        const unsigned teamSize  = powerOfTwo << 1;
-        const unsigned teamColor = commRank & ~(teamSize-1);
-        const unsigned teamRank  = commRank &  (teamSize-1);
-        mpi::CommSplit( orig.dist.comm, teamColor, teamRank, factSN.comm );
-        unsigned gridHeight = 
-            static_cast<unsigned>(sqrt(static_cast<double>(teamSize)));
-        while( teamSize % gridHeight != 0 )
-            ++gridHeight;
-        const unsigned gridWidth = teamSize / gridHeight;
-        factSN.grid = new Grid( factSN.comm, gridHeight, gridWidth );
-        const unsigned gridRow = factSN.grid->MCRank();
-        const unsigned gridCol = factSN.grid->MRRank();
+        // Duplicate the communicator from the distributed eTree 
+        mpi::CommDup( node.comm, nodeInfo.comm );
+        nodeInfo.grid = new Grid( nodeInfo.comm );
 
-        // Set some offset and size information for this supernode
-        factSN.localSize1d = 
-            LocalLength<int>( origSN.size, teamRank, teamSize );
-        factSN.localOffset1d = localOffset1d;
-
-        // Retrieve the child grid information
-        const unsigned childTeamRank = mpi::CommRank( factChildSN.comm );
-        const unsigned childTeamSize = mpi::CommSize( factChildSN.comm );
-        const unsigned childGridHeight = factChildSN.grid->Height();
-        const unsigned childGridWidth = factChildSN.grid->Width();
-        const unsigned childGridRow = factChildSN.grid->MCRank();
-        const unsigned childGridCol = factChildSN.grid->MRRank();
+        // Set some offset and size information for this node
+        nodeInfo.localSize1d = LocalLength<int>(node.size,teamRank,teamSize);
+        nodeInfo.localOffset1d = localOffset1d;
 
         // SendRecv the message lengths
-        const int myChildSize = factChildSN.size;
-        const int myChildLowerStructSize = factChildSN.lowerStruct.size();
+        const int myChildSize = childNodeInfo.size;
+        const int myChildLowerStructSize = childNodeInfo.lowerStruct.size();
         const int initialSends[2] = { myChildSize, myChildLowerStructSize };
         int initialRecvs[2];
         mpi::SendRecv
         ( initialSends, 2, partner, 0,
-          initialRecvs, 2, partner, 0, orig.dist.comm );
+          initialRecvs, 2, partner, 0, node.comm );
         const int theirChildSize = initialRecvs[0];
         const int theirChildLowerStructSize = initialRecvs[1];
         // Perform the exchange
         sendBuffer.resize( myChildLowerStructSize );
         recvBuffer.resize( theirChildLowerStructSize );
         elem::MemCopy
-        ( &sendBuffer[0], &factChildSN.lowerStruct[0], myChildLowerStructSize );
+        ( &sendBuffer[0], &childNodeInfo.lowerStruct[0], 
+          myChildLowerStructSize );
         mpi::SendRecv
         ( &sendBuffer[0], myChildLowerStructSize, partner, 0,
-          &recvBuffer[0], theirChildLowerStructSize, partner, 0, 
-          orig.dist.comm );
+          &recvBuffer[0], theirChildLowerStructSize, partner, 0, node.comm );
         
         // Union the two child lower structures
 #ifndef RELEASE
@@ -163,8 +153,7 @@ void symbolic::DistSymmetricFactorization
             if( sendBuffer[i] <= sendBuffer[i-1] )    
             {
                 std::ostringstream msg;
-                msg << "My child's lower struct was not sorted for s="
-                    << s << "\n";
+                msg << "My child's lower struct not sorted for s=" << s << "\n";
                 throw std::logic_error( msg.str().c_str() );
             }
         }
@@ -173,8 +162,7 @@ void symbolic::DistSymmetricFactorization
             if( recvBuffer[i] <= recvBuffer[i-1] )    
             {
                 std::ostringstream msg;
-                msg << "Their child's lower struct was not sorted for s="
-                    << s << "\n";
+                msg << "Their child's lower struct not sorted, s=" << s << "\n";
                 throw std::logic_error( msg.str().c_str() );
             }
         }
@@ -187,51 +175,51 @@ void symbolic::DistSymmetricFactorization
         const int childrenStructSize = int(it-childrenStruct.begin());
         childrenStruct.resize( childrenStructSize );
 
-        // Union the lower structure of this supernode
+        // Union the lower structure of this node
 #ifndef RELEASE
-        for( unsigned i=1; i<origSN.lowerStruct.size(); ++i )
+        for( unsigned i=1; i<node.lowerStruct.size(); ++i )
         {
-            if( origSN.lowerStruct[i] <= origSN.lowerStruct[i-1] )    
+            if( node.lowerStruct[i] <= node.lowerStruct[i-1] )    
             {
                 std::ostringstream msg;
-                msg << "Original struct was not sorted for s=" << s << "\n";
+                msg << "Original struct not sorted for s=" << s << "\n";
                 throw std::logic_error( msg.str().c_str() );
             }
         }
 #endif
-        partialStruct.resize( childrenStructSize + origSN.lowerStruct.size() );
+        partialStruct.resize( childrenStructSize + node.lowerStruct.size() );
         it = std::set_union
         ( childrenStruct.begin(), childrenStruct.end(),
-          origSN.lowerStruct.begin(), origSN.lowerStruct.end(),
+          node.lowerStruct.begin(), node.lowerStruct.end(),
           partialStruct.begin() );
         const int partialStructSize = int(it-partialStruct.begin());
         partialStruct.resize( partialStructSize );
 
-        // Union again with the supernode indices
-        supernodeIndices.resize( origSN.size );
-        for( int i=0; i<origSN.size; ++i )
-            supernodeIndices[i] = origSN.offset + i;
-        fullStruct.resize( origSN.size + partialStructSize );
+        // Union again with the node indices
+        nodeIndices.resize( node.size );
+        for( int i=0; i<node.size; ++i )
+            nodeIndices[i] = node.offset + i;
+        fullStruct.resize( node.size + partialStructSize );
         it = std::set_union
-        ( supernodeIndices.begin(), supernodeIndices.end(),
+        ( nodeIndices.begin(), nodeIndices.end(),
           partialStruct.begin(), partialStruct.end(), 
           fullStruct.begin() );
         const int fullStructSize = int(it-fullStruct.begin());
         fullStruct.resize( fullStructSize );
 
         // Construct the relative indices of the original lower structure
-        const int numOrigLowerIndices = origSN.lowerStruct.size();
+        const int numOrigLowerIndices = node.lowerStruct.size();
         it = fullStruct.begin();
-        factSN.origLowerRelIndices.resize( numOrigLowerIndices );
+        nodeInfo.origLowerRelIndices.resize( numOrigLowerIndices );
         for( int i=0; i<numOrigLowerIndices; ++i )
         {
-            const int index = origSN.lowerStruct[i];
+            const int index = node.lowerStruct[i];
             it = std::lower_bound( it, fullStruct.end(), index );
 #ifndef RELEASE
             if( it == fullStruct.end() )
                 throw std::logic_error("Relative index failure");
 #endif
-            factSN.origLowerRelIndices[i] = int(it-fullStruct.begin());
+            nodeInfo.origLowerRelIndices[i] = int(it-fullStruct.begin());
         }
 
         // Construct the relative indices of the children
@@ -239,8 +227,8 @@ void symbolic::DistSymmetricFactorization
         const int *leftIndices, *rightIndices;
         if( onLeft )
         {
-            factSN.leftChildSize = myChildSize;
-            factSN.rightChildSize = theirChildSize;
+            nodeInfo.leftChildSize = myChildSize;
+            nodeInfo.rightChildSize = theirChildSize;
             leftIndices = &sendBuffer[0];
             rightIndices = &recvBuffer[0];
             numLeftIndices = sendBuffer.size();
@@ -248,14 +236,14 @@ void symbolic::DistSymmetricFactorization
         }
         else
         {
-            factSN.leftChildSize = theirChildSize;
-            factSN.rightChildSize = myChildSize;
+            nodeInfo.leftChildSize = theirChildSize;
+            nodeInfo.rightChildSize = myChildSize;
             leftIndices = &recvBuffer[0];
             rightIndices = &sendBuffer[0];
             numLeftIndices = recvBuffer.size();
             numRightIndices = sendBuffer.size();
         }
-        factSN.leftChildRelIndices.resize( numLeftIndices );
+        nodeInfo.leftChildRelIndices.resize( numLeftIndices );
         it = fullStruct.begin();
         for( int i=0; i<numLeftIndices; ++i )
         {
@@ -265,9 +253,9 @@ void symbolic::DistSymmetricFactorization
             if( it == fullStruct.end() )
                 throw std::logic_error("Relative index failure");
 #endif
-            factSN.leftChildRelIndices[i] = int(it-fullStruct.begin());
+            nodeInfo.leftChildRelIndices[i] = int(it-fullStruct.begin());
         }
-        factSN.rightChildRelIndices.resize( numRightIndices );
+        nodeInfo.rightChildRelIndices.resize( numRightIndices );
         it = fullStruct.begin();
         for( int i=0; i<numRightIndices; ++i )
         {
@@ -277,36 +265,44 @@ void symbolic::DistSymmetricFactorization
             if( it == fullStruct.end() )
                 throw std::logic_error("Relative index failure");
 #endif
-            factSN.rightChildRelIndices[i] = int(it-fullStruct.begin());
+            nodeInfo.rightChildRelIndices[i] = int(it-fullStruct.begin());
         }
 
-        // Form lower structure of this node by removing the supernode indices
-        const int lowerStructSize = fullStructSize - origSN.size;
-        factSN.lowerStruct.resize( lowerStructSize );
+        // Form lower structure of this node by removing the node indices
+        const int lowerStructSize = fullStructSize - node.size;
+        nodeInfo.lowerStruct.resize( lowerStructSize );
         for( int i=0; i<lowerStructSize; ++i )
-            factSN.lowerStruct[i] = fullStruct[origSN.size+i];
-
+            nodeInfo.lowerStruct[i] = fullStruct[node.size+i];
 #ifndef RELEASE
         // Ensure that our partner computed a lowerStruct of the same size
         int partnerLowerStructSize;
         mpi::SendRecv
         ( &lowerStructSize,        1, partner, 0,
-          &partnerLowerStructSize, 1, partner, 0, orig.dist.comm );
+          &partnerLowerStructSize, 1, partner, 0, node.comm );
         if( partnerLowerStructSize != lowerStructSize )
         {
             std::ostringstream msg;
             msg << "Partner's (" << partner << "'s) lower struct size was " 
-                << partnerLowerStructSize << " for supernode " << s << "\n";
+                << partnerLowerStructSize << " for node " << s << "\n";
             throw std::logic_error( msg.str().c_str() );
         }
 #endif
 
+        const unsigned gridHeight = nodeInfo.grid->Height();
+        const unsigned gridWidth = nodeInfo.grid->Width();
+        const unsigned childTeamRank = mpi::CommRank( childNodeInfo.comm );
+        const unsigned childTeamSize = mpi::CommSize( childNodeInfo.comm );
+        const unsigned childGridHeight = childNodeInfo.grid->Height();
+        const unsigned childGridWidth = childNodeInfo.grid->Width();
+        const unsigned childGridRow = childNodeInfo.grid->Row();
+        const unsigned childGridCol = childNodeInfo.grid->Col();
+
         // Fill numChildFactSendIndices so that we can reuse it for many facts.
-        factSN.numChildFactSendIndices.resize( teamSize );
-        elem::MemZero( &factSN.numChildFactSendIndices[0], teamSize );
+        nodeInfo.numChildFactSendIndices.resize( teamSize );
+        elem::MemZero( &nodeInfo.numChildFactSendIndices[0], teamSize );
         const std::vector<int>& myChildRelIndices = 
-            ( onLeft ? factSN.leftChildRelIndices 
-                     : factSN.rightChildRelIndices );
+            ( onLeft ? nodeInfo.leftChildRelIndices 
+                     : nodeInfo.rightChildRelIndices );
         const int updateSize = myChildLowerStructSize;
         {
             const int updateColAlignment = myChildSize % childGridHeight;
@@ -341,14 +337,14 @@ void symbolic::DistSymmetricFactorization
                         myChildRelIndices[iChild] % gridHeight;
 
                     const int destRank = destGridRow + destGridCol*gridHeight;
-                    ++factSN.numChildFactSendIndices[destRank];
+                    ++nodeInfo.numChildFactSendIndices[destRank];
                 }
             }
         }
 
         // Fill numChildSolveSendIndices to use for many solves
-        factSN.numChildSolveSendIndices.resize( teamSize );
-        elem::MemZero( &factSN.numChildSolveSendIndices[0], teamSize );
+        nodeInfo.numChildSolveSendIndices.resize( teamSize );
+        elem::MemZero( &nodeInfo.numChildSolveSendIndices[0], teamSize );
         {
             const int updateAlignment = myChildSize % childTeamSize;
             const int updateShift = 
@@ -360,109 +356,109 @@ void symbolic::DistSymmetricFactorization
             {
                 const int iChild = updateShift + iChildLocal*childTeamSize;
                 const int destRank = myChildRelIndices[iChild] % teamSize;
-                ++factSN.numChildSolveSendIndices[destRank];
+                ++nodeInfo.numChildSolveSendIndices[destRank];
             }
         }
 
         // Fill {left,right}ChildFact{Col,Row}Indices so that we can reuse them
         // to compute our recv information for use in many factorizations
-        factSN.leftChildFactColIndices.clear();
+        const unsigned gridRow = nodeInfo.grid->Row();
+        const unsigned gridCol = nodeInfo.grid->Col();
+        nodeInfo.leftChildFactColIndices.clear();
         for( int i=0; i<numLeftIndices; ++i )
-            if( factSN.leftChildRelIndices[i] % gridHeight == gridRow )
-                factSN.leftChildFactColIndices.push_back( i );
-        factSN.leftChildFactRowIndices.clear();
+            if( nodeInfo.leftChildRelIndices[i] % gridHeight == gridRow )
+                nodeInfo.leftChildFactColIndices.push_back( i );
+        nodeInfo.leftChildFactRowIndices.clear();
         for( int i=0; i<numLeftIndices; ++i )
-            if( factSN.leftChildRelIndices[i] % gridWidth == gridCol )
-                factSN.leftChildFactRowIndices.push_back( i );
-        factSN.rightChildFactColIndices.clear();
+            if( nodeInfo.leftChildRelIndices[i] % gridWidth == gridCol )
+                nodeInfo.leftChildFactRowIndices.push_back( i );
+        nodeInfo.rightChildFactColIndices.clear();
         for( int i=0; i<numRightIndices; ++i )
-            if( factSN.rightChildRelIndices[i] % gridHeight == gridRow )
-                factSN.rightChildFactColIndices.push_back( i );
-        factSN.rightChildFactRowIndices.clear();
+            if( nodeInfo.rightChildRelIndices[i] % gridHeight == gridRow )
+                nodeInfo.rightChildFactColIndices.push_back( i );
+        nodeInfo.rightChildFactRowIndices.clear();
         for( int i=0; i<numRightIndices; ++i )
-            if( factSN.rightChildRelIndices[i] % gridWidth == gridCol )
-                factSN.rightChildFactRowIndices.push_back( i );
+            if( nodeInfo.rightChildRelIndices[i] % gridWidth == gridCol )
+                nodeInfo.rightChildFactRowIndices.push_back( i );
 
         // Fill {left,right}ChildSolveIndices for use in many solves
-        factSN.leftChildSolveIndices.clear();
+        nodeInfo.leftChildSolveIndices.clear();
         for( int i=0; i<numLeftIndices; ++i )
-            if( factSN.leftChildRelIndices[i] % teamSize == teamRank )
-                factSN.leftChildSolveIndices.push_back( i );
-        factSN.rightChildSolveIndices.clear();
+            if( nodeInfo.leftChildRelIndices[i] % teamSize == teamRank )
+                nodeInfo.leftChildSolveIndices.push_back( i );
+        nodeInfo.rightChildSolveIndices.clear();
         for( int i=0; i<numRightIndices; ++i )
-            if( factSN.rightChildRelIndices[i] % teamSize == teamRank )
-                factSN.rightChildSolveIndices.push_back( i );
-        const int numLeftSolveIndices = factSN.leftChildSolveIndices.size();
-        const int numRightSolveIndices = factSN.rightChildSolveIndices.size();
+            if( nodeInfo.rightChildRelIndices[i] % teamSize == teamRank )
+                nodeInfo.rightChildSolveIndices.push_back( i );
+        const int numLeftSolveIndices = nodeInfo.leftChildSolveIndices.size();
+        const int numRightSolveIndices = nodeInfo.rightChildSolveIndices.size();
 
         //
         // Compute the solve recv indices
         //
-        const int leftChildTeamSize = teamSize / 2;
-        const int rightChildTeamSize = teamSize / 2;
-        factSN.childSolveRecvIndices.clear();
-        factSN.childSolveRecvIndices.resize( teamSize );
+        nodeInfo.childSolveRecvIndices.clear();
+        nodeInfo.childSolveRecvIndices.resize( teamSize );
 
         // Compute the recv indices for the left child 
         const int leftUpdateAlignment = 
-            factSN.leftChildSize % leftChildTeamSize;
+            nodeInfo.leftChildSize % leftChildTeamSize;
         for( int iPre=0; iPre<numLeftSolveIndices; ++iPre )
         {
-            const int iChild = factSN.leftChildSolveIndices[iPre];
-            const int iFront = factSN.leftChildRelIndices[iChild];
+            const int iChild = nodeInfo.leftChildSolveIndices[iPre];
+            const int iFront = nodeInfo.leftChildRelIndices[iChild];
             const int iFrontLocal = (iFront-teamRank) / teamSize;
 
             const int childRank = 
                 (iChild+leftUpdateAlignment) % leftChildTeamSize;
             const int frontRank = childRank;
-            factSN.childSolveRecvIndices[frontRank].push_back(iFrontLocal);
+            nodeInfo.childSolveRecvIndices[frontRank].push_back(iFrontLocal);
         }
 
         // Compute the recv indices for the right child
         const int rightUpdateAlignment = 
-            factSN.rightChildSize % rightChildTeamSize;
+            nodeInfo.rightChildSize % rightChildTeamSize;
         for( int iPre=0; iPre<numRightSolveIndices; ++iPre )
         {
-            const int iChild = factSN.rightChildSolveIndices[iPre];
-            const int iFront = factSN.rightChildRelIndices[iChild];
+            const int iChild = nodeInfo.rightChildSolveIndices[iPre];
+            const int iFront = nodeInfo.rightChildRelIndices[iChild];
             const int iFrontLocal = (iFront-teamRank) / teamSize;
 
             const int childRank = 
                 (iChild+rightUpdateAlignment) % rightChildTeamSize;
             const int frontRank = leftChildTeamSize + childRank;
-            factSN.childSolveRecvIndices[frontRank].push_back(iFrontLocal);
+            nodeInfo.childSolveRecvIndices[frontRank].push_back(iFrontLocal);
         }
 
         // Optionally compute the recv indices for the factorization. 
         // This is optional since it requires a nontrivial amount of storage.
         if( storeFactRecvIndices )
-            ComputeFactRecvIndices( factSN, factChildSN );
+            ComputeFactRecvIndices( nodeInfo, childNodeInfo );
         else
-            factSN.childFactRecvIndices.clear();
+            nodeInfo.childFactRecvIndices.clear();
 
-        myOffset += factSN.size;
-        localOffset1d += factSN.localSize1d;
+        myOffset += nodeInfo.size;
+        localOffset1d += nodeInfo.localSize1d;
     }
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
-void symbolic::ComputeFactRecvIndices
-( const DistSymmFactSupernode& sn, 
-  const DistSymmFactSupernode& childSN )
+void ComputeFactRecvIndices
+( const DistSymmNodeInfo& node, 
+  const DistSymmNodeInfo& childNode )
 {
 #ifndef RELEASE
-    PushCallStack("symbolic::ComputeFactRecvIndices");
+    PushCallStack("ComputeFactRecvIndices");
 #endif
-    const int commRank = mpi::CommRank( sn.comm );
-    const int commSize = mpi::CommSize( sn.comm );
-    const int gridHeight = sn.grid->Height();
-    const int gridWidth = sn.grid->Width();
-    const int gridRow = sn.grid->MCRank();
-    const int gridCol = sn.grid->MRRank();
-    const int childGridHeight = childSN.grid->Height();
-    const int childGridWidth = childSN.grid->Width();
+    const int commRank = mpi::CommRank( node.comm );
+    const int commSize = mpi::CommSize( node.comm );
+    const int gridHeight = node.grid->Height();
+    const int gridWidth = node.grid->Width();
+    const int gridRow = node.grid->Row();
+    const int gridCol = node.grid->Col();
+    const int childGridHeight = childNode.grid->Height();
+    const int childGridWidth = childNode.grid->Width();
 
     // Assuming that we have a power of two number of processes, the following
     // should be valid. It will eventually need to be improved.
@@ -474,7 +470,7 @@ void symbolic::ComputeFactRecvIndices
 
 #ifndef RELEASE
     // Ensure that all processes in our communicator agree on the grid 
-    // dimensions and supernode sizes
+    // dimensions and node sizes
     int basicData[10];
     if( commRank == 0 )
     {
@@ -482,55 +478,56 @@ void symbolic::ComputeFactRecvIndices
         basicData[1] = gridWidth;
         basicData[2] = childGridHeight;
         basicData[3] = childGridWidth;
-        basicData[4] = sn.size;
-        basicData[5] = sn.leftChildSize;
-        basicData[6] = sn.rightChildSize;
-        basicData[7] = sn.lowerStruct.size();
-        basicData[8] = sn.leftChildRelIndices.size();
-        basicData[9] = sn.rightChildRelIndices.size();
+        basicData[4] = node.size;
+        basicData[5] = node.leftChildSize;
+        basicData[6] = node.rightChildSize;
+        basicData[7] = node.lowerStruct.size();
+        basicData[8] = node.leftChildRelIndices.size();
+        basicData[9] = node.rightChildRelIndices.size();
     }
-    mpi::Broadcast( basicData, 10, 0, sn.comm );
+    mpi::Broadcast( basicData, 10, 0, node.comm );
     if( gridHeight != basicData[0] || gridWidth != basicData[1] )
         throw std::logic_error("Grid dimensions conflicted");
     if( childGridHeight != basicData[2] || childGridWidth != basicData[3] )
         throw std::logic_error("Child grid dimensions conflicted");
-    if( sn.size != basicData[4] )
+    if( node.size != basicData[4] )
         throw std::logic_error("Supernode sizes conflicted");
-    if( sn.leftChildSize != basicData[5] || sn.rightChildSize != basicData[6] )
-        throw std::logic_error("Child supernode sizes conflicted");
-    if( sn.lowerStruct.size() != (unsigned)basicData[7] )
+    if( node.leftChildSize != basicData[5] || 
+        node.rightChildSize != basicData[6] )
+        throw std::logic_error("Child node sizes conflicted");
+    if( node.lowerStruct.size() != (unsigned)basicData[7] )
         throw std::logic_error("Lower struct sizes conflicted");
-    if( sn.leftChildRelIndices.size() != (unsigned)basicData[8] ||
-        sn.rightChildRelIndices.size() != (unsigned)basicData[9] )
+    if( node.leftChildRelIndices.size() != (unsigned)basicData[8] ||
+        node.rightChildRelIndices.size() != (unsigned)basicData[9] )
         throw std::logic_error("Child lower struct sizes conflicted");
 #endif
 
-    sn.childFactRecvIndices.clear();
-    sn.childFactRecvIndices.resize( commSize );
+    node.childFactRecvIndices.clear();
+    node.childFactRecvIndices.resize( commSize );
     std::deque<int>::const_iterator it;
 
     // Compute the recv indices of the left child from each process 
-    for( unsigned jPre=0; jPre<sn.leftChildFactRowIndices.size(); ++jPre )
+    for( unsigned jPre=0; jPre<node.leftChildFactRowIndices.size(); ++jPre )
     {
-        const int jChild = sn.leftChildFactRowIndices[jPre];
-        const int jFront = sn.leftChildRelIndices[jChild];
+        const int jChild = node.leftChildFactRowIndices[jPre];
+        const int jFront = node.leftChildRelIndices[jChild];
 #ifndef RELEASE
         if( (jFront-gridCol) % gridWidth != 0 )
             throw std::logic_error("Invalid left jFront");
 #endif
         const int jFrontLocal = (jFront-gridCol) / gridWidth;
-        const int childCol = (jChild+sn.leftChildSize) % leftGridWidth;
+        const int childCol = (jChild+node.leftChildSize) % leftGridWidth;
 
         // Find the first iPre that maps to the lower triangle
         it = std::lower_bound
-             ( sn.leftChildFactColIndices.begin(),
-               sn.leftChildFactColIndices.end(), jChild );
-        const int iPreStart = int(it-sn.leftChildFactColIndices.begin());
+             ( node.leftChildFactColIndices.begin(),
+               node.leftChildFactColIndices.end(), jChild );
+        const int iPreStart = int(it-node.leftChildFactColIndices.begin());
         for( unsigned iPre=iPreStart; 
-                      iPre<sn.leftChildFactColIndices.size(); ++iPre )
+                      iPre<node.leftChildFactColIndices.size(); ++iPre )
         {
-            const int iChild = sn.leftChildFactColIndices[iPre];
-            const int iFront = sn.leftChildRelIndices[iChild];
+            const int iChild = node.leftChildFactColIndices[iPre];
+            const int iFront = node.leftChildRelIndices[iChild];
 #ifndef RELEASE
             if( iChild < jChild )
                 throw std::logic_error("Invalid left iChild");
@@ -539,37 +536,37 @@ void symbolic::ComputeFactRecvIndices
 #endif
             const int iFrontLocal = (iFront-gridRow) / gridHeight;
 
-            const int childRow = (iChild+sn.leftChildSize) % leftGridHeight;
+            const int childRow = (iChild+node.leftChildSize) % leftGridHeight;
             const int childRank = childRow + childCol*leftGridHeight;
 
             const int frontRank = childRank;
-            sn.childFactRecvIndices[frontRank].push_back(iFrontLocal);
-            sn.childFactRecvIndices[frontRank].push_back(jFrontLocal);
+            node.childFactRecvIndices[frontRank].push_back(iFrontLocal);
+            node.childFactRecvIndices[frontRank].push_back(jFrontLocal);
         }
     }
     
     // Compute the recv indices of the right child from each process 
-    for( unsigned jPre=0; jPre<sn.rightChildFactRowIndices.size(); ++jPre )
+    for( unsigned jPre=0; jPre<node.rightChildFactRowIndices.size(); ++jPre )
     {
-        const int jChild = sn.rightChildFactRowIndices[jPre];
-        const int jFront = sn.rightChildRelIndices[jChild];
+        const int jChild = node.rightChildFactRowIndices[jPre];
+        const int jFront = node.rightChildRelIndices[jChild];
 #ifndef RELEASE
         if( (jFront-gridCol) % gridWidth != 0 )
             throw std::logic_error("Invalid right jFront");
 #endif
         const int jFrontLocal = (jFront-gridCol) / gridWidth;
-        const int childCol = (jChild+sn.rightChildSize) % rightGridWidth;
+        const int childCol = (jChild+node.rightChildSize) % rightGridWidth;
 
         // Find the first iPre that maps to the lower triangle
         it = std::lower_bound
-             ( sn.rightChildFactColIndices.begin(),
-               sn.rightChildFactColIndices.end(), jChild );
-        const int iPreStart = int(it-sn.rightChildFactColIndices.begin());
+             ( node.rightChildFactColIndices.begin(),
+               node.rightChildFactColIndices.end(), jChild );
+        const int iPreStart = int(it-node.rightChildFactColIndices.begin());
         for( unsigned iPre=iPreStart; 
-                 iPre<sn.rightChildFactColIndices.size(); ++iPre )
+                 iPre<node.rightChildFactColIndices.size(); ++iPre )
         {
-            const int iChild = sn.rightChildFactColIndices[iPre];
-            const int iFront = sn.rightChildRelIndices[iChild];
+            const int iChild = node.rightChildFactColIndices[iPre];
+            const int iFront = node.rightChildRelIndices[iChild];
 #ifndef RELEASE
             if( iChild < jChild )
                 throw std::logic_error("Invalid right iChild");
@@ -578,12 +575,12 @@ void symbolic::ComputeFactRecvIndices
 #endif
             const int iFrontLocal = (iFront-gridRow) / gridHeight;
 
-            const int childRow = (iChild+sn.rightChildSize) % rightGridHeight;
+            const int childRow = (iChild+node.rightChildSize) % rightGridHeight;
             const int childRank = childRow + childCol*rightGridHeight;
 
             const int frontRank = rightOffset + childRank;
-            sn.childFactRecvIndices[frontRank].push_back(iFrontLocal);
-            sn.childFactRecvIndices[frontRank].push_back(jFrontLocal);
+            node.childFactRecvIndices[frontRank].push_back(iFrontLocal);
+            node.childFactRecvIndices[frontRank].push_back(jFrontLocal);
         }
     }
 #ifndef RELEASE
