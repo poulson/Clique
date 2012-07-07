@@ -22,11 +22,11 @@ using namespace cliq;
 
 void Usage()
 {
-    std::cout << "FileSpeed <num MB> <num pieces> <num files> <base name>\n"
-              << "  <num MB>:     number of megabytes to write to file\n"
-              << "  <num pieces>: number of pieces to break it into\n"
-              << "  <num files>:  number of files to read/write\n"
-              << "  <base name>:  base file name to write/read\n"
+    std::cout << "FileSpeed <num MB> <num pieces> <num files> [basename=out]\n"
+              << "  <num MB>:       number of megabytes to write to file\n"
+              << "  <num pieces>:   number of pieces to break it into\n"
+              << "  <num files>:    number of files to read/write\n"
+              << "  [basename=out]: base file name to write/read\n"
               << std::endl;
 }
 
@@ -37,7 +37,7 @@ main( int argc, char* argv[] )
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
 
-    if( argc < 5 )
+    if( argc < 4 )
     {
         if( commRank == 0 )        
             Usage();
@@ -49,7 +49,7 @@ main( int argc, char* argv[] )
     const unsigned numMB = atoi( argv[argNum++] );
     const unsigned numPieces = atoi( argv[argNum++] );
     const unsigned numFiles = atoi( argv[argNum++] );
-    const char* baseName = argv[argNum++];
+    const char* baseName = ( argc >= 5 ? argv[argNum++] : "out" );
     if( numPieces == 0 && commRank == 0 )
     {
         std::cout << "Number of pieces must be positive." << std::endl;

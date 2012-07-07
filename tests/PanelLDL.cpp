@@ -22,18 +22,18 @@ using namespace cliq;
 
 void Usage()
 {
-    std::cout << "PanelLDL <numPanels> <nx> <ny> <nz> <cutoff> <fact blocksize>"
-                 " <solve blocksize> <useFast1d> <write info?>\n"
-              << "<numPanels>: number of panels to factor in memory\n"
+    std::cout << "PanelLDL <nx> <ny> <nz> [cutoff=16] [fact blocksize=96] "
+                 "[solve blocksize=64] [useFast1d=0] [write info=0] "
+                 "[basename=out]\n"
               << "<nx>: size of panel in x direction\n"
               << "<ny>: size of panel in y direction\n"
               << "<nz>: size of panel in z direction\n"
-              << "<cutoff>: minimum required leaf size\n" 
-              << "<fact blocksize>: algorithmic blocksize for factorization\n"
-              << "<solve blocksize>: algorithm blocksize for solve\n"
-              << "<useFast1d>: use 1d distributions iff != 0\n"
-              << "<write info?>: write basic local info to file? [0/1]\n"
-              << "<prefix>: prefix for each process's info file\n"
+              << "[cutoff=16]: minimum required leaf size\n" 
+              << "[fact blocksize=96]: factorization algorithmic blocksize\n"
+              << "[solve blocksize=64]: solve algorithmic blocksize\n"
+              << "[useFast1d=0]: use 1d distributions iff != 0\n"
+              << "[write info=0]: write basic local info to file? [0/1]\n"
+              << "[basename=out]: basename for each process's info file\n"
               << std::endl;
 }
 
@@ -85,7 +85,7 @@ main( int argc, char* argv[] )
         return 0;
     }
 
-    if( argc < 10 )
+    if( argc < 4 )
     {
         if( commRank == 0 )        
             Usage();
@@ -94,26 +94,17 @@ main( int argc, char* argv[] )
     }
 
     int argNum = 1;
-    const int numPanels = atoi( argv[argNum++] );
-    const int nx = atoi( argv[argNum++] );
-    const int ny = atoi( argv[argNum++] );
-    const int nz = atoi( argv[argNum++] );
-    const int cutoff = atoi( argv[argNum++] );
-    const int factBlocksize = atoi( argv[argNum++] );
-    const int solveBlocksize = atoi( argv[argNum++] );
-    const bool useFast1d = atoi( argv[argNum++] );
-    const bool writeInfo = atoi( argv[argNum++] );
-    if( writeInfo && argc == 10 )
-    {
-        if( commRank == 0 )
-            Usage();
-        cliq::Finalize();
-        return 0;
-    }
-    const char* basename = argv[argNum++];
+    const int nx = atoi(argv[argNum++]);
+    const int ny = atoi(argv[argNum++]);
+    const int nz = atoi(argv[argNum++]);
+    const int cutoff = ( argc >= 5 ? atoi(argv[argNum++]) : 16 );
+    const int factBlocksize = ( argc >= 6 ? atoi(argv[argNum++]) : 96 );
+    const int solveBlocksize = ( argc >= 7 ? atoi(argv[argNum++]) : 64 );
+    const bool useFast1d = ( argc >= 8 ? atoi(argv[argNum++]) : 0 );
+    const bool writeInfo = ( argc >= 9 ? atoi(argv[argNum++]) : 0 );
+    const char* basename = ( argc >= 10 ? argv[argNum++] : "out" );
     if( commRank == 0 )
-        std::cout << "numPanels=" << numPanels << "\n"
-                  << "(nx,ny,nz)=(" << nx << "," << ny << "," << nz << ")\n"
+        std::cout << "(nx,ny,nz)=(" << nx << "," << ny << "," << nz << ")\n"
                   << "cutoff=" << cutoff << "\n"
                   << "factBlocksize=" << factBlocksize << "\n"
                   << "solveBlocksize=" << solveBlocksize << std::endl;
@@ -197,6 +188,7 @@ main( int argc, char* argv[] )
                         S.dist.supernodes.back().localSize1d << std::endl;
         }
 
+        const int numPanels = 10;
         std::vector<numeric::SymmFrontTree<F>*> symmFrontTrees;
         for( int panel=0; panel<numPanels; ++panel )
         {

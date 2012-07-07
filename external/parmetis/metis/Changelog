@@ -1,4 +1,13 @@
 
+metis-5.0.2
+------------------------------------------------------------------------
+r10974 | karypis | 2011-10-29 18:24:32 -0500 (Sat, 29 Oct 2011)
+
+- Fixed issue with high-degree vertices and mask-based compression.
+- Fixed issue with wrong COARSENING_FRACTION.
+- Modified coarsening schemes to better support non FE graphs.
+
+
 metis-5.0.1
 ------------------------------------------------------------------------
 r10709 | karypis | 2011-08-31 16:07:57 -0500 (Wed, 31 Aug 2011)
