@@ -24,16 +24,15 @@ namespace cliq {
 namespace internal {
 
 inline void GetLowerStructFromPartner
-( int& theirChildSize, std::vector<int>& theirChildLowerStruct,
+( int leftChildTeamSize, 
+  int& theirChildSize, std::vector<int>& theirChildLowerStruct,
   const DistSymmNode& node, const DistSymmNodeInfo& childNodeInfo )
 {
     // Determine our partner's rank for this exchange in node's 
     // communicator
     const int teamRank = mpi::CommRank( node.comm );
     const int teamSize = mpi::CommSize( node.comm );
-    const bool onLeft = ( teamRank < teamSize/2 );
-    const int rightChildTeamSize = teamSize/2;
-    const int leftChildTeamSize = teamSize - rightChildTeamSize;
+    const bool onLeft = ( teamRank < leftChildTeamSize );
     const int partner =
         ( onLeft ? teamRank+leftChildTeamSize
                  : teamRank-leftChildTeamSize );
@@ -58,25 +57,69 @@ inline void GetLowerStructFromPartner
 }
 
 inline void GetLowerStruct
-( int& theirChildSize, std::vector<int>& theirChildLowerStruct,
+( int leftChildTeamSize, 
+  int& theirChildSize, std::vector<int>& theirChildLowerStruct,
   const DistSymmNode& node, const DistSymmNodeInfo& childNodeInfo )
 {
-    throw std::logic_error("Not yet written");
+    // Determine our partner's rank for this exchange in node's 
+    // communicator
+    const int teamRank = mpi::CommRank( node.comm );
+    const int teamSize = mpi::CommSize( node.comm );
+    const int childTeamRank = mpi::CommRank( childNodeInfo.comm );
+    const bool onLeft = ( teamRank < leftChildTeamSize );
+
+    if( childTeamRank == 0 )
+    {
+        const int partner = ( onLeft ? leftChildTeamSize : 0 );
+
+        // SendRecv the message lengths
+        const int myChildSize = childNodeInfo.size;
+        const int myChildLowerStructSize = childNodeInfo.lowerStruct.size();
+        const int initialSends[2] = { myChildSize, myChildLowerStructSize };
+        int initialRecvs[2];
+        mpi::SendRecv
+        ( initialSends, 2, partner, 0,
+          initialRecvs, 2, partner, 0, node.comm );
+        theirChildSize = initialRecvs[0];
+        const int theirChildLowerStructSize = initialRecvs[1];
+
+        // Perform the exchange
+        theirChildLowerStruct.resize( theirChildLowerStructSize );
+        mpi::SendRecv
+        ( &childNodeInfo.lowerStruct[0], myChildLowerStructSize, partner, 0,
+          &theirChildLowerStruct[0], theirChildLowerStructSize, partner, 0, 
+          node.comm );
+
+        // Broadcast the other team's child's sizes
+        mpi::Broadcast( initialRecvs, 2, 0, childNodeInfo.comm );
+
+        // Broadcast the other team's child's lower struct
+        mpi::Broadcast
+        ( &theirChildLowerStruct[0], theirChildLowerStructSize, 
+          0, childNodeInfo.comm );
+    } 
+    else
+    {
+        // Receive the other team's child's sizes
+        int initialRecvs[2];
+        mpi::Broadcast( initialRecvs, 2, 0, childNodeInfo.comm );
+        theirChildSize = initialRecvs[0];
+        const int theirChildLowerStructSize = initialRecvs[1];
+
+        // Receive the other team's child's lower struct
+        theirChildLowerStruct.resize( theirChildLowerStructSize );
+        mpi::Broadcast
+        ( &theirChildLowerStruct[0], theirChildLowerStructSize,
+          0, childNodeInfo.comm );
+    }
 }
 
 inline void ComputeStructAndRelIndices
-( int s, int theirChildSize, const std::vector<int>& theirChildLowerStruct,
+( int leftChildTeamSize, 
+  int theirChildSize, const std::vector<int>& theirChildLowerStruct,
   const DistSymmNode& node,         const DistSymmNode& childNode, 
         DistSymmNodeInfo& nodeInfo, const DistSymmNodeInfo& childNodeInfo )
 {
-    const int teamRank = mpi::CommRank( node.comm );
-    const int teamSize = mpi::CommSize( node.comm );
-    const bool onLeft = ( teamRank < teamSize/2 );
-    const int rightChildTeamSize = teamSize/2;
-    const int leftChildTeamSize = teamSize - rightChildTeamSize;
-    const int childTeamRank = mpi::CommRank( childNode.comm );
-    const int childTeamSize = mpi::CommSize( childNode.comm );
-
     const std::vector<int>& myChildLowerStruct = childNodeInfo.lowerStruct;
     const int myChildSize = childNodeInfo.size;
     const int myChildLowerStructSize = myChildLowerStruct.size();
@@ -88,23 +131,11 @@ inline void ComputeStructAndRelIndices
     // Union the two child lower structures
 #ifndef RELEASE
     for( int i=1; i<myChildLowerStructSize; ++i )
-    {
         if( myChildLowerStruct[i] <= myChildLowerStruct[i-1] )
-        {
-            std::ostringstream msg;
-            msg << "My child's lower struct not sorted for s=" << s << "\n";
-            throw std::logic_error( msg.str().c_str() );
-        }
-    }
+            throw std::runtime_error("Child's lower struct was not sorted");
     for( int i=1; i<theirChildLowerStructSize; ++i )
-    {
         if( theirChildLowerStruct[i] <= theirChildLowerStruct[i-1] )
-        {
-            std::ostringstream msg;
-            msg << "Their child's lower struct not sorted, s=" << s << "\n";
-            throw std::logic_error( msg.str().c_str() );
-        }
-    }
+            throw std::runtime_error("Child's lower struct was not sorted");
 #endif
     childrenStruct.resize
     ( myChildLowerStructSize+theirChildLowerStructSize );
@@ -118,14 +149,8 @@ inline void ComputeStructAndRelIndices
     // Union the lower structure of this node
 #ifndef RELEASE
     for( unsigned i=1; i<node.lowerStruct.size(); ++i )
-    {
         if( node.lowerStruct[i] <= node.lowerStruct[i-1] )
-        {
-            std::ostringstream msg;
-            msg << "Original struct not sorted for s=" << s << "\n";
-            throw std::logic_error( msg.str().c_str() );
-        }
-    }
+            throw std::runtime_error("Original struct was not sorted");
 #endif
     partialStruct.resize( childrenStructSize + node.lowerStruct.size() );
     it = std::set_union
@@ -157,12 +182,15 @@ inline void ComputeStructAndRelIndices
         it = std::lower_bound( it, fullStruct.end(), index );
 #ifndef RELEASE
         if( it == fullStruct.end() )
-            throw std::logic_error("Relative index failure");
+            throw std::logic_error("Relative index failed for original struct");
 #endif
         nodeInfo.origLowerRelIndices[i] = int(it-fullStruct.begin());
     }
 
     // Construct the relative indices of the children
+    const int teamRank = mpi::CommRank( node.comm );
+    const int teamSize = mpi::CommSize( node.comm );
+    const bool onLeft = ( teamRank < leftChildTeamSize );
     int numLeftIndices, numRightIndices;
     const int *leftIndices, *rightIndices;
     if( onLeft )
@@ -191,7 +219,7 @@ inline void ComputeStructAndRelIndices
         it = std::lower_bound( it, fullStruct.end(), index );
 #ifndef RELEASE
         if( it == fullStruct.end() )
-            throw std::logic_error("Relative index failure");
+            throw std::logic_error("Relative index failed for left indices");
 #endif
         nodeInfo.leftChildRelIndices[i] = int(it-fullStruct.begin());
     }
@@ -203,7 +231,7 @@ inline void ComputeStructAndRelIndices
         it = std::lower_bound( it, fullStruct.end(), index );
 #ifndef RELEASE
         if( it == fullStruct.end() )
-            throw std::logic_error("Relative index failure");
+            throw std::logic_error("Relative index failed for right indices");
 #endif
         nodeInfo.rightChildRelIndices[i] = int(it-fullStruct.begin());
     }
@@ -220,12 +248,7 @@ inline void ComputeStructAndRelIndices
         rootLowerStructSize = lowerStructSize;
     mpi::Broadcast( &rootLowerStructSize, 1, 0, node.comm );
     if( rootLowerStructSize != lowerStructSize )
-    {
-        std::ostringstream msg;
-        msg << "Root's lower struct size was " << rootLowerStructSize 
-            << " for node " << s << "\n";
-        throw std::logic_error( msg.str().c_str() );
-    }
+        throw std::runtime_error("Root has different lower struct size");
 #endif
 
     // Fill {left,right}ChildFact{Col,Row}Indices so that we can reuse them
@@ -269,24 +292,14 @@ inline void ComputeStructAndRelIndices
 // For now, we will assume that the distributed part of the elimination 
 // tree is binary.
 //
-// TODO: Generalize to support more than just a power-of-two number of 
-//       processes. This should be relatively straightforward.
-//
 void DistSymmetricAnalysis
-( const SymmElimTree& eTree, SymmInfo& info, 
-  bool storeFactRecvIndices )
+( const SymmElimTree& eTree, SymmInfo& info, bool storeFactRecvIndices )
 {
 #ifndef RELEASE
     PushCallStack("DistSymmetricAnalysis");
 #endif
     const unsigned numNodes = eTree.dist.nodes.size();
     info.dist.nodes.resize( numNodes );
-    if( numNodes == 0 )
-        return;
-
-    mpi::Comm comm = eTree.dist.nodes.back().comm;
-    const unsigned commRank = mpi::CommRank( comm );
-    const unsigned commSize = mpi::CommSize( comm );
 
     // The bottom node was analyzed locally, so just copy its results over
     const LocalSymmNodeInfo& topLocal = info.local.nodes.back();
@@ -334,28 +347,30 @@ void DistSymmetricAnalysis
         mpi::CommDup( node.comm, nodeInfo.comm );
         nodeInfo.grid = new Grid( nodeInfo.comm );
 
-        // Set some offset and size information for this node
-        const int teamRank = mpi::CommRank( node.comm );
-        const int teamSize = mpi::CommSize( node.comm );
-        const bool onLeft = ( teamRank < teamSize/2 );
-        const int rightChildTeamSize = teamSize/2;
-        const int leftChildTeamSize = teamSize - rightChildTeamSize;
-        const int childTeamRank = mpi::CommRank( childNode.comm );
-        const int childTeamSize = mpi::CommSize( childNode.comm );
-        nodeInfo.localSize1d = LocalLength<int>(node.size,teamRank,teamSize);
-        nodeInfo.localOffset1d = localOffset1d;
-
+        // Get the lower struct for the child we do not share
         int theirChildSize;
         std::vector<int> theirChildLowerStruct;
+        const int teamSize = mpi::CommSize( node.comm );
+        const int teamRank = mpi::CommRank( node.comm );
+        const int childTeamRank = mpi::CommRank( childNode.comm );
+        const int childTeamSize = mpi::CommSize( childNode.comm );
+        const bool onLeft = ( teamRank == childTeamRank );
+        const int leftChildTeamSize = 
+            ( onLeft ? childTeamSize : teamSize-childTeamSize );
+        const int rightChildTeamSize = teamSize - leftChildTeamSize;
         if( leftChildTeamSize == rightChildTeamSize )
             internal::GetLowerStructFromPartner
-            ( theirChildSize, theirChildLowerStruct, node, childNodeInfo );
+            ( leftChildTeamSize, theirChildSize, theirChildLowerStruct, 
+              node, childNodeInfo );
         else
             internal::GetLowerStruct
-            ( theirChildSize, theirChildLowerStruct, node, childNodeInfo );
+            ( leftChildTeamSize, theirChildSize, theirChildLowerStruct, 
+              node, childNodeInfo );
 
+        // Perform one level of symbolic factorization and then compute
+        // a wide variety of relative indices
         internal::ComputeStructAndRelIndices
-        ( s, theirChildSize, theirChildLowerStruct, 
+        ( leftChildTeamSize, theirChildSize, theirChildLowerStruct, 
           node, childNode, nodeInfo, childNodeInfo );
 
         // Fill numChildFactSendIndices so that we can reuse it for many facts.
@@ -369,6 +384,7 @@ void DistSymmetricAnalysis
         const int myChildLowerStructSize = childNodeInfo.lowerStruct.size();
         nodeInfo.numChildFactSendIndices.resize( teamSize );
         elem::MemZero( &nodeInfo.numChildFactSendIndices[0], teamSize );
+
         const std::vector<int>& myChildRelIndices = 
             ( onLeft ? nodeInfo.leftChildRelIndices 
                      : nodeInfo.rightChildRelIndices );
@@ -474,6 +490,9 @@ void DistSymmetricAnalysis
         else
             nodeInfo.childFactRecvIndices.clear();
 
+        nodeInfo.localSize1d = LocalLength<int>(node.size,teamRank,teamSize);
+        nodeInfo.localOffset1d = localOffset1d;
+
         myOffset += nodeInfo.size;
         localOffset1d += nodeInfo.localSize1d;
     }
@@ -500,6 +519,8 @@ void ComputeFactRecvIndices
 
     // Assuming that we have a power of two number of processes, the following
     // should be valid. It will eventually need to be improved.
+    //
+    // TODO: Generalize this to non-powers-of-two
     const int rightOffset = commSize / 2;
     const int leftGridHeight = childGridHeight;
     const int leftGridWidth = childGridWidth;
