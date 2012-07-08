@@ -470,7 +470,6 @@ void FillDistElimTree
         const bool onLeft = ( nodeCommRank < leftTeamSize );
         const int childNodeCommRank = 
             ( onLeft ? nodeCommRank : nodeCommRank-leftTeamSize );
-        const int commRank = mpi::CommRank( comm );
         mpi::CommSplit( node.comm, onLeft, childNodeCommRank, childNode.comm );
 
         if( nxSub >= nySub )
