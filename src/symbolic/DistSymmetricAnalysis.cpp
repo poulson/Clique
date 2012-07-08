@@ -508,61 +508,54 @@ void ComputeFactRecvIndices
 #ifndef RELEASE
     PushCallStack("ComputeFactRecvIndices");
 #endif
-    const int commRank = mpi::CommRank( node.comm );
-    const int commSize = mpi::CommSize( node.comm );
+    const int teamRank = mpi::CommRank( node.comm );
+    const int teamSize = mpi::CommSize( node.comm );
     const int gridHeight = node.grid->Height();
     const int gridWidth = node.grid->Width();
     const int gridRow = node.grid->Row();
     const int gridCol = node.grid->Col();
     const int childGridHeight = childNode.grid->Height();
     const int childGridWidth = childNode.grid->Width();
+    const int childTeamRank = mpi::CommRank( childNode.comm );
+    const int childTeamSize = mpi::CommSize( childNode.comm );
+    const bool onLeft = ( teamRank == childTeamRank );
+    const int leftChildTeamSize =
+        ( onLeft ? childTeamSize : teamSize-childTeamSize );
 
-    // Assuming that we have a power of two number of processes, the following
-    // should be valid. It will eventually need to be improved.
-    //
-    // TODO: Generalize this to non-powers-of-two
-    const int rightOffset = commSize / 2;
-    const int leftGridHeight = childGridHeight;
-    const int leftGridWidth = childGridWidth;
-    const int rightGridHeight = childGridHeight;
-    const int rightGridWidth = childGridWidth;
+    // Communicate to get the grid sizes
+    int childGridDims[4] = { 0, 0, 0, 0 };
+    if( onLeft && childTeamRank == 0 )
+    {
+        childGridDims[0] = childGridHeight;
+        childGridDims[1] = childGridWidth;
+    }
+    else if( !onLeft && childTeamRank == 0 )
+    {
+        childGridDims[2] = childGridHeight;
+        childGridDims[3] = childGridWidth;
+    }
+    mpi::AllReduce( childGridDims, 4, mpi::SUM, node.comm );
+    const int leftGridHeight = childGridDims[0];
+    const int leftGridWidth = childGridDims[1];
+    const int rightGridHeight = childGridDims[2];
+    const int rightGridWidth = childGridDims[3];
 
 #ifndef RELEASE
-    // Ensure that all processes in our communicator agree on the grid 
-    // dimensions and node sizes
-    int basicData[10];
-    if( commRank == 0 )
+    if( leftChildTeamSize != leftGridHeight*leftGridWidth )
     {
-        basicData[0] = gridHeight;
-        basicData[1] = gridWidth;
-        basicData[2] = childGridHeight;
-        basicData[3] = childGridWidth;
-        basicData[4] = node.size;
-        basicData[5] = node.leftChildSize;
-        basicData[6] = node.rightChildSize;
-        basicData[7] = node.lowerStruct.size();
-        basicData[8] = node.leftChildRelIndices.size();
-        basicData[9] = node.rightChildRelIndices.size();
+        std::cerr << "childGridDims: " 
+                  << childGridDims[0] << " " << childGridDims[1] << " "
+                  << childGridDims[2] << " " << childGridDims[3] << "\n"
+                  << "leftChildTeamSize: " << leftChildTeamSize << std::endl;
+        throw std::runtime_error("Computed left grid incorrectly");
     }
-    mpi::Broadcast( basicData, 10, 0, node.comm );
-    if( gridHeight != basicData[0] || gridWidth != basicData[1] )
-        throw std::logic_error("Grid dimensions conflicted");
-    if( childGridHeight != basicData[2] || childGridWidth != basicData[3] )
-        throw std::logic_error("Child grid dimensions conflicted");
-    if( node.size != basicData[4] )
-        throw std::logic_error("Supernode sizes conflicted");
-    if( node.leftChildSize != basicData[5] || 
-        node.rightChildSize != basicData[6] )
-        throw std::logic_error("Child node sizes conflicted");
-    if( node.lowerStruct.size() != (unsigned)basicData[7] )
-        throw std::logic_error("Lower struct sizes conflicted");
-    if( node.leftChildRelIndices.size() != (unsigned)basicData[8] ||
-        node.rightChildRelIndices.size() != (unsigned)basicData[9] )
-        throw std::logic_error("Child lower struct sizes conflicted");
+    const int rightChildTeamSize = teamSize - leftChildTeamSize;
+    if( rightChildTeamSize != rightGridHeight*rightGridWidth )
+        throw std::runtime_error("Computed right grid incorrectly");
 #endif
 
     node.childFactRecvIndices.clear();
-    node.childFactRecvIndices.resize( commSize );
+    node.childFactRecvIndices.resize( teamSize );
     std::deque<int>::const_iterator it;
 
     // Compute the recv indices of the left child from each process 
@@ -637,7 +630,7 @@ void ComputeFactRecvIndices
             const int childRow = (iChild+node.rightChildSize) % rightGridHeight;
             const int childRank = childRow + childCol*rightGridHeight;
 
-            const int frontRank = rightOffset + childRank;
+            const int frontRank = leftChildTeamSize + childRank;
             node.childFactRecvIndices[frontRank].push_back(iFrontLocal);
             node.childFactRecvIndices[frontRank].push_back(jFrontLocal);
         }

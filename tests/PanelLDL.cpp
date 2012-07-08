@@ -28,6 +28,7 @@ void Usage()
               << "<nx>: size of panel in x direction\n"
               << "<ny>: size of panel in y direction\n"
               << "<nz>: size of panel in z direction\n"
+              << "[block LDL=0]: use block LDL iff != 0\n"
               << "[cutoff=16]: minimum required leaf size\n" 
               << "[fact blocksize=96]: factorization algorithmic blocksize\n"
               << "[solve blocksize=64]: solve algorithmic blocksize\n"
@@ -49,16 +50,40 @@ void CountLocalTreeSize
 ( int nxSub, int nySub, int nz, int cutoff, int& numNodes );
 
 void FillElimTree
-( int nx, int ny, int nz, int cutoff, mpi::Comm comm, int log2CommSize,
+( int nx, int ny, int nz, int cutoff, mpi::Comm comm, int distDepth,
   SymmElimTree& eTree );
 
 void FillDistElimTree
 ( int nx, int ny, int nz, int& nxSub, int& nySub, int& xOffset, int& yOffset, 
-  int cutoff, mpi::Comm comm, int log2CommSize, SymmElimTree& eTree );
+  int cutoff, mpi::Comm comm, int distDepth, SymmElimTree& eTree );
 
 void FillLocalElimTree
 ( int nx, int ny, int nz, int nxSub, int nySub, int xOffset, int yOffset, 
-  int cutoff, int log2CommSize, SymmElimTree& eTree );
+  int cutoff, int distDepth, SymmElimTree& eTree );
+
+void DistributedDepthRecursion
+( unsigned commRank, unsigned commSize, unsigned& distDepth )
+{
+    if( commSize == 1 )
+        return;
+
+    ++distDepth;
+    const unsigned leftTeamSize = commSize/2;
+    const unsigned rightTeamSize = commSize - leftTeamSize;
+    if( commRank < leftTeamSize )
+        DistributedDepthRecursion
+        ( commRank, leftTeamSize, distDepth );
+    else
+        DistributedDepthRecursion
+        ( commRank-leftTeamSize, rightTeamSize, distDepth );
+}
+
+unsigned DistributedDepth( unsigned commRank, unsigned commSize )
+{
+    unsigned distDepth = 0;
+    DistributedDepthRecursion( commRank, commSize, distDepth );
+    return distDepth;
+}
 
 int
 main( int argc, char* argv[] )
@@ -69,21 +94,7 @@ main( int argc, char* argv[] )
     const unsigned commSize = mpi::CommSize( comm );
     typedef Complex<double> F;
 
-    // Ensure that we have a power of two number of processes
-    unsigned temp = commSize;
-    unsigned log2CommSize = 0;
-    while( temp >>= 1 )
-        ++log2CommSize;
-    if( 1u<<log2CommSize != commSize )
-    {
-        if( commRank == 0 )
-        {
-            std::cerr << "Must use a power of two number of processes" 
-                      << std::endl;
-        }
-        cliq::Finalize();
-        return 0;
-    }
+    const unsigned distDepth = DistributedDepth( commRank, commSize );
 
     if( argc < 4 )
     {
@@ -97,12 +108,13 @@ main( int argc, char* argv[] )
     const int nx = atoi(argv[argNum++]);
     const int ny = atoi(argv[argNum++]);
     const int nz = atoi(argv[argNum++]);
-    const int cutoff = ( argc >= 5 ? atoi(argv[argNum++]) : 16 );
-    const int factBlocksize = ( argc >= 6 ? atoi(argv[argNum++]) : 96 );
-    const int solveBlocksize = ( argc >= 7 ? atoi(argv[argNum++]) : 64 );
-    const bool useFast1d = ( argc >= 8 ? atoi(argv[argNum++]) : 0 );
-    const bool writeInfo = ( argc >= 9 ? atoi(argv[argNum++]) : 0 );
-    const char* basename = ( argc >= 10 ? argv[argNum++] : "out" );
+    const bool useBlockLDL = ( argc >= 5 ? atoi(argv[argNum++]) : false );
+    const int cutoff = ( argc >= 6 ? atoi(argv[argNum++]) : 16 );
+    const int factBlocksize = ( argc >= 7 ? atoi(argv[argNum++]) : 96 );
+    const int solveBlocksize = ( argc >= 8 ? atoi(argv[argNum++]) : 64 );
+    const bool useFast1d = ( argc >= 9 ? atoi(argv[argNum++]) : 0 );
+    const bool writeInfo = ( argc >= 10 ? atoi(argv[argNum++]) : 0 );
+    const char* basename = ( argc >= 11 ? argv[argNum++] : "out" );
     if( commRank == 0 )
         std::cout << "(nx,ny,nz)=(" << nx << "," << ny << "," << nz << ")\n"
                   << "cutoff=" << cutoff << "\n"
@@ -123,7 +135,7 @@ main( int argc, char* argv[] )
         mpi::Barrier( comm );
         const double initStartTime = mpi::Time();
         SymmElimTree eTree;
-        FillElimTree( nx, ny, nz, cutoff, comm, log2CommSize, eTree );
+        FillElimTree( nx, ny, nz, cutoff, comm, distDepth, eTree );
         mpi::Barrier( comm );
         const double initStopTime = mpi::Time();
         if( commRank == 0 )
@@ -210,9 +222,9 @@ main( int argc, char* argv[] )
                     frontL.Print( infoFile, "frontL local" );
             }
             L.dist.mode = NORMAL_2D;
-            L.dist.fronts.resize( log2CommSize+1 );
+            L.dist.fronts.resize( distDepth+1 );
             InitializeDistLeaf( info, L );
-            for( unsigned s=1; s<log2CommSize+1; ++s )
+            for( unsigned s=1; s<distDepth+1; ++s )
             {
                 const DistSymmNodeInfo& node = info.dist.nodes[s];
                 DistMatrix<F>& front2dL = L.dist.fronts[s].front2dL;
@@ -265,7 +277,10 @@ main( int argc, char* argv[] )
             // Call the numerical factorization routine
             elem::SetBlocksize( factBlocksize );
             const double factStartTime = mpi::Time();
-            LDL( TRANSPOSE, info, L );
+            if( useBlockLDL )
+                BlockLDL( TRANSPOSE, info, L );
+            else
+                LDL( TRANSPOSE, info, L );
             mpi::Barrier( comm );
             const double factStopTime = mpi::Time();
             if( commRank == 0 )
@@ -273,24 +288,30 @@ main( int argc, char* argv[] )
                           << factStopTime-factStartTime
                           << " secs" << std::endl;
 
-            // Invert the diagonal blocks for faster solves
-            const double redistStartTime = mpi::Time();
-            if( useFast1d )
-                SetSolveMode( L, FAST_1D_LDL );
-            else
-                SetSolveMode( L, FAST_2D_LDL );
-            mpi::Barrier( comm );
-            const double redistStopTime = mpi::Time();
-            if( commRank == 0 )
-                std::cout << "Redistribution time: " 
-                          << redistStopTime-redistStartTime 
-                          << " secs" << std::endl;
+            if( !useBlockLDL )
+            {
+                // Invert the diagonal blocks for faster solves
+                const double redistStartTime = mpi::Time();
+                if( useFast1d )
+                    SetSolveMode( L, FAST_1D_LDL );
+                else
+                    SetSolveMode( L, FAST_2D_LDL );
+                mpi::Barrier( comm );
+                const double redistStopTime = mpi::Time();
+                if( commRank == 0 )
+                    std::cout << "Redistribution time: " 
+                              << redistStopTime-redistStartTime 
+                              << " secs" << std::endl;
+            }
 
             // Solve
             elem::SetBlocksize( solveBlocksize );
             mpi::Barrier( comm );
             const double solveStartTime = mpi::Time();
-            LDLSolve( TRANSPOSE, info, L, localY );
+            if( useBlockLDL )
+                BlockLDLSolve( TRANSPOSE, info, L, localY );
+            else
+                LDLSolve( TRANSPOSE, info, L, localY );
             mpi::Barrier( comm );
             const double solveStopTime = mpi::Time();
             if( commRank == 0 )
@@ -404,7 +425,7 @@ int ReorderedIndex
 }
 
 void FillElimTree
-( int nx, int ny, int nz, int cutoff, mpi::Comm comm, int log2CommSize,
+( int nx, int ny, int nz, int cutoff, mpi::Comm comm, int distDepth,
   SymmElimTree& eTree )
 {
 #ifndef RELEASE
@@ -413,10 +434,10 @@ void FillElimTree
     int nxSub=nx, nySub=ny, xOffset=0, yOffset=0;
     FillDistElimTree
     ( nx, ny, nz, nxSub, nySub, xOffset, yOffset, cutoff, 
-      comm, log2CommSize, eTree );
+      comm, distDepth, eTree );
     FillLocalElimTree
     ( nx, ny, nz, nxSub, nySub, xOffset, yOffset, cutoff, 
-      log2CommSize, eTree );
+      distDepth, eTree );
 #ifndef RELEASE
     cliq::PopCallStack();
 #endif
@@ -424,13 +445,13 @@ void FillElimTree
   
 void FillDistElimTree
 ( int nx, int ny, int nz, int& nxSub, int& nySub, int& xOffset, int& yOffset, 
-  int cutoff, mpi::Comm comm, int log2CommSize, SymmElimTree& eTree )
+  int cutoff, mpi::Comm comm, int distDepth, SymmElimTree& eTree )
 {
 #ifndef RELEASE
     cliq::PushCallStack("FillDistElimTree");
 #endif
     // TODO: Generalize this for non power-of-two numbers of processes
-    const int numDistNodes = log2CommSize+1;
+    const int numDistNodes = distDepth+1;
 
     eTree.dist.nodes.resize( numDistNodes );
     mpi::CommDup( comm, eTree.dist.nodes.back().comm );
@@ -443,14 +464,15 @@ void FillDistElimTree
 
         const int nodeCommRank = mpi::CommRank( node.comm );
         const int nodeCommSize = mpi::CommSize( node.comm );
-        const int rightTeamSize = nodeCommSize/2;
-        const int leftTeamSize = nodeCommSize - rightTeamSize;
+        const int leftTeamSize = nodeCommSize/2;
+        const int rightTeamSize = nodeCommSize - leftTeamSize;
 
-        const bool onLeft = ( nodeCommRank < nodeCommSize/2 );
+        const bool onLeft = ( nodeCommRank < leftTeamSize );
         const int childNodeCommRank = 
             ( onLeft ? nodeCommRank : nodeCommRank-leftTeamSize );
+        const int commRank = mpi::CommRank( comm );
         mpi::CommSplit( node.comm, onLeft, childNodeCommRank, childNode.comm );
-  
+
         if( nxSub >= nySub )
         {
             // Form the structure of a partition of the X dimension
@@ -459,7 +481,7 @@ void FillDistElimTree
             node.offset = 
                 ReorderedIndex
                 ( xOffset+middle, yOffset, 0, nx, ny, nz, 
-                  log2CommSize, cutoff );
+                  distDepth, cutoff );
 
             // Allocate space for the lower structure
             int numJoins = 0;
@@ -476,7 +498,7 @@ void FillDistElimTree
                 for( int i=0; i<nz; ++i )
                     node.lowerStruct[i] = ReorderedIndex
                     ( xOffset+middle, yOffset-1, i, nx, ny, nz, 
-                      log2CommSize, cutoff );
+                      distDepth, cutoff );
                 joinOffset += nz;
             }
             if( yOffset+nySub < ny )
@@ -484,7 +506,7 @@ void FillDistElimTree
                 for( int i=0; i<nz; ++i )
                     node.lowerStruct[joinOffset+i] = ReorderedIndex
                     ( xOffset+middle, yOffset+nySub, i, nx, ny, nz, 
-                      log2CommSize, cutoff );
+                      distDepth, cutoff );
             }
 
             // Sort the lower structure
@@ -510,7 +532,7 @@ void FillDistElimTree
             node.offset = 
                 ReorderedIndex
                 ( xOffset, yOffset+middle, 0, nx, ny, nz, 
-                  log2CommSize, cutoff );
+                  distDepth, cutoff );
 
             // Allocate space for the lower structure
             int numJoins = 0;
@@ -527,7 +549,7 @@ void FillDistElimTree
                 for( int i=0; i<nz; ++i )
                     node.lowerStruct[i] = ReorderedIndex
                     ( xOffset-1, yOffset+middle, i, nx, ny, nz, 
-                      log2CommSize, cutoff );
+                      distDepth, cutoff );
                 joinOffset += nz;
             }
             if( xOffset+nxSub < nx )
@@ -535,7 +557,7 @@ void FillDistElimTree
                 for( int i=0; i<nz; ++i )
                     node.lowerStruct[joinOffset+i] = ReorderedIndex
                     ( xOffset+nxSub, yOffset+middle, i, nx, ny, nz,
-                      log2CommSize, cutoff );
+                      distDepth, cutoff );
             }
 
             // Sort the lower structure
@@ -561,7 +583,7 @@ void FillDistElimTree
     {
         node.size = nxSub*nySub*nz;
         node.offset = ReorderedIndex
-            ( xOffset, yOffset, 0, nx, ny, nz, log2CommSize, cutoff );
+            ( xOffset, yOffset, 0, nx, ny, nz, distDepth, cutoff );
 
         // Count, allocate, and fill the lower struct
         int joinSize = 0;
@@ -582,7 +604,7 @@ void FillDistElimTree
                 for( int j=0; j<nySub; ++j )
                     node.lowerStruct[i*nySub+j] = ReorderedIndex
                     ( xOffset-1, yOffset+j, i, 
-                      nx, ny, nz, log2CommSize, cutoff );
+                      nx, ny, nz, distDepth, cutoff );
             joinOffset += nySub*nz;
         }
         if( xOffset+nxSub < nx )
@@ -591,7 +613,7 @@ void FillDistElimTree
                 for( int j=0; j<nySub; ++j )
                     node.lowerStruct[joinOffset+i*nySub+j] = ReorderedIndex
                     ( xOffset+nxSub, yOffset+j, i, 
-                      nx, ny, nz, log2CommSize, cutoff );
+                      nx, ny, nz, distDepth, cutoff );
             joinOffset += nySub*nz;
         }
         if( yOffset-1 >= 0 )
@@ -600,7 +622,7 @@ void FillDistElimTree
                 for( int j=0; j<nxSub; ++j )
                     node.lowerStruct[joinOffset+i*nxSub+j] = ReorderedIndex
                     ( xOffset+j, yOffset-1, i, 
-                      nx, ny, nz, log2CommSize, cutoff );
+                      nx, ny, nz, distDepth, cutoff );
             joinOffset += nxSub*nz;
         }
         if( yOffset+nySub < ny )
@@ -609,7 +631,7 @@ void FillDistElimTree
                 for( int j=0; j<nxSub; ++j )
                     node.lowerStruct[joinOffset+i*nxSub+j] = ReorderedIndex
                     ( xOffset+j, yOffset+nySub, i, 
-                      nx, ny, nz, log2CommSize, cutoff );
+                      nx, ny, nz, distDepth, cutoff );
         }
 
         // Sort the lower structure
@@ -622,7 +644,7 @@ void FillDistElimTree
         node.size = nySub*nz;
         node.offset = 
             ReorderedIndex
-            ( xOffset+middle, yOffset, 0, nx, ny, nz, log2CommSize, cutoff );
+            ( xOffset+middle, yOffset, 0, nx, ny, nz, distDepth, cutoff );
 
         // Allocate space for the lower structure
         int numJoins = 0;
@@ -639,7 +661,7 @@ void FillDistElimTree
             for( int i=0; i<nz; ++i )
                 node.lowerStruct[i] = ReorderedIndex
                 ( xOffset+middle, yOffset-1, i, nx, ny, nz, 
-                  log2CommSize, cutoff );
+                  distDepth, cutoff );
             joinOffset += nz;
         }
         if( yOffset+nySub < ny )
@@ -647,7 +669,7 @@ void FillDistElimTree
             for( int i=0; i<nz; ++i )
                 node.lowerStruct[joinOffset+i] = ReorderedIndex
                 ( xOffset+middle, yOffset+nySub, i, nx, ny, nz, 
-                  log2CommSize, cutoff );
+                  distDepth, cutoff );
         }
 
         // Sort the lower structure
@@ -660,7 +682,7 @@ void FillDistElimTree
         node.size = nxSub*nz;
         node.offset = 
             ReorderedIndex
-            ( xOffset, yOffset+middle, 0, nx, ny, nz, log2CommSize, cutoff );
+            ( xOffset, yOffset+middle, 0, nx, ny, nz, distDepth, cutoff );
 
         // Allocate space for the lower structure
         int numJoins = 0;
@@ -677,7 +699,7 @@ void FillDistElimTree
             for( int i=0; i<nz; ++i )
                 node.lowerStruct[i] = ReorderedIndex
                 ( xOffset-1, yOffset+middle, i, nx, ny, nz, 
-                  log2CommSize, cutoff );
+                  distDepth, cutoff );
             joinOffset += nz;
         }
         if( xOffset+nxSub < nx )
@@ -685,7 +707,7 @@ void FillDistElimTree
             for( int i=0; i<nz; ++i )
                 node.lowerStruct[joinOffset+i] = ReorderedIndex
                 ( xOffset+nxSub, yOffset+middle, i, nx, ny, nz,
-                  log2CommSize, cutoff );
+                  distDepth, cutoff );
         }
 
         // Sort the lower structure
@@ -709,7 +731,7 @@ struct Box
 
 void FillLocalElimTree
 ( int nx, int ny, int nz, int nxSub, int nySub, int xOffset, int yOffset, 
-  int cutoff, int log2CommSize, SymmElimTree& eTree )
+  int cutoff, int distDepth, SymmElimTree& eTree )
 {
 #ifndef RELEASE
     cliq::PushCallStack("FillLocalElimTree");
@@ -753,7 +775,7 @@ void FillLocalElimTree
             node.size = box.nx*box.ny*nz;
             node.offset = ReorderedIndex
                 ( box.xOffset, box.yOffset, 0, nx, ny, nz, 
-                  log2CommSize, cutoff );
+                  distDepth, cutoff );
             node.children.clear();
 
             // Count, allocate, and fill the lower struct
@@ -775,7 +797,7 @@ void FillLocalElimTree
                     for( int j=0; j<box.ny; ++j )
                         node.lowerStruct[i*box.ny+j] = ReorderedIndex
                         ( box.xOffset-1, box.yOffset+j, i, 
-                          nx, ny, nz, log2CommSize, cutoff );
+                          nx, ny, nz, distDepth, cutoff );
                 joinOffset += box.ny*nz;
             }
             if( box.xOffset+box.nx < nx )
@@ -784,7 +806,7 @@ void FillLocalElimTree
                     for( int j=0; j<box.ny; ++j )
                         node.lowerStruct[joinOffset+i*box.ny+j] = ReorderedIndex
                         ( box.xOffset+box.nx, box.yOffset+j, i, 
-                          nx, ny, nz, log2CommSize, cutoff );
+                          nx, ny, nz, distDepth, cutoff );
                 joinOffset += box.ny*nz;
             }
             if( box.yOffset-1 >= 0 )
@@ -793,7 +815,7 @@ void FillLocalElimTree
                     for( int j=0; j<box.nx; ++j )
                         node.lowerStruct[joinOffset+i*box.nx+j] = ReorderedIndex
                         ( box.xOffset+j, box.yOffset-1, i, 
-                          nx, ny, nz, log2CommSize, cutoff );
+                          nx, ny, nz, distDepth, cutoff );
                 joinOffset += box.nx*nz;
             }
             if( box.yOffset+box.ny < ny )
@@ -802,7 +824,7 @@ void FillLocalElimTree
                     for( int j=0; j<box.nx; ++j )
                         node.lowerStruct[joinOffset+i*box.nx+j] = ReorderedIndex
                         ( box.xOffset+j, box.yOffset+box.ny, i,
-                          nx, ny, nz, log2CommSize, cutoff );
+                          nx, ny, nz, distDepth, cutoff );
             }
 
             // Sort the lower structure
@@ -818,7 +840,7 @@ void FillLocalElimTree
                 node.size = box.ny*nz;
                 node.offset = ReorderedIndex
                     ( box.xOffset+middle, box.yOffset, 0, nx, ny, nz,
-                      log2CommSize, cutoff );
+                      distDepth, cutoff );
 
                 // Count, allocate, and fill the lower struct
                 int numJoins = 0;
@@ -834,7 +856,7 @@ void FillLocalElimTree
                     for( int i=0; i<nz; ++i )
                         node.lowerStruct[i] = ReorderedIndex
                         ( box.xOffset+middle, box.yOffset-1, i, nx, ny, nz,
-                          log2CommSize, cutoff );
+                          distDepth, cutoff );
                     joinOffset += nz;
                 }
                 if( box.yOffset+box.ny < ny )
@@ -842,7 +864,7 @@ void FillLocalElimTree
                     for( int i=0; i<nz; ++i )
                         node.lowerStruct[joinOffset+i] = ReorderedIndex
                         ( box.xOffset+middle, box.yOffset+box.ny, i, nx, ny, nz,
-                          log2CommSize, cutoff );
+                          distDepth, cutoff );
                 }
 
                 // Sort the lower structure
@@ -875,7 +897,7 @@ void FillLocalElimTree
                 node.size = box.nx*nz;
                 node.offset = ReorderedIndex
                     ( box.xOffset, box.yOffset+middle, 0, nx, ny, nz,
-                      log2CommSize, cutoff );
+                      distDepth, cutoff );
 
                 // Count, allocate, and fill the lower struct
                 int numJoins = 0;
@@ -891,7 +913,7 @@ void FillLocalElimTree
                     for( int i=0; i<nz; ++i )
                         node.lowerStruct[i] = ReorderedIndex
                         ( box.xOffset-1, box.yOffset+middle, i, nx, ny, nz,
-                          log2CommSize, cutoff );
+                          distDepth, cutoff );
                     joinOffset += nz;
                 }
                 if( box.xOffset+box.nx < nx )
@@ -899,7 +921,7 @@ void FillLocalElimTree
                     for( int i=0; i<nz; ++i )
                         node.lowerStruct[joinOffset+i] = ReorderedIndex
                         ( box.xOffset+box.nx, box.yOffset+middle, i, nx, ny, nz,
-                          log2CommSize, cutoff );
+                          distDepth, cutoff );
                 }
 
                 // Sort the lower structure
