@@ -24,12 +24,12 @@ namespace cliq {
 
 template<typename F> 
 void DistBlockLowerForwardSolve
-( const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX );
+( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX );
 
 template<typename F>
 void DistBlockLowerBackwardSolve
 ( Orientation orientation, 
-  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX );
+  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -37,20 +37,19 @@ void DistBlockLowerBackwardSolve
 
 template<typename F> 
 inline void DistBlockLowerForwardSolve
-( const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX )
+( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
 {
 #ifndef RELEASE
     PushCallStack("DistBlockLowerForwardSolve");
 #endif
-    const int numDistNodes = info.dist.nodes.size();
+    const int numDistNodes = info.distNodes.size();
     const int width = localX.Width();
-    const SolveMode mode = L.dist.mode;
-    if( mode != NORMAL_2D )
+    if( L.mode != NORMAL_2D )
         throw std::logic_error("This solve mode is not yet implemented");
 
     // Copy the information from the local portion into the distributed leaf
-    const LocalSymmFront<F>& localRootFront = L.local.fronts.back();
-    const DistSymmFront<F>& distLeafFront = L.dist.fronts[0];
+    const LocalSymmFront<F>& localRootFront = L.localFronts.back();
+    const DistSymmFront<F>& distLeafFront = L.distFronts[0];
     const Grid& leafGrid = distLeafFront.front2dL.Grid();
     distLeafFront.work1d.LockedView
     ( localRootFront.work.Height(), localRootFront.work.Width(), 0,
@@ -60,10 +59,10 @@ inline void DistBlockLowerForwardSolve
     // Perform the distributed portion of the forward solve
     for( int s=1; s<numDistNodes; ++s )
     {
-        const DistSymmNodeInfo& node = info.dist.nodes[s];
-        const DistSymmFront<F>& front = L.dist.fronts[s];
-        const DistSymmNodeInfo& childNode = info.dist.nodes[s-1];
-        const DistSymmFront<F>& childFront = L.dist.fronts[s-1];
+        const DistSymmNodeInfo& node = info.distNodes[s];
+        const DistSymmFront<F>& front = L.distFronts[s];
+        const DistSymmNodeInfo& childNode = info.distNodes[s-1];
+        const DistSymmFront<F>& childFront = L.distFronts[s-1];
         const Grid& childGrid = childFront.front2dL.Grid();
         const Grid& grid = front.front2dL.Grid();
         mpi::Comm comm = grid.VCComm();
@@ -123,7 +122,7 @@ inline void DistBlockLowerForwardSolve
         packOffsets.clear();
         childW.Empty();
         if( s == 1 )
-            L.local.fronts.back().work.Empty();
+            L.localFronts.back().work.Empty();
 
         // Set up the receive buffer
         int recvBufferSize = 0;
@@ -174,8 +173,8 @@ inline void DistBlockLowerForwardSolve
         // Store this node's portion of the result
         localXT = WT.LocalMatrix();
     }
-    L.local.fronts.back().work.Empty();
-    L.dist.fronts.back().work1d.Empty();
+    L.localFronts.back().work.Empty();
+    L.distFronts.back().work1d.Empty();
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -184,20 +183,19 @@ inline void DistBlockLowerForwardSolve
 template<typename F>
 inline void DistBlockLowerBackwardSolve
 ( Orientation orientation, 
-  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX )
+  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
 {
 #ifndef RELEASE
     PushCallStack("DistBlockLowerBackwardSolve");
 #endif
-    const int numDistNodes = info.dist.nodes.size();
+    const int numDistNodes = info.distNodes.size();
     const int width = localX.Width();
-    const SolveMode mode = L.dist.mode;
-    if( mode != NORMAL_2D )
+    if( L.mode != NORMAL_2D )
         throw std::logic_error("This solve mode is not yet implemented");
 
     // Directly operate on the root separator's portion of the right-hand sides
-    const DistSymmNodeInfo& rootNode = info.dist.nodes.back();
-    const LocalSymmFront<F>& localRootFront = L.local.fronts.back();
+    const DistSymmNodeInfo& rootNode = info.distNodes.back();
+    const LocalSymmFront<F>& localRootFront = L.localFronts.back();
     if( numDistNodes == 1 )
     {
         localRootFront.work.View
@@ -208,7 +206,7 @@ inline void DistBlockLowerBackwardSolve
     }
     else
     {
-        const DistSymmFront<F>& rootFront = L.dist.fronts.back();
+        const DistSymmFront<F>& rootFront = L.distFronts.back();
         const Grid& rootGrid = rootFront.front2dL.Grid();
         rootFront.work1d.View
         ( rootNode.size, width, 0,
@@ -219,10 +217,10 @@ inline void DistBlockLowerBackwardSolve
 
     for( int s=numDistNodes-2; s>=0; --s )
     {
-        const DistSymmNodeInfo& parentNode = info.dist.nodes[s+1];
-        const DistSymmNodeInfo& node = info.dist.nodes[s];
-        const DistSymmFront<F>& parentFront = L.dist.fronts[s+1];
-        const DistSymmFront<F>& front = L.dist.fronts[s];
+        const DistSymmNodeInfo& parentNode = info.distNodes[s+1];
+        const DistSymmNodeInfo& node = info.distNodes[s];
+        const DistSymmFront<F>& parentFront = L.distFronts[s+1];
+        const DistSymmFront<F>& front = L.distFronts[s];
         const Grid& grid = front.front2dL.Grid();
         const Grid& parentGrid = parentFront.front2dL.Grid();
         mpi::Comm comm = grid.VCComm(); 

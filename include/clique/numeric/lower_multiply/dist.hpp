@@ -25,12 +25,12 @@ namespace cliq {
 template<typename F> 
 void DistLowerMultiplyNormal
 ( UnitOrNonUnit diag, int diagOffset,
-  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX );
+  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX );
 
 template<typename F> 
 void DistLowerMultiplyTranspose
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX );
+  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -39,19 +39,19 @@ void DistLowerMultiplyTranspose
 template<typename F> 
 inline void DistLowerMultiplyNormal
 ( UnitOrNonUnit diag, int diagOffset,
-  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX )
+  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
 {
 #ifndef RELEASE
     PushCallStack("DistLowerMultiplyNormal");
 #endif
-    const int numDistNodes = info.dist.nodes.size();
+    const int numDistNodes = info.distNodes.size();
     const int width = localX.Width();
-    if( L.dist.mode != NORMAL_1D )
+    if( L.mode != NORMAL_1D )
         throw std::logic_error("This multiply mode is not yet implemented");
 
     // Copy the information from the local portion into the distributed leaf
-    const LocalSymmFront<F>& localRootFront = L.local.fronts.back();
-    const DistSymmFront<F>& distLeafFront = L.dist.fronts[0];
+    const LocalSymmFront<F>& localRootFront = L.localFronts.back();
+    const DistSymmFront<F>& distLeafFront = L.distFronts[0];
     distLeafFront.work1d.LockedView
     ( localRootFront.work.Height(), localRootFront.work.Width(), 0,
       localRootFront.work.LockedBuffer(), localRootFront.work.LDim(),
@@ -60,10 +60,10 @@ inline void DistLowerMultiplyNormal
     // Perform the distributed portion of the forward multiply
     for( int s=1; s<numDistNodes; ++s )
     {
-        const DistSymmNodeInfo& childNode = info.dist.nodes[s-1];
-        const DistSymmNodeInfo& node = info.dist.nodes[s];
-        const DistSymmFront<F>& childFront = L.dist.fronts[s-1];
-        const DistSymmFront<F>& front = L.dist.fronts[s];
+        const DistSymmNodeInfo& childNode = info.distNodes[s-1];
+        const DistSymmNodeInfo& node = info.distNodes[s];
+        const DistSymmFront<F>& childFront = L.distFronts[s-1];
+        const DistSymmFront<F>& front = L.distFronts[s];
         const Grid& childGrid = childFront.front1dL.Grid();
         const Grid& grid = front.front1dL.Grid();
         mpi::Comm comm = grid.VCComm();
@@ -126,7 +126,7 @@ inline void DistLowerMultiplyNormal
         packOffsets.clear();
         childW.Empty();
         if( s == 1 )
-            L.local.fronts.back().work.Empty();
+            L.localFronts.back().work.Empty();
 
         // Set up the receive buffer
         int recvBufferSize = 0;
@@ -174,8 +174,8 @@ inline void DistLowerMultiplyNormal
         // Store this node's portion of the result
         localXT = WT.LocalMatrix();
     }
-    L.local.fronts.back().work.Empty();
-    L.dist.fronts.back().work1d.Empty();
+    L.localFronts.back().work.Empty();
+    L.distFronts.back().work1d.Empty();
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -184,19 +184,19 @@ inline void DistLowerMultiplyNormal
 template<typename F> 
 inline void DistLowerMultiplyTranspose
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX )
+  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
 {
 #ifndef RELEASE
     PushCallStack("DistLowerMultiplyTranspose");
 #endif
-    const int numDistNodes = info.dist.nodes.size();
+    const int numDistNodes = info.distNodes.size();
     const int width = localX.Width();
-    if( L.dist.mode != NORMAL_1D )
+    if( L.mode != NORMAL_1D )
         throw std::logic_error("This multiply mode is not yet implemented");
 
     // Directly operate on the root separator's portion of the right-hand sides
-    const DistSymmNodeInfo& rootNode = info.dist.nodes.back();
-    const LocalSymmFront<F>& localRootFront = L.local.fronts.back();
+    const DistSymmNodeInfo& rootNode = info.distNodes.back();
+    const LocalSymmFront<F>& localRootFront = L.localFronts.back();
     if( numDistNodes == 1 )
     {
         Matrix<F> XRoot;
@@ -209,7 +209,7 @@ inline void DistLowerMultiplyTranspose
     }
     else
     {
-        const DistSymmFront<F>& rootFront = L.dist.fronts.back();
+        const DistSymmFront<F>& rootFront = L.distFronts.back();
         const Grid& rootGrid = rootFront.front1dL.Grid();
         DistMatrix<F,VC,STAR> XRoot(rootGrid);
         XRoot.View
@@ -222,10 +222,10 @@ inline void DistLowerMultiplyTranspose
 
     for( int s=numDistNodes-2; s>=0; --s )
     {
-        const DistSymmNodeInfo& parentNode = info.dist.nodes[s+1];
-        const DistSymmNodeInfo& node = info.dist.nodes[s];
-        const DistSymmFront<F>& parentFront = L.dist.fronts[s+1];
-        const DistSymmFront<F>& front = L.dist.fronts[s];
+        const DistSymmNodeInfo& parentNode = info.distNodes[s+1];
+        const DistSymmNodeInfo& node = info.distNodes[s];
+        const DistSymmFront<F>& parentFront = L.distFronts[s+1];
+        const DistSymmFront<F>& front = L.distFronts[s];
         const Grid& grid = front.front1dL.Grid();
         const Grid& parentGrid = parentFront.front1dL.Grid();
         mpi::Comm comm = grid.VCComm(); 

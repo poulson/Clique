@@ -27,7 +27,7 @@ namespace cliq {
 
 template<typename F> 
 void DistBlockLDL
-( Orientation orientation, SymmInfo& info, SymmFrontTree<F>& L );
+( Orientation orientation, DistSymmInfo& info, DistSymmFrontTree<F>& L );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -35,19 +35,19 @@ void DistBlockLDL
 
 template<typename F> 
 inline void DistBlockLDL
-( Orientation orientation, SymmInfo& info, SymmFrontTree<F>& L )
+( Orientation orientation, DistSymmInfo& info, DistSymmFrontTree<F>& L )
 {
 #ifndef RELEASE
     PushCallStack("DistBlockLDL");
     if( orientation == NORMAL )
         throw std::logic_error("LDL must be (conjugate-)transposed");
 #endif
-    L.dist.mode = NORMAL_2D;
+    L.mode = NORMAL_2D;
 
     // The bottom front is already computed, so just view it
-    LocalSymmFront<F>& topLocalFront = L.local.fronts.back();
-    DistSymmFront<F>& bottomDistFront = L.dist.fronts[0];
-    const Grid& bottomGrid = *info.dist.nodes[0].grid;
+    LocalSymmFront<F>& topLocalFront = L.localFronts.back();
+    DistSymmFront<F>& bottomDistFront = L.distFronts[0];
+    const Grid& bottomGrid = *info.distNodes[0].grid;
     bottomDistFront.front2dL.Empty();
     bottomDistFront.front2dL.LockedView
     ( topLocalFront.frontL.Height(), topLocalFront.frontL.Width(), 0, 0, 
@@ -60,14 +60,14 @@ inline void DistBlockLDL
       bottomGrid );
 
     // Perform the distributed portion of the factorization
-    const unsigned numDistNodes = info.dist.nodes.size();
+    const unsigned numDistNodes = info.distNodes.size();
     for( unsigned s=1; s<numDistNodes; ++s )
     {
-        const DistSymmNodeInfo& childNode = info.dist.nodes[s-1];
-        const DistSymmNodeInfo& node = info.dist.nodes[s];
+        const DistSymmNodeInfo& childNode = info.distNodes[s-1];
+        const DistSymmNodeInfo& node = info.distNodes[s];
         const int updateSize = node.lowerStruct.size();
-        DistSymmFront<F>& childFront = L.dist.fronts[s-1];
-        DistSymmFront<F>& front = L.dist.fronts[s];
+        DistSymmFront<F>& childFront = L.distFronts[s-1];
+        DistSymmFront<F>& front = L.distFronts[s];
         front.work2d.Empty();
 #ifndef RELEASE
         if( front.front2dL.Height() != node.size+updateSize ||
@@ -217,8 +217,8 @@ inline void DistBlockLDL
         front.diag.SetGrid( grid );
         front.diag = diag;
     }
-    L.local.fronts.back().work.Empty();
-    L.dist.fronts.back().work2d.Empty();
+    L.localFronts.back().work.Empty();
+    L.distFronts.back().work2d.Empty();
 #ifndef RELEASE
     PopCallStack();
 #endif

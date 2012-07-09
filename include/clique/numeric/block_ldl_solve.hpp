@@ -25,7 +25,7 @@ namespace cliq {
 template<typename F>
 void BlockLDLSolve
 ( Orientation orientation,
-  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX );
+  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -34,7 +34,7 @@ void BlockLDLSolve
 template<typename F>
 inline void BlockLDLSolve
 ( Orientation orientation,
-  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX )
+  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
 {
 #ifndef RELEASE
     PushCallStack("BlockLDLSolve");

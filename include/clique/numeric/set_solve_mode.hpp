@@ -23,7 +23,7 @@
 namespace cliq {
 
 template<typename F>
-void SetSolveMode( SymmFrontTree<F>& L, SolveMode mode );
+void SetSolveMode( DistSymmFrontTree<F>& L, SolveMode mode );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -32,22 +32,22 @@ void SetSolveMode( SymmFrontTree<F>& L, SolveMode mode );
 // This routine could be modified later so that it uses much less memory
 // by replacing the '=' redistributions with piece-by-piece redistributions.
 template<typename F>
-inline void SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
+inline void SetSolveMode( DistSymmFrontTree<F>& L, SolveMode mode )
 {
 #ifndef RELEASE
     PushCallStack("SetSolveMode");
 #endif
     // Check if this call can be a no-op
-    if( mode == L.dist.mode ) 
+    if( mode == L.mode ) 
     {
 #ifndef RELEASE
         PopCallStack();
 #endif
         return;
     }
-    const int numDistNodes = L.dist.fronts.size();    
-    DistSymmFront<F>& leafFront = L.dist.fronts[0];
-    const SolveMode oldMode = L.dist.mode;
+    const int numDistNodes = L.distFronts.size();    
+    DistSymmFront<F>& leafFront = L.distFronts[0];
+    const SolveMode oldMode = L.mode;
 
     if( mode == NORMAL_1D && oldMode == NORMAL_2D )
     {
@@ -59,7 +59,7 @@ inline void SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
           leafFront.front2dL.Grid() );
         for( int s=1; s<numDistNodes; ++s )
         {
-            DistSymmFront<F>& front = L.dist.fronts[s];
+            DistSymmFront<F>& front = L.distFronts[s];
             front.front1dL.Empty();
             front.front1dL.SetGrid( front.front2dL.Grid() );
             front.front1dL = front.front2dL;
@@ -70,7 +70,7 @@ inline void SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
     {
         for( int s=1; s<numDistNodes; ++s )
         {
-            DistSymmFront<F>& front = L.dist.fronts[s];
+            DistSymmFront<F>& front = L.distFronts[s];
             const Grid& grid = front.front2dL.Grid();
             const int snSize = front.front2dL.Width();
 
@@ -92,7 +92,7 @@ inline void SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
           leafFront.front2dL.Grid() );
         for( int s=1; s<numDistNodes; ++s )
         {
-            DistSymmFront<F>& front = L.dist.fronts[s];
+            DistSymmFront<F>& front = L.distFronts[s];
             const Grid& grid = front.front2dL.Grid();
             const int snSize = front.front2dL.Width();
 
@@ -119,7 +119,7 @@ inline void SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
           leafFront.front1dL.Grid() );
         for( int s=1; s<numDistNodes; ++s )
         {
-            DistSymmFront<F>& front = L.dist.fronts[s];
+            DistSymmFront<F>& front = L.distFronts[s];
             front.front2dL.Empty();
             front.front2dL.SetGrid( front.front1dL.Grid() );
             front.front2dL = front.front1dL;
@@ -128,7 +128,7 @@ inline void SetSolveMode( SymmFrontTree<F>& L, SolveMode mode )
     }
     else
         throw std::logic_error("Unavailable solve mode change");
-    L.dist.mode = mode;
+    L.mode = mode;
 #ifndef RELEASE
     PopCallStack();
 #endif

@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_SYMM_FRONT_TREE_HPP
-#define CLIQUE_SYMM_FRONT_TREE_HPP 1
+#ifndef CLIQUE_DIST_SYMM_FRONT_TREE_HPP
+#define CLIQUE_DIST_SYMM_FRONT_TREE_HPP 1
 
 namespace cliq {
 
@@ -42,12 +42,6 @@ struct LocalSymmFront
 {
     Matrix<F> frontL;
     mutable Matrix<F> work;
-};
-
-template<typename F>
-struct LocalSymmFrontTree
-{
-    std::vector<LocalSymmFront<F> > fronts;
 };
 
 template<typename F>
@@ -76,19 +70,13 @@ template<typename F>
 struct DistSymmFrontTree
 {
     SolveMode mode;
-    std::vector<DistSymmFront<F> > fronts;
+    std::vector<LocalSymmFront<F> > localFronts;
+    std::vector<DistSymmFront<F> > distFronts;
 };
 
 template<typename F>
-struct SymmFrontTree
-{
-    LocalSymmFrontTree<F> local;
-    DistSymmFrontTree<F> dist;
-};
-
-template<typename F>
-void SetSolveMode( SymmFrontTree<F>& L, SolveMode solveMode );
+void SetSolveMode( DistSymmFrontTree<F>& L, SolveMode solveMode );
 
 } // namespace cliq
 
-#endif // CLIQUE_SYMM_FRONT_TREE_HPP
+#endif // CLIQUE_DIST_SYMM_FRONT_TREE_HPP

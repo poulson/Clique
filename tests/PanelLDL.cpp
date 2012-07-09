@@ -51,15 +51,15 @@ void CountLocalTreeSize
 
 void FillElimTree
 ( int nx, int ny, int nz, int cutoff, mpi::Comm comm, int distDepth,
-  SymmElimTree& eTree );
+  DistSymmElimTree& eTree );
 
 void FillDistElimTree
 ( int nx, int ny, int nz, int& nxSub, int& nySub, int& xOffset, int& yOffset, 
-  int cutoff, mpi::Comm comm, int distDepth, SymmElimTree& eTree );
+  int cutoff, mpi::Comm comm, int distDepth, DistSymmElimTree& eTree );
 
 void FillLocalElimTree
 ( int nx, int ny, int nz, int nxSub, int nySub, int xOffset, int yOffset, 
-  int cutoff, int distDepth, SymmElimTree& eTree );
+  int cutoff, int distDepth, DistSymmElimTree& eTree );
 
 void DistributedDepthRecursion
 ( unsigned commRank, unsigned commSize, unsigned& distDepth )
@@ -134,7 +134,7 @@ main( int argc, char* argv[] )
         // Fill the distributed portion of the original structure
         mpi::Barrier( comm );
         const double initStartTime = mpi::Time();
-        SymmElimTree eTree;
+        DistSymmElimTree eTree;
         FillElimTree( nx, ny, nz, cutoff, comm, distDepth, eTree );
         mpi::Barrier( comm );
         const double initStopTime = mpi::Time();
@@ -144,24 +144,24 @@ main( int argc, char* argv[] )
 
         if( writeInfo )
         {
-            const int numLocalNodes = eTree.local.nodes.size();
-            const int numDistNodes = eTree.dist.nodes.size();
+            const int numLocalNodes = eTree.localNodes.size();
+            const int numDistNodes = eTree.distNodes.size();
             infoFile << "Local original structure sizes:\n";
             for( int s=0; s<numLocalNodes; ++s )
                 infoFile << "  " << s << ": node=" 
-                         << eTree.local.nodes[s].size << ", lower="
-                         << eTree.local.nodes[s].lowerStruct.size() << "\n"; 
+                         << eTree.localNodes[s].size << ", lower="
+                         << eTree.localNodes[s].lowerStruct.size() << "\n"; 
             infoFile << "\nDist original structure sizes:\n";
             for( int s=0; s<numDistNodes; ++s )
                 infoFile << "  " << s << ": node="
-                         << eTree.dist.nodes[s].size << ", lower="
-                         << eTree.dist.nodes[s].lowerStruct.size() << "\n";
+                         << eTree.distNodes[s].size << ", lower="
+                         << eTree.distNodes[s].lowerStruct.size() << "\n";
             infoFile << std::endl;
         }
 
         // Call the symbolic factorization routine
         const double analysisStartTime = mpi::Time();
-        SymmInfo info;
+        DistSymmInfo info;
         SymmetricAnalysis( eTree, info, true );
         mpi::Barrier( comm );
         const double analysisStopTime = mpi::Time();
@@ -172,31 +172,31 @@ main( int argc, char* argv[] )
 
         if( writeInfo )
         {
-            const int numLocalNodes = info.local.nodes.size();
-            const int numDistNodes = info.dist.nodes.size();
+            const int numLocalNodes = info.localNodes.size();
+            const int numDistNodes = info.distNodes.size();
             infoFile << "Local factor structure sizes:\n";
             for( int s=0; s<numLocalNodes; ++s )
                 infoFile << "  " << s << ": node=" 
-                         << info.local.nodes[s].size << ", "
+                         << info.localNodes[s].size << ", "
                          << " lower=" 
-                         << info.local.nodes[s].lowerStruct.size() << "\n";
+                         << info.localNodes[s].lowerStruct.size() << "\n";
             infoFile << "\n"
                      << "Dist factor structure sizes:\n";
             for( int s=0; s<numDistNodes; ++s )
                 infoFile << "  " << s << ": node="
-                         << info.dist.nodes[s].size << ", "
+                         << info.distNodes[s].size << ", "
                          << " lower="
-                         << info.dist.nodes[s].lowerStruct.size() << "\n";
+                         << info.distNodes[s].lowerStruct.size() << "\n";
             infoFile << std::endl;
 
             infoFile << "\n"
                      << "Local height 1d: " 
-                     << info.dist.nodes.back().localOffset1d + 
-                        info.dist.nodes.back().localSize1d << std::endl;
+                     << info.distNodes.back().localOffset1d + 
+                        info.distNodes.back().localSize1d << std::endl;
         }
 
         const int numPanels = 10;
-        std::vector<SymmFrontTree<F>*> symmFrontTrees;
+        std::vector<DistSymmFrontTree<F>*> symmFrontTrees;
         for( int panel=0; panel<numPanels; ++panel )
         {
             if( commRank == 0 )
@@ -208,26 +208,26 @@ main( int argc, char* argv[] )
             // Directly initialize the frontal matrices with the original 
             // sparse matrix (for now, use an original matrix equal to identity)
             const double fillStartTime = mpi::Time();
-            symmFrontTrees.push_back( new SymmFrontTree<F> );
-            SymmFrontTree<F>& L = *symmFrontTrees.back();
-            L.local.fronts.resize( info.local.nodes.size() );
-            for( unsigned s=0; s<info.local.nodes.size(); ++s )
+            symmFrontTrees.push_back( new DistSymmFrontTree<F> );
+            DistSymmFrontTree<F>& L = *symmFrontTrees.back();
+            L.localFronts.resize( info.localNodes.size() );
+            for( unsigned s=0; s<info.localNodes.size(); ++s )
             {
-                const LocalSymmNodeInfo& node = info.local.nodes[s];
-                Matrix<F>& frontL = L.local.fronts[s].frontL;
+                const LocalSymmNodeInfo& node = info.localNodes[s];
+                Matrix<F>& frontL = L.localFronts[s].frontL;
 
                 const int frontSize = node.size+node.lowerStruct.size();
                 elem::Uniform( frontSize, node.size, frontL );
                 if( writeInfo )
                     frontL.Print( infoFile, "frontL local" );
             }
-            L.dist.mode = NORMAL_2D;
-            L.dist.fronts.resize( distDepth+1 );
+            L.mode = NORMAL_2D;
+            L.distFronts.resize( distDepth+1 );
             InitializeDistLeaf( info, L );
             for( unsigned s=1; s<distDepth+1; ++s )
             {
-                const DistSymmNodeInfo& node = info.dist.nodes[s];
-                DistMatrix<F>& front2dL = L.dist.fronts[s].front2dL;
+                const DistSymmNodeInfo& node = info.distNodes[s];
+                DistMatrix<F>& front2dL = L.distFronts[s].front2dL;
 
                 front2dL.SetGrid( *node.grid );
                 const int frontSize = node.size+node.lowerStruct.size();
@@ -247,8 +247,8 @@ main( int argc, char* argv[] )
             const int NUM_RHS = 1;
             const double makeRhsStartTime = mpi::Time();
             const int localHeight1d = 
-                info.dist.nodes.back().localOffset1d + 
-                info.dist.nodes.back().localSize1d;
+                info.distNodes.back().localOffset1d + 
+                info.distNodes.back().localSize1d;
             Matrix<F> localX;
             elem::Uniform( localHeight1d, NUM_RHS, localX );
             Matrix<F> localYLower = localX;
@@ -426,7 +426,7 @@ int ReorderedIndex
 
 void FillElimTree
 ( int nx, int ny, int nz, int cutoff, mpi::Comm comm, int distDepth,
-  SymmElimTree& eTree )
+  DistSymmElimTree& eTree )
 {
 #ifndef RELEASE
     cliq::PushCallStack("FillElimTree");
@@ -445,7 +445,7 @@ void FillElimTree
   
 void FillDistElimTree
 ( int nx, int ny, int nz, int& nxSub, int& nySub, int& xOffset, int& yOffset, 
-  int cutoff, mpi::Comm comm, int distDepth, SymmElimTree& eTree )
+  int cutoff, mpi::Comm comm, int distDepth, DistSymmElimTree& eTree )
 {
 #ifndef RELEASE
     cliq::PushCallStack("FillDistElimTree");
@@ -453,14 +453,14 @@ void FillDistElimTree
     // TODO: Generalize this for non power-of-two numbers of processes
     const int numDistNodes = distDepth+1;
 
-    eTree.dist.nodes.resize( numDistNodes );
-    mpi::CommDup( comm, eTree.dist.nodes.back().comm );
+    eTree.distNodes.resize( numDistNodes );
+    mpi::CommDup( comm, eTree.distNodes.back().comm );
 
     // Fill the distributed nodes
     for( int s=numDistNodes-1; s>0; --s )
     {
-        DistSymmNode& node = eTree.dist.nodes[s];
-        DistSymmNode& childNode = eTree.dist.nodes[s-1];
+        DistSymmNode& node = eTree.distNodes[s];
+        DistSymmNode& childNode = eTree.distNodes[s-1];
 
         const int nodeCommRank = mpi::CommRank( node.comm );
         const int nodeCommSize = mpi::CommSize( node.comm );
@@ -577,7 +577,7 @@ void FillDistElimTree
     }
 
     // Fill the bottom node, which is only owned by a single process
-    DistSymmNode& node = eTree.dist.nodes[0];
+    DistSymmNode& node = eTree.distNodes[0];
     if( nxSub*nySub*nz <= cutoff )
     {
         node.size = nxSub*nySub*nz;
@@ -730,7 +730,7 @@ struct Box
 
 void FillLocalElimTree
 ( int nx, int ny, int nz, int nxSub, int nySub, int xOffset, int yOffset, 
-  int cutoff, int distDepth, SymmElimTree& eTree )
+  int cutoff, int distDepth, DistSymmElimTree& eTree )
 {
 #ifndef RELEASE
     cliq::PushCallStack("FillLocalElimTree");
@@ -738,7 +738,7 @@ void FillLocalElimTree
     // First count the depth, resize, and then run the actual fill
     int numNodes = 0;
     CountLocalTreeSize( nxSub, nySub, nz, cutoff, numNodes );
-    eTree.local.nodes.resize( numNodes );
+    eTree.localNodes.resize( numNodes );
     
     // Initialize with the root's box
     std::stack<Box> boxStack;
@@ -759,14 +759,14 @@ void FillLocalElimTree
         Box box = boxStack.top();
         boxStack.pop();
 
-        LocalSymmNode& node = eTree.local.nodes[s];
+        LocalSymmNode& node = eTree.localNodes[s];
         node.parent = box.parentIndex;
         if( node.parent != -1 )
         {
             if( box.leftChild )
-                eTree.local.nodes[node.parent].children[0] = s;
+                eTree.localNodes[node.parent].children[0] = s;
             else
-                eTree.local.nodes[node.parent].children[1] = s;
+                eTree.localNodes[node.parent].children[1] = s;
         }
 
         if( box.nx*box.ny*nz <= cutoff )

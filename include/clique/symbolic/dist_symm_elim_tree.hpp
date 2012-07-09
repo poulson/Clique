@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_SYMM_ELIM_TREE_HPP
-#define CLIQUE_SYMM_ELIM_TREE_HPP 1
+#ifndef CLIQUE_DIST_SYMM_ELIM_TREE_HPP
+#define CLIQUE_DIST_SYMM_ELIM_TREE_HPP 1
 
 namespace cliq {
 
@@ -33,11 +33,6 @@ struct LocalSymmNode
     std::vector<int> lowerStruct;
 };
 
-struct LocalSymmElimTree
-{
-    std::vector<LocalSymmNode> nodes;
-};
-
 struct DistSymmNode
 {
     int size, offset;
@@ -47,15 +42,10 @@ struct DistSymmNode
 
 struct DistSymmElimTree
 {
-    std::vector<DistSymmNode> nodes;
-};
-
-struct SymmElimTree
-{
-    LocalSymmElimTree local;
-    DistSymmElimTree dist;
+    std::vector<LocalSymmNode> localNodes;
+    std::vector<DistSymmNode> distNodes;
 };
 
 } // namespace cliq
 
-#endif /* CLIQUE_SYMM_ELIM_TREE_HPP */
+#endif /* CLIQUE_DIST_SYMM_ELIM_TREE_HPP */

@@ -26,10 +26,11 @@ namespace cliq {
 // original sparse matrix before calling the following factorizations.
 
 template<typename F>
-void InitializeDistLeaf( const SymmInfo& info, SymmFrontTree<F>& L );
+void InitializeDistLeaf( const DistSymmInfo& info, DistSymmFrontTree<F>& L );
 
 template<typename F>
-void LDL( Orientation orientation, SymmInfo& info, SymmFrontTree<F>& L );
+void LDL
+( Orientation orientation, DistSymmInfo& info, DistSymmFrontTree<F>& L );
 
 } // namespace cliq
 
@@ -46,14 +47,15 @@ void LDL( Orientation orientation, SymmInfo& info, SymmFrontTree<F>& L );
 namespace cliq {
 
 template<typename F>
-inline void InitializeDistLeaf( const SymmInfo& info, SymmFrontTree<F>& L )
+inline void InitializeDistLeaf
+( const DistSymmInfo& info, DistSymmFrontTree<F>& L )
 {
 #ifndef RELEASE
     PushCallStack("InitializeDistLeaf");
 #endif
-    const DistSymmNodeInfo& node = info.dist.nodes[0];
-    Matrix<F>& topLocalFrontL = L.local.fronts.back().frontL;
-    DistMatrix<F>& front2dL = L.dist.fronts[0].front2dL;
+    const DistSymmNodeInfo& node = info.distNodes[0];
+    Matrix<F>& topLocalFrontL = L.localFronts.back().frontL;
+    DistMatrix<F>& front2dL = L.distFronts[0].front2dL;
 
     front2dL.LockedView
     ( topLocalFrontL.Height(), topLocalFrontL.Width(), 0, 0,
@@ -65,7 +67,8 @@ inline void InitializeDistLeaf( const SymmInfo& info, SymmFrontTree<F>& L )
 }
 
 template<typename F>
-inline void LDL( Orientation orientation, SymmInfo& info, SymmFrontTree<F>& L )
+inline void LDL
+( Orientation orientation, DistSymmInfo& info, DistSymmFrontTree<F>& L )
 {
 #ifndef RELEASE
     PushCallStack("LDL");

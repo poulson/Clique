@@ -26,7 +26,8 @@ namespace cliq {
 // original sparse matrix before calling the following factorizations.
 
 template<typename F>
-void BlockLDL( Orientation orientation, SymmInfo& info, SymmFrontTree<F>& L );
+void BlockLDL
+( Orientation orientation, DistSymmInfo& info, DistSymmFrontTree<F>& L );
 
 } // namespace cliq
 
@@ -44,7 +45,7 @@ namespace cliq {
 
 template<typename F>
 inline void BlockLDL
-( Orientation orientation, SymmInfo& info, SymmFrontTree<F>& L )
+( Orientation orientation, DistSymmInfo& info, DistSymmFrontTree<F>& L )
 {
 #ifndef RELEASE
     PushCallStack("BlockLDL");

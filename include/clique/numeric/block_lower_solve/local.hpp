@@ -24,12 +24,12 @@ namespace cliq {
 
 template<typename F> 
 void LocalBlockLowerForwardSolve
-( const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& X );
+( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& X );
 
 template<typename F> 
 void LocalBlockLowerBackwardSolve
 ( Orientation orientation, 
-  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& X );
+  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& X );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -37,18 +37,18 @@ void LocalBlockLowerBackwardSolve
 
 template<typename F> 
 inline void LocalBlockLowerForwardSolve
-( const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& X )
+( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
     PushCallStack("LocalBlockLowerForwardSolve");
 #endif
-    const int numLocalNodes = info.local.nodes.size();
+    const int numLocalNodes = info.localNodes.size();
     const int width = X.Width();
     for( int s=0; s<numLocalNodes; ++s )
     {
-        const LocalSymmNodeInfo& node = info.local.nodes[s];
-        const Matrix<F>& frontL = L.local.fronts[s].frontL;
-        Matrix<F>& W = L.local.fronts[s].work;
+        const LocalSymmNodeInfo& node = info.localNodes[s];
+        const Matrix<F>& frontL = L.localFronts[s].frontL;
+        Matrix<F>& W = L.localFronts[s].work;
 
         // Set up a workspace
         W.ResizeTo( frontL.Height(), width );
@@ -69,10 +69,10 @@ inline void LocalBlockLowerForwardSolve
         {
             const int leftIndex = node.children[0];
             const int rightIndex = node.children[1];
-            Matrix<F>& leftWork = L.local.fronts[leftIndex].work;
-            Matrix<F>& rightWork = L.local.fronts[rightIndex].work;
-            const int leftNodeSize = info.local.nodes[leftIndex].size;
-            const int rightNodeSize = info.local.nodes[rightIndex].size;
+            Matrix<F>& leftWork = L.localFronts[leftIndex].work;
+            Matrix<F>& rightWork = L.localFronts[rightIndex].work;
+            const int leftNodeSize = info.localNodes[leftIndex].size;
+            const int rightNodeSize = info.localNodes[rightIndex].size;
             const int leftUpdateSize = leftWork.Height()-leftNodeSize;
             const int rightUpdateSize = rightWork.Height()-rightNodeSize;
 
@@ -116,23 +116,23 @@ inline void LocalBlockLowerForwardSolve
 template<typename F> 
 inline void LocalBlockLowerBackwardSolve
 ( Orientation orientation, 
-  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& X )
+  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
     PushCallStack("LocalBlockLowerBackwardSolve");
 #endif
-    const int numLocalNodes = info.local.nodes.size();
+    const int numLocalNodes = info.localNodes.size();
     const int width = X.Width();
 
     // Pull in the top local information from the bottom distributed information
-    L.local.fronts.back().work.LockedView
-    ( L.dist.fronts[0].work1d.LocalMatrix() );
+    L.localFronts.back().work.LockedView
+    ( L.distFronts[0].work1d.LocalMatrix() );
 
     for( int s=numLocalNodes-2; s>=0; --s )
     {
-        const LocalSymmNodeInfo& node = info.local.nodes[s];
-        const Matrix<F>& frontL = L.local.fronts[s].frontL;
-        Matrix<F>& W = L.local.fronts[s].work;
+        const LocalSymmNodeInfo& node = info.localNodes[s];
+        const Matrix<F>& frontL = L.localFronts[s].frontL;
+        Matrix<F>& W = L.localFronts[s].work;
 
         // Set up a workspace
         W.ResizeTo( frontL.Height(), width );
@@ -148,8 +148,8 @@ inline void LocalBlockLowerBackwardSolve
 
         // Update using the parent
         const int parent = node.parent;
-        Matrix<F>& parentWork = L.local.fronts[parent].work;
-        const LocalSymmNodeInfo& parentNode = info.local.nodes[parent];
+        Matrix<F>& parentWork = L.localFronts[parent].work;
+        const LocalSymmNodeInfo& parentNode = info.localNodes[parent];
         const int currentUpdateSize = WB.Height();
         const std::vector<int>& parentRelIndices = 
           ( node.isLeftChild ? 
@@ -168,7 +168,7 @@ inline void LocalBlockLowerBackwardSolve
         {
             parentWork.Empty();
             if( parent == numLocalNodes-1 )
-                L.dist.fronts[0].work1d.Empty();
+                L.distFronts[0].work1d.Empty();
         }
 
         // Solve against this front
@@ -179,9 +179,9 @@ inline void LocalBlockLowerBackwardSolve
     }
 
     // Ensure that all of the temporary buffers are freed (this is overkill)
-    L.dist.fronts[0].work1d.Empty();
+    L.distFronts[0].work1d.Empty();
     for( int s=0; s<numLocalNodes; ++s )
-        L.local.fronts[s].work.Empty();
+        L.localFronts[s].work.Empty();
 #ifndef RELEASE
     PopCallStack();
 #endif

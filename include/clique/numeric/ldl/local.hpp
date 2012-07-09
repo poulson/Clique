@@ -23,7 +23,8 @@
 namespace cliq {
 
 template<typename F> 
-void LocalLDL( Orientation orientation, SymmInfo& info, SymmFrontTree<F>& L );
+void LocalLDL
+( Orientation orientation, DistSymmInfo& info, DistSymmFrontTree<F>& L );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -31,20 +32,20 @@ void LocalLDL( Orientation orientation, SymmInfo& info, SymmFrontTree<F>& L );
 
 template<typename F> 
 inline void LocalLDL
-( Orientation orientation, SymmInfo& info, SymmFrontTree<F>& L )
+( Orientation orientation, DistSymmInfo& info, DistSymmFrontTree<F>& L )
 {
 #ifndef RELEASE
     PushCallStack("LocalLDL");
     if( orientation == NORMAL )
         throw std::logic_error("LDL must be (conjugate-)transposed");
 #endif
-    const int numLocalNodes = info.local.nodes.size();
+    const int numLocalNodes = info.localNodes.size();
     for( int s=0; s<numLocalNodes; ++s )
     {
-        LocalSymmNodeInfo& node = info.local.nodes[s];
+        LocalSymmNodeInfo& node = info.localNodes[s];
         const int updateSize = node.lowerStruct.size();
-        Matrix<F>& frontL = L.local.fronts[s].frontL;
-        Matrix<F>& frontBR = L.local.fronts[s].work;
+        Matrix<F>& frontL = L.localFronts[s].frontL;
+        Matrix<F>& frontBR = L.localFronts[s].work;
         frontBR.Empty();
 #ifndef RELEASE
         if( frontL.Height() != node.size+updateSize ||
@@ -59,8 +60,8 @@ inline void LocalLDL
         {
             const int leftIndex = node.children[0];
             const int rightIndex = node.children[1];
-            Matrix<F>& leftUpdate = L.local.fronts[leftIndex].work;
-            Matrix<F>& rightUpdate = L.local.fronts[rightIndex].work;
+            Matrix<F>& leftUpdate = L.localFronts[leftIndex].work;
+            Matrix<F>& rightUpdate = L.localFronts[rightIndex].work;
 
             // Add the left child's update matrix
             const int leftUpdateSize = leftUpdate.Height();

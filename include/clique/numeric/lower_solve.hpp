@@ -25,7 +25,7 @@ namespace cliq {
 template<typename F>
 void LowerSolve
 ( Orientation orientation, UnitOrNonUnit diag,
-  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX );
+  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX );
 
 } // namespace cliq
 
@@ -45,7 +45,7 @@ namespace cliq {
 template<typename F>
 inline void LowerSolve
 ( Orientation orientation, UnitOrNonUnit diag, 
-  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX )
+  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
 {
 #ifndef RELEASE
     PushCallStack("LowerSolve");

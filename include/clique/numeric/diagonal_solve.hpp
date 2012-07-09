@@ -24,7 +24,7 @@ namespace cliq {
 
 template<typename F>
 void DiagonalSolve
-( const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX );
+( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -32,26 +32,26 @@ void DiagonalSolve
 
 template<typename F>
 void LocalDiagonalSolve
-( const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX );
+( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX );
 
 template<typename F>
 void DistDiagonalSolve
-( const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX );
+( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX );
 
 template<typename F>
 inline void LocalDiagonalSolve
-( const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& X )
+( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
     PushCallStack("LocalDiagonalSolve");
 #endif
-    const int numLocalNodes = info.local.nodes.size();
+    const int numLocalNodes = info.localNodes.size();
     const int width = X.Width();
     Matrix<F> XSub;
     for( int s=0; s<numLocalNodes; ++s )
     {
-        const LocalSymmNodeInfo& node = info.local.nodes[s];
-        const Matrix<F>& frontL = L.local.fronts[s].frontL;
+        const LocalSymmNodeInfo& node = info.localNodes[s];
+        const Matrix<F>& frontL = L.localFronts[s].frontL;
         XSub.View( X, node.myOffset, 0, node.size, width );
 
         Matrix<F> frontTL;
@@ -67,18 +67,18 @@ inline void LocalDiagonalSolve
 
 template<typename F> 
 void DistDiagonalSolve
-( const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX )
+( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
 {
 #ifndef RELEASE
     PushCallStack("DistDiagonalSolve");
 #endif
-    const int numDistNodes = info.dist.nodes.size();
+    const int numDistNodes = info.distNodes.size();
     const int width = localX.Width();
 
     for( int s=1; s<numDistNodes; ++s )
     {
-        const DistSymmNodeInfo& node = info.dist.nodes[s];
-        const DistSymmFront<F>& front = L.dist.fronts[s];
+        const DistSymmNodeInfo& node = info.distNodes[s];
+        const DistSymmFront<F>& front = L.distFronts[s];
 
         Matrix<F> localXT;
         localXT.View( localX, node.localOffset1d, 0, node.localSize1d, width );
@@ -93,7 +93,7 @@ void DistDiagonalSolve
 
 template<typename F>
 inline void DiagonalSolve
-( const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX )
+( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
 {
 #ifndef RELEASE
     PushCallStack("DiagonalSolve");

@@ -25,7 +25,7 @@ namespace cliq {
 template<typename F>
 void LowerMultiply
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX );
+  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX );
 
 } // namespace cliq
 
@@ -44,7 +44,7 @@ namespace cliq {
 template<typename F>
 inline void LowerMultiply
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const SymmInfo& info, const SymmFrontTree<F>& L, Matrix<F>& localX )
+  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
 {
 #ifndef RELEASE
     PushCallStack("LowerMultiply");

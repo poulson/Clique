@@ -293,18 +293,18 @@ inline void ComputeStructAndRelIndices
 // tree is binary.
 //
 void DistSymmetricAnalysis
-( const SymmElimTree& eTree, SymmInfo& info, bool storeFactRecvIndices )
+( const DistSymmElimTree& eTree, DistSymmInfo& info, bool storeFactRecvIndices )
 {
 #ifndef RELEASE
     PushCallStack("DistSymmetricAnalysis");
 #endif
-    const unsigned numNodes = eTree.dist.nodes.size();
-    info.dist.nodes.resize( numNodes );
+    const unsigned numNodes = eTree.distNodes.size();
+    info.distNodes.resize( numNodes );
 
     // The bottom node was analyzed locally, so just copy its results over
-    const LocalSymmNodeInfo& topLocal = info.local.nodes.back();
-    DistSymmNodeInfo& bottomDist = info.dist.nodes[0];
-    mpi::CommDup( eTree.dist.nodes[0].comm, bottomDist.comm );
+    const LocalSymmNodeInfo& topLocal = info.localNodes.back();
+    DistSymmNodeInfo& bottomDist = info.distNodes[0];
+    mpi::CommDup( eTree.distNodes[0].comm, bottomDist.comm );
     bottomDist.grid = new Grid( bottomDist.comm );
     bottomDist.size = topLocal.size;
     bottomDist.localSize1d = topLocal.size;
@@ -334,10 +334,10 @@ void DistSymmetricAnalysis
     int localOffset1d = bottomDist.localOffset1d + bottomDist.size;
     for( unsigned s=1; s<numNodes; ++s )
     {
-        const DistSymmNode& node = eTree.dist.nodes[s];
-        const DistSymmNode& childNode = eTree.dist.nodes[s-1];
-        const DistSymmNodeInfo& childNodeInfo = info.dist.nodes[s-1];
-        DistSymmNodeInfo& nodeInfo = info.dist.nodes[s];
+        const DistSymmNode& node = eTree.distNodes[s];
+        const DistSymmNode& childNode = eTree.distNodes[s-1];
+        const DistSymmNodeInfo& childNodeInfo = info.distNodes[s-1];
+        DistSymmNodeInfo& nodeInfo = info.distNodes[s];
         nodeInfo.size = node.size;
         nodeInfo.offset = node.offset;
         nodeInfo.myOffset = myOffset;

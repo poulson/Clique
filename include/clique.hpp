@@ -21,9 +21,12 @@
 #define CLIQUE_HPP 1
 
 #include "clique/core/environment.hpp"
-#include "clique/symbolic/symm_elim_tree.hpp"
+#include "clique/symbolic/dist_graph.hpp"
+#include "clique/symbolic/dist_symm_elim_tree.hpp"
+#include "clique/symbolic/dist_symm_info.hpp"
 #include "clique/symbolic/symm_analysis.hpp"
-#include "clique/numeric/symm_front_tree.hpp"
+#include "clique/numeric/dist_sparse_matrix.hpp"
+#include "clique/numeric/dist_symm_front_tree.hpp"
 #include "clique/numeric/set_solve_mode.hpp"
 
 #include "clique/numeric/ldl.hpp"
