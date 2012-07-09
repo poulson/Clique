@@ -43,8 +43,12 @@ public:
     int NumLocalEntries() const;
     int Capacity() const;
 
+    int Row( int localEntry ) const;
+    int Col( int localEntry ) const;
+    F Value( int localEntry ) const;
+
     void Reserve( int numLocalEntries );
-    void PushBack( int i, int j, F value );
+    void PushBack( int row, int col, F value );
 
     void Empty();
     void ResizeTo( int height, int width );
@@ -129,6 +133,47 @@ DistSparseMatrix<F>::Capacity() const
 }
 
 template<typename F>
+inline int
+DistSparseMatrix<F>::Row( int localEntry ) const
+{ 
+#ifndef RELEASE 
+    PushCallStack("DistSparseMatrix::Row");
+#endif
+    const int row = graph_.Source( localEntry );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return row;
+}
+
+template<typename F>
+inline int
+DistSparseMatrix<F>::Col( int localEntry ) const
+{ 
+#ifndef RELEASE 
+    PushCallStack("DistSparseMatrix::Col");
+#endif
+    const int col = graph_.Target( localEntry );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return col;
+}
+
+template<typename F>
+inline F
+DistSparseMatrix<F>::Value( int localEntry ) const
+{ 
+#ifndef RELEASE 
+    PushCallStack("DistSparseMatrix::Value");
+    if( localEntry < 0 || localEntry >= entries_.size() )
+        throw std::logic_error("Entry number out of bounds");
+    PopCallStack();
+#endif
+    return entries_[localEntry];
+}
+
+template<typename F>
 inline void
 DistSparseMatrix<F>::Reserve( int numLocalEntries )
 { 
@@ -138,13 +183,13 @@ DistSparseMatrix<F>::Reserve( int numLocalEntries )
 
 template<typename F>
 inline void
-DistSparseMatrix<F>::PushBack( int i, int j, F value )
+DistSparseMatrix<F>::PushBack( int row, int col, F value )
 {
 #ifndef RELEASE
     PushCallStack("DistSparseMatrix::PushBack");
     EnsureConsistentSizes();
 #endif
-    graph_.PushBack( i, j );
+    graph_.PushBack( row, col );
     entries_.push_back( value );
 #ifndef RELEASE
     PopCallStack();

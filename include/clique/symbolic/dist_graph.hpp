@@ -43,8 +43,11 @@ public:
     int NumLocalEdges() const;
     int Capacity() const;
 
+    int Source( int localEdge ) const;
+    int Target( int localEdge ) const;
+
     void Reserve( int numLocalEdges );
-    void PushBack( int i, int j );
+    void PushBack( int source, int target );
 
     void Empty();
     void ResizeTo( int numVertices );
@@ -142,6 +145,30 @@ DistGraph::Capacity() const
     PopCallStack();
 #endif
     return sources_.capacity();
+}
+
+inline int
+DistGraph::Source( int localEdge ) const
+{
+#ifndef RELEASE
+    PushCallStack("DistGraph::Source");
+    if( localEdge < 0 || localEdge >= sources_.size() )
+        throw std::logic_error("Edge number out of bounds");
+    PopCallStack();
+#endif
+    return sources_[localEdge];
+}
+
+inline int
+DistGraph::Target( int localEdge ) const
+{
+#ifndef RELEASE
+    PushCallStack("DistGraph::Target");
+    if( localEdge < 0 || localEdge >= targets_.size() )
+        throw std::logic_error("Edge number out of bounds");
+    PopCallStack();
+#endif
+    return targets_[localEdge];
 }
 
 inline void
