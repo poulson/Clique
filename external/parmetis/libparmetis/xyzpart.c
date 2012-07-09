@@ -111,7 +111,7 @@ void IRBinCoordinates(ctrl_t *ctrl, graph_t *graph, idx_t ndims, real_t *xyz,
       /* determine bucket counts */
       iset(nbins, 0, lcounts);
       for (j=0, i=0; i<nvtxs;) {
-        if (cand[i].key < emarkers[j+1]) {
+        if (cand[i].key <= emarkers[j+1]) {
           lcounts[j]++;
           i++;
         }
@@ -158,7 +158,7 @@ void IRBinCoordinates(ctrl_t *ctrl, graph_t *graph, idx_t ndims, real_t *xyz,
 
     /* assign the coordinate to the appropriate bin */
     for (j=0, i=0; i<nvtxs;) {
-      if (cand[i].key < emarkers[j+1]) {
+      if (cand[i].key <= emarkers[j+1]) {
         bxyz[cand[i].val*ndims+k] = j;
         i++;
       }
