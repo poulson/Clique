@@ -60,29 +60,48 @@ inline void NestedDissection
         vtxDist[i] = i*blocksize;
     vtxDist[commSize] = graph.NumSources();
 
-    // Fill our local connectivity
+    // ParMETIS assumes that there are no self-connections, so we must
+    // manually remove them from our graph
     const unsigned numLocalEdges = graph.NumLocalEdges();
+    unsigned numLocalSelfEdges = 0;
+    for( unsigned i=0; i<numLocalEdges; ++i )
+        if( graph.Source(i) == graph.Target(i) )
+            ++numLocalSelfEdges;
+
+    // Fill our local connectivity (ignoring self edges)
+    const unsigned numLocalValidEdges = numLocalEdges - numLocalSelfEdges;
     const unsigned numLocalSources = graph.NumLocalSources();
     const unsigned firstLocalSource = graph.FirstLocalSource();
     std::vector<idx_t> xAdj( numLocalSources+1 );
-    std::vector<idx_t> adjacency( numLocalEdges );
+    std::vector<idx_t> adjacency( numLocalValidEdges );
+    unsigned validCounter=0;
     unsigned sourceOffset=0;
     unsigned prevSource=firstLocalSource;
     xAdj[sourceOffset++] = 0;
     for( unsigned i=0; i<numLocalEdges; ++i )
     {
-        const unsigned source = Source( i );
+        const unsigned source = graph.Source( i );
+        const unsigned target = graph.Target( i );
 #ifndef RELEASE
         if( source < prevSource )
             throw std::runtime_error("sources were not properly sorted");
 #endif
         while( source != prevSource )
         {
-            xAdj[sourceOffset++] = i;
+            xAdj[sourceOffset++] = validCounter;
             ++prevSource;
         }
-        adjacency[i] = Target( i );
+        if( source != target )
+        {
+            adjacency[validCounter] = target;
+            ++validCounter;
+        }
     }
+#ifndef RELEASE
+    if( sourceOffset != numLocalSources )
+        throw std::logic_error("Mistake in xAdj computation");
+#endif
+    xAdj[numLocalSources] = numLocalValidEdges;
 
     // Create space for the result
     std::vector<idx_t> order( numLocalSources );
@@ -101,8 +120,13 @@ inline void NestedDissection
       &comm );
 
     if( commRank == 0 )
-        std::cout << "Finished ParMETIS_V32_NodeND with retval=" << retval
-                  << std::endl;
+    {
+        if( retval == METIS_OK )
+            std::cout << "ParMETIS_V32_NodeND finished successfully" 
+                      << std::endl;
+        else
+            std::cout << "ParMETIS_V32_NodeND failed" << std::endl;
+    }
 #ifndef RELEASE
     PopCallStack();
 #endif

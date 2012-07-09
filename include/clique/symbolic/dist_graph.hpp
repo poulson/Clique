@@ -24,8 +24,8 @@ namespace cliq {
 
 // Use a simple 1d distribution where each process owns a fixed number of 
 // sources:
-//     if last process,  numSources - (commSize-1)*ceil(numSources/commSize)
-//     otherwise,        ceil(numSources/commSize)
+//     if last process,  numSources - (commSize-1)*floor(numSources/commSize)
+//     otherwise,        floor(numSources/commSize)
 class DistGraph
 {
 public:
@@ -78,7 +78,7 @@ inline DistGraph::DistGraph
 {
     const int commRank = mpi::CommRank( comm );
     const int commSize = mpi::CommSize( comm );
-    blocksize_ = (numVertices+commSize-1)/commSize;
+    blocksize_ = numVertices/commSize;
     firstLocalSource_ = commRank*blocksize_;
     if( commRank != commSize-1 )
         numLocalSources_ = blocksize_;
@@ -92,7 +92,7 @@ inline DistGraph::DistGraph
 {
     const int commRank = mpi::CommRank( comm );
     const int commSize = mpi::CommSize( comm );
-    blocksize_ = (numSources+commSize-1)/commSize;
+    blocksize_ = numSources/commSize;
     firstLocalSource_ = commRank*blocksize_;
     if( commRank != commSize-1 )
         numLocalSources_ = blocksize_;
@@ -186,7 +186,8 @@ DistGraph::PushBack( int source, int target )
     EnsureConsistentSizes();
     if( sources_.size() != 0 && source < sources_.back() )
         throw std::logic_error("Incorrectly ordered sources");
-    if( targets_.size() != 0 && target < targets_.back() )
+    if( targets_.size() != 0 && 
+        source == sources_.back() && target < targets_.back() )
         throw std::logic_error("Incorrectly ordered targets");
     const int capacity = Capacity();
     const int numLocalEdges = NumLocalEdges();

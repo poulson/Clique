@@ -23,8 +23,8 @@
 namespace cliq {
 
 // Use a simple 1d distribution where each process owns a fixed number of rows,
-//     if last process,  height - (commSize-1)*ceil(height/commSize)
-//     otherwise,        ceil(height/commSize)
+//     if last process,  height - (commSize-1)*floor(height/commSize)
+//     otherwise,        floor(height/commSize)
 template<typename F>
 class DistSparseMatrix
 {

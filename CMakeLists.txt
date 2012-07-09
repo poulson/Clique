@@ -37,7 +37,10 @@ include_directories(${MPI_CXX_INCLUDE_PATH})
 option(BUILD_PARMETIS "Build the parallel metis library" OFF)
 if(BUILD_PARMETIS)
   add_subdirectory(external/parmetis)
-  include_directories("${PROJECT_BINARY_DIR}/external/parmetis/include")
+  # TODO: Install these into the build directory instead
+  include_directories("${PROJECT_SOURCE_DIR}/external/parmetis/include")
+  include_directories("${PROJECT_SOURCE_DIR}/external/parmetis/metis/include")
+  set(HAVE_PARMETIS TRUE)
 endif(BUILD_PARMETIS)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")
@@ -91,6 +94,9 @@ include_directories("${PROJECT_BINARY_DIR}/include")
 if(BUILD_TESTS)
   set(TEST_DIR ${PROJECT_SOURCE_DIR}/tests)
   set(TESTS FileSpeed PanelLDL)
+  if(HAVE_PARMETIS)
+    list(APPEND TESTS NestedDissection)
+  endif(HAVE_PARMETIS)
 
   # Build the tests
   set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/tests")
