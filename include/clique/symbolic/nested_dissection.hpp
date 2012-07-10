@@ -26,15 +26,16 @@
 
 namespace cliq {
 
+// NOTE: This routine is nowhere near finished
 void NestedDissection
-( const DistGraph& graph, DistSymmElimTree& eTree );
+( const DistGraph& graph, DistSeparatorTree& sepTree, DistSymmElimTree& eTree );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
 inline void NestedDissection
-( const DistGraph& graph, DistSymmElimTree& eTree )
+( const DistGraph& graph, DistSeparatorTree& sepTree, DistSymmElimTree& eTree )
 {
 #ifndef RELEASE
     PushCallStack("NestedDissection");
@@ -54,34 +55,33 @@ inline void NestedDissection
         ("NestedDissection currently requires a power of two # of processes");
 
     // Describe the source distribution
-    const unsigned blocksize = graph.Blocksize();
+    const int blocksize = graph.Blocksize();
     std::vector<idx_t> vtxDist( commSize+1 );
-    for( unsigned i=0; i<commSize; ++i )
+    for( int i=0; i<commSize; ++i )
         vtxDist[i] = i*blocksize;
     vtxDist[commSize] = graph.NumSources();
 
     // ParMETIS assumes that there are no self-connections, so we must
     // manually remove them from our graph
-    const unsigned numLocalEdges = graph.NumLocalEdges();
-    unsigned numLocalSelfEdges = 0;
-    for( unsigned i=0; i<numLocalEdges; ++i )
+    const int numLocalEdges = graph.NumLocalEdges();
+    int numLocalSelfEdges = 0;
+    for( int i=0; i<numLocalEdges; ++i )
         if( graph.Source(i) == graph.Target(i) )
             ++numLocalSelfEdges;
 
     // Fill our local connectivity (ignoring self edges)
-    const unsigned numLocalValidEdges = numLocalEdges - numLocalSelfEdges;
-    const unsigned numLocalSources = graph.NumLocalSources();
-    const unsigned firstLocalSource = graph.FirstLocalSource();
+    const int numLocalValidEdges = numLocalEdges - numLocalSelfEdges;
+    const int numLocalSources = graph.NumLocalSources();
+    const int firstLocalSource = graph.FirstLocalSource();
     std::vector<idx_t> xAdj( numLocalSources+1 );
     std::vector<idx_t> adjacency( numLocalValidEdges );
-    unsigned validCounter=0;
-    unsigned sourceOffset=0;
-    unsigned prevSource=firstLocalSource;
-    xAdj[sourceOffset++] = 0;
-    for( unsigned i=0; i<numLocalEdges; ++i )
+    int validCounter=0;
+    int sourceOffset=0;
+    int prevSource=firstLocalSource-1;
+    for( int localEdge=0; localEdge<numLocalEdges; ++localEdge )
     {
-        const unsigned source = graph.Source( i );
-        const unsigned target = graph.Target( i );
+        const int source = graph.Source( localEdge );
+        const int target = graph.Target( localEdge );
 #ifndef RELEASE
         if( source < prevSource )
             throw std::runtime_error("sources were not properly sorted");

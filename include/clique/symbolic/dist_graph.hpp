@@ -45,6 +45,7 @@ public:
 
     int Source( int localEdge ) const;
     int Target( int localEdge ) const;
+    int LocalEdgeOffset( int localSource ) const;
 
     void Reserve( int numLocalEdges );
     void PushBack( int source, int target );
@@ -61,6 +62,11 @@ private:
     int firstLocalSource_, numLocalSources_;
 
     std::vector<int> sources_, targets_;
+
+    // Helpers for local indexing
+    mutable bool haveLocalEdgeOffsets_;
+    mutable std::vector<int> localEdgeOffsets_;
+    void UpdateLocalEdgeOffsets() const;
 
     void EnsureConsistentSizes() const;
     void EnsureConsistentCapacities() const;
@@ -84,6 +90,7 @@ inline DistGraph::DistGraph
         numLocalSources_ = blocksize_;
     else
         numLocalSources_ = numVertices - (commSize-1)*blocksize_;
+    haveLocalEdgeOffsets_ = false;
 }
 
 inline DistGraph::DistGraph
@@ -98,6 +105,7 @@ inline DistGraph::DistGraph
         numLocalSources_ = blocksize_;
     else
         numLocalSources_ = numSources - (commSize-1)*blocksize_;
+    haveLocalEdgeOffsets_ = false;
 }
 
 inline int 
@@ -171,6 +179,55 @@ DistGraph::Target( int localEdge ) const
     return targets_[localEdge];
 }
 
+inline int
+DistGraph::LocalEdgeOffset( int localSource ) const
+{
+#ifndef RELEASE
+    PushCallStack("DistGraph::LocalEdgeOffset");
+    if( localSource < 0 || localSource > numLocalSources_ )
+        throw std::logic_error("Out of bounds local source index");
+#endif
+    UpdateLocalEdgeOffsets();
+    const int localEdgeOffset = localEdgeOffsets_[localSource];
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return localEdgeOffset;
+}
+
+inline void
+DistGraph::UpdateLocalEdgeOffsets() const
+{
+#ifndef RELEASE
+    PushCallStack("DistGraph::UpdateLocalEdgeOffsets");
+#endif
+    if( !haveLocalEdgeOffsets_ )
+    {
+        int sourceOffset = 0;
+        int prevSource = firstLocalSource_-1;
+        localEdgeOffsets_.resize( numLocalSources_+1 );
+        const int numLocalEdges = NumLocalEdges();
+        for( int localEdge=0; localEdge<numLocalEdges; ++localEdge )
+        {
+            const int source = Source( localEdge );
+#ifndef RELEASE
+            if( source < prevSource )
+                throw std::runtime_error("sources were not properly sorted");
+#endif
+            while( source != prevSource )
+            {
+                localEdgeOffsets_[sourceOffset++] = localEdge;
+                ++prevSource;
+            }
+        }
+        localEdgeOffsets_[numLocalSources_] = numLocalEdges;
+        haveLocalEdgeOffsets_ = true;
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
 inline void
 DistGraph::Reserve( int numLocalEdges )
 { 
@@ -197,6 +254,7 @@ DistGraph::PushBack( int source, int target )
 #endif
     sources_.push_back( source );
     targets_.push_back( target );
+    haveLocalEdgeOffsets_ = false;
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -212,6 +270,8 @@ DistGraph::Empty()
     blocksize_ = 0;
     firstLocalSource_ = 0;
     numLocalSources_ = 0;
+    haveLocalEdgeOffsets_ = false;
+    localEdgeOffsets_.clear();
 }
 
 inline void
@@ -233,6 +293,8 @@ DistGraph::ResizeTo( int numSources, int numTargets )
         numLocalSources_ = numSources - (commSize-1)*blocksize_;
     sources_.clear();
     targets_.clear();
+    haveLocalEdgeOffsets_ = false;
+    localEdgeOffsets_.clear();
 }
 
 inline void

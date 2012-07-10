@@ -46,6 +46,7 @@ public:
     int Row( int localEntry ) const;
     int Col( int localEntry ) const;
     F Value( int localEntry ) const;
+    int LocalEntryOffset( int localRow ) const;
 
     void Reserve( int numLocalEntries );
     void PushBack( int row, int col, F value );
@@ -158,6 +159,20 @@ DistSparseMatrix<F>::Col( int localEntry ) const
     PopCallStack();
 #endif
     return col;
+}
+
+template<typename F>
+inline int
+DistSparseMatrix<F>::LocalEntryOffset( int localRow ) const
+{
+#ifndef RELEASE
+    PushCallStack("DistSparseMatrix::LocalEntryOffset");
+#endif
+    const int localEntryOffset = graph_.LocalEdgeOffset( localRow );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return localEntryOffset;
 }
 
 template<typename F>

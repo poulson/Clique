@@ -62,8 +62,9 @@ main( int argc, char* argv[] )
                 graph.PushBack( i, i+n*n );
         }
 
+        DistSeparatorTree sepTree;
         DistSymmElimTree eTree;
-        NestedDissection( graph, eTree );
+        NestedDissection( graph, sepTree, eTree );
     }
     catch( std::exception& e )
     {

@@ -22,6 +22,7 @@
 
 #include "clique/core/environment.hpp"
 #include "clique/symbolic/dist_graph.hpp"
+#include "clique/symbolic/dist_separator_tree.hpp"
 #include "clique/symbolic/dist_symm_elim_tree.hpp"
 #include "clique/symbolic/dist_symm_info.hpp"
 #include "clique/symbolic/nested_dissection.hpp"
