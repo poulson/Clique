@@ -33,7 +33,6 @@ main( int argc, char* argv[] )
         const int numVertices = n*n*n;
         DistGraph graph( numVertices, comm );
 
-        const int blocksize = graph.Blocksize();
         const int firstLocalSource = graph.FirstLocalSource();
         const int numLocalSources = graph.NumLocalSources();
 
