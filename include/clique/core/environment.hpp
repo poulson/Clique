@@ -23,6 +23,7 @@
 #include "elemental.hpp"
 #include <algorithm>
 #include <map>
+#include <set>
 
 #include "clique/config.h"
 

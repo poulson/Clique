@@ -45,7 +45,7 @@ public:
 
     int Row( int localEntry ) const;
     int Col( int localEntry ) const;
-    F Value( int localEntry ) const;
+    F Entry( int localEntry ) const;
     int LocalEntryOffset( int localRow ) const;
 
     void Reserve( int numLocalEntries );
@@ -177,10 +177,10 @@ DistSparseMatrix<F>::LocalEntryOffset( int localRow ) const
 
 template<typename F>
 inline F
-DistSparseMatrix<F>::Value( int localEntry ) const
+DistSparseMatrix<F>::Entry( int localEntry ) const
 { 
 #ifndef RELEASE 
-    PushCallStack("DistSparseMatrix::Value");
+    PushCallStack("DistSparseMatrix::Entry");
     if( localEntry < 0 || localEntry >= entries_.size() )
         throw std::logic_error("Entry number out of bounds");
     PopCallStack();
