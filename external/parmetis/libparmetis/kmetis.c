@@ -14,6 +14,97 @@
 
 #include <parmetislib.h>
 
+int CliqBisect(idx_t *vtxdist, idx_t *xadj, idx_t *adjncy, 
+	idx_t *edgecut, idx_t *part, MPI_Comm *comm)
+{
+  idx_t vwgt=NULL;
+  idx_t adjwgt=NULL;
+  idx_t wgtflag=0;
+  idx_t nparts=2;
+  real_t tpwgts[2] = { 0.5, 0.5 };
+  real_t ubvec[2] = { 1.06, 1.06 };
+  idx_t options[3] = { 0, 0, 42 };
+  idx_t numflag=0;
+  idx_t ncon=1;
+  idx_t h, i, status, nvtxs, npes, mype, seed, dbglvl;
+  ctrl_t *ctrl;
+  graph_t *graph;
+  idx_t moptions[METIS_NOPTIONS];
+  size_t curmem;
+
+  /* Check the input parameters and return if an error */
+  status = CheckInputsPartKway(vtxdist, xadj, adjncy, vwgt, adjwgt, &wgtflag, 
+               &numflag, &ncon, &nparts, tpwgts, ubvec, options, edgecut, part, 
+               comm);
+  if (GlobalSEMinComm(*comm, status) == 0) 
+    return METIS_ERROR;
+
+  status = METIS_OK;
+  gk_malloc_init();
+  curmem = gk_GetCurMemoryUsed();
+
+  /* Set up the control */
+  ctrl = SetupCtrl(PARMETIS_OP_KMETIS, options, ncon, nparts, tpwgts, ubvec, *comm);
+  npes = ctrl->npes;
+  mype = ctrl->mype;
+
+  /* Take care of npes == 1 case */
+  if (npes == 1) {
+    nvtxs = vtxdist[1] - vtxdist[0];
+    METIS_SetDefaultOptions(moptions);
+    moptions[METIS_OPTION_NUMBERING] = numflag;
+
+    status = METIS_PartGraphKway(&nvtxs, &ncon, xadj, adjncy, vwgt, NULL, 
+                 adjwgt, &nparts, tpwgts, ubvec, moptions, edgecut, part);
+ 
+    goto DONE;
+  }
+
+  /* Setup the graph */
+  graph = SetupGraph(ctrl, ncon, vtxdist, xadj, vwgt, NULL, adjncy, adjwgt, wgtflag);
+
+  /* Setup the workspace */
+  AllocateWSpace(ctrl, 10*graph->nvtxs);
+
+  /* Partition the graph */
+  STARTTIMER(ctrl, ctrl->TotalTmr);
+
+  ctrl->CoarsenTo = gk_min(vtxdist[npes]+1, 25*ncon*gk_max(npes, nparts));
+  if (vtxdist[npes] < SMALLGRAPH 
+      || vtxdist[npes] < npes*20 
+      || GlobalSESum(ctrl, graph->nedges) == 0) { /* serially */
+    IFSET(ctrl->dbglvl, DBG_INFO, 
+        rprintf(ctrl, "Partitioning a graph of size %"PRIDX" serially\n", vtxdist[npes]));
+    PartitionSmallGraph(ctrl, graph);
+  }
+  else { /* in parallel */
+    Global_Partition(ctrl, graph);
+  }
+  ParallelReMapGraph(ctrl, graph);
+
+  icopy(graph->nvtxs, graph->where, part);
+  *edgecut = graph->mincut;
+
+  STOPTIMER(ctrl, ctrl->TotalTmr);
+
+  /* Print out stats */
+  IFSET(ctrl->dbglvl, DBG_TIME, PrintTimingInfo(ctrl));
+  IFSET(ctrl->dbglvl, DBG_TIME, gkMPI_Barrier(ctrl->gcomm));
+  IFSET(ctrl->dbglvl, DBG_INFO, PrintPostPartInfo(ctrl, graph, 0));
+
+  FreeInitialGraphAndRemap(graph);
+
+DONE:
+  FreeCtrl(&ctrl);
+  if (gk_GetCurMemoryUsed() - curmem > 0) {
+    printf("ParMETIS appears to have a memory leak of %zdbytes. Report this.\n", 
+        (ssize_t)(gk_GetCurMemoryUsed() - curmem));
+  }
+  gk_malloc_cleanup(0);
+
+  return (int)status;
+}
+
 /***********************************************************************************
 * This function is the entry point of the parallel k-way multilevel partitionioner. 
 * This function assumes nothing about the graph distribution.

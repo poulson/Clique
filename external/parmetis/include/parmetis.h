@@ -60,6 +60,12 @@ extern "C" {
 #endif
 
 /*-------------------------------------------------------------------
+* Added for usage in Clique by Jack Poulson
+*--------------------------------------------------------------------*/
+int __cdecl CliqBisect(idx_t *vtxdist, idx_t *xadj, idx_t *adjncy, 
+        idx_t *edgecut, idx_t *part, MPI_Comm *comm);
+
+/*-------------------------------------------------------------------
 * API Introduced with Release 3.0 (current API) 
 *--------------------------------------------------------------------*/
 int __cdecl ParMETIS_V3_PartKway(

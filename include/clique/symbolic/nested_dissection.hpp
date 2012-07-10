@@ -97,7 +97,7 @@ inline void NestedDissection
     std::vector<idx_t> part( numLocalSources );
 
     if( commRank == 0 )
-        std::cout << "Starting ParMETIS_V3_PartKway..." << std::endl;
+        std::cout << "Starting CliqBisect..." << std::endl;
 
     idx_t wgtFlag = 0;
     idx_t numFlag = 0;
@@ -107,18 +107,22 @@ inline void NestedDissection
     real_t imbalance = 1.1;
     idx_t options[3] = { 0, 0, 42 };
     idx_t edgeCut;
+    const int retval = CliqBisect
+    ( &vtxDist[0], &xAdj[0], &adjacency[0], &edgeCut, &part[0], &comm );
+    /*
     const int retval = ParMETIS_V3_PartKway
     ( &vtxDist[0], &xAdj[0], &adjacency[0], NULL, NULL, &wgtFlag, &numFlag,
       &nCon, &numParts, tpWgts, &imbalance, options, &edgeCut, &part[0], 
       &comm );
+    */
 
     if( commRank == 0 )
     {
         if( retval == METIS_OK )
-            std::cout << "ParMETIS_V3_NodeKway finished successfully with " 
-                      << "edgeCut=" << edgeCut << std::endl;
+            std::cout << "CliqBisect finished successfully with edgeCut=" 
+                      << edgeCut << std::endl;
         else
-            std::cout << "ParMETIS_V3_NodeKway failed" << std::endl;
+            std::cout << "CliqBisect failed" << std::endl;
     }
 #ifndef RELEASE
     PopCallStack();
