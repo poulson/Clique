@@ -102,15 +102,16 @@ inline void NestedDissection
     idx_t numParSeps = 5;
     idx_t numSeqSeps = 5;
     real_t imbalance = 1.1;
-    idx_t size;
+    idx_t sizes[3];
     const int retval = CliqBisect
     ( &vtxDist[0], &xAdj[0], &adjacency[0], &numParSeps, &numSeqSeps, 
-      &imbalance, NULL, &order[0], &size, &comm );
+      &imbalance, NULL, &order[0], sizes, &comm );
 
     if( commRank == 0 )
     {
         if( retval == METIS_OK )
-            std::cout << "CliqBisect was successful with size=" << size
+            std::cout << "CliqBisect was successful with sizes=" 
+                      << sizes[0] << ", " << sizes[1] << ", " << sizes[2]
                       << std::endl;
         else
             std::cout << "CliqBisect failed" << std::endl;

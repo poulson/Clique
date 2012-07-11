@@ -14,7 +14,7 @@
 
 int CliqBisect(idx_t *vtxdist, idx_t *xadj, idx_t *adjncy, 
               idx_t *p_nseps, idx_t *s_nseps, 
-              real_t *ubfrac, idx_t *idbglvl, idx_t *order, idx_t *size, 
+              real_t *ubfrac, idx_t *idbglvl, idx_t *order, idx_t *sizes, 
               MPI_Comm *comm)
 {
   idx_t i, npes, mype, dbglvl, status;
@@ -68,11 +68,11 @@ int CliqBisect(idx_t *vtxdist, idx_t *xadj, idx_t *adjncy,
   ctrl->CoarsenTo = gk_min(graph->gnvtxs-1,
                        gk_max(1500*npes, graph->gnvtxs/(5*NUM_INIT_MSECTIONS*npes)));
 
-  CliqOrder(ctrl, graph, order, size);
+  CliqOrder(ctrl, graph, order, sizes);
 
   FreeInitialGraphAndRemap(graph);
 
-  goto DONE;  /* Remove the warning for now */
+  goto DONE;
 
 DONE:
   FreeCtrl(&ctrl);
@@ -85,7 +85,7 @@ DONE:
   return (int)status;
 }
 
-void CliqOrder(ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *size)
+void CliqOrder(ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *sizes)
 {
   idx_t i, nparts, nvtxs;
   idx_t *lastnode;
@@ -100,36 +100,35 @@ void CliqOrder(ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *size)
   iset(nvtxs, -1, order);
   iset(nvtxs, 0, graph->where);
 
+  /* 
+   * This avoids a memory leak, as match would not be allocated if this graph
+   * had been created from a move. Down to 48 bytes for 2 procs and n=18
+   */
+  gk_free((void **)&graph->match, 
+          (void **)&graph->cmap, 
+          (void **)&graph->rlens, 
+          (void **)&graph->slens, 
+          (void **)&graph->rcand, LTERM);
+
   Order_Partition_Multiple(ctrl, graph);
 
-  CliqLabelSeparator(ctrl, graph, lastnode, order, size);
+  CliqLabelSeparator(ctrl, graph, lastnode, order, sizes);
 
   gk_free((void **)&lastnode, LTERM);
 }
 
 void CliqLabelSeparator
-(ctrl_t *ctrl, graph_t *graph, idx_t *lastnode, idx_t *order, idx_t *size)
+(ctrl_t *ctrl, graph_t *graph, idx_t *lastnode, idx_t *order, idx_t *sizes)
 { 
   idx_t i, nvtxs, nparts, sid; 
   idx_t *where, *lpwgts, *gpwgts, *sizescan;
 
-  if( ctrl->nparts != 2 )
-      printf("ctrl->nparts should have been 2 and was %u\n", ctrl->nparts);
   nparts = 2;
 
   nvtxs  = graph->nvtxs;
   where  = graph->where;
   lpwgts = graph->lpwgts;
   gpwgts = graph->gpwgts;
-
-  if (ctrl->dbglvl&DBG_INFO) { 
-    if (ctrl->mype == 0) {
-      printf("SepWgts:  ");
-      printf(" %"PRIDX" [%"PRIDX" %"PRIDX"]", gpwgts[2], gpwgts[0], gpwgts[1]);
-      printf("\n");
-    }
-    gkMPI_Barrier(ctrl->comm);
-  }
 
   /* Compute the local size of the separator. This is required in case the 
      graph has vertex weights */
@@ -145,23 +144,10 @@ void CliqLabelSeparator
   gkMPI_Allreduce
   ((void *)lpwgts, (void *)gpwgts, 2*nparts, IDX_T, MPI_SUM, ctrl->comm);
 
-#ifdef DEBUG_ORDER
-  PrintVector(ctrl, 2*nparts, 0, lpwgts, "Lpwgts");
-  PrintVector(ctrl, 2*nparts, 0, sizescan, "SizeScan");
-  PrintVector(ctrl, 2*nparts, 0, lastnode, "LastNode");
-#endif
-
   /* Fill in the size of the partition */
-  *size = gpwgts[2];
-
-  if (ctrl->dbglvl&DBG_INFO) { 
-    if (ctrl->mype == 0) {
-      printf("SepSizes: ");
-      printf(" %"PRIDX" [%"PRIDX" %"PRIDX"]", gpwgts[2], gpwgts[0], gpwgts[1]);
-      printf("\n");
-    }
-    gkMPI_Barrier(ctrl->comm);
-  }
+  sizes[0] = gpwgts[0];
+  sizes[1] = gpwgts[1];
+  sizes[2] = gpwgts[2];
 
   for (i=0; i<2*nparts; i++)
     sizescan[i] -= lpwgts[i];

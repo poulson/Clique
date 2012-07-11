@@ -20,6 +20,13 @@
 #include "clique.hpp"
 using namespace cliq;
 
+void Usage()
+{
+    std::cout << "NestedDissection <n>\n" 
+              << "  n: size of n x n x n mesh\n"
+              << std::endl;
+}
+
 int
 main( int argc, char* argv[] )
 {
@@ -27,9 +34,17 @@ main( int argc, char* argv[] )
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
 
+    if( argc < 2 )
+    {
+        if( commRank == 0 )
+            Usage();
+        cliq::Finalize();
+        return 0;
+    }
+    const int n = atoi( argv[1] );
+
     try
     {
-        const int n = 50;
         const int numVertices = n*n*n;
         DistGraph graph( numVertices, comm );
 
