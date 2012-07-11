@@ -76,9 +76,33 @@ main( int argc, char* argv[] )
                 graph.PushBack( i, i+n*n );
         }
 
-        DistSeparatorTree sepTree;
-        DistSymmElimTree eTree;
-        NestedDissection( graph, sepTree, eTree );
+        DistGraph child;
+        std::vector<int> localMap;
+        bool haveLeftChild;
+        const int sepSize = Bisect( graph, child, localMap, haveLeftChild );
+
+        int leftSize, rightSize;
+        if( haveLeftChild )
+        {
+            leftSize = child.NumSources();
+            rightSize = numVertices - leftSize - sepSize;
+        }
+        else
+        {
+            rightSize = child.NumSources();
+            leftSize = numVertices - rightSize - sepSize;
+        }
+        if( commRank == 0 )
+        {
+            if( haveLeftChild )
+                std::cout << "Root is on left with sizes: " 
+                          << leftSize << ", " << rightSize << ", " << sepSize
+                          << std::endl;
+            else
+                std::cout << "Root is on right with sizes: " 
+                          << leftSize << ", " << rightSize << ", " << sepSize
+                          << std::endl;
+        }
     }
     catch( std::exception& e )
     {

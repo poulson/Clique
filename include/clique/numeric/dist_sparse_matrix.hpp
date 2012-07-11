@@ -47,6 +47,7 @@ public:
     int Col( int localEntry ) const;
     F Entry( int localEntry ) const;
     int LocalEntryOffset( int localRow ) const;
+    int NumConnections( int localRow ) const;
 
     void Reserve( int numLocalEntries );
     void PushBack( int row, int col, F value );
@@ -173,6 +174,20 @@ DistSparseMatrix<F>::LocalEntryOffset( int localRow ) const
     PopCallStack();
 #endif
     return localEntryOffset;
+}
+
+template<typename F>
+inline int
+DistSparseMatrix<F>::NumConnections( int localRow ) const
+{
+#ifndef RELEASE
+    PushCallStack("DistSparseMatrix::NumConnections");
+#endif
+    const int numConnections = graph_.NumConnections( localRow );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return numConnections;
 }
 
 template<typename F>

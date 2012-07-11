@@ -91,6 +91,7 @@ template<typename F>
 DistSymmFrontTree<F>::DistSymmFrontTree()
 { }
 
+// TODO: Simplify this using the new MapIndices and InvertMap functions
 template<typename F>
 DistSymmFrontTree<F>::DistSymmFrontTree
 ( const DistSparseMatrix<F>& A, 
@@ -218,7 +219,7 @@ DistSymmFrontTree<F>::DistSymmFrontTree
       &numEntriesNeededPerRow[0], &neededRowSizes[0], &neededRowOffsets[0],
       comm );
 
-    // Compute the number of entries we give and need to each other process
+    // Compute the number of entries we give and need from each process
     int numGivingEntries=0;
     std::vector<int> givingEntriesSizes( commSize, 0 );
     std::vector<int> givingEntriesOffsets( commSize );

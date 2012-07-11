@@ -22,6 +22,8 @@
 
 namespace cliq {
 
+// TODO: Build on top of a sequential Graph class?
+
 // Use a simple 1d distribution where each process owns a fixed number of 
 // sources:
 //     if last process,  numSources - (commSize-1)*floor(numSources/commSize)
@@ -29,13 +31,17 @@ namespace cliq {
 class DistGraph
 {
 public:
+    DistGraph();
     DistGraph( int numVertices, mpi::Comm comm );
     DistGraph( int numSources, int numTargets, mpi::Comm comm );
+    ~DistGraph();
 
     int NumSources() const;
     int NumTargets() const;
 
+    void SetComm( mpi::Comm comm );
     mpi::Comm Comm() const;
+
     int Blocksize() const;
     int FirstLocalSource() const;
     int NumLocalSources() const;
@@ -45,7 +51,9 @@ public:
 
     int Source( int localEdge ) const;
     int Target( int localEdge ) const;
+
     int LocalEdgeOffset( int localSource ) const;
+    int NumConnections( int localSource ) const;
 
     void Reserve( int numLocalEdges );
     void PushBack( int source, int target );
@@ -78,12 +86,23 @@ private:
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
+inline DistGraph::DistGraph()
+: numSources_(0), numTargets_(0)
+{
+    mpi::CommDup( mpi::COMM_WORLD, comm_ );
+    blocksize_ = 0;
+    firstLocalSource_ = 0;
+    numLocalSources_ = 0;
+    haveLocalEdgeOffsets_ = false;
+}
+
 inline DistGraph::DistGraph
 ( int numVertices, mpi::Comm comm )
-: numSources_(numVertices), numTargets_(numVertices), comm_(comm)
+: numSources_(numVertices), numTargets_(numVertices)
 {
     const int commRank = mpi::CommRank( comm );
     const int commSize = mpi::CommSize( comm );
+    mpi::CommDup( comm, comm_ );
     blocksize_ = numVertices/commSize;
     firstLocalSource_ = commRank*blocksize_;
     if( commRank != commSize-1 )
@@ -95,10 +114,11 @@ inline DistGraph::DistGraph
 
 inline DistGraph::DistGraph
 ( int numSources, int numTargets, mpi::Comm comm )
-: numSources_(numSources), numTargets_(numTargets), comm_(comm)
+: numSources_(numSources), numTargets_(numTargets)
 {
     const int commRank = mpi::CommRank( comm );
     const int commSize = mpi::CommSize( comm );
+    mpi::CommDup( comm, comm_ );
     blocksize_ = numSources/commSize;
     firstLocalSource_ = commRank*blocksize_;
     if( commRank != commSize-1 )
@@ -108,6 +128,10 @@ inline DistGraph::DistGraph
     haveLocalEdgeOffsets_ = false;
 }
 
+inline
+DistGraph::~DistGraph()
+{ mpi::CommFree( comm_ ); } 
+
 inline int 
 DistGraph::NumSources() const
 { return numSources_; }
@@ -115,6 +139,13 @@ DistGraph::NumSources() const
 inline int 
 DistGraph::NumTargets() const
 { return numTargets_; }
+
+inline void 
+DistGraph::SetComm( mpi::Comm comm )
+{
+    Empty();
+    mpi::CommDup( comm, comm_ );
+}
 
 inline mpi::Comm 
 DistGraph::Comm() const
@@ -193,6 +224,20 @@ DistGraph::LocalEdgeOffset( int localSource ) const
     PopCallStack();
 #endif
     return localEdgeOffset;
+}
+
+inline int
+DistGraph::NumConnections( int localSource ) const
+{
+#ifndef RELEASE
+    PushCallStack("DistGraph::NumConnections");
+#endif
+    const int numConnections = LocalEdgeOffset(localSource+1) - 
+                               LocalEdgeOffset(localSource);
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return numConnections;
 }
 
 inline void
