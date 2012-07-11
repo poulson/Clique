@@ -102,7 +102,7 @@ void CliqOrder(ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *sizes)
 
   /* 
    * This avoids a memory leak, as match would not be allocated if this graph
-   * had been created from a move. Down to 48 bytes for 2 procs and n=18
+   * had been created from a move. 
    */
   gk_free((void **)&graph->match, 
           (void **)&graph->cmap, 
