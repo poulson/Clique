@@ -22,8 +22,6 @@
 
 namespace cliq {
 
-// TODO: Build on top of a sequential Graph class?
-
 // Use a simple 1d distribution where each process owns a fixed number of 
 // sources:
 //     if last process,  numSources - (commSize-1)*floor(numSources/commSize)
@@ -32,6 +30,7 @@ class DistGraph
 {
 public:
     DistGraph();
+    DistGraph( mpi::Comm comm );
     DistGraph( int numVertices, mpi::Comm comm );
     DistGraph( int numSources, int numTargets, mpi::Comm comm );
     ~DistGraph();
@@ -86,7 +85,8 @@ private:
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
-inline DistGraph::DistGraph()
+inline 
+DistGraph::DistGraph()
 : numSources_(0), numTargets_(0)
 {
     mpi::CommDup( mpi::COMM_WORLD, comm_ );
@@ -96,8 +96,19 @@ inline DistGraph::DistGraph()
     haveLocalEdgeOffsets_ = false;
 }
 
-inline DistGraph::DistGraph
-( int numVertices, mpi::Comm comm )
+inline
+DistGraph::DistGraph( mpi::Comm comm )
+: numSources_(0), numTargets_(0)
+{
+    mpi::CommDup( comm, comm_ );
+    blocksize_ = 0;
+    firstLocalSource_ = 0;
+    numLocalSources_ = 0;
+    haveLocalEdgeOffsets_ = false;
+}
+
+inline 
+DistGraph::DistGraph( int numVertices, mpi::Comm comm )
 : numSources_(numVertices), numTargets_(numVertices)
 {
     const int commRank = mpi::CommRank( comm );
@@ -112,8 +123,8 @@ inline DistGraph::DistGraph
     haveLocalEdgeOffsets_ = false;
 }
 
-inline DistGraph::DistGraph
-( int numSources, int numTargets, mpi::Comm comm )
+inline 
+DistGraph::DistGraph( int numSources, int numTargets, mpi::Comm comm )
 : numSources_(numSources), numTargets_(numTargets)
 {
     const int commRank = mpi::CommRank( comm );

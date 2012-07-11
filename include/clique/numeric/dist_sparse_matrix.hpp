@@ -29,13 +29,18 @@ template<typename F>
 class DistSparseMatrix
 {
 public:
+    DistSparseMatrix();
+    DistSparseMatrix( mpi::Comm comm );
     DistSparseMatrix( int height, int width, mpi::Comm comm );
+    ~DistSparseMatrix();
 
     int Height() const;
     int Width() const;
     const DistGraph& Graph() const;
 
+    void SetComm( mpi::Comm comm );
     mpi::Comm Comm() const;
+
     int Blocksize() const;
     int FirstLocalRow() const;
     int LocalHeight() const;
@@ -45,7 +50,7 @@ public:
 
     int Row( int localEntry ) const;
     int Col( int localEntry ) const;
-    F Entry( int localEntry ) const;
+    F Value( int localEntry ) const;
     int LocalEntryOffset( int localRow ) const;
     int NumConnections( int localRow ) const;
 
@@ -57,8 +62,7 @@ public:
 
 private:
     DistGraph graph_;
-
-    std::vector<F> entries_;
+    std::vector<F> values_;
 
     void EnsureConsistentSizes() const;
     void EnsureConsistentCapacities() const;
@@ -69,9 +73,25 @@ private:
 //----------------------------------------------------------------------------//
 
 template<typename F>
-inline DistSparseMatrix<F>::DistSparseMatrix
-( int height, int width, mpi::Comm comm )
+inline 
+DistSparseMatrix<F>::DistSparseMatrix()
+{ }
+
+template<typename F>
+inline 
+DistSparseMatrix<F>::DistSparseMatrix( mpi::Comm comm )
+: graph_(comm)
+{ }
+
+template<typename F>
+inline 
+DistSparseMatrix<F>::DistSparseMatrix( int height, int width, mpi::Comm comm )
 : graph_(height,width,comm)
+{ }
+
+template<typename F>
+inline 
+DistSparseMatrix<F>::~DistSparseMatrix()
 { }
 
 template<typename F>
@@ -88,6 +108,14 @@ template<typename F>
 inline const DistGraph& 
 DistSparseMatrix<F>::Graph() const
 { return graph_; }
+
+template<typename F>
+inline void
+DistSparseMatrix<F>::SetComm( mpi::Comm comm )
+{ 
+    graph_.SetComm( comm ); 
+    values_.clear();
+}
 
 template<typename F>
 inline mpi::Comm 
@@ -192,15 +220,15 @@ DistSparseMatrix<F>::NumConnections( int localRow ) const
 
 template<typename F>
 inline F
-DistSparseMatrix<F>::Entry( int localEntry ) const
+DistSparseMatrix<F>::Value( int localEntry ) const
 { 
 #ifndef RELEASE 
-    PushCallStack("DistSparseMatrix::Entry");
-    if( localEntry < 0 || localEntry >= entries_.size() )
+    PushCallStack("DistSparseMatrix::Value");
+    if( localEntry < 0 || localEntry >= values_.size() )
         throw std::logic_error("Entry number out of bounds");
     PopCallStack();
 #endif
-    return entries_[localEntry];
+    return values_[localEntry];
 }
 
 template<typename F>
@@ -208,7 +236,7 @@ inline void
 DistSparseMatrix<F>::Reserve( int numLocalEntries )
 { 
     graph_.Reserve( numLocalEntries );
-    entries_.reserve( numLocalEntries );
+    values_.reserve( numLocalEntries );
 }
 
 template<typename F>
@@ -220,7 +248,7 @@ DistSparseMatrix<F>::PushBack( int row, int col, F value )
     EnsureConsistentSizes();
 #endif
     graph_.PushBack( row, col );
-    entries_.push_back( value );
+    values_.push_back( value );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -231,7 +259,7 @@ inline void
 DistSparseMatrix<F>::Empty()
 {
     graph_.Empty();
-    entries_.clear();
+    values_.clear();
 }
 
 template<typename F>
@@ -239,7 +267,7 @@ inline void
 DistSparseMatrix<F>::ResizeTo( int height, int width )
 {
     graph_.ResizeTo( height, width );
-    entries_.clear();
+    values_.clear();
 }
 
 template<typename F>
@@ -247,7 +275,7 @@ inline void
 DistSparseMatrix<F>::EnsureConsistentSizes() const
 { 
     graph_.EnsureConsistentSizes();
-    if( graph_.NumLocalEdges() != entries_.size() )
+    if( graph_.NumLocalEdges() != values_.size() )
         throw std::logic_error("Inconsistent sparsity sizes");
 }
 
@@ -256,7 +284,7 @@ inline void
 DistSparseMatrix<F>::EnsureConsistentCapacities() const
 { 
     graph_.EnsureConsistentCapacities();
-    if( graph_.Capacity() != entries_.capacity() )
+    if( graph_.Capacity() != values_.capacity() )
         throw std::logic_error("Inconsistent sparsity capacities");
 }
 
