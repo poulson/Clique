@@ -94,33 +94,24 @@ inline void NestedDissection
     xAdj[numLocalSources] = numLocalValidEdges;
 
     // Create space for the result
-    std::vector<idx_t> part( numLocalSources );
+    std::vector<idx_t> order( numLocalSources );
 
     if( commRank == 0 )
         std::cout << "Starting CliqBisect..." << std::endl;
 
-    idx_t wgtFlag = 0;
-    idx_t numFlag = 0;
-    idx_t nCon = 1;
-    idx_t numParts = 2;
-    real_t tpWgts[2] = { 0.5, 0.5 };
+    idx_t numParSeps = 5;
+    idx_t numSeqSeps = 5;
     real_t imbalance = 1.1;
-    idx_t options[3] = { 0, 0, 42 };
-    idx_t edgeCut;
+    idx_t size;
     const int retval = CliqBisect
-    ( &vtxDist[0], &xAdj[0], &adjacency[0], &edgeCut, &part[0], &comm );
-    /*
-    const int retval = ParMETIS_V3_PartKway
-    ( &vtxDist[0], &xAdj[0], &adjacency[0], NULL, NULL, &wgtFlag, &numFlag,
-      &nCon, &numParts, tpWgts, &imbalance, options, &edgeCut, &part[0], 
-      &comm );
-    */
+    ( &vtxDist[0], &xAdj[0], &adjacency[0], &numParSeps, &numSeqSeps, 
+      &imbalance, NULL, &order[0], &size, &comm );
 
     if( commRank == 0 )
     {
         if( retval == METIS_OK )
-            std::cout << "CliqBisect finished successfully with edgeCut=" 
-                      << edgeCut << std::endl;
+            std::cout << "CliqBisect was successful with size=" << size
+                      << std::endl;
         else
             std::cout << "CliqBisect failed" << std::endl;
     }

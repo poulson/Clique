@@ -280,7 +280,7 @@ void FreeInitialGraphAndRemap(graph_t *graph)
 
   nedges = graph->nedges;
   adjncy = graph->adjncy;
-  imap   = graph->imap;
+  imap = graph->imap;
 
   if (imap != NULL) {
     for (i=0; i<nedges; i++)

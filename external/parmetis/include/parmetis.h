@@ -62,8 +62,9 @@ extern "C" {
 /*-------------------------------------------------------------------
 * Added for usage in Clique by Jack Poulson
 *--------------------------------------------------------------------*/
-int __cdecl CliqBisect(idx_t *vtxdist, idx_t *xadj, idx_t *adjncy, 
-        idx_t *edgecut, idx_t *part, MPI_Comm *comm);
+int __cdecl CliqBisect
+(idx_t *vtxdist, idx_t *xadj, idx_t *adjncy, idx_t *p_nseps, idx_t *s_nseps,
+ real_t *ubfrac, idx_t *dbglvl, idx_t *order, idx_t *size, MPI_Comm *comm);
 
 /*-------------------------------------------------------------------
 * API Introduced with Release 3.0 (current API) 

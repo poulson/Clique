@@ -12,6 +12,11 @@
  *
  */
 
+/* Added by Jack Poulson to support Cliq's interface with ParMETIS */
+void CliqOrder(ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *size);
+void CliqLabelSeparator
+(ctrl_t *ctrl, graph_t *graph, idx_t *lastnode, idx_t *order, idx_t *size);
+
 /* ctrl.c */
 ctrl_t *SetupCtrl(pmoptype_et optype, idx_t *options, idx_t ncon, idx_t nparts,
             real_t *tpwgts, real_t *ubvec, MPI_Comm comm);
