@@ -99,7 +99,7 @@ inline void NestedDissection
     if( commRank == 0 )
         std::cout << "Starting CliqBisect..." << std::endl;
 
-    idx_t numParSeps = 5;
+    idx_t numParSeps = 20;
     idx_t numSeqSeps = 5;
     real_t imbalance = 1.1;
     idx_t sizes[3];

@@ -35,24 +35,17 @@ int CliqBisect(idx_t *vtxdist, idx_t *xadj, idx_t *adjncy,
   gk_malloc_init();
   curmem = gk_GetCurMemoryUsed();
 
-  /* Setup the ctrl */
-  /* Increase number of partitions?!? */
   ctrl = SetupCtrl(PARMETIS_OP_KMETIS, NULL, 1, 2, NULL, NULL, *comm);
 
   dbglvl = (idbglvl == NULL ? 0 : *idbglvl);
   ctrl->dbglvl = dbglvl;
 
-  /* Setup the graph */
   graph = SetupGraph(ctrl, 1, vtxdist, xadj, NULL, NULL, adjncy, NULL, 0);
-
-  /* Allocate workspace */
   AllocateWSpace(ctrl, 10*graph->nvtxs);
 
-  /* Compute the partitioning */
+  /* Compute an initial partition: for some reason this improves the quality */
   ctrl->CoarsenTo = gk_min(vtxdist[npes]+1, 200*gk_max(npes,ctrl->nparts));
-  //ctrl->CoarsenTo = gk_min(vtxdist[npes]+1, 200*gk_max(npes,ctrl->npes));
-
-  Global_Partition(ctrl, graph);
+  Global_Partition(ctrl, graph); 
 
   /* Compute an ordering */
   ctrl->optype    = PARMETIS_OP_OMETIS;
@@ -64,10 +57,7 @@ int CliqBisect(idx_t *vtxdist, idx_t *xadj, idx_t *adjncy,
   ctrl->ubfrac    = (ubfrac == NULL ? ORDER_UNBALANCE_FRACTION : *ubfrac);
   ctrl->dbglvl    = dbglvl;
   ctrl->ipart     = ISEP_NODE;
-  /* NOTE: Can this be greatly lowered?!? */
-  ctrl->CoarsenTo = gk_min(graph->gnvtxs-1,
-                       gk_max(1500*npes, graph->gnvtxs/(5*NUM_INIT_MSECTIONS*npes)));
-
+  ctrl->CoarsenTo = gk_min(graph->gnvtxs-1,1500*npes); 
   CliqOrder(ctrl, graph, order, sizes);
 
   FreeInitialGraphAndRemap(graph);
@@ -88,22 +78,15 @@ DONE:
 void CliqOrder(ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *sizes)
 {
   idx_t i, nparts, nvtxs;
-  idx_t *lastnode;
 
   nparts = 2;
   nvtxs = graph->nvtxs;
-
-  lastnode = ismalloc(4*nparts, -1, "CliqOrder: lastnode");
-
-  lastnode[2] = graph->gnvtxs;
-
   iset(nvtxs, -1, order);
-  iset(nvtxs, 0, graph->where);
 
-  /* 
-   * This avoids a memory leak, as match would not be allocated if this graph
-   * had been created from a move. 
-   */
+  /* graph->where = ismalloc(nvtxs, 0, "CliqOrder: graph->where"); */
+  /* If we computed an initial partition with Global_Partition, then we 
+     should run the following instead of the above ismalloc of graph->where*/
+  iset(nvtxs, 0, graph->where); 
   gk_free((void **)&graph->match, 
           (void **)&graph->cmap, 
           (void **)&graph->rlens, 
@@ -112,13 +95,11 @@ void CliqOrder(ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *sizes)
 
   Order_Partition_Multiple(ctrl, graph);
 
-  CliqLabelSeparator(ctrl, graph, lastnode, order, sizes);
-
-  gk_free((void **)&lastnode, LTERM);
+  CliqLabelSeparator(ctrl, graph, order, sizes);
 }
 
 void CliqLabelSeparator
-(ctrl_t *ctrl, graph_t *graph, idx_t *lastnode, idx_t *order, idx_t *sizes)
+(ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *sizes)
 { 
   idx_t i, nvtxs, nparts, sid; 
   idx_t *where, *lpwgts, *gpwgts, *sizescan;
@@ -158,14 +139,9 @@ void CliqLabelSeparator
       sid = where[i];
       sizescan[sid]++;
       PASSERT(ctrl, order[i] == -1);
-      order[i] = lastnode[sid] - sizescan[sid];
+      order[i] = graph->gnvtxs - sizescan[sid];
     }
   }
-
-  /* Update lastnode array */
-  icopy(2*nparts, lastnode, sizescan);
-  lastnode[2*nparts] = sizescan[nparts]-gpwgts[nparts]-gpwgts[1];
-  lastnode[2*nparts+2] = sizescan[nparts]-gpwgts[nparts];
 
   gk_free((void **)&sizescan, LTERM);
 }
