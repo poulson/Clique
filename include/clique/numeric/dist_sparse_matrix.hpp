@@ -54,18 +54,33 @@ public:
     int LocalEntryOffset( int localRow ) const;
     int NumConnections( int localRow ) const;
 
+    void StartAssembly();
+    void StopAssembly();
     void Reserve( int numLocalEntries );
     void PushBack( int row, int col, F value );
 
     void Empty();
     void ResizeTo( int height, int width );
 
+    // TODO: operator=
+
 private:
     DistGraph graph_;
     std::vector<F> values_;
 
+    template<typename U>
+    struct Entry
+    {
+        int i, j;
+        U value;
+    };
+
+    static bool CompareEntries( const Entry<F>& a, const Entry<F>& b );
+
     void EnsureConsistentSizes() const;
     void EnsureConsistentCapacities() const;
+
+    template<typename U> friend class SparseMatrix;
 };
 
 //----------------------------------------------------------------------------//
@@ -229,6 +244,64 @@ DistSparseMatrix<F>::Value( int localEntry ) const
     PopCallStack();
 #endif
     return values_[localEntry];
+}
+
+template<typename F>
+inline bool
+DistSparseMatrix<F>::CompareEntries( const Entry<F>& a, const Entry<F>& b )
+{
+    return a.i < b.i || (a.i == b.i && a.j < b.j);
+}
+
+template<typename F>
+inline void
+DistSparseMatrix<F>::StartAssembly()
+{
+#ifndef RELEASE
+    PushCallStack("DistSparseMatrix::StartAssembly");
+#endif
+    graph_.EnsureNotAssembling();
+    graph_.assembling_ = true;
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename F>
+inline void
+DistSparseMatrix<F>::StopAssembly()
+{
+#ifndef RELEASE
+    PushCallStack("DistSparseMatrix::StopAssembly");
+#endif
+    if( !graph_.assembling_ )
+        throw std::logic_error("Cannot stop assembly without starting");
+    graph_.assembling_ = false;
+
+    // Ensure that the connection pairs are sorted
+    if( !graph_.sorted_ )
+    {
+        const int numLocalEntries = values_.size();
+        std::vector<Entry<F> > entries( numLocalEntries );
+        for( int s=0; s<numLocalEntries; ++s )
+        {
+            entries[s].i = graph_.sources_[s];
+            entries[s].j = graph_.targets_[s];
+            entries[s].value = values_[s];
+        }
+        std::sort( entries.begin(), entries.end(), CompareEntries );
+        for( int s=0; s<numLocalEntries; ++s )
+        {
+            graph_.sources_[s] = entries[s].i;
+            graph_.targets_[s] = entries[s].j;
+            values_[s] = entries[s].value;
+        }
+    }
+
+    graph_.ComputeLocalEdgeOffsets();
+#ifndef RELEASE
+    PopCallStack();
+#endif
 }
 
 template<typename F>

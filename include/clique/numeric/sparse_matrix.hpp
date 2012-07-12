@@ -28,6 +28,9 @@ class SparseMatrix
 public:
     SparseMatrix();
     SparseMatrix( int height, int width );
+    SparseMatrix( const SparseMatrix<F>& A );
+    // NOTE: This requires A to be distributed over a single process
+    SparseMatrix( const DistSparseMatrix<F>& A );
     ~SparseMatrix();
 
     int Height() const;
@@ -43,18 +46,35 @@ public:
     int EntryOffset( int row ) const;
     int NumConnections( int row ) const;
 
+    void StartAssembly();
+    void StopAssembly();
     void Reserve( int numEntries );
     void PushBack( int row, int col, F value );
 
     void Empty();
     void ResizeTo( int height, int width );
 
+    const SparseMatrix<F>& operator=( const SparseMatrix<F>& A );
+    // NOTE: This requires A to be distributed over a single process
+    const SparseMatrix<F>& operator=( const DistSparseMatrix<F>& A );
+
 private:
     cliq::Graph graph_;
     std::vector<F> values_;
 
+    template<typename U>
+    struct Entry
+    {
+        int i, j;
+        U value;
+    };
+
+    static bool CompareEntries( const Entry<F>& a, const Entry<F>& b );
+
     void EnsureConsistentSizes() const;
     void EnsureConsistentCapacities() const;
+
+    template<typename U> friend class DistSparseMatrix;
 };
 
 //----------------------------------------------------------------------------//
@@ -71,6 +91,35 @@ inline
 SparseMatrix<F>::SparseMatrix( int height, int width )
 : graph_(height,width)
 { }
+
+template<typename F>
+inline
+SparseMatrix<F>::SparseMatrix( const SparseMatrix<F>& A )
+{ 
+#ifndef RELEASE
+    PushCallStack("SparseMatrix::SparseMatrix");
+#endif
+    if( &A != this )
+        *this = A;
+    else
+        throw std::logic_error("Tried to construct sparse matrix with itself");
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename F>
+inline
+SparseMatrix<F>::SparseMatrix( const DistSparseMatrix<F>& A )
+{ 
+#ifndef RELEASE
+    PushCallStack("SparseMatrix::SparseMatrix");
+#endif
+    *this = A;
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
 
 template<typename F>
 inline
@@ -187,6 +236,64 @@ SparseMatrix<F>::Value( int entry ) const
 }
 
 template<typename F>
+inline bool
+SparseMatrix<F>::CompareEntries( const Entry<F>& a, const Entry<F>& b )
+{
+    return a.i < b.i || (a.i == b.i && a.j < b.j);
+}
+
+template<typename F>
+inline void
+SparseMatrix<F>::StartAssembly()
+{
+#ifndef RELEASE
+    PushCallStack("SparseMatrix::StartAssembly");
+#endif
+    graph_.EnsureNotAssembling();
+    graph_.assembling_ = true;
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename F>
+inline void
+SparseMatrix<F>::StopAssembly()
+{
+#ifndef RELEASE
+    PushCallStack("SparseMatrix::StopAssembly");
+#endif
+    if( !graph_.assembling_ )
+        throw std::logic_error("Cannot stop assembly without starting");
+    graph_.assembling_ = false;
+
+    // Ensure that the connection pairs are sorted
+    if( !graph_.sorted_ )
+    {
+        const int numEntries = values_.size();
+        std::vector<Entry<F> > entries( numEntries );
+        for( int s=0; s<numEntries; ++s )
+        {
+            entries[s].i = graph_.sources_[s];
+            entries[s].j = graph_.targets_[s];
+            entries[s].value = values_[s];
+        }
+        std::sort( entries.begin(), entries.end(), CompareEntries );
+        for( int s=0; s<numEntries; ++s )
+        {
+            graph_.sources_[s] = entries[s].i;
+            graph_.targets_[s] = entries[s].j;
+            values_[s] = entries[s].value;
+        }
+    }
+
+    graph_.ComputeEdgeOffsets();
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename F>
 inline void
 SparseMatrix<F>::Reserve( int numEntries )
 { 
@@ -223,6 +330,42 @@ SparseMatrix<F>::ResizeTo( int height, int width )
 {
     graph_.ResizeTo( height, width );
     values_.clear();
+}
+
+template<typename F>
+inline const SparseMatrix<F>&
+SparseMatrix<F>::operator=( const SparseMatrix<F>& A )
+{
+#ifndef RELEASE
+    PushCallStack("SparseMatrix::operator=");
+#endif
+    graph_ = A.graph_;
+    values_ = A.values_;
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return *this;
+}
+
+template<typename F>
+inline const SparseMatrix<F>&
+SparseMatrix<F>::operator=( const DistSparseMatrix<F>& A )
+{
+#ifndef RELEASE
+    PushCallStack("SparseMatrix::operator=");
+#endif
+    mpi::Comm comm = A.Comm();
+    const int commSize = mpi::CommSize( comm );
+    if( commSize != 1 )
+        throw std::logic_error
+        ("Can not yet construct from distributed sparse matrix");
+
+    graph_ = A.graph_;
+    values_ = A.values_;
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return *this;
 }
 
 template<typename F>

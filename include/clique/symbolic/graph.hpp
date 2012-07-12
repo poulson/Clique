@@ -28,6 +28,9 @@ public:
     Graph();
     Graph( int numVertices );
     Graph( int numSources, int numTargets );
+    Graph( const Graph& graph );
+    // NOTE: This requires the DistGraph to be over a single process
+    Graph( const DistGraph& graph );
     ~Graph();
 
     int NumSources() const;
@@ -42,6 +45,8 @@ public:
     int EdgeOffset( int source ) const;
     int NumConnections( int source ) const;
 
+    void StartAssembly();
+    void StopAssembly();
     void Reserve( int numEdges );
     void PushBack( int source, int target );
 
@@ -49,18 +54,27 @@ public:
     void ResizeTo( int numVertices );
     void ResizeTo( int numSources, int numTargets );
 
+    const Graph& operator=( const Graph& graph );
+    // NOTE: This requires the DistGraph to be over a single process
+    const Graph& operator=( const DistGraph& graph );
+
 private:
     int numSources_, numTargets_;
     std::vector<int> sources_, targets_;
 
     // Helpers for local indexing
-    mutable bool haveEdgeOffsets_;
-    mutable std::vector<int> edgeOffsets_;
-    void UpdateEdgeOffsets() const;
+    bool assembling_, sorted_;
+    std::vector<int> edgeOffsets_;
+    void ComputeEdgeOffsets();
 
+    static bool ComparePairs
+    ( const std::pair<int,int>& a, const std::pair<int,int>& b );
+
+    void EnsureNotAssembling() const;
     void EnsureConsistentSizes() const;
     void EnsureConsistentCapacities() const;
 
+    friend class DistGraph;
     template<typename F> friend class SparseMatrix;
 };
 
@@ -70,18 +84,47 @@ private:
 
 inline 
 Graph::Graph()
-: numSources_(0), numTargets_(0)
-{ haveEdgeOffsets_ = false; }
+: numSources_(0), numTargets_(0), assembling_(false), sorted_(true)
+{ }
 
 inline 
 Graph::Graph( int numVertices )
-: numSources_(numVertices), numTargets_(numVertices)
-{ haveEdgeOffsets_ = false; }
+: numSources_(numVertices), numTargets_(numVertices), 
+  assembling_(false), sorted_(true)
+{ }
 
 inline 
 Graph::Graph( int numSources, int numTargets )
-: numSources_(numSources), numTargets_(numTargets)
-{ haveEdgeOffsets_ = false; }
+: numSources_(numSources), numTargets_(numTargets),
+  assembling_(false), sorted_(true)
+{ }
+
+inline
+Graph::Graph( const Graph& graph )
+{
+#ifndef RELEASE
+    PushCallStack("Graph::Graph");
+#endif
+    if( &graph != this )
+        *this = graph;
+    else
+        throw std::logic_error("Tried to construct a graph with itself");
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+    
+inline
+Graph::Graph( const DistGraph& graph )
+{
+#ifndef RELEASE
+    PushCallStack("Graph::Graph");
+#endif
+    *this = graph;
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
 
 inline 
 Graph::~Graph()
@@ -127,6 +170,7 @@ Graph::Source( int edge ) const
         throw std::logic_error("Edge number out of bounds");
     PopCallStack();
 #endif
+    EnsureNotAssembling();
     return sources_[edge];
 }
 
@@ -139,6 +183,7 @@ Graph::Target( int edge ) const
         throw std::logic_error("Edge number out of bounds");
     PopCallStack();
 #endif
+    EnsureNotAssembling();
     return targets_[edge];
 }
 
@@ -150,7 +195,7 @@ Graph::EdgeOffset( int source ) const
     if( source < 0 || source > numSources_ )
         throw std::logic_error("Out of bounds source index");
 #endif
-    UpdateEdgeOffsets();
+    EnsureNotAssembling();
     const int edgeOffset = edgeOffsets_[source];
 #ifndef RELEASE
     PopCallStack();
@@ -171,34 +216,131 @@ Graph::NumConnections( int source ) const
     return numConnections;
 }
 
-inline void
-Graph::UpdateEdgeOffsets() const
+inline const Graph&
+Graph::operator=( const Graph& graph )
 {
 #ifndef RELEASE
-    PushCallStack("Graph::UpdateEdgeOffsets");
+    PushCallStack("Graph::operator=");
 #endif
-    if( !haveEdgeOffsets_ )
-    {
-        int sourceOffset = 0;
-        int prevSource = -1;
-        edgeOffsets_.resize( numSources_+1 );
-        const int numEdges = NumEdges();
-        for( int edge=0; edge<numEdges; ++edge )
-        {
-            const int source = Source( edge );
+    numSources_ = graph.numSources_;
+    numTargets_ = graph.numTargets_;
+    sources_ = graph.sources_; 
+    targets_ = graph.targets_;
+
+    sorted_ = graph.sorted_;
+    assembling_ = graph.assembling_;
+    edgeOffsets_ = graph.edgeOffsets_;
 #ifndef RELEASE
-            if( source < prevSource )
-                throw std::runtime_error("sources were not properly sorted");
+    PopCallStack();
 #endif
-            while( source != prevSource )
-            {
-                edgeOffsets_[sourceOffset++] = edge;
-                ++prevSource;
-            }
+    return *this;
+}
+
+inline const Graph&
+Graph::operator=( const DistGraph& graph )
+{
+#ifndef RELEASE
+    PushCallStack("Graph::operator=");
+#endif
+    mpi::Comm comm = graph.Comm();
+    const int commSize = mpi::CommSize( comm );
+    if( commSize != 1 )
+        throw std::logic_error
+        ("Cannot yet construct sequential graph from distributed graph");
+
+    numSources_ = graph.numSources_;
+    numTargets_ = graph.numTargets_;
+    sources_ = graph.sources_; 
+    targets_ = graph.targets_;
+
+    sorted_ = graph.sorted_;
+    assembling_ = graph.assembling_;
+    edgeOffsets_ = graph.localEdgeOffsets_;
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return *this;
+}
+
+inline bool
+Graph::ComparePairs
+( const std::pair<int,int>& a, const std::pair<int,int>& b )
+{ 
+    return a.first < b.first || (a.first  == b.first && a.second < b.second);
+}
+
+inline void
+Graph::StartAssembly()
+{
+#ifndef RELEASE
+    PushCallStack("Graph::StartAssembly");
+#endif
+    EnsureNotAssembling();
+    assembling_ = true;
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+inline void
+Graph::StopAssembly()
+{
+#ifndef RELEASE
+    PushCallStack("Graph::StopAssembly");
+#endif
+    if( !assembling_ )
+        throw std::logic_error("Cannot stop assembly without starting");
+    assembling_ = false;
+
+    // Ensure that the connection pairs are sorted
+    if( !sorted_ )
+    {
+        const int numEdges = sources_.size();
+        std::vector<std::pair<int,int> > pairs( numEdges );
+        for( int e=0; e<numEdges; ++e )
+        {
+            pairs[e].first = sources_[e];
+            pairs[e].second = targets_[e];
         }
-        edgeOffsets_[numSources_] = numEdges;
-        haveEdgeOffsets_ = true;
+        std::sort( pairs.begin(), pairs.end(), ComparePairs );
+        for( int e=0; e<numEdges; ++e )
+        {
+            sources_[e] = pairs[e].first;
+            targets_[e] = pairs[e].second;
+        }
     }
+
+    ComputeEdgeOffsets();
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+inline void
+Graph::ComputeEdgeOffsets()
+{
+#ifndef RELEASE
+    PushCallStack("Graph::ComputeEdgeOffsets");
+#endif
+    // Compute the edge offsets
+    int sourceOffset = 0;
+    int prevSource = -1;
+    edgeOffsets_.resize( numSources_+1 );
+    const int numEdges = NumEdges();
+    for( int edge=0; edge<numEdges; ++edge )
+    {
+        const int source = Source( edge );
+#ifndef RELEASE
+        if( source < prevSource )
+            throw std::runtime_error("sources were not properly sorted");
+#endif
+        while( source != prevSource )
+        {
+            edgeOffsets_[sourceOffset++] = edge;
+            ++prevSource;
+        }
+    }
+    edgeOffsets_[numSources_] = numEdges;
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -217,20 +359,24 @@ Graph::PushBack( int source, int target )
 #ifndef RELEASE
     PushCallStack("Graph::PushBack");
     EnsureConsistentSizes();
-    if( sources_.size() != 0 && source < sources_.back() )
-        throw std::logic_error("Incorrectly ordered sources");
-    if( targets_.size() != 0 && 
-        source == sources_.back() && target < targets_.back() )
-        throw std::logic_error("Incorrectly ordered targets");
     const int capacity = Capacity();
     const int numEdges = NumEdges();
     if( numEdges == capacity )
         std::cerr << "WARNING: Pushing back without first reserving space" 
                   << std::endl;
 #endif
+    if( !assembling_ )
+        throw std::logic_error("Must start assembly before pushing back");
     sources_.push_back( source );
     targets_.push_back( target );
-    haveEdgeOffsets_ = false;
+    if( sorted_ )
+    {
+        if( sources_.size() != 0 && source < sources_.back() )
+            sorted_ = false;
+        if( targets_.size() != 0 &&
+            source == sources_.back() && target < targets_.back() )
+            sorted_ = false;
+    }
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -243,7 +389,8 @@ Graph::Empty()
     numTargets_ = 0;
     sources_.clear();
     targets_.clear();
-    haveEdgeOffsets_ = false;
+    sorted_ = true;
+    assembling_ = false;
     edgeOffsets_.clear();
 }
 
@@ -258,8 +405,16 @@ Graph::ResizeTo( int numSources, int numTargets )
     numTargets_ = numTargets;
     sources_.clear();
     targets_.clear();
-    haveEdgeOffsets_ = false;
+    sorted_ = true;
+    assembling_ = false;
     edgeOffsets_.clear();
+}
+
+inline void
+Graph::EnsureNotAssembling() const
+{
+    if( assembling_ )
+        throw std::logic_error("Should have finished assembling first");
 }
 
 inline void

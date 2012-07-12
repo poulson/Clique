@@ -122,6 +122,10 @@ inline int Bisect
     // Create space for the result
     localMap.resize( numLocalSources );
 
+    mpi::Barrier( comm );
+    if( commRank == 0 )
+        std::cout << "Starting CliqBisect..." << std::endl;
+
     idx_t numParSeps = 10;
     idx_t numSeqSeps = 5;
     real_t imbalance = 1.1;
@@ -133,6 +137,13 @@ inline int Bisect
     const int leftChildSize = sizes[0];
     const int rightChildSize = sizes[1];
     const int sepSize = sizes[2];
+
+    if( commRank == 0 )
+    {
+        std::cout << "sizes: " 
+                  << sizes[0] << ", " << sizes[1] << ", " << sizes[2] 
+                  << std::endl;
+    }
 
     // Build the child graph from the partitioned parent
     const int smallTeamSize = commSize/2;
@@ -147,8 +158,7 @@ inline int Bisect
     const int rightTeamBlocksize = rightChildSize / rightTeamSize;
     const bool inLeftTeam = ( smallOnLeft == inSmallTeam );
 
-    // Count how many indices we must send to each process (row indices and 
-    // the number of nonzeros in that row)
+    // Count how many rows we must send to each process 
     std::vector<int> rowSendSizes( commSize, 0 );
     for( int s=0; s<numLocalSources; ++s )
     {
@@ -156,13 +166,13 @@ inline int Bisect
         if( i < leftChildSize )
         {
             const int q = leftTeamOffset + i/leftTeamBlocksize;
-            rowSendSizes[q] += 2;
+            ++rowSendSizes[q];
         }
         else if( i < leftChildSize+rightChildSize )
         {
             const int q = 
                 rightTeamOffset + (i-leftChildSize)/rightTeamBlocksize;
-            rowSendSizes[q] += 2;
+            ++rowSendSizes[q];
         }
     }
 
@@ -172,25 +182,26 @@ inline int Bisect
     ( &rowSendSizes[0], 1,
       &rowRecvSizes[0], 1, comm );
 
-    // Prepare for the AllToAll to exchange row indices
+    // Prepare for the AllToAll to exchange the row indices and 
+    // the number of column indices per row
     int numSendRows=0;
     std::vector<int> rowSendOffsets( commSize );
     for( int q=0; q<commSize; ++q )
     {
-        rowSendOffsets[q] = 2*numSendRows;
-        numSendRows += rowSendSizes[q]/2;
+        rowSendOffsets[q] = numSendRows;
+        numSendRows += rowSendSizes[q];
     }
     int numRecvRows=0;
     std::vector<int> rowRecvOffsets( commSize );
     for( int q=0; q<commSize; ++q )
     {
-        rowRecvOffsets[q] = 2*numRecvRows;
-        numRecvRows += rowRecvSizes[q]/2;
+        rowRecvOffsets[q] = numRecvRows;
+        numRecvRows += rowRecvSizes[q];
     }
 
-    // Pack the row indices and how many entries there will be
-    // TODO: Double offsets and sizes
-    std::vector<int> rowSendIndices( 2*numSendRows );
+    // Pack the row indices and how many column entries there will be per row
+    std::vector<int> rowSendLengths( numSendRows );
+    std::vector<int> rowSendIndices( numSendRows );
     std::vector<int> offsets = rowSendOffsets;
     for( int s=0; s<numLocalSources; ++s )
     {
@@ -198,38 +209,113 @@ inline int Bisect
         if( i < leftChildSize )
         {
             const int q = leftTeamOffset + i/leftTeamBlocksize;
-            rowSendIndices[offsets[q]++] = i;
-            rowSendIndices[offsets[q]++] = graph.NumConnections( s );
+            rowSendLengths[offsets[q]] = i;
+            rowSendIndices[offsets[q]] = graph.NumConnections( s );
+            ++offsets[q];
         }
         else if( i < leftChildSize+rightChildSize )
         {
             const int q = 
                 rightTeamOffset + (i-leftChildSize)/rightTeamBlocksize;
-            rowSendIndices[offsets[q]++] = i;
-            rowSendIndices[offsets[q]++] = graph.NumConnections( s );
+            rowSendLengths[offsets[q]] = i;
+            rowSendIndices[offsets[q]] = graph.NumConnections( s );
+            ++offsets[q];
         }
     }
 
+    // Perform the row lengths exchange
+    std::vector<int> rowRecvLengths( numRecvRows );
+    mpi::AllToAll
+    ( &rowSendLengths[0], &rowSendSizes[0], &rowSendOffsets[0],
+      &rowRecvLengths[0], &rowRecvSizes[0], &rowRecvOffsets[0], comm );
+    rowSendLengths.clear();
+
     // Perform the row indices exchange
-    std::vector<int> rowRecvIndices( 2*numRecvRows );
+    std::vector<int> rowRecvIndices( numRecvRows );
     mpi::AllToAll
     ( &rowSendIndices[0], &rowSendSizes[0], &rowSendOffsets[0],
       &rowRecvIndices[0], &rowRecvSizes[0], &rowRecvOffsets[0], comm );
+    rowSendIndices.clear();
+    rowSendSizes.clear();
+    rowSendOffsets.clear();
 
-    // Compute how many total connections we will need to receive
-    // HERE
+    // Set up for sending the column indices
+    int numSendIndices=0;
+    std::vector<int> indexSendSizes( commSize, 0 );
+    std::vector<int> indexSendOffsets( commSize );
+    for( int q=0; q<commSize; ++q )
+    {
+        const int numRows = rowSendSizes[q];
+        const int offset = rowSendOffsets[q];
+        for( int s=0; s<numRows; ++s )
+            indexSendSizes[q] += rowSendIndices[offset+s];
 
-    // Pack the column indices
-    // TODO
+        indexSendOffsets[q] = numSendIndices;
+        numSendIndices += indexSendSizes[q];
+    }
+    int numRecvIndices=0;
+    std::vector<int> indexRecvSizes( commSize, 0 );
+    std::vector<int> indexRecvOffsets( commSize );
+    for( int q=0; q<commSize; ++q )
+    {
+        const int numRows = rowRecvSizes[q];
+        const int offset = rowRecvOffsets[q];
+        for( int s=0; s<numRows; ++s )
+            indexRecvSizes[q] += rowRecvIndices[offset+s];
 
-    // Communicate the column indices
-    // TODO
+        indexRecvOffsets[q] = numRecvIndices;
+        numRecvIndices += indexRecvSizes[q];
+    }
 
-    // Map the column indices with 'MapIndices'
-    // TODO
+    // Pack the indices
+    std::vector<int> sendIndices( numSendIndices );
+    offsets = indexSendOffsets;
+    for( int s=0; s<numLocalSources; ++s )
+    {
+        const int i = localMap[s];
+        if( i < leftChildSize )
+        {
+            const int q = leftTeamOffset + i/leftTeamBlocksize;
+
+            int& offset = offsets[q];
+            const int numConnections = graph.NumConnections( s );
+            const int localEdgeOffset = graph.LocalEdgeOffset( s );
+            for( int j=0; j<numConnections; ++j )
+                sendIndices[offset++] = graph.Target( localEdgeOffset+j );
+        }
+        else if( i < leftChildSize+rightChildSize )
+        {
+            const int q =
+                rightTeamOffset + (i-leftChildSize)/rightTeamBlocksize;
+               
+            int& offset = offsets[q];
+            const int numConnections = graph.NumConnections( s );
+            const int localEdgeOffset = graph.LocalEdgeOffset( s );
+            for( int j=0u; j<numConnections; ++j )
+                sendIndices[offset++] = graph.Target( localEdgeOffset+j );
+        }
+    }
+
+    // Send/recv the column indices
+    std::vector<int> recvIndices( numRecvIndices );
+    mpi::AllToAll
+    ( &sendIndices[0], &indexSendSizes[0], &indexSendOffsets[0],
+      &recvIndices[0], &indexRecvSizes[0], &indexRecvOffsets[0], comm );
+    sendIndices.clear();
+    indexSendSizes.clear();
+    indexSendOffsets.clear();
+
+    // Get the indices after reordering
+    mpi::Barrier( comm );
+    if( commRank == 0 )
+        std::cout << "Starting MapIndices..." << std::endl;
+    MapIndices( localMap, blocksize, recvIndices, comm );
 
     // Put the connections into our new graph
-    // TODO
+    mpi::Barrier( comm );
+    if( commRank == 0 )
+        std::cout << "Starting assembly..." << std::endl;
+
     const int childTeamRank = 
         ( inLeftTeam ? commRank-leftTeamOffset : commRank-rightTeamOffset );
     MPI_Comm childComm;
@@ -245,6 +331,21 @@ inline int Bisect
         haveLeftChild = false;
         child.ResizeTo( rightChildSize );
     }
+    const int childFirstLocalSource = child.FirstLocalSource();
+    child.StartAssembly();
+    child.Reserve( recvIndices.size() );
+    int offset=0;
+    for( int s=0; s<numRecvRows; ++s )
+    {
+        const int source = rowRecvIndices[s];
+        const int numConnections = rowRecvLengths[s];
+        for( int t=0; t<numConnections; ++t )
+        {
+            const int target = recvIndices[offset++];
+            child.PushBack( source, target );
+        }
+    }
+    child.StopAssembly();
 #ifndef RELEASE
     PopCallStack();
 #endif

@@ -53,6 +53,7 @@ main( int argc, char* argv[] )
 
         // Fill our portion of the graph of a 3D n x n x n 7-point stencil
         // in natural ordering: (x,y,z) at x + y*n + z*n*n
+        graph.StartAssembly();
         graph.Reserve( 7*numLocalSources );
         for( int iLocal=0; iLocal<numLocalSources; ++iLocal )
         {
@@ -75,6 +76,7 @@ main( int argc, char* argv[] )
             if( z != n-1 )
                 graph.PushBack( i, i+n*n );
         }
+        graph.StopAssembly();
 
         DistGraph child;
         std::vector<int> localMap;
