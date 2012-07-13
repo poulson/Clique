@@ -31,13 +31,10 @@ namespace cliq {
 void NestedDissection
 ( const DistGraph& graph, DistSeparatorTree& sepTree, DistSymmElimTree& eTree );*/
 
-// TODO
-/*
 // For 1 process
 int Bisect
 ( const Graph& graph, Graph& leftChild, Graph& rightChild, 
   std::vector<int>& map );
-*/
 
 int Bisect
 ( const DistGraph& graph, DistGraph& child, 
@@ -54,6 +51,149 @@ void InvertMap
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
+
+inline int Bisect
+( const Graph& graph ,Graph& leftChild, Graph& rightChild,
+  std::vector<int>& map )
+{
+#ifndef RELEASE
+    PushCallStack("Bisect");
+#endif
+    // TODO: Use a wrapper to METIS instead of ParMETIS
+
+    // Describe the source distribution
+    const int numSources = graph.NumSources();
+    std::vector<idx_t> vtxDist( 2 );
+    vtxDist[0] = 0;
+    vtxDist[1] = numSources;
+
+    // ParMETIS assumes that there are no self-connections, so we must
+    // manually remove them from our graph
+    const int numEdges = graph.NumEdges();
+    int numSelfEdges = 0;
+    for( int i=0; i<numEdges; ++i )
+        if( graph.Source(i) == graph.Target(i) )
+            ++numSelfEdges;
+
+    // Fill our connectivity (ignoring self edges)
+    const int numValidEdges = numEdges - numSelfEdges;
+    std::vector<idx_t> xAdj( numSources+1 );
+    std::vector<idx_t> adjacency( numValidEdges );
+    int validCounter=0;
+    int sourceOffset=0;
+    int prevSource=-1;
+    for( int edge=0; edge<numEdges; ++edge )
+    {
+        const int source = graph.Source( edge );
+        const int target = graph.Target( edge );
+#ifndef RELEASE
+        if( source < prevSource )
+            throw std::runtime_error("sources were not properly sorted");
+#endif
+        while( source != prevSource )
+        {
+            xAdj[sourceOffset++] = validCounter;
+            ++prevSource;
+        }
+        if( source != target )
+        {
+            adjacency[validCounter] = target;
+            ++validCounter;
+        }
+    }
+#ifndef RELEASE
+    if( sourceOffset != numSources )
+        throw std::logic_error("Mistake in xAdj computation");
+#endif
+    xAdj[numSources] = numValidEdges;
+
+    // Create space for the result
+    map.resize( numSources );
+
+    // Use the custom ParMETIS interface
+    mpi::Comm comm = mpi::COMM_SELF;
+    idx_t numParSeps = 10;
+    idx_t numSeqSeps = 5;
+    real_t imbalance = 1.1;
+    idx_t sizes[3];
+    const int retval = CliqBisect
+    ( &vtxDist[0], &xAdj[0], &adjacency[0], &numParSeps, &numSeqSeps, 
+      &imbalance, NULL, &map[0], sizes, &comm );
+#ifndef RELEASE
+    std::vector<int> timesMapped( numSources, 0 );
+    for( int i=0; i<numSources; ++i )
+        ++timesMapped[map[i]];
+    for( int i=0; i<numSources; ++i )
+    {
+        if( timesMapped[i] != 1 )
+        {
+            std::ostringstream msg;
+            msg << timesMapped[i] << " vertices were relabeled as "
+                << i;
+            throw std::logic_error( msg.str().c_str() );
+        }
+    }
+#endif
+
+    const int leftChildSize = sizes[0];
+    const int rightChildSize = sizes[1];
+    const int sepSize = sizes[2];
+
+    // Build the inverse map
+    std::vector<int> inverseMap( numSources );
+    for( int i=0; i<numSources; ++i )
+        inverseMap[map[i]] = i;
+
+    // Get an upper bound on the number of edges in the child graphs
+    int leftChildUpperBound=0, rightChildUpperBound=0;
+    for( int s=0; s<leftChildSize; ++s )
+        leftChildUpperBound += graph.NumConnections( inverseMap[s] );
+    for( int s=0; s<rightChildSize; ++s )
+        rightChildUpperBound += 
+            graph.NumConnections( inverseMap[s+leftChildSize] );
+
+    // Build the left child's graph
+    leftChild.ResizeTo( leftChildSize );
+    leftChild.StartAssembly();
+    leftChild.Reserve( leftChildUpperBound );
+    for( int s=0; s<leftChildSize; ++s )
+    {
+        const int source = s;
+        const int inverseSource = inverseMap[s];
+        const int offset = graph.EdgeOffset( inverseSource );
+        const int numConnections = graph.NumConnections( inverseSource );
+        for( int t=0; t<numConnections; ++t )
+        {
+            const int inverseTarget = graph.Target( offset+t );
+            const int target = map[inverseTarget];
+            leftChild.PushBack( source, target );
+        }
+    }
+    leftChild.StopAssembly();
+
+    // Build the right child's graph
+    rightChild.ResizeTo( rightChildSize );
+    rightChild.StartAssembly();
+    rightChild.Reserve( rightChildUpperBound );
+    for( int s=0; s<rightChildSize; ++s )
+    {
+        const int source = s+leftChildSize;
+        const int inverseSource = inverseMap[source];
+        const int offset = graph.EdgeOffset( inverseSource );
+        const int numConnections = graph.NumConnections( inverseSource );
+        for( int t=0; t<numConnections; ++t )
+        {
+            const int inverseTarget = graph.Target( offset+t );
+            const int target = map[inverseTarget];
+            rightChild.PushBack( source-leftChildSize, target-leftChildSize );
+        }
+    }
+    rightChild.StopAssembly();
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return sepSize;
+}
 
 inline int Bisect
 ( const DistGraph& graph, DistGraph& child, 
