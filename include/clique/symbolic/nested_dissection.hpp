@@ -679,10 +679,6 @@ MapIndices
         requestOffsets[q] = numRequests;
         numRequests += requestSizes[q];
     }
-#ifndef RELEASE
-    if( numRequests != numLocalIndices )
-        throw std::logic_error("Miscalculated numRequests");
-#endif
     int numFulfills=0;
     std::vector<int> fulfillOffsets( commSize );
     for( int q=0; q<commSize; ++q )
