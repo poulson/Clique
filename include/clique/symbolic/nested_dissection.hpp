@@ -40,12 +40,18 @@ int Bisect
   std::vector<int>& localMap, bool& haveLeftChild );
 
 void MapIndices
-( const std::vector<int>& localMap, int blocksize,
-  std::vector<int>& indices, mpi::Comm comm );
+( const std::vector<int>& localMap, 
+        std::vector<int>& localIndices, int blocksize, mpi::Comm comm );
+
+// third(i) := second(first(i))
+void ComposeMaps
+( const std::vector<int>& localFirstMap, 
+  const std::vector<int>& localSecondMap,
+        std::vector<int>& localThirdMap, int blocksize, mpi::Comm comm );
 
 void InvertMap
-( const std::vector<int>& localMap, int blocksize,
-   std::vector<int>& localInverseMap, mpi::Comm comm );
+( const std::vector<int>& localMap,
+        std::vector<int>& localInverseMap, int blocksize, mpi::Comm comm );
 
 int DistributedDepth( mpi::Comm comm );
 
@@ -551,7 +557,7 @@ Bisect
     indexSendOffsets.clear();
 
     // Get the indices after reordering
-    MapIndices( localMap, blocksize, recvIndices, comm );
+    MapIndices( localMap, recvIndices, blocksize, comm );
 
     // Put the connections into our new graph
     const int childTeamRank = 
@@ -597,8 +603,8 @@ Bisect
 // processes's localMap. 
 inline void 
 MapIndices
-( const std::vector<int>& localMap, int blocksize,
-  std::vector<int>& indices, mpi::Comm comm )
+( const std::vector<int>& localMap, 
+        std::vector<int>& localIndices, int blocksize, mpi::Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("MapIndices");
@@ -608,13 +614,13 @@ MapIndices
 
     const int firstLocalSource = blocksize*commRank;
     const int numLocalSources = localMap.size();
-    const int numLocalIndices = indices.size();
+    const int numLocalIndices = localIndices.size();
 
     // Count how many indices we need each process to map
     std::vector<int> requestSizes( commSize, 0 );
     for( int s=0; s<numLocalIndices; ++s )
     {
-        const int i = indices[s];
+        const int i = localIndices[s];
 #ifndef RELEASE
         if( i < 0 )
             throw std::logic_error("Index was negative");
@@ -654,7 +660,7 @@ MapIndices
     std::vector<int> offsets = requestOffsets;
     for( int s=0; s<numLocalIndices; ++s )
     {
-        const int i = indices[s];
+        const int i = localIndices[s];
         const int q = std::min( i/blocksize, commSize-1 );
         requests[offsets[q]++] = i;
     }
@@ -691,10 +697,27 @@ MapIndices
     offsets = requestOffsets;
     for( int s=0; s<numLocalIndices; ++s )
     {
-        const int i = indices[s];
+        const int i = localIndices[s];
         const int q = std::min( i/blocksize, commSize-1 );
-        indices[s] = requests[offsets[q]++];
+        localIndices[s] = requests[offsets[q]++];
     }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+// third(i) := second(first(i))
+inline void 
+ComposeMaps
+( const std::vector<int>& localFirstMap, 
+  const std::vector<int>& localSecondMap,
+        std::vector<int>& localThirdMap, int blocksize, mpi::Comm comm )
+{
+#ifndef RELEASE
+    PushCallStack("ComposeMaps");
+#endif
+    localThirdMap = localFirstMap;
+    MapIndices( localSecondMap, localThirdMap, blocksize, comm );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -703,8 +726,8 @@ MapIndices
 // Generate our local portion of the inverse of a distributed map
 inline void 
 InvertMap
-( const std::vector<int>& localMap, int blocksize,
-  std::vector<int>& localInverseMap, mpi::Comm comm )
+( const std::vector<int>& localMap, 
+        std::vector<int>& localInverseMap, int blocksize, mpi::Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("InvertMap");
