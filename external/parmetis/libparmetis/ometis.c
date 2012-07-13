@@ -17,25 +17,42 @@ int CliqBisect(idx_t *vtxdist, idx_t *xadj, idx_t *adjncy,
               real_t *ubfrac, idx_t *idbglvl, idx_t *order, idx_t *sizes, 
               MPI_Comm *comm)
 {
-  idx_t i, npes, mype, dbglvl, status;
+  idx_t i, j, npes, npesNonzero, mype, mypeNonzero, dbglvl, status, haveData;
   ctrl_t *ctrl;
   graph_t *graph;
+  MPI_Comm nonzeroComm, nullComm;
   size_t curmem;
 
   gkMPI_Comm_size(*comm, &npes);
   gkMPI_Comm_rank(*comm, &mype);
 
-  /* Deal with poor vertex distributions */
-  if (GlobalSEMinComm(*comm, vtxdist[mype+1]-vtxdist[mype]) < 1) {
-    printf("Error: Poor vertex distribution (processor with no vertices).\n");
-    return METIS_ERROR;
+  haveData = ( vtxdist[mype+1]-vtxdist[mype] != 0 );
+  if( haveData )
+    gkMPI_Comm_split(*comm, 1, mype, &nonzeroComm);
+  else
+    gkMPI_Comm_split(*comm, MPI_UNDEFINED, 0, &nullComm);
+
+  if( !haveData )
+  {
+      sizes[0] = sizes[1] = sizes[2] = 0;
+      gkMPI_Allreduce(MPI_IN_PLACE, (void *)sizes, 3, IDX_T, MPI_SUM, *comm);
+      return METIS_OK;
   }
+
+  gkMPI_Comm_size(nonzeroComm, &npesNonzero);
+  gkMPI_Comm_rank(nonzeroComm, &mypeNonzero);
+
+  /* Compress the vtxdist data to make it match the new communicator */
+  j=0;
+  for( i=1; i<npes+1; ++i )
+      if( vtxdist[i] != vtxdist[j] )
+          vtxdist[++j] = vtxdist[i];
 
   status = METIS_OK;
   gk_malloc_init();
   curmem = gk_GetCurMemoryUsed();
 
-  ctrl = SetupCtrl(PARMETIS_OP_KMETIS, NULL, 1, 2, NULL, NULL, *comm);
+  ctrl = SetupCtrl(PARMETIS_OP_KMETIS, NULL, 1, 2, NULL, NULL, nonzeroComm);
 
   dbglvl = (idbglvl == NULL ? 0 : *idbglvl);
   ctrl->dbglvl = dbglvl;
@@ -44,7 +61,8 @@ int CliqBisect(idx_t *vtxdist, idx_t *xadj, idx_t *adjncy,
   AllocateWSpace(ctrl, 10*graph->nvtxs);
 
   /* Compute an initial partition: for some reason this improves the quality */
-  ctrl->CoarsenTo = gk_min(vtxdist[npes]+1, 200*gk_max(npes,ctrl->nparts));
+  ctrl->CoarsenTo = gk_min(vtxdist[npesNonzero]+1, 
+                           200*gk_max(npesNonzero,ctrl->nparts));
   Global_Partition(ctrl, graph); 
 
   /* Compute an ordering */
@@ -57,10 +75,15 @@ int CliqBisect(idx_t *vtxdist, idx_t *xadj, idx_t *adjncy,
   ctrl->ubfrac    = (ubfrac == NULL ? ORDER_UNBALANCE_FRACTION : *ubfrac);
   ctrl->dbglvl    = dbglvl;
   ctrl->ipart     = ISEP_NODE;
-  ctrl->CoarsenTo = gk_min(graph->gnvtxs-1,1500*npes); 
+  ctrl->CoarsenTo = gk_min(graph->gnvtxs-1,1500*npesNonzero); 
   CliqOrder(ctrl, graph, order, sizes);
 
   FreeInitialGraphAndRemap(graph);
+
+  /* Pass the data to the early-exiting processes with an allreduce */
+  if( mypeNonzero != 0 )
+      sizes[0] = sizes[1] = sizes[2] = 0;
+  gkMPI_Allreduce(MPI_IN_PLACE, (void*)sizes, 3, IDX_T, MPI_SUM, *comm);
 
   goto DONE;
 
@@ -77,9 +100,8 @@ DONE:
 
 void CliqOrder(ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *sizes)
 {
-  idx_t i, nparts, nvtxs;
+  idx_t i, nvtxs;
 
-  nparts = 2;
   nvtxs = graph->nvtxs;
   iset(nvtxs, -1, order);
 

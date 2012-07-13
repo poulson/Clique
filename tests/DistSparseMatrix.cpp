@@ -22,9 +22,9 @@ using namespace cliq;
 
 void Usage()
 {
-    std::cout << "NestedDissection <n> <cutoff>\n" 
+    std::cout << "DistSparseMatrix <n>\n" 
               << "  n: size of n x n x n mesh\n"
-              << "  cutoff: maximum size of leaf node\n"
+              << "  cutoff: maximum leaf size\n"
               << std::endl;
 }
 
@@ -48,43 +48,63 @@ main( int argc, char* argv[] )
 
     try
     {
-        const int numVertices = n*n*n;
-        DistGraph graph( numVertices, comm );
+        const int height = n*n*n;
+        const int width = height;
+        DistSparseMatrix<double> A( height, width, comm );
 
-        const int firstLocalSource = graph.FirstLocalSource();
-        const int numLocalSources = graph.NumLocalSources();
+        const int firstLocalRow = A.FirstLocalRow();
+        const int localHeight = A.LocalHeight();
 
-        // Fill our portion of the graph of a 3D n x n x n 7-point stencil
-        // in natural ordering: (x,y,z) at x + y*n + z*n*n
+        // Fill our portion of the 3D negative Laplacian using a n x n x n 
+        // 7-point stencil in natural ordering: (x,y,z) at x + y*n + z*n*n
         if( commRank == 0 )
         {
-            std::cout << "Filling local portion of graph...";
+            std::cout << "Filling local portion of matrix...";
             std::cout.flush();
         }
-        graph.StartAssembly();
-        graph.Reserve( 7*numLocalSources );
-        for( int iLocal=0; iLocal<numLocalSources; ++iLocal )
+        A.StartAssembly();
+        A.Reserve( 7*localHeight );
+        for( int iLocal=0; iLocal<localHeight; ++iLocal )
         {
-            const int i = firstLocalSource + iLocal;
+            const int i = firstLocalRow + iLocal;
             const int x = i % n;
             const int y = (i/n) % n;
             const int z = i/(n*n);
 
+            double sum = 0.;
             if( z != 0 )
-                graph.PushBack( i, i-n*n );
+            {
+                A.PushBack( i, i-n*n, -1. );
+                sum += 1.;
+            }
             if( y != 0 )
-                graph.PushBack( i, i-n );
+            {
+                A.PushBack( i, i-n, -1. );
+                sum += 1.;
+            }
             if( x != 0 )
-                graph.PushBack( i, i-1 );
-            graph.PushBack( i, i );
+            {
+                A.PushBack( i, i-1, -1. );
+                sum += 1.;
+            }
             if( x != n-1 )
-                graph.PushBack( i, i+1 );
+            {
+                A.PushBack( i, i+1, -1. );
+                sum += 1.;
+            }
             if( y != n-1 )
-                graph.PushBack( i, i+n );
+            {
+                A.PushBack( i, i+n, -1. );
+                sum += 1.;
+            }
             if( z != n-1 )
-                graph.PushBack( i, i+n*n );
-        }
-        graph.StopAssembly();
+            {
+                A.PushBack( i, i+n*n, -1. );
+                sum += 1.;
+            }
+            A.PushBack( i, i, sum );
+        } 
+        A.StopAssembly();
         mpi::Barrier( comm );
         if( commRank == 0 )
             std::cout << "done" << std::endl;
@@ -94,6 +114,7 @@ main( int argc, char* argv[] )
             std::cout << "Running nested dissection...";
             std::cout.flush();
         }
+        const DistGraph& graph = A.Graph();
         DistSymmInfo info;
         DistSeparatorTree sepTree;
         NestedDissection( graph, info, sepTree, cutoff );
@@ -104,7 +125,7 @@ main( int argc, char* argv[] )
         if( commRank == 0 )
         {
             const int numDistNodes = info.distNodes.size();
-            const int numLocalNodes = info.localNodes.size(); 
+            const int numLocalNodes = info.localNodes.size();
             const int rootSepSize = info.distNodes.back().size;
             std::cout << "\n"
                       << "On the root process:\n"

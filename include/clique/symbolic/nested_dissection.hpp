@@ -56,9 +56,20 @@ void InvertMap
 
 int DistributedDepth( mpi::Comm comm );
 
+int RowToProcess( int i, int blocksize, int commSize );
+
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
+
+inline int
+RowToProcess( int i, int blocksize, int commSize )
+{
+    if( blocksize > 0 )
+        return std::min( i/blocksize, commSize-1 );
+    else
+        return commSize-1;
+}
 
 inline void
 DistributedDepthRecursion
@@ -490,6 +501,73 @@ NestedDissection
         localPerm[s] = s + firstLocalSource;
     NestedDissectionRecursion( graph, eTree, sepTree, localPerm, 0, 0, cutoff );
 
+    // Reverse the order of the pointers and indices in the elimination and 
+    // separator trees (so that the leaves come first)
+    const int numLocalNodes = eTree.localNodes.size();
+    const int lastIndex = numLocalNodes-1;
+    if( numLocalNodes != 1 )
+    {
+        // Switch the pointers for the root and last nodes
+        LocalSymmNode* rootNode = eTree.localNodes[0];
+        LocalSymmNode* lastNode = eTree.localNodes.back();
+        eTree.localNodes[0] = lastNode;
+        eTree.localNodes.back() = rootNode;
+        LocalSepOrLeaf* rootSep = sepTree.localSepsAndLeaves[0];
+        LocalSepOrLeaf* lastLeaf = sepTree.localSepsAndLeaves.back();
+        sepTree.localSepsAndLeaves[0] = lastLeaf;
+        sepTree.localSepsAndLeaves.back() = rootSep;
+
+        // Update their parent indices to what their final values will be
+        // (The root node's parent index does not need to be changed.)
+        lastNode->parent = lastIndex - lastNode->parent;
+        lastLeaf->parent = lastIndex - lastLeaf->parent;
+        // Update their children's indices
+        // (The last node will not have children)
+        const int numRootChildren = rootNode->children.size();
+        for( int c=0; c<numRootChildren; ++c )
+            rootNode->children[c] = lastIndex - rootNode->children[c];
+    }
+    // Switch the middle nodes (we will miss the middle node if an odd number)
+    for( int s=1; s<numLocalNodes/2; ++s )
+    {
+        const int t = lastIndex - s;
+        // Switch the pointers for the last and right nodes
+        LocalSymmNode* leftNode = eTree.localNodes[s];
+        LocalSymmNode* rightNode = eTree.localNodes[t];
+        LocalSepOrLeaf* leftSepOrLeaf = sepTree.localSepsAndLeaves[s];
+        LocalSepOrLeaf* rightSepOrLeaf = sepTree.localSepsAndLeaves[t];
+        eTree.localNodes[s] = rightNode;
+        eTree.localNodes[t] = leftNode;
+        sepTree.localSepsAndLeaves[s] = rightSepOrLeaf;
+        sepTree.localSepsAndLeaves[t] = leftSepOrLeaf;
+        // Update their parent indices to what their final values will be
+        leftNode->parent = lastIndex - leftNode->parent;
+        rightNode->parent = lastIndex - rightNode->parent;
+        leftSepOrLeaf->parent = lastIndex - leftSepOrLeaf->parent;
+        rightSepOrLeaf->parent = lastIndex - rightSepOrLeaf->parent;
+        // Update their children's indices
+        const int numLeftChildren = leftNode->children.size();
+        for( int c=0; c<numLeftChildren; ++c )
+            leftNode->children[c] = lastIndex - leftNode->children[c];
+        const int numRightChildren = rightNode->children.size();
+        for( int c=0; c<numRightChildren; ++c )
+            rightNode->children[c] = lastIndex - rightNode->children[c];
+    }
+    // Handle the middle node if it exists
+    if( numLocalNodes % 2 != 0 )
+    {
+        const int midIndex = numLocalNodes/2;
+        // Update the parent indices to the final values
+        LocalSymmNode* middleNode = eTree.localNodes[midIndex];
+        LocalSepOrLeaf* middleSepOrLeaf = sepTree.localSepsAndLeaves[midIndex];
+        middleNode->parent = lastIndex - middleNode->parent;
+        middleSepOrLeaf->parent = lastIndex - middleSepOrLeaf->parent;
+        // Update the children's indices
+        const int numChildren = middleNode->children.size();
+        for( int c=0; c<numChildren; ++c )
+            middleNode->children[c] = lastIndex - middleNode->children[c];
+    }
+
     SymmetricAnalysis( eTree, info, storeFactRecvIndices );
 #ifndef RELEASE
     PopCallStack();
@@ -559,7 +637,7 @@ Bisect
     idx_t numParSeps = 10;
     idx_t numSeqSeps = 5;
     real_t imbalance = 1.1;
-    idx_t sizes[3];
+    idx_t sizes[3] = { 0, 0, 0 };
     const int retval = CliqBisect
     ( &vtxDist[0], &xAdj[0], &adjacency[0], &numParSeps, &numSeqSeps, 
       &imbalance, NULL, &map[0], sizes, &comm );
@@ -651,8 +729,7 @@ Bisect
 #ifndef RELEASE
     PushCallStack("Bisect");
 #endif
-    mpi::Comm comm;
-    mpi::CommDup( graph.Comm(), comm );
+    mpi::Comm comm = graph.Comm();
     const int commSize = mpi::CommSize( comm );
     const int commRank = mpi::CommRank( comm );
     if( commSize == 1 )
@@ -716,7 +793,7 @@ Bisect
     idx_t numParSeps = 10;
     idx_t numSeqSeps = 5;
     real_t imbalance = 1.1;
-    idx_t sizes[3];
+    idx_t sizes[3] = { 0, 0, 0 };
     const int retval = CliqBisect
     ( &vtxDist[0], &xAdj[0], &adjacency[0], &numParSeps, &numSeqSeps, 
       &imbalance, NULL, &localMap[0], sizes, &comm );
@@ -765,14 +842,14 @@ Bisect
         if( i < leftChildSize )
         {
             const int q = leftTeamOffset + 
-                std::min(i/leftTeamBlocksize,leftTeamSize-1);
+                RowToProcess( i, leftTeamBlocksize, leftTeamSize );
             ++rowSendSizes[q];
         }
         else if( i < leftChildSize+rightChildSize )
         {
-            const int q = 
-                rightTeamOffset + 
-                std::min((i-leftChildSize)/rightTeamBlocksize,rightTeamSize-1);
+            const int q = rightTeamOffset +
+                RowToProcess
+                ( i-leftChildSize, rightTeamBlocksize, rightTeamSize );
             ++rowSendSizes[q];
         }
     }
@@ -810,16 +887,16 @@ Bisect
         if( i < leftChildSize )
         {
             const int q = leftTeamOffset + 
-                std::min(i/leftTeamBlocksize,leftTeamSize-1);
+                RowToProcess( i, leftTeamBlocksize, leftTeamSize );
             rowSendIndices[offsets[q]] = i;
             rowSendLengths[offsets[q]] = graph.NumConnections( s );
             ++offsets[q];
         }
         else if( i < leftChildSize+rightChildSize )
         {
-            const int q = 
-                rightTeamOffset + 
-                std::min((i-leftChildSize)/rightTeamBlocksize,rightTeamSize-1);
+            const int q = rightTeamOffset + 
+                RowToProcess
+                ( i-leftChildSize, rightTeamBlocksize, rightTeamSize );
             rowSendIndices[offsets[q]] = i;
             rowSendLengths[offsets[q]] = graph.NumConnections( s );
             ++offsets[q];
@@ -879,7 +956,7 @@ Bisect
         if( i < leftChildSize )
         {
             const int q = leftTeamOffset + 
-                std::min(i/leftTeamBlocksize,leftTeamSize-1);
+                RowToProcess( i, leftTeamBlocksize, leftTeamSize );
 
             int& offset = offsets[q];
             const int numConnections = graph.NumConnections( s );
@@ -889,9 +966,9 @@ Bisect
         }
         else if( i < leftChildSize+rightChildSize )
         {
-            const int q =
-                rightTeamOffset + 
-                std::min((i-leftChildSize)/rightTeamBlocksize,rightTeamSize-1);
+            const int q = rightTeamOffset + 
+                RowToProcess
+                ( i-leftChildSize, rightTeamBlocksize, rightTeamSize );
                
             int& offset = offsets[q];
             const int numConnections = graph.NumConnections( s );
@@ -941,7 +1018,6 @@ Bisect
         }
     }
     child.StopAssembly();
-    mpi::CommFree( comm );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -978,7 +1054,7 @@ MapIndices
 #endif
         if( i < numSources )
         {
-            const int q = std::min( i/blocksize, commSize-1 );
+            const int q = RowToProcess( i, blocksize, commSize );
             ++requestSizes[q];
         }
     }
@@ -1013,7 +1089,7 @@ MapIndices
         const int i = localIndices[s];
         if( i < numSources )
         {
-            const int q = std::min( i/blocksize, commSize-1 );
+            const int q = RowToProcess( i, blocksize, commSize );
             requests[offsets[q]++] = i;
         }
     }
@@ -1053,7 +1129,7 @@ MapIndices
         const int i = localIndices[s];
         if( i < numSources )
         {
-            const int q = std::min( i/blocksize, commSize-1 );
+            const int q = RowToProcess( i, blocksize, commSize );
             localIndices[s] = requests[offsets[q]++];
         }
     }
@@ -1100,7 +1176,7 @@ InvertMap
     for( int s=0; s<numLocalSources; ++s )
     {
         const int i = localMap[s];
-        const int q = std::min( i/blocksize, commSize-1 );
+        const int q = RowToProcess( i, blocksize, commSize );
         sendSizes[q] += 2;
     }
 
@@ -1140,7 +1216,7 @@ InvertMap
     for( int s=0; s<numLocalSources; ++s )
     {
         const int i = localMap[s];
-        const int q = std::min( i/blocksize, commSize-1 );
+        const int q = RowToProcess( i, blocksize, commSize );
         sends[offsets[q]++] = s+firstLocalSource;
         sends[offsets[q]++] = i;
     }
