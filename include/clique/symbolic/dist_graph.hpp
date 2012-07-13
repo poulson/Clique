@@ -101,9 +101,9 @@ private:
 
 inline 
 DistGraph::DistGraph()
-: numSources_(0), numTargets_(0), assembling_(false), sorted_(true)
+: numSources_(0), numTargets_(0)
 {
-    mpi::CommDup( mpi::COMM_WORLD, comm_ );
+    SetComm( mpi::COMM_WORLD );
     blocksize_ = 0;
     firstLocalSource_ = 0;
     numLocalSources_ = 0;
@@ -111,9 +111,9 @@ DistGraph::DistGraph()
 
 inline
 DistGraph::DistGraph( mpi::Comm comm )
-: numSources_(0), numTargets_(0), assembling_(false), sorted_(true)
+: numSources_(0), numTargets_(0)
 {
-    mpi::CommDup( comm, comm_ );
+    SetComm( comm );
     blocksize_ = 0;
     firstLocalSource_ = 0;
     numLocalSources_ = 0;
@@ -121,12 +121,11 @@ DistGraph::DistGraph( mpi::Comm comm )
 
 inline 
 DistGraph::DistGraph( int numVertices, mpi::Comm comm )
-: numSources_(numVertices), numTargets_(numVertices), 
-  assembling_(false), sorted_(true)
+: numSources_(numVertices), numTargets_(numVertices)
 {
     const int commRank = mpi::CommRank( comm );
     const int commSize = mpi::CommSize( comm );
-    mpi::CommDup( comm, comm_ );
+    SetComm( comm );
     blocksize_ = numVertices/commSize;
     firstLocalSource_ = commRank*blocksize_;
     if( commRank != commSize-1 )
@@ -137,12 +136,11 @@ DistGraph::DistGraph( int numVertices, mpi::Comm comm )
 
 inline 
 DistGraph::DistGraph( int numSources, int numTargets, mpi::Comm comm )
-: numSources_(numSources), numTargets_(numTargets), 
-  assembling_(false), sorted_(true)
+: numSources_(numSources), numTargets_(numTargets)
 {
     const int commRank = mpi::CommRank( comm );
     const int commSize = mpi::CommSize( comm );
-    mpi::CommDup( comm, comm_ );
+    SetComm( comm );
     blocksize_ = numSources/commSize;
     firstLocalSource_ = commRank*blocksize_;
     if( commRank != commSize-1 )
@@ -168,7 +166,10 @@ DistGraph::DistGraph( const DistGraph& graph )
 
 inline
 DistGraph::~DistGraph()
-{ mpi::CommFree( comm_ ); } 
+{ 
+    if( comm_ != mpi::COMM_WORLD )
+        mpi::CommFree( comm_ );
+} 
 
 inline int 
 DistGraph::NumSources() const
@@ -181,8 +182,19 @@ DistGraph::NumTargets() const
 inline void 
 DistGraph::SetComm( mpi::Comm comm )
 {
-    Empty();
-    mpi::CommDup( comm, comm_ );
+    sources_.clear();
+    targets_.clear();
+    blocksize_ = 0;
+    firstLocalSource_ = 0;
+    numLocalSources_ = 0;
+    sorted_ = true;
+    assembling_ = false;
+    localEdgeOffsets_.clear();
+
+    if( comm == mpi::COMM_WORLD )
+        comm_ = comm;
+    else
+        mpi::CommDup( comm, comm_ );
 }
 
 inline mpi::Comm 
@@ -231,9 +243,11 @@ DistGraph::Source( int localEdge ) const
     PushCallStack("DistGraph::Source");
     if( localEdge < 0 || localEdge >= sources_.size() )
         throw std::logic_error("Edge number out of bounds");
-    PopCallStack();
 #endif
     EnsureNotAssembling();
+#ifndef RELEASE
+    PopCallStack();
+#endif
     return sources_[localEdge];
 }
 
@@ -244,9 +258,11 @@ DistGraph::Target( int localEdge ) const
     PushCallStack("DistGraph::Target");
     if( localEdge < 0 || localEdge >= targets_.size() )
         throw std::logic_error("Edge number out of bounds");
-    PopCallStack();
 #endif
     EnsureNotAssembling();
+#ifndef RELEASE
+    PopCallStack();
+#endif
     return targets_[localEdge];
 }
 
@@ -256,7 +272,12 @@ DistGraph::LocalEdgeOffset( int localSource ) const
 #ifndef RELEASE
     PushCallStack("DistGraph::LocalEdgeOffset");
     if( localSource < 0 || localSource > numLocalSources_ )
-        throw std::logic_error("Out of bounds local source index");
+    {
+        std::ostringstream msg;
+        msg << "Out of bounds localSource: " << localSource << " is not in ["
+            << "0," << numLocalSources_ << ")";
+        throw std::logic_error( msg.str().c_str() );
+    }
 #endif
     EnsureNotAssembling();
     const int localEdgeOffset = localEdgeOffsets_[localSource];
@@ -286,9 +307,10 @@ DistGraph::operator=( const DistGraph& graph )
 #ifndef RELEASE
     PushCallStack("DistGraph::operator=");
 #endif
+    SetComm( graph.comm_ );
+
     numSources_ = graph.numSources_;
     numTargets_ = graph.numTargets_;
-    mpi::CommDup( graph.comm_, comm_ );
 
     blocksize_ = graph.blocksize_;
     firstLocalSource_ = graph.firstLocalSource_;

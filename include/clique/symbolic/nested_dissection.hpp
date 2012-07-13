@@ -28,7 +28,8 @@ namespace cliq {
 
 // NOTE: This routine is not yet finished
 void NestedDissection
-( const DistGraph& graph, DistSymmElimTree& eTree, DistSeparatorTree& sepTree );
+( const DistGraph& graph, DistSymmInfo& info, DistSeparatorTree& sepTree,
+  int cutoff=128, bool storeFactRecvIndices=false );
 
 int Bisect
 ( const Graph& graph, Graph& leftChild, Graph& rightChild, 
@@ -88,61 +89,370 @@ DistributedDepth( mpi::Comm comm )
 
 inline void
 NestedDissectionRecursion
+( const Graph& graph, DistSymmElimTree& eTree, DistSeparatorTree& sepTree,
+  const std::vector<int>& perm, int parent, int offset, int cutoff=128 )
+{
+#ifndef RELEASE
+    PushCallStack("NestedDissectionRecursion");
+#endif
+    if( graph.NumSources() <= cutoff )
+    {
+        // Fill in this node of the local separator tree
+        const int numSources = graph.NumSources();
+        sepTree.localSepsAndLeaves.push_back( new LocalSepOrLeaf );
+        LocalSepOrLeaf& leaf = *sepTree.localSepsAndLeaves.back();
+        leaf.parent = parent;
+        leaf.indices.resize( numSources );
+        for( int s=0; s<numSources; ++s )
+            leaf.indices[s] = offset + perm[s];
+
+        // Fill in this node of the local elimination tree
+        eTree.localNodes.push_back( new LocalSymmNode );
+        LocalSymmNode& node = *eTree.localNodes.back();
+        node.size = numSources;
+        node.offset = offset;
+        node.parent = parent;
+        node.children.clear();
+        std::set<int> connectedAncestors;
+        for( int s=0; s<node.size; ++s )
+        {
+            const int numConnections = graph.NumConnections( s );
+            const int edgeOffset = graph.EdgeOffset( s );
+            for( int t=0; t<numConnections; ++t )
+            {
+                const int target = graph.Target( edgeOffset+t );
+                if( target >= numSources )
+                    connectedAncestors.insert( target );
+            }
+        }
+        const int numConnectedAncestors = connectedAncestors.size();
+        node.lowerStruct.resize( numConnectedAncestors );
+        int structIndex=0;
+        std::set<int>::const_iterator it;
+        for( it=connectedAncestors.begin(); it!=connectedAncestors.end(); ++it )
+            node.lowerStruct[structIndex++] = *it;
+    }
+    else
+    {
+        // Partition the graph and construct the inverse map
+        Graph leftChild, rightChild;
+        std::vector<int> map;
+        const int sepSize = Bisect( graph, leftChild, rightChild, map );
+        const int numSources = graph.NumSources();
+        std::vector<int> inverseMap( numSources );
+        for( int s=0; s<numSources; ++s )
+            inverseMap[map[s]] = s;
+
+        // Mostly compute this node of the local separator tree
+        // (we will finish computing the separator indices soon)
+        sepTree.localSepsAndLeaves.push_back( new LocalSepOrLeaf );
+        LocalSepOrLeaf& sep = *sepTree.localSepsAndLeaves.back();
+        sep.parent = parent;
+        sep.indices.resize( sepSize );
+        for( int s=0; s<sepSize; ++s )
+        {
+            const int mappedSource = s + (numSources-sepSize);
+            sep.indices[s] = inverseMap[mappedSource];
+        }
+    
+        // Fill in this node in the local elimination tree
+        eTree.localNodes.push_back( new LocalSymmNode );
+        LocalSymmNode& node = *eTree.localNodes.back();
+        node.size = sepSize;
+        node.offset = offset + (numSources-sepSize);
+        node.parent = parent;
+        node.children.resize( 2 );
+        std::set<int> connectedAncestors;
+        for( int s=0; s<sepSize; ++s )
+        {
+            const int source = sep.indices[s];
+            const int numConnections = graph.NumConnections( source );
+            const int edgeOffset = graph.EdgeOffset( source );
+            for( int t=0; t<numConnections; ++t )
+            {
+                const int target = graph.Target( edgeOffset+t );
+                if( target >= numSources )
+                    connectedAncestors.insert( target );
+            }
+        }
+        const int numConnectedAncestors = connectedAncestors.size();
+        node.lowerStruct.resize( numConnectedAncestors );
+        int structIndex=0;
+        std::set<int>::const_iterator it;
+        for( it=connectedAncestors.begin(); it!=connectedAncestors.end(); ++it )
+            node.lowerStruct[structIndex++] = *it;
+
+        // Finish computing the separator indices
+        for( int s=0; s<sepSize; ++s )
+            sep.indices[s] = perm[sep.indices[s]];
+
+        // Construct the inverse maps from the child indices to the original
+        // degrees of freedom
+        const int leftChildSize = leftChild.NumSources();
+        std::vector<int> leftPerm( leftChildSize );
+        for( int s=0; s<leftChildSize; ++s )
+            leftPerm[s] = perm[inverseMap[s]];
+        const int rightChildSize = rightChild.NumSources();
+        std::vector<int> rightPerm( rightChildSize );
+        for( int s=0; s<rightChildSize; ++s )
+            rightPerm[s] = perm[inverseMap[s+leftChildSize]];
+
+        const int parent = eTree.localNodes.size()-1;
+        node.children[0] = eTree.localNodes.size();
+        NestedDissectionRecursion
+        ( leftChild, eTree, sepTree, leftPerm, parent, offset, cutoff );
+        node.children[1] = eTree.localNodes.size();
+        NestedDissectionRecursion
+        ( rightChild, eTree, sepTree, rightPerm, parent, offset, cutoff );
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+inline void
+NestedDissectionRecursion
 ( const DistGraph& graph, DistSymmElimTree& eTree, DistSeparatorTree& sepTree,
-  int depth, int offset )
+  const std::vector<int>& localPerm, int depth, int offset, int cutoff=128 )
 {
 #ifndef RELEASE
     PushCallStack("NestedDissectionRecursion");
 #endif
     const int distDepth = sepTree.distSeps.size();
+    mpi::Comm comm = graph.Comm();
     if( distDepth - depth > 0 )
     {
+        // Partition the graph and construct the inverse map
         DistGraph child;
         bool onLeft;
         std::vector<int> localMap;
         const int sepSize = Bisect( graph, child, localMap, onLeft );
+        const int numSources = graph.NumSources();
         const int childSize = child.NumSources();
+        const int leftChildSize = 
+            ( onLeft ? childSize : numSources-sepSize-childSize );
 
-        // Fill in this node of the DistSeparatorTree
+        std::vector<int> localInverseMap;
+        InvertMap( localMap, localInverseMap, numSources, comm );
+
+        // Mostly fill this node of the DistSeparatorTree
+        // (we will finish computing the separator indices at the end)
         DistSeparator& sep = sepTree.distSeps[distDepth-1-depth];
-        mpi::Comm comm = graph.Comm();
         mpi::CommDup( comm, sep.comm );
         sep.indices.resize( sepSize );
-        std::vector<int> localInverseMap;
-        const int numSources = graph.NumSources();
-        InvertMap( localMap, localInverseMap, numSources, comm );
         for( int s=0; s<sepSize; ++s )
-            sep.indices[s] = numSources-sepSize;
+            sep.indices[s] = s + (numSources-sepSize);
         MapIndices( localInverseMap, sep.indices, numSources, comm );
-        for( int s=0; s<sepSize; ++s )
-            sep.indices[s] += offset;
 
         // Fill in this node of the DistSymmElimTree
-        DistSymmNode& distNode = eTree.distNodes[distDepth-depth];
-        distNode.size = sepSize;
-        distNode.offset = offset + (numSources-sepSize);
-        mpi::CommDup( comm, distNode.comm );
-        // TODO: Fill an std::set with the separator connections 
-        //       which are outside the sources
-        // TODO: Allocate space for the lowerStruct
-        // TOOD: Fill the lower struct
+        DistSymmNode& node = eTree.distNodes[distDepth-depth];
+        node.size = sepSize;
+        node.offset = offset + (numSources-sepSize);
+        mpi::CommDup( comm, node.comm );
+        const int numLocalSources = graph.NumLocalSources();
+        const int firstLocalSource = graph.FirstLocalSource();
+        std::set<int> localConnectedAncestors;
+        for( int s=0; s<sepSize; ++s )
+        {
+            const int source = sep.indices[s];
+            if( source >= firstLocalSource && 
+                source < firstLocalSource+numLocalSources )
+            {
+                const int localSource = source - firstLocalSource;
+                const int numConnections = graph.NumConnections( localSource );
+                const int localOffset = graph.LocalEdgeOffset( localSource );
+                for( int t=0; t<numConnections; ++t )
+                {
+                    const int target = graph.Target( localOffset+t );
+                    if( target >= numSources )
+                        localConnectedAncestors.insert( target );
+                }
+            }
+        }
+        const int numLocalConnected = localConnectedAncestors.size();
+        const int commSize = mpi::CommSize( comm );
+        std::vector<int> localConnectedSizes( commSize );
+        mpi::AllGather
+        ( &numLocalConnected, 1, &localConnectedSizes[0], 1, comm );
+        std::vector<int> localConnectedVector( numLocalConnected );
+        int connectedIndex=0;
+        std::set<int>::const_iterator it;
+        for( it=localConnectedAncestors.begin(); 
+             it!=localConnectedAncestors.end(); ++it )
+            localConnectedVector[connectedIndex++] = *it;
+        int sumOfLocalConnectedSizes=0;
+        std::vector<int> localConnectedOffsets( commSize );
+        for( int q=0; q<commSize; ++q )
+        {
+            localConnectedOffsets[q] = sumOfLocalConnectedSizes;
+            sumOfLocalConnectedSizes += localConnectedSizes[q];
+        }
+        std::vector<int> localConnections( sumOfLocalConnectedSizes );
+        mpi::AllGather
+        ( &localConnectedVector[0], numLocalConnected,
+          &localConnections[0], 
+          &localConnectedSizes[0], &localConnectedOffsets[0], comm );
+        std::set<int> connectedAncestors;
+        for( int s=0; s<sumOfLocalConnectedSizes; ++s )
+            connectedAncestors.insert( localConnections[s] );
+        const int numConnected = connectedAncestors.size();
+        node.lowerStruct.resize( numConnected );
+        int structIndex=0;
+        for( it=connectedAncestors.begin(); it!=connectedAncestors.end(); ++it )
+            node.lowerStruct[structIndex++] = *it; 
 
-        const int otherChildSize = numSources - sepSize - childSize; 
-        const int newOffset = ( onLeft ? offset : offset+otherChildSize );
+        // Finish computing the separator indices
+        MapIndices( localPerm, sep.indices, numSources, comm );
+
+        // Construct map from child indices to the original ordering
+        const int localChildSize = child.NumLocalSources();
+        const int firstLocalChildSource = child.FirstLocalSource();
+        std::vector<int> newLocalPerm( localChildSize );
+        if( onLeft )
+            for( int s=0; s<localChildSize; ++s )
+                newLocalPerm[s] = s+firstLocalChildSource;
+        else
+            for( int s=0; s<localChildSize; ++s )
+                newLocalPerm[s] = s+firstLocalChildSource+leftChildSize;
+        MapIndices( localInverseMap, newLocalPerm, numSources, comm );
+        MapIndices( localPerm, newLocalPerm, numSources, comm );
+
+        // Recurse
+        const int newOffset = ( onLeft ? offset : offset+leftChildSize );
         NestedDissectionRecursion
-        ( child, eTree, sepTree, depth+1, otherChildSize );
+        ( child, eTree, sepTree, newLocalPerm, depth+1, newOffset, cutoff );
+    }
+    else if( graph.NumSources() <= cutoff )
+    {
+        // Convert to a sequential graph
+        const int numSources = graph.NumSources();
+        Graph seqGraph( graph );
+
+        // Fill in this node of the local separator tree
+        sepTree.localSepsAndLeaves.push_back( new LocalSepOrLeaf );
+        LocalSepOrLeaf& leaf = *sepTree.localSepsAndLeaves.back();
+        leaf.parent = -1;
+        leaf.indices.resize( numSources );
+        for( int s=0; s<numSources; ++s )
+            leaf.indices[s] = localPerm[s];
+
+        // Fill in this node of the local and distributed parts of the 
+        // elimination tree
+        eTree.localNodes.push_back( new LocalSymmNode );
+        LocalSymmNode& localNode = *eTree.localNodes.back();
+        DistSymmNode& distNode = eTree.distNodes[0];
+        mpi::CommDup( comm, distNode.comm );
+        distNode.size = localNode.size = numSources;
+        distNode.offset = localNode.offset = offset;
+        localNode.parent = -1;
+        localNode.children.clear();
+        std::set<int> connectedAncestors;
+        for( int s=0; s<numSources; ++s )
+        {
+            const int numConnections = seqGraph.NumConnections( s );
+            const int edgeOffset = seqGraph.EdgeOffset( s );
+            for( int t=0; t<numConnections; ++t )
+            {
+                const int target = seqGraph.Target( edgeOffset+t );
+                if( target >= numSources )
+                    connectedAncestors.insert( target );
+            }
+        }
+        const int numConnectedAncestors = connectedAncestors.size();
+        localNode.lowerStruct.resize( numConnectedAncestors );
+        distNode.lowerStruct.resize( numConnectedAncestors );
+        int structIndex=0;
+        std::set<int>::const_iterator it;
+        for( it=connectedAncestors.begin(); it!=connectedAncestors.end(); ++it )
+        {
+            localNode.lowerStruct[structIndex] = *it;
+            distNode.lowerStruct[structIndex] = *it; 
+            ++structIndex;
+        }
     }
     else
     {
+        // Convert to a sequential graph
         Graph seqGraph( graph );
 
+        // Partition the graph and construct the inverse map
         Graph leftChild, rightChild;
         std::vector<int> map;
         const int sepSize = Bisect( seqGraph, leftChild, rightChild, map );
+        const int numSources = graph.NumSources();
+        std::vector<int> inverseMap( numSources );
+        for( int s=0; s<numSources; ++s )
+            inverseMap[map[s]] = s;
 
-        // TODO
-        //NestedDissectionRecursion( leftChild, eTree, sepTree );
-        //NestedDissectionRecursion( rightChild, eTree, sepTree );
+        // Mostly compute this node of the local separator tree
+        // (we will finish computing the separator indices soon)
+        sepTree.localSepsAndLeaves.push_back( new LocalSepOrLeaf );
+        LocalSepOrLeaf& sep = *sepTree.localSepsAndLeaves.back();
+        sep.parent = -1;
+        sep.indices.resize( sepSize );
+        for( int s=0; s<sepSize; ++s )
+        {
+            const int mappedSource = s + (numSources-sepSize);
+            sep.indices[s] = inverseMap[mappedSource];
+        }
+        
+        // Fill in this node in both the local and distributed parts of 
+        // the elimination tree
+        eTree.localNodes.push_back( new LocalSymmNode );
+        LocalSymmNode& localNode = *eTree.localNodes.back();
+        DistSymmNode& distNode = eTree.distNodes[0];
+        mpi::CommDup( comm, distNode.comm );
+        distNode.size = localNode.size = sepSize;
+        distNode.offset = localNode.offset = offset + (numSources-sepSize);
+        localNode.parent = -1;
+        localNode.children.resize( 2 );
+        std::set<int> connectedAncestors;
+        for( int s=0; s<sepSize; ++s )
+        {
+            const int source = sep.indices[s];
+            const int numConnections = seqGraph.NumConnections( source );
+            const int edgeOffset = seqGraph.EdgeOffset( source );
+            for( int t=0; t<numConnections; ++t )
+            {
+                const int target = seqGraph.Target( edgeOffset+t );
+                if( target >= numSources )
+                    connectedAncestors.insert( target );
+            }
+        }
+        const int numConnectedAncestors = connectedAncestors.size();
+        localNode.lowerStruct.resize( numConnectedAncestors );
+        distNode.lowerStruct.resize( numConnectedAncestors );
+        int structIndex=0;
+        std::set<int>::const_iterator it;
+        for( it=connectedAncestors.begin(); it!=connectedAncestors.end(); ++it )
+        {
+            localNode.lowerStruct[structIndex] = *it;
+            distNode.lowerStruct[structIndex] = *it; 
+            ++structIndex;
+        }
+
+        // Finish computing the separator indices
+        for( int s=0; s<sepSize; ++s )
+            sep.indices[s] = localPerm[sep.indices[s]];
+
+        // Construct the inverse maps from the child indices to the original
+        // degrees of freedom
+        const int leftChildSize = leftChild.NumSources();
+        std::vector<int> leftPerm( leftChildSize );
+        for( int s=0; s<leftChildSize; ++s )
+            leftPerm[s] = localPerm[inverseMap[s]];
+        const int rightChildSize = rightChild.NumSources();
+        std::vector<int> rightPerm( rightChildSize );
+        for( int s=0; s<rightChildSize; ++s )
+            rightPerm[s] = localPerm[inverseMap[s+leftChildSize]];
+
+        const int parent=0;
+        localNode.children[0] = eTree.localNodes.size();
+        NestedDissectionRecursion
+        ( leftChild, eTree, sepTree, leftPerm, parent, offset, cutoff );
+        localNode.children[1] = eTree.localNodes.size();
+        NestedDissectionRecursion
+        ( rightChild, eTree, sepTree, rightPerm, parent, offset, cutoff );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -151,7 +461,8 @@ NestedDissectionRecursion
 
 inline void 
 NestedDissection
-( const DistGraph& graph, DistSymmElimTree& eTree, DistSeparatorTree& sepTree )
+( const DistGraph& graph, DistSymmInfo& info, DistSeparatorTree& sepTree,
+  int cutoff, bool storeFactRecvIndices )
 {
 #ifndef RELEASE
     PushCallStack("NestedDissection");
@@ -161,6 +472,7 @@ NestedDissection
     const int commSize = mpi::CommSize( comm );
 
     const int distDepth = DistributedDepth( comm );
+    DistSymmElimTree eTree;
 
     // NOTE: There is a potential memory leak here if these data structures 
     //       are reused. Their destructors should call a member function which
@@ -171,7 +483,14 @@ NestedDissection
     eTree.distNodes.resize( distDepth+1 );
     sepTree.distSeps.resize( distDepth );
 
-    NestedDissectionRecursion( graph, eTree, sepTree, 0, 0 );
+    const int numLocalSources = graph.NumLocalSources();
+    const int firstLocalSource = graph.FirstLocalSource();
+    std::vector<int> localPerm( numLocalSources );
+    for( int s=0; s<numLocalSources; ++s )
+        localPerm[s] = s + firstLocalSource;
+    NestedDissectionRecursion( graph, eTree, sepTree, localPerm, 0, 0, cutoff );
+
+    SymmetricAnalysis( eTree, info, storeFactRecvIndices );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -332,16 +651,14 @@ Bisect
 #ifndef RELEASE
     PushCallStack("Bisect");
 #endif
-    mpi::Comm comm = graph.Comm();
+    mpi::Comm comm;
+    mpi::CommDup( graph.Comm(), comm );
     const int commSize = mpi::CommSize( comm );
     const int commRank = mpi::CommRank( comm );
     if( commSize == 1 )
         throw std::logic_error
         ("This routine assumes at least two processes are used, "
          "otherwise one child will be lost");
-    const int worldRank = mpi::CommRank( mpi::COMM_WORLD );
-    if( worldRank == 0 )
-        std::cout << "root entered Bisect" << std::endl;
 
     // Describe the source distribution
     const int blocksize = graph.Blocksize();
@@ -624,6 +941,7 @@ Bisect
         }
     }
     child.StopAssembly();
+    mpi::CommFree( comm );
 #ifndef RELEASE
     PopCallStack();
 #endif

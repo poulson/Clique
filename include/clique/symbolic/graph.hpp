@@ -168,9 +168,11 @@ Graph::Source( int edge ) const
     PushCallStack("Graph::Source");
     if( edge < 0 || edge >= sources_.size() )
         throw std::logic_error("Edge number out of bounds");
-    PopCallStack();
 #endif
     EnsureNotAssembling();
+#ifndef RELEASE
+    PopCallStack();
+#endif
     return sources_[edge];
 }
 
@@ -181,9 +183,11 @@ Graph::Target( int edge ) const
     PushCallStack("Graph::Target");
     if( edge < 0 || edge >= targets_.size() )
         throw std::logic_error("Edge number out of bounds");
-    PopCallStack();
 #endif
     EnsureNotAssembling();
+#ifndef RELEASE
+    PopCallStack();
+#endif
     return targets_[edge];
 }
 

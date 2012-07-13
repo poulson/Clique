@@ -22,9 +22,8 @@ using namespace cliq;
 
 void Usage()
 {
-    std::cout << "NestedDissection <n> <cutoff>\n" 
+    std::cout << "Bisection <n>\n" 
               << "  n: size of n x n x n mesh\n"
-              << "  cutoff: maximum size of leaf node\n"
               << std::endl;
 }
 
@@ -36,7 +35,7 @@ main( int argc, char* argv[] )
     const int commRank = mpi::CommRank( comm );
     const int commSize = mpi::CommSize( comm );
 
-    if( argc < 3 )
+    if( argc < 2 )
     {
         if( commRank == 0 )
             Usage();
@@ -44,7 +43,6 @@ main( int argc, char* argv[] )
         return 0;
     }
     const int n = atoi( argv[1] );
-    const int cutoff = atoi( argv[2] );
 
     try
     {
@@ -81,9 +79,51 @@ main( int argc, char* argv[] )
         }
         graph.StopAssembly();
 
-        DistSymmInfo info;
-        DistSeparatorTree sepTree;
-        NestedDissection( graph, info, sepTree, cutoff );
+        if( commSize > 1 )
+        {
+            DistGraph child;
+            std::vector<int> localMap;
+            bool haveLeftChild;
+            const int sepSize = Bisect( graph, child, localMap, haveLeftChild );
+
+            int leftChildSize, rightChildSize;
+            if( haveLeftChild )
+            {
+                leftChildSize = child.NumSources();
+                rightChildSize = numVertices - leftChildSize - sepSize;
+            }
+            else
+            {
+                rightChildSize = child.NumSources();
+                leftChildSize = numVertices - rightChildSize - sepSize;
+            }
+            if( commRank == 0 )
+            {
+                if( haveLeftChild )
+                    std::cout << "Root is on left with sizes: " 
+                              << leftChildSize << ", " << rightChildSize << ", "
+                              << sepSize << std::endl;
+                else
+                    std::cout << "Root is on right with sizes: " 
+                              << leftChildSize << ", " << rightChildSize << ", "
+                              << sepSize << std::endl;
+            }
+        }
+        else
+        {
+            // Turn the single-process DistGraph into a Graph
+            Graph seqGraph( graph );
+
+            Graph leftChild, rightChild;
+            std::vector<int> map;
+            const int sepSize = Bisect( seqGraph, leftChild, rightChild, map );
+
+            const int leftChildSize = leftChild.NumSources();
+            const int rightChildSize = rightChild.NumSources();
+            std::cout << "Partition sizes were: "
+                      << leftChildSize << ", " << rightChildSize << ", "
+                      << sepSize << std::endl;
+        }
     }
     catch( std::exception& e )
     {

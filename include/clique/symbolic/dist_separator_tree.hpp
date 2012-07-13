@@ -24,7 +24,7 @@ namespace cliq {
 
 struct LocalSepOrLeaf
 {
-    int localParent; // -1 if local root
+    int parent; // -1 if local root
     std::vector<int> indices;
 };
 
@@ -49,6 +49,15 @@ struct DistSeparatorTree
 
     ~DistSeparatorTree()
     {
+        if( std::uncaught_exception() )
+        {
+            std::cerr << "Uncaught exception in ~DistSepTree" << std::endl;
+#ifndef RELEASE            
+            DumpCallStack();
+#endif
+            return;
+        }
+
         const int numLocal = localSepsAndLeaves.size();
         for( int i=0; i<numLocal; ++i )
             delete localSepsAndLeaves[i];

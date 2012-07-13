@@ -95,7 +95,7 @@ if(BUILD_TESTS)
   set(TEST_DIR ${PROJECT_SOURCE_DIR}/tests)
   set(TESTS FileSpeed PanelLDL)
   if(HAVE_PARMETIS)
-    list(APPEND TESTS NestedDissection)
+    list(APPEND TESTS Bisection NestedDissection)
   endif(HAVE_PARMETIS)
 
   # Build the tests
