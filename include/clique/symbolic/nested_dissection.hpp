@@ -41,17 +41,17 @@ int Bisect
 
 void MapIndices
 ( const std::vector<int>& localMap, 
-        std::vector<int>& localIndices, int blocksize, mpi::Comm comm );
+        std::vector<int>& localIndices, int numSources, mpi::Comm comm );
 
 // third(i) := second(first(i))
 void ComposeMaps
 ( const std::vector<int>& localFirstMap, 
   const std::vector<int>& localSecondMap,
-        std::vector<int>& localThirdMap, int blocksize, mpi::Comm comm );
+        std::vector<int>& localThirdMap, int numSources, mpi::Comm comm );
 
 void InvertMap
 ( const std::vector<int>& localMap,
-        std::vector<int>& localInverseMap, int blocksize, mpi::Comm comm );
+        std::vector<int>& localInverseMap, int numSources, mpi::Comm comm );
 
 int DistributedDepth( mpi::Comm comm );
 
@@ -109,20 +109,23 @@ NestedDissectionRecursion
         mpi::CommDup( comm, sep.comm );
         sep.indices.resize( sepSize );
         std::vector<int> localInverseMap;
-        const int blocksize = graph.Blocksize();
-        InvertMap( localMap, localInverseMap, blocksize, comm );
         const int numSources = graph.NumSources();
+        InvertMap( localMap, localInverseMap, numSources, comm );
         for( int s=0; s<sepSize; ++s )
             sep.indices[s] = numSources-sepSize;
-        MapIndices( localInverseMap, sep.indices, blocksize, comm );
+        MapIndices( localInverseMap, sep.indices, numSources, comm );
         for( int s=0; s<sepSize; ++s )
             sep.indices[s] += offset;
 
         // Fill in this node of the DistSymmElimTree
-        //
-        // TODO: Figure out how to fill the lowerStruct for this separator
         DistSymmNode& distNode = eTree.distNodes[distDepth-depth];
+        distNode.size = sepSize;
+        distNode.offset = offset + (numSources-sepSize);
         mpi::CommDup( comm, distNode.comm );
+        // TODO: Fill an std::set with the separator connections 
+        //       which are outside the sources
+        // TODO: Allocate space for the lowerStruct
+        // TOOD: Fill the lower struct
 
         const int otherChildSize = numSources - sepSize - childSize; 
         const int newOffset = ( onLeft ? offset : offset+otherChildSize );
@@ -190,16 +193,15 @@ Bisect
     vtxDist[0] = 0;
     vtxDist[1] = numSources;
 
-    // ParMETIS assumes that there are no self-connections, so we must
-    // manually remove them from our graph
+    // ParMETIS assumes that there are no self-connections or connections 
+    // outside the sources, so we must manually remove them from our graph
     const int numEdges = graph.NumEdges();
-    int numSelfEdges = 0;
+    int numValidEdges = 0;
     for( int i=0; i<numEdges; ++i )
-        if( graph.Source(i) == graph.Target(i) )
-            ++numSelfEdges;
+        if( graph.Source(i) != graph.Target(i) && graph.Target(i) < numSources )
+            ++numValidEdges;
 
-    // Fill our connectivity (ignoring self edges)
-    const int numValidEdges = numEdges - numSelfEdges;
+    // Fill our connectivity (ignoring self and too-large connections)
     std::vector<idx_t> xAdj( numSources+1 );
     std::vector<idx_t> adjacency( numValidEdges );
     int validCounter=0;
@@ -218,7 +220,7 @@ Bisect
             xAdj[sourceOffset++] = validCounter;
             ++prevSource;
         }
-        if( source != target )
+        if( source != target && target < numSources )
         {
             adjacency[validCounter] = target;
             ++validCounter;
@@ -288,7 +290,9 @@ Bisect
         for( int t=0; t<numConnections; ++t )
         {
             const int inverseTarget = graph.Target( offset+t );
-            const int target = map[inverseTarget];
+            const int target = ( inverseTarget < numSources ? 
+                                 map[inverseTarget] :
+                                 inverseTarget );
             leftChild.PushBack( source, target );
         }
     }
@@ -307,7 +311,9 @@ Bisect
         for( int t=0; t<numConnections; ++t )
         {
             const int inverseTarget = graph.Target( offset+t );
-            const int target = map[inverseTarget];
+            const int target = ( inverseTarget < numSources ?
+                                 map[inverseTarget] :
+                                 inverseTarget );
             rightChild.PushBack( source-leftChildSize, target-leftChildSize );
         }
     }
@@ -333,6 +339,9 @@ Bisect
         throw std::logic_error
         ("This routine assumes at least two processes are used, "
          "otherwise one child will be lost");
+    const int worldRank = mpi::CommRank( mpi::COMM_WORLD );
+    if( worldRank == 0 )
+        std::cout << "root entered Bisect" << std::endl;
 
     // Describe the source distribution
     const int blocksize = graph.Blocksize();
@@ -341,16 +350,16 @@ Bisect
         vtxDist[i] = i*blocksize;
     vtxDist[commSize] = graph.NumSources();
 
-    // ParMETIS assumes that there are no self-connections, so we must
-    // manually remove them from our graph
+    // ParMETIS assumes that there are no self-connections or connections 
+    // outside the sources, so we must manually remove them from our graph
+    const int numSources = graph.NumSources();
     const int numLocalEdges = graph.NumLocalEdges();
-    int numLocalSelfEdges = 0;
+    int numLocalValidEdges = 0;
     for( int i=0; i<numLocalEdges; ++i )
-        if( graph.Source(i) == graph.Target(i) )
-            ++numLocalSelfEdges;
+        if( graph.Source(i) != graph.Target(i) && graph.Target(i) < numSources )
+            ++numLocalValidEdges;
 
-    // Fill our local connectivity (ignoring self edges)
-    const int numLocalValidEdges = numLocalEdges - numLocalSelfEdges;
+    // Fill our local connectivity (ignoring self and too-large connections)
     const int numLocalSources = graph.NumLocalSources();
     const int firstLocalSource = graph.FirstLocalSource();
     std::vector<idx_t> xAdj( numLocalSources+1 );
@@ -371,7 +380,7 @@ Bisect
             xAdj[sourceOffset++] = validCounter;
             ++prevSource;
         }
-        if( source != target )
+        if( source != target && target < numSources )
         {
             adjacency[validCounter] = target;
             ++validCounter;
@@ -395,7 +404,6 @@ Bisect
     ( &vtxDist[0], &xAdj[0], &adjacency[0], &numParSeps, &numSeqSeps, 
       &imbalance, NULL, &localMap[0], sizes, &comm );
 #ifndef RELEASE
-    const int numSources = graph.NumSources();
     std::vector<int> timesMapped( numSources, 0 );
     for( int i=0; i<numLocalSources; ++i )
         ++timesMapped[localMap[i]];
@@ -430,7 +438,7 @@ Bisect
     const int rightTeamOffset = ( smallOnLeft ? smallTeamSize : 0 );
     const int leftTeamBlocksize = leftChildSize / leftTeamSize;
     const int rightTeamBlocksize = rightChildSize / rightTeamSize;
-    const bool inLeftTeam = ( smallOnLeft == inSmallTeam );
+    onLeft = ( smallOnLeft == inSmallTeam );
 
     // Count how many rows we must send to each process 
     std::vector<int> rowSendSizes( commSize, 0 );
@@ -586,24 +594,18 @@ Bisect
     indexSendOffsets.clear();
 
     // Get the indices after reordering
-    MapIndices( localMap, recvIndices, blocksize, comm );
+    MapIndices( localMap, recvIndices, numSources, comm );
 
     // Put the connections into our new graph
     const int childTeamRank = 
-        ( inLeftTeam ? commRank-leftTeamOffset : commRank-rightTeamOffset );
+        ( onLeft ? commRank-leftTeamOffset : commRank-rightTeamOffset );
     MPI_Comm childComm;
-    mpi::CommSplit( comm, inLeftTeam, childTeamRank, childComm );
+    mpi::CommSplit( comm, onLeft, childTeamRank, childComm );
     child.SetComm( childComm );
-    if( inLeftTeam )
-    {
-        onLeft = true;
+    if( onLeft )
         child.ResizeTo( leftChildSize );
-    }
     else
-    {
-        onLeft = false;
         child.ResizeTo( rightChildSize );
-    }
     const int childFirstLocalSource = child.FirstLocalSource();
     child.StartAssembly();
     child.Reserve( recvIndices.size() );
@@ -629,11 +631,12 @@ Bisect
 }
 
 // Overwrite the array of indices with the distributed map defined by each 
-// processes's localMap. 
+// processes's localMap. If the index is not within the set of indices, it is 
+// preserved.
 inline void 
 MapIndices
 ( const std::vector<int>& localMap, 
-        std::vector<int>& localIndices, int blocksize, mpi::Comm comm )
+        std::vector<int>& localIndices, int numSources, mpi::Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("MapIndices");
@@ -641,6 +644,7 @@ MapIndices
     const int commRank = mpi::CommRank( comm );
     const int commSize = mpi::CommSize( comm );
 
+    const int blocksize = numSources/commSize;
     const int firstLocalSource = blocksize*commRank;
     const int numLocalSources = localMap.size();
     const int numLocalIndices = localIndices.size();
@@ -654,8 +658,11 @@ MapIndices
         if( i < 0 )
             throw std::logic_error("Index was negative");
 #endif
-        const int q = std::min( i/blocksize, commSize-1 );
-        ++requestSizes[q];
+        if( i < numSources )
+        {
+            const int q = std::min( i/blocksize, commSize-1 );
+            ++requestSizes[q];
+        }
     }
 
     // Send our requests and find out what we need to fulfill
@@ -690,8 +697,11 @@ MapIndices
     for( int s=0; s<numLocalIndices; ++s )
     {
         const int i = localIndices[s];
-        const int q = std::min( i/blocksize, commSize-1 );
-        requests[offsets[q]++] = i;
+        if( i < numSources )
+        {
+            const int q = std::min( i/blocksize, commSize-1 );
+            requests[offsets[q]++] = i;
+        }
     }
 
     // Perform the first index exchange
@@ -727,8 +737,11 @@ MapIndices
     for( int s=0; s<numLocalIndices; ++s )
     {
         const int i = localIndices[s];
-        const int q = std::min( i/blocksize, commSize-1 );
-        localIndices[s] = requests[offsets[q]++];
+        if( i < numSources )
+        {
+            const int q = std::min( i/blocksize, commSize-1 );
+            localIndices[s] = requests[offsets[q]++];
+        }
     }
 #ifndef RELEASE
     PopCallStack();
@@ -740,13 +753,13 @@ inline void
 ComposeMaps
 ( const std::vector<int>& localFirstMap, 
   const std::vector<int>& localSecondMap,
-        std::vector<int>& localThirdMap, int blocksize, mpi::Comm comm )
+        std::vector<int>& localThirdMap, int numSources, mpi::Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("ComposeMaps");
 #endif
     localThirdMap = localFirstMap;
-    MapIndices( localSecondMap, localThirdMap, blocksize, comm );
+    MapIndices( localSecondMap, localThirdMap, numSources, comm );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -756,7 +769,7 @@ ComposeMaps
 inline void 
 InvertMap
 ( const std::vector<int>& localMap, 
-        std::vector<int>& localInverseMap, int blocksize, mpi::Comm comm )
+        std::vector<int>& localInverseMap, int numSources, mpi::Comm comm )
 {
 #ifndef RELEASE
     PushCallStack("InvertMap");
@@ -764,7 +777,8 @@ InvertMap
     const int commRank = mpi::CommRank( comm );
     const int commSize = mpi::CommSize( comm );
 
-    const int firstLocalSource = blocksize*commSize;
+    const int blocksize = numSources/commSize;
+    const int firstLocalSource = blocksize*commRank;
     const int numLocalSources = localMap.size();
 
     // How many pairs of original and mapped indices to send to each process
