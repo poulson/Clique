@@ -33,6 +33,7 @@ main( int argc, char* argv[] )
     cliq::Initialize( argc, argv );
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
+    const int commSize = mpi::CommSize( comm );
 
     if( argc < 2 )
     {
@@ -78,41 +79,50 @@ main( int argc, char* argv[] )
         }
         graph.StopAssembly();
 
-        DistGraph child;
-        std::vector<int> localMap;
-        bool haveLeftChild;
-        const int sepSize = Bisect( graph, child, localMap, haveLeftChild );
-
-        int leftSize, rightSize;
-        if( haveLeftChild )
+        if( commSize > 1 )
         {
-            leftSize = child.NumSources();
-            rightSize = numVertices - leftSize - sepSize;
+            DistGraph child;
+            std::vector<int> localMap;
+            bool haveLeftChild;
+            const int sepSize = Bisect( graph, child, localMap, haveLeftChild );
+
+            int leftChildSize, rightChildSize;
+            if( haveLeftChild )
+            {
+                leftChildSize = child.NumSources();
+                rightChildSize = numVertices - leftChildSize - sepSize;
+            }
+            else
+            {
+                rightChildSize = child.NumSources();
+                leftChildSize = numVertices - rightChildSize - sepSize;
+            }
+            if( commRank == 0 )
+            {
+                if( haveLeftChild )
+                    std::cout << "Root is on left with sizes: " 
+                              << leftChildSize << ", " << rightChildSize << ", "
+                              << sepSize << std::endl;
+                else
+                    std::cout << "Root is on right with sizes: " 
+                              << leftChildSize << ", " << rightChildSize << ", "
+                              << sepSize << std::endl;
+            }
         }
         else
         {
-            rightSize = child.NumSources();
-            leftSize = numVertices - rightSize - sepSize;
-        }
-        if( commRank == 0 )
-        {
-            if( haveLeftChild )
-                std::cout << "Root is on left with sizes: " 
-                          << leftSize << ", " << rightSize << ", " << sepSize
-                          << std::endl;
-            else
-                std::cout << "Root is on right with sizes: " 
-                          << leftSize << ", " << rightSize << ", " << sepSize
-                          << std::endl;
+            // Turn the single-process DistGraph into a Graph
+            Graph seqGraph( graph );
 
-            const int numChildSources = child.NumSources();
-            const int numLocalChildSources = child.NumLocalSources();
-            const int numLocalChildEdges = child.NumLocalEdges();
-            std::cout << "numChildSources = " << numChildSources << "\n"
-                      << "numLocalChildSources = " << numLocalChildSources
-                      << "\n"
-                      << "numLocalChildEdges = " << numLocalChildEdges 
-                      << std::endl;
+            Graph leftChild, rightChild;
+            std::vector<int> map;
+            const int sepSize = Bisect( seqGraph, leftChild, rightChild, map );
+
+            const int leftChildSize = leftChild.NumSources();
+            const int rightChildSize = rightChild.NumSources();
+            std::cout << "Partition sizes were: "
+                      << leftChildSize << ", " << rightChildSize << ", "
+                      << sepSize << std::endl;
         }
     }
     catch( std::exception& e )
