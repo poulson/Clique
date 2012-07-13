@@ -50,8 +50,7 @@ void CountLocalTreeSize
 ( int nxSub, int nySub, int nz, int cutoff, int& numNodes );
 
 void FillElimTree
-( int nx, int ny, int nz, int cutoff, mpi::Comm comm, int distDepth,
-  DistSymmElimTree& eTree );
+( int nx, int ny, int nz, int cutoff, mpi::Comm comm, DistSymmElimTree& eTree );
 
 void FillDistElimTree
 ( int nx, int ny, int nz, int& nxSub, int& nySub, int& xOffset, int& yOffset, 
@@ -61,30 +60,6 @@ void FillLocalElimTree
 ( int nx, int ny, int nz, int nxSub, int nySub, int xOffset, int yOffset, 
   int cutoff, int distDepth, DistSymmElimTree& eTree );
 
-void DistributedDepthRecursion
-( unsigned commRank, unsigned commSize, unsigned& distDepth )
-{
-    if( commSize == 1 )
-        return;
-
-    ++distDepth;
-    const unsigned leftTeamSize = commSize/2;
-    const unsigned rightTeamSize = commSize - leftTeamSize;
-    if( commRank < leftTeamSize )
-        DistributedDepthRecursion
-        ( commRank, leftTeamSize, distDepth );
-    else
-        DistributedDepthRecursion
-        ( commRank-leftTeamSize, rightTeamSize, distDepth );
-}
-
-unsigned DistributedDepth( unsigned commRank, unsigned commSize )
-{
-    unsigned distDepth = 0;
-    DistributedDepthRecursion( commRank, commSize, distDepth );
-    return distDepth;
-}
-
 int
 main( int argc, char* argv[] )
 {
@@ -93,8 +68,6 @@ main( int argc, char* argv[] )
     const int commRank = mpi::CommRank( comm );
     const unsigned commSize = mpi::CommSize( comm );
     typedef Complex<double> F;
-
-    const unsigned distDepth = DistributedDepth( commRank, commSize );
 
     if( argc < 4 )
     {
@@ -135,7 +108,9 @@ main( int argc, char* argv[] )
         mpi::Barrier( comm );
         const double initStartTime = mpi::Time();
         DistSymmElimTree eTree;
-        FillElimTree( nx, ny, nz, cutoff, comm, distDepth, eTree );
+        FillElimTree( nx, ny, nz, cutoff, comm, eTree );
+        const int numLocalNodes = eTree.localNodes.size();
+        const int numDistNodes = eTree.distNodes.size();
         mpi::Barrier( comm );
         const double initStopTime = mpi::Time();
         if( commRank == 0 )
@@ -144,13 +119,11 @@ main( int argc, char* argv[] )
 
         if( writeInfo )
         {
-            const int numLocalNodes = eTree.localNodes.size();
-            const int numDistNodes = eTree.distNodes.size();
             infoFile << "Local original structure sizes:\n";
             for( int s=0; s<numLocalNodes; ++s )
                 infoFile << "  " << s << ": node=" 
-                         << eTree.localNodes[s].size << ", lower="
-                         << eTree.localNodes[s].lowerStruct.size() << "\n"; 
+                         << eTree.localNodes[s]->size << ", lower="
+                         << eTree.localNodes[s]->lowerStruct.size() << "\n"; 
             infoFile << "\nDist original structure sizes:\n";
             for( int s=0; s<numDistNodes; ++s )
                 infoFile << "  " << s << ": node="
@@ -222,9 +195,9 @@ main( int argc, char* argv[] )
                     frontL.Print( infoFile, "frontL local" );
             }
             L.mode = NORMAL_2D;
-            L.distFronts.resize( distDepth+1 );
+            L.distFronts.resize( numDistNodes );
             InitializeDistLeaf( info, L );
-            for( unsigned s=1; s<distDepth+1; ++s )
+            for( unsigned s=1; s<numDistNodes; ++s )
             {
                 const DistSymmNodeInfo& node = info.distNodes[s];
                 DistMatrix<F>& front2dL = L.distFronts[s].front2dL;
@@ -425,12 +398,13 @@ int ReorderedIndex
 }
 
 void FillElimTree
-( int nx, int ny, int nz, int cutoff, mpi::Comm comm, int distDepth,
+( int nx, int ny, int nz, int cutoff, mpi::Comm comm, 
   DistSymmElimTree& eTree )
 {
 #ifndef RELEASE
     cliq::PushCallStack("FillElimTree");
 #endif
+    const int distDepth = DistributedDepth( comm );
     int nxSub=nx, nySub=ny, xOffset=0, yOffset=0;
     FillDistElimTree
     ( nx, ny, nz, nxSub, nySub, xOffset, yOffset, cutoff, 
@@ -450,7 +424,6 @@ void FillDistElimTree
 #ifndef RELEASE
     cliq::PushCallStack("FillDistElimTree");
 #endif
-    // TODO: Generalize this for non power-of-two numbers of processes
     const int numDistNodes = distDepth+1;
 
     eTree.distNodes.resize( numDistNodes );
@@ -759,14 +732,15 @@ void FillLocalElimTree
         Box box = boxStack.top();
         boxStack.pop();
 
-        LocalSymmNode& node = eTree.localNodes[s];
+        eTree.localNodes[s] = new LocalSymmNode;
+        LocalSymmNode& node = *eTree.localNodes[s];
         node.parent = box.parentIndex;
         if( node.parent != -1 )
         {
             if( box.leftChild )
-                eTree.localNodes[node.parent].children[0] = s;
+                eTree.localNodes[node.parent]->children[0] = s;
             else
-                eTree.localNodes[node.parent].children[1] = s;
+                eTree.localNodes[node.parent]->children[1] = s;
         }
 
         if( box.nx*box.ny*nz <= cutoff )

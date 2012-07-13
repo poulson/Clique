@@ -26,16 +26,15 @@
 
 namespace cliq {
 
-// TODO
-/*
+// NOTE: This routine is not yet finished
 void NestedDissection
-( const DistGraph& graph, DistSeparatorTree& sepTree, DistSymmElimTree& eTree );*/
+( const DistGraph& graph, DistSymmElimTree& eTree, DistSeparatorTree& sepTree );
 
-// For 1 process
 int Bisect
 ( const Graph& graph, Graph& leftChild, Graph& rightChild, 
   std::vector<int>& map );
 
+// NOTE: for two or more processes
 int Bisect
 ( const DistGraph& graph, DistGraph& child, 
   std::vector<int>& localMap, bool& haveLeftChild );
@@ -48,11 +47,100 @@ void InvertMap
 ( const std::vector<int>& localMap, int blocksize,
    std::vector<int>& localInverseMap, mpi::Comm comm );
 
+int DistributedDepth( mpi::Comm comm );
+
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
-inline int Bisect
+inline void
+DistributedDepthRecursion
+( unsigned commRank, unsigned commSize, unsigned& distDepth )
+{
+    if( commSize == 1 )
+        return;
+
+    ++distDepth;
+    const unsigned smallTeamSize = commSize/2;
+    const unsigned largeTeamSize = commSize - smallTeamSize;
+    if( commRank < smallTeamSize )
+        DistributedDepthRecursion( commRank, smallTeamSize, distDepth );
+    else
+        DistributedDepthRecursion
+        ( commRank-smallTeamSize, largeTeamSize, distDepth );
+}
+
+inline int
+DistributedDepth( mpi::Comm comm )
+{
+    unsigned commRank = mpi::CommRank( comm );
+    unsigned commSize = mpi::CommSize( comm );
+    unsigned distDepth = 0;
+    DistributedDepthRecursion( commRank, commSize, distDepth );
+    return distDepth;
+}
+
+inline void
+NestedDissectionRecursion
+( const DistGraph& graph, DistSymmElimTree& eTree, DistSeparatorTree& sepTree,
+  int depth )
+{
+#ifndef RELEASE
+    PushCallStack("NestedDissectionRecursion");
+#endif
+    const int distDepth = sepTree.distSeps.size();
+    if( distDepth - depth > 0 )
+    {
+        DistGraph child;
+        bool haveLeftChild;
+        std::vector<int> localMap;
+        const int sepSize = Bisect( graph, child, localMap, haveLeftChild );
+
+        NestedDissectionRecursion( child, eTree, sepTree, depth+1 );
+        // TODO
+    }
+    else
+    {
+        Graph seqGraph( graph );
+
+        Graph leftChild, rightChild;
+        std::vector<int> map;
+        const int sepSize = Bisect( seqGraph, leftChild, rightChild, map );
+
+        // TODO
+        //NestedDissectionRecursion( leftChild, eTree, sepTree );
+        //NestedDissectionRecursion( rightChild, eTree, sepTree );
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+inline void 
+NestedDissection
+( const DistGraph& graph, DistSymmElimTree& eTree, DistSeparatorTree& sepTree )
+{
+#ifndef RELEASE
+    PushCallStack("NestedDissection");
+#endif
+    mpi::Comm comm = graph.Comm();
+    const int commRank = mpi::CommRank( comm );
+    const int commSize = mpi::CommSize( comm );
+
+    const int distDepth = DistributedDepth( comm );
+
+    eTree.distNodes.resize( distDepth+1 );
+    sepTree.distSeps.resize( distDepth );
+
+    NestedDissectionRecursion( graph, eTree, sepTree, 0 );
+    // TODO
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+inline int 
+Bisect
 ( const Graph& graph ,Graph& leftChild, Graph& rightChild,
   std::vector<int>& map )
 {
@@ -195,7 +283,8 @@ inline int Bisect
     return sepSize;
 }
 
-inline int Bisect
+inline int 
+Bisect
 ( const DistGraph& graph, DistGraph& child, 
   std::vector<int>& localMap, bool& haveLeftChild )
 {
@@ -506,7 +595,8 @@ inline int Bisect
 
 // Overwrite the array of indices with the distributed map defined by each 
 // processes's localMap. 
-inline void MapIndices
+inline void 
+MapIndices
 ( const std::vector<int>& localMap, int blocksize,
   std::vector<int>& indices, mpi::Comm comm )
 {
@@ -611,7 +701,8 @@ inline void MapIndices
 }
 
 // Generate our local portion of the inverse of a distributed map
-inline void InvertMap
+inline void 
+InvertMap
 ( const std::vector<int>& localMap, int blocksize,
   std::vector<int>& localInverseMap, mpi::Comm comm )
 {

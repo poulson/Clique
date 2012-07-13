@@ -37,9 +37,22 @@ struct DistSeparator
 struct DistSeparatorTree
 {
     // Full local binary tree
-    std::vector<LocalSepOrLeaf> localSepsAndLeaves;
-    // One path through top of binary tree (does not include local separator)
+    //
+    // NOTE: This is an array of pointers, as we will not know during 
+    //       construction how many will need to be created
+    std::vector<LocalSepOrLeaf*> localSepsAndLeaves;
+
+    // One path through top of binary tree 
+    //
+    // NOTE: does not include the single-process separator/leaf
     std::vector<DistSeparator> distSeps;
+
+    ~DistSeparatorTree()
+    {
+        const int numLocal = localSepsAndLeaves.size();
+        for( int i=0; i<numLocal; ++i )
+            delete localSepsAndLeaves[i];
+    }
 };
 
 } // namespace cliq

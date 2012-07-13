@@ -117,7 +117,8 @@ DistSymmFrontTree<F>::DistSymmFrontTree
     {
         const int size = info.localNodes[s].size;
         const int offset = info.localNodes[s].offset;
-        const std::vector<int>& indices = sepTree.localSepsAndLeaves[s].indices;
+        const std::vector<int>& indices = 
+            sepTree.localSepsAndLeaves[s]->indices;
         for( int t=0; t<size; ++t )
         {
             const int i = indices[t];
@@ -159,7 +160,8 @@ DistSymmFrontTree<F>::DistSymmFrontTree
     {
         const int size = info.localNodes[s].size; 
         const int offset = info.localNodes[s].offset;
-        const std::vector<int>& indices = sepTree.localSepsAndLeaves[s].indices;
+        const std::vector<int>& indices = 
+            sepTree.localSepsAndLeaves[s]->indices;
         for( int t=0; t<size; ++t )
         {
             const int i = indices[t];
@@ -375,7 +377,8 @@ DistSymmFrontTree<F>::DistSymmFrontTree
         Zeros( height, width, front.frontL );
 
         const int offset = info.localNodes[s].offset;
-        const std::vector<int>& indices = sepTree.localSepsAndLeaves[s].indices;
+        const std::vector<int>& indices = 
+            sepTree.localSepsAndLeaves[s]->indices;
         for( int t=0; t<width; ++t )
         {
             const int i = indices[t];

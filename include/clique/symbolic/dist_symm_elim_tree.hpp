@@ -42,8 +42,17 @@ struct DistSymmNode
 
 struct DistSymmElimTree
 {
-    std::vector<LocalSymmNode> localNodes;
+    // NOTE: This is an array of pointers, as we will not know how many 
+    //       are needed during construction
+    std::vector<LocalSymmNode*> localNodes;
     std::vector<DistSymmNode> distNodes;
+
+    ~DistSymmElimTree()
+    {
+        const int numLocal = localNodes.size();
+        for( int i=0; i<numLocal; ++i )
+            delete localNodes[i];
+    }
 };
 
 } // namespace cliq

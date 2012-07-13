@@ -35,7 +35,7 @@ void LocalSymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info )
     std::vector<int> childrenStruct, partialStruct, fullStruct, nodeIndices;
     for( int s=0; s<numNodes; ++s )
     {
-        const LocalSymmNode& node = eTree.localNodes[s];
+        const LocalSymmNode& node = *eTree.localNodes[s];
         LocalSymmNodeInfo& nodeInfo = info.localNodes[s];
         nodeInfo.size = node.size;
         nodeInfo.offset = node.offset;
