@@ -37,7 +37,7 @@ int Bisect
 // NOTE: for two or more processes
 int Bisect
 ( const DistGraph& graph, DistGraph& child, 
-  std::vector<int>& localMap, bool& haveLeftChild );
+  std::vector<int>& localMap, bool& onLeft );
 
 void MapIndices
 ( const std::vector<int>& localMap, 
@@ -89,7 +89,7 @@ DistributedDepth( mpi::Comm comm )
 inline void
 NestedDissectionRecursion
 ( const DistGraph& graph, DistSymmElimTree& eTree, DistSeparatorTree& sepTree,
-  int depth )
+  int depth, int offset )
 {
 #ifndef RELEASE
     PushCallStack("NestedDissectionRecursion");
@@ -98,12 +98,36 @@ NestedDissectionRecursion
     if( distDepth - depth > 0 )
     {
         DistGraph child;
-        bool haveLeftChild;
+        bool onLeft;
         std::vector<int> localMap;
-        const int sepSize = Bisect( graph, child, localMap, haveLeftChild );
+        const int sepSize = Bisect( graph, child, localMap, onLeft );
+        const int childSize = child.NumSources();
 
-        NestedDissectionRecursion( child, eTree, sepTree, depth+1 );
-        // TODO
+        // Fill in this node of the DistSeparatorTree
+        DistSeparator& sep = sepTree.distSeps[distDepth-1-depth];
+        mpi::Comm comm = graph.Comm();
+        mpi::CommDup( comm, sep.comm );
+        sep.indices.resize( sepSize );
+        std::vector<int> localInverseMap;
+        const int blocksize = graph.Blocksize();
+        InvertMap( localMap, localInverseMap, blocksize, comm );
+        const int numSources = graph.NumSources();
+        for( int s=0; s<sepSize; ++s )
+            sep.indices[s] = numSources-sepSize;
+        MapIndices( localInverseMap, sep.indices, blocksize, comm );
+        for( int s=0; s<sepSize; ++s )
+            sep.indices[s] += offset;
+
+        // Fill in this node of the DistSymmElimTree
+        //
+        // TODO: Figure out how to fill the lowerStruct for this separator
+        DistSymmNode& distNode = eTree.distNodes[distDepth-depth];
+        mpi::CommDup( comm, distNode.comm );
+
+        const int otherChildSize = numSources - sepSize - childSize; 
+        const int newOffset = ( onLeft ? offset : offset+otherChildSize );
+        NestedDissectionRecursion
+        ( child, eTree, sepTree, depth+1, otherChildSize );
     }
     else
     {
@@ -135,11 +159,16 @@ NestedDissection
 
     const int distDepth = DistributedDepth( comm );
 
+    // NOTE: There is a potential memory leak here if these data structures 
+    //       are reused. Their destructors should call a member function which
+    //       we can simply call here to clear the data
+    eTree.localNodes.clear();
+    sepTree.localSepsAndLeaves.clear();
+
     eTree.distNodes.resize( distDepth+1 );
     sepTree.distSeps.resize( distDepth );
 
-    NestedDissectionRecursion( graph, eTree, sepTree, 0 );
-    // TODO
+    NestedDissectionRecursion( graph, eTree, sepTree, 0, 0 );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -292,7 +321,7 @@ Bisect
 inline int 
 Bisect
 ( const DistGraph& graph, DistGraph& child, 
-  std::vector<int>& localMap, bool& haveLeftChild )
+  std::vector<int>& localMap, bool& onLeft )
 {
 #ifndef RELEASE
     PushCallStack("Bisect");
@@ -567,12 +596,12 @@ Bisect
     child.SetComm( childComm );
     if( inLeftTeam )
     {
-        haveLeftChild = true;
+        onLeft = true;
         child.ResizeTo( leftChildSize );
     }
     else
     {
-        haveLeftChild = false;
+        onLeft = false;
         child.ResizeTo( rightChildSize );
     }
     const int childFirstLocalSource = child.FirstLocalSource();
@@ -586,7 +615,7 @@ Bisect
         for( int t=0; t<numConnections; ++t )
         {
             const int target = recvIndices[offset++];
-            if( haveLeftChild )
+            if( onLeft )
                 child.PushBack( source, target );
             else
                 child.PushBack( source-leftChildSize, target-leftChildSize );

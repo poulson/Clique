@@ -52,6 +52,10 @@ struct DistSeparatorTree
         const int numLocal = localSepsAndLeaves.size();
         for( int i=0; i<numLocal; ++i )
             delete localSepsAndLeaves[i];
+
+        const int numDist = distSeps.size();
+        for( int i=0; i<numDist; ++i )
+            mpi::CommFree( distSeps[i].comm );
     }
 };
 

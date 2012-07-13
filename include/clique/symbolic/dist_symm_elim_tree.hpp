@@ -52,6 +52,9 @@ struct DistSymmElimTree
         const int numLocal = localNodes.size();
         for( int i=0; i<numLocal; ++i )
             delete localNodes[i];
+        const int numDist = distNodes.size();
+        for( int i=0; i<numDist; ++i )
+            mpi::CommFree( distNodes[i].comm );
     }
 };
 
