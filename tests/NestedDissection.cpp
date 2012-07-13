@@ -104,6 +104,15 @@ main( int argc, char* argv[] )
                 std::cout << "Root is on right with sizes: " 
                           << leftSize << ", " << rightSize << ", " << sepSize
                           << std::endl;
+
+            const int numChildSources = child.NumSources();
+            const int numLocalChildSources = child.NumLocalSources();
+            const int numLocalChildEdges = child.NumLocalEdges();
+            std::cout << "numChildSources = " << numChildSources << "\n"
+                      << "numLocalChildSources = " << numLocalChildSources
+                      << "\n"
+                      << "numLocalChildEdges = " << numLocalChildEdges 
+                      << std::endl;
         }
     }
     catch( std::exception& e )

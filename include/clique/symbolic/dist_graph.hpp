@@ -405,22 +405,30 @@ DistGraph::PushBack( int source, int target )
     EnsureConsistentSizes();
     const int capacity = Capacity();
     const int numLocalEdges = NumLocalEdges();
+    if( source < firstLocalSource_ || 
+        source >= firstLocalSource_+numLocalSources_ )
+    {
+        std::ostringstream msg;
+        msg << "Source was out of bounds: " << source << " is not in ["
+            << firstLocalSource_ << "," << firstLocalSource_+numLocalSources_
+            << ")";
+        throw std::logic_error( msg.str().c_str() );
+    }
     if( numLocalEdges == capacity )
         std::cerr << "WARNING: Pushing back without first reserving space" 
                   << std::endl;
 #endif
     if( !assembling_ )
         throw std::logic_error("Must start assembly before pushing back");
-    sources_.push_back( source );
-    targets_.push_back( target );
-    if( sorted_ )
+    if( sorted_ && sources_.size() != 0 )
     {
-        if( sources_.size() != 0 && source < sources_.back() )
+        if( source < sources_.back() )
             sorted_ = false;
-        if( targets_.size() != 0 && 
-            source == sources_.back() && target < targets_.back() )
+        if( source == sources_.back() && target < targets_.back() )
             sorted_ = false;
     }
+    sources_.push_back( source );
+    targets_.push_back( target );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -452,7 +460,7 @@ DistGraph::ResizeTo( int numSources, int numTargets )
     const int commSize = mpi::CommSize( comm_ );
     numSources_ = numSources;
     numTargets_ = numTargets;
-    blocksize_ = (numSources+commSize-1)/commSize;
+    blocksize_ = numSources/commSize;
     firstLocalSource_ = commRank*blocksize_;
     if( commRank != commSize-1 )
         numLocalSources_ = blocksize_;

@@ -95,55 +95,49 @@ void CliqOrder(ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *sizes)
 
   Order_Partition_Multiple(ctrl, graph);
 
-  CliqLabelSeparator(ctrl, graph, order, sizes);
+  CliqLabelVertices(ctrl, graph, order, sizes);
 }
 
-void CliqLabelSeparator
+void CliqLabelVertices
 (ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *sizes)
 { 
-  idx_t i, nvtxs, nparts, sid; 
-  idx_t *where, *lpwgts, *gpwgts, *sizescan;
-
-  nparts = 2;
+  idx_t i, j, nvtxs, id; 
+  idx_t *where, *lpwgts, *gpwgts;
+  idx_t sizescan[3];
 
   nvtxs  = graph->nvtxs;
   where  = graph->where;
   lpwgts = graph->lpwgts;
   gpwgts = graph->gpwgts;
 
-  /* Compute the local size of the separator. This is required in case the 
-     graph has vertex weights */
-  iset(2*nparts, 0, lpwgts);
+  /* Compute the local sizes of the left side, right side, and separator */
+  iset(3, 0, lpwgts);
   for (i=0; i<nvtxs; i++) 
     lpwgts[where[i]]++;
 
-  sizescan = imalloc(2*nparts, "CliqLabelSeparator: sizescan");
-
   /* Perform a Prefix scan of the separator size to determine the boundaries */
-  gkMPI_Scan
-  ((void *)lpwgts, (void *)sizescan, 2*nparts, IDX_T, MPI_SUM, ctrl->comm);
+  gkMPI_Scan((void *)lpwgts, (void *)sizescan, 3, IDX_T, MPI_SUM, ctrl->comm);
   gkMPI_Allreduce
-  ((void *)lpwgts, (void *)gpwgts, 2*nparts, IDX_T, MPI_SUM, ctrl->comm);
+  ((void *)lpwgts, (void *)gpwgts, 3, IDX_T, MPI_SUM, ctrl->comm);
 
   /* Fill in the size of the partition */
   sizes[0] = gpwgts[0];
   sizes[1] = gpwgts[1];
   sizes[2] = gpwgts[2];
 
-  for (i=0; i<2*nparts; i++)
+  for (i=2; i>=0; --i)
+    for (j=i+1; j<3; ++j )
+        sizescan[i] += gpwgts[j];
+  for (i=0; i<3; i++)
     sizescan[i] -= lpwgts[i];
 
-  /* Assign the order[] values to the separator nodes */
   for (i=0; i<nvtxs; i++) {
-    if (where[i] >= nparts) {
-      sid = where[i];
-      sizescan[sid]++;
-      PASSERT(ctrl, order[i] == -1);
-      order[i] = graph->gnvtxs - sizescan[sid];
-    }
+    id = where[i];
+    PASSERT(ctrl, id <= 2);
+    sizescan[id]++;
+    PASSERT(ctrl, order[i] == -1);
+    order[i] = graph->gnvtxs - sizescan[id];
   }
-
-  gk_free((void **)&sizescan, LTERM);
 }
 
 /***********************************************************************************/

@@ -122,10 +122,7 @@ inline int Bisect
     // Create space for the result
     localMap.resize( numLocalSources );
 
-    mpi::Barrier( comm );
-    if( commRank == 0 )
-        std::cout << "Starting CliqBisect..." << std::endl;
-
+    // Use the custom ParMETIS interface
     idx_t numParSeps = 10;
     idx_t numSeqSeps = 5;
     real_t imbalance = 1.1;
@@ -133,17 +130,30 @@ inline int Bisect
     const int retval = CliqBisect
     ( &vtxDist[0], &xAdj[0], &adjacency[0], &numParSeps, &numSeqSeps, 
       &imbalance, NULL, &localMap[0], sizes, &comm );
+#ifndef RELEASE
+    const int numSources = graph.NumSources();
+    std::vector<int> timesMapped( numSources, 0 );
+    for( int i=0; i<numLocalSources; ++i )
+        ++timesMapped[localMap[i]];
+    mpi::Reduce( &timesMapped[0], numSources, MPI_SUM, 0, comm );
+    if( commRank == 0 )
+    {
+        for( int i=0; i<numSources; ++i )
+        {
+            if( timesMapped[i] != 1 )
+            {
+                std::ostringstream msg;
+                msg << timesMapped[i] << " vertices were relabeled as "
+                    << i;
+                throw std::logic_error( msg.str().c_str() );
+            }
+        }
+    }
+#endif
 
     const int leftChildSize = sizes[0];
     const int rightChildSize = sizes[1];
     const int sepSize = sizes[2];
-
-    if( commRank == 0 )
-    {
-        std::cout << "sizes: " 
-                  << sizes[0] << ", " << sizes[1] << ", " << sizes[2] 
-                  << std::endl;
-    }
 
     // Build the child graph from the partitioned parent
     const int smallTeamSize = commSize/2;
@@ -165,13 +175,15 @@ inline int Bisect
         const int i = localMap[s];
         if( i < leftChildSize )
         {
-            const int q = leftTeamOffset + i/leftTeamBlocksize;
+            const int q = leftTeamOffset + 
+                std::min(i/leftTeamBlocksize,leftTeamSize-1);
             ++rowSendSizes[q];
         }
         else if( i < leftChildSize+rightChildSize )
         {
             const int q = 
-                rightTeamOffset + (i-leftChildSize)/rightTeamBlocksize;
+                rightTeamOffset + 
+                std::min((i-leftChildSize)/rightTeamBlocksize,rightTeamSize-1);
             ++rowSendSizes[q];
         }
     }
@@ -208,17 +220,19 @@ inline int Bisect
         const int i = localMap[s];
         if( i < leftChildSize )
         {
-            const int q = leftTeamOffset + i/leftTeamBlocksize;
-            rowSendLengths[offsets[q]] = i;
-            rowSendIndices[offsets[q]] = graph.NumConnections( s );
+            const int q = leftTeamOffset + 
+                std::min(i/leftTeamBlocksize,leftTeamSize-1);
+            rowSendIndices[offsets[q]] = i;
+            rowSendLengths[offsets[q]] = graph.NumConnections( s );
             ++offsets[q];
         }
         else if( i < leftChildSize+rightChildSize )
         {
             const int q = 
-                rightTeamOffset + (i-leftChildSize)/rightTeamBlocksize;
-            rowSendLengths[offsets[q]] = i;
-            rowSendIndices[offsets[q]] = graph.NumConnections( s );
+                rightTeamOffset + 
+                std::min((i-leftChildSize)/rightTeamBlocksize,rightTeamSize-1);
+            rowSendIndices[offsets[q]] = i;
+            rowSendLengths[offsets[q]] = graph.NumConnections( s );
             ++offsets[q];
         }
     }
@@ -248,7 +262,7 @@ inline int Bisect
         const int numRows = rowSendSizes[q];
         const int offset = rowSendOffsets[q];
         for( int s=0; s<numRows; ++s )
-            indexSendSizes[q] += rowSendIndices[offset+s];
+            indexSendSizes[q] += rowSendLengths[offset+s];
 
         indexSendOffsets[q] = numSendIndices;
         numSendIndices += indexSendSizes[q];
@@ -261,7 +275,7 @@ inline int Bisect
         const int numRows = rowRecvSizes[q];
         const int offset = rowRecvOffsets[q];
         for( int s=0; s<numRows; ++s )
-            indexRecvSizes[q] += rowRecvIndices[offset+s];
+            indexRecvSizes[q] += rowRecvLengths[offset+s];
 
         indexRecvOffsets[q] = numRecvIndices;
         numRecvIndices += indexRecvSizes[q];
@@ -275,7 +289,8 @@ inline int Bisect
         const int i = localMap[s];
         if( i < leftChildSize )
         {
-            const int q = leftTeamOffset + i/leftTeamBlocksize;
+            const int q = leftTeamOffset + 
+                std::min(i/leftTeamBlocksize,leftTeamSize-1);
 
             int& offset = offsets[q];
             const int numConnections = graph.NumConnections( s );
@@ -286,7 +301,8 @@ inline int Bisect
         else if( i < leftChildSize+rightChildSize )
         {
             const int q =
-                rightTeamOffset + (i-leftChildSize)/rightTeamBlocksize;
+                rightTeamOffset + 
+                std::min((i-leftChildSize)/rightTeamBlocksize,rightTeamSize-1);
                
             int& offset = offsets[q];
             const int numConnections = graph.NumConnections( s );
@@ -306,16 +322,9 @@ inline int Bisect
     indexSendOffsets.clear();
 
     // Get the indices after reordering
-    mpi::Barrier( comm );
-    if( commRank == 0 )
-        std::cout << "Starting MapIndices..." << std::endl;
     MapIndices( localMap, blocksize, recvIndices, comm );
 
     // Put the connections into our new graph
-    mpi::Barrier( comm );
-    if( commRank == 0 )
-        std::cout << "Starting assembly..." << std::endl;
-
     const int childTeamRank = 
         ( inLeftTeam ? commRank-leftTeamOffset : commRank-rightTeamOffset );
     MPI_Comm childComm;
@@ -342,7 +351,10 @@ inline int Bisect
         for( int t=0; t<numConnections; ++t )
         {
             const int target = recvIndices[offset++];
-            child.PushBack( source, target );
+            if( haveLeftChild )
+                child.PushBack( source, target );
+            else
+                child.PushBack( source-leftChildSize, target-leftChildSize );
         }
     }
     child.StopAssembly();
@@ -364,7 +376,7 @@ inline void MapIndices
     const int commRank = mpi::CommRank( comm );
     const int commSize = mpi::CommSize( comm );
 
-    const int firstLocalSource = blocksize*commSize;
+    const int firstLocalSource = blocksize*commRank;
     const int numLocalSources = localMap.size();
     const int numLocalIndices = indices.size();
 
@@ -373,7 +385,11 @@ inline void MapIndices
     for( int s=0; s<numLocalIndices; ++s )
     {
         const int i = indices[s];
-        const int q = i / blocksize;
+#ifndef RELEASE
+        if( i < 0 )
+            throw std::logic_error("Index was negative");
+#endif
+        const int q = std::min( i/blocksize, commSize-1 );
         ++requestSizes[q];
     }
 
@@ -409,7 +425,7 @@ inline void MapIndices
     for( int s=0; s<numLocalIndices; ++s )
     {
         const int i = indices[s];
-        const int q = i / blocksize;
+        const int q = std::min( i/blocksize, commSize-1 );
         requests[offsets[q]++] = i;
     }
 
@@ -426,7 +442,12 @@ inline void MapIndices
         const int iLocal = i - firstLocalSource;
 #ifndef RELEASE
         if( iLocal < 0 || iLocal >= numLocalSources )
-            throw std::logic_error("Invalid request");
+        {
+            std::ostringstream msg;
+            msg << "invalid request: i=" << i << ", iLocal=" << iLocal 
+                << ", commRank=" << commRank << ", blocksize=" << blocksize;
+            throw std::logic_error( msg.str().c_str() );
+        }
 #endif
         fulfills[s] = localMap[iLocal];
     }
@@ -441,7 +462,7 @@ inline void MapIndices
     for( int s=0; s<numLocalIndices; ++s )
     {
         const int i = indices[s];
-        const int q = i / blocksize;
+        const int q = std::min( i/blocksize, commSize-1 );
         indices[s] = requests[offsets[q]++];
     }
 #ifndef RELEASE
@@ -468,7 +489,7 @@ inline void InvertMap
     for( int s=0; s<numLocalSources; ++s )
     {
         const int i = localMap[s];
-        const int q = i / blocksize;
+        const int q = std::min( i/blocksize, commSize-1 );
         sendSizes[q] += 2;
     }
 
@@ -508,7 +529,7 @@ inline void InvertMap
     for( int s=0; s<numLocalSources; ++s )
     {
         const int i = localMap[s];
-        const int q = i / blocksize;
+        const int q = std::min( i/blocksize, commSize-1 );
         sends[offsets[q]++] = s+firstLocalSource;
         sends[offsets[q]++] = i;
     }

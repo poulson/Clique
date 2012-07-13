@@ -361,22 +361,28 @@ Graph::PushBack( int source, int target )
     EnsureConsistentSizes();
     const int capacity = Capacity();
     const int numEdges = NumEdges();
+    if( source < 0 || source >= numSources_ )
+    {
+        std::ostringstream msg;
+        msg << "Source was out of bounds: " << source << " is not in [0,"
+            << numSources_ << ")";
+        throw std::logic_error( msg.str().c_str() );
+    }
     if( numEdges == capacity )
         std::cerr << "WARNING: Pushing back without first reserving space" 
                   << std::endl;
 #endif
     if( !assembling_ )
         throw std::logic_error("Must start assembly before pushing back");
-    sources_.push_back( source );
-    targets_.push_back( target );
-    if( sorted_ )
+    if( sorted_ && sources_.size() != 0 )
     {
-        if( sources_.size() != 0 && source < sources_.back() )
+        if( source < sources_.back() )
             sorted_ = false;
-        if( targets_.size() != 0 &&
-            source == sources_.back() && target < targets_.back() )
+        if( source == sources_.back() && target < targets_.back() )
             sorted_ = false;
     }
+    sources_.push_back( source );
+    targets_.push_back( target );
 #ifndef RELEASE
     PopCallStack();
 #endif
