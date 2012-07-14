@@ -65,21 +65,37 @@ void LocalSymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info )
 #ifndef RELEASE
             for( int i=1; i<numLeftIndices; ++i )
             {
-                if( leftChild.lowerStruct[i] <= leftChild.lowerStruct[i-1] )
+                const int thisIndex = leftChild.lowerStruct[i];
+                const int lastIndex = leftChild.lowerStruct[i-1];
+                if( thisIndex < lastIndex )
                 {
                     std::ostringstream msg;
-                    msg << "Left child struct was not sorted for s=" << s 
-                        << "\n";
+                    msg << "Left child struct was not sorted for s=" << s;
+                    throw std::logic_error( msg.str().c_str() );
+                }
+                else if( thisIndex == lastIndex )
+                {
+                    std::ostringstream msg;
+                    msg << "Left child struct had repeated index, " 
+                        << thisIndex << ", for s=" << s;
                     throw std::logic_error( msg.str().c_str() );
                 }
             }
             for( int i=1; i<numRightIndices; ++i )
             {
-                if( rightChild.lowerStruct[i] <= rightChild.lowerStruct[i-1] )
+                const int thisIndex = rightChild.lowerStruct[i];
+                const int lastIndex = rightChild.lowerStruct[i-1];
+                if( thisIndex < lastIndex )
                 {
                     std::ostringstream msg;
-                    msg << "Right child struct was not sorted for s=" << s
-                        << "\n";
+                    msg << "Right child struct was not sorted for s=" << s;
+                    throw std::logic_error( msg.str().c_str() );
+                }
+                else if( thisIndex == lastIndex )
+                {
+                    std::ostringstream msg;
+                    msg << "Right child struct had repeated index, " 
+                        << thisIndex << ", for s=" << s;
                     throw std::logic_error( msg.str().c_str() );
                 }
             }

@@ -136,6 +136,18 @@ main( int argc, char* argv[] )
                       << rootSepSize << " vertices in root separator\n"
                       << std::endl;
         }
+
+        if( commRank == 0 )
+        {
+            std::cout << "Building DistSymmFrontTree...";
+            std::cout.flush();
+        }
+        mpi::Barrier( comm );
+        sleep( 1 );
+        DistSymmFrontTree<double> frontTree( A, localMap, sepTree, info );
+        mpi::Barrier( comm );
+        if( commRank == 0 )
+            std::cout << "done" << std::endl;
     }
     catch( std::exception& e )
     {

@@ -25,12 +25,14 @@ namespace cliq {
 struct LocalSepOrLeaf
 {
     int parent; // -1 if local root
+    int offset;
     std::vector<int> indices;
 };
 
 struct DistSeparator
 {
     mpi::Comm comm;
+    int offset;
     std::vector<int> indices;
 };
 

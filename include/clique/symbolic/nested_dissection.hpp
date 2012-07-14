@@ -56,9 +56,12 @@ void InvertMap
         std::vector<int>& localInverseMap, int numSources, mpi::Comm comm );
 
 void BuildMap
-( const DistGraph& graph, 
-  const DistSymmInfo& info, const DistSeparatorTree& sepTree, 
+( const DistGraph& graph, const DistSeparatorTree& sepTree, 
   std::vector<int>& localMap );
+
+void MapLowerStruct
+( const DistGraph& graph, const std::vector<int>& localMap,
+  DistSymmElimTree& eTree );
 
 int DistributedDepth( mpi::Comm comm );
 
@@ -119,9 +122,10 @@ NestedDissectionRecursion
         sepTree.localSepsAndLeaves.push_back( new LocalSepOrLeaf );
         LocalSepOrLeaf& leaf = *sepTree.localSepsAndLeaves.back();
         leaf.parent = parent;
+        leaf.offset = offset;
         leaf.indices.resize( numSources );
         for( int s=0; s<numSources; ++s )
-            leaf.indices[s] = offset + perm[s];
+            leaf.indices[s] = perm[s];
 
         // Fill in this node of the local elimination tree
         eTree.localNodes.push_back( new LocalSymmNode );
@@ -165,6 +169,7 @@ NestedDissectionRecursion
         sepTree.localSepsAndLeaves.push_back( new LocalSepOrLeaf );
         LocalSepOrLeaf& sep = *sepTree.localSepsAndLeaves.back();
         sep.parent = parent;
+        sep.offset = offset + (numSources-sepSize);
         sep.indices.resize( sepSize );
         for( int s=0; s<sepSize; ++s )
         {
@@ -176,7 +181,7 @@ NestedDissectionRecursion
         eTree.localNodes.push_back( new LocalSymmNode );
         LocalSymmNode& node = *eTree.localNodes.back();
         node.size = sepSize;
-        node.offset = offset + (numSources-sepSize);
+        node.offset = sep.offset;
         node.parent = parent;
         node.children.resize( 2 );
         std::set<int> connectedAncestors;
@@ -220,7 +225,8 @@ NestedDissectionRecursion
         ( leftChild, eTree, sepTree, leftPerm, parent, offset, cutoff );
         node.children[1] = eTree.localNodes.size();
         NestedDissectionRecursion
-        ( rightChild, eTree, sepTree, rightPerm, parent, offset, cutoff );
+        ( rightChild, eTree, sepTree, rightPerm, parent, 
+          offset+leftChildSize, cutoff );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -256,6 +262,7 @@ NestedDissectionRecursion
         // (we will finish computing the separator indices at the end)
         DistSeparator& sep = sepTree.distSeps[distDepth-1-depth];
         mpi::CommDup( comm, sep.comm );
+        sep.offset = offset + (numSources-sepSize);
         sep.indices.resize( sepSize );
         for( int s=0; s<sepSize; ++s )
             sep.indices[s] = s + (numSources-sepSize);
@@ -264,7 +271,7 @@ NestedDissectionRecursion
         // Fill in this node of the DistSymmElimTree
         DistSymmNode& node = eTree.distNodes[distDepth-depth];
         node.size = sepSize;
-        node.offset = offset + (numSources-sepSize);
+        node.offset = sep.offset;
         mpi::CommDup( comm, node.comm );
         const int numLocalSources = graph.NumLocalSources();
         const int firstLocalSource = graph.FirstLocalSource();
@@ -349,6 +356,7 @@ NestedDissectionRecursion
         sepTree.localSepsAndLeaves.push_back( new LocalSepOrLeaf );
         LocalSepOrLeaf& leaf = *sepTree.localSepsAndLeaves.back();
         leaf.parent = -1;
+        leaf.offset = offset;
         leaf.indices.resize( numSources );
         for( int s=0; s<numSources; ++s )
             leaf.indices[s] = localPerm[s];
@@ -406,6 +414,7 @@ NestedDissectionRecursion
         sepTree.localSepsAndLeaves.push_back( new LocalSepOrLeaf );
         LocalSepOrLeaf& sep = *sepTree.localSepsAndLeaves.back();
         sep.parent = -1;
+        sep.offset = offset + (numSources-sepSize);
         sep.indices.resize( sepSize );
         for( int s=0; s<sepSize; ++s )
         {
@@ -420,7 +429,7 @@ NestedDissectionRecursion
         DistSymmNode& distNode = eTree.distNodes[0];
         mpi::CommDup( comm, distNode.comm );
         distNode.size = localNode.size = sepSize;
-        distNode.offset = localNode.offset = offset + (numSources-sepSize);
+        distNode.offset = localNode.offset = sep.offset;
         localNode.parent = -1;
         localNode.children.resize( 2 );
         std::set<int> connectedAncestors;
@@ -469,14 +478,14 @@ NestedDissectionRecursion
         ( leftChild, eTree, sepTree, leftPerm, parent, offset, cutoff );
         localNode.children[1] = eTree.localNodes.size();
         NestedDissectionRecursion
-        ( rightChild, eTree, sepTree, rightPerm, parent, offset, cutoff );
+        ( rightChild, eTree, sepTree, rightPerm, parent, 
+          offset+leftChildSize, cutoff );
     }
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
-// TODO: Add computation of local reordering
 inline void 
 NestedDissection
 ( const DistGraph& graph, DistSymmInfo& info, DistSeparatorTree& sepTree,
@@ -486,9 +495,6 @@ NestedDissection
     PushCallStack("NestedDissection");
 #endif
     mpi::Comm comm = graph.Comm();
-    const int commRank = mpi::CommRank( comm );
-    const int commSize = mpi::CommSize( comm );
-
     const int distDepth = DistributedDepth( comm );
     DistSymmElimTree eTree;
 
@@ -576,7 +582,33 @@ NestedDissection
     }
 
     // Construct the distributed reordering
-    BuildMap( graph, info, sepTree, localMap );
+    BuildMap( graph, sepTree, localMap );
+#ifndef RELEASE
+    const int commRank = mpi::CommRank( comm );
+    const int numSources = graph.NumSources();
+    std::vector<int> timesMapped( numSources, 0 );
+    for( int i=0; i<numLocalSources; ++i )
+        ++timesMapped[localMap[i]];
+    mpi::Reduce( &timesMapped[0], numSources, MPI_SUM, 0, comm );
+    if( commRank == 0 )
+    {
+        for( int i=0; i<numSources; ++i )
+        {
+            if( timesMapped[i] != 1 )
+            {
+                std::ostringstream msg;
+                msg << timesMapped[i] << " vertices were relabeled as "
+                    << i << " by BuildMap";
+                throw std::logic_error( msg.str().c_str() );
+            }
+        }
+        std::cout << std::endl;
+    }
+#endif
+
+    // Convert the lowerStruct from each node of the elimination tree from 
+    // the original to the reordered indices
+    MapLowerStruct( graph, localMap, eTree );
 
     // Run the symbolic analysis
     SymmetricAnalysis( eTree, info, storeFactRecvIndices );
@@ -587,8 +619,7 @@ NestedDissection
 
 inline void
 BuildMap
-( const DistGraph& graph, 
-  const DistSymmInfo& info, const DistSeparatorTree& sepTree, 
+( const DistGraph& graph, const DistSeparatorTree& sepTree, 
   std::vector<int>& localMap )
 {
 #ifndef RELEASE
@@ -597,6 +628,7 @@ BuildMap
     mpi::Comm comm = graph.Comm();
     const int commSize = mpi::CommSize( comm );
     const int blocksize = graph.Blocksize();
+    const int numLocalSources = graph.NumLocalSources();
     const int numLocal = sepTree.localSepsAndLeaves.size();
     // NOTE: The dist separator tree does not double-count the first 
     //       single-process node, but DistSymmInfo does. Thus their number of
@@ -613,6 +645,15 @@ BuildMap
         for( int t=0; t<numIndices; ++t )
         {
             const int i = sepOrLeaf.indices[t];
+#ifndef RELEASE
+            if( i < 0 || i >= graph.NumSources() )
+            {
+                std::ostringstream msg;
+                msg << "local separator index, " << i << ", was not in [0,"
+                    << graph.NumSources() << ")";
+                throw std::logic_error( msg.str().c_str() );
+            }
+#endif
             const int q = RowToProcess( i, blocksize, commSize );
             ++sendSizes[q];
         }
@@ -629,6 +670,15 @@ BuildMap
         {
             const int t = teamRank + tLocal*teamSize;
             const int i = sep.indices[t];
+#ifndef RELEASE
+            if( i < 0 || i >= graph.NumSources() )
+            {
+                std::ostringstream msg;
+                msg << "dist separator index, " << i << ", was not in [0,"
+                    << graph.NumSources() << ")";
+                throw std::logic_error( msg.str().c_str() );
+            }
+#endif
             const int q = RowToProcess( i, blocksize, commSize );
             ++sendSizes[q];
         }
@@ -653,16 +703,11 @@ BuildMap
     for( int s=0; s<numLocal; ++s )
     {
         const LocalSepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
-        const LocalSymmNodeInfo& node = info.localNodes[s];
-        const int numIndices = node.size;
-#ifndef RELEASE
-        if( node.size != sepOrLeaf.indices.size() )
-            throw std::logic_error("mismatch between separator tree and info");
-#endif
+        const int numIndices = sepOrLeaf.indices.size();
         for( int t=0; t<numIndices; ++t )
         {
             const int i = sepOrLeaf.indices[t];
-            const int iMapped = node.offset + t;
+            const int iMapped = sepOrLeaf.offset + t;
             const int q = RowToProcess( i, blocksize, commSize );
             sendOrigIndices[offsets[q]] = i;
             sendIndices[offsets[q]] = iMapped;
@@ -672,12 +717,7 @@ BuildMap
     for( int s=0; s<numDist; ++s )
     {
         const DistSeparator& sep = sepTree.distSeps[s];
-        const DistSymmNodeInfo& node = info.distNodes[s+1];
-        const int numIndices = node.size;
-#ifndef RELEASE
-        if( node.size != sep.indices.size() )
-            throw std::logic_error("mismatch between separator tree and info");
-#endif
+        const int numIndices = sep.indices.size();
         const int teamSize = mpi::CommSize( sep.comm );
         const int teamRank = mpi::CommRank( sep.comm );
         const int numLocalIndices = 
@@ -686,7 +726,7 @@ BuildMap
         {
             const int t = teamRank + tLocal*teamSize;
             const int i = sep.indices[t];
-            const int iMapped = node.offset + t;
+            const int iMapped = sep.offset + t;
             const int q = RowToProcess( i, blocksize, commSize );
             sendOrigIndices[offsets[q]] = i;
             sendIndices[offsets[q]] = iMapped;
@@ -695,7 +735,6 @@ BuildMap
     }
 
     // Perform an AllToAll to exchange the reordered indices
-    // TODO
     int numRecvs = 0;
     std::vector<int> recvOffsets( commSize );
     for( int q=0; q<commSize; ++q )
@@ -703,6 +742,10 @@ BuildMap
         recvOffsets[q] = numRecvs;
         numRecvs += recvSizes[q];
     }
+#ifndef RELEASE
+    if( numRecvs != numLocalSources )
+        throw std::logic_error("incorrect number of recv indices");
+#endif
     std::vector<int> recvIndices( numRecvs );
     mpi::AllToAll
     ( &sendIndices[0], &sendSizes[0], &sendOffsets[0],
@@ -715,15 +758,120 @@ BuildMap
       &recvOrigIndices[0], &recvSizes[0], &recvOffsets[0], comm );
 
     // Unpack the indices
-    const int numLocalSources = graph.NumLocalSources();
     const int firstLocalSource = graph.FirstLocalSource();
     localMap.resize( numLocalSources );
     for( int s=0; s<numRecvs; ++s )
     {
         const int i = recvOrigIndices[s];
         const int iLocal = i - firstLocalSource;
+#ifndef RELEASE
+        if( iLocal < 0 || iLocal >= numLocalSources )
+        {
+            std::ostringstream msg;
+            msg << "Local index was out of bounds: " << iLocal 
+                << " is not in [0," << numLocalSources << ")" << std::endl;
+            throw std::logic_error( msg.str().c_str() );
+        }
+#endif
         const int iMapped = recvIndices[s];
+#ifndef RELEASE
+        if( iMapped < 0 || iMapped >= graph.NumSources() )
+        {
+            std::ostringstream msg;
+            msg << "mapped index, " << iMapped << ", was not in [0,"
+                << graph.NumSources() << ")";
+            throw std::logic_error( msg.str().c_str() );
+        }
+#endif
         localMap[iLocal] = iMapped;
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+inline void
+MapLowerStruct
+( const DistGraph& graph, const std::vector<int>& localMap, 
+  DistSymmElimTree& eTree )
+{
+#ifndef RELEASE
+    PushCallStack("MapLowerStruct");
+#endif
+    mpi::Comm comm = graph.Comm();
+    const int numDist = eTree.distNodes.size();
+    const int numLocal = eTree.localNodes.size();
+    const int numSources = graph.NumSources();
+
+    // Build the set of lowerStruct indices
+    std::set<int> indexSet;
+    for( int s=0; s<numLocal; ++s )
+    {
+        const LocalSymmNode& node = *eTree.localNodes[s];
+        const int numIndices = node.lowerStruct.size();
+        for( int t=0; t<numIndices; ++t )
+            indexSet.insert( node.lowerStruct[t] );
+    }
+    for( int s=1; s<numDist; ++s )
+    {
+        const DistSymmNode& node = eTree.distNodes[s];
+        const int numIndices = node.lowerStruct.size();
+        for( int t=0; t<numIndices; ++t )
+            indexSet.insert( node.lowerStruct[t] );
+    }
+
+    // Flatten the set into a vector
+    const int numIndices = indexSet.size();
+    std::vector<int> indices( numIndices );
+    {
+        int offset = 0;
+        std::set<int>::const_iterator it;
+        for( it=indexSet.begin(); it!=indexSet.end(); ++it )
+            indices[offset++] = *it;
+    }
+
+    // Compute the reordered indices
+    std::vector<int> mappedIndices = indices;
+    MapIndices( localMap, mappedIndices, numSources, comm );
+
+    // Unpack the reordered indices
+    std::vector<int>::const_iterator it;
+    for( int s=0; s<numLocal; ++s )
+    {
+        LocalSymmNode& node = *eTree.localNodes[s];
+        const int numIndices = node.lowerStruct.size();
+        for( int t=0; t<numIndices; ++t )
+        {
+            const int index = node.lowerStruct[t];
+            it = std::lower_bound
+                ( indices.begin(), indices.end(), index );
+#ifndef RELEASE
+            if( it == indices.end() )
+                throw std::logic_error("Could not find local struct index");
+#endif
+            const int offset = it - indices.begin();
+            node.lowerStruct[t] = mappedIndices[offset];
+        }
+        std::sort( node.lowerStruct.begin(), node.lowerStruct.end() );
+    }
+    eTree.distNodes[0].lowerStruct = eTree.localNodes.back()->lowerStruct;
+    for( int s=1; s<numDist; ++s )
+    {
+        DistSymmNode& node = eTree.distNodes[s];
+        const int numIndices = node.lowerStruct.size();
+        for( int t=0; t<numIndices; ++t )
+        {
+            const int index = node.lowerStruct[t];
+            it = std::lower_bound
+                ( indices.begin(), indices.end(), index );
+#ifndef RELEASE
+            if( it == indices.end() )
+                throw std::logic_error("Could not find dist struct index");
+#endif
+            const int offset = it - indices.begin();
+            node.lowerStruct[t] = mappedIndices[offset];
+        }
+        std::sort( node.lowerStruct.begin(), node.lowerStruct.end() );
     }
 #ifndef RELEASE
     PopCallStack();

@@ -131,11 +131,40 @@ inline void ComputeStructAndRelIndices
     // Union the two child lower structures
 #ifndef RELEASE
     for( int i=1; i<myChildLowerStructSize; ++i )
-        if( myChildLowerStruct[i] <= myChildLowerStruct[i-1] )
-            throw std::runtime_error("Child's lower struct was not sorted");
+    {
+        const int thisIndex = myChildLowerStruct[i];
+        const int lastIndex = myChildLowerStruct[i-1];
+        if( thisIndex < lastIndex )
+        {
+            std::ostringstream msg;
+            msg << "My child's lower struct was not sorted";
+            throw std::logic_error( msg.str().c_str() );
+        }
+        else if( thisIndex == lastIndex )
+        {
+            std::ostringstream msg;
+            msg << "My child's lower struct had repeated index, " << thisIndex;
+            throw std::logic_error( msg.str().c_str() );
+        }
+    }
     for( int i=1; i<theirChildLowerStructSize; ++i )
-        if( theirChildLowerStruct[i] <= theirChildLowerStruct[i-1] )
-            throw std::runtime_error("Child's lower struct was not sorted");
+    {
+        const int thisIndex = theirChildLowerStruct[i];
+        const int lastIndex = theirChildLowerStruct[i-1];
+        if( thisIndex < lastIndex )
+        {
+            std::ostringstream msg;
+            msg << "Their child's lower struct was not sorted";
+            throw std::logic_error( msg.str().c_str() );
+        }
+        else if( thisIndex == lastIndex )
+        {
+            std::ostringstream msg;
+            msg << "Their child's lower struct had repeated index, "
+                << thisIndex;
+            throw std::logic_error( msg.str().c_str() );
+        }
+    }
 #endif
     childrenStruct.resize
     ( myChildLowerStructSize+theirChildLowerStructSize );
@@ -149,8 +178,22 @@ inline void ComputeStructAndRelIndices
     // Union the lower structure of this node
 #ifndef RELEASE
     for( unsigned i=1; i<node.lowerStruct.size(); ++i )
-        if( node.lowerStruct[i] <= node.lowerStruct[i-1] )
-            throw std::runtime_error("Original struct was not sorted");
+    {
+        const int thisIndex = node.lowerStruct[i];
+        const int lastIndex = node.lowerStruct[i-1];
+        if( thisIndex < lastIndex )
+        {
+            std::ostringstream msg;
+            msg << "Original struct was not sorted";
+            throw std::logic_error( msg.str().c_str() );
+        }
+        else if( thisIndex == lastIndex )
+        {
+            std::ostringstream msg;
+            msg << "Original struct had repeated index, " << thisIndex;
+            throw std::logic_error( msg.str().c_str() );
+        }
+    }
 #endif
     partialStruct.resize( childrenStructSize + node.lowerStruct.size() );
     it = std::set_union

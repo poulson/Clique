@@ -196,8 +196,15 @@ Graph::EdgeOffset( int source ) const
 {
 #ifndef RELEASE
     PushCallStack("Graph::EdgeOffset");
-    if( source < 0 || source > numSources_ )
-        throw std::logic_error("Out of bounds source index");
+    if( source < 0 )
+        throw std::logic_error("Negative source index");
+    if( source > numSources_ )
+    {
+        std::ostringstream msg;
+        msg << "Source index was too large: " << source << " is not in "
+            << "[0," << numSources_ << "]";
+        throw std::logic_error( msg.str().c_str() );
+    }
 #endif
     EnsureNotAssembling();
     const int edgeOffset = edgeOffsets_[source];

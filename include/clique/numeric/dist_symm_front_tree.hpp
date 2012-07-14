@@ -102,17 +102,18 @@ DistSymmFrontTree<F>::DistSymmFrontTree
 {
 #ifndef RELEASE
     PushCallStack("DistSymmFrontTree::DistSymmFrontTree");
-    if( localMap.size() != A.NumLocalSources() )
+    if( localMap.size() != A.LocalHeight() )
         throw std::logic_error("Local mapping was not the right size");
 #endif
     mpi::Comm comm = A.Comm();
     const int blocksize = A.Blocksize();
     const int commSize = mpi::CommSize( comm );
+    const int numLocal = sepTree.localSepsAndLeaves.size();
+    const int numDist = sepTree.distSeps.size();
 
     // Count the number of rows that we want from each process
     std::vector<int> neededRowSizes( commSize, 0 );
-    const int numLocalNodes = info.localNodes.size();
-    for( int s=0; s<numLocalNodes; ++s )
+    for( int s=0; s<numLocal; ++s )
     {
         const int size = info.localNodes[s].size;
         const int offset = info.localNodes[s].offset;
@@ -121,16 +122,23 @@ DistSymmFrontTree<F>::DistSymmFrontTree
         for( int t=0; t<size; ++t )
         {
             const int i = indices[t];
+#ifndef RELEASE
+            if( i < 0 || i >= A.Height() )
+            {
+                std::ostringstream msg;
+                msg << "Row " << i << " is outside of [0," << A.Height() << ")";
+                throw std::logic_error( msg.str().c_str() );
+            }
+#endif
             const int q = RowToProcess( i, blocksize, commSize );
             ++neededRowSizes[q];
         }
     }
-    const int numDistNodes = info.distNodes.size();
-    for( int s=0; s<numDistNodes; ++s )
+    for( int s=0; s<numDist; ++s )
     {
         // Request entire rows of the distributed matrices, even though we will
         // only need a subset of each row
-        const DistSymmNodeInfo& node= info.distNodes[s];
+        const DistSymmNodeInfo& node= info.distNodes[s+1];
         const int size = node.size;
         const int offset = node.offset;
         const int rowShift = node.grid->Col();
@@ -139,6 +147,14 @@ DistSymmFrontTree<F>::DistSymmFrontTree
         for( int t=rowShift; t<size; t+=rowStride )
         {
             const int i = indices[t];
+#ifndef RELEASE
+            if( i < 0 || i >= A.Height() )
+            {
+                std::ostringstream msg;
+                msg << "Row " << i << " is outside of [0," << A.Height() << ")";
+                throw std::logic_error( msg.str().c_str() );
+            }
+#endif
             const int q = RowToProcess( i, blocksize, commSize );
             ++neededRowSizes[q];
         }
@@ -154,7 +170,7 @@ DistSymmFrontTree<F>::DistSymmFrontTree
     }
     std::vector<int> neededRows( numNeededRows );
     std::vector<int> offsets = neededRowOffsets;
-    for( int s=0; s<numLocalNodes; ++s )
+    for( int s=0; s<numLocal; ++s )
     {
         const int size = info.localNodes[s].size; 
         const int offset = info.localNodes[s].offset;
@@ -167,9 +183,9 @@ DistSymmFrontTree<F>::DistSymmFrontTree
             neededRows[offsets[q]++] = i;
         }
     }
-    for( int s=0; s<numDistNodes; ++s )
+    for( int s=0; s<numDist; ++s )
     {
-        const DistSymmNodeInfo& node = info.distNodes[s];
+        const DistSymmNodeInfo& node = info.distNodes[s+1];
         const int size = node.size;
         const int offset = node.offset;
         const int rowShift = node.grid->Col();
@@ -202,12 +218,14 @@ DistSymmFrontTree<F>::DistSymmFrontTree
       &givingRows[0], &givingRowSizes[0], &givingRowOffsets[0], comm );
 
     // Tell each process how many entries we will send per requested row
+    const int firstLocalRow = A.FirstLocalRow();
     std::vector<int> numEntriesGivingPerRow( numGivingRows );
     for( int s=0; s<numGivingRows; ++s )
     {
         const int i = givingRows[s];
-        const int firstLocalEntry = A.LocalEntryOffset( i );
-        const int lastLocalEntry = A.LocalEntryOffset( i+1 ); 
+        const int iLocal = i - firstLocalRow;
+        const int firstLocalEntry = A.LocalEntryOffset( iLocal );
+        const int lastLocalEntry = A.LocalEntryOffset( iLocal+1 ); 
         numEntriesGivingPerRow[s] = 0;
         for( int t=firstLocalEntry; t<lastLocalEntry; ++t )
             if( A.Col(t) >= i )
@@ -254,22 +272,22 @@ DistSymmFrontTree<F>::DistSymmFrontTree
     offsets = givingEntriesOffsets;
     for( int q=0; q<commSize; ++q )
     {
-        int& entryOffset = givingEntriesOffsets[q];
         const int rowOffset = givingRowOffsets[q];
         const int numRows = givingRowSizes[q];
         for( int s=0; s<numRows; ++s )
         {
             const int i = givingRows[rowOffset+s];
-            const int firstLocalEntry = A.LocalEntryOffset( i );
-            const int lastLocalEntry = A.LocalEntryOffset( i+1 );
+            const int iLocal = i - firstLocalRow;
+            const int firstLocalEntry = A.LocalEntryOffset( iLocal );
+            const int lastLocalEntry = A.LocalEntryOffset( iLocal+1 );
             for( int t=firstLocalEntry; t<lastLocalEntry; ++t )
             {
                 const int column = A.Col(t);
                 if( A.Col(t) >= i )
                 {
-                    givingIndices[entryOffset] = column;
-                    givingEntries[entryOffset] = A.Value(t);
-                    ++entryOffset;
+                    givingIndices[offsets[q]] = column;
+                    givingEntries[offsets[q]] = A.Value(t);
+                    ++offsets[q];
                 }
             }
         }
@@ -340,11 +358,20 @@ DistSymmFrontTree<F>::DistSymmFrontTree
       comm );
 
     // Overwrite givingMappedIndices with their mapped values
-    const int firstLocalSource = A.FirstLocalSource();
     for( int i=0; i<numGivingMappedIndices; ++i )
     {
         const int j = givingMappedIndices[i];
-        givingMappedIndices[i] = localMap[j-firstLocalSource];
+        const int jLocal = j - firstLocalRow;
+#ifndef RELEASE
+        if( jLocal < 0 || jLocal >= A.LocalHeight() )
+        {
+            std::ostringstream msg;
+            msg << "Invalid local index: " << jLocal << " is not in [0,"
+                << A.LocalHeight() << ")";
+            throw std::logic_error( msg.str().c_str() );
+        }
+#endif
+        givingMappedIndices[i] = localMap[jLocal];
     }
 
     // Return the mapped values to everyone
@@ -364,8 +391,8 @@ DistSymmFrontTree<F>::DistSymmFrontTree
     offsets = neededEntriesOffsets;
     std::vector<int> rowOffsets = neededRowOffsets;
     std::vector<int>::const_iterator it;
-    localFronts.resize( numLocalNodes );
-    for( int s=0; s<numLocalNodes; ++s )
+    localFronts.resize( numLocal );
+    for( int s=0; s<numLocal; ++s )
     {
         LocalSymmFront<F>& front = localFronts[s];    
         const LocalSymmNodeInfo& node = info.localNodes[s];
@@ -401,24 +428,35 @@ DistSymmFrontTree<F>::DistSymmFrontTree
                       node.origLowerStruct.end(), mappedIndex );
 #ifndef RELEASE
                 if( it == node.origLowerStruct.end() )
-                    throw std::logic_error("origLowerStruct index not found");
+                    throw std::logic_error
+                    ("local origLowerStruct index not found");
 #endif
                 const int origOffset = it - node.origLowerStruct.begin();
                 const int row = node.origLowerRelIndices[origOffset];
 
                 const F entry = neededEntries[offsets[q]];
-                const F value = ( conjugate ? Conj(entry) : entry );
+                const F value = ( conjugate ? elem::Conj(entry) : entry );
                 front.frontL.Set( row, t, value );
 
                 ++offsets[q];
             }
         }
     }
-    distFronts.resize( numDistNodes );
-    for( int s=0; s<numDistNodes; ++s )
+    distFronts.resize( numDist+1 );
+    // Initialize the distributed leaf from the local root
     {
-        DistSymmFront<F>& front = distFronts[s];
-        const DistSymmNodeInfo& node = info.distNodes[s];
+        const DistSymmNodeInfo& node = info.distNodes[0];
+        Matrix<F>& topLocalFrontL = localFronts.back().frontL;
+        DistMatrix<F>& front2dL = distFronts[0].front2dL;
+        front2dL.LockedView
+        ( topLocalFrontL.Height(), topLocalFrontL.Width(), 0, 0,
+          topLocalFrontL.LockedBuffer(), topLocalFrontL.LDim(),
+          *node.grid );
+    }
+    for( int s=0; s<numDist; ++s )
+    {
+        DistSymmFront<F>& front = distFronts[s+1];
+        const DistSymmNodeInfo& node = info.distNodes[s+1];
         const Grid& g = *node.grid;
 
         const int offset = node.offset;
@@ -456,7 +494,8 @@ DistSymmFrontTree<F>::DistSymmFrontTree
                       node.origLowerStruct.end(), mappedIndex );
 #ifndef RELEASE
                 if( it == node.origLowerStruct.end() )
-                    throw std::logic_error("origLowerStruct index not found");
+                    throw std::logic_error
+                    ("dist origLowerStruct index not found");
 #endif
                 const int origOffset = it - node.origLowerStruct.begin();
                 const int row = node.origLowerRelIndices[origOffset];
@@ -466,8 +505,8 @@ DistSymmFrontTree<F>::DistSymmFrontTree
                     const int localRow = (row-colShift) / colStride;
                     const int localCol = (t-rowShift) / rowStride;
                     const F entry = neededEntries[offsets[q]];
-                    const F value = ( conjugate ? Conj(entry) : entry );
-                    front.frontL.SetLocal( localRow, localCol, value );
+                    const F value = ( conjugate ? elem::Conj(entry) : entry );
+                    front.front2dL.SetLocal( localRow, localCol, value );
                 }
 
                 ++offsets[q];
