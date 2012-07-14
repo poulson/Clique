@@ -56,7 +56,8 @@ void InvertMap
         std::vector<int>& localInverseMap, int numSources, mpi::Comm comm );
 
 void BuildMap
-( const DistGraph& graph, const DistSeparatorTree& sepTree, 
+( const DistGraph& graph, 
+  const DistSymmInfo& info, const DistSeparatorTree& sepTree, 
   std::vector<int>& localMap );
 
 int DistributedDepth( mpi::Comm comm );
@@ -575,7 +576,7 @@ NestedDissection
     }
 
     // Construct the distributed reordering
-    BuildMap( graph, sepTree, localMap );
+    BuildMap( graph, info, sepTree, localMap );
 
     // Run the symbolic analysis
     SymmetricAnalysis( eTree, info, storeFactRecvIndices );
@@ -586,31 +587,144 @@ NestedDissection
 
 inline void
 BuildMap
-( const DistGraph& graph, const DistSeparatorTree& sepTree, 
+( const DistGraph& graph, 
+  const DistSymmInfo& info, const DistSeparatorTree& sepTree, 
   std::vector<int>& localMap )
 {
 #ifndef RELEASE
     PushCallStack("BuildMap");
 #endif
+    mpi::Comm comm = graph.Comm();
+    const int commSize = mpi::CommSize( comm );
+    const int blocksize = graph.Blocksize();
+    const int numLocal = sepTree.localSepsAndLeaves.size();
+    // NOTE: The dist separator tree does not double-count the first 
+    //       single-process node, but DistSymmInfo does. Thus their number of
+    //       distributed nodes is different by one.
+    const int numDist = sepTree.distSeps.size();
+
     // Traverse local sepTree to count how many indices we should send the
     // final index for
-    // TODO
+    std::vector<int> sendSizes( commSize, 0 );
+    for( int s=0; s<numLocal; ++s )
+    {
+        const LocalSepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
+        const int numIndices = sepOrLeaf.indices.size();
+        for( int t=0; t<numIndices; ++t )
+        {
+            const int i = sepOrLeaf.indices[t];
+            const int q = RowToProcess( i, blocksize, commSize );
+            ++sendSizes[q];
+        }
+    }
+    for( int s=0; s<numDist; ++s )
+    {
+        const DistSeparator& sep = sepTree.distSeps[s];
+        const int numIndices = sep.indices.size();
+        const int teamSize = mpi::CommSize( sep.comm );
+        const int teamRank = mpi::CommRank( sep.comm );
+        const int numLocalIndices = 
+            LocalLength( numIndices, teamRank, teamSize );
+        for( int tLocal=0; tLocal<numLocalIndices; ++tLocal )
+        {
+            const int t = teamRank + tLocal*teamSize;
+            const int i = sep.indices[t];
+            const int q = RowToProcess( i, blocksize, commSize );
+            ++sendSizes[q];
+        }
+    }
 
     // Use a single-entry AllToAll to coordinate how many indices will be 
     // exchanges
-    // TODO
+    std::vector<int> recvSizes( commSize );
+    mpi::AllToAll( &sendSizes[0], 1, &recvSizes[0], 1, comm );
 
     // Pack the reordered indices
-    // TODO
+    int numSends = 0;
+    std::vector<int> sendOffsets( commSize );
+    for( int q=0; q<commSize; ++q )
+    {
+        sendOffsets[q] = numSends;
+        numSends += sendSizes[q];
+    }
+    std::vector<int> sendIndices( numSends );
+    std::vector<int> sendOrigIndices( numSends );
+    std::vector<int> offsets = sendOffsets;
+    for( int s=0; s<numLocal; ++s )
+    {
+        const LocalSepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
+        const LocalSymmNodeInfo& node = info.localNodes[s];
+        const int numIndices = node.size;
+#ifndef RELEASE
+        if( node.size != sepOrLeaf.indices.size() )
+            throw std::logic_error("mismatch between separator tree and info");
+#endif
+        for( int t=0; t<numIndices; ++t )
+        {
+            const int i = sepOrLeaf.indices[t];
+            const int iMapped = node.offset + t;
+            const int q = RowToProcess( i, blocksize, commSize );
+            sendOrigIndices[offsets[q]] = i;
+            sendIndices[offsets[q]] = iMapped;
+            ++offsets[q];
+        }
+    }
+    for( int s=0; s<numDist; ++s )
+    {
+        const DistSeparator& sep = sepTree.distSeps[s];
+        const DistSymmNodeInfo& node = info.distNodes[s+1];
+        const int numIndices = node.size;
+#ifndef RELEASE
+        if( node.size != sep.indices.size() )
+            throw std::logic_error("mismatch between separator tree and info");
+#endif
+        const int teamSize = mpi::CommSize( sep.comm );
+        const int teamRank = mpi::CommRank( sep.comm );
+        const int numLocalIndices = 
+            LocalLength( numIndices, teamRank, teamSize );
+        for( int tLocal=0; tLocal<numLocalIndices; ++tLocal )
+        {
+            const int t = teamRank + tLocal*teamSize;
+            const int i = sep.indices[t];
+            const int iMapped = node.offset + t;
+            const int q = RowToProcess( i, blocksize, commSize );
+            sendOrigIndices[offsets[q]] = i;
+            sendIndices[offsets[q]] = iMapped;
+            ++offsets[q];
+        }
+    }
 
     // Perform an AllToAll to exchange the reordered indices
     // TODO
+    int numRecvs = 0;
+    std::vector<int> recvOffsets( commSize );
+    for( int q=0; q<commSize; ++q )
+    {
+        recvOffsets[q] = numRecvs;
+        numRecvs += recvSizes[q];
+    }
+    std::vector<int> recvIndices( numRecvs );
+    mpi::AllToAll
+    ( &sendIndices[0], &sendSizes[0], &sendOffsets[0],
+      &recvIndices[0], &recvSizes[0], &recvOffsets[0], comm );
 
     // Perform an AllToAll to exchange the original indices
-    // TODO
+    std::vector<int> recvOrigIndices( numRecvs );
+    mpi::AllToAll
+    ( &sendOrigIndices[0], &sendSizes[0], &sendOffsets[0],
+      &recvOrigIndices[0], &recvSizes[0], &recvOffsets[0], comm );
 
     // Unpack the indices
-    // TODO
+    const int numLocalSources = graph.NumLocalSources();
+    const int firstLocalSource = graph.FirstLocalSource();
+    localMap.resize( numLocalSources );
+    for( int s=0; s<numRecvs; ++s )
+    {
+        const int i = recvOrigIndices[s];
+        const int iLocal = i - firstLocalSource;
+        const int iMapped = recvIndices[s];
+        localMap[iLocal] = iMapped;
+    }
 #ifndef RELEASE
     PopCallStack();
 #endif
