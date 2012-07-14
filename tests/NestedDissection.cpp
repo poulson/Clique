@@ -112,7 +112,31 @@ main( int argc, char* argv[] )
                       << numLocalNodes << " local nodes\n"
                       << numDistNodes  << " distributed nodes\n"
                       << rootSepSize << " vertices in root separator\n"
-                      << std::endl;
+                      << "\n";
+            if( numDistNodes > 1 )
+            {
+                if( sepTree.distSeps.back().indices.size() != rootSepSize )
+                    throw std::logic_error("Dist root sep. was wrong size");
+            }
+            else
+            {
+                if( sepTree.localSepsAndLeaves.back()->indices.size() != 
+                    rootSepSize )
+                    throw std::logic_error("Local root sep. was wrong size");
+            }
+            for( int s=0; s<rootSepSize; ++s )
+            {
+                const int i = 
+                    ( numDistNodes > 1 ? 
+                      sepTree.distSeps.back().indices[s] :
+                      sepTree.localSepsAndLeaves.back()->indices[s] );
+                const int x = i % n;
+                const int y = (i/n) % n;
+                const int z = i/(n*n);
+                std::cout << "rootSep[" << s << "]: " << i << ", ("
+                          << x << "," << y << "," << z << ")\n";
+            }
+            std::cout << std::endl;
         }
     }
     catch( std::exception& e )

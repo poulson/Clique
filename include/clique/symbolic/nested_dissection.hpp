@@ -637,7 +637,7 @@ Bisect
     idx_t numParSeps = 10;
     idx_t numSeqSeps = 5;
     real_t imbalance = 1.1;
-    idx_t sizes[3] = { 0, 0, 0 };
+    idx_t sizes[3];
     const int retval = CliqBisect
     ( &vtxDist[0], &xAdj[0], &adjacency[0], &numParSeps, &numSeqSeps, 
       &imbalance, NULL, &map[0], sizes, &comm );
@@ -793,7 +793,7 @@ Bisect
     idx_t numParSeps = 10;
     idx_t numSeqSeps = 5;
     real_t imbalance = 1.1;
-    idx_t sizes[3] = { 0, 0, 0 };
+    idx_t sizes[3];
     const int retval = CliqBisect
     ( &vtxDist[0], &xAdj[0], &adjacency[0], &numParSeps, &numSeqSeps, 
       &imbalance, NULL, &localMap[0], sizes, &comm );
