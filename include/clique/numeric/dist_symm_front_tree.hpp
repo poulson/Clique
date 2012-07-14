@@ -77,7 +77,7 @@ struct DistSymmFrontTree
 
     DistSymmFrontTree
     ( const DistSparseMatrix<F>& A, 
-      const std::vector<int>& localMapping,
+      const std::vector<int>& localMap,
       const DistSeparatorTree& sepTree,
       const DistSymmInfo& info,
       Orientation orientation=TRANSPOSE );
@@ -91,11 +91,10 @@ template<typename F>
 DistSymmFrontTree<F>::DistSymmFrontTree()
 { }
 
-// TODO: Simplify this using the new MapIndices and InvertMap functions
 template<typename F>
 DistSymmFrontTree<F>::DistSymmFrontTree
 ( const DistSparseMatrix<F>& A, 
-  const std::vector<int>& localMapping,
+  const std::vector<int>& localMap,
   const DistSeparatorTree& sepTree, 
   const DistSymmInfo& info,
   Orientation orientation )
@@ -103,7 +102,7 @@ DistSymmFrontTree<F>::DistSymmFrontTree
 {
 #ifndef RELEASE
     PushCallStack("DistSymmFrontTree::DistSymmFrontTree");
-    if( localMapping.size() != A.NumLocalSources() )
+    if( localMap.size() != A.NumLocalSources() )
         throw std::logic_error("Local mapping was not the right size");
 #endif
     mpi::Comm comm = A.Comm();
@@ -122,7 +121,7 @@ DistSymmFrontTree<F>::DistSymmFrontTree
         for( int t=0; t<size; ++t )
         {
             const int i = indices[t];
-            const int q = i / blocksize;
+            const int q = RowToProcess( i, blocksize, commSize );
             ++neededRowSizes[q];
         }
     }
@@ -131,7 +130,6 @@ DistSymmFrontTree<F>::DistSymmFrontTree
     {
         // Request entire rows of the distributed matrices, even though we will
         // only need a subset of each row
-        
         const DistSymmNodeInfo& node= info.distNodes[s];
         const int size = node.size;
         const int offset = node.offset;
@@ -141,7 +139,7 @@ DistSymmFrontTree<F>::DistSymmFrontTree
         for( int t=rowShift; t<size; t+=rowStride )
         {
             const int i = indices[t];
-            const int q = i / blocksize;
+            const int q = RowToProcess( i, blocksize, commSize );
             ++neededRowSizes[q];
         }
     }
@@ -165,7 +163,7 @@ DistSymmFrontTree<F>::DistSymmFrontTree
         for( int t=0; t<size; ++t )
         {
             const int i = indices[t];
-            const int q = i / blocksize;
+            const int q = RowToProcess( i, blocksize, commSize );
             neededRows[offsets[q]++] = i;
         }
     }
@@ -180,7 +178,7 @@ DistSymmFrontTree<F>::DistSymmFrontTree
         for( int t=rowShift; t<size; t+=rowStride )
         {
             const int i = indices[t];
-            const int q = i / blocksize;
+            const int q = RowToProcess( i, blocksize, commSize );
             neededRows[offsets[q]++] = i;
         }
     }
@@ -310,7 +308,7 @@ DistSymmFrontTree<F>::DistSymmFrontTree
             const int col = *it;
             neededMappedIndices[i] = col;
 
-            const int q = col / blocksize;
+            const int q = RowToProcess( col, blocksize, commSize );
             while( q != qPrev )
             {
                 neededMappedIndicesSizes[qPrev] = i - lastOffset;
@@ -346,7 +344,7 @@ DistSymmFrontTree<F>::DistSymmFrontTree
     for( int i=0; i<numGivingMappedIndices; ++i )
     {
         const int j = givingMappedIndices[i];
-        givingMappedIndices[i] = localMapping[j-firstLocalSource];
+        givingMappedIndices[i] = localMap[j-firstLocalSource];
     }
 
     // Return the mapped values to everyone
@@ -382,7 +380,7 @@ DistSymmFrontTree<F>::DistSymmFrontTree
         for( int t=0; t<width; ++t )
         {
             const int i = indices[t];
-            const int q = i / blocksize;
+            const int q = RowToProcess( i, blocksize, commSize );
 
             const int numEntries = numEntriesNeededPerRow[rowOffsets[q]++];
             for( int k=0; k<numEntries; ++k )
@@ -437,7 +435,7 @@ DistSymmFrontTree<F>::DistSymmFrontTree
         for( int t=rowShift; t<width; t+=rowStride )
         {
             const int i = indices[t];
-            const int q = i / blocksize;
+            const int q = RowToProcess( i, blocksize, commSize );
 
             const int numEntries = numEntriesNeededPerRow[rowOffsets[q]++];
             for( int k=0; k<numEntries; ++k )

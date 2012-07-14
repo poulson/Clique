@@ -29,6 +29,7 @@ namespace cliq {
 // NOTE: This routine is not yet finished
 void NestedDissection
 ( const DistGraph& graph, DistSymmInfo& info, DistSeparatorTree& sepTree,
+  std::vector<int>& localMap, 
   int cutoff=128, bool storeFactRecvIndices=false );
 
 int Bisect
@@ -53,6 +54,10 @@ void ComposeMaps
 void InvertMap
 ( const std::vector<int>& localMap,
         std::vector<int>& localInverseMap, int numSources, mpi::Comm comm );
+
+void BuildMap
+( const DistGraph& graph, const DistSeparatorTree& sepTree, 
+  std::vector<int>& localMap );
 
 int DistributedDepth( mpi::Comm comm );
 
@@ -470,10 +475,11 @@ NestedDissectionRecursion
 #endif
 }
 
+// TODO: Add computation of local reordering
 inline void 
 NestedDissection
 ( const DistGraph& graph, DistSymmInfo& info, DistSeparatorTree& sepTree,
-  int cutoff, bool storeFactRecvIndices )
+  std::vector<int>& localMap, int cutoff, bool storeFactRecvIndices )
 {
 #ifndef RELEASE
     PushCallStack("NestedDissection");
@@ -568,7 +574,43 @@ NestedDissection
             middleNode->children[c] = lastIndex - middleNode->children[c];
     }
 
+    // Construct the distributed reordering
+    BuildMap( graph, sepTree, localMap );
+
+    // Run the symbolic analysis
     SymmetricAnalysis( eTree, info, storeFactRecvIndices );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+inline void
+BuildMap
+( const DistGraph& graph, const DistSeparatorTree& sepTree, 
+  std::vector<int>& localMap )
+{
+#ifndef RELEASE
+    PushCallStack("BuildMap");
+#endif
+    // Traverse local sepTree to count how many indices we should send the
+    // final index for
+    // TODO
+
+    // Use a single-entry AllToAll to coordinate how many indices will be 
+    // exchanges
+    // TODO
+
+    // Pack the reordered indices
+    // TODO
+
+    // Perform an AllToAll to exchange the reordered indices
+    // TODO
+
+    // Perform an AllToAll to exchange the original indices
+    // TODO
+
+    // Unpack the indices
+    // TODO
 #ifndef RELEASE
     PopCallStack();
 #endif

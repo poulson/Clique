@@ -117,7 +117,8 @@ main( int argc, char* argv[] )
         const DistGraph& graph = A.Graph();
         DistSymmInfo info;
         DistSeparatorTree sepTree;
-        NestedDissection( graph, info, sepTree, cutoff );
+        std::vector<int> localMap;
+        NestedDissection( graph, info, sepTree, localMap, cutoff );
         mpi::Barrier( comm );
         if( commRank == 0 )
             std::cout << "done" << std::endl;
