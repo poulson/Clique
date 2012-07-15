@@ -124,7 +124,7 @@ main( int argc, char* argv[] )
         DistSeparatorTree sepTree;
         std::vector<int> localMap;
         NestedDissection
-       ( graph, info, sepTree, localMap, cutoff, numDistSeps, numSeqSeps );
+       ( graph, localMap, sepTree, info, cutoff, numDistSeps, numSeqSeps );
         mpi::Barrier( comm );
         if( commRank == 0 )
             std::cout << "done" << std::endl;

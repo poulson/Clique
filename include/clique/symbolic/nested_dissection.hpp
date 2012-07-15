@@ -26,10 +26,10 @@
 
 namespace cliq {
 
-// NOTE: This routine is not yet finished
 void NestedDissection
-( const DistGraph& graph, DistSymmInfo& info, DistSeparatorTree& sepTree,
-  std::vector<int>& localMap, 
+( const DistGraph& graph, 
+  std::vector<int>& localMap,
+  DistSeparatorTree& sepTree, DistSymmInfo& info,
   int cutoff=128, int numDistSeps=10, int numSeqSeps=5, 
   bool storeFactRecvIndices=false );
 
@@ -107,9 +107,9 @@ DistributedDepth( mpi::Comm comm )
 
 inline void
 NestedDissectionRecursion
-( const Graph& graph, DistSymmElimTree& eTree, DistSeparatorTree& sepTree,
-  const std::vector<int>& perm, int parent, int offset, 
-  int cutoff=128, int numSeps=5 )
+( const Graph& graph, const std::vector<int>& perm,
+  DistSeparatorTree& sepTree, DistSymmElimTree& eTree,
+  int parent, int offset, int cutoff=128, int numSeps=5 )
 {
 #ifndef RELEASE
     PushCallStack("NestedDissectionRecursion");
@@ -222,11 +222,11 @@ NestedDissectionRecursion
         const int parent = eTree.localNodes.size()-1;
         node.children[0] = eTree.localNodes.size();
         NestedDissectionRecursion
-        ( leftChild, eTree, sepTree, leftPerm, parent, offset, 
+        ( leftChild, leftPerm, sepTree, eTree, parent, offset, 
           cutoff, numSeps );
         node.children[1] = eTree.localNodes.size();
         NestedDissectionRecursion
-        ( rightChild, eTree, sepTree, rightPerm, parent, offset+leftChildSize,
+        ( rightChild, rightPerm, sepTree, eTree, parent, offset+leftChildSize,
           cutoff, numSeps );
     }
 #ifndef RELEASE
@@ -236,8 +236,9 @@ NestedDissectionRecursion
 
 inline void
 NestedDissectionRecursion
-( const DistGraph& graph, DistSymmElimTree& eTree, DistSeparatorTree& sepTree,
-  const std::vector<int>& localPerm, int depth, int offset, 
+( const DistGraph& graph, const std::vector<int>& localPerm,
+  DistSeparatorTree& sepTree, DistSymmElimTree& eTree,
+  int depth, int offset, 
   int cutoff=128, int numDistSeps=10, int numSeqSeps=5 )
 {
 #ifndef RELEASE
@@ -347,7 +348,7 @@ NestedDissectionRecursion
         // Recurse
         const int newOffset = ( onLeft ? offset : offset+leftChildSize );
         NestedDissectionRecursion
-        ( child, eTree, sepTree, newLocalPerm, depth+1, newOffset, 
+        ( child, newLocalPerm, sepTree, eTree, depth+1, newOffset, 
           cutoff, numDistSeps, numSeqSeps );
     }
     else if( graph.NumSources() <= cutoff )
@@ -480,11 +481,11 @@ NestedDissectionRecursion
         const int parent=0;
         localNode.children[0] = eTree.localNodes.size();
         NestedDissectionRecursion
-        ( leftChild, eTree, sepTree, leftPerm, parent, offset, 
+        ( leftChild, leftPerm, sepTree, eTree, parent, offset, 
           cutoff, numSeqSeps );
         localNode.children[1] = eTree.localNodes.size();
         NestedDissectionRecursion
-        ( rightChild, eTree, sepTree, rightPerm, parent, offset+leftChildSize, 
+        ( rightChild, rightPerm, sepTree, eTree, parent, offset+leftChildSize, 
           cutoff, numSeqSeps );
     }
 #ifndef RELEASE
@@ -494,8 +495,8 @@ NestedDissectionRecursion
 
 inline void 
 NestedDissection
-( const DistGraph& graph, DistSymmInfo& info, DistSeparatorTree& sepTree,
-  std::vector<int>& localMap, 
+( const DistGraph& graph, std::vector<int>& localMap,
+  DistSeparatorTree& sepTree, DistSymmInfo& info,
   int cutoff, int numDistSeps, int numSeqSeps, bool storeFactRecvIndices )
 {
 #ifndef RELEASE
@@ -520,7 +521,7 @@ NestedDissection
     for( int s=0; s<numLocalSources; ++s )
         localPerm[s] = s + firstLocalSource;
     NestedDissectionRecursion
-    ( graph, eTree, sepTree, localPerm, 0, 0, cutoff, numDistSeps, numSeqSeps );
+    ( graph, localPerm, sepTree, eTree, 0, 0, cutoff, numDistSeps, numSeqSeps );
 
     // Reverse the order of the pointers and indices in the elimination and 
     // separator trees (so that the leaves come first)
