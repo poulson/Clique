@@ -32,6 +32,7 @@ public:
     DistVector();
     DistVector( mpi::Comm comm );
     DistVector( int height, mpi::Comm comm );
+    // TODO: Constructor for building from a DistVector
     ~DistVector();
 
     int Height() const;
@@ -43,13 +44,14 @@ public:
     int FirstLocalRow() const;
     int LocalHeight() const;
 
-    F Get( int localRow ) const;
-    void Set( int localRow, F value );
+    F GetLocal( int localRow ) const;
+    void SetLocal( int localRow, F value );
+    void UpdateLocal( int localRow, F value );
 
     void Empty();
     void ResizeTo( int height );
 
-    // TODO: operator=
+    const DistVector<F>& operator=( const DistVector<F>& x );
 
 private:
     int height_;
@@ -143,10 +145,10 @@ DistVector<F>::LocalHeight() const
 
 template<typename F>
 inline F
-DistVector<F>::Get( int localRow ) const
+DistVector<F>::GetLocal( int localRow ) const
 { 
 #ifndef RELEASE 
-    PushCallStack("DistVector::Value");
+    PushCallStack("DistVector::GetLocal");
     if( localRow < 0 || localRow >= values_.size() )
         throw std::logic_error("Local row out of bounds");
     PopCallStack();
@@ -156,14 +158,29 @@ DistVector<F>::Get( int localRow ) const
 
 template<typename F>
 inline void
-DistVector<F>::Set( int localRow, F value )
+DistVector<F>::SetLocal( int localRow, F value )
 {
 #ifndef RELEASE
-    PushCallStack("DistVector::Set");
+    PushCallStack("DistVector::SetLocal");
     if( localRow < 0 || localRow >= values_.size() )
         throw std::logic_error("Local row out of bounds");
 #endif
     values_[localRow] = value;
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename F>
+inline void
+DistVector<F>::UpdateLocal( int localRow, F value )
+{
+#ifndef RELEASE
+    PushCallStack("DistVector::UpdateLocal");
+    if( localRow < 0 || localRow >= values_.size() )
+        throw std::logic_error("Local row out of bounds");
+#endif
+    values_[localRow] += value;
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -193,6 +210,22 @@ DistVector<F>::ResizeTo( int height )
           blocksize_ :
           height_ - (commSize-1)*blocksize_ );
     values_.resize( localHeight );
+}
+
+template<typename F>
+const DistVector<F>& 
+DistVector<F>::operator=( const DistVector<F>& x )
+{
+#ifndef RELEASE
+    PushCallStack("DistVector::operator=");
+#endif
+    height_ = x.height_;
+    SetComm( x.comm_ );
+    values_ = x.values_;
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return *this;
 }
 
 } // namespace cliq

@@ -32,6 +32,7 @@ public:
     DistSparseMatrix();
     DistSparseMatrix( mpi::Comm comm );
     DistSparseMatrix( int height, int width, mpi::Comm comm );
+    // TODO: Constructor for building from another DistSparseMatrix
     ~DistSparseMatrix();
 
     int Height() const;
