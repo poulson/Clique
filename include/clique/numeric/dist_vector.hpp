@@ -64,9 +64,45 @@ private:
     std::vector<F> values_;
 };
 
+// Set all of the entries of x to zero
+template<typename F>
+void MakeZeros( DistVector<F>& x );
+
+// Draw the entries of x uniformly from the unitball in F
+template<typename F>
+void MakeUniform( DistVector<F>& x );
+
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
+
+template<typename F>
+void MakeZeros( DistVector<F>& x )
+{
+#ifndef RELEASE
+    PushCallStack("MakeZeros");
+#endif
+    const int localHeight = x.LocalHeight();
+    for( int iLocal=0; iLocal<localHeight; ++iLocal )
+        x.SetLocal( iLocal, (F)0 );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename F>
+void MakeUniform( DistVector<F>& x )
+{
+#ifndef RELEASE
+    PushCallStack("MakeUniform");
+#endif
+    const int localHeight = x.LocalHeight();
+    for( int iLocal=0; iLocal<localHeight; ++iLocal )
+        x.SetLocal( iLocal, elem::SampleUnitBall<F>() );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
 
 template<typename F>
 inline 

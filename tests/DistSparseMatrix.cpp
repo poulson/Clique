@@ -53,9 +53,8 @@ main( int argc, char* argv[] )
 
     try
     {
-        const int height = n*n*n;
-        const int width = height;
-        DistSparseMatrix<double> A( height, width, comm );
+        const int N = n*n*n;
+        DistSparseMatrix<double> A( N, N, comm );
 
         const int firstLocalRow = A.FirstLocalRow();
         const int localHeight = A.LocalHeight();
@@ -164,6 +163,31 @@ main( int argc, char* argv[] )
         mpi::Barrier( comm );
         if( commRank == 0 )
             std::cout << "done" << std::endl;
+
+        if( commRank == 0 )
+        {
+            std::cout << "Generating random vector x and forming y := A x...";
+            std::cout.flush();
+        }
+        DistVector<double> x( N, comm ), y( N, comm );
+        MakeUniform( x );
+        MakeZeros( y );
+        Multiply( 1., A, x, 0., y );
+        if( commRank == 0 )
+            std::cout << "done" << std::endl;
+
+        /*
+        if( commRank == 0 )
+        {
+            std::cout << "Redistributing y to match frontal distribution...";
+            std::cout.flush();
+        }
+        */
+        // TODO
+        /*
+        if( commRank == 0 )
+            std::cout << "done" << std::endl;
+        */
     }
     catch( std::exception& e )
     {

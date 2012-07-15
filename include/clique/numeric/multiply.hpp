@@ -41,7 +41,8 @@ void Multiply
     PushCallStack("Multiply");
     if( A.Height() != y.Height() || A.Width() != x.Height() )
         throw std::logic_error("A, x, and y did not conform");
-    if( A.Comm() != x.Comm() || x.Comm() != y.Comm() )
+    if( !mpi::CongruentComms( A.Comm(), x.Comm() ) || 
+        !mpi::CongruentComms( x.Comm(), y.Comm() ) )
         throw std::logic_error("Communicators did not match");
 #endif
     mpi::Comm comm = A.Comm();
@@ -71,7 +72,7 @@ void Multiply
         {
             const int j = *setIt;
             const int q = RowToProcess( j, blocksize, commSize );
-            while( q != qPrev )
+            while( qPrev != q )
             {
                 recvIndexSizes[qPrev] = offset - lastOffset;
                 recvIndexOffsets[qPrev+1] = offset;
@@ -80,6 +81,13 @@ void Multiply
                 ++qPrev;
             }
             recvIndices[offset++] = j;
+        }
+        while( qPrev != commSize-1 )
+        {
+            recvIndexSizes[qPrev] = offset - lastOffset;
+            recvIndexOffsets[qPrev+1] = offset;
+            lastOffset = offset;
+            ++qPrev;
         }
         recvIndexSizes[commSize-1] = offset - lastOffset;
     }
@@ -106,7 +114,7 @@ void Multiply
         const int i = sendIndices[s];
         const int iLocal = i - firstLocalRow;
 #ifndef RELEASE
-        if( iLocal < 0 || iLocal >= firstLocalRow )
+        if( iLocal < 0 || iLocal >= xLocalHeight )
             throw std::logic_error("iLocal was out of bounds");
 #endif
         sendValues[s] = x.GetLocal( iLocal );
