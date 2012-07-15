@@ -176,18 +176,16 @@ main( int argc, char* argv[] )
         if( commRank == 0 )
             std::cout << "done" << std::endl;
 
-        /*
         if( commRank == 0 )
         {
             std::cout << "Redistributing y to match frontal distribution...";
             std::cout.flush();
         }
-        */
-        // TODO
-        /*
+        std::vector<int> inverseLocalMap;
+        InvertMap( localMap, inverseLocalMap, N, comm );
+        DistNodalVector<double> yNodal( inverseLocalMap, info, y );
         if( commRank == 0 )
             std::cout << "done" << std::endl;
-        */
     }
     catch( std::exception& e )
     {
