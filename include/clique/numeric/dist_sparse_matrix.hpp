@@ -81,6 +81,7 @@ private:
     void EnsureConsistentCapacities() const;
 
     template<typename U> friend class SparseMatrix;
+    template<typename U> friend class DistSymmFrontTree;
 };
 
 //----------------------------------------------------------------------------//

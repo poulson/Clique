@@ -106,412 +106,356 @@ DistSymmFrontTree<F>::DistSymmFrontTree
         throw std::logic_error("Local mapping was not the right size");
 #endif
     mpi::Comm comm = A.Comm();
+    const DistGraph& graph = A.Graph();
     const int blocksize = A.Blocksize();
     const int commSize = mpi::CommSize( comm );
+    const int numSources = graph.NumSources();
     const int numLocal = sepTree.localSepsAndLeaves.size();
     const int numDist = sepTree.distSeps.size();
 
-    // Count the number of rows that we want from each process
-    std::vector<int> neededRowSizes( commSize, 0 );
-    for( int s=0; s<numLocal; ++s )
+    // Get the reordered indices of the targets of our portion of the 
+    // distributed sparse matrix
+    std::set<int> targetSet;
+    const int numLocalEdges = graph.NumLocalEdges();
+    for( int e=0; e<numLocalEdges; ++e )
+        targetSet.insert( graph.Target(e) );
+    const int numTargets = targetSet.size();
+    std::vector<int> targets( numTargets );
     {
-        const int size = info.localNodes[s].size;
-        const int offset = info.localNodes[s].offset;
-        const std::vector<int>& indices = 
-            sepTree.localSepsAndLeaves[s]->indices;
-        for( int t=0; t<size; ++t )
-        {
-            const int i = indices[t];
-#ifndef RELEASE
-            if( i < 0 || i >= A.Height() )
-            {
-                std::ostringstream msg;
-                msg << "Row " << i << " is outside of [0," << A.Height() << ")";
-                throw std::logic_error( msg.str().c_str() );
-            }
-#endif
-            const int q = RowToProcess( i, blocksize, commSize );
-            ++neededRowSizes[q];
-        }
+        int offset=0;
+        std::set<int>::const_iterator setIt;
+        for( setIt=targetSet.begin(); setIt!=targetSet.end(); ++setIt )
+            targets[offset++] = *setIt;
     }
-    for( int s=0; s<numDist; ++s )
-    {
-        // Request entire rows of the distributed matrices, even though we will
-        // only need a subset of each row
-        const DistSymmNodeInfo& node= info.distNodes[s+1];
-        const int size = node.size;
-        const int offset = node.offset;
-        const int rowShift = node.grid->Col();
-        const int rowStride = node.grid->Width();
-        const std::vector<int>& indices = sepTree.distSeps[s].indices;
-        for( int t=rowShift; t<size; t+=rowStride )
-        {
-            const int i = indices[t];
-#ifndef RELEASE
-            if( i < 0 || i >= A.Height() )
-            {
-                std::ostringstream msg;
-                msg << "Row " << i << " is outside of [0," << A.Height() << ")";
-                throw std::logic_error( msg.str().c_str() );
-            }
-#endif
-            const int q = RowToProcess( i, blocksize, commSize );
-            ++neededRowSizes[q];
-        }
-    }
+    std::vector<int> mappedTargets = targets;
+    MapIndices( localMap, mappedTargets, numSources, comm );
 
-    // Fill the set of rows we need from each process
-    int numNeededRows=0;
-    std::vector<int> neededRowOffsets( commSize );
-    for( int q=0; q<commSize; ++q )
-    {
-        neededRowOffsets[q] = numNeededRows;
-        numNeededRows += neededRowSizes[q];
-    }
-    std::vector<int> neededRows( numNeededRows );
-    std::vector<int> offsets = neededRowOffsets;
+    // Set up the indices for the rows we need from each process
+    std::vector<int> recvRowSizes( commSize, 0 );
     for( int s=0; s<numLocal; ++s )
     {
-        const int size = info.localNodes[s].size; 
-        const int offset = info.localNodes[s].offset;
-        const std::vector<int>& indices = 
-            sepTree.localSepsAndLeaves[s]->indices;
-        for( int t=0; t<size; ++t )
+        const LocalSepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
+        const int numIndices = sepOrLeaf.indices.size();
+        for( int t=0; t<numIndices; ++t )
         {
-            const int i = indices[t];
+            const int i = sepOrLeaf.indices[t];
+#ifndef RELEASE
+            if( i < 0 || i >= numSources )
+                throw std::logic_error("separator index was out of bounds");
+#endif
             const int q = RowToProcess( i, blocksize, commSize );
-            neededRows[offsets[q]++] = i;
+            ++recvRowSizes[q];
         }
     }
     for( int s=0; s<numDist; ++s )
     {
+        const DistSeparator& sep = sepTree.distSeps[s];
         const DistSymmNodeInfo& node = info.distNodes[s+1];
-        const int size = node.size;
-        const int offset = node.offset;
-        const int rowShift = node.grid->Col();
-        const int rowStride = node.grid->Width();
-        const std::vector<int>& indices = sepTree.distSeps[s].indices;
-        for( int t=rowShift; t<size; t+=rowStride )
+        const Grid& grid = *node.grid;
+        const int rowShift = grid.Col();
+        const int rowStride = grid.Width();
+        const int numIndices = sep.indices.size();
+        for( int t=rowShift; t<numIndices; t+=rowStride )
         {
-            const int i = indices[t];
-            const int q = RowToProcess( i, blocksize, commSize );
-            neededRows[offsets[q]++] = i;
-        }
-    }
-
-    // Perform an AllToAll to exchange how much each process needs, then 
-    // allocate the necessary space for the receives
-    std::vector<int> givingRowSizes( commSize );
-    mpi::AllToAll( &neededRowSizes[0], 1, &givingRowSizes[0], 1, comm );
-    int numGivingRows=0;
-    std::vector<int> givingRowOffsets( commSize );
-    for( int q=0; q<commSize; ++q )
-    {
-        givingRowOffsets[q] = numGivingRows;
-        numGivingRows += givingRowSizes[q];
-    }
-
-    // Perform an AllToAll to exchange what each process needs
-    std::vector<int> givingRows( numGivingRows );
-    mpi::AllToAll
-    ( &neededRows[0], &neededRowSizes[0], &neededRowOffsets[0],
-      &givingRows[0], &givingRowSizes[0], &givingRowOffsets[0], comm );
-
-    // Tell each process how many entries we will send per requested row
-    const int firstLocalRow = A.FirstLocalRow();
-    std::vector<int> numEntriesGivingPerRow( numGivingRows );
-    for( int s=0; s<numGivingRows; ++s )
-    {
-        const int i = givingRows[s];
-        const int iLocal = i - firstLocalRow;
-        const int firstLocalEntry = A.LocalEntryOffset( iLocal );
-        const int lastLocalEntry = A.LocalEntryOffset( iLocal+1 ); 
-        numEntriesGivingPerRow[s] = 0;
-        for( int t=firstLocalEntry; t<lastLocalEntry; ++t )
-            if( A.Col(t) >= i )
-                ++numEntriesGivingPerRow[s];
-    }
-    std::vector<int> numEntriesNeededPerRow( numNeededRows );
-    mpi::AllToAll
-    ( &numEntriesGivingPerRow[0], &givingRowSizes[0], &givingRowOffsets[0],
-      &numEntriesNeededPerRow[0], &neededRowSizes[0], &neededRowOffsets[0],
-      comm );
-
-    // Compute the number of entries we give and need from each process
-    int numGivingEntries=0;
-    std::vector<int> givingEntriesSizes( commSize, 0 );
-    std::vector<int> givingEntriesOffsets( commSize );
-    for( int q=0; q<commSize; ++q )
-    {
-        const int numRows = givingRowSizes[q];
-        const int offset = givingRowOffsets[q];
-        for( int s=0; s<numRows; ++s )
-            givingEntriesSizes[q] += numEntriesGivingPerRow[offset+s];
-
-        givingEntriesOffsets[q] = numGivingEntries;
-        numGivingEntries += givingEntriesSizes[q];
-    }
-    numEntriesGivingPerRow.clear();
-    int numNeededEntries=0;
-    std::vector<int> neededEntriesSizes( commSize, 0 );
-    std::vector<int> neededEntriesOffsets( commSize );
-    for( int q=0; q<commSize; ++q )
-    {
-        const int numRows = neededRowSizes[q];
-        const int offset = neededRowOffsets[q];
-        for( int s=0; s<numRows; ++s )
-            neededEntriesSizes[q] += numEntriesNeededPerRow[offset+s];
-
-        neededEntriesOffsets[q] = numNeededEntries;
-        numNeededEntries += neededEntriesSizes[q];
-    }
-
-    // Pack the information that each process requested
-    std::vector<int> givingIndices( numGivingEntries );
-    std::vector<F> givingEntries( numGivingEntries );
-    offsets = givingEntriesOffsets;
-    for( int q=0; q<commSize; ++q )
-    {
-        const int rowOffset = givingRowOffsets[q];
-        const int numRows = givingRowSizes[q];
-        for( int s=0; s<numRows; ++s )
-        {
-            const int i = givingRows[rowOffset+s];
-            const int iLocal = i - firstLocalRow;
-            const int firstLocalEntry = A.LocalEntryOffset( iLocal );
-            const int lastLocalEntry = A.LocalEntryOffset( iLocal+1 );
-            for( int t=firstLocalEntry; t<lastLocalEntry; ++t )
-            {
-                const int column = A.Col(t);
-                if( A.Col(t) >= i )
-                {
-                    givingIndices[offsets[q]] = column;
-                    givingEntries[offsets[q]] = A.Value(t);
-                    ++offsets[q];
-                }
-            }
-        }
-    }
-
-    // Perform two AllToAll's to exchange entries and column indices
-    std::vector<int> neededIndices( numNeededEntries );
-    std::vector<F> neededEntries( numNeededEntries );
-    mpi::AllToAll
-    ( &givingEntries[0], &givingEntriesSizes[0], &givingEntriesOffsets[0],
-      &neededEntries[0], &neededEntriesSizes[0], &neededEntriesOffsets[0], 
-      comm );
-    givingEntries.clear();
-    mpi::AllToAll
-    ( &givingIndices[0], &givingEntriesSizes[0], &givingEntriesOffsets[0],
-      &neededIndices[0], &neededEntriesSizes[0], &neededEntriesOffsets[0], 
-      comm );
-    givingIndices.clear();
-    givingEntriesSizes.clear();
-    givingEntriesOffsets.clear();
-
-    // Perform another round of AllToAll's to get the reordered indices of our
-    // recently gathered column indices
-    std::set<int> colIndexSet;
-    for( int i=0; i<numNeededEntries; ++i )
-        colIndexSet.insert( neededIndices[i] );
-    const int numNeededMappedIndices = colIndexSet.size();
-    std::vector<int> neededMappedIndices( numNeededMappedIndices );
-    std::vector<int> neededMappedIndicesOffsets( commSize );
-    std::vector<int> neededMappedIndicesSizes( commSize );
-    {
-        int i=0, qPrev=-1, lastOffset=0;
-        std::set<int>::const_iterator it;
-        for( it=colIndexSet.begin(); it!=colIndexSet.end(); ++it, ++i )
-        {
-            const int col = *it;
-            neededMappedIndices[i] = col;
-
-            const int q = RowToProcess( col, blocksize, commSize );
-            while( q != qPrev )
-            {
-                neededMappedIndicesSizes[qPrev] = i - lastOffset;
-                neededMappedIndicesOffsets[qPrev+1] = i;
-                lastOffset = i;
-                ++qPrev;
-            }
-        }
-        neededMappedIndicesSizes[commSize-1] = 
-            numNeededMappedIndices-lastOffset;
-    }
-    std::vector<int> givingMappedIndicesSizes( commSize );
-    mpi::AllToAll
-    ( &neededMappedIndicesSizes[0], 1, 
-      &givingMappedIndicesSizes[0], 1, comm );
-    int numGivingMappedIndices=0;
-    std::vector<int> givingMappedIndicesOffsets( commSize );
-    for( int q=0; q<commSize; ++q )
-    {
-        givingMappedIndicesOffsets[q] = numGivingMappedIndices;
-        numGivingMappedIndices += givingMappedIndicesSizes[q];
-    }
-    std::vector<int> givingMappedIndices( numGivingMappedIndices );
-    mpi::AllToAll
-    ( &neededMappedIndices[0], 
-      &neededMappedIndicesSizes[0], &neededMappedIndicesOffsets[0],
-      &givingMappedIndices[0],
-      &givingMappedIndicesSizes[0], &givingMappedIndicesOffsets[0],
-      comm );
-
-    // Overwrite givingMappedIndices with their mapped values
-    for( int i=0; i<numGivingMappedIndices; ++i )
-    {
-        const int j = givingMappedIndices[i];
-        const int jLocal = j - firstLocalRow;
+            const int i = sep.indices[t];
 #ifndef RELEASE
-        if( jLocal < 0 || jLocal >= A.LocalHeight() )
-        {
-            std::ostringstream msg;
-            msg << "Invalid local index: " << jLocal << " is not in [0,"
-                << A.LocalHeight() << ")";
-            throw std::logic_error( msg.str().c_str() );
-        }
+            if( i < 0 || i >= numSources )
+                throw std::logic_error("separator index was out of bounds");
 #endif
-        givingMappedIndices[i] = localMap[jLocal];
+            const int q = RowToProcess( i, blocksize, commSize );
+            ++recvRowSizes[q];
+        }
+    }
+    int numRecvRows=0;
+    std::vector<int> recvRowOffsets( commSize );
+    for( int q=0; q<commSize; ++q )
+    {
+        recvRowOffsets[q] = numRecvRows;
+        numRecvRows += recvRowSizes[q];
+    }
+    std::vector<int> recvRows( numRecvRows );
+    std::vector<int> offsets = recvRowOffsets;
+    for( int s=0; s<numLocal; ++s )
+    {
+        const LocalSepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
+        const int numIndices = sepOrLeaf.indices.size();
+        for( int t=0; t<numIndices; ++t )
+        {
+            const int i = sepOrLeaf.indices[t];
+#ifndef RELEASE
+            if( i < 0 || i >= numSources )
+                throw std::logic_error("separator index was out of bounds");
+#endif
+            const int q = RowToProcess( i, blocksize, commSize );
+#ifndef RELEASE            
+            if( offsets[q] >= numRecvRows )
+                throw std::logic_error("offset got too large");
+#endif
+            recvRows[offsets[q]++] = i;
+        }
+    }
+    for( int s=0; s<numDist; ++s )
+    {
+        const DistSeparator& sep = sepTree.distSeps[s];
+        const DistSymmNodeInfo& node = info.distNodes[s+1];
+        const Grid& grid = *node.grid;
+        const int rowShift = grid.Col();
+        const int rowStride = grid.Width();
+        const int numIndices = sep.indices.size();
+        for( int t=rowShift; t<numIndices; t+=rowStride )
+        {
+            const int i = sep.indices[t];
+#ifndef RELEASE
+            if( i < 0 || i >= numSources )
+                throw std::logic_error("separator index was out of bounds");
+#endif
+            const int q = RowToProcess( i, blocksize, commSize );
+#ifndef RELEASE            
+            if( offsets[q] >= numRecvRows )
+                throw std::logic_error("offset got too large");
+#endif
+            recvRows[offsets[q]++] = i;
+        }
     }
 
-    // Return the mapped values to everyone
-    std::vector<int> mappedIndices( numNeededMappedIndices );
+    // Retreive the list of rows that we must send to each process
+    std::vector<int> sendRowSizes( commSize );
+    mpi::AllToAll( &recvRowSizes[0], 1, &sendRowSizes[0], 1, comm );
+    int numSendRows=0;
+    std::vector<int> sendRowOffsets( commSize );
+    for( int q=0; q<commSize; ++q )
+    {
+        sendRowOffsets[q] = numSendRows;
+        numSendRows += sendRowSizes[q];
+    }
+    std::vector<int> sendRows( numSendRows );
     mpi::AllToAll
-    ( &givingMappedIndices[0],
-      &givingMappedIndicesSizes[0], &givingMappedIndicesOffsets[0],
-      &mappedIndices[0],
-      &neededMappedIndicesSizes[0], &neededMappedIndicesOffsets[0],
-      comm );
-    givingMappedIndices.clear();
-    givingMappedIndicesSizes.clear();
-    givingMappedIndicesOffsets.clear();
+    ( &recvRows[0], &recvRowSizes[0], &recvRowOffsets[0],
+      &sendRows[0], &sendRowSizes[0], &sendRowOffsets[0], comm );
 
-    // Unpack the received information
-    const bool conjugate = ( orientation == ADJOINT ); 
-    offsets = neededEntriesOffsets;
-    std::vector<int> rowOffsets = neededRowOffsets;
-    std::vector<int>::const_iterator it;
+    // Pack the number of nonzeros per row (and the nonzeros themselves)
+    int numSendEntries=0;
+    const int firstLocalRow = A.FirstLocalRow();
+    std::vector<int> sendRowLengths( numSendRows, 0 );
+    std::vector<int> sendEntriesSizes( commSize, 0 );
+    std::vector<int> sendEntriesOffsets( commSize );
+    for( int q=0; q<commSize; ++q )
+    {
+        const int size = sendRowSizes[q];
+        const int offset = sendRowOffsets[q];
+        sendEntriesOffsets[q] = numSendEntries;
+        for( int s=0; s<size; ++s )
+        {
+            const int i = sendRows[s+offset];
+            const int iLocal = i - firstLocalRow;
+            const int numConnections = A.NumConnections( iLocal );
+            numSendEntries += numConnections;
+            sendEntriesSizes[q] += numConnections;
+            sendRowLengths[s+offset] = numConnections;
+        }
+    }
+    const bool conjugate = ( orientation == ADJOINT ? true : false );
+    std::vector<F> sendEntries( numSendEntries );
+    std::vector<int> sendTargets( numSendEntries );
+    std::vector<int>::const_iterator vecIt;
+    for( int q=0; q<commSize; ++q )
+    {
+        int index = sendEntriesOffsets[q];
+        const int size = sendRowSizes[q];
+        const int offset = sendRowOffsets[q];
+        for( int s=0; s<size; ++s )
+        {
+            const int i = sendRows[s+offset];
+            const int iLocal = i - firstLocalRow;
+            const int numConnections = sendRowLengths[s+offset];
+            const int localEntryOffset = A.LocalEntryOffset( iLocal );
+            for( int t=0; t<numConnections; ++t )
+            {
+                const F value = A.Value( localEntryOffset+t );
+                const int col = A.Col( localEntryOffset+t );
+                vecIt = std::lower_bound
+                    ( targets.begin(), targets.end(), col );
+#ifndef RELEASE
+                if( vecIt == targets.end() )
+                    throw std::logic_error("Could not find target");
+#endif
+                const int targetOffset = vecIt - targets.begin();
+                const int mappedTarget = mappedTargets[targetOffset];
+#ifndef RELEASE
+                if( index >= numSendEntries )
+                    throw std::logic_error("send entry index got too big");
+#endif
+
+                sendEntries[index] = ( conjugate ? elem::Conj(value) : value );
+                sendTargets[index] = mappedTarget;
+                ++index;
+            }
+        }
+    }
+
+    // Send back the number of nonzeros per row and the nonzeros themselves
+    std::vector<int> recvRowLengths( numRecvRows );
+    mpi::AllToAll
+    ( &sendRowLengths[0], &sendRowSizes[0], &sendRowOffsets[0],
+      &recvRowLengths[0], &recvRowSizes[0], &recvRowOffsets[0], comm );
+    int numRecvEntries=0;
+    std::vector<int> recvEntriesSizes( commSize, 0 );
+    std::vector<int> recvEntriesOffsets( commSize );
+    for( int q=0; q<commSize; ++q )
+    {
+        const int size = recvRowSizes[q];
+        const int offset = recvRowOffsets[q];
+        for( int s=0; s<size; ++s )
+            recvEntriesSizes[q] += recvRowLengths[offset+s];
+
+        recvEntriesOffsets[q] = numRecvEntries; 
+        numRecvEntries += recvEntriesSizes[q];
+    }
+    std::vector<F> recvEntries( numRecvEntries );
+    std::vector<int> recvTargets( numRecvEntries );
+    mpi::AllToAll
+    ( &sendEntries[0], &sendEntriesSizes[0], &sendEntriesOffsets[0],
+      &recvEntries[0], &recvEntriesSizes[0], &recvEntriesOffsets[0], comm );
+    mpi::AllToAll
+    ( &sendTargets[0], &sendEntriesSizes[0], &sendEntriesOffsets[0],
+      &recvTargets[0], &recvEntriesSizes[0], &recvEntriesOffsets[0], comm );
+
+    // Unpack the received entries
+    offsets = recvRowOffsets;
+    std::vector<int> entryOffsets = recvEntriesOffsets;
     localFronts.resize( numLocal );
     for( int s=0; s<numLocal; ++s )
     {
-        LocalSymmFront<F>& front = localFronts[s];    
+        LocalSymmFront<F>& front = localFronts[s];
+        const LocalSepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
         const LocalSymmNodeInfo& node = info.localNodes[s];
+        const std::vector<int>& origLowerStruct = node.origLowerStruct;
+        const int numIndices = sepOrLeaf.indices.size();
 
-        const int width = node.size;
-        const int height = width + node.lowerStruct.size();
-        Zeros( height, width, front.frontL );
+        const int size = node.size;
+        const int offset = node.offset;
+        const int lowerSize = node.lowerStruct.size();
+        Zeros( size+lowerSize, size, front.frontL );
 
-        const int offset = info.localNodes[s].offset;
-        const std::vector<int>& indices = 
-            sepTree.localSepsAndLeaves[s]->indices;
-        for( int t=0; t<width; ++t )
+        for( int t=0; t<numIndices; ++t )
         {
-            const int i = indices[t];
+            const int i = sepOrLeaf.indices[t];
             const int q = RowToProcess( i, blocksize, commSize );
 
-            const int numEntries = numEntriesNeededPerRow[rowOffsets[q]++];
+            int& entryOffset = entryOffsets[q];
+            const int numEntries = recvRowLengths[offsets[q]++];
+
             for( int k=0; k<numEntries; ++k )
             {
-                const int j = neededIndices[offsets[q]];
-                it = std::lower_bound
-                    ( neededMappedIndices.begin(), 
-                      neededMappedIndices.end(), j );
+                const int value = recvEntries[entryOffset];
+                const int target = recvTargets[entryOffset];
+                ++entryOffset;
+
+                if( target < offset )
+                    continue;
+                else if( target < offset+size )
+                    front.frontL.Set( target-offset, t, value );
+                else
+                {
+                    vecIt = std::lower_bound
+                        ( origLowerStruct.begin(), 
+                          origLowerStruct.end(), target );
 #ifndef RELEASE
-                if( it == neededMappedIndices.end() )
-                    throw std::logic_error("Did not find needed mapped index");
+                    if( vecIt == origLowerStruct.end() )
+                    {
+                        std::ostringstream msg;
+                        msg << "Could not find " << target 
+                            << " in origLowerStruct: ";
+                        for( int i=0; i<origLowerStruct.size(); ++i )
+                            msg << origLowerStruct[i] << " ";
+                        std::cerr << msg.str() << std::endl;
+                        throw std::logic_error("No match in origLowerStruct");
+                    }
 #endif
-                const int indexOffset = it - neededMappedIndices.begin();
-                const int mappedIndex = mappedIndices[indexOffset];
-
-                it = std::lower_bound
-                    ( node.origLowerStruct.begin(),
-                      node.origLowerStruct.end(), mappedIndex );
-#ifndef RELEASE
-                if( it == node.origLowerStruct.end() )
-                    throw std::logic_error
-                    ("local origLowerStruct index not found");
-#endif
-                const int origOffset = it - node.origLowerStruct.begin();
-                const int row = node.origLowerRelIndices[origOffset];
-
-                const F entry = neededEntries[offsets[q]];
-                const F value = ( conjugate ? elem::Conj(entry) : entry );
-                front.frontL.Set( row, t, value );
-
-                ++offsets[q];
+                    const int origOffset = vecIt - origLowerStruct.begin();
+                    const int row = node.origLowerRelIndices[origOffset];
+                    front.frontL.Set( row, t, value );
+                }
             }
         }
     }
+
     distFronts.resize( numDist+1 );
-    // Initialize the distributed leaf from the local root
-    {
-        const DistSymmNodeInfo& node = info.distNodes[0];
-        Matrix<F>& topLocalFrontL = localFronts.back().frontL;
-        DistMatrix<F>& front2dL = distFronts[0].front2dL;
-        front2dL.LockedView
-        ( topLocalFrontL.Height(), topLocalFrontL.Width(), 0, 0,
-          topLocalFrontL.LockedBuffer(), topLocalFrontL.LDim(),
-          *node.grid );
-    }
     for( int s=0; s<numDist; ++s )
     {
         DistSymmFront<F>& front = distFronts[s+1];
+        const DistSeparator& sep = sepTree.distSeps[s];
         const DistSymmNodeInfo& node = info.distNodes[s+1];
-        const Grid& g = *node.grid;
+        const std::vector<int>& origLowerStruct = node.origLowerStruct;
+        const int numIndices = sep.indices.size();
 
+        const Grid& grid = *node.grid;
+        const int colShift = grid.Row();
+        const int rowShift = grid.Col();
+        const int colStride = grid.Height();
+        const int rowStride = grid.Width();
+
+        const int size = node.size;
         const int offset = node.offset;
-        const int width = node.size;
-        const int height = width + node.lowerStruct.size();
-        front.front2dL.SetGrid( g );
-        Zeros( height, width, front.front2dL );
+        const int lowerSize = node.lowerStruct.size();
+        front.front2dL.SetGrid( grid );
+        Zeros( size+lowerSize, size, front.front2dL );
 
-        const std::vector<int>& indices = sepTree.distSeps[s].indices;
-        const int colShift = g.Row();
-        const int rowShift = g.Col();
-        const int colStride = g.Height();
-        const int rowStride = g.Width();
-        for( int t=rowShift; t<width; t+=rowStride )
+        for( int t=rowShift; t<numIndices; t+=rowStride )
         {
-            const int i = indices[t];
+            const int i = sep.indices[t];
             const int q = RowToProcess( i, blocksize, commSize );
+            const int localCol = (t-rowShift) / rowStride;
 
-            const int numEntries = numEntriesNeededPerRow[rowOffsets[q]++];
+            int& entryOffset = entryOffsets[q];
+            const int numEntries = recvRowLengths[offsets[q]++];
+
             for( int k=0; k<numEntries; ++k )
             {
-                const int j = neededIndices[offsets[q]];
-                it = std::lower_bound
-                    ( neededMappedIndices.begin(), 
-                      neededMappedIndices.end(), j );
-#ifndef RELEASE
-                if( it == neededMappedIndices.end() )
-                    throw std::logic_error("Did not find needed mapped index");
-#endif
-                const int indexOffset = it - neededMappedIndices.begin();
-                const int mappedIndex = mappedIndices[indexOffset];
+                const int value = recvEntries[entryOffset];
+                const int target = recvTargets[entryOffset];
+                ++entryOffset;
 
-                it = std::lower_bound
-                    ( node.origLowerStruct.begin(), 
-                      node.origLowerStruct.end(), mappedIndex );
-#ifndef RELEASE
-                if( it == node.origLowerStruct.end() )
-                    throw std::logic_error
-                    ("dist origLowerStruct index not found");
-#endif
-                const int origOffset = it - node.origLowerStruct.begin();
-                const int row = node.origLowerRelIndices[origOffset];
-
-                if( row % colStride == colShift )
+                if( target < offset )
+                    continue;
+                else if( target < offset+size )
                 {
-                    const int localRow = (row-colShift) / colStride;
-                    const int localCol = (t-rowShift) / rowStride;
-                    const F entry = neededEntries[offsets[q]];
-                    const F value = ( conjugate ? elem::Conj(entry) : entry );
-                    front.front2dL.SetLocal( localRow, localCol, value );
+                    if( (target-offset) % colStride == colShift )
+                    {
+                        const int row = target-offset;
+                        const int localRow = (row-colShift) / colStride;
+                        front.front2dL.SetLocal( localRow, localCol, value );
+                    }
                 }
-
-                ++offsets[q];
+                else 
+                {
+                    vecIt = std::lower_bound
+                        ( origLowerStruct.begin(),
+                          origLowerStruct.end(), target );
+#ifndef RELEASE
+                    if( vecIt == origLowerStruct.end() )
+                        throw std::logic_error("No match in origLowerStruct");
+#endif
+                    const int origOffset = vecIt - origLowerStruct.begin();
+                    const int row = node.origLowerRelIndices[origOffset];
+                    if( row % colStride == colShift )
+                    {
+                        const int localRow = (row-colShift) / colStride;
+                        front.front2dL.Set( localRow, localCol, value );
+                    }
+                }
             }
         }
+    }
+    
+    // Copy information from the local root to the dist leaf
+    {
+        const DistSymmNodeInfo& node = info.distNodes[0];
+        Matrix<F>& topLocal = localFronts.back().frontL;
+        DistMatrix<F>& bottomDist = distFronts[0].front2dL;
+        bottomDist.LockedView
+        ( topLocal.Height(), topLocal.Width(), 0, 0,
+          topLocal.LockedBuffer(), topLocal.LDim(), *node.grid );
     }
 #ifndef RELEASE
     PopCallStack();

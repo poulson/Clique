@@ -85,6 +85,8 @@ int CliqBisect(idx_t *vtxdist, idx_t *xadj, idx_t *adjncy,
       sizes[0] = sizes[1] = sizes[2] = 0;
   gkMPI_Allreduce(MPI_IN_PLACE, (void*)sizes, 3, IDX_T, MPI_SUM, *comm);
 
+  MPI_Comm_free( &nonzeroComm );
+
   goto DONE;
 
 DONE:

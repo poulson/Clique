@@ -59,10 +59,6 @@ void BuildMap
 ( const DistGraph& graph, const DistSeparatorTree& sepTree, 
   std::vector<int>& localMap );
 
-void MapLowerStruct
-( const DistGraph& graph, const std::vector<int>& localMap,
-  DistSymmElimTree& eTree );
-
 int DistributedDepth( mpi::Comm comm );
 
 int RowToProcess( int i, int blocksize, int commSize );
@@ -143,7 +139,7 @@ NestedDissectionRecursion
             {
                 const int target = graph.Target( edgeOffset+t );
                 if( target >= numSources )
-                    connectedAncestors.insert( target );
+                    connectedAncestors.insert( offset+target );
             }
         }
         const int numConnectedAncestors = connectedAncestors.size();
@@ -194,7 +190,7 @@ NestedDissectionRecursion
             {
                 const int target = graph.Target( edgeOffset+t );
                 if( target >= numSources )
-                    connectedAncestors.insert( target );
+                    connectedAncestors.insert( offset+target );
             }
         }
         const int numConnectedAncestors = connectedAncestors.size();
@@ -318,7 +314,7 @@ NestedDissectionRecursion
           &localConnectedSizes[0], &localConnectedOffsets[0], comm );
         std::set<int> connectedAncestors;
         for( int s=0; s<sumOfLocalConnectedSizes; ++s )
-            connectedAncestors.insert( localConnections[s] );
+            connectedAncestors.insert( offset+localConnections[s] );
         const int numConnected = connectedAncestors.size();
         node.lowerStruct.resize( numConnected );
         int structIndex=0;
@@ -380,7 +376,7 @@ NestedDissectionRecursion
             {
                 const int target = seqGraph.Target( edgeOffset+t );
                 if( target >= numSources )
-                    connectedAncestors.insert( target );
+                    connectedAncestors.insert( offset+target );
             }
         }
         const int numConnectedAncestors = connectedAncestors.size();
@@ -442,7 +438,7 @@ NestedDissectionRecursion
             {
                 const int target = seqGraph.Target( edgeOffset+t );
                 if( target >= numSources )
-                    connectedAncestors.insert( target );
+                    connectedAncestors.insert( offset+target );
             }
         }
         const int numConnectedAncestors = connectedAncestors.size();
@@ -602,13 +598,8 @@ NestedDissection
                 throw std::logic_error( msg.str().c_str() );
             }
         }
-        std::cout << std::endl;
     }
 #endif
-
-    // Convert the lowerStruct from each node of the elimination tree from 
-    // the original to the reordered indices
-    MapLowerStruct( graph, localMap, eTree );
 
     // Run the symbolic analysis
     SymmetricAnalysis( eTree, info, storeFactRecvIndices );
@@ -790,94 +781,6 @@ BuildMap
 #endif
 }
 
-inline void
-MapLowerStruct
-( const DistGraph& graph, const std::vector<int>& localMap, 
-  DistSymmElimTree& eTree )
-{
-#ifndef RELEASE
-    PushCallStack("MapLowerStruct");
-#endif
-    mpi::Comm comm = graph.Comm();
-    const int numDist = eTree.distNodes.size();
-    const int numLocal = eTree.localNodes.size();
-    const int numSources = graph.NumSources();
-
-    // Build the set of lowerStruct indices
-    std::set<int> indexSet;
-    for( int s=0; s<numLocal; ++s )
-    {
-        const LocalSymmNode& node = *eTree.localNodes[s];
-        const int numIndices = node.lowerStruct.size();
-        for( int t=0; t<numIndices; ++t )
-            indexSet.insert( node.lowerStruct[t] );
-    }
-    for( int s=1; s<numDist; ++s )
-    {
-        const DistSymmNode& node = eTree.distNodes[s];
-        const int numIndices = node.lowerStruct.size();
-        for( int t=0; t<numIndices; ++t )
-            indexSet.insert( node.lowerStruct[t] );
-    }
-
-    // Flatten the set into a vector
-    const int numIndices = indexSet.size();
-    std::vector<int> indices( numIndices );
-    {
-        int offset = 0;
-        std::set<int>::const_iterator it;
-        for( it=indexSet.begin(); it!=indexSet.end(); ++it )
-            indices[offset++] = *it;
-    }
-
-    // Compute the reordered indices
-    std::vector<int> mappedIndices = indices;
-    MapIndices( localMap, mappedIndices, numSources, comm );
-
-    // Unpack the reordered indices
-    std::vector<int>::const_iterator it;
-    for( int s=0; s<numLocal; ++s )
-    {
-        LocalSymmNode& node = *eTree.localNodes[s];
-        const int numIndices = node.lowerStruct.size();
-        for( int t=0; t<numIndices; ++t )
-        {
-            const int index = node.lowerStruct[t];
-            it = std::lower_bound
-                ( indices.begin(), indices.end(), index );
-#ifndef RELEASE
-            if( it == indices.end() )
-                throw std::logic_error("Could not find local struct index");
-#endif
-            const int offset = it - indices.begin();
-            node.lowerStruct[t] = mappedIndices[offset];
-        }
-        std::sort( node.lowerStruct.begin(), node.lowerStruct.end() );
-    }
-    eTree.distNodes[0].lowerStruct = eTree.localNodes.back()->lowerStruct;
-    for( int s=1; s<numDist; ++s )
-    {
-        DistSymmNode& node = eTree.distNodes[s];
-        const int numIndices = node.lowerStruct.size();
-        for( int t=0; t<numIndices; ++t )
-        {
-            const int index = node.lowerStruct[t];
-            it = std::lower_bound
-                ( indices.begin(), indices.end(), index );
-#ifndef RELEASE
-            if( it == indices.end() )
-                throw std::logic_error("Could not find dist struct index");
-#endif
-            const int offset = it - indices.begin();
-            node.lowerStruct[t] = mappedIndices[offset];
-        }
-        std::sort( node.lowerStruct.begin(), node.lowerStruct.end() );
-    }
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
 inline int 
 Bisect
 ( const Graph& graph ,Graph& leftChild, Graph& rightChild,
@@ -1015,6 +918,7 @@ Bisect
             const int target = ( inverseTarget < numSources ?
                                  map[inverseTarget] :
                                  inverseTarget );
+            // The targets that are in parent separators do not need to be
             rightChild.PushBack( source-leftChildSize, target-leftChildSize );
         }
     }
@@ -1277,7 +1181,7 @@ Bisect
             int& offset = offsets[q];
             const int numConnections = graph.NumConnections( s );
             const int localEdgeOffset = graph.LocalEdgeOffset( s );
-            for( int j=0u; j<numConnections; ++j )
+            for( int j=0; j<numConnections; ++j )
                 sendIndices[offset++] = graph.Target( localEdgeOffset+j );
         }
     }
