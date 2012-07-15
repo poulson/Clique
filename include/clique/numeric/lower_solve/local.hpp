@@ -146,6 +146,21 @@ inline void LocalLowerBackwardSolve
 
         // Update using the parent
         const int parent = node.parent;
+#ifndef RELEASE
+        if( parent < 0 )
+        {
+            std::ostringstream msg;
+            msg << "Parent index was negative: " << parent;
+            throw std::logic_error( msg.str().c_str() );
+        }
+        if( parent >= numLocalNodes )  
+        {
+            std::ostringstream msg;
+            msg << "Parent index was too large: " << parent << " >= "
+                << numLocalNodes;
+            throw std::logic_error( msg.str().c_str() );
+        }
+#endif
         Matrix<F>& parentWork = L.localFronts[parent].work;
         const LocalSymmNodeInfo& parentNode = info.localNodes[parent];
         const int currentUpdateSize = WB.Height();

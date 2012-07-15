@@ -213,14 +213,16 @@ NestedDissectionRecursion
         for( int s=0; s<rightChildSize; ++s )
             rightPerm[s] = perm[inverseMap[s+leftChildSize]];
 
+        // Update right then left so that, once we later reverse the order 
+        // of the nodes, the left node will be ordered first
         const int parent = eTree.localNodes.size()-1;
-        node.children[0] = eTree.localNodes.size();
-        NestedDissectionRecursion
-        ( leftChild, leftPerm, sepTree, eTree, parent, offset, 
-          cutoff, numSeps );
         node.children[1] = eTree.localNodes.size();
         NestedDissectionRecursion
         ( rightChild, rightPerm, sepTree, eTree, parent, offset+leftChildSize,
+          cutoff, numSeps );
+        node.children[0] = eTree.localNodes.size();
+        NestedDissectionRecursion
+        ( leftChild, leftPerm, sepTree, eTree, parent, offset, 
           cutoff, numSeps );
     }
 #ifndef RELEASE
@@ -454,14 +456,16 @@ NestedDissectionRecursion
         for( int s=0; s<rightChildSize; ++s )
             rightPerm[s] = localPerm[inverseMap[s+leftChildSize]];
 
+        // Update right then left so that, once we later reverse the order 
+        // of the nodes, the left node will be ordered first
         const int parent=0;
-        localNode.children[0] = eTree.localNodes.size();
-        NestedDissectionRecursion
-        ( leftChild, leftPerm, sepTree, eTree, parent, offset, 
-          cutoff, numSeqSeps );
         localNode.children[1] = eTree.localNodes.size();
         NestedDissectionRecursion
         ( rightChild, rightPerm, sepTree, eTree, parent, offset+leftChildSize, 
+          cutoff, numSeqSeps );
+        localNode.children[0] = eTree.localNodes.size();
+        NestedDissectionRecursion
+        ( leftChild, leftPerm, sepTree, eTree, parent, offset, 
           cutoff, numSeqSeps );
     }
 #ifndef RELEASE
@@ -886,6 +890,11 @@ Bisect
             const int target = ( inverseTarget < numSources ? 
                                  map[inverseTarget] :
                                  inverseTarget );
+#ifndef RELEASE
+            if( target >= leftChildSize && target < (numSources-sepSize) )
+                throw std::logic_error
+                ("Invalid bisection, left set touches right set");
+#endif
             leftChild.PushBack( source, target );
         }
     }
@@ -907,6 +916,11 @@ Bisect
             const int target = ( inverseTarget < numSources ?
                                  map[inverseTarget] :
                                  inverseTarget );
+#ifndef RELEASE
+            if( target < leftChildSize )
+                throw std::logic_error
+                ("Invalid bisection, right set touches left set");
+#endif
             // The targets that are in parent separators do not need to be
             rightChild.PushBack( source-leftChildSize, target-leftChildSize );
         }
@@ -1053,9 +1067,7 @@ Bisect
 
     // Exchange the number of rows
     std::vector<int> rowRecvSizes( commSize );
-    mpi::AllToAll
-    ( &rowSendSizes[0], 1,
-      &rowRecvSizes[0], 1, comm );
+    mpi::AllToAll( &rowSendSizes[0], 1, &rowRecvSizes[0], 1, comm );
 
     // Prepare for the AllToAll to exchange the row indices and 
     // the number of column indices per row
@@ -1105,7 +1117,6 @@ Bisect
     mpi::AllToAll
     ( &rowSendLengths[0], &rowSendSizes[0], &rowSendOffsets[0],
       &rowRecvLengths[0], &rowRecvSizes[0], &rowRecvOffsets[0], comm );
-    rowSendLengths.clear();
 
     // Perform the row indices exchange
     std::vector<int> rowRecvIndices( numRecvRows );
@@ -1113,8 +1124,6 @@ Bisect
     ( &rowSendIndices[0], &rowSendSizes[0], &rowSendOffsets[0],
       &rowRecvIndices[0], &rowRecvSizes[0], &rowRecvOffsets[0], comm );
     rowSendIndices.clear();
-    rowSendSizes.clear();
-    rowSendOffsets.clear();
 
     // Set up for sending the column indices
     int numSendIndices=0;
@@ -1130,6 +1139,7 @@ Bisect
         indexSendOffsets[q] = numSendIndices;
         numSendIndices += indexSendSizes[q];
     }
+    rowSendLengths.clear();
     int numRecvIndices=0;
     std::vector<int> indexRecvSizes( commSize, 0 );
     std::vector<int> indexRecvOffsets( commSize );
@@ -1143,6 +1153,8 @@ Bisect
         indexRecvOffsets[q] = numRecvIndices;
         numRecvIndices += indexRecvSizes[q];
     }
+    rowSendSizes.clear();
+    rowSendOffsets.clear();
 
     // Pack the indices
     std::vector<int> sendIndices( numSendIndices );
@@ -1209,9 +1221,28 @@ Bisect
         {
             const int target = recvIndices[offset++];
             if( onLeft )
+            {
+#ifndef RELEASE
+                if( target >= leftChildSize && target < (numSources-sepSize) )
+                {
+                    std::ostringstream msg;
+                    msg << "Invalid dist bisection, left set touches right:\n"
+                        << "  " << source << " touches " << target << " and "
+                        << "leftChildSize=" << leftChildSize;
+                    throw std::logic_error( msg.str().c_str() );
+                }
+#endif
                 child.PushBack( source, target );
+            }
             else
+            {
+#ifndef RELEASE
+                if( target < leftChildSize )
+                    throw std::logic_error
+                    ("Invalid dist bisection, right set touches left set");
+#endif
                 child.PushBack( source-leftChildSize, target-leftChildSize );
+            }
         }
     }
     child.StopAssembly();

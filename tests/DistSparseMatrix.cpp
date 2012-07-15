@@ -77,36 +77,18 @@ main( int argc, char* argv[] )
 
             double sum = 0.;
             if( z != 0 )
-            {
                 A.PushBack( i, i-n*n, -1. );
-                sum += 1.;
-            }
             if( y != 0 )
-            {
                 A.PushBack( i, i-n, -1. );
-                sum += 1.;
-            }
             if( x != 0 )
-            {
                 A.PushBack( i, i-1, -1. );
-                sum += 1.;
-            }
             if( x != n-1 )
-            {
                 A.PushBack( i, i+1, -1. );
-                sum += 1.;
-            }
             if( y != n-1 )
-            {
                 A.PushBack( i, i+n, -1. );
-                sum += 1.;
-            }
             if( z != n-1 )
-            {
                 A.PushBack( i, i+n*n, -1. );
-                sum += 1.;
-            }
-            A.PushBack( i, i, sum );
+            A.PushBack( i, i, 6. );
         } 
         A.StopAssembly();
         mpi::Barrier( comm );
@@ -155,11 +137,12 @@ main( int argc, char* argv[] )
 
         if( commRank == 0 )
         {
-            std::cout << "Running LDL^T factorization...";
+            std::cout << "Running LDL^T factorization and redistribution...";
             std::cout.flush();
         }
         mpi::Barrier( comm );
         LDL( TRANSPOSE, info, frontTree );
+        SetSolveMode( frontTree, FAST_2D_LDL );
         mpi::Barrier( comm );
         if( commRank == 0 )
             std::cout << "done" << std::endl;
@@ -178,14 +161,41 @@ main( int argc, char* argv[] )
 
         if( commRank == 0 )
         {
-            std::cout << "Redistributing y to match frontal distribution...";
+            std::cout << "Solving against y...";
             std::cout.flush();
         }
         std::vector<int> inverseLocalMap;
         InvertMap( localMap, inverseLocalMap, N, comm );
-        DistNodalVector<double> yNodal( inverseLocalMap, info, y );
+        DistNodalVector<double> yNodal;
+        yNodal.Pull( inverseLocalMap, info, y );
+        LDLSolve( TRANSPOSE, info, frontTree, yNodal.values );
+        yNodal.Push( inverseLocalMap, info, y );
         if( commRank == 0 )
             std::cout << "done" << std::endl;
+
+        if( commRank == 0 )
+            std::cout << "Checking error in computed solution..." << std::endl;
+        DistNodalVector<double> xNodal( inverseLocalMap, info, x );
+        const double xLocalNorm = elem::Nrm2( xNodal.values );
+        const double yLocalNorm = elem::Nrm2( yNodal.values );
+        elem::Axpy( -1., xNodal.values, yNodal.values );
+        const double errorLocalNorm = elem::Nrm2( yNodal.values );
+        const double xLocalNormSq = xLocalNorm*xLocalNorm;
+        const double yLocalNormSq = yLocalNorm*yLocalNorm;
+        const double errorLocalNormSq = errorLocalNorm*errorLocalNorm;
+        double xNormSq, yNormSq, errorNormSq;
+        mpi::AllReduce( &xLocalNormSq, &xNormSq, 1, mpi::SUM, comm );
+        mpi::AllReduce( &yLocalNormSq, &yNormSq, 1, mpi::SUM, comm );
+        mpi::AllReduce( &errorLocalNormSq, &errorNormSq, 1, mpi::SUM, comm );
+        const double xNorm = elem::Sqrt( xNormSq );
+        const double yNorm = elem::Sqrt( yNormSq );
+        const double errorNorm = elem::Sqrt( errorNormSq );
+        if( commRank == 0 )
+        {
+            std::cout << "|| x ||_2 = " << xNorm << "\n"
+                      << "|| y ||_2 = " << yNorm << "\n"
+                      << "|| x - y ||_2 = " << errorNorm << std::endl;
+        }
     }
     catch( std::exception& e )
     {

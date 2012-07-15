@@ -123,8 +123,8 @@ void Multiply
     // Send them back
     std::vector<F> recvValues( numRecvIndices );
     mpi::AllToAll
-    ( &sendIndices[0], &sendIndexSizes[0], &sendIndexOffsets[0],
-      &recvIndices[0], &recvIndexSizes[0], &recvIndexOffsets[0], comm );
+    ( &sendValues[0], &sendIndexSizes[0], &sendIndexOffsets[0],
+      &recvValues[0], &recvIndexSizes[0], &recvIndexOffsets[0], comm );
      
     // Perform the local multiply-accumulate, y := alpha A x + y
     std::vector<int>::const_iterator vecIt;
@@ -143,7 +143,8 @@ void Multiply
 #endif
             const int colOffset = vecIt - recvIndices.begin();
             const F value = recvValues[colOffset];
-            y.UpdateLocal( iLocal, value*A.Value(k+offset) );
+            const F update = alpha*value*A.Value(k+offset);
+            y.UpdateLocal( iLocal, update );
         }
     }
 #ifndef RELEASE

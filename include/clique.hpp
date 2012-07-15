@@ -30,10 +30,14 @@
 #include "clique/symbolic/symm_analysis.hpp"
 #include "clique/symbolic/nested_dissection.hpp"
 
-#include "clique/numeric/dist_sparse_matrix.hpp"
-#include "clique/numeric/sparse_matrix.hpp"
+// These two classes are interdependent, so declare both, then define both
 #include "clique/numeric/dist_vector.hpp"
 #include "clique/numeric/dist_nodal_vector.hpp"
+#include "clique/numeric/dist_vector_main.hpp"
+#include "clique/numeric/dist_nodal_vector_main.hpp"
+
+#include "clique/numeric/dist_sparse_matrix.hpp"
+#include "clique/numeric/sparse_matrix.hpp"
 #include "clique/numeric/multiply.hpp"
 
 #include "clique/numeric/dist_symm_front_tree.hpp"

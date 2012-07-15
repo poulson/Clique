@@ -227,7 +227,7 @@ DistSymmFrontTree<F>::DistSymmFrontTree
     // Pack the number of nonzeros per row (and the nonzeros themselves)
     int numSendEntries=0;
     const int firstLocalRow = A.FirstLocalRow();
-    std::vector<int> sendRowLengths( numSendRows, 0 );
+    std::vector<int> sendRowLengths( numSendRows );
     std::vector<int> sendEntriesSizes( commSize, 0 );
     std::vector<int> sendEntriesOffsets( commSize );
     for( int q=0; q<commSize; ++q )
@@ -321,14 +321,18 @@ DistSymmFrontTree<F>::DistSymmFrontTree
         const LocalSepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
         const LocalSymmNodeInfo& node = info.localNodes[s];
         const std::vector<int>& origLowerStruct = node.origLowerStruct;
-        const int numIndices = sepOrLeaf.indices.size();
 
         const int size = node.size;
         const int offset = node.offset;
         const int lowerSize = node.lowerStruct.size();
         Zeros( size+lowerSize, size, front.frontL );
 
-        for( int t=0; t<numIndices; ++t )
+#ifndef RELEASE
+        if( sepOrLeaf.indices.size() != size )
+            throw std::logic_error("Mismatch between separator and node size");
+#endif
+
+        for( int t=0; t<size; ++t )
         {
             const int i = sepOrLeaf.indices[t];
             const int q = RowToProcess( i, blocksize, commSize );
@@ -342,10 +346,12 @@ DistSymmFrontTree<F>::DistSymmFrontTree
                 const int target = recvTargets[entryOffset];
                 ++entryOffset;
 
-                if( target < offset )
+                if( target < offset+t )
                     continue;
                 else if( target < offset+size )
+                {
                     front.frontL.Set( target-offset, t, value );
+                }
                 else
                 {
                     vecIt = std::lower_bound
@@ -378,7 +384,6 @@ DistSymmFrontTree<F>::DistSymmFrontTree
         const DistSeparator& sep = sepTree.distSeps[s];
         const DistSymmNodeInfo& node = info.distNodes[s+1];
         const std::vector<int>& origLowerStruct = node.origLowerStruct;
-        const int numIndices = sep.indices.size();
 
         const Grid& grid = *node.grid;
         const int colShift = grid.Row();
@@ -392,7 +397,12 @@ DistSymmFrontTree<F>::DistSymmFrontTree
         front.front2dL.SetGrid( grid );
         Zeros( size+lowerSize, size, front.front2dL );
 
-        for( int t=rowShift; t<numIndices; t+=rowStride )
+#ifndef RELEASE
+        if( sep.indices.size() != size )
+            throw std::logic_error("Mismatch in separator and node sizes");
+#endif
+
+        for( int t=rowShift; t<size; t+=rowStride )
         {
             const int i = sep.indices[t];
             const int q = RowToProcess( i, blocksize, commSize );
@@ -407,7 +417,7 @@ DistSymmFrontTree<F>::DistSymmFrontTree
                 const int target = recvTargets[entryOffset];
                 ++entryOffset;
 
-                if( target < offset )
+                if( target < offset+t )
                     continue;
                 else if( target < offset+size )
                 {
