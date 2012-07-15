@@ -122,9 +122,7 @@ NestedDissectionRecursion
         LocalSepOrLeaf& leaf = *sepTree.localSepsAndLeaves.back();
         leaf.parent = parent;
         leaf.offset = offset;
-        leaf.indices.resize( numSources );
-        for( int s=0; s<numSources; ++s )
-            leaf.indices[s] = perm[s];
+        leaf.indices = perm;
 
         // Fill in this node of the local elimination tree
         eTree.localNodes.push_back( new LocalSymmNode );
@@ -145,12 +143,10 @@ NestedDissectionRecursion
                     connectedAncestors.insert( offset+target );
             }
         }
-        const int numConnectedAncestors = connectedAncestors.size();
-        node.lowerStruct.resize( numConnectedAncestors );
-        int structIndex=0;
-        std::set<int>::const_iterator it;
-        for( it=connectedAncestors.begin(); it!=connectedAncestors.end(); ++it )
-            node.lowerStruct[structIndex++] = *it;
+        node.lowerStruct.resize( connectedAncestors.size() );
+        std::copy
+        ( connectedAncestors.begin(), connectedAncestors.end(), 
+          node.lowerStruct.begin() );
     }
     else
     {
@@ -197,12 +193,10 @@ NestedDissectionRecursion
                     connectedAncestors.insert( offset+target );
             }
         }
-        const int numConnectedAncestors = connectedAncestors.size();
-        node.lowerStruct.resize( numConnectedAncestors );
-        int structIndex=0;
-        std::set<int>::const_iterator it;
-        for( it=connectedAncestors.begin(); it!=connectedAncestors.end(); ++it )
-            node.lowerStruct[structIndex++] = *it;
+        node.lowerStruct.resize( connectedAncestors.size() );
+        std::copy
+        ( connectedAncestors.begin(), connectedAncestors.end(), 
+          node.lowerStruct.begin() );
 
         // Finish computing the separator indices
         for( int s=0; s<sepSize; ++s )
@@ -293,7 +287,7 @@ NestedDissectionRecursion
                 {
                     const int target = graph.Target( localOffset+t );
                     if( target >= numSources )
-                        localConnectedAncestors.insert( target );
+                        localConnectedAncestors.insert( offset+target );
                 }
             }
         }
@@ -303,11 +297,9 @@ NestedDissectionRecursion
         mpi::AllGather
         ( &numLocalConnected, 1, &localConnectedSizes[0], 1, comm );
         std::vector<int> localConnectedVector( numLocalConnected );
-        int connectedIndex=0;
-        std::set<int>::const_iterator it;
-        for( it=localConnectedAncestors.begin(); 
-             it!=localConnectedAncestors.end(); ++it )
-            localConnectedVector[connectedIndex++] = *it;
+        std::copy
+        ( localConnectedAncestors.begin(), localConnectedAncestors.end(), 
+          localConnectedVector.begin() );
         int sumOfLocalConnectedSizes=0;
         std::vector<int> localConnectedOffsets( commSize );
         for( int q=0; q<commSize; ++q )
@@ -320,14 +312,12 @@ NestedDissectionRecursion
         ( &localConnectedVector[0], numLocalConnected,
           &localConnections[0], 
           &localConnectedSizes[0], &localConnectedOffsets[0], comm );
-        std::set<int> connectedAncestors;
-        for( int s=0; s<sumOfLocalConnectedSizes; ++s )
-            connectedAncestors.insert( offset+localConnections[s] );
-        const int numConnected = connectedAncestors.size();
-        node.lowerStruct.resize( numConnected );
-        int structIndex=0;
-        for( it=connectedAncestors.begin(); it!=connectedAncestors.end(); ++it )
-            node.lowerStruct[structIndex++] = *it; 
+        std::set<int> connectedAncestors
+        ( localConnections.begin(), localConnections.end() );
+        node.lowerStruct.resize( connectedAncestors.size() );
+        std::copy
+        ( connectedAncestors.begin(), connectedAncestors.end(), 
+          node.lowerStruct.begin() );
 
         // Finish computing the separator indices
         MapIndices( localPerm, sep.indices, numSources, comm );
@@ -362,9 +352,7 @@ NestedDissectionRecursion
         LocalSepOrLeaf& leaf = *sepTree.localSepsAndLeaves.back();
         leaf.parent = -1;
         leaf.offset = offset;
-        leaf.indices.resize( numSources );
-        for( int s=0; s<numSources; ++s )
-            leaf.indices[s] = localPerm[s];
+        leaf.indices = localPerm;
 
         // Fill in this node of the local and distributed parts of the 
         // elimination tree
@@ -388,17 +376,11 @@ NestedDissectionRecursion
                     connectedAncestors.insert( offset+target );
             }
         }
-        const int numConnectedAncestors = connectedAncestors.size();
-        localNode.lowerStruct.resize( numConnectedAncestors );
-        distNode.lowerStruct.resize( numConnectedAncestors );
-        int structIndex=0;
-        std::set<int>::const_iterator it;
-        for( it=connectedAncestors.begin(); it!=connectedAncestors.end(); ++it )
-        {
-            localNode.lowerStruct[structIndex] = *it;
-            distNode.lowerStruct[structIndex] = *it; 
-            ++structIndex;
-        }
+        localNode.lowerStruct.resize( connectedAncestors.size() );
+        std::copy
+        ( connectedAncestors.begin(), connectedAncestors.end(), 
+          localNode.lowerStruct.begin() );    
+        distNode.lowerStruct = localNode.lowerStruct;
     }
     else
     {
@@ -451,17 +433,11 @@ NestedDissectionRecursion
                     connectedAncestors.insert( offset+target );
             }
         }
-        const int numConnectedAncestors = connectedAncestors.size();
-        localNode.lowerStruct.resize( numConnectedAncestors );
-        distNode.lowerStruct.resize( numConnectedAncestors );
-        int structIndex=0;
-        std::set<int>::const_iterator it;
-        for( it=connectedAncestors.begin(); it!=connectedAncestors.end(); ++it )
-        {
-            localNode.lowerStruct[structIndex] = *it;
-            distNode.lowerStruct[structIndex] = *it; 
-            ++structIndex;
-        }
+        localNode.lowerStruct.resize( connectedAncestors.size() );
+        std::copy
+        ( connectedAncestors.begin(), connectedAncestors.end(), 
+          localNode.lowerStruct.begin() );
+        distNode.lowerStruct = localNode.lowerStruct;
 
         // Finish computing the separator indices
         for( int s=0; s<sepSize; ++s )

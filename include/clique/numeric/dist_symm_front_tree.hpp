@@ -115,18 +115,9 @@ DistSymmFrontTree<F>::DistSymmFrontTree
 
     // Get the reordered indices of the targets of our portion of the 
     // distributed sparse matrix
-    std::set<int> targetSet;
-    const int numLocalEdges = graph.NumLocalEdges();
-    for( int e=0; e<numLocalEdges; ++e )
-        targetSet.insert( graph.Target(e) );
-    const int numTargets = targetSet.size();
-    std::vector<int> targets( numTargets );
-    {
-        int offset=0;
-        std::set<int>::const_iterator setIt;
-        for( setIt=targetSet.begin(); setIt!=targetSet.end(); ++setIt )
-            targets[offset++] = *setIt;
-    }
+    std::set<int> targetSet( graph.targets_.begin(), graph.targets_.end() );
+    std::vector<int> targets( targetSet.size() );
+    std::copy( targetSet.begin(), targetSet.end(), targets.begin() );
     std::vector<int> mappedTargets = targets;
     MapIndices( localMap, mappedTargets, numSources, comm );
 
