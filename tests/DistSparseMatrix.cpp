@@ -143,8 +143,18 @@ main( int argc, char* argv[] )
             std::cout.flush();
         }
         mpi::Barrier( comm );
-        sleep( 1 );
         DistSymmFrontTree<double> frontTree( A, localMap, sepTree, info );
+        mpi::Barrier( comm );
+        if( commRank == 0 )
+            std::cout << "done" << std::endl;
+
+        if( commRank == 0 )
+        {
+            std::cout << "Running LDL^T factorization...";
+            std::cout.flush();
+        }
+        mpi::Barrier( comm );
+        LDL( TRANSPOSE, info, frontTree );
         mpi::Barrier( comm );
         if( commRank == 0 )
             std::cout << "done" << std::endl;
