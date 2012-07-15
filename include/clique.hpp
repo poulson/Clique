@@ -31,6 +31,7 @@
 #include "clique/symbolic/nested_dissection.hpp"
 
 #include "clique/numeric/dist_sparse_matrix.hpp"
+#include "clique/numeric/dist_vector.hpp"
 #include "clique/numeric/sparse_matrix.hpp"
 #include "clique/numeric/dist_symm_front_tree.hpp"
 #include "clique/numeric/set_solve_mode.hpp"

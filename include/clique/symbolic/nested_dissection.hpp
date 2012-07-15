@@ -30,16 +30,18 @@ namespace cliq {
 void NestedDissection
 ( const DistGraph& graph, DistSymmInfo& info, DistSeparatorTree& sepTree,
   std::vector<int>& localMap, 
-  int cutoff=128, bool storeFactRecvIndices=false );
+  int cutoff=128, int numDistSeps=10, int numSeqSeps=5, 
+  bool storeFactRecvIndices=false );
 
 int Bisect
 ( const Graph& graph, Graph& leftChild, Graph& rightChild, 
-  std::vector<int>& map );
+  std::vector<int>& map, int numSeps=5 );
 
 // NOTE: for two or more processes
 int Bisect
 ( const DistGraph& graph, DistGraph& child, 
-  std::vector<int>& localMap, bool& onLeft );
+  std::vector<int>& localMap, bool& onLeft, 
+  int numDistSeps=10, int numSeqSeps=5 );
 
 void MapIndices
 ( const std::vector<int>& localMap, 
@@ -106,7 +108,8 @@ DistributedDepth( mpi::Comm comm )
 inline void
 NestedDissectionRecursion
 ( const Graph& graph, DistSymmElimTree& eTree, DistSeparatorTree& sepTree,
-  const std::vector<int>& perm, int parent, int offset, int cutoff=128 )
+  const std::vector<int>& perm, int parent, int offset, 
+  int cutoff=128, int numSeps=5 )
 {
 #ifndef RELEASE
     PushCallStack("NestedDissectionRecursion");
@@ -154,7 +157,8 @@ NestedDissectionRecursion
         // Partition the graph and construct the inverse map
         Graph leftChild, rightChild;
         std::vector<int> map;
-        const int sepSize = Bisect( graph, leftChild, rightChild, map );
+        const int sepSize = 
+            Bisect( graph, leftChild, rightChild, map, numSeps );
         const int numSources = graph.NumSources();
         std::vector<int> inverseMap( numSources );
         for( int s=0; s<numSources; ++s )
@@ -218,11 +222,12 @@ NestedDissectionRecursion
         const int parent = eTree.localNodes.size()-1;
         node.children[0] = eTree.localNodes.size();
         NestedDissectionRecursion
-        ( leftChild, eTree, sepTree, leftPerm, parent, offset, cutoff );
+        ( leftChild, eTree, sepTree, leftPerm, parent, offset, 
+          cutoff, numSeps );
         node.children[1] = eTree.localNodes.size();
         NestedDissectionRecursion
-        ( rightChild, eTree, sepTree, rightPerm, parent, 
-          offset+leftChildSize, cutoff );
+        ( rightChild, eTree, sepTree, rightPerm, parent, offset+leftChildSize,
+          cutoff, numSeps );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -232,7 +237,8 @@ NestedDissectionRecursion
 inline void
 NestedDissectionRecursion
 ( const DistGraph& graph, DistSymmElimTree& eTree, DistSeparatorTree& sepTree,
-  const std::vector<int>& localPerm, int depth, int offset, int cutoff=128 )
+  const std::vector<int>& localPerm, int depth, int offset, 
+  int cutoff=128, int numDistSeps=10, int numSeqSeps=5 )
 {
 #ifndef RELEASE
     PushCallStack("NestedDissectionRecursion");
@@ -245,7 +251,8 @@ NestedDissectionRecursion
         DistGraph child;
         bool onLeft;
         std::vector<int> localMap;
-        const int sepSize = Bisect( graph, child, localMap, onLeft );
+        const int sepSize = 
+            Bisect( graph, child, localMap, onLeft, numDistSeps, numSeqSeps );
         const int numSources = graph.NumSources();
         const int childSize = child.NumSources();
         const int leftChildSize = 
@@ -340,7 +347,8 @@ NestedDissectionRecursion
         // Recurse
         const int newOffset = ( onLeft ? offset : offset+leftChildSize );
         NestedDissectionRecursion
-        ( child, eTree, sepTree, newLocalPerm, depth+1, newOffset, cutoff );
+        ( child, eTree, sepTree, newLocalPerm, depth+1, newOffset, 
+          cutoff, numDistSeps, numSeqSeps );
     }
     else if( graph.NumSources() <= cutoff )
     {
@@ -399,7 +407,8 @@ NestedDissectionRecursion
         // Partition the graph and construct the inverse map
         Graph leftChild, rightChild;
         std::vector<int> map;
-        const int sepSize = Bisect( seqGraph, leftChild, rightChild, map );
+        const int sepSize = 
+            Bisect( seqGraph, leftChild, rightChild, map, numSeqSeps );
         const int numSources = graph.NumSources();
         std::vector<int> inverseMap( numSources );
         for( int s=0; s<numSources; ++s )
@@ -471,11 +480,12 @@ NestedDissectionRecursion
         const int parent=0;
         localNode.children[0] = eTree.localNodes.size();
         NestedDissectionRecursion
-        ( leftChild, eTree, sepTree, leftPerm, parent, offset, cutoff );
+        ( leftChild, eTree, sepTree, leftPerm, parent, offset, 
+          cutoff, numSeqSeps );
         localNode.children[1] = eTree.localNodes.size();
         NestedDissectionRecursion
-        ( rightChild, eTree, sepTree, rightPerm, parent, 
-          offset+leftChildSize, cutoff );
+        ( rightChild, eTree, sepTree, rightPerm, parent, offset+leftChildSize, 
+          cutoff, numSeqSeps );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -485,7 +495,8 @@ NestedDissectionRecursion
 inline void 
 NestedDissection
 ( const DistGraph& graph, DistSymmInfo& info, DistSeparatorTree& sepTree,
-  std::vector<int>& localMap, int cutoff, bool storeFactRecvIndices )
+  std::vector<int>& localMap, 
+  int cutoff, int numDistSeps, int numSeqSeps, bool storeFactRecvIndices )
 {
 #ifndef RELEASE
     PushCallStack("NestedDissection");
@@ -508,7 +519,8 @@ NestedDissection
     std::vector<int> localPerm( numLocalSources );
     for( int s=0; s<numLocalSources; ++s )
         localPerm[s] = s + firstLocalSource;
-    NestedDissectionRecursion( graph, eTree, sepTree, localPerm, 0, 0, cutoff );
+    NestedDissectionRecursion
+    ( graph, eTree, sepTree, localPerm, 0, 0, cutoff, numDistSeps, numSeqSeps );
 
     // Reverse the order of the pointers and indices in the elimination and 
     // separator trees (so that the leaves come first)
@@ -784,7 +796,7 @@ BuildMap
 inline int 
 Bisect
 ( const Graph& graph ,Graph& leftChild, Graph& rightChild,
-  std::vector<int>& map )
+  std::vector<int>& map, int numSeps )
 {
 #ifndef RELEASE
     PushCallStack("Bisect");
@@ -841,12 +853,12 @@ Bisect
 
     // Use the custom ParMETIS interface
     mpi::Comm comm = mpi::COMM_SELF;
-    idx_t numParSeps = 10;
-    idx_t numSeqSeps = 5;
+    idx_t nparseps = 1;
+    idx_t nseqseps = numSeps;
     real_t imbalance = 1.1;
     idx_t sizes[3];
     const int retval = CliqBisect
-    ( &vtxDist[0], &xAdj[0], &adjacency[0], &numParSeps, &numSeqSeps, 
+    ( &vtxDist[0], &xAdj[0], &adjacency[0], &nparseps, &nseqseps, 
       &imbalance, NULL, &map[0], sizes, &comm );
 #ifndef RELEASE
     std::vector<int> timesMapped( numSources, 0 );
@@ -932,7 +944,7 @@ Bisect
 inline int 
 Bisect
 ( const DistGraph& graph, DistGraph& child, 
-  std::vector<int>& localMap, bool& onLeft )
+  std::vector<int>& localMap, bool& onLeft, int numDistSeps, int numSeqSeps )
 {
 #ifndef RELEASE
     PushCallStack("Bisect");
@@ -998,12 +1010,12 @@ Bisect
     localMap.resize( numLocalSources );
 
     // Use the custom ParMETIS interface
-    idx_t numParSeps = 10;
-    idx_t numSeqSeps = 5;
+    idx_t nparseps = numDistSeps;
+    idx_t nseqseps = numSeqSeps;
     real_t imbalance = 1.1;
     idx_t sizes[3];
     const int retval = CliqBisect
-    ( &vtxDist[0], &xAdj[0], &adjacency[0], &numParSeps, &numSeqSeps, 
+    ( &vtxDist[0], &xAdj[0], &adjacency[0], &nparseps, &nseqseps, 
       &imbalance, NULL, &localMap[0], sizes, &comm );
 #ifndef RELEASE
     std::vector<int> timesMapped( numSources, 0 );

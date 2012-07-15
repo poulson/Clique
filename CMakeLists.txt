@@ -34,7 +34,7 @@ include_directories("${PROJECT_BINARY_DIR}/external/elemental/include")
 include_directories(${MPI_CXX_INCLUDE_PATH})
 
 # We do not yet need ParMetis
-option(BUILD_PARMETIS "Build the parallel metis library" OFF)
+option(BUILD_PARMETIS "Build the parallel metis library" ON)
 if(BUILD_PARMETIS)
   add_subdirectory(external/parmetis)
   # TODO: Install these into the build directory instead

@@ -22,8 +22,10 @@ using namespace cliq;
 
 void Usage()
 {
-    std::cout << "Bisection <n>\n" 
+    std::cout << "Bisection <n> [numDistSeps=10] [numSeqSeps=5]\n" 
               << "  n: size of n x n x n mesh\n"
+              << "  numDistSeps: number of distributed separators to try\n"
+              << "  numSeqSeps: number of sequential separators to try\n"
               << std::endl;
 }
 
@@ -43,6 +45,8 @@ main( int argc, char* argv[] )
         return 0;
     }
     const int n = atoi( argv[1] );
+    const int numDistSeps = ( argc >= 3 ? atoi( argv[2] ) : 10 );
+    const int numSeqSeps = ( argc >= 4 ? atoi( argv[3] ) : 5 );
 
     try
     {
@@ -84,7 +88,10 @@ main( int argc, char* argv[] )
             DistGraph child;
             std::vector<int> localMap;
             bool haveLeftChild;
-            const int sepSize = Bisect( graph, child, localMap, haveLeftChild );
+            const int sepSize = 
+                Bisect
+                ( graph, child, localMap, haveLeftChild, 
+                  numDistSeps, numSeqSeps );
 
             int leftChildSize, rightChildSize;
             if( haveLeftChild )
@@ -116,7 +123,8 @@ main( int argc, char* argv[] )
 
             Graph leftChild, rightChild;
             std::vector<int> map;
-            const int sepSize = Bisect( seqGraph, leftChild, rightChild, map );
+            const int sepSize = 
+                Bisect( seqGraph, leftChild, rightChild, map, numSeqSeps );
 
             const int leftChildSize = leftChild.NumSources();
             const int rightChildSize = rightChild.NumSources();

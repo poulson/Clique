@@ -22,10 +22,13 @@ using namespace cliq;
 
 void Usage()
 {
-    std::cout << "DistSparseMatrix <n>\n" 
-              << "  n: size of n x n x n mesh\n"
-              << "  cutoff: maximum leaf size\n"
-              << std::endl;
+    std::cout
+      << "DistSparseMatrix <n> [cutoff=128] [numDistSeps=10] [numSeqSeps=5]\n"
+      << "  n: size of n x n x n mesh\n"
+      << "  cutoff: maximum size of leaf node\n"
+      << "  numDistSeps: number of distributed separators to try\n"
+      << "  numSeqSeps: number of sequential separators to try\n"
+      << std::endl;
 }
 
 int
@@ -36,7 +39,7 @@ main( int argc, char* argv[] )
     const int commRank = mpi::CommRank( comm );
     const int commSize = mpi::CommSize( comm );
 
-    if( argc < 3 )
+    if( argc < 2 )
     {
         if( commRank == 0 )
             Usage();
@@ -44,7 +47,9 @@ main( int argc, char* argv[] )
         return 0;
     }
     const int n = atoi( argv[1] );
-    const int cutoff = atoi( argv[2] );
+    const int cutoff = ( argc >= 3 ? atoi( argv[2] ) : 128 );
+    const int numDistSeps = ( argc >= 4 ? atoi( argv[3] ) : 10 );
+    const int numSeqSeps = ( argc >= 5 ? atoi( argv[4] ) : 5 );
 
     try
     {
@@ -118,7 +123,8 @@ main( int argc, char* argv[] )
         DistSymmInfo info;
         DistSeparatorTree sepTree;
         std::vector<int> localMap;
-        NestedDissection( graph, info, sepTree, localMap, cutoff );
+        NestedDissection
+       ( graph, info, sepTree, localMap, cutoff, numDistSeps, numSeqSeps );
         mpi::Barrier( comm );
         if( commRank == 0 )
             std::cout << "done" << std::endl;
