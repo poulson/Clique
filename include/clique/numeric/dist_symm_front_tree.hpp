@@ -276,7 +276,6 @@ DistSymmFrontTree<F>::DistSymmFrontTree
                 if( index >= numSendEntries )
                     throw std::logic_error("send entry index got too big");
 #endif
-
                 sendEntries[index] = ( conjugate ? elem::Conj(value) : value );
                 sendTargets[index] = mappedTarget;
                 ++index;
@@ -446,7 +445,7 @@ DistSymmFrontTree<F>::DistSymmFrontTree
                     if( row % colStride == colShift )
                     {
                         const int localRow = (row-colShift) / colStride;
-                        front.front2dL.Set( localRow, localCol, value );
+                        front.front2dL.SetLocal( localRow, localCol, value );
                     }
                 }
             }

@@ -1038,8 +1038,6 @@ Bisect
     const int sepSize = sizes[2];
 
     // Build the child graph from the partitioned parent
-    // TODO: Fix this later
-    /*
     const int smallTeamSize = commSize/2;
     const int largeTeamSize = commSize - smallTeamSize;
     const bool inSmallTeam = ( commRank < smallTeamSize );
@@ -1048,12 +1046,7 @@ Bisect
     const int rightTeamSize = ( smallOnLeft ? largeTeamSize : smallTeamSize );
     const int leftTeamOffset = ( smallOnLeft ? 0 : smallTeamSize );
     const int rightTeamOffset = ( smallOnLeft ? smallTeamSize : 0 );
-    */
-    const int leftTeamSize = commSize/2;
-    const int rightTeamSize = commSize - leftTeamSize;
-    const int leftTeamOffset = 0;
-    const int rightTeamOffset = leftTeamSize;
-    onLeft = ( commRank < leftTeamSize );
+    onLeft = ( inSmallTeam == smallOnLeft );
 
     const int leftTeamBlocksize = leftChildSize / leftTeamSize;
     const int rightTeamBlocksize = rightChildSize / rightTeamSize;

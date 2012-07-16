@@ -130,8 +130,8 @@ void Multiply
     std::vector<int>::const_iterator vecIt;
     for( int iLocal=0; iLocal<yLocalHeight; ++iLocal )
     {
-        const int rowSize = A.NumConnections( iLocal );
         const int offset = A.LocalEntryOffset( iLocal );
+        const int rowSize = A.NumConnections( iLocal );
         for( int k=0; k<rowSize; ++k )
         {
             const int col = A.Col( offset+k );
@@ -142,8 +142,9 @@ void Multiply
                 throw std::logic_error("Could not find recv index");
 #endif
             const int colOffset = vecIt - recvIndices.begin();
-            const F value = recvValues[colOffset];
-            const F update = alpha*value*A.Value(k+offset);
+            const F AValue = A.Value(k+offset);
+            const F xValue = recvValues[colOffset];
+            const F update = alpha*AValue*xValue;
             y.UpdateLocal( iLocal, update );
         }
     }
