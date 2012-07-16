@@ -23,8 +23,11 @@ using namespace cliq;
 void Usage()
 {
     std::cout
-      << "DistSparseMatrix <n> [cutoff=128] [numDistSeps=10] [numSeqSeps=5]\n"
-      << "  n: size of n x n x n mesh\n"
+      << "DistSparseMatrix <n1> <n2> <n3> "
+      << "[cutoff=128] [numDistSeps=10] [numSeqSeps=5]\n"
+      << "  n1: first dimension of n1 x n2 x n3 mesh\n"
+      << "  n2: second dimension of n1 x n2 x n3 mesh\n"
+      << "  n3: third dimension of n1 x n2 x n3 mesh\n"
       << "  cutoff: maximum size of leaf node\n"
       << "  numDistSeps: number of distributed separators to try\n"
       << "  numSeqSeps: number of sequential separators to try\n"
@@ -38,28 +41,30 @@ main( int argc, char* argv[] )
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
 
-    if( argc < 2 )
+    if( argc < 4 )
     {
         if( commRank == 0 )
             Usage();
         cliq::Finalize();
         return 0;
     }
-    const int n = atoi( argv[1] );
-    const int cutoff = ( argc >= 3 ? atoi( argv[2] ) : 128 );
-    const int numDistSeps = ( argc >= 4 ? atoi( argv[3] ) : 10 );
-    const int numSeqSeps = ( argc >= 5 ? atoi( argv[4] ) : 5 );
+    const int n1 = atoi( argv[1] );
+    const int n2 = atoi( argv[2] );
+    const int n3 = atoi( argv[3] );
+    const int cutoff = ( argc >= 5 ? atoi( argv[4] ) : 128 );
+    const int numDistSeps = ( argc >= 6 ? atoi( argv[5] ) : 10 );
+    const int numSeqSeps = ( argc >= 7 ? atoi( argv[6] ) : 5 );
 
     try
     {
-        const int N = n*n*n;
+        const int N = n1*n2*n3;
         DistSparseMatrix<double> A( N, N, comm );
 
         const int firstLocalRow = A.FirstLocalRow();
         const int localHeight = A.LocalHeight();
 
-        // Fill our portion of the 3D negative Laplacian using a n x n x n 
-        // 7-point stencil in natural ordering: (x,y,z) at x + y*n + z*n*n
+        // Fill our portion of the 3D negative Laplacian using a n1 x n2 x n3
+        // 7-point stencil in natural ordering: (x,y,z) at x + y*n1 + z*n1*n2
         if( commRank == 0 )
         {
             std::cout << "Filling local portion of matrix...";
@@ -70,23 +75,23 @@ main( int argc, char* argv[] )
         for( int iLocal=0; iLocal<localHeight; ++iLocal )
         {
             const int i = firstLocalRow + iLocal;
-            const int x = i % n;
-            const int y = (i/n) % n;
-            const int z = i/(n*n);
+            const int x = i % n1;
+            const int y = (i/n1) % n2;
+            const int z = i/(n1*n2);
 
             if( z != 0 )
-                A.PushBack( i, i-n*n, -1. );
+                A.PushBack( i, i-n1*n2, -1. );
             if( y != 0 )
-                A.PushBack( i, i-n, -1. );
+                A.PushBack( i, i-n1, -1. );
             if( x != 0 )
                 A.PushBack( i, i-1, -1. );
             A.PushBack( i, i, 6. );
-            if( x != n-1 )
+            if( x != n1-1 )
                 A.PushBack( i, i+1, -1. );
-            if( y != n-1 )
-                A.PushBack( i, i+n, -1. );
-            if( z != n-1 )
-                A.PushBack( i, i+n*n, -1. );
+            if( y != n2-1 )
+                A.PushBack( i, i+n1, -1. );
+            if( z != n3-1 )
+                A.PushBack( i, i+n1*n2, -1. );
         } 
         A.StopAssembly();
         mpi::Barrier( comm );
