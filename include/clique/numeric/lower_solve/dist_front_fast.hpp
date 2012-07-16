@@ -158,7 +158,6 @@ inline void DistFrontFastLowerForwardSolve
     }
 #endif
     const Grid& g = L.Grid();
-    const int commRank = g.VCRank();
     const int commSize = g.Size();
     if( commSize == 1 )
     {
@@ -352,7 +351,6 @@ inline void DistFrontFastLowerBackwardSolve
 #endif
     const Grid& g = L.Grid();
     const int commSize = g.Size();
-    const int commRank = g.VCRank();
     if( commSize == 1 )
     {
         LocalFrontLowerBackwardSolve

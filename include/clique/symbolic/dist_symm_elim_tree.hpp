@@ -35,6 +35,7 @@ struct LocalSymmNode
 
 struct DistSymmNode
 {
+    bool onLeft; // irrelevant if root node
     mpi::Comm comm;
     int size, offset;
     std::vector<int> lowerStruct;

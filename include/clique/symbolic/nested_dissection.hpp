@@ -234,7 +234,7 @@ inline void
 NestedDissectionRecursion
 ( const DistGraph& graph, const std::vector<int>& localPerm,
   DistSeparatorTree& sepTree, DistSymmElimTree& eTree,
-  int depth, int offset, 
+  int depth, int offset, bool onLeft,
   int cutoff=128, int numDistSeps=10, int numSeqSeps=5 )
 {
 #ifndef RELEASE
@@ -246,14 +246,15 @@ NestedDissectionRecursion
     {
         // Partition the graph and construct the inverse map
         DistGraph child;
-        bool onLeft;
+        bool childIsOnLeft;
         std::vector<int> localMap;
         const int sepSize = 
-            Bisect( graph, child, localMap, onLeft, numDistSeps, numSeqSeps );
+            Bisect
+            ( graph, child, localMap, childIsOnLeft, numDistSeps, numSeqSeps );
         const int numSources = graph.NumSources();
         const int childSize = child.NumSources();
         const int leftChildSize = 
-            ( onLeft ? childSize : numSources-sepSize-childSize );
+            ( childIsOnLeft ? childSize : numSources-sepSize-childSize );
 
         std::vector<int> localInverseMap;
         InvertMap( localMap, localInverseMap, numSources, comm );
@@ -272,6 +273,7 @@ NestedDissectionRecursion
         DistSymmNode& node = eTree.distNodes[distDepth-depth];
         node.size = sepSize;
         node.offset = sep.offset;
+        node.onLeft = onLeft;
         mpi::CommDup( comm, node.comm );
         const int numLocalSources = graph.NumLocalSources();
         const int firstLocalSource = graph.FirstLocalSource();
@@ -328,7 +330,7 @@ NestedDissectionRecursion
         const int localChildSize = child.NumLocalSources();
         const int firstLocalChildSource = child.FirstLocalSource();
         std::vector<int> newLocalPerm( localChildSize );
-        if( onLeft )
+        if( childIsOnLeft )
             for( int s=0; s<localChildSize; ++s )
                 newLocalPerm[s] = s+firstLocalChildSource;
         else
@@ -338,10 +340,10 @@ NestedDissectionRecursion
         MapIndices( localPerm, newLocalPerm, numSources, comm );
 
         // Recurse
-        const int newOffset = ( onLeft ? offset : offset+leftChildSize );
+        const int newOffset = ( childIsOnLeft ? offset : offset+leftChildSize );
         NestedDissectionRecursion
         ( child, newLocalPerm, sepTree, eTree, depth+1, newOffset, 
-          cutoff, numDistSeps, numSeqSeps );
+          childIsOnLeft, cutoff, numDistSeps, numSeqSeps );
     }
     else if( graph.NumSources() <= cutoff )
     {
@@ -362,6 +364,7 @@ NestedDissectionRecursion
         LocalSymmNode& localNode = *eTree.localNodes.back();
         DistSymmNode& distNode = eTree.distNodes[0];
         mpi::CommDup( comm, distNode.comm );
+        distNode.onLeft = onLeft;
         distNode.size = localNode.size = numSources;
         distNode.offset = localNode.offset = offset;
         localNode.parent = -1;
@@ -418,6 +421,7 @@ NestedDissectionRecursion
         LocalSymmNode& localNode = *eTree.localNodes.back();
         DistSymmNode& distNode = eTree.distNodes[0];
         mpi::CommDup( comm, distNode.comm );
+        distNode.onLeft = onLeft;
         distNode.size = localNode.size = sepSize;
         distNode.offset = localNode.offset = sep.offset;
         localNode.parent = -1;
@@ -501,7 +505,8 @@ NestedDissection
     for( int s=0; s<numLocalSources; ++s )
         localPerm[s] = s + firstLocalSource;
     NestedDissectionRecursion
-    ( graph, localPerm, sepTree, eTree, 0, 0, cutoff, numDistSeps, numSeqSeps );
+    ( graph, localPerm, sepTree, eTree, 0, 0, false, cutoff, 
+      numDistSeps, numSeqSeps );
 
     // Reverse the order of the pointers and indices in the elimination and 
     // separator trees (so that the leaves come first)
@@ -838,7 +843,7 @@ Bisect
     idx_t nseqseps = numSeps;
     real_t imbalance = 1.1;
     idx_t sizes[3];
-    const int retval = CliqBisect
+    CliqBisect
     ( &vtxDist[0], &xAdj[0], &adjacency[0], &nparseps, &nseqseps, 
       &imbalance, NULL, &map[0], sizes, &comm );
 #ifndef RELEASE
@@ -1005,7 +1010,7 @@ Bisect
     idx_t nseqseps = numSeqSeps;
     real_t imbalance = 1.1;
     idx_t sizes[3];
-    const int retval = CliqBisect
+    CliqBisect
     ( &vtxDist[0], &xAdj[0], &adjacency[0], &nparseps, &nseqseps, 
       &imbalance, NULL, &localMap[0], sizes, &comm );
 #ifndef RELEASE
@@ -1033,6 +1038,8 @@ Bisect
     const int sepSize = sizes[2];
 
     // Build the child graph from the partitioned parent
+    // TODO: Fix this later
+    /*
     const int smallTeamSize = commSize/2;
     const int largeTeamSize = commSize - smallTeamSize;
     const bool inSmallTeam = ( commRank < smallTeamSize );
@@ -1041,9 +1048,15 @@ Bisect
     const int rightTeamSize = ( smallOnLeft ? largeTeamSize : smallTeamSize );
     const int leftTeamOffset = ( smallOnLeft ? 0 : smallTeamSize );
     const int rightTeamOffset = ( smallOnLeft ? smallTeamSize : 0 );
+    */
+    const int leftTeamSize = commSize/2;
+    const int rightTeamSize = commSize - leftTeamSize;
+    const int leftTeamOffset = 0;
+    const int rightTeamOffset = leftTeamSize;
+    onLeft = ( commRank < leftTeamSize );
+
     const int leftTeamBlocksize = leftChildSize / leftTeamSize;
     const int rightTeamBlocksize = rightChildSize / rightTeamSize;
-    onLeft = ( smallOnLeft == inSmallTeam );
 
     // Count how many rows we must send to each process 
     std::vector<int> rowSendSizes( commSize, 0 );
@@ -1209,7 +1222,7 @@ Bisect
         child.ResizeTo( leftChildSize );
     else
         child.ResizeTo( rightChildSize );
-    const int childFirstLocalSource = child.FirstLocalSource();
+
     child.StartAssembly();
     child.Reserve( recvIndices.size() );
     int offset=0;
@@ -1217,6 +1230,14 @@ Bisect
     {
         const int source = rowRecvIndices[s];
         const int numConnections = rowRecvLengths[s];
+#ifndef RELEASE
+        const int childFirstLocalSource = child.FirstLocalSource();
+        const int numChildLocalSources = child.NumLocalSources();
+        const int adjustedSource = ( onLeft ? source : source-leftChildSize );
+        if( adjustedSource < childFirstLocalSource || 
+            adjustedSource >= childFirstLocalSource+numChildLocalSources )
+            throw std::logic_error("source was out of bounds");
+#endif
         for( int t=0; t<numConnections; ++t )
         {
             const int target = recvIndices[offset++];
@@ -1268,7 +1289,6 @@ MapIndices
 
     const int blocksize = numSources/commSize;
     const int firstLocalSource = blocksize*commRank;
-    const int numLocalSources = localMap.size();
     const int numLocalIndices = localIndices.size();
 
     // Count how many indices we need each process to map
@@ -1334,7 +1354,7 @@ MapIndices
         const int i = fulfills[s];
         const int iLocal = i - firstLocalSource;
 #ifndef RELEASE
-        if( iLocal < 0 || iLocal >= numLocalSources )
+        if( iLocal < 0 || iLocal >= (int)localMap.size() )
         {
             std::ostringstream msg;
             msg << "invalid request: i=" << i << ", iLocal=" << iLocal 

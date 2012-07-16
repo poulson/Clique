@@ -68,7 +68,6 @@ inline void DistBlockLowerForwardSolve
         mpi::Comm comm = grid.VCComm();
         mpi::Comm childComm = childGrid.VCComm();
         const int commSize = mpi::CommSize( comm );
-        const int commRank = mpi::CommRank( comm );
         const int childCommSize = mpi::CommSize( childComm );
         const int frontHeight = front.front2dL.Height();
 
@@ -103,7 +102,7 @@ inline void DistBlockLowerForwardSolve
         }
         std::vector<F> sendBuffer( sendBufferSize );
 
-        const bool isLeftChild = ( commRank < commSize/2 );
+        const bool isLeftChild = childNode.onLeft;
         const std::vector<int>& myChildRelIndices = 
             ( isLeftChild ? node.leftChildRelIndices
                           : node.rightChildRelIndices );
@@ -227,7 +226,6 @@ inline void DistBlockLowerBackwardSolve
         mpi::Comm parentComm = parentGrid.VCComm();
         const int commSize = mpi::CommSize( comm );
         const int parentCommSize = mpi::CommSize( parentComm );
-        const int parentCommRank = mpi::CommRank( parentComm );
         const int frontHeight = front.front2dL.Height();
 
         // Set up a workspace
@@ -305,7 +303,7 @@ inline void DistBlockLowerBackwardSolve
         sendDispls.clear();
 
         // Unpack the updates using the send approach from the forward solve
-        const bool isLeftChild = ( parentCommRank < parentCommSize/2 );
+        const bool isLeftChild = node.onLeft;
         const std::vector<int>& myRelIndices = 
             ( isLeftChild ? parentNode.leftChildRelIndices
                           : parentNode.rightChildRelIndices );

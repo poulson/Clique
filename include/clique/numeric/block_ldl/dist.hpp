@@ -81,7 +81,6 @@ inline void DistBlockLDL
         // Grab this front's grid information
         const Grid& grid = front.front2dL.Grid();
         mpi::Comm comm = grid.VCComm();
-        const unsigned commRank = mpi::CommRank( comm );
         const unsigned commSize = mpi::CommSize( comm );
         const unsigned gridHeight = grid.Height();
         const unsigned gridWidth = grid.Width();
@@ -93,7 +92,7 @@ inline void DistBlockLDL
 
         // Pack our child's update
         const DistMatrix<F>& childUpdate = childFront.work2d;
-        const bool isLeftChild = ( commRank < commSize/2 );
+        const bool isLeftChild = childNode.onLeft;
         std::vector<int> sendCounts(commSize), sendDispls(commSize);
         int sendBufferSize = 0;
         for( unsigned proc=0; proc<commSize; ++proc )

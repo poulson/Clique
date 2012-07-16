@@ -226,7 +226,7 @@ DistGraph::Source( int localEdge ) const
 {
 #ifndef RELEASE
     PushCallStack("DistGraph::Source");
-    if( localEdge < 0 || localEdge >= sources_.size() )
+    if( localEdge < 0 || localEdge >= (int)sources_.size() )
         throw std::logic_error("Edge number out of bounds");
 #endif
     EnsureNotAssembling();
@@ -241,7 +241,7 @@ DistGraph::Target( int localEdge ) const
 {
 #ifndef RELEASE
     PushCallStack("DistGraph::Target");
-    if( localEdge < 0 || localEdge >= targets_.size() )
+    if( localEdge < 0 || localEdge >= (int)targets_.size() )
         throw std::logic_error("Edge number out of bounds");
 #endif
     EnsureNotAssembling();

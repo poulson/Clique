@@ -241,7 +241,7 @@ DistSparseMatrix<F>::Value( int localEntry ) const
 { 
 #ifndef RELEASE 
     PushCallStack("DistSparseMatrix::Value");
-    if( localEntry < 0 || localEntry >= values_.size() )
+    if( localEntry < 0 || localEntry >= (int)values_.size() )
         throw std::logic_error("Entry number out of bounds");
     PopCallStack();
 #endif
@@ -350,7 +350,7 @@ inline void
 DistSparseMatrix<F>::EnsureConsistentSizes() const
 { 
     graph_.EnsureConsistentSizes();
-    if( graph_.NumLocalEdges() != values_.size() )
+    if( graph_.NumLocalEdges() != (int)values_.size() )
         throw std::logic_error("Inconsistent sparsity sizes");
 }
 

@@ -69,9 +69,7 @@ inline void DistLowerMultiplyNormal
         mpi::Comm comm = grid.VCComm();
         mpi::Comm childComm = childGrid.VCComm();
         const int commSize = mpi::CommSize( comm );
-        const int commRank = mpi::CommRank( comm );
         const int childCommSize = mpi::CommSize( childComm );
-        const int childCommRank = mpi::CommRank( childComm );
 
         // Set up a workspace
         DistMatrix<F,VC,STAR>& W = front.work1d;
@@ -107,7 +105,7 @@ inline void DistLowerMultiplyNormal
         }
         std::vector<F> sendBuffer( sendBufferSize );
 
-        const bool isLeftChild = ( commRank < commSize/2 );
+        const bool isLeftChild = childNode.onLeft;
         const std::vector<int>& myChildRelIndices = 
             ( isLeftChild ? node.leftChildRelIndices
                           : node.rightChildRelIndices );
@@ -157,7 +155,8 @@ inline void DistLowerMultiplyNormal
             const F* recvValues = &recvBuffer[recvDispls[proc]];
             const std::deque<int>& recvIndices = 
                 node.childSolveRecvIndices[proc];
-            for( int k=0; k<recvIndices.size(); ++k )
+            const int numRecvIndices = recvIndices.size();
+            for( int k=0; k<numRecvIndices; ++k )
             {
                 const int iFrontLocal = recvIndices[k];
                 const F* recvRow = &recvValues[k*width];
@@ -231,9 +230,7 @@ inline void DistLowerMultiplyTranspose
         mpi::Comm comm = grid.VCComm(); 
         mpi::Comm parentComm = parentGrid.VCComm();
         const int commSize = mpi::CommSize( comm );
-        const int commRank = mpi::CommRank( comm );
         const int parentCommSize = mpi::CommSize( parentComm );
-        const int parentCommRank = mpi::CommRank( parentComm );
 
         // Set up a copy of the RHS in our workspace.
         DistMatrix<F,VC,STAR>& W = front.work1d;
@@ -273,7 +270,8 @@ inline void DistLowerMultiplyTranspose
             F* sendValues = &sendBuffer[sendDispls[proc]];
             const std::deque<int>& recvIndices = 
                 parentNode.childSolveRecvIndices[proc];
-            for( int k=0; k<recvIndices.size(); ++k )
+            const int numRecvIndices = recvIndices.size();
+            for( int k=0; k<numRecvIndices; ++k )
             {
                 const int iFrontLocal = recvIndices[k];
                 F* packedRow = &sendValues[k*width];
@@ -311,7 +309,7 @@ inline void DistLowerMultiplyTranspose
         sendDispls.clear();
 
         // Unpack the updates using the send approach from the forward solve
-        const bool isLeftChild = ( parentCommRank < parentCommSize/2 );
+        const bool isLeftChild = node.onLeft;
         const std::vector<int>& myRelIndices = 
             ( isLeftChild ? parentNode.leftChildRelIndices
                           : parentNode.rightChildRelIndices );

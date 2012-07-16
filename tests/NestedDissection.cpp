@@ -37,7 +37,6 @@ main( int argc, char* argv[] )
     cliq::Initialize( argc, argv );
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
-    const int commSize = mpi::CommSize( comm );
 
     if( argc < 2 )
     {
@@ -120,17 +119,6 @@ main( int argc, char* argv[] )
                       << numDistNodes  << " distributed nodes\n"
                       << rootSepSize << " vertices in root separator\n"
                       << "\n";
-            if( numDistNodes > 1 )
-            {
-                if( sepTree.distSeps.back().indices.size() != rootSepSize )
-                    throw std::logic_error("Dist root sep. was wrong size");
-            }
-            else
-            {
-                if( sepTree.localSepsAndLeaves.back()->indices.size() != 
-                    rootSepSize )
-                    throw std::logic_error("Local root sep. was wrong size");
-            }
             for( int s=0; s<rootSepSize; ++s )
             {
                 const int i = 

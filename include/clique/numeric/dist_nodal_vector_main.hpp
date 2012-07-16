@@ -53,7 +53,6 @@ DistNodalVector<F>::Pull
     mpi::Comm comm = x.Comm();
     const int commSize = mpi::CommSize( comm );
     const int blocksize = x.Blocksize();
-    const int localHeight = x.LocalHeight();
     const int firstLocalRow = x.FirstLocalRow();
     const int numDist = info.distNodes.size();
     const int numLocal = info.localNodes.size();

@@ -102,7 +102,7 @@ DistSymmFrontTree<F>::DistSymmFrontTree
 {
 #ifndef RELEASE
     PushCallStack("DistSymmFrontTree::DistSymmFrontTree");
-    if( localMap.size() != A.LocalHeight() )
+    if( A.LocalHeight() != (int)localMap.size() )
         throw std::logic_error("Local mapping was not the right size");
 #endif
     mpi::Comm comm = A.Comm();
@@ -282,6 +282,10 @@ DistSymmFrontTree<F>::DistSymmFrontTree
                 ++index;
             }
         }
+#ifndef RELEASE
+        if( index != sendEntriesOffsets[q]+sendEntriesSizes[q] )
+            throw std::logic_error("index was not the correct value");
+#endif
     }
 
     // Send back the number of nonzeros per row and the nonzeros themselves
@@ -328,7 +332,7 @@ DistSymmFrontTree<F>::DistSymmFrontTree
         Zeros( size+lowerSize, size, front.frontL );
 
 #ifndef RELEASE
-        if( sepOrLeaf.indices.size() != size )
+        if( size != (int)sepOrLeaf.indices.size() )
             throw std::logic_error("Mismatch between separator and node size");
 #endif
 
@@ -359,17 +363,13 @@ DistSymmFrontTree<F>::DistSymmFrontTree
                           origLowerStruct.end(), target );
 #ifndef RELEASE
                     if( vecIt == origLowerStruct.end() )
-                    {
-                        std::ostringstream msg;
-                        msg << "Could not find " << target 
-                            << " in origLowerStruct: ";
-                        for( int i=0; i<origLowerStruct.size(); ++i )
-                            msg << origLowerStruct[i] << " ";
-                        std::cerr << msg.str() << std::endl;
                         throw std::logic_error("No match in origLowerStruct");
-                    }
 #endif
                     const int origOffset = vecIt - origLowerStruct.begin();
+#ifndef RELEASE
+                    if( origOffset >= (int)node.origLowerRelIndices.size() )
+                        throw std::logic_error("origLowerRelIndices too small");
+#endif
                     const int row = node.origLowerRelIndices[origOffset];
                     front.frontL.Set( row, t, value );
                 }
@@ -398,7 +398,7 @@ DistSymmFrontTree<F>::DistSymmFrontTree
         Zeros( size+lowerSize, size, front.front2dL );
 
 #ifndef RELEASE
-        if( sep.indices.size() != size )
+        if( size != (int)sep.indices.size() )
             throw std::logic_error("Mismatch in separator and node sizes");
 #endif
 
@@ -438,6 +438,10 @@ DistSymmFrontTree<F>::DistSymmFrontTree
                         throw std::logic_error("No match in origLowerStruct");
 #endif
                     const int origOffset = vecIt - origLowerStruct.begin();
+#ifndef RELEASE
+                    if( origOffset >= (int)node.origLowerRelIndices.size() )
+                        throw std::logic_error("origLowerRelIndices too small");
+#endif
                     const int row = node.origLowerRelIndices[origOffset];
                     if( row % colStride == colShift )
                     {
@@ -448,6 +452,11 @@ DistSymmFrontTree<F>::DistSymmFrontTree
             }
         }
     }
+#ifndef RELEASE
+    for( int q=0; q<commSize; ++q )
+        if( entryOffsets[q] != recvEntriesOffsets[q]+recvEntriesSizes[q] )
+            throw std::logic_error("entryOffsets were incorrect");
+#endif
     
     // Copy information from the local root to the dist leaf
     {

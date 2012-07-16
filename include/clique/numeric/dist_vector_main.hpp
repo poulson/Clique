@@ -131,7 +131,7 @@ DistVector<F>::GetLocal( int localRow ) const
 { 
 #ifndef RELEASE 
     PushCallStack("DistVector::GetLocal");
-    if( localRow < 0 || localRow >= values_.size() )
+    if( localRow < 0 || localRow >= (int)values_.size() )
         throw std::logic_error("Local row out of bounds");
     PopCallStack();
 #endif
@@ -144,7 +144,7 @@ DistVector<F>::SetLocal( int localRow, F value )
 {
 #ifndef RELEASE
     PushCallStack("DistVector::SetLocal");
-    if( localRow < 0 || localRow >= values_.size() )
+    if( localRow < 0 || localRow >= (int)values_.size() )
         throw std::logic_error("Local row out of bounds");
 #endif
     values_[localRow] = value;
@@ -159,7 +159,7 @@ DistVector<F>::UpdateLocal( int localRow, F value )
 {
 #ifndef RELEASE
     PushCallStack("DistVector::UpdateLocal");
-    if( localRow < 0 || localRow >= values_.size() )
+    if( localRow < 0 || localRow >= (int)values_.size() )
         throw std::logic_error("Local row out of bounds");
 #endif
     values_[localRow] += value;

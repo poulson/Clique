@@ -39,7 +39,6 @@ struct LocalSymmNodeInfo
     int myOffset;
     std::vector<int> lowerStruct;
     std::vector<int> origLowerRelIndices;
-    // The relative indices of the left and right children
     // (maps from the child update indices to our frontal indices).
     std::vector<int> leftChildRelIndices, rightChildRelIndices;
 };
@@ -51,6 +50,7 @@ struct DistSymmNodeInfo
     //
     int size, offset;
     std::vector<int> origLowerStruct;
+    bool onLeft;
     mpi::Comm comm;
 
     //
@@ -61,7 +61,7 @@ struct DistSymmNodeInfo
     std::vector<int> lowerStruct;
     std::vector<int> origLowerRelIndices;
 
-    // The relative indices of the left and right children
+    // The relative indices of our child
     // (maps from the child update indices to our frontal indices).
     // These could be replaced with just the relative indices of our local 
     // submatrices of the child updates.

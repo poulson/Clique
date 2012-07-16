@@ -66,7 +66,6 @@ main( int argc, char* argv[] )
     cliq::Initialize( argc, argv );
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
-    const unsigned commSize = mpi::CommSize( comm );
     typedef Complex<double> F;
 
     if( argc < 4 )
@@ -145,8 +144,6 @@ main( int argc, char* argv[] )
 
         if( writeInfo )
         {
-            const int numLocalNodes = info.localNodes.size();
-            const int numDistNodes = info.distNodes.size();
             infoFile << "Local factor structure sizes:\n";
             for( int s=0; s<numLocalNodes; ++s )
                 infoFile << "  " << s << ": node=" 
@@ -184,7 +181,7 @@ main( int argc, char* argv[] )
             symmFrontTrees.push_back( new DistSymmFrontTree<F> );
             DistSymmFrontTree<F>& L = *symmFrontTrees.back();
             L.localFronts.resize( info.localNodes.size() );
-            for( unsigned s=0; s<info.localNodes.size(); ++s )
+            for( int s=0; s<numLocalNodes; ++s )
             {
                 const LocalSymmNodeInfo& node = info.localNodes[s];
                 Matrix<F>& frontL = L.localFronts[s].frontL;
@@ -197,7 +194,7 @@ main( int argc, char* argv[] )
             L.mode = NORMAL_2D;
             L.distFronts.resize( numDistNodes );
             InitializeDistLeaf( info, L );
-            for( unsigned s=1; s<numDistNodes; ++s )
+            for( int s=1; s<numDistNodes; ++s )
             {
                 const DistSymmNodeInfo& node = info.distNodes[s];
                 DistMatrix<F>& front2dL = L.distFronts[s].front2dL;
@@ -438,12 +435,12 @@ void FillDistElimTree
         const int nodeCommRank = mpi::CommRank( node.comm );
         const int nodeCommSize = mpi::CommSize( node.comm );
         const int leftTeamSize = nodeCommSize/2;
-        const int rightTeamSize = nodeCommSize - leftTeamSize;
 
         const bool onLeft = ( nodeCommRank < leftTeamSize );
         const int childNodeCommRank = 
             ( onLeft ? nodeCommRank : nodeCommRank-leftTeamSize );
         mpi::CommSplit( node.comm, onLeft, childNodeCommRank, childNode.comm );
+        childNode.onLeft = onLeft;
 
         if( nxSub >= nySub )
         {
