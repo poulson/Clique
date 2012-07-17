@@ -22,22 +22,35 @@
 
 #include "clique/core/environment.hpp"
 
-#include "clique/symbolic/dist_graph.hpp"
+// These two classes are intertwined, so declare both before defining them
+namespace cliq { class Graph; class DistGraph; }
 #include "clique/symbolic/graph.hpp"
+#include "clique/symbolic/dist_graph.hpp"
+#include "clique/symbolic/graph_main.hpp"
+#include "clique/symbolic/dist_graph_main.hpp"
+
 #include "clique/symbolic/dist_separator_tree.hpp"
 #include "clique/symbolic/dist_symm_elim_tree.hpp"
 #include "clique/symbolic/dist_symm_info.hpp"
 #include "clique/symbolic/symm_analysis.hpp"
 #include "clique/symbolic/nested_dissection.hpp"
 
-// These two classes are interdependent, so declare both, then define both
 #include "clique/numeric/dist_vector.hpp"
-#include "clique/numeric/dist_nodal_vector.hpp"
 #include "clique/numeric/dist_vector_main.hpp"
+
+#include "clique/numeric/dist_nodal_vector.hpp"
 #include "clique/numeric/dist_nodal_vector_main.hpp"
 
-#include "clique/numeric/dist_sparse_matrix.hpp"
+// These two classes are intertwined, so declare both before defining them
+namespace cliq { 
+template<typename F> class SparseMatrix; 
+template<typename F> class DistSparseMatrix; 
+}
 #include "clique/numeric/sparse_matrix.hpp"
+#include "clique/numeric/dist_sparse_matrix.hpp"
+#include "clique/numeric/sparse_matrix_main.hpp"
+#include "clique/numeric/dist_sparse_matrix_main.hpp"
+
 #include "clique/numeric/multiply.hpp"
 
 #include "clique/numeric/dist_symm_front_tree.hpp"

@@ -79,17 +79,18 @@ main( int argc, char* argv[] )
             const int y = (i/n1) % n2;
             const int z = i/(n1*n2);
 
-            if( z != 0 )
-                A.PushBack( i, i-n1*n2, -1. );
-            if( y != 0 )
-                A.PushBack( i, i-n1, -1. );
+            // Purposely pushed back in non-lexicographical order
+            A.PushBack( i, i, 6. );
             if( x != 0 )
                 A.PushBack( i, i-1, -1. );
-            A.PushBack( i, i, 6. );
             if( x != n1-1 )
                 A.PushBack( i, i+1, -1. );
+            if( y != 0 )
+                A.PushBack( i, i-n1, -1. );
             if( y != n2-1 )
                 A.PushBack( i, i+n1, -1. );
+            if( z != 0 )
+                A.PushBack( i, i-n1*n2, -1. );
             if( z != n3-1 )
                 A.PushBack( i, i+n1*n2, -1. );
         } 
