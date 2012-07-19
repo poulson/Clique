@@ -109,7 +109,7 @@ if(BUILD_TESTS)
   set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/tests")
   foreach(TEST ${TESTS})
     add_executable(tests-${TEST} ${TEST_DIR}/${TEST}.cpp)
-    target_link_libraries(tests-${TEST} clique cmake-dummy-lib)
+    target_link_libraries(tests-${TEST} clique)
     set_target_properties(tests-${TEST} PROPERTIES
                           OUTPUT_NAME ${TEST}
                           RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
