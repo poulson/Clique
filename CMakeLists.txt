@@ -36,21 +36,29 @@ include_directories(${MPI_CXX_INCLUDE_PATH})
 option(BUILD_PARMETIS "Build the parallel metis library" ON)
 if(BUILD_PARMETIS)
   add_subdirectory(external/parmetis)
-  # TODO: Install these into the build directory instead
   include_directories("${PROJECT_SOURCE_DIR}/external/parmetis/include")
   include_directories("${PROJECT_SOURCE_DIR}/external/parmetis/metis/include")
   set(HAVE_PARMETIS TRUE)
-endif(BUILD_PARMETIS)
+endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")
 
 # Create the Clique configuration header
 configure_file( 
-  ${PROJECT_SOURCE_DIR}/include/clique/config.h.cmake
+  ${PROJECT_SOURCE_DIR}/cmake/config.h.cmake
   ${PROJECT_BINARY_DIR}/include/clique/config.h 
 ) 
 install(FILES ${PROJECT_BINARY_DIR}/include/clique/config.h 
         DESTINATION include/clique)
+
+# Create a file which can be included in Makefile's.
+# This is meant to be analogous to PETSc's 'conf/petscvariables' file
+configure_file(
+  ${PROJECT_SOURCE_DIR}/cmake/cliqvariables.cmake
+  ${PROJECT_BINARY_DIR}/conf/cliqvariables @ONLY
+)
+install(FILES ${PROJECT_BINARY_DIR}/conf/cliqvariables
+        DESTINATION conf)
 
 # Grab all of the .c, .cpp, .h, and .hpp Clique files
 file(GLOB_RECURSE CLIQUE_CPP RELATIVE ${PROJECT_SOURCE_DIR} 
@@ -63,9 +71,9 @@ set(CLIQUE_SRC "${CLIQUE_CPP};${CLIQUE_HEADERS}")
 add_library(clique ${LIBRARY_TYPE} ${CLIQUE_SRC})
 if(BUILD_PARMETIS)
   target_link_libraries(clique elemental parmetis)
-else(BUILD_PARMETIS)
+else()
   target_link_libraries(clique elemental)
-endif(BUILD_PARMETIS)
+endif()
 set(MPI_LINK_FLAGS "${MPI_CXX_LINK_FLAGS}")
 install(TARGETS clique DESTINATION lib)
 
@@ -82,7 +90,7 @@ foreach(HEADER ${CLIQUE_HEADERS})
 
   get_filename_component(HEADER_PATH ${HEADER} PATH)
   install(FILES ${PROJECT_BINARY_DIR}/${HEADER} DESTINATION ${HEADER_PATH})
-endforeach(HEADER)
+endforeach()
 add_custom_target(prepare_clique_headers DEPENDS ${PREPARED_HEADERS})
 add_dependencies(clique prepare_clique_headers)
 
@@ -95,7 +103,7 @@ if(BUILD_TESTS)
   set(TESTS FileSpeed PanelLDL)
   if(HAVE_PARMETIS)
     list(APPEND TESTS Bisection DistSparseMatrix NestedDissection)
-  endif(HAVE_PARMETIS)
+  endif()
 
   # Build the tests
   set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/tests")
@@ -108,10 +116,10 @@ if(BUILD_TESTS)
     if(MPI_LINK_FLAGS)
       set_target_properties(tests-${TEST} PROPERTIES
                             LINK_FLAGS ${MPI_LINK_FLAGS})
-    endif(MPI_LINK_FLAGS)
+    endif()
     install(TARGETS tests-${TEST} DESTINATION bin/tests)
-  endforeach(TEST)
-endif(BUILD_TESTS)
+  endforeach()
+endif()
 
 ################################################################################
 # Uncomment if including Clique as a subproject in another build system        #

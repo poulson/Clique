@@ -1985,8 +1985,7 @@ void AllGather
     SafeMpi( 
         MPI_Allgatherv
         ( const_cast<double*>(sbuf), sizeof(double)*sc, MPI_UNSIGNED_CHAR, 
-          rbuf, &byteRcs[0], &byteRds[0], MPI_UNSIGNED_CHAR, 
-          comm ) 
+          rbuf, &byteRcs[0], &byteRds[0], MPI_UNSIGNED_CHAR, comm )
     );
 #else
     SafeMpi( 

@@ -8,7 +8,4 @@ add_library(parmetis ${ParMETIS_LIBRARY_TYPE} ${parmetis_sources})
 target_link_libraries(parmetis metis ${MPI_LIBRARIES})
 set_target_properties(parmetis PROPERTIES LINK_FLAGS "${MPI_LINK_FLAGS}")
 
-install(TARGETS parmetis
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION lib
-  ARCHIVE DESTINATION lib)
+install(TARGETS parmetis DESTINATION lib)
