@@ -345,7 +345,7 @@ DistSymmFrontTree<F>::DistSymmFrontTree
 
             for( int k=0; k<numEntries; ++k )
             {
-                const int value = recvEntries[entryOffset];
+                const F value = recvEntries[entryOffset];
                 const int target = recvTargets[entryOffset];
                 ++entryOffset;
 
@@ -412,7 +412,7 @@ DistSymmFrontTree<F>::DistSymmFrontTree
 
             for( int k=0; k<numEntries; ++k )
             {
-                const int value = recvEntries[entryOffset];
+                const F value = recvEntries[entryOffset];
                 const int target = recvTargets[entryOffset];
                 ++entryOffset;
 
