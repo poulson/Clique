@@ -24,7 +24,7 @@ project(Clique)
 set(Clique_VERSION_MAJOR 0)
 set(Clique_VERSION_MINOR 1)
 
-option(BUILD_TESTS "Build a collection of test executables" OFF)
+option(CLIQ_TESTS "Build a collection of test executables" OFF)
 option(USE_CUSTOM_ALLTOALLV "Avoid MPI_Alltoallv for performance reasons" ON)
 
 # Add Elemental, but don't worry about the Hermitian eigensolver
@@ -98,7 +98,7 @@ add_dependencies(clique prepare_clique_headers)
 include_directories("${PROJECT_BINARY_DIR}/include")
 
 # Build the test drivers if necessary
-if(BUILD_TESTS)
+if(CLIQ_TESTS)
   set(TEST_DIR ${PROJECT_SOURCE_DIR}/tests)
   set(TESTS FileSpeed PanelLDL)
   if(HAVE_PARMETIS)
