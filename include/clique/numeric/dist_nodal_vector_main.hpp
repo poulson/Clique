@@ -164,7 +164,7 @@ DistNodalVector<F>::Pull
     // Unpack the values
     offset=0;
     offsets = recvIndexOffsets;
-    values.ResizeTo( numRecvIndices, 1 );
+    localVec.ResizeTo( numRecvIndices, 1 );
     for( int s=0; s<numLocal; ++s )
     {
         const LocalSymmNodeInfo& node = info.localNodes[s];
@@ -176,7 +176,7 @@ DistNodalVector<F>::Pull
             if( offsets[q] >= numRecvIndices )
                 throw std::logic_error("One of the offsets was too large");
 #endif
-            values.Set( offset++, 0, recvValues[offsets[q]++] );
+            localVec.Set( offset++, 0, recvValues[offsets[q]++] );
         }
     }
     for( int s=1; s<numDist; ++s )
@@ -195,7 +195,7 @@ DistNodalVector<F>::Pull
             if( offsets[q] >= numRecvIndices )
                 throw std::logic_error("One of the offsets was too large");
 #endif
-            values.Set( offset++, 0, recvValues[offsets[q]++] );
+            localVec.Set( offset++, 0, recvValues[offsets[q]++] );
         }
     }
 #ifndef RELEASE
@@ -231,7 +231,7 @@ DistNodalVector<F>::Push
     const int numLocal = info.localNodes.size();
 
     // Fill the set of indices that we need to map to the original ordering
-    const int numSendIndices = values.Height();
+    const int numSendIndices = localVec.Height();
     int offset=0;
     std::vector<int> mappedIndices( numSendIndices );
     for( int s=0; s<numLocal; ++s )
@@ -280,7 +280,7 @@ DistNodalVector<F>::Push
     {
         const int i = mappedIndices[s];
         const int q = RowToProcess( i, blocksize, commSize );
-        sendValues[offsets[q]] = values.Get(offset++,0);
+        sendValues[offsets[q]] = localVec.Get(offset++,0);
         sendIndices[offsets[q]] = i;
         ++offsets[q];
     }

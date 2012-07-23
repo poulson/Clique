@@ -30,7 +30,7 @@ template<typename F>
 class DistNodalVector
 {
 public:
-    Matrix<F> values;
+    Matrix<F> localVec;
 
     void Pull
     ( const std::vector<int>& localInverseMap, const DistSymmInfo& info,

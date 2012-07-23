@@ -23,7 +23,8 @@
 namespace cliq {
 
 template<typename F>
-void MakeZeros( DistVector<F>& x )
+inline void 
+MakeZeros( DistVector<F>& x )
 {
 #ifndef RELEASE
     PushCallStack("MakeZeros");
@@ -37,7 +38,8 @@ void MakeZeros( DistVector<F>& x )
 }
 
 template<typename F>
-void MakeUniform( DistVector<F>& x )
+inline void 
+MakeUniform( DistVector<F>& x )
 {
 #ifndef RELEASE
     PushCallStack("MakeUniform");
@@ -45,6 +47,80 @@ void MakeUniform( DistVector<F>& x )
     const int localHeight = x.LocalHeight();
     for( int iLocal=0; iLocal<localHeight; ++iLocal )
         x.SetLocal( iLocal, elem::SampleUnitBall<F>() );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename F>
+inline typename Base<F>::type 
+Norm( const DistVector<F>& x )
+{
+#ifndef RELEASE
+    PushCallStack("Norm");
+#endif
+    typedef typename Base<F>::type R;
+    const int localHeight = x.LocalHeight();
+    mpi::Comm comm = x.Comm();
+
+    R localScale = 0;
+    R localScaledSquare = 1;
+    for( int iLocal=0; iLocal<localHeight; ++iLocal )
+    {
+        const R alphaAbs = Abs(x.GetLocal(iLocal));
+        if( alphaAbs != 0 )
+        {
+            if( alphaAbs <= localScale )
+            {
+                const R relScale = alphaAbs/localScale;
+                localScaledSquare += relScale*relScale;
+            }
+            else
+            {
+                const R relScale = localScale/alphaAbs;
+                localScaledSquare = localScaledSquare*relScale*relScale + 1;
+                localScale = alphaAbs;
+            }
+        }
+    }
+
+    // Find the maximum relative scale
+    R scale;
+    mpi::AllReduce( &localScale, &scale, 1, mpi::MAX, comm );
+
+    R norm = 0;
+    if( scale != 0 )
+    {
+        // Equilibrate our local scaled sum to the maximum scale
+        R relScale = localScale/scale;
+        localScaledSquare *= relScale*relScale;
+
+        // The scaled square is now simply the sum of the local contributions
+        R scaledSquare;
+        mpi::AllReduce( &localScaledSquare, &scaledSquare, 1, mpi::SUM, comm );
+
+        norm = scale*Sqrt(scaledSquare);
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return norm;
+}
+
+template<typename F>
+inline void
+Axpy( F alpha, const DistVector<F>& x, DistVector<F>& y )
+{
+#ifndef RELEASE
+    PushCallStack("Axpy");
+    if( !mpi::CongruentComms( x.Comm(), y.Comm() ) )
+        throw std::logic_error("x and y must have congruent communicators");
+    if( x.Height() != y.Height() )
+        throw std::logic_error("x and y must be the same height");
+#endif
+    const int localHeight = x.LocalHeight(); 
+    for( int iLocal=0; iLocal<localHeight; ++iLocal )
+        y.UpdateLocal( iLocal, alpha*x.GetLocal(iLocal) );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -102,7 +178,7 @@ DistVector<F>::SetComm( mpi::Comm comm )
         ( commRank<commSize-1 ?
           blocksize_ :
           height_ - (commSize-1)*blocksize_ );
-    values_.resize( localHeight );
+    localVec_.ResizeTo( localHeight, 1 );
 }
 
 template<typename F>
@@ -123,7 +199,7 @@ DistVector<F>::FirstLocalRow() const
 template<typename F>
 inline int
 DistVector<F>::LocalHeight() const
-{ return values_.size(); }
+{ return localVec_.Height(); }
 
 template<typename F>
 inline F
@@ -131,11 +207,12 @@ DistVector<F>::GetLocal( int localRow ) const
 { 
 #ifndef RELEASE 
     PushCallStack("DistVector::GetLocal");
-    if( localRow < 0 || localRow >= (int)values_.size() )
-        throw std::logic_error("Local row out of bounds");
+#endif
+    const F value = localVec_.Get(localRow,0);
+#ifndef RELEASE
     PopCallStack();
 #endif
-    return values_[localRow];
+    return value;
 }
 
 template<typename F>
@@ -144,10 +221,8 @@ DistVector<F>::SetLocal( int localRow, F value )
 {
 #ifndef RELEASE
     PushCallStack("DistVector::SetLocal");
-    if( localRow < 0 || localRow >= (int)values_.size() )
-        throw std::logic_error("Local row out of bounds");
 #endif
-    values_[localRow] = value;
+    localVec_.Set(localRow,0,value);
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -159,10 +234,8 @@ DistVector<F>::UpdateLocal( int localRow, F value )
 {
 #ifndef RELEASE
     PushCallStack("DistVector::UpdateLocal");
-    if( localRow < 0 || localRow >= (int)values_.size() )
-        throw std::logic_error("Local row out of bounds");
 #endif
-    values_[localRow] += value;
+    localVec_.Update(localRow,0,value);
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -175,7 +248,7 @@ DistVector<F>::Empty()
     height_ = 0;
     blocksize_ = 0;
     firstLocalRow_ = 0;
-    values_.clear();
+    localVec_.Empty();
 }
 
 template<typename F>
@@ -191,7 +264,7 @@ DistVector<F>::ResizeTo( int height )
         ( commRank<commSize-1 ?
           blocksize_ :
           height_ - (commSize-1)*blocksize_ );
-    values_.resize( localHeight );
+    localVec_.ResizeTo( localHeight, 1 );
 }
 
 template<typename F>
@@ -203,7 +276,7 @@ DistVector<F>::operator=( const DistVector<F>& x )
 #endif
     height_ = x.height_;
     SetComm( x.comm_ );
-    values_ = x.values_;
+    localVec_ = x.localVec_;
 #ifndef RELEASE
     PopCallStack();
 #endif

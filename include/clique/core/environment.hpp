@@ -59,6 +59,13 @@ using elem::Matrix;
 using elem::Grid;
 using elem::DistMatrix;
 
+// A few useful scalar operations
+using elem::Abs;
+using elem::Sqrt;
+
+// For extracting the underlying real datatype of a field
+using elem::Base;
+
 // Pull in a few indexing routines
 using elem::Shift;
 using elem::LocalLength;

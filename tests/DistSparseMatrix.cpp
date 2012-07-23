@@ -108,6 +108,7 @@ main( int argc, char* argv[] )
         MakeUniform( x );
         MakeZeros( y );
         Multiply( 1., A, x, 0., y );
+        const double yOrigNorm = Norm( y );
         if( commRank == 0 )
             std::cout << "done" << std::endl;
 
@@ -122,6 +123,8 @@ main( int argc, char* argv[] )
         std::vector<int> localMap;
         NestedDissection
         ( graph, localMap, sepTree, info, cutoff, numDistSeps, numSeqSeps );
+        std::vector<int> inverseLocalMap;
+        InvertMap( localMap, inverseLocalMap, N, comm );
         mpi::Barrier( comm );
         if( commRank == 0 )
             std::cout << "done" << std::endl;
@@ -147,15 +150,13 @@ main( int argc, char* argv[] )
         }
         mpi::Barrier( comm );
         DistSymmFrontTree<double> frontTree( A, localMap, sepTree, info );
-        std::vector<int> inverseLocalMap;
-        InvertMap( localMap, inverseLocalMap, N, comm );
         mpi::Barrier( comm );
         if( commRank == 0 )
             std::cout << "done" << std::endl;
 
         if( commRank == 0 )
         {
-            std::cout << "Running LDL^T factorization and redistribution...";
+            std::cout << "Running LDL^T and selective inversion...";
             std::cout.flush();
         }
         mpi::Barrier( comm );
@@ -172,35 +173,17 @@ main( int argc, char* argv[] )
         }
         DistNodalVector<double> yNodal;
         yNodal.Pull( inverseLocalMap, info, y );
-        const double yOrigLocalNorm = elem::Nrm2( yNodal.values );
-        LDLSolve( TRANSPOSE, info, frontTree, yNodal.values );
+        LDLSolve( TRANSPOSE, info, frontTree, yNodal.localVec );
         yNodal.Push( inverseLocalMap, info, y );
         if( commRank == 0 )
             std::cout << "done" << std::endl;
 
         if( commRank == 0 )
             std::cout << "Checking error in computed solution..." << std::endl;
-        DistNodalVector<double> xNodal;
-        xNodal.Pull( inverseLocalMap, info, x );
-        const double xLocalNorm = elem::Nrm2( xNodal.values );
-        const double yLocalNorm = elem::Nrm2( yNodal.values );
-        elem::Axpy( -1., xNodal.values, yNodal.values );
-        const double errorLocalNorm = elem::Nrm2( yNodal.values );
-        const double xLocalNormSq = xLocalNorm*xLocalNorm;
-        const double yLocalNormSq = yLocalNorm*yLocalNorm;
-        const double yOrigLocalNormSq = yOrigLocalNorm*yOrigLocalNorm;
-
-        const double errorLocalNormSq = errorLocalNorm*errorLocalNorm;
-        double xNormSq, yNormSq, yOrigNormSq, errorNormSq;
-        mpi::AllReduce( &xLocalNormSq, &xNormSq, 1, mpi::SUM, comm );
-        mpi::AllReduce( &yLocalNormSq, &yNormSq, 1, mpi::SUM, comm );
-        mpi::AllReduce( &yOrigLocalNormSq, &yOrigNormSq, 1, mpi::SUM, comm );
-        mpi::AllReduce( &errorLocalNormSq, &errorNormSq, 1, mpi::SUM, comm );
-        const double xNorm = elem::Sqrt( xNormSq );
-        const double yNorm = elem::Sqrt( yNormSq );
-        const double yOrigNorm = elem::Sqrt( yOrigNormSq );
-        const double errorNorm = elem::Sqrt( errorNormSq );
-
+        const double xNorm = Norm( x );
+        const double yNorm = Norm( y );
+        Axpy( -1., x, y );
+        const double errorNorm = Norm( y );
         if( commRank == 0 )
         {
             std::cout << "|| x     ||_2 = " << xNorm << "\n"

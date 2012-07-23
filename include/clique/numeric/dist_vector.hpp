@@ -61,7 +61,7 @@ private:
     int blocksize_;
     int firstLocalRow_;
 
-    std::vector<F> values_;
+    Matrix<F> localVec_;
 };
 
 // Set all of the entries of x to zero
@@ -71,6 +71,14 @@ void MakeZeros( DistVector<F>& x );
 // Draw the entries of x uniformly from the unitball in F
 template<typename F>
 void MakeUniform( DistVector<F>& x );
+
+// Just an l2 norm for now
+template<typename F>
+typename Base<F>::type Norm( const DistVector<F>& x );
+
+// y := alpha x + y
+template<typename F>
+void Axpy( F alpha, const DistVector<F>& x, DistVector<F>& y );
 
 } // namespace cliq
 
