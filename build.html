@@ -1,0 +1,224 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Build system &mdash; Clique 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/print.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="_static/theme_extras.js"></script>
+    <link rel="top" title="Clique 0.1 documentation" href="index.html" />
+    <link rel="next" title="Indices" href="indices.html" />
+    <link rel="prev" title="Introduction" href="intro.html" /> 
+  </head>
+  <body>
+      <div class="header"><h1 class="heading"><a href="index.html">
+          <span>Clique 0.1 documentation</span></a></h1>
+        <h2 class="heading"><span>Build system</span></h2>
+      </div>
+      <div class="topnav">
+      
+        <p>
+        «&#160;&#160;<a href="intro.html">Introduction</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="indices.html">Indices</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="build-system">
+<h1>Build system<a class="headerlink" href="#build-system" title="Permalink to this headline">¶</a></h1>
+<p>Clique&#8217;s build system sits on top of
+<a class="reference external" href="http://poulson.github.com/Elemental/build.html">Elemental&#8217;s</a>, and so it is
+a good idea to familiarize yourself with Elemental&#8217;s build system and
+dependencies first.</p>
+<div class="section" id="getting-clique-s-source">
+<h2>Getting Clique&#8217;s source<a class="headerlink" href="#getting-clique-s-source" title="Permalink to this headline">¶</a></h2>
+<p>The best way to get a copy of Clique&#8217;s source is to install
+<a class="reference external" href="http://mercurial.selenic.com">Mercurial</a> and run</p>
+<div class="highlight-python"><pre>hg clone http://bitbucket.org/poulson/clique clique</pre>
+</div>
+</div>
+<div class="section" id="building-clique">
+<h2>Building Clique<a class="headerlink" href="#building-clique" title="Permalink to this headline">¶</a></h2>
+<p>Clique&#8217;s build works essentially the same as Elemental&#8217;s, which is described
+<a class="reference external" href="http://poulson.github.com/Elemental/build.html#building-elemental">here</a>.
+Assuming all <a class="reference external" href="http://poulson.github.com/Elemental/build.html#dependencies">dependencies</a>
+have been installed, Clique can often be built and installed using the commands:</p>
+<div class="highlight-python"><pre>cd clique
+mkdir build
+cd build
+cmake ..
+make
+make install</pre>
+</div>
+<p>Note that the default install location is system-wide, e.g., <tt class="docutils literal"><span class="pre">/usr/local</span></tt>.
+The installation directory can be changed at any time by running:</p>
+<div class="highlight-python"><pre>cmake -D CMAKE_INSTALL_PREFIX=/your/desired/install/path ..
+make install</pre>
+</div>
+</div>
+<div class="section" id="testing-the-installation">
+<h2>Testing the installation<a class="headerlink" href="#testing-the-installation" title="Permalink to this headline">¶</a></h2>
+<p>Once Clique has been installed, it is easy to test whether or not it is
+functioning. Assuming that Clique&#8217;s source code sits in the directory <tt class="docutils literal"><span class="pre">/home/username/clique</span></tt>, and that Clique was installed in <tt class="docutils literal"><span class="pre">/usr/local</span></tt>, then one can
+create the following Makefile from any directory:</p>
+<div class="highlight-python"><pre>include /usr/local/conf/cliqvariables
+
+DistSparseMatrix: /home/username/clique/tests/DistSparseMatrix.cpp
+    ${CXX} ${CLIQ_COMPILE_FLAGS} $&lt; -o $@ ${CLIQ_LINK_FLAGS} ${CLIQ_LIBS}</pre>
+</div>
+<p>and then simply running <tt class="docutils literal"><span class="pre">make</span></tt> should build the test driver.</p>
+<p>You can also build a handful of test drivers by using the CMake option:</p>
+<div class="highlight-python"><pre>-D CLIQ_TESTS=ON</pre>
+</div>
+</div>
+<div class="section" id="clique-as-a-subproject">
+<h2>Clique as a subproject<a class="headerlink" href="#clique-as-a-subproject" title="Permalink to this headline">¶</a></h2>
+<p>Adding Clique as a dependency into a project which uses CMake for its build
+system is relatively straightforward: simply put an entire copy of the
+Clique source tree in a subdirectory of your main project folder, say
+<tt class="docutils literal"><span class="pre">external/clique</span></tt>, and uncomment out the bottom section of Clique&#8217;s
+<tt class="docutils literal"><span class="pre">CMakeLists.txt</span></tt>, i.e., change</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">################################################################################</span>
+<span class="c"># Uncomment if including Clique as a subproject in another build system        #</span>
+<span class="c">################################################################################</span>
+<span class="c">#set(USE_CUSTOM_ALLTOALLV ${USE_CUSTOM_ALLTOALLV} PARENT_SCOPE)</span>
+<span class="c">#set(HAVE_PARMETIS ${HAVE_PARMETIS} PARENT_SCOPE)</span>
+<span class="c">#</span>
+<span class="c">#set(LIBRARY_TYPE ${LIBRARY_TYPE} PARENT_SCOPE)</span>
+<span class="c">#set(MPI_C_COMPILER ${MPI_C_COMPILER} PARENT_SCOPE)</span>
+<span class="c">#set(MPI_C_INCLUDE_PATH ${MPI_C_INCLUDE_PATH} PARENT_SCOPE)</span>
+<span class="c">#set(MPI_C_COMPILE_FLAGS ${MPI_C_COMPILE_FLAGS} PARENT_SCOPE)</span>
+<span class="c">#set(MPI_C_LINK_FLAGS ${MPI_C_LINK_FLAGS} PARENT_SCOPE)</span>
+<span class="c">#set(MPI_C_LIBRARIES ${MPI_C_LIBRARIES} PARENT_SCOPE)</span>
+<span class="c">#set(MPI_CXX_COMPILER ${MPI_CXX_COMPILER} PARENT_SCOPE)</span>
+<span class="c">#set(MPI_CXX_INCLUDE_PATH ${MPI_CXX_INCLUDE_PATH} PARENT_SCOPE)</span>
+<span class="c">#set(MPI_CXX_COMPILE_FLAGS ${MPI_CXX_COMPILE_FLAGS} PARENT_SCOPE)</span>
+<span class="c">#set(MPI_CXX_LINK_FLAGS ${MPI_CXX_LINK_FLAGS} PARENT_SCOPE)</span>
+<span class="c">#set(MPI_CXX_LIBRARIES ${MPI_CXX_LIBRARIES} PARENT_SCOPE)</span>
+<span class="c">#set(MATH_LIBS ${MATH_LIBS} PARENT_SCOPE)</span>
+<span class="c">#set(RESTRICT ${RESTRICT} PARENT_SCOPE)</span>
+<span class="c">#set(RELEASE ${RELEASE} PARENT_SCOPE)</span>
+<span class="c">#set(BLAS_POST ${BLAS_POST} PARENT_SCOPE)</span>
+<span class="c">#set(LAPACK_POST ${LAPACK_POST} PARENT_SCOPE)</span>
+<span class="c">#set(HAVE_F90_INTERFACE ${HAVE_F90_INTERFACE} PARENT_SCOPE)</span>
+<span class="c">#set(WITHOUT_PMRRR ${WITHOUT_PMRRR} PARENT_SCOPE)</span>
+<span class="c">#set(AVOID_COMPLEX_MPI ${AVOID_COMPLEX_MPI} PARENT_SCOPE)</span>
+<span class="c">#set(HAVE_REDUCE_SCATTER_BLOCK ${HAVE_REDUCE_SCATTER_BLOCK} PARENT_SCOPE)</span>
+<span class="c">#set(REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE ${REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE} PARENT_SCOPE)</span>
+<span class="c">#set(USE_BYTE_ALLGATHERS ${USE_BYTE_ALLGATHERS} PARENT_SCOPE)</span>
+</pre></div>
+</div>
+<p>to</p>
+<div class="highlight-python"><pre>################################################################################
+# Uncomment if including Clique as a subproject in another build system        #
+################################################################################
+set(USE_CUSTOM_ALLTOALLV ${USE_CUSTOM_ALLTOALLV} PARENT_SCOPE)
+set(HAVE_PARMETIS ${HAVE_PARMETIS} PARENT_SCOPE)
+
+set(LIBRARY_TYPE ${LIBRARY_TYPE} PARENT_SCOPE)
+set(MPI_C_COMPILER ${MPI_C_COMPILER} PARENT_SCOPE)
+set(MPI_C_INCLUDE_PATH ${MPI_C_INCLUDE_PATH} PARENT_SCOPE)
+set(MPI_C_COMPILE_FLAGS ${MPI_C_COMPILE_FLAGS} PARENT_SCOPE)
+set(MPI_C_LINK_FLAGS ${MPI_C_LINK_FLAGS} PARENT_SCOPE)
+set(MPI_C_LIBRARIES ${MPI_C_LIBRARIES} PARENT_SCOPE)
+set(MPI_CXX_COMPILER ${MPI_CXX_COMPILER} PARENT_SCOPE)
+set(MPI_CXX_INCLUDE_PATH ${MPI_CXX_INCLUDE_PATH} PARENT_SCOPE)
+set(MPI_CXX_COMPILE_FLAGS ${MPI_CXX_COMPILE_FLAGS} PARENT_SCOPE)
+set(MPI_CXX_LINK_FLAGS ${MPI_CXX_LINK_FLAGS} PARENT_SCOPE)
+set(MPI_CXX_LIBRARIES ${MPI_CXX_LIBRARIES} PARENT_SCOPE)
+set(MATH_LIBS ${MATH_LIBS} PARENT_SCOPE)
+set(RESTRICT ${RESTRICT} PARENT_SCOPE)
+set(RELEASE ${RELEASE} PARENT_SCOPE)
+set(BLAS_POST ${BLAS_POST} PARENT_SCOPE)
+set(LAPACK_POST ${LAPACK_POST} PARENT_SCOPE)
+set(HAVE_F90_INTERFACE ${HAVE_F90_INTERFACE} PARENT_SCOPE)
+set(WITHOUT_PMRRR ${WITHOUT_PMRRR} PARENT_SCOPE)
+set(AVOID_COMPLEX_MPI ${AVOID_COMPLEX_MPI} PARENT_SCOPE)
+set(HAVE_REDUCE_SCATTER_BLOCK ${HAVE_REDUCE_SCATTER_BLOCK} PARENT_SCOPE)
+set(REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE ${REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE} PARENT_SCOPE)
+set(USE_BYTE_ALLGATHERS ${USE_BYTE_ALLGATHERS} PARENT_SCOPE)</pre>
+</div>
+<p>Afterwards, create a <tt class="docutils literal"><span class="pre">CMakeLists.txt</span></tt> in your main project folder that builds
+off of the following snippet:</p>
+<div class="highlight-python"><pre>cmake_minimum_required(VERSION 2.8.5)
+project(Foo)
+
+add_subdirectory(external/clique)
+include_directories("${PROJECT_BINARY_DIR}/external/clique/include")
+if(HAVE_PARMETIS)
+  include_directories(
+    "${PROJECT_SOURCE_DIR}/external/clique/external/parmetis/include"
+  )
+  include_directories(
+    "${PROJECT_SOURCE_DIR}/external/clique/external/parmetis/metis/include"
+  )
+endif()
+include_directories(
+  "${PROJECT_BINARY_DIR}/external/clique/external/elemental/include")
+)
+include_directories(${MPI_CXX_INCLUDE_PATH})
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")
+
+# Build your project here
+# e.g.,
+#   add_library(foo STATIC ${FOO_SRC})
+#   target_link_libraries(foo clique)</pre>
+</div>
+</div>
+<div class="section" id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h2>
+<p>If you run into problems, please email
+<a class="reference external" href="mailto:jack&#46;poulson&#37;&#52;&#48;gmail&#46;com">jack<span>&#46;</span>poulson<span>&#64;</span>gmail<span>&#46;</span>com</a>. If you are having
+build problems, please make sure to attach the file <tt class="docutils literal"><span class="pre">include/clique/config.h</span></tt>,
+which should be generated within your build directory.</p>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav">
+      
+        <p>
+        «&#160;&#160;<a href="intro.html">Introduction</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="indices.html">Indices</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer">
+        &copy; Copyright 2012, Jack Poulson.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
