@@ -80,13 +80,13 @@ sorted in lexicographical order based upon the row and column indices
 
    .. rubric:: Data
 
+   .. cpp:function:: int NumEntries() const
+
    .. cpp:function:: int Row( int entry ) const
 
    .. cpp:function:: int Col( int entry ) const
 
    .. cpp:function:: T Value( int entry ) const
-
-   .. cpp:function:: int NumEntries() const
 
    .. cpp:function:: int EntryOffset( int row ) const
 
@@ -211,13 +211,13 @@ sorted in lexicographical order based upon the row and column indices
 
    .. rubric:: Local data
 
+   .. cpp:function:: int NumLocalEntries() const
+
    .. cpp:function:: int Row( int localEntry ) const
 
    .. cpp:function:: int Col( int localEntry ) const
 
    .. cpp:function:: T Value( int localEntry ) const
-
-   .. cpp:function:: int NumLocalEntries() const
 
    .. cpp:function:: int LocalEntryOffset( int localRow ) const
 

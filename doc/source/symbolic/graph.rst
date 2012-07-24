@@ -50,9 +50,13 @@ is the column index.
 
    .. cpp:function:: Graph()
 
-   .. cpp:function:: Graph( int numSources )
+   .. cpp:function:: Graph( int numVertices )
 
    .. cpp:function:: Graph( int numSources, int numTargets )
+
+   .. cpp:function:: Graph( const Graph& graph )
+
+   .. cpp:function:: Graph( const DistGraph& graph )
 
    .. rubric:: High-level information
 
@@ -74,11 +78,11 @@ is the column index.
 
    .. rubric:: Data
 
+   .. cpp:function:: int NumEdges() const
+
    .. cpp:function:: int Source( int edge ) const
 
    .. cpp:function:: int Target( int edge ) const
-
-   .. cpp:function:: int NumEdges() const
 
    .. cpp:function:: int EdgeOffset( int source ) const
 
@@ -88,7 +92,15 @@ is the column index.
 
    .. cpp:function:: void Empty()
 
+   .. cpp:function:: void ResizeTo( int numVertices )
+
    .. cpp:function:: void ResizeTo( int numSources, int numTargets )
+
+   .. rubric:: For copying one graph into another
+
+   .. cpp:function:: const Graph& operator=( const Graph& graph )
+
+   .. cpp:function:: const Graph& operator=( const DistGraph& graph )
 
 The DistGraph class
 ===================
@@ -151,9 +163,13 @@ sorted lexicographically based upon their source and target indices
 
    .. cpp:function:: DistGraph( mpi::Comm comm )
 
-   .. cpp:function:: DistGraph( int numSources, mpi::Comm comm )
+   .. cpp:function:: DistGraph( int numVertices, mpi::Comm comm )
 
    .. cpp:function:: DistGraph( int numSources, int numTargets, mpi::Comm comm )
+
+   .. cpp:function:: DistGraph( const Graph& graph )
+
+   .. cpp:function:: DistGraph( const DistGraph& graph )
 
    .. rubric:: High-level information
 
@@ -189,11 +205,11 @@ sorted lexicographically based upon their source and target indices
 
    .. rubric:: Local data
 
+   .. cpp:function:: int NumLocalEdges() const
+
    .. cpp:function:: int Source( int localEdge ) const
 
    .. cpp:function:: int Target( int localEdge ) const
-
-   .. cpp:function:: int NumLocalEdges() const
 
    .. cpp:function:: int LocalEdgeOffset( int localSource ) const
 
@@ -203,5 +219,13 @@ sorted lexicographically based upon their source and target indices
 
    .. cpp:function:: void Empty()
 
+   .. cpp:function:: void ResizeTo( int numVertices )
+
    .. cpp:function:: void ResizeTo( int numSources, int numTargets )
+
+   .. rubric:: For copying one graph into another
+
+   .. cpp:function:: const DistGraph& operator=( const Graph& graph )
+
+   .. cpp:function:: const DistGraph& operator=( const DistGraph& graph )
 

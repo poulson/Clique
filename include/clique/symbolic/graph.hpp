@@ -25,6 +25,7 @@ namespace cliq {
 class Graph
 {
 public:
+    // Constructors and destructors
     Graph();
     Graph( int numVertices );
     Graph( int numSources, int numTargets );
@@ -33,27 +34,30 @@ public:
     Graph( const DistGraph& graph );
     ~Graph();
 
+    // High-level information
     int NumSources() const;
     int NumTargets() const;
 
-    int NumEdges() const;
-    int Capacity() const;
-
-    int Source( int edge ) const;
-    int Target( int edge ) const;
-
-    int EdgeOffset( int source ) const;
-    int NumConnections( int source ) const;
-
+    // Assembly-related routines
     void StartAssembly();
     void StopAssembly();
     void Reserve( int numEdges );
     void Insert( int source, int target );
+    int Capacity() const;
 
+    // Data
+    int NumEdges() const;
+    int Source( int edge ) const;
+    int Target( int edge ) const;
+    int EdgeOffset( int source ) const;
+    int NumConnections( int source ) const;
+
+    // For resizing the graph
     void Empty();
     void ResizeTo( int numVertices );
     void ResizeTo( int numSources, int numTargets );
 
+    // For copying one graph into another
     const Graph& operator=( const Graph& graph );
     // NOTE: This requires the DistGraph to be over a single process
     const Graph& operator=( const DistGraph& graph );

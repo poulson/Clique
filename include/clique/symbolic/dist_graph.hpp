@@ -29,6 +29,7 @@ namespace cliq {
 class DistGraph
 {
 public:
+    // Construction and destruction
     DistGraph();
     DistGraph( mpi::Comm comm );
     DistGraph( int numVertices, mpi::Comm comm );
@@ -37,34 +38,39 @@ public:
     DistGraph( const DistGraph& graph );
     ~DistGraph();
 
+    // High-level information
     int NumSources() const;
     int NumTargets() const;
 
+    // Communicator-management
     void SetComm( mpi::Comm comm );
     mpi::Comm Comm() const;
 
+    // Distribution data
     int Blocksize() const;
     int FirstLocalSource() const;
     int NumLocalSources() const;
 
-    int NumLocalEdges() const;
-    int Capacity() const;
-
-    int Source( int localEdge ) const;
-    int Target( int localEdge ) const;
-
-    int LocalEdgeOffset( int localSource ) const;
-    int NumConnections( int localSource ) const;
-
+    // Assembly-related routines
     void StartAssembly(); 
     void StopAssembly();
     void Reserve( int numLocalEdges );
     void Insert( int source, int target );
+    int Capacity() const;
 
+    // Local data
+    int NumLocalEdges() const;
+    int Source( int localEdge ) const;
+    int Target( int localEdge ) const;
+    int LocalEdgeOffset( int localSource ) const;
+    int NumConnections( int localSource ) const;
+
+    // For resizing the graph
     void Empty();
     void ResizeTo( int numVertices );
     void ResizeTo( int numSources, int numTargets );
 
+    // For copying one graph into another
     const DistGraph& operator=( const Graph& graph );
     const DistGraph& operator=( const DistGraph& graph );
 
