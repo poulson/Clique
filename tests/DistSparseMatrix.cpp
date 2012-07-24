@@ -58,7 +58,7 @@ main( int argc, char* argv[] )
     try
     {
         const int N = n1*n2*n3;
-        DistSparseMatrix<double> A( N, N, comm );
+        DistSparseMatrix<double> A( N, comm );
 
         const int firstLocalRow = A.FirstLocalRow();
         const int localHeight = A.LocalHeight();
@@ -70,8 +70,8 @@ main( int argc, char* argv[] )
             std::cout << "Filling local portion of matrix...";
             std::cout.flush();
         }
-        A.StartAssembly();
         A.Reserve( 7*localHeight );
+        A.StartAssembly();
         for( int iLocal=0; iLocal<localHeight; ++iLocal )
         {
             const int i = firstLocalRow + iLocal;
@@ -79,20 +79,19 @@ main( int argc, char* argv[] )
             const int y = (i/n1) % n2;
             const int z = i/(n1*n2);
 
-            // Purposely pushed back in non-lexicographical order
-            A.PushBack( i, i, 6. );
+            A.Update( i, i, 6. );
             if( x != 0 )
-                A.PushBack( i, i-1, -1. );
+                A.Update( i, i-1, -1. );
             if( x != n1-1 )
-                A.PushBack( i, i+1, -1. );
+                A.Update( i, i+1, -1. );
             if( y != 0 )
-                A.PushBack( i, i-n1, -1. );
+                A.Update( i, i-n1, -1. );
             if( y != n2-1 )
-                A.PushBack( i, i+n1, -1. );
+                A.Update( i, i+n1, -1. );
             if( z != 0 )
-                A.PushBack( i, i-n1*n2, -1. );
+                A.Update( i, i-n1*n2, -1. );
             if( z != n3-1 )
-                A.PushBack( i, i+n1*n2, -1. );
+                A.Update( i, i+n1*n2, -1. );
         } 
         A.StopAssembly();
         mpi::Barrier( comm );

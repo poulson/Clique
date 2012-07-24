@@ -23,19 +23,19 @@
 namespace cliq {
 
 // y := alpha A x + beta y
-template<typename F>
+template<typename T>
 void Multiply
-( F alpha, const DistSparseMatrix<F>& A, const DistVector<F>& x,
-  F beta,                                      DistVector<F>& y );
+( T alpha, const DistSparseMatrix<T>& A, const DistVector<T>& x,
+  T beta,                                      DistVector<T>& y );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
-template<typename F>
+template<typename T>
 void Multiply
-( F alpha, const DistSparseMatrix<F>& A, const DistVector<F>& x,
-  F beta,                                      DistVector<F>& y )
+( T alpha, const DistSparseMatrix<T>& A, const DistVector<T>& x,
+  T beta,                                      DistVector<T>& y )
 {
 #ifndef RELEASE
     PushCallStack("Multiply");
@@ -108,7 +108,7 @@ void Multiply
       &sendIndices[0], &sendIndexSizes[0], &sendIndexOffsets[0], comm );
 
     // Pack the send indices
-    std::vector<F> sendValues( numSendIndices );
+    std::vector<T> sendValues( numSendIndices );
     for( int s=0; s<numSendIndices; ++s )
     {
         const int i = sendIndices[s];
@@ -121,7 +121,7 @@ void Multiply
     }
 
     // Send them back
-    std::vector<F> recvValues( numRecvIndices );
+    std::vector<T> recvValues( numRecvIndices );
     mpi::AllToAll
     ( &sendValues[0], &sendIndexSizes[0], &sendIndexOffsets[0],
       &recvValues[0], &recvIndexSizes[0], &recvIndexOffsets[0], comm );
@@ -142,9 +142,9 @@ void Multiply
                 throw std::logic_error("Could not find recv index");
 #endif
             const int colOffset = vecIt - recvIndices.begin();
-            const F AValue = A.Value(k+offset);
-            const F xValue = recvValues[colOffset];
-            const F update = alpha*AValue*xValue;
+            const T AValue = A.Value(k+offset);
+            const T xValue = recvValues[colOffset];
+            const T update = alpha*AValue*xValue;
             y.UpdateLocal( iLocal, update );
         }
     }

@@ -11,4 +11,6 @@ Welcome to Clique's documentation!
 
    intro
    build
+   graph
+   sparse_matrix
    indices

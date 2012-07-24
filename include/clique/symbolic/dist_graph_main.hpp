@@ -368,10 +368,10 @@ DistGraph::Reserve( int numLocalEdges )
 }
 
 inline void
-DistGraph::PushBack( int source, int target )
+DistGraph::Insert( int source, int target )
 {
 #ifndef RELEASE
-    PushCallStack("DistGraph::PushBack");
+    PushCallStack("DistGraph::Insert");
     EnsureConsistentSizes();
     const int capacity = Capacity();
     const int numLocalEdges = NumLocalEdges();

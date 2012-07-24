@@ -59,7 +59,7 @@ public:
     void StartAssembly(); 
     void StopAssembly();
     void Reserve( int numLocalEdges );
-    void PushBack( int source, int target );
+    void Insert( int source, int target );
 
     void Empty();
     void ResizeTo( int numVertices );

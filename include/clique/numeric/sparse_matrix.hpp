@@ -22,45 +22,51 @@
 
 namespace cliq {
 
-template<typename F>
+template<typename T>
 class SparseMatrix
 {
 public:
+    // Construction and destruction
     SparseMatrix();
+    SparseMatrix( int height );
     SparseMatrix( int height, int width );
-    SparseMatrix( const SparseMatrix<F>& A );
+    SparseMatrix( const SparseMatrix<T>& A );
     // NOTE: This requires A to be distributed over a single process
-    SparseMatrix( const DistSparseMatrix<F>& A );
+    SparseMatrix( const DistSparseMatrix<T>& A );
     ~SparseMatrix();
 
+    // High-level information
     int Height() const;
     int Width() const;
     const cliq::Graph& Graph() const;
 
-    int NumEntries() const;
-    int Capacity() const;
-
-    int Row( int entry ) const;
-    int Col( int entry ) const;
-    F Value( int entry ) const;
-    int EntryOffset( int row ) const;
-    int NumConnections( int row ) const;
-
+    // Assembly-related routines
     void StartAssembly();
     void StopAssembly();
     void Reserve( int numEntries );
-    void PushBack( int row, int col, F value );
+    void Update( int row, int col, T value );
+    int Capacity() const;
 
+    // Data
+    int Row( int entry ) const;
+    int Col( int entry ) const;
+    T Value( int entry ) const;
+    int NumEntries() const;
+    int EntryOffset( int row ) const;
+    int NumConnections( int row ) const;
+
+    // For modifying the size of the matrix
     void Empty();
     void ResizeTo( int height, int width );
 
-    const SparseMatrix<F>& operator=( const SparseMatrix<F>& A );
+    // For copying one matrix to another
+    const SparseMatrix<T>& operator=( const SparseMatrix<T>& A );
     // NOTE: This requires A to be distributed over a single process
-    const SparseMatrix<F>& operator=( const DistSparseMatrix<F>& A );
+    const SparseMatrix<T>& operator=( const DistSparseMatrix<T>& A );
 
 private:
     cliq::Graph graph_;
-    std::vector<F> values_;
+    std::vector<T> values_;
 
     template<typename U>
     struct Entry
@@ -69,7 +75,7 @@ private:
         U value;
     };
 
-    static bool CompareEntries( const Entry<F>& a, const Entry<F>& b );
+    static bool CompareEntries( const Entry<T>& a, const Entry<T>& b );
 
     void EnsureConsistentSizes() const;
     void EnsureConsistentCapacities() const;

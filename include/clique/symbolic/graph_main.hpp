@@ -315,10 +315,10 @@ Graph::Reserve( int numEdges )
 }
 
 inline void
-Graph::PushBack( int source, int target )
+Graph::Insert( int source, int target )
 {
 #ifndef RELEASE
-    PushCallStack("Graph::PushBack");
+    PushCallStack("Graph::Insert");
     EnsureConsistentSizes();
     const int capacity = Capacity();
     const int numEdges = NumEdges();
