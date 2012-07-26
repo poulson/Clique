@@ -70,8 +70,8 @@ main( int argc, char* argv[] )
             std::cout << "Filling local portion of matrix...";
             std::cout.flush();
         }
-        A.Reserve( 7*localHeight );
         A.StartAssembly();
+        A.Reserve( 7*localHeight );
         for( int iLocal=0; iLocal<localHeight; ++iLocal )
         {
             const int i = firstLocalRow + iLocal;

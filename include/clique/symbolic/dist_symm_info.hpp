@@ -84,8 +84,8 @@ struct DistSymmNodeInfo
 
 struct DistSymmInfo
 {
-    std::vector<DistSymmNodeInfo> distNodes;
     std::vector<LocalSymmNodeInfo> localNodes;
+    std::vector<DistSymmNodeInfo> distNodes;
 };
 
 } // namespace cliq
