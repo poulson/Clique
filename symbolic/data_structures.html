@@ -1,0 +1,427 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Analysis-related data structures &mdash; Clique 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/print.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/theme_extras.js"></script>
+    <link rel="top" title="Clique 0.1 documentation" href="../index.html" />
+    <link rel="up" title="Symbolic computation" href="../symbolic.html" />
+    <link rel="next" title="Numerics" href="../numeric.html" />
+    <link rel="prev" title="Analysis" href="analysis.html" /> 
+  </head>
+  <body>
+      <div class="header"><h1 class="heading"><a href="../index.html">
+          <span>Clique 0.1 documentation</span></a></h1>
+        <h2 class="heading"><span>Analysis-related data structures</span></h2>
+      </div>
+      <div class="topnav">
+      
+        <p>
+        «&#160;&#160;<a href="analysis.html">Analysis</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../numeric.html">Numerics</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="analysis-related-data-structures">
+<h1>Analysis-related data structures<a class="headerlink" href="#analysis-related-data-structures" title="Permalink to this headline">¶</a></h1>
+<p><strong>The data structures used for symbolic analysis are meant to serve as
+black-boxes for the vast majority of users.</strong> Nevertheless, they are
+briefly documented here for the sake of posterity.</p>
+<div class="section" id="distseparatortree">
+<h2>DistSeparatorTree<a class="headerlink" href="#distseparatortree" title="Permalink to this headline">¶</a></h2>
+<dl class="type">
+<dt id="LocalSepOrLeaf__struct">
+<em class="property">type </em>struct <tt class="descname">LocalSepOrLeaf</tt><a class="headerlink" href="#LocalSepOrLeaf__struct" title="Permalink to this definition">¶</a></dt>
+<dd><p><strong>TODO: Briefly describe each member variable</strong></p>
+<dl class="member">
+<dt id="LocalSepOrLeaf::parent__i">
+int <tt class="descname">parent</tt><a class="headerlink" href="#LocalSepOrLeaf::parent__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="LocalSepOrLeaf::offset__i">
+int <tt class="descname">offset</tt><a class="headerlink" href="#LocalSepOrLeaf::offset__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="LocalSepOrLeaf::indices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">indices</tt><a class="headerlink" href="#LocalSepOrLeaf::indices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="type">
+<dt id="DistSeparator__struct">
+<em class="property">type </em>struct <tt class="descname">DistSeparator</tt><a class="headerlink" href="#DistSeparator__struct" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="member">
+<dt id="DistSeparator::comm__mpi::Comm">
+mpi::Comm <tt class="descname">comm</tt><a class="headerlink" href="#DistSeparator::comm__mpi::Comm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSeparator::offset__i">
+int <tt class="descname">offset</tt><a class="headerlink" href="#DistSeparator::offset__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSeparator::indices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">indices</tt><a class="headerlink" href="#DistSeparator::indices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="type">
+<dt id="DistSeparatorTree__struct">
+<em class="property">type </em>struct <tt class="descname">DistSeparatorTree</tt><a class="headerlink" href="#DistSeparatorTree__struct" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="member">
+<dt id="DistSeparatorTree::localSepsAndLeaves__std::vector:LocalSepOrLeafP:">
+std::vector&lt;LocalSepOrLeaf*&gt; <tt class="descname">localSepsAndLeaves</tt><a class="headerlink" href="#DistSeparatorTree::localSepsAndLeaves__std::vector:LocalSepOrLeafP:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSeparatorTree::distSeps__std::vector:DistSeparator:">
+std::vector&lt;DistSeparator&gt; <tt class="descname">distSeps</tt><a class="headerlink" href="#DistSeparatorTree::distSeps__std::vector:DistSeparator:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="distsymmelimtree">
+<h2>DistSymmElimTree<a class="headerlink" href="#distsymmelimtree" title="Permalink to this headline">¶</a></h2>
+<dl class="type">
+<dt id="LocalSymmNode__struct">
+<em class="property">type </em>struct <tt class="descname">LocalSymmNode</tt><a class="headerlink" href="#LocalSymmNode__struct" title="Permalink to this definition">¶</a></dt>
+<dd><p><strong>TODO: Briefly describe each member variable</strong></p>
+<dl class="member">
+<dt id="LocalSymmNode::size__i">
+int <tt class="descname">size</tt><a class="headerlink" href="#LocalSymmNode::size__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="LocalSymmNode::offset__i">
+int <tt class="descname">offset</tt><a class="headerlink" href="#LocalSymmNode::offset__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="LocalSymmNode::parent__i">
+int <tt class="descname">parent</tt><a class="headerlink" href="#LocalSymmNode::parent__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="LocalSymmNode::children__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">children</tt><a class="headerlink" href="#LocalSymmNode::children__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="LocalSymmNode::lowerStruct__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">lowerStruct</tt><a class="headerlink" href="#LocalSymmNode::lowerStruct__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="type">
+<dt id="DistSymmNode__struct">
+<em class="property">type </em>struct <tt class="descname">DistSymmNode</tt><a class="headerlink" href="#DistSymmNode__struct" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="member">
+<dt id="DistSymmNode::onLeft__b">
+bool <tt class="descname">onLeft</tt><a class="headerlink" href="#DistSymmNode::onLeft__b" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNode::comm__mpi::Comm">
+mpi::Comm <tt class="descname">comm</tt><a class="headerlink" href="#DistSymmNode::comm__mpi::Comm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNode::size__i">
+int <tt class="descname">size</tt><a class="headerlink" href="#DistSymmNode::size__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNode::offset__i">
+int <tt class="descname">offset</tt><a class="headerlink" href="#DistSymmNode::offset__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNode::lowerStruct__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">lowerStruct</tt><a class="headerlink" href="#DistSymmNode::lowerStruct__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="type">
+<dt id="DistSymmElimTree__struct">
+<em class="property">type </em>struct <tt class="descname">DistSymmElimTree</tt><a class="headerlink" href="#DistSymmElimTree__struct" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="member">
+<dt id="DistSymmElimTree::localNodes__std::vector:LocalSymmNodeP:">
+std::vector&lt;LocalSymmNode*&gt; <tt class="descname">localNodes</tt><a class="headerlink" href="#DistSymmElimTree::localNodes__std::vector:LocalSymmNodeP:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmElimTree::distNodes__std::vector:DistSymmNode:">
+std::vector&lt;DistSymmNode&gt; <tt class="descname">distNodes</tt><a class="headerlink" href="#DistSymmElimTree::distNodes__std::vector:DistSymmNode:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="distsymminfo">
+<h2>DistSymmInfo<a class="headerlink" href="#distsymminfo" title="Permalink to this headline">¶</a></h2>
+<dl class="type">
+<dt id="LocalSymmNodeInfo__struct">
+<em class="property">type </em>struct <tt class="descname">LocalSymmNodeInfo</tt><a class="headerlink" href="#LocalSymmNodeInfo__struct" title="Permalink to this definition">¶</a></dt>
+<dd><p><strong>TODO: Briefly describe each member variable</strong></p>
+<p class="rubric">Known before analysis</p>
+<dl class="member">
+<dt id="LocalSymmNodeInfo::size__i">
+int <tt class="descname">size</tt><a class="headerlink" href="#LocalSymmNodeInfo::size__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="LocalSymmNodeInfo::offset__i">
+int <tt class="descname">offset</tt><a class="headerlink" href="#LocalSymmNodeInfo::offset__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="LocalSymmNodeInfo::children__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">children</tt><a class="headerlink" href="#LocalSymmNodeInfo::children__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="LocalSymmNodeInfo::origLowerStruct__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">origLowerStruct</tt><a class="headerlink" href="#LocalSymmNodeInfo::origLowerStruct__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p class="rubric">Computed during analysis</p>
+<dl class="member">
+<dt id="LocalSymmNodeInfo::isLefChild__b">
+bool <tt class="descname">isLefChild</tt><a class="headerlink" href="#LocalSymmNodeInfo::isLefChild__b" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="LocalSymmNodeInfo::myOffset__i">
+int <tt class="descname">myOffset</tt><a class="headerlink" href="#LocalSymmNodeInfo::myOffset__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="LocalSymmNodeInfo::lowerStruct__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">lowerStruct</tt><a class="headerlink" href="#LocalSymmNodeInfo::lowerStruct__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="LocalSymmNodeInfo::origLowerRelIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">origLowerRelIndices</tt><a class="headerlink" href="#LocalSymmNodeInfo::origLowerRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="LocalSymmNodeInfo::leftChildRelIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">leftChildRelIndices</tt><a class="headerlink" href="#LocalSymmNodeInfo::leftChildRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="LocalSymmNodeInfo::rightChildRelIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">rightChildRelIndices</tt><a class="headerlink" href="#LocalSymmNodeInfo::rightChildRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="type">
+<dt id="DistSymmNodeInfo__struct">
+<em class="property">type </em>struct <tt class="descname">DistSymmNodeInfo</tt><a class="headerlink" href="#DistSymmNodeInfo__struct" title="Permalink to this definition">¶</a></dt>
+<dd><p class="rubric">Known before analysis</p>
+<dl class="member">
+<dt id="DistSymmNodeInfo::size__i">
+int <tt class="descname">size</tt><a class="headerlink" href="#DistSymmNodeInfo::size__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNodeInfo::offset__i">
+int <tt class="descname">offset</tt><a class="headerlink" href="#DistSymmNodeInfo::offset__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNodeInfo::origLowerStruct__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">origLowerStruct</tt><a class="headerlink" href="#DistSymmNodeInfo::origLowerStruct__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNodeInfo::onLeft__b">
+bool <tt class="descname">onLeft</tt><a class="headerlink" href="#DistSymmNodeInfo::onLeft__b" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNodeInfo::comm__mpi::Comm">
+mpi::Comm <tt class="descname">comm</tt><a class="headerlink" href="#DistSymmNodeInfo::comm__mpi::Comm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p class="rubric">Computed during analysis</p>
+<dl class="member">
+<dt id="DistSymmNodeInfo::grid__GridP">
+Grid* <tt class="descname">grid</tt><a class="headerlink" href="#DistSymmNodeInfo::grid__GridP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNodeInfo::myOffset__i">
+int <tt class="descname">myOffset</tt><a class="headerlink" href="#DistSymmNodeInfo::myOffset__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNodeInfo::leftChildSize__i">
+int <tt class="descname">leftChildSize</tt><a class="headerlink" href="#DistSymmNodeInfo::leftChildSize__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNodeInfo::rightChildSize__i">
+int <tt class="descname">rightChildSize</tt><a class="headerlink" href="#DistSymmNodeInfo::rightChildSize__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNodeInfo::lowerStruct__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">lowerStruct</tt><a class="headerlink" href="#DistSymmNodeInfo::lowerStruct__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNodeInfo::origLowerRelIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">origLowerRelIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::origLowerRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNodeInfo::leftChildRelIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">leftChildRelIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::leftChildRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNodeInfo::rightChildRelIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">rightChildRelIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::rightChildRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNodeInfo::numChildFactSendIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">numChildFactSendIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::numChildFactSendIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNodeInfo::leftChildFactColIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">leftChildFactColIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::leftChildFactColIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNodeInfo::leftChildFactRowIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">leftChildFactRowIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::leftChildFactRowIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNodeInfo::rightChildFactColIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">rightChildFactColIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::rightChildFactColIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNodeInfo::rightChildFactRowIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">rightChildFactRowIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::rightChildFactRowIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNodeInfo::childFactRecvIndices__mutable-std::vector:std::deque:i::">
+mutable std::vector&lt;std::deque&lt;int&gt;&gt; <tt class="descname">childFactRecvIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::childFactRecvIndices__mutable-std::vector:std::deque:i::" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNodeInfo::leftChildSolveIndices__std::deque:i:">
+std::deque&lt;int&gt; <tt class="descname">leftChildSolveIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::leftChildSolveIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNodeInfo::rightChildSolveIndices__std::deque:i:">
+std::deque&lt;int&gt; <tt class="descname">rightChildSolveIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::rightChildSolveIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNodeInfo::localSize1d__i">
+int <tt class="descname">localSize1d</tt><a class="headerlink" href="#DistSymmNodeInfo::localSize1d__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNodeInfo::localOffset1d__i">
+int <tt class="descname">localOffset1d</tt><a class="headerlink" href="#DistSymmNodeInfo::localOffset1d__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNodeInfo::numChildSolveSendIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">numChildSolveSendIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::numChildSolveSendIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNodeInfo::childSolveRecvIndices__std::vector:std::deque:i::">
+std::vector&lt;std::deque&lt;int&gt;&gt; <tt class="descname">childSolveRecvIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::childSolveRecvIndices__std::vector:std::deque:i::" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="type">
+<dt id="DistSymmInfo__struct">
+<em class="property">type </em>struct <tt class="descname">DistSymmInfo</tt><a class="headerlink" href="#DistSymmInfo__struct" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="member">
+<dt id="DistSymmInfo::localNodes__std::vector:LocalSymmNodeInfo:">
+std::vector&lt;LocalSymmNodeInfo&gt; <tt class="descname">localNodes</tt><a class="headerlink" href="#DistSymmInfo::localNodes__std::vector:LocalSymmNodeInfo:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="DistSymmInfo::distNodes__std::vector:DistSymmNodeInfo:">
+std::vector&lt;DistSymmNodeInfo&gt; <tt class="descname">distNodes</tt><a class="headerlink" href="#DistSymmInfo::distNodes__std::vector:DistSymmNodeInfo:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav">
+      
+        <p>
+        «&#160;&#160;<a href="analysis.html">Analysis</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../numeric.html">Numerics</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer">
+        &copy; Copyright 2012, Jack Poulson.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

@@ -29,9 +29,9 @@
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="../_static/theme_extras.js"></script>
     <link rel="top" title="Clique 0.1 documentation" href="../index.html" />
-    <link rel="up" title="Symbolic analysis" href="../symbolic.html" />
-    <link rel="next" title="Numerics" href="../numeric.html" />
-    <link rel="prev" title="Symbolic analysis" href="../symbolic.html" /> 
+    <link rel="up" title="Symbolic computation" href="../symbolic.html" />
+    <link rel="next" title="The DistGraph class" href="dist_graph.html" />
+    <link rel="prev" title="Symbolic computation" href="../symbolic.html" /> 
   </head>
   <body>
       <div class="header"><h1 class="heading"><a href="../index.html">
@@ -41,11 +41,11 @@
       <div class="topnav">
       
         <p>
-        «&#160;&#160;<a href="../symbolic.html">Symbolic analysis</a>
+        «&#160;&#160;<a href="../symbolic.html">Symbolic computation</a>
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
         &#160;&#160;::&#160;&#160;
-        <a href="../numeric.html">Numerics</a>&#160;&#160;»
+        <a href="dist_graph.html">The DistGraph class</a>&#160;&#160;»
         </p>
 
       </div>
@@ -97,7 +97,8 @@ is the column index.</p>
 <dl class="class">
 <dt id="Graph">
 <em class="property">class </em><tt class="descname">Graph</tt><a class="headerlink" href="#Graph" title="Permalink to this definition">¶</a></dt>
-<dd><p class="rubric">Constructors</p>
+<dd><p><strong>TODO: Briefly describe each member variable</strong></p>
+<p class="rubric">Constructors</p>
 <dl class="function">
 <dt id="Graph::Graph">
  <tt class="descname">Graph</tt><big>(</big><big>)</big><a class="headerlink" href="#Graph::Graph" title="Permalink to this definition">¶</a></dt>
@@ -216,220 +217,17 @@ const Graph&amp; <tt class="descname">operator=</tt><big>(</big>const DistGraph&
 </dd></dl>
 
 </div>
-<div class="section" id="the-distgraph-class">
-<h1>The DistGraph class<a class="headerlink" href="#the-distgraph-class" title="Permalink to this headline">¶</a></h1>
-<p>Like the <tt class="docutils literal"><span class="pre">Graph</span></tt> class, the <tt class="docutils literal"><span class="pre">DistGraph</span></tt> class is mainly used internally
-by Clique for (distributed) graph partitioning and for most of the
-functionality of the <tt class="docutils literal"><span class="pre">DistSparseMatrix</span></tt> class. The <tt class="docutils literal"><span class="pre">DistGraph</span></tt> class
-essentially provides of a subset of the functionality of the
-<tt class="docutils literal"><span class="pre">DistSparseMatrix</span></tt> class, but an example of constructing the graph of a
-7-point stencil over an <span class="math">\(n_1 \times n_2 \times n_3\)</span> grid is shown below:</p>
-<div class="highlight-cpp"><div class="highlight"><pre><span class="n">DistGraph</span> <span class="n">graph</span><span class="p">(</span> <span class="n">N</span><span class="p">,</span> <span class="n">comm</span> <span class="p">);</span>
-<span class="k">const</span> <span class="kt">int</span> <span class="n">firstLocalSource</span> <span class="o">=</span> <span class="n">graph</span><span class="p">.</span><span class="n">FirstLocalSource</span><span class="p">();</span>
-<span class="k">const</span> <span class="kt">int</span> <span class="n">numLocalSources</span> <span class="o">=</span> <span class="n">graph</span><span class="p">.</span><span class="n">NumLocalSources</span><span class="p">();</span>
-<span class="n">graph</span><span class="p">.</span><span class="n">StartAssembly</span><span class="p">();</span>
-<span class="n">graph</span><span class="p">.</span><span class="n">Reserve</span><span class="p">(</span> <span class="mi">7</span><span class="o">*</span><span class="n">numLocalSources</span> <span class="p">);</span>
-<span class="k">for</span><span class="p">(</span> <span class="kt">int</span> <span class="n">iLocal</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">iLocal</span><span class="o">&lt;</span><span class="n">numLocalSources</span><span class="p">;</span> <span class="o">++</span><span class="n">iLocal</span> <span class="p">)</span>
-<span class="p">{</span>
-    <span class="k">const</span> <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">firstLocalSource</span> <span class="o">+</span> <span class="n">iLocal</span><span class="p">;</span>
-    <span class="k">const</span> <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="n">i</span> <span class="o">%</span> <span class="n">n1</span><span class="p">;</span>
-    <span class="k">const</span> <span class="kt">int</span> <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span><span class="o">/</span><span class="n">n1</span><span class="p">)</span> <span class="o">%</span> <span class="n">n2</span><span class="p">;</span>
-    <span class="k">const</span> <span class="kt">int</span> <span class="n">z</span> <span class="o">=</span> <span class="n">i</span><span class="o">/</span><span class="p">(</span><span class="n">n1</span><span class="o">*</span><span class="n">n2</span><span class="p">);</span>
-
-    <span class="n">graph</span><span class="p">.</span><span class="n">Insert</span><span class="p">(</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span> <span class="p">);</span>
-    <span class="k">if</span><span class="p">(</span> <span class="n">x</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">)</span>
-        <span class="n">graph</span><span class="p">.</span><span class="n">Insert</span><span class="p">(</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="o">-</span><span class="mi">1</span> <span class="p">);</span>
-    <span class="k">if</span><span class="p">(</span> <span class="n">x</span> <span class="o">!=</span> <span class="n">n1</span><span class="o">-</span><span class="mi">1</span> <span class="p">)</span>
-        <span class="n">graph</span><span class="p">.</span><span class="n">Insert</span><span class="p">(</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span> <span class="p">);</span>
-    <span class="k">if</span><span class="p">(</span> <span class="n">y</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">)</span>
-        <span class="n">graph</span><span class="p">.</span><span class="n">Insert</span><span class="p">(</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="o">-</span><span class="n">n1</span> <span class="p">);</span>
-    <span class="k">if</span><span class="p">(</span> <span class="n">y</span> <span class="o">!=</span> <span class="n">n2</span><span class="o">-</span><span class="mi">1</span> <span class="p">)</span>
-        <span class="n">graph</span><span class="p">.</span><span class="n">Insert</span><span class="p">(</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="n">n1</span> <span class="p">);</span>
-    <span class="k">if</span><span class="p">(</span> <span class="n">z</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">)</span>
-        <span class="n">graph</span><span class="p">.</span><span class="n">Insert</span><span class="p">(</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="o">-</span><span class="n">n1</span><span class="o">*</span><span class="n">n2</span> <span class="p">);</span>
-    <span class="k">if</span><span class="p">(</span> <span class="n">z</span> <span class="o">!=</span> <span class="n">n3</span><span class="o">-</span><span class="mi">1</span> <span class="p">)</span>
-        <span class="n">graph</span><span class="p">.</span><span class="n">Insert</span><span class="p">(</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="n">n1</span><span class="o">*</span><span class="n">n2</span> <span class="p">);</span>
-<span class="p">}</span>
-<span class="n">graph</span><span class="p">.</span><span class="n">StopAssembly</span><span class="p">();</span>
-</pre></div>
-</div>
-<p>The first thing to notice is that all routines which relate to modifying the
-sparse matrix are wrapped with the <tt class="docutils literal"><span class="pre">StartAssembly</span></tt> and <tt class="docutils literal"><span class="pre">StopAssembly</span></tt>
-routines.
-If the edges were all naively appended to the end of a contiguous region of
-memory, then larger and larger regions of memory would frequently need to be
-allocated and the previous contents would be copied into each new buffer.
-In order to prevent this issue, one can simply pass an upper-bound on the
-number of local updates to the <tt class="docutils literal"><span class="pre">Reserve</span></tt> member function before inserting
-any edges.</p>
-<p>After finishing assembly, all redundant edges are deleted and the edges are
-sorted lexicographically based upon their source and target indices
-(respectively).</p>
-<dl class="class">
-<dt id="DistGraph">
-<em class="property">class </em><tt class="descname">DistGraph</tt><a class="headerlink" href="#DistGraph" title="Permalink to this definition">¶</a></dt>
-<dd><p class="rubric">Constructors</p>
-<dl class="function">
-<dt id="DistGraph::DistGraph">
- <tt class="descname">DistGraph</tt><big>(</big><big>)</big><a class="headerlink" href="#DistGraph::DistGraph" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistGraph::DistGraph__mpi::Comm">
- <tt class="descname">DistGraph</tt><big>(</big>mpi::Comm <em>comm</em><big>)</big><a class="headerlink" href="#DistGraph::DistGraph__mpi::Comm" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistGraph::DistGraph__i.mpi::Comm">
- <tt class="descname">DistGraph</tt><big>(</big>int <em>numVertices</em>, mpi::Comm <em>comm</em><big>)</big><a class="headerlink" href="#DistGraph::DistGraph__i.mpi::Comm" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistGraph::DistGraph__i.i.mpi::Comm">
- <tt class="descname">DistGraph</tt><big>(</big>int <em>numSources</em>, int <em>numTargets</em>, mpi::Comm <em>comm</em><big>)</big><a class="headerlink" href="#DistGraph::DistGraph__i.i.mpi::Comm" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistGraph::DistGraph__GraphCR">
- <tt class="descname">DistGraph</tt><big>(</big>const Graph&amp; <em>graph</em><big>)</big><a class="headerlink" href="#DistGraph::DistGraph__GraphCR" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistGraph::DistGraph__DistGraphCR">
- <tt class="descname">DistGraph</tt><big>(</big>const DistGraph&amp; <em>graph</em><big>)</big><a class="headerlink" href="#DistGraph::DistGraph__DistGraphCR" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<p class="rubric">High-level information</p>
-<dl class="function">
-<dt id="DistGraph::NumSourcesC">
-int <tt class="descname">NumSources</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::NumSourcesC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistGraph::NumTargetsC">
-int <tt class="descname">NumTargets</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::NumTargetsC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<p class="rubric">Communicator-management</p>
-<dl class="function">
-<dt id="DistGraph::SetComm__mpi::Comm">
-void <tt class="descname">SetComm</tt><big>(</big>mpi::Comm <em>comm</em><big>)</big><a class="headerlink" href="#DistGraph::SetComm__mpi::Comm" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistGraph::CommC">
-mpi::Comm <tt class="descname">Comm</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::CommC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<p class="rubric">Distribution information</p>
-<dl class="function">
-<dt id="DistGraph::BlocksizeC">
-int <tt class="descname">Blocksize</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::BlocksizeC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistGraph::FirstLocalSourceC">
-int <tt class="descname">FirstLocalSource</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::FirstLocalSourceC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistGraph::NumLocalSourcesC">
-int <tt class="descname">NumLocalSources</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::NumLocalSourcesC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<p class="rubric">Assembly-related routines</p>
-<dl class="function">
-<dt id="DistGraph::StartAssembly">
-void <tt class="descname">StartAssembly</tt><big>(</big><big>)</big><a class="headerlink" href="#DistGraph::StartAssembly" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistGraph::StopAssembly">
-void <tt class="descname">StopAssembly</tt><big>(</big><big>)</big><a class="headerlink" href="#DistGraph::StopAssembly" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistGraph::Reserve__i">
-void <tt class="descname">Reserve</tt><big>(</big>int <em>numLocalEdges</em><big>)</big><a class="headerlink" href="#DistGraph::Reserve__i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistGraph::Insert__i.i">
-void <tt class="descname">Insert</tt><big>(</big>int <em>source</em>, int <em>target</em><big>)</big><a class="headerlink" href="#DistGraph::Insert__i.i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistGraph::CapacityC">
-int <tt class="descname">Capacity</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::CapacityC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<p class="rubric">Local data</p>
-<dl class="function">
-<dt id="DistGraph::NumLocalEdgesC">
-int <tt class="descname">NumLocalEdges</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::NumLocalEdgesC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistGraph::Source__iC">
-int <tt class="descname">Source</tt><big>(</big>int <em>localEdge</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::Source__iC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistGraph::Target__iC">
-int <tt class="descname">Target</tt><big>(</big>int <em>localEdge</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::Target__iC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistGraph::LocalEdgeOffset__iC">
-int <tt class="descname">LocalEdgeOffset</tt><big>(</big>int <em>localSource</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::LocalEdgeOffset__iC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistGraph::NumConnections__iC">
-int <tt class="descname">NumConnections</tt><big>(</big>int <em>localSource</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::NumConnections__iC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<p class="rubric">For modifying the size of the graph</p>
-<dl class="function">
-<dt id="DistGraph::Empty">
-void <tt class="descname">Empty</tt><big>(</big><big>)</big><a class="headerlink" href="#DistGraph::Empty" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistGraph::ResizeTo__i">
-void <tt class="descname">ResizeTo</tt><big>(</big>int <em>numVertices</em><big>)</big><a class="headerlink" href="#DistGraph::ResizeTo__i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistGraph::ResizeTo__i.i">
-void <tt class="descname">ResizeTo</tt><big>(</big>int <em>numSources</em>, int <em>numTargets</em><big>)</big><a class="headerlink" href="#DistGraph::ResizeTo__i.i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<p class="rubric">For copying one graph into another</p>
-<dl class="function">
-<dt id="DistGraph::assign-operator__GraphCR">
-const DistGraph&amp; <tt class="descname">operator=</tt><big>(</big>const Graph&amp; <em>graph</em><big>)</big><a class="headerlink" href="#DistGraph::assign-operator__GraphCR" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistGraph::assign-operator__DistGraphCR">
-const DistGraph&amp; <tt class="descname">operator=</tt><big>(</big>const DistGraph&amp; <em>graph</em><big>)</big><a class="headerlink" href="#DistGraph::assign-operator__DistGraphCR" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-</div>
 
 
       </div>
       <div class="bottomnav">
       
         <p>
-        «&#160;&#160;<a href="../symbolic.html">Symbolic analysis</a>
+        «&#160;&#160;<a href="../symbolic.html">Symbolic computation</a>
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
         &#160;&#160;::&#160;&#160;
-        <a href="../numeric.html">Numerics</a>&#160;&#160;»
+        <a href="dist_graph.html">The DistGraph class</a>&#160;&#160;»
         </p>
 
       </div>

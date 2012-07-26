@@ -9,3 +9,7 @@ rely on numerical values.
    :maxdepth: 2
 
    numeric/sparse_matrix
+   numeric/dist_sparse_matrix
+   numeric/factorization
+   numeric/solve
+   numeric/data_structures
