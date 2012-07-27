@@ -30,7 +30,7 @@ Set up and clean up
 
 .. cpp:function:: bool Initialized()
 
-   Return whether or not Elemental is currently initialized.
+   Returns whether or not Elemental is currently initialized.
 
 Blocksize manipulation
 ----------------------
@@ -56,83 +56,10 @@ Blocksize manipulation
 
    Pops the stack of blocksizes. See above.
 
-Scalar manipulation
--------------------
+Complex data
+------------
 
-.. cpp:function:: Z Abs( const Z& alpha )
-
-   Return the absolute value of the real variable :math:`\alpha`.
-
-.. cpp:function:: Z Abs( const Complex<Z>& alpha )
-
-   Return the absolute value of complex :math:`\alpha`: 
-
-   .. math::
-
-      |\alpha| = \sqrt{|\mathcal{R}(\alpha)|^2+|\mathcal{I}(\alpha)|^2}
-
-.. cpp:function:: Z FastAbs( const Z& alpha )
-
-   Same as :cpp:function::Abs: for real :math:`\alpha`.
-
-.. cpp:function:: Z FastAbs( const Complex<Z>& alpha )
-
-   Return a cheaper norm of the complex :math:`\alpha`:
-
-   .. math::
-   
-      |\alpha|_{\mbox{fast}} = |\mathcal{R}(\alpha)| + |\mathcal{I}(\alpha)|
-
-.. cpp:function:: Z RealPart( const Z& alpha )
-
-   Return the real part of the real variable :math:`\alpha`, which is 
-   :math:`\alpha` itself. 
-
-.. cpp:function:: Z RealPart( const Complex<Z>& alpha )
-
-   Return the real part of the complex variable :math:`\alpha`.
-
-.. cpp:function:: Z ImagPart( const Z& alpha )
-
-   Return the imaginary part of the real variable :math:`\alpha`, which is 
-   trivially zero.
-
-.. cpp:function:: Z ImagPart( const Complex<Z>& alpha )
-
-   Return the imaginary part of the complex variable :math:`\alpha`.
-
-.. cpp:function:: Z Conj( const Z& alpha )
-
-   Return the complex conjugate of the real variable :math:`\alpha`,
-   which is simply :math:`\alpha`.
-
-.. cpp:function:: Complex<Z> Conj( const Complex<Z>& alpha )
-
-   Return the complex conjugate of the complex variable :math:`\alpha`,
-
-   .. math::
-
-      \bar \alpha = \mathcal{R}(\alpha) - \mathcal{I}(\alpha) i
-
-.. cpp:class:: Base<F>
-
-   .. cpp:type:: type
-
-      The underlying real datatype of the (potentially complex) datatype ``F``.
-      For example, ``typename Base<Complex<double> >::type`` and 
-      ``typename Base<double>::type`` are both equivalent to ``double``.
-      This is often extremely useful in implementing routines which are 
-      templated over real and complex datatypes but still make use of real 
-      datatypes.
-
-Custom datatypes
-----------------
-
-.. cpp:type:: byte
-
-   ``typedef unsigned char byte;``
-
-.. cpp:class:: Complex<R>
+.. cpp:type:: struct Complex<R>
 
    .. cpp:type:: R BaseType
 
@@ -199,6 +126,17 @@ Custom datatypes
    .. cpp:function:: Complex<R>& operator/=( const Complex<R>& alpha )
 
       Divide with a complex value.
+
+.. cpp:type:: struct Base<F>
+
+   .. cpp:type:: type
+
+      The underlying real datatype of the (potentially complex) datatype ``F``.
+      For example, ``typename Base<Complex<double> >::type`` and 
+      ``typename Base<double>::type`` are both equivalent to ``double``.
+      This is often extremely useful in implementing routines which are 
+      templated over real and complex datatypes but still make use of real 
+      datatypes.
 
 .. cpp:function:: Complex<R> operator+( const Complex<R>& alpha, const Complex<R>& beta )
 
@@ -292,39 +230,119 @@ Custom datatypes
 
    ``typedef Complex<double> dcomplex;``
 
-.. cpp:type:: UnitOrNonUnit
+Scalar manipulation
+-------------------
 
-   An enum for specifying either ``UNIT`` or ``NON_UNIT``; typically used for 
-   stating whether or not a triangular matrix's diagonal is explicitly stored
-   (``NON_UNIT``) or is implicitly unit-diagonal (``UNIT``).
+.. cpp:function:: typename Base<F>::type Abs( const F& alpha )
 
-.. cpp:type:: Orientation
+   Return the absolute value of the real or complex variable :math:`\alpha`.
 
-   An enum for specifying whether a matrix, say :math:`A`, should be implicitly 
-   treated as :math:`A` (``NORMAL``), :math:`A^H` (``ADJOINT``), or :math:`A^T`
-   (``TRANSPOSE``).
+.. cpp:function:: F FastAbs( const F& alpha )
 
-.. cpp:type:: LeftOrRight
+   Return a cheaper norm of the real or complex :math:`\alpha`:
 
-   An enum for specifying ``LEFT`` or ``RIGHT``.
+   .. math::
+   
+      |\alpha|_{\mbox{fast}} = |\mathcal{R}(\alpha)| + |\mathcal{I}(\alpha)|
 
-.. cpp:type:: ForwardOrBackward
+.. cpp:function:: F RealPart( const F& alpha )
 
-   An enum for specifying ``FORWARD`` or ``BACKWARD``.
+   Return the real part of the real or complex variable :math:`\alpha`.
 
-.. cpp:type:: UpperOrLower
+.. cpp:function:: F ImagPart( const F& alpha )
 
-   An enum for specifying ``LOWER`` or ``UPPER`` (triangular).
+   Return the imaginary part of the real or complex variable :math:`\alpha`.
 
-.. cpp:type:: VerticalOrHorizontal
+.. cpp:function:: F Conj( const F& alpha )
 
-   An enum for specifying ``VERTICAL`` or ``HORIZONTAL``.
+   Return the complex conjugate of the real or complex variable :math:`\alpha`.
 
-.. cpp:type:: Conjugation
+.. cpp:function:: F Sqrt( const F& alpha )
+
+   Returns the square root or the real or complex variable :math:`\alpha`.
+
+.. cpp:function:: F Cos( const F& alpha )
+
+   Returns the cosine of the real or complex variable :math:`\alpha`.
+
+.. cpp:function:: F Sin( const F& alpha )
+
+   Returns the sine of the real or complex variable :math:`\alpha`.
+
+.. cpp:function:: F Tan( const F& alpha )
+
+   Returns the tangent of the real or complex variable :math:`\alpha`.
+
+.. cpp:function:: F Cosh( const F& alpha )
+
+   Returns the hyperbolic cosine of the real or complex variable :math:`\alpha`.
+
+.. cpp:function:: F Sinh( const F& alpha )
+
+   Returns the hyperbolic sine of the real or complex variable :math:`\alpha`.
+
+.. cpp:function:: typename Base<F>::type Arg( const F& alpha )
+
+   Returns the argument of the real or complex variable :math:`\alpha`.
+
+.. cpp:function:: Complex<R> Polar( const R& r, const R& theta=0 )
+
+   Returns the complex variable constructed from the polar coordinates
+   :math:`(r,\theta)`.
+
+.. cpp:function:: F Exp( const F& alpha )
+
+   Returns the exponential of the real or complex variable :math:`\alpha`.
+
+.. cpp:function:: F Pow( const F& alpha, const F& beta )
+
+   Returns :math:`\alpha^\beta` for real or complex :math:`\alpha` and 
+   :math:`\beta`.
+
+.. cpp:function:: F Log( const F& alpha )
+
+   Returns the logarithm of the real or complex variable :math:`\alpha`.
+
+Other typedefs and enums
+------------------------
+
+.. cpp:type:: byte
+
+   ``typedef unsigned char byte;``
+
+.. cpp:type:: enum Conjugation
 
    An enum which can be set to either ``CONJUGATED`` or ``UNCONJUGATED``.
 
-.. cpp:type:: NormType
+.. cpp:type:: enum Distribution
+
+   An enum for specifying the distribution of a row or column of a distributed
+   matrix:
+
+   * ``MC``: Column of a standard matrix distribution
+   * ``MD``: Diagonal of a standard matrix distribution
+   * ``MR``: Row of a standard matrix distribution
+   * ``VC``: Column-major vector distribution
+   * ``VR``: Row-major vector distribution
+   * ``STAR``: Redundantly stored
+
+.. cpp:type:: enum ForwardOrBackward
+
+   An enum for specifying ``FORWARD`` or ``BACKWARD``.
+
+.. cpp:type:: enum GridOrder
+
+   An enum for specifying either a ``ROW_MAJOR`` or ``COLUMN_MAJOR`` ordering;
+   it is used to tune one of the algorithms in :cpp:func:`HermitianTridiag`
+   which requires building a smaller square process grid from a rectangular 
+   process grid, as the ordering of the processes can greatly impact 
+   performance. See :cpp:func:`SetHermitianTridiagGridOrder`.
+
+.. cpp:type:: enum LeftOrRight
+
+   An enum for specifying ``LEFT`` or ``RIGHT``.
+
+.. cpp:type:: enum NormType
 
    An enum that can be set to either
 
@@ -339,20 +357,16 @@ Custom datatypes
      .. math:: 
         :nowrap:
 
-        \[
         \|A\|_{\infty} = \max_{\|x\|_{\infty}=1} \|Ax\|_{\infty} 
                        = \max_i \sum_{j=0}^{n-1} |\alpha_{i,j}|
-        \]
 
    * ``ONE_NORM``:
 
      .. math:: 
         :nowrap:
 
-        \[
         \|A\|_1 = \max_{\|x\|_1=1} \|Ax\|_1 
                 = \max_j \sum_{i=0}^{m-1} |\alpha_{i,j}|
-        \]
 
    * ``MAX_NORM``:
 
@@ -360,25 +374,25 @@ Custom datatypes
      
         \|A\|_{\mbox{max}} = \max_{i,j} |\alpha_{i,j}|
   
-.. cpp:type:: Distribution
+.. cpp:type:: enum Orientation
 
-   An enum for specifying the distribution of a row or column of a distributed
-   matrix:
+   An enum for specifying whether a matrix, say :math:`A`, should be implicitly 
+   treated as :math:`A` (``NORMAL``), :math:`A^H` (``ADJOINT``), or :math:`A^T`
+   (``TRANSPOSE``).
 
-   * ``MC``: Column of a matrix distribution
-   * ``MD``: Diagonal of a matrix distribution
-   * ``MR``: Row of a matrix distribution
-   * ``VC``: Column-major vector distribution
-   * ``VR``: Row-major vector distribution
-   * ``STAR``: Redundantly stored
+.. cpp:type:: enum UnitOrNonUnit
 
-.. cpp:type:: GridOrder
+   An enum for specifying either ``UNIT`` or ``NON_UNIT``; typically used for 
+   stating whether or not a triangular matrix's diagonal is explicitly stored
+   (``NON_UNIT``) or is implicitly unit-diagonal (``UNIT``).
 
-   An enum for specifying either a ``ROW_MAJOR`` or ``COLUMN_MAJOR`` ordering;
-   it is used to tune one of the algorithms in ``HermitianTridiag``
-   which requires building a smaller square process grid from a rectangular 
-   process grid, as the ordering of the processes can greatly impact 
-   performance. See ``SetHermitianTridiagGridOrder``.
+.. cpp:type:: enum UpperOrLower
+
+   An enum for specifying ``LOWER`` or ``UPPER`` (triangular).
+
+.. cpp:type:: enum VerticalOrHorizontal
+
+   An enum for specifying ``VERTICAL`` or ``HORIZONTAL``.
 
 Custom exceptions
 -----------------
@@ -448,6 +462,29 @@ Call stack manipulation
 .. cpp:function:: void DumpCallStack()
 
    Print (and empty) the contents of the call stack.
+
+Indexing utilities
+------------------
+
+.. cpp:function:: Int Shift( Int rank, Int firstRank, Int numProcs )
+
+   Given a element-wise cyclic distribution over ``numProcs`` processes, 
+   where the first entry is owned by the process with rank ``firstRank``, 
+   this routine returns the first entry owned by the process with rank
+   ``rank``.
+
+.. cpp:function:: Int LocalLength( Int n, Int shift, Int numProcs )
+
+   Given a vector with :math:`n` entries distributed over ``numProcs`` 
+   processes with shift as defined above, this routine returns the number of 
+   entries of the vector which are owned by this process.
+
+.. cpp:function:: Int LocalLength( Int n, Int rank, Int firstRank, Int numProcs )
+
+   Given a vector with :math:`n` entries distributed over ``numProcs`` 
+   processes, with the first entry owned by process ``firstRank``, this routine
+   returns the number of entries locally owned by the process with rank 
+   ``rank``.
    
 Default process grid
 --------------------

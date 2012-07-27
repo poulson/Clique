@@ -11,6 +11,7 @@ Welcome to Clique's documentation!
 
    intro
    build
+   core
    symbolic
    numeric
    indices

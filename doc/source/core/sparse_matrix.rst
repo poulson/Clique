@@ -1,8 +1,9 @@
 The SparseMatrix class
 ======================
-The ``SparseMatrix`` class is supposed to provide a simple means of forming
-sequential sparse matrices within Clique and is a simplification of the 
-upcoming ``DistSparseMatrix`` class (which most users will work with).
+The :cpp:class:`SparseMatrix\<T>` class is supposed to provide a simple means 
+of forming sequential sparse matrices within Clique and is a simplification of 
+the upcoming :cpp:class:`DistSparseMatrix\<T>` class 
+(which most users will work with).
 One might start by first constructing an empty double-precision 
 :math:`N \times N` sparse matrix, e.g., with
 
@@ -39,8 +40,10 @@ A typical assembly of a sparse matrix (i.e., using a 7-point finite-difference s
    A.StopAssembly();
 
 The basic pattern is to wrap the entire assembly process with the 
-``StartAssembly`` and ``StopAssembly`` member functions, to reserve space for
-all of the updates to the sparse matrix with the ``Reserve`` function, and then
+:cpp:func:`SparseMatrix\<T>::StartAssembly` and 
+:cpp:func:`SparseMatrix\<T>::StopAssembly` member functions, 
+to reserve space for all of the updates to the sparse matrix with the 
+:cpp:func:`SparseMatrix\<T>::Reserve` function, and then
 to add entries onto the sparse matrix in various locations. 
 
 After finishing assembly, all updates to the same entry are combined and the 

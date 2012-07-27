@@ -1,11 +1,12 @@
 The DistGraph class
 ===================
-Like the ``Graph`` class, the ``DistGraph`` class is mainly used internally 
-by Clique for (distributed) graph partitioning and for most of the 
-functionality of the ``DistSparseMatrix`` class. The ``DistGraph`` class 
-essentially provides of a subset of the functionality of the 
-``DistSparseMatrix`` class, but an example of constructing the graph of a 
-7-point stencil over an :math:`n_1 \times n_2 \times n_3` grid is shown below:
+Like the :cpp:class:`Graph` class, the :cpp:class:`DistGraph` class is mainly 
+used internally by Clique for (distributed) graph partitioning and for most of 
+the functionality of the :cpp:class:`DistSparseMatrix\<T>` class. 
+The :cpp:class:`DistGraph` class essentially provides of a subset of the 
+functionality of the :cpp:class:`DistSparseMatrix\<T>` class, but an example 
+of constructing the graph of a 7-point stencil over an 
+:math:`n_1 \times n_2 \times n_3` grid is shown below:
 
 .. code-block:: cpp
 
@@ -38,14 +39,14 @@ essentially provides of a subset of the functionality of the
     graph.StopAssembly();
 
 The first thing to notice is that all routines which relate to modifying the 
-sparse matrix are wrapped with the ``StartAssembly`` and ``StopAssembly`` 
-routines.
+sparse matrix are wrapped with the :cpp:func:`DistGraph::StartAssembly` and 
+:cpp:func:`DistGraph::StopAssembly` routines.
 If the edges were all naively appended to the end of a contiguous region of 
 memory, then larger and larger regions of memory would frequently need to be 
 allocated and the previous contents would be copied into each new buffer. 
 In order to prevent this issue, one can simply pass an upper-bound on the 
-number of local updates to the ``Reserve`` member function before inserting 
-any edges.
+number of local updates to the :cpp:func:`DistGraph::Reserve` member function 
+before inserting any edges.
 
 After finishing assembly, all redundant edges are deleted and the edges are 
 sorted lexicographically based upon their source and target indices 

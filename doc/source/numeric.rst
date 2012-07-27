@@ -8,8 +8,6 @@ rely on numerical values.
 .. toctree::
    :maxdepth: 2
 
-   numeric/sparse_matrix
-   numeric/dist_sparse_matrix
    numeric/multiplication
    numeric/factorization
    numeric/solve

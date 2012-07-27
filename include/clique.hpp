@@ -20,14 +20,36 @@
 #ifndef CLIQUE_HPP
 #define CLIQUE_HPP 1
 
+//
+// The core of the library
+//
+
 #include "clique/core/environment.hpp"
 
 // These two classes are intertwined, so declare both before defining them
 namespace cliq { class Graph; class DistGraph; }
-#include "clique/symbolic/graph.hpp"
-#include "clique/symbolic/dist_graph.hpp"
-#include "clique/symbolic/graph_main.hpp"
-#include "clique/symbolic/dist_graph_main.hpp"
+
+#include "clique/core/graph.hpp"
+#include "clique/core/dist_graph.hpp"
+#include "clique/core/graph_main.hpp"
+#include "clique/core/dist_graph_main.hpp"
+
+// These two classes are intertwined, so declare both before defining them
+namespace cliq { 
+template<typename F> class SparseMatrix; 
+template<typename F> class DistSparseMatrix; 
+}
+#include "clique/core/sparse_matrix.hpp"
+#include "clique/core/dist_sparse_matrix.hpp"
+#include "clique/core/sparse_matrix_main.hpp"
+#include "clique/core/dist_sparse_matrix_main.hpp"
+
+#include "clique/core/dist_vector.hpp"
+#include "clique/core/dist_vector_main.hpp"
+
+//
+// Symbolic computation
+//
 
 #include "clique/symbolic/dist_separator_tree.hpp"
 #include "clique/symbolic/dist_symm_elim_tree.hpp"
@@ -35,21 +57,12 @@ namespace cliq { class Graph; class DistGraph; }
 #include "clique/symbolic/symm_analysis.hpp"
 #include "clique/symbolic/nested_dissection.hpp"
 
-#include "clique/numeric/dist_vector.hpp"
-#include "clique/numeric/dist_vector_main.hpp"
+//
+// Numerical computation
+//
 
 #include "clique/numeric/dist_nodal_vector.hpp"
 #include "clique/numeric/dist_nodal_vector_main.hpp"
-
-// These two classes are intertwined, so declare both before defining them
-namespace cliq { 
-template<typename F> class SparseMatrix; 
-template<typename F> class DistSparseMatrix; 
-}
-#include "clique/numeric/sparse_matrix.hpp"
-#include "clique/numeric/dist_sparse_matrix.hpp"
-#include "clique/numeric/sparse_matrix_main.hpp"
-#include "clique/numeric/dist_sparse_matrix_main.hpp"
 
 #include "clique/numeric/multiply.hpp"
 

@@ -1,10 +1,11 @@
 The Graph class
 ===============
-The ``Graph`` class is primarily used under-the-hood in Clique for graph 
-partitioning and as the primary component of the ``SparseMatrix`` class.
+The :cpp:class:`Graph` class is primarily used under-the-hood in Clique for 
+graph partitioning and as the primary component of the 
+:cpp:class:`SparseMatrix\<T>` class.
 Nevertheless, it is possible to work directly with graphs in Clique. The usage
-is extremely similar to the ``SparseMatrix`` class, and so the construction
-of the graph corresponding to the 7-point stencil over a 
+is extremely similar to the :cpp:class:`SparseMatrix\<T>` class, and so the 
+construction of the graph corresponding to the 7-point stencil over a 
 :math:`n_1 \times n_2 \times n_3` grid is briefly demonstrated below:
 
 .. code-block:: cpp
@@ -35,9 +36,10 @@ of the graph corresponding to the 7-point stencil over a
    graph.StopAssembly();
 
 The basic pattern is to wrap the entire assembly process with the 
-``StartAssembly`` and ``StopAssembly`` member functions, to reserve space for
-all of the edges in the graph with the ``Reserve`` function, and then
-to add edges into the graph in various locations. 
+:cpp:func:`Graph::StartAssembly` and :cpp:func:`Graph::StopAssembly` member 
+functions, to reserve space for
+all of the edges in the graph with the :cpp:func:`Graph::Reserve` function, 
+and then to add edges into the graph in various locations. 
 
 After finishing assembly, redundant edges are deleted and the edges are sorted
 lexicographically based upon the source and target indices (respectively). 

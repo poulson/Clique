@@ -1,9 +1,9 @@
 The DistSparseMatrix class
 ==========================
-The ``DistSparseMatrix`` class is meant to provide a convenient means of 
-building a distributed sparse matrix within Clique. After initializing a
-real double-precision :math:`N \times N` sparse matrix distributed over the 
-communicator ``comm``, e.g., with
+The :cpp:class:`DistSparseMatrix\<T>` class is meant to provide a convenient 
+means of building a distributed sparse matrix within Clique. 
+After initializing a real double-precision :math:`N \times N` sparse matrix 
+distributed over the communicator ``comm``, e.g., with
 
 .. code-block:: cpp
 
@@ -50,13 +50,14 @@ example of filling a 7-point finite-difference stencil over an :math:`n_1 \times
     A.StopAssembly();
 
 The first thing to notice is that all routines which relate to modifying the 
-sparse matrix are wrapped with ``A.StartAssembly()`` and ``A.StopAssembly()``
+sparse matrix are wrapped with :cpp:func:`DistSparseMatrix\<T>::StartAssembly` 
+and :cpp:func:`DistSparseMatrix\<T>::StopAssembly`.
 If the updates were all naively appended to the end of a contiguous region of 
 memory, then larger and larger regions of memory would frequently need to be 
 allocated and the previous contents would be copied into each new buffer.
 In order to prevent this issue, one can simply pass an upper-bound on the 
-number of local updates to the ``Reserve`` member function before performing 
-any updates.
+number of local updates to the :cpp:func:`DistSparseMatrix\<T>::Reserve` 
+member function before performing any updates.
 
 After finishing assembly, all updates to the same entry are combined and the 
 nonzero triples, which contain the row index, column index, and value, are 
