@@ -29,7 +29,7 @@
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="_static/theme_extras.js"></script>
     <link rel="top" title="Clique 0.1 documentation" href="index.html" />
-    <link rel="next" title="The SparseMatrix class" href="numeric/sparse_matrix.html" />
+    <link rel="next" title="Multiplication" href="numeric/multiplication.html" />
     <link rel="prev" title="Analysis-related data structures" href="symbolic/data_structures.html" /> 
   </head>
   <body>
@@ -44,7 +44,7 @@
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="index.html">Contents</a>
         &#160;&#160;::&#160;&#160;
-        <a href="numeric/sparse_matrix.html">The SparseMatrix class</a>&#160;&#160;»
+        <a href="numeric/multiplication.html">Multiplication</a>&#160;&#160;»
         </p>
 
       </div>
@@ -58,11 +58,20 @@ rely on numerical values.
 <strong>TODO: Much more here</strong></p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="numeric/sparse_matrix.html">The SparseMatrix class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="numeric/dist_sparse_matrix.html">The DistSparseMatrix class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="numeric/factorization.html">Factorization</a></li>
-<li class="toctree-l1"><a class="reference internal" href="numeric/solve.html">Solve</a></li>
-<li class="toctree-l1"><a class="reference internal" href="numeric/data_structures.html">Factorization-related data structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="numeric/multiplication.html">Multiplication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="numeric/factorization.html">Factorization</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="numeric/factorization.html#ldl-factorization">LDL factorization</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="numeric/solve.html">Solving after factorization</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="numeric/solve.html#after-ldl-factorization">After LDL factorization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="numeric/solve.html#after-block-ldl-factorization">After block LDL factorization</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="numeric/data_structures.html">Factorization-related data structures</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="numeric/data_structures.html#distsymmfronttree">DistSymmFrontTree</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -76,7 +85,7 @@ rely on numerical values.
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="index.html">Contents</a>
         &#160;&#160;::&#160;&#160;
-        <a href="numeric/sparse_matrix.html">The SparseMatrix class</a>&#160;&#160;»
+        <a href="numeric/multiplication.html">Multiplication</a>&#160;&#160;»
         </p>
 
       </div>

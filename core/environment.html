@@ -1,0 +1,234 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Environment &mdash; Clique 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/print.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/theme_extras.js"></script>
+    <link rel="top" title="Clique 0.1 documentation" href="../index.html" />
+    <link rel="up" title="Core functionality" href="../core.html" />
+    <link rel="next" title="The Graph class" href="graph.html" />
+    <link rel="prev" title="Core functionality" href="../core.html" /> 
+  </head>
+  <body>
+      <div class="header"><h1 class="heading"><a href="../index.html">
+          <span>Clique 0.1 documentation</span></a></h1>
+        <h2 class="heading"><span>Environment</span></h2>
+      </div>
+      <div class="topnav">
+      
+        <p>
+        «&#160;&#160;<a href="../core.html">Core functionality</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="graph.html">The Graph class</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="environment">
+<h1>Environment<a class="headerlink" href="#environment" title="Permalink to this headline">¶</a></h1>
+<p><strong>TODO</strong></p>
+<div class="section" id="set-up-and-clean-up">
+<h2>Set up and clean up<a class="headerlink" href="#set-up-and-clean-up" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="Initialize__iR.cPPR">
+void <tt class="descname">Initialize</tt><big>(</big>int&amp; <em>argc</em>, char**&amp; <em>argv</em><big>)</big><a class="headerlink" href="#Initialize__iR.cPPR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialized Clique and (if necessary) Elemental. The usage is very similar
+to <tt class="docutils literal"><span class="pre">MPI_Init</span></tt>, but the command-line information, <tt class="docutils literal"><span class="pre">argc</span></tt> and <tt class="docutils literal"><span class="pre">argv</span></tt>,
+do not have to be passed in as pointers:</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="cp">#include &quot;clique.hpp&quot;</span>
+
+<span class="kt">int</span>
+<span class="n">main</span><span class="p">(</span> <span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">argv</span><span class="p">[]</span> <span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">cliq</span><span class="o">::</span><span class="n">Initialize</span><span class="p">(</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span> <span class="p">);</span>
+
+    <span class="c1">// ...</span>
+
+    <span class="n">cliq</span><span class="o">::</span><span class="n">Finalize</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="Finalize">
+void <tt class="descname">Finalize</tt><big>(</big><big>)</big><a class="headerlink" href="#Finalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cleans up all allocated resources from Clique&#8217;s environment and
+(if necessary) from Elemental&#8217;s</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="Initialized">
+bool <tt class="descname">Initialized</tt><big>(</big><big>)</big><a class="headerlink" href="#Initialized" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether or not Clique is currently initialized.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="functionality-from-elemental">
+<h2>Functionality from Elemental<a class="headerlink" href="#functionality-from-elemental" title="Permalink to this headline">¶</a></h2>
+<p>Clique heavily relies on many of
+<a class="reference external" href="http://poulson.github.com/Elemental">Elemental&#8217;s</a> data structures,
+particularly the <a class="reference internal" href="#DistMatrix:T.U.V:" title="DistMatrix&lt;T, U, V&gt;"><tt class="xref cpp cpp-class docutils literal"><span class="pre">DistMatrix&lt;T,U,V&gt;</span></tt></a> class for managing
+distributed matrices and vectors.</p>
+<p class="rubric">Complex data</p>
+<dl class="type">
+<dt id="Complex:R:__struct">
+<em class="property">type </em>struct <tt class="descname">Complex&lt;R&gt;</tt><a class="headerlink" href="#Complex:R:__struct" title="Permalink to this definition">¶</a></dt>
+<dd><p>Import of Elemental&#8217;s <a class="reference external" href="http://poulson.github.com/Elemental/core/environment.html#Complex:R:">Complex</a> class.</p>
+</dd></dl>
+
+<dl class="type">
+<dt id="Base:F:__struct">
+<em class="property">type </em>struct <tt class="descname">Base&lt;F&gt;</tt><a class="headerlink" href="#Base:F:__struct" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="type">
+<dt id="Base:F:::type">
+<em class="property">type </em><tt class="descname">type</tt><a class="headerlink" href="#Base:F:::type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Underlying real datatype of the field <tt class="docutils literal"><span class="pre">F</span></tt>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="Abs__FCR">
+<a class="reference internal" href="#Base:F:::type" title="Base&lt;F&gt;::type">typename Base&lt;F&gt;::type</a> <tt class="descname">Abs</tt><big>(</big>const F&amp; <em>alpha</em><big>)</big><a class="headerlink" href="#Abs__FCR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the absolute value of the real or complex variable <span class="math">\(\alpha\)</span>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="Sqrt__FCR">
+F <tt class="descname">Sqrt</tt><big>(</big>const F&amp; <em>alpha</em><big>)</big><a class="headerlink" href="#Sqrt__FCR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the square-root of the real or complex variable <span class="math">\(\alpha\)</span>.</p>
+</dd></dl>
+
+<p class="rubric">Classes</p>
+<dl class="class">
+<dt id="Matrix:T:">
+<em class="property">class </em><tt class="descname">Matrix&lt;T&gt;</tt><a class="headerlink" href="#Matrix:T:" title="Permalink to this definition">¶</a></dt>
+<dd><p>Import of Elemental&#8217;s
+<a class="reference external" href="http://poulson.github.com/Elemental/core/matrix.html">Matrix</a> class.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="Grid">
+<em class="property">class </em><tt class="descname">Grid</tt><a class="headerlink" href="#Grid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Import of Elemental&#8217;s
+<a class="reference external" href="http://poulson.github.com/Elemental/core/grid.html">Grid</a> class.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="DistMatrix:T.U.V:">
+<em class="property">class </em><tt class="descname">DistMatrix&lt;T, U, V&gt;</tt><a class="headerlink" href="#DistMatrix:T.U.V:" title="Permalink to this definition">¶</a></dt>
+<dd><p>Import of Elemental&#8217;s
+<a class="reference external" href="http://poulson.github.com/Elemental/core/dist_matrix.html">DistMatrix</a>
+class.</p>
+</dd></dl>
+
+<p class="rubric">Enums</p>
+<dl class="type">
+<dt id="Distribution__enum">
+<em class="property">type </em>enum <tt class="descname">Distribution</tt><a class="headerlink" href="#Distribution__enum" title="Permalink to this definition">¶</a></dt>
+<dd><p>See <a class="reference external" href="http://poulson.github.com/Elemental/core/environment.html#Distribution__enum">the Elemental documentation</a>.</p>
+</dd></dl>
+
+<dl class="type">
+<dt id="LeftOrRight__enum">
+<em class="property">type </em>enum <tt class="descname">LeftOrRight</tt><a class="headerlink" href="#LeftOrRight__enum" title="Permalink to this definition">¶</a></dt>
+<dd><p>See <a class="reference external" href="http://poulson.github.com/Elemental/core/environment.html#LeftOrRight__enum">the Elemental documentation</a>.</p>
+</dd></dl>
+
+<dl class="type">
+<dt id="UnitOrNonUnit__enum">
+<em class="property">type </em>enum <tt class="descname">UnitOrNonUnit</tt><a class="headerlink" href="#UnitOrNonUnit__enum" title="Permalink to this definition">¶</a></dt>
+<dd><p>See <a class="reference external" href="http://poulson.github.com/Elemental/core/environment.html#UnitOrNonUnit__enum">the Elemental documentation</a>.</p>
+</dd></dl>
+
+<dl class="type">
+<dt id="Orientation__enum">
+<em class="property">type </em>enum <tt class="descname">Orientation</tt><a class="headerlink" href="#Orientation__enum" title="Permalink to this definition">¶</a></dt>
+<dd><p>See <a class="reference external" href="http://poulson.github.com/Elemental/core/environment.html#Orientation__enum">the Elemental documentation</a>.</p>
+</dd></dl>
+
+<dl class="type">
+<dt id="UpperOrLower__enum">
+<em class="property">type </em>enum <tt class="descname">UpperOrLower</tt><a class="headerlink" href="#UpperOrLower__enum" title="Permalink to this definition">¶</a></dt>
+<dd><p>See <a class="reference external" href="http://poulson.github.com/Elemental/core/environment.html#UpperOrLower__enum">the Elemental documentation</a>.</p>
+</dd></dl>
+
+<p class="rubric">Indexing routines</p>
+<dl class="function">
+<dt id="Shift__Int.Int.Int">
+Int <tt class="descname">Shift</tt><big>(</big>Int <em>rank</em>, Int <em>firstRank</em>, Int <em>numProcs</em><big>)</big><a class="headerlink" href="#Shift__Int.Int.Int" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a element-wise cyclic distribution over <tt class="docutils literal"><span class="pre">numProcs</span></tt> processes,
+where the first entry is owned by the process with rank <tt class="docutils literal"><span class="pre">firstRank</span></tt>,
+this routine returns the first entry owned by the process with rank
+<tt class="docutils literal"><span class="pre">rank</span></tt>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="LocalLength__Int.Int.Int">
+Int <tt class="descname">LocalLength</tt><big>(</big>Int <em>n</em>, Int <em>shift</em>, Int <em>numProcs</em><big>)</big><a class="headerlink" href="#LocalLength__Int.Int.Int" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a vector with <span class="math">\(n\)</span> entries distributed over <tt class="docutils literal"><span class="pre">numProcs</span></tt>
+processes with shift as defined above, this routine returns the number of
+entries of the vector which are owned by this process.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="LocalLength__Int.Int.Int.Int">
+Int <tt class="descname">LocalLength</tt><big>(</big>Int <em>n</em>, Int <em>rank</em>, Int <em>firstRank</em>, Int <em>numProcs</em><big>)</big><a class="headerlink" href="#LocalLength__Int.Int.Int.Int" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a vector with <span class="math">\(n\)</span> entries distributed over <tt class="docutils literal"><span class="pre">numProcs</span></tt>
+processes, with the first entry owned by process <tt class="docutils literal"><span class="pre">firstRank</span></tt>, this routine
+returns the number of entries locally owned by the process with rank
+<tt class="docutils literal"><span class="pre">rank</span></tt>.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav">
+      
+        <p>
+        «&#160;&#160;<a href="../core.html">Core functionality</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="graph.html">The Graph class</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer">
+        &copy; Copyright 2012, Jack Poulson.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

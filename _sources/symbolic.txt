@@ -8,8 +8,6 @@ rely on the structure of a sparse matrix and not its numerical values.
 .. toctree::
    :maxdepth: 2
 
-   symbolic/graph
-   symbolic/dist_graph
    symbolic/nested_dissection
    symbolic/analysis
    symbolic/data_structures

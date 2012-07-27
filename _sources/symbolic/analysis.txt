@@ -14,11 +14,10 @@ The following routine is called ``SymmetricAnalysis`` instead of
 symbolic factorization, it also computes and stores other data which is 
 useful for numerical factorization and solves. 
 
+.. cpp:function:: void SymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info, bool storeFactRecvIndices=true )
+    
 .. note:: 
-   Most users will not need to directly call the following routine, as it is 
+   Most users will not need to directly call this routine, as it is 
    part of ``NestedDissection``. It will only need to be manually called in 
    cases where someone has manually computed the elimination tree of their 
    sparse matrix.
-
-.. cpp:function:: void SymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info, bool storeFactRecvIndices=true )
-    

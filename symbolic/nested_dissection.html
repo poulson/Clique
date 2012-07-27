@@ -31,7 +31,7 @@
     <link rel="top" title="Clique 0.1 documentation" href="../index.html" />
     <link rel="up" title="Symbolic computation" href="../symbolic.html" />
     <link rel="next" title="Analysis" href="analysis.html" />
-    <link rel="prev" title="The Graph class" href="graph.html" /> 
+    <link rel="prev" title="Symbolic computation" href="../symbolic.html" /> 
   </head>
   <body>
       <div class="header"><h1 class="heading"><a href="../index.html">
@@ -41,7 +41,7 @@
       <div class="topnav">
       
         <p>
-        «&#160;&#160;<a href="graph.html">The Graph class</a>
+        «&#160;&#160;<a href="../symbolic.html">Symbolic computation</a>
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
         &#160;&#160;::&#160;&#160;
@@ -57,13 +57,29 @@
 <p><em>Nested dissection</em> refers to the process of recursively partitioning a graph
 into two disjoint subdomains which only interact through a region known as a
 <em>separator</em> (for <span class="math">\(d\)</span>-dimensional domains, separators are typically
-<span class="math">\(d-1\)</span>-dimensional);
-<strong>TODO: Give an introduction to multifrontal algorithms and their connection
-to nested dissection here.</strong></p>
+<span class="math">\(d-1\)</span>-dimensional); each separator from the nested dissection process
+yields a node in a <em>separator tree</em>, which can be used to guide a multifrontal
+algorithm. The following routine uses a parallel graph partitioner (ParMETIS)
+as a means of producing such a separator tree from an arbitrary graph.</p>
 <dl class="function">
 <dt id="NestedDissection__DistGraphCR.std::vector:i:R.DistSeparatorTreeR.DistSymmInfoR.i.i.i.b">
-void <tt class="descname">NestedDissection</tt><big>(</big>const DistGraph&amp; <em>graph</em>, std::vector&lt;int&gt;&amp; <em>localMap</em>, DistSeparatorTree&amp; <em>sepTree</em>, DistSymmInfo&amp; <em>info</em>, int <em>cutoff</em><em>=128</em>, int <em>numDistSeps</em><em>=10</em>, int <em>numSeqSeps</em><em>=5</em>, bool <em>storeFactRecvIndices</em><em>=true </em><big>)</big><a class="headerlink" href="#NestedDissection__DistGraphCR.std::vector:i:R.DistSeparatorTreeR.DistSymmInfoR.i.i.i.b" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+void <tt class="descname">NestedDissection</tt><big>(</big>const DistGraph&amp; <em>graph</em>, std::vector&lt;int&gt;&amp; <em>localMap</em>, <a class="reference internal" href="data_structures.html#DistSeparatorTree__struct" title="DistSeparatorTree">DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="data_structures.html#DistSymmInfo__struct" title="DistSymmInfo">DistSymmInfo&amp;</a> <em>info</em>, int <em>cutoff</em><em>=128</em>, int <em>numDistSeps</em><em>=10</em>, int <em>numSeqSeps</em><em>=5</em>, bool <em>storeFactRecvIndices</em><em>=true </em><big>)</big><a class="headerlink" href="#NestedDissection__DistGraphCR.std::vector:i:R.DistSeparatorTreeR.DistSymmInfoR.i.i.i.b" title="Permalink to this definition">¶</a></dt>
+<dd><p>In addition to generating the separator tree, which simply stores the indices
+of each separator, each process computes its portion of the mapping from the
+original to the reordered indices (implied by nested dissection) within the
+<tt class="docutils literal"><span class="pre">localMap</span></tt> vector, and the symbolic factorization, as well as a variety of
+other useful information, is returned in an instance of the <tt class="docutils literal"><span class="pre">DistSymmInfo</span></tt>
+structure, <tt class="docutils literal"><span class="pre">info</span></tt>. The <tt class="docutils literal"><span class="pre">cutoff</span></tt> parameter determines the maximum
+acceptable leaf node size for nested dissection, the <tt class="docutils literal"><span class="pre">numDistSeps</span></tt> and
+<tt class="docutils literal"><span class="pre">numSeqSeps</span></tt> variables respectively determine how many distributed and
+sequential separators should be tried for each bisection, and
+<tt class="docutils literal"><span class="pre">storeFactRecvIndices</span></tt> determines whether or not to store information
+needed for the redistributions which occur in the subsequent numerical
+factorization</p>
+<p>See <a class="reference external" href="https://github.com/poulson/Clique/blob/master/tests/NestedDissection.cpp">tests/NestedDissection</a> for an example of its usage directly on a
+distributed graph, and <a class="reference external" href="https://github.com/poulson/Clique/blob/master/tests/DistSparseMatrix.cpp">tests/DistSparseMatrix.cpp</a> for its application to the
+underlying graph of a sparse matrix.</p>
+</dd></dl>
 
 </div>
 
@@ -72,7 +88,7 @@ void <tt class="descname">NestedDissection</tt><big>(</big>const DistGraph&amp; 
       <div class="bottomnav">
       
         <p>
-        «&#160;&#160;<a href="graph.html">The Graph class</a>
+        «&#160;&#160;<a href="../symbolic.html">Symbolic computation</a>
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
         &#160;&#160;::&#160;&#160;

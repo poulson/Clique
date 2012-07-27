@@ -1,0 +1,229 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>The SparseMatrix class &mdash; Clique 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/print.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/theme_extras.js"></script>
+    <link rel="top" title="Clique 0.1 documentation" href="../index.html" />
+    <link rel="up" title="Core functionality" href="../core.html" />
+    <link rel="next" title="The DistSparseMatrix class" href="dist_sparse_matrix.html" />
+    <link rel="prev" title="The DistGraph class" href="dist_graph.html" /> 
+  </head>
+  <body>
+      <div class="header"><h1 class="heading"><a href="../index.html">
+          <span>Clique 0.1 documentation</span></a></h1>
+        <h2 class="heading"><span>The SparseMatrix class</span></h2>
+      </div>
+      <div class="topnav">
+      
+        <p>
+        «&#160;&#160;<a href="dist_graph.html">The DistGraph class</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="dist_sparse_matrix.html">The DistSparseMatrix class</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="the-sparsematrix-class">
+<h1>The SparseMatrix class<a class="headerlink" href="#the-sparsematrix-class" title="Permalink to this headline">¶</a></h1>
+<p>The <a class="reference internal" href="#SparseMatrix:T:" title="SparseMatrix&lt;T&gt;"><tt class="xref cpp cpp-class docutils literal"><span class="pre">SparseMatrix&lt;T&gt;</span></tt></a> class is supposed to provide a simple means
+of forming sequential sparse matrices within Clique and is a simplification of
+the upcoming <a class="reference internal" href="dist_sparse_matrix.html#DistSparseMatrix:T:" title="DistSparseMatrix&lt;T&gt;"><tt class="xref cpp cpp-class docutils literal"><span class="pre">DistSparseMatrix&lt;T&gt;</span></tt></a> class
+(which most users will work with).
+One might start by first constructing an empty double-precision
+<span class="math">\(N \times N\)</span> sparse matrix, e.g., with</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="n">SparseMatrix</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">A</span><span class="p">(</span> <span class="n">N</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p>A typical assembly of a sparse matrix (i.e., using a 7-point finite-difference stencil over an <span class="math">\(n_1 \times n_2 \times n_3\)</span> grid) might be</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="n">A</span><span class="p">.</span><span class="n">StartAssembly</span><span class="p">();</span>
+<span class="n">A</span><span class="p">.</span><span class="n">Reserve</span><span class="p">(</span> <span class="mi">7</span><span class="o">*</span><span class="n">N</span> <span class="p">);</span>
+<span class="k">for</span><span class="p">(</span> <span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span> <span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">const</span> <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="n">i</span> <span class="o">%</span> <span class="n">n1</span><span class="p">;</span>
+    <span class="k">const</span> <span class="kt">int</span> <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span><span class="o">/</span><span class="n">n1</span><span class="p">)</span> <span class="o">%</span> <span class="n">n2</span><span class="p">;</span>
+    <span class="k">const</span> <span class="kt">int</span> <span class="n">z</span> <span class="o">=</span> <span class="n">i</span><span class="o">/</span><span class="p">(</span><span class="n">n1</span><span class="o">*</span><span class="n">n2</span><span class="p">);</span>
+
+    <span class="n">A</span><span class="p">.</span><span class="n">Update</span><span class="p">(</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="mf">6.</span> <span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span> <span class="n">x</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">)</span>
+        <span class="n">A</span><span class="p">.</span><span class="n">Update</span><span class="p">(</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span> <span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span> <span class="n">x</span> <span class="o">!=</span> <span class="n">n1</span><span class="o">-</span><span class="mi">1</span> <span class="p">)</span>
+        <span class="n">A</span><span class="p">.</span><span class="n">Update</span><span class="p">(</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span> <span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span> <span class="n">y</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">)</span>
+        <span class="n">A</span><span class="p">.</span><span class="n">Update</span><span class="p">(</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="o">-</span><span class="n">n1</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span> <span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span> <span class="n">y</span> <span class="o">!=</span> <span class="n">n2</span><span class="o">-</span><span class="mi">1</span> <span class="p">)</span>
+        <span class="n">A</span><span class="p">.</span><span class="n">Update</span><span class="p">(</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="n">n1</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span> <span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span> <span class="n">z</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">)</span>
+        <span class="n">A</span><span class="p">.</span><span class="n">Update</span><span class="p">(</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="o">-</span><span class="n">n1</span><span class="o">*</span><span class="n">n2</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span> <span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span> <span class="n">z</span> <span class="o">!=</span> <span class="n">n3</span><span class="o">-</span><span class="mi">1</span> <span class="p">)</span>
+        <span class="n">A</span><span class="p">.</span><span class="n">Update</span><span class="p">(</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="n">n1</span><span class="o">*</span><span class="n">n2</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span> <span class="p">);</span>
+<span class="p">}</span>
+<span class="n">A</span><span class="p">.</span><span class="n">StopAssembly</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>The basic pattern is to wrap the entire assembly process with the
+<a class="reference internal" href="#SparseMatrix:T:::StartAssembly" title="SparseMatrix&lt;T&gt;::StartAssembly"><tt class="xref cpp cpp-func docutils literal"><span class="pre">SparseMatrix&lt;T&gt;::StartAssembly()</span></tt></a> and
+<a class="reference internal" href="#SparseMatrix:T:::StopAssembly" title="SparseMatrix&lt;T&gt;::StopAssembly"><tt class="xref cpp cpp-func docutils literal"><span class="pre">SparseMatrix&lt;T&gt;::StopAssembly()</span></tt></a> member functions,
+to reserve space for all of the updates to the sparse matrix with the
+<a class="reference internal" href="#SparseMatrix:T:::Reserve__i" title="SparseMatrix&lt;T&gt;::Reserve"><tt class="xref cpp cpp-func docutils literal"><span class="pre">SparseMatrix&lt;T&gt;::Reserve()</span></tt></a> function, and then
+to add entries onto the sparse matrix in various locations.</p>
+<p>After finishing assembly, all updates to the same entry are combined and the
+nonzero triples, which contain the row index, column index, and value, are
+sorted in lexicographical order based upon the row and column indices
+(respectively).</p>
+<dl class="class">
+<dt id="SparseMatrix:T:">
+<em class="property">class </em><tt class="descname">SparseMatrix&lt;T&gt;</tt><a class="headerlink" href="#SparseMatrix:T:" title="Permalink to this definition">¶</a></dt>
+<dd><p><strong>TODO: Briefly describe each member variable</strong></p>
+<p class="rubric">Constructors</p>
+<dl class="function">
+<dt id="SparseMatrix:T:::SparseMatrix">
+ <tt class="descname">SparseMatrix</tt><big>(</big><big>)</big><a class="headerlink" href="#SparseMatrix:T:::SparseMatrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="SparseMatrix:T:::SparseMatrix__i">
+ <tt class="descname">SparseMatrix</tt><big>(</big>int <em>height</em><big>)</big><a class="headerlink" href="#SparseMatrix:T:::SparseMatrix__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="SparseMatrix:T:::SparseMatrix__i.i">
+ <tt class="descname">SparseMatrix</tt><big>(</big>int <em>height</em>, int <em>width</em><big>)</big><a class="headerlink" href="#SparseMatrix:T:::SparseMatrix__i.i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p class="rubric">High-level information</p>
+<dl class="function">
+<dt id="SparseMatrix:T:::HeightC">
+int <tt class="descname">Height</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#SparseMatrix:T:::HeightC" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="SparseMatrix:T:::WidthC">
+int <tt class="descname">Width</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#SparseMatrix:T:::WidthC" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="SparseMatrix:T:::GraphC">
+const Graph&amp; <tt class="descname">Graph</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#SparseMatrix:T:::GraphC" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p class="rubric">Assembly-related routines</p>
+<dl class="function">
+<dt id="SparseMatrix:T:::StartAssembly">
+void <tt class="descname">StartAssembly</tt><big>(</big><big>)</big><a class="headerlink" href="#SparseMatrix:T:::StartAssembly" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="SparseMatrix:T:::StopAssembly">
+void <tt class="descname">StopAssembly</tt><big>(</big><big>)</big><a class="headerlink" href="#SparseMatrix:T:::StopAssembly" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="SparseMatrix:T:::Reserve__i">
+void <tt class="descname">Reserve</tt><big>(</big>int <em>numEntries</em><big>)</big><a class="headerlink" href="#SparseMatrix:T:::Reserve__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="SparseMatrix:T:::Update__i.i.T">
+void <tt class="descname">Update</tt><big>(</big>int <em>row</em>, int <em>col</em>, T <em>value</em><big>)</big><a class="headerlink" href="#SparseMatrix:T:::Update__i.i.T" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="SparseMatrix:T:::CapacityC">
+int <tt class="descname">Capacity</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#SparseMatrix:T:::CapacityC" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p class="rubric">Data</p>
+<dl class="function">
+<dt id="SparseMatrix:T:::NumEntriesC">
+int <tt class="descname">NumEntries</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#SparseMatrix:T:::NumEntriesC" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="SparseMatrix:T:::Row__iC">
+int <tt class="descname">Row</tt><big>(</big>int <em>entry</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#SparseMatrix:T:::Row__iC" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="SparseMatrix:T:::Col__iC">
+int <tt class="descname">Col</tt><big>(</big>int <em>entry</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#SparseMatrix:T:::Col__iC" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="SparseMatrix:T:::Value__iC">
+T <tt class="descname">Value</tt><big>(</big>int <em>entry</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#SparseMatrix:T:::Value__iC" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="SparseMatrix:T:::EntryOffset__iC">
+int <tt class="descname">EntryOffset</tt><big>(</big>int <em>row</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#SparseMatrix:T:::EntryOffset__iC" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="SparseMatrix:T:::NumConnections__iC">
+int <tt class="descname">NumConnections</tt><big>(</big>int <em>row</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#SparseMatrix:T:::NumConnections__iC" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p class="rubric">For modifying the size of the matrix</p>
+<dl class="function">
+<dt id="SparseMatrix:T:::Empty">
+void <tt class="descname">Empty</tt><big>(</big><big>)</big><a class="headerlink" href="#SparseMatrix:T:::Empty" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="SparseMatrix:T:::ResizeTo__i.i">
+void <tt class="descname">ResizeTo</tt><big>(</big>int <em>height</em>, int <em>width</em><big>)</big><a class="headerlink" href="#SparseMatrix:T:::ResizeTo__i.i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+      </div>
+      <div class="bottomnav">
+      
+        <p>
+        «&#160;&#160;<a href="dist_graph.html">The DistGraph class</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="dist_sparse_matrix.html">The DistSparseMatrix class</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer">
+        &copy; Copyright 2012, Jack Poulson.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Solve &mdash; Clique 0.1 documentation</title>
+    <title>Solving after factorization &mdash; Clique 0.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -36,7 +36,7 @@
   <body>
       <div class="header"><h1 class="heading"><a href="../index.html">
           <span>Clique 0.1 documentation</span></a></h1>
-        <h2 class="heading"><span>Solve</span></h2>
+        <h2 class="heading"><span>Solving after factorization</span></h2>
       </div>
       <div class="topnav">
       
@@ -52,9 +52,39 @@
       <div class="content">
         
         
-  <div class="section" id="solve">
-<h1>Solve<a class="headerlink" href="#solve" title="Permalink to this headline">¶</a></h1>
-<p><strong>TODO</strong></p>
+  <div class="section" id="solving-after-factorization">
+<h1>Solving after factorization<a class="headerlink" href="#solving-after-factorization" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="after-ldl-factorization">
+<h2>After LDL factorization<a class="headerlink" href="#after-ldl-factorization" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="LDLSolve__Orientation.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R">
+void <tt class="descname">LDLSolve</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../symbolic/data_structures.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="data_structures.html#DistSymmFrontTree:F:" title="DistSymmFrontTree&lt;F&gt;">const DistSymmFrontTree&lt;F&gt;&amp;</a> <em>L</em>, Matrix&lt;F&gt;&amp; <em>localX</em><big>)</big><a class="headerlink" href="#LDLSolve__Orientation.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="LowerSolve__Orientation.UnitOrNonUnit.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R">
+void <tt class="descname">LowerSolve</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../core/environment.html#UnitOrNonUnit__enum" title="UnitOrNonUnit">UnitOrNonUnit</a> <em>diag</em>, <a class="reference internal" href="../symbolic/data_structures.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="data_structures.html#DistSymmFrontTree:F:" title="DistSymmFrontTree&lt;F&gt;">const DistSymmFrontTree&lt;F&gt;&amp;</a> <em>L</em>, Matrix&lt;F&gt;&amp; <em>localX</em><big>)</big><a class="headerlink" href="#LowerSolve__Orientation.UnitOrNonUnit.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="DiagonalSolve__DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R">
+void <tt class="descname">DiagonalSolve</tt><big>(</big><a class="reference internal" href="../symbolic/data_structures.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="data_structures.html#DistSymmFrontTree:F:" title="DistSymmFrontTree&lt;F&gt;">const DistSymmFrontTree&lt;F&gt;&amp;</a> <em>L</em>, Matrix&lt;F&gt;&amp; <em>localX</em><big>)</big><a class="headerlink" href="#DiagonalSolve__DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="after-block-ldl-factorization">
+<h2>After block LDL factorization<a class="headerlink" href="#after-block-ldl-factorization" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="BlockLDLSolve__Orientation.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R">
+void <tt class="descname">BlockLDLSolve</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../symbolic/data_structures.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="data_structures.html#DistSymmFrontTree:F:" title="DistSymmFrontTree&lt;F&gt;">const DistSymmFrontTree&lt;F&gt;&amp;</a> <em>L</em>, Matrix&lt;F&gt;&amp; <em>localX</em><big>)</big><a class="headerlink" href="#BlockLDLSolve__Orientation.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="BlockLowerSolve__Orientation.UnitOrNonUnit.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R">
+void <tt class="descname">BlockLowerSolve</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../core/environment.html#UnitOrNonUnit__enum" title="UnitOrNonUnit">UnitOrNonUnit</a> <em>diag</em>, <a class="reference internal" href="../symbolic/data_structures.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="data_structures.html#DistSymmFrontTree:F:" title="DistSymmFrontTree&lt;F&gt;">const DistSymmFrontTree&lt;F&gt;&amp;</a> <em>L</em>, Matrix&lt;F&gt;&amp; <em>localX</em><big>)</big><a class="headerlink" href="#BlockLowerSolve__Orientation.UnitOrNonUnit.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
 </div>
 
 
