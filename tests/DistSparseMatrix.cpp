@@ -148,7 +148,8 @@ main( int argc, char* argv[] )
             std::cout.flush();
         }
         mpi::Barrier( comm );
-        DistSymmFrontTree<double> frontTree( A, localMap, sepTree, info );
+        DistSymmFrontTree<double> 
+            frontTree( TRANSPOSE, A, localMap, sepTree, info );
         mpi::Barrier( comm );
         if( commRank == 0 )
             std::cout << "done" << std::endl;

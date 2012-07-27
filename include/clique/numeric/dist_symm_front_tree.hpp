@@ -76,11 +76,11 @@ struct DistSymmFrontTree
     DistSymmFrontTree();
 
     DistSymmFrontTree
-    ( const DistSparseMatrix<F>& A, 
+    ( Orientation orientation,
+      const DistSparseMatrix<F>& A, 
       const std::vector<int>& localMap,
       const DistSeparatorTree& sepTree,
-      const DistSymmInfo& info,
-      Orientation orientation=TRANSPOSE );
+      const DistSymmInfo& info );
 };
 
 //----------------------------------------------------------------------------//
@@ -93,11 +93,11 @@ DistSymmFrontTree<F>::DistSymmFrontTree()
 
 template<typename F>
 DistSymmFrontTree<F>::DistSymmFrontTree
-( const DistSparseMatrix<F>& A, 
+( Orientation orientation,
+  const DistSparseMatrix<F>& A, 
   const std::vector<int>& localMap,
   const DistSeparatorTree& sepTree, 
-  const DistSymmInfo& info,
-  Orientation orientation )
+  const DistSymmInfo& info )
 : mode(NORMAL_2D)
 {
 #ifndef RELEASE

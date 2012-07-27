@@ -10,6 +10,7 @@ rely on numerical values.
 
    numeric/sparse_matrix
    numeric/dist_sparse_matrix
+   numeric/multiplication
    numeric/factorization
    numeric/solve
    numeric/data_structures
