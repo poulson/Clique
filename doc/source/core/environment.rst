@@ -46,7 +46,7 @@ distributed matrices and vectors.
 
 .. cpp:type:: struct Complex<R>
 
-   Import of Elemental's `Complex <http://poulson.github.com/Elemental/core/environment.html#Complex:R:>`__ class.
+   Import of Elemental's `Complex <http://poulson.github.com/Elemental/core/environment.html#Complex:R:__struct>`__ class.
 
 .. cpp:type:: struct Base<F>
 
