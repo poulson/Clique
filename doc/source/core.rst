@@ -9,4 +9,5 @@ Core functionality
    core/dist_graph
    core/sparse_matrix
    core/dist_sparse_matrix
+   core/vector
    core/dist_vector

@@ -39,13 +39,14 @@ namespace cliq {
     class DistGraph; 
     template<typename T> class SparseMatrix;
     template<typename T> class DistSparseMatrix;
-    // TODO: template<typename T> class Vector;
+    template<typename T> class Vector;
     template<typename T> class DistVector;
 } 
 #include "clique/core/graph_decl.hpp"
 #include "clique/core/dist_graph_decl.hpp"
 #include "clique/core/sparse_matrix_decl.hpp"
 #include "clique/core/dist_sparse_matrix_decl.hpp"
+#include "clique/core/vector_decl.hpp"
 #include "clique/core/dist_vector_decl.hpp"
 
 // Data-structure implementations
@@ -53,6 +54,7 @@ namespace cliq {
 #include "clique/core/dist_graph_impl.hpp"
 #include "clique/core/sparse_matrix_impl.hpp"
 #include "clique/core/dist_sparse_matrix_impl.hpp"
+#include "clique/core/vector_impl.hpp"
 #include "clique/core/dist_vector_impl.hpp"
 
 //

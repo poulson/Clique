@@ -70,6 +70,7 @@ main( int argc, char* argv[] )
             std::cout << "Filling local portion of matrix...";
             std::cout.flush();
         }
+        const double fillStart = mpi::Time();
         A.StartAssembly();
         A.Reserve( 7*localHeight );
         for( int iLocal=0; iLocal<localHeight; ++iLocal )
@@ -95,27 +96,34 @@ main( int argc, char* argv[] )
         } 
         A.StopAssembly();
         mpi::Barrier( comm );
+        const double fillStop =  mpi::Time();
         if( commRank == 0 )
-            std::cout << "done" << std::endl;
+            std::cout << "done, " << fillStop-fillStart << " seconds" 
+                      << std::endl;
 
         if( commRank == 0 )
         {
             std::cout << "Generating random vector x and forming y := A x...";
             std::cout.flush();
         }
+        const double multiplyStart = mpi::Time();
         DistVector<double> x( N, comm ), y( N, comm );
         MakeUniform( x );
         MakeZeros( y );
         Multiply( 1., A, x, 0., y );
         const double yOrigNorm = Norm( y );
+        mpi::Barrier( comm );
+        const double multiplyStop = mpi::Time();
         if( commRank == 0 )
-            std::cout << "done" << std::endl;
+            std::cout << "done, " << multiplyStop-multiplyStart << " seconds"
+                      << std::endl;
 
         if( commRank == 0 )
         {
             std::cout << "Running nested dissection...";
             std::cout.flush();
         }
+        const double nestedStart = mpi::Time();
         const DistGraph& graph = A.Graph();
         DistSymmInfo info;
         DistSeparatorTree sepTree;
@@ -125,8 +133,10 @@ main( int argc, char* argv[] )
         std::vector<int> inverseLocalMap;
         InvertMap( localMap, inverseLocalMap, N, comm );
         mpi::Barrier( comm );
+        const double nestedStop = mpi::Time();
         if( commRank == 0 )
-            std::cout << "done" << std::endl;
+            std::cout << "done, " << nestedStop-nestedStart << " seconds"
+                      << std::endl;
 
         if( commRank == 0 )
         {
@@ -148,11 +158,14 @@ main( int argc, char* argv[] )
             std::cout.flush();
         }
         mpi::Barrier( comm );
+        const double buildStart = mpi::Time();
         DistSymmFrontTree<double> 
             frontTree( TRANSPOSE, A, localMap, sepTree, info );
         mpi::Barrier( comm );
+        const double buildStop = mpi::Time();
         if( commRank == 0 )
-            std::cout << "done" << std::endl;
+            std::cout << "done, " << buildStop-buildStart << " seconds"
+                      << std::endl;
 
         if( commRank == 0 )
         {
@@ -160,23 +173,30 @@ main( int argc, char* argv[] )
             std::cout.flush();
         }
         mpi::Barrier( comm );
+        const double ldlStart = mpi::Time();
         LDL( TRANSPOSE, info, frontTree );
         SetSolveMode( frontTree, FAST_2D_LDL );
         mpi::Barrier( comm );
+        const double ldlStop = mpi::Time();
         if( commRank == 0 )
-            std::cout << "done" << std::endl;
+            std::cout << "done, " << ldlStop-ldlStart << " seconds" 
+                      << std::endl;
 
         if( commRank == 0 )
         {
             std::cout << "Solving against y...";
             std::cout.flush();
         }
+        const double solveStart = mpi::Time();
         DistNodalVector<double> yNodal;
         yNodal.Pull( inverseLocalMap, info, y );
         LDLSolve( TRANSPOSE, info, frontTree, yNodal.localVec );
         yNodal.Push( inverseLocalMap, info, y );
+        mpi::Barrier( comm );
+        const double solveStop = mpi::Time();
         if( commRank == 0 )
-            std::cout << "done" << std::endl;
+            std::cout << "done, " << solveStop-solveStart << " seconds"
+                      << std::endl;
 
         if( commRank == 0 )
             std::cout << "Checking error in computed solution..." << std::endl;
