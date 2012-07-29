@@ -1,7 +1,9 @@
 The DistVector class
 ====================
-The :cpp:class:`DistVector\<T>` class is meant to...
-**TODO**
+The :cpp:class:`DistVector\<T>` class is the standard interface in Clique for
+setting up right-hand sides for solves: it uses the same simple one-dimensional
+distribution as :cpp:class:`DistSparseMatrix\<T>` and is meant to be simple to
+use.
 
 .. cpp:class:: DistVector<T>
 
@@ -9,27 +11,39 @@ The :cpp:class:`DistVector\<T>` class is meant to...
 
    .. cpp:function:: DistVector()
 
+      Constructs a vector of length zero over ``mpi::COMM_WORLD``.
+
    .. cpp:function:: DistVector( mpi::Comm comm )
 
+      Constructs a vector of length zero over the specified communicator.
+
    .. cpp:function:: DistVector( int height, mpi::Comm comm )
+
+      Constructs a vector of the given height over a particular communicator.
 
    .. rubric:: High-level information
 
    .. cpp:function:: int Height() const
 
+      Returns the length of the vector.
+
    .. rubric:: Communicator-management
 
    .. cpp:function:: void SetComm( mpi::Comm comm )
 
+      Reconfigures the vector to be of length zero and distributed over the 
+      specified communicator.
+
    .. cpp:function:: mpi::Comm Comm() const
+
+      The communciator for the distributed vector.
 
    .. rubric:: Distribution information
 
    .. cpp:function:: int Blocksize() const
 
-      The distribution blocksize of the distributed vector:
-      the process with rank ``r``'s first local row is global row
-      ``r*blocksize``.
+      The distribution blocksize of the vector: the process with rank ``r``'s
+      first local row is global row ``r*blocksize``.
 
    .. cpp:function:: int FirstLocalRow() const
 
@@ -69,8 +83,17 @@ The :cpp:class:`DistVector\<T>` class is meant to...
 
 .. cpp:function:: void MakeZeros( DistVector<T>& x )
 
+   Sets every entry in the vector to zero.
+
 .. cpp:function:: void MakeUniform( DistVector<T>& x )
+
+   Sets each entry in the vector to a sample from the unit ball appropriate 
+   for type ``T``.
 
 .. cpp:function:: typename Base<F>::type Norm( const DistVector<F>& x )
 
+   Returns the Euclidean norm of the vector.
+
 .. cpp:function:: void Axpy( T alpha, const DistVector<T>& x, DistVector<T>& y )
+
+   Updates :math:`y := \alpha x + y`.
