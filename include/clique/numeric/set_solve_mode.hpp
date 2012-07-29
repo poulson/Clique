@@ -17,8 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_SET_SOLVE_MODE_HPP
-#define CLIQUE_SET_SOLVE_MODE_HPP 1
 
 namespace cliq {
 
@@ -135,5 +133,3 @@ inline void SetSolveMode( DistSymmFrontTree<F>& L, SolveMode mode )
 }
 
 } // namespace cliq
-
-#endif // CLIQUE_SET_SOLVE_MODE_HPP

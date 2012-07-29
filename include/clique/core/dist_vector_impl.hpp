@@ -17,36 +17,34 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_DIST_VECTOR_MAIN_HPP
-#define CLIQUE_DIST_VECTOR_MAIN_HPP 1
 
 namespace cliq {
 
-template<typename F>
+template<typename T>
 inline void 
-MakeZeros( DistVector<F>& x )
+MakeZeros( DistVector<T>& x )
 {
 #ifndef RELEASE
     PushCallStack("MakeZeros");
 #endif
     const int localHeight = x.LocalHeight();
     for( int iLocal=0; iLocal<localHeight; ++iLocal )
-        x.SetLocal( iLocal, (F)0 );
+        x.SetLocal( iLocal, (T)0 );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
-template<typename F>
+template<typename T>
 inline void 
-MakeUniform( DistVector<F>& x )
+MakeUniform( DistVector<T>& x )
 {
 #ifndef RELEASE
     PushCallStack("MakeUniform");
 #endif
     const int localHeight = x.LocalHeight();
     for( int iLocal=0; iLocal<localHeight; ++iLocal )
-        x.SetLocal( iLocal, elem::SampleUnitBall<F>() );
+        x.SetLocal( iLocal, elem::SampleUnitBall<T>() );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -107,9 +105,9 @@ Norm( const DistVector<F>& x )
     return norm;
 }
 
-template<typename F>
+template<typename T>
 inline void
-Axpy( F alpha, const DistVector<F>& x, DistVector<F>& y )
+Axpy( T alpha, const DistVector<T>& x, DistVector<T>& y )
 {
 #ifndef RELEASE
     PushCallStack("Axpy");
@@ -126,44 +124,44 @@ Axpy( F alpha, const DistVector<F>& x, DistVector<F>& y )
 #endif
 }
 
-template<typename F>
+template<typename T>
 inline 
-DistVector<F>::DistVector()
+DistVector<T>::DistVector()
 : height_(0), comm_(mpi::COMM_WORLD), blocksize_(0), firstLocalRow_(0)
 { }
 
-template<typename F>
+template<typename T>
 inline 
-DistVector<F>::DistVector( mpi::Comm comm )
+DistVector<T>::DistVector( mpi::Comm comm )
 : height_(0), blocksize_(0), firstLocalRow_(0)
 { 
     SetComm( comm );
 }
 
-template<typename F>
+template<typename T>
 inline 
-DistVector<F>::DistVector( int height, mpi::Comm comm )
+DistVector<T>::DistVector( int height, mpi::Comm comm )
 : height_(height)
 { 
     SetComm( comm );
 }
 
-template<typename F>
+template<typename T>
 inline 
-DistVector<F>::~DistVector()
+DistVector<T>::~DistVector()
 { 
     if( comm_ != mpi::COMM_WORLD )
         mpi::CommFree( comm_ );
 }
 
-template<typename F>
+template<typename T>
 inline int 
-DistVector<F>::Height() const
+DistVector<T>::Height() const
 { return height_; }
 
-template<typename F>
+template<typename T>
 inline void
-DistVector<F>::SetComm( mpi::Comm comm )
+DistVector<T>::SetComm( mpi::Comm comm )
 { 
     if( comm_ != mpi::COMM_WORLD )
         mpi::CommDup( comm, comm_ );
@@ -181,43 +179,43 @@ DistVector<F>::SetComm( mpi::Comm comm )
     localVec_.ResizeTo( localHeight, 1 );
 }
 
-template<typename F>
+template<typename T>
 inline mpi::Comm 
-DistVector<F>::Comm() const
+DistVector<T>::Comm() const
 { return comm_; }
 
-template<typename F>
+template<typename T>
 inline int
-DistVector<F>::Blocksize() const
+DistVector<T>::Blocksize() const
 { return blocksize_; }
 
-template<typename F>
+template<typename T>
 inline int
-DistVector<F>::FirstLocalRow() const
+DistVector<T>::FirstLocalRow() const
 { return firstLocalRow_; }
 
-template<typename F>
+template<typename T>
 inline int
-DistVector<F>::LocalHeight() const
+DistVector<T>::LocalHeight() const
 { return localVec_.Height(); }
 
-template<typename F>
-inline F
-DistVector<F>::GetLocal( int localRow ) const
+template<typename T>
+inline T
+DistVector<T>::GetLocal( int localRow ) const
 { 
 #ifndef RELEASE 
     PushCallStack("DistVector::GetLocal");
 #endif
-    const F value = localVec_.Get(localRow,0);
+    const T value = localVec_.Get(localRow,0);
 #ifndef RELEASE
     PopCallStack();
 #endif
     return value;
 }
 
-template<typename F>
+template<typename T>
 inline void
-DistVector<F>::SetLocal( int localRow, F value )
+DistVector<T>::SetLocal( int localRow, T value )
 {
 #ifndef RELEASE
     PushCallStack("DistVector::SetLocal");
@@ -228,9 +226,9 @@ DistVector<F>::SetLocal( int localRow, F value )
 #endif
 }
 
-template<typename F>
+template<typename T>
 inline void
-DistVector<F>::UpdateLocal( int localRow, F value )
+DistVector<T>::UpdateLocal( int localRow, T value )
 {
 #ifndef RELEASE
     PushCallStack("DistVector::UpdateLocal");
@@ -241,9 +239,9 @@ DistVector<F>::UpdateLocal( int localRow, F value )
 #endif
 }
 
-template<typename F>
+template<typename T>
 inline void
-DistVector<F>::Empty()
+DistVector<T>::Empty()
 {
     height_ = 0;
     blocksize_ = 0;
@@ -251,9 +249,9 @@ DistVector<F>::Empty()
     localVec_.Empty();
 }
 
-template<typename F>
+template<typename T>
 inline void
-DistVector<F>::ResizeTo( int height )
+DistVector<T>::ResizeTo( int height )
 {
     const int commRank = mpi::CommRank( comm_ );
     const int commSize = mpi::CommSize( comm_ );
@@ -267,9 +265,9 @@ DistVector<F>::ResizeTo( int height )
     localVec_.ResizeTo( localHeight, 1 );
 }
 
-template<typename F>
-const DistVector<F>& 
-DistVector<F>::operator=( const DistVector<F>& x )
+template<typename T>
+const DistVector<T>& 
+DistVector<T>::operator=( const DistVector<T>& x )
 {
 #ifndef RELEASE
     PushCallStack("DistVector::operator=");
@@ -284,5 +282,3 @@ DistVector<F>::operator=( const DistVector<F>& x )
 }
 
 } // namespace cliq
-
-#endif // CLIQUE_DIST_VECTOR_MAIN_HPP

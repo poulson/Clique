@@ -17,8 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_LDL_SOLVE_HPP
-#define CLIQUE_LDL_SOLVE_HPP 1
 
 namespace cliq {
 
@@ -55,5 +53,3 @@ inline void LDLSolve
 }
 
 } // namespace cliq
-
-#endif // CLIQUE_LDL_SOLVE_HPP

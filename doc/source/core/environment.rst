@@ -1,6 +1,10 @@
 Environment
 ===========
-**TODO**
+
+This section describes the routines and data structures which help set up 
+Clique's programming environment: it discusses initialization of Clique,
+call stack manipulation, and data structures and routines imported from 
+`Elemental <https://code.google.com/p/elemental>`__.
 
 Set up and clean up
 -------------------
@@ -34,11 +38,33 @@ Set up and clean up
 
    Returns whether or not Clique is currently initialized.
 
+Call stack manipulation
+-----------------------
+
+.. note:: 
+
+   The following call stack manipulation routines are only available in
+   non-release builds (i.e., PureDebug and HybridDebug) and are meant to allow
+   for the call stack to be printed (via :cpp:func:`DumpCallStack`) when an 
+   exception is caught.
+
+.. cpp:function:: void PushCallStack( std::string s )
+
+   Push the given routine name onto the call stack.
+
+.. cpp:function:: void PopCallStack()
+
+   Remove the routine name at the top of the call stack.
+
+.. cpp:function:: void DumpCallStack()
+
+   Print (and empty) the contents of the call stack.
+
 Functionality from Elemental
 ----------------------------
 
 Clique heavily relies on many of 
-`Elemental's <http://poulson.github.com/Elemental>`__ data structures, 
+`Elemental's <http://code.google.com/p/elemental>`__ data structures, 
 particularly the :cpp:class:`DistMatrix\<T,U,V>` class for managing
 distributed matrices and vectors. 
 
@@ -79,6 +105,21 @@ distributed matrices and vectors.
    Import of Elemental's 
    `DistMatrix <http://poulson.github.com/Elemental/core/dist_matrix.html>`__ 
    class.
+
+.. rubric:: Imported libraries
+
+Elemental provides 
+`high-level interfaces to several libraries <http://poulson.github.com/Elemental/core/imports.html>`__, 
+and several of those interfaces are used within Clique. 
+
+* `BLAS <http://poulson.github.com/Elemental/core/imports/blas.html>`__: 
+  exposed in the ``cliq::blas`` namespace
+
+* `LAPACK <http://poulson.github.com/Elemental/core/imports/lapack.html>`__:
+  exposed in the ``cliq::lapack`` namespace
+
+* `MPI <http://poulson.github.com/Elemental/core/imports/mpi.html>`__:
+  exposed in the ``cliq::mpi`` namespace
 
 .. rubric:: Enums
 

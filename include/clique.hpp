@@ -20,32 +20,40 @@
 #ifndef CLIQUE_HPP
 #define CLIQUE_HPP 1
 
+#include "elemental.hpp"
+#include <algorithm>
+#include <map>
+#include <set>
+
+#include "clique/config.h"
+
 //
 // The core of the library
 //
 
 #include "clique/core/environment.hpp"
 
-// These two classes are intertwined, so declare both before defining them
-namespace cliq { class Graph; class DistGraph; }
-
-#include "clique/core/graph.hpp"
-#include "clique/core/dist_graph.hpp"
-#include "clique/core/graph_main.hpp"
-#include "clique/core/dist_graph_main.hpp"
-
-// These two classes are intertwined, so declare both before defining them
+// Data-structure declarations
 namespace cliq { 
-template<typename F> class SparseMatrix; 
-template<typename F> class DistSparseMatrix; 
-}
-#include "clique/core/sparse_matrix.hpp"
-#include "clique/core/dist_sparse_matrix.hpp"
-#include "clique/core/sparse_matrix_main.hpp"
-#include "clique/core/dist_sparse_matrix_main.hpp"
+    class Graph; 
+    class DistGraph; 
+    template<typename T> class SparseMatrix;
+    template<typename T> class DistSparseMatrix;
+    // TODO: template<typename T> class Vector;
+    template<typename T> class DistVector;
+} 
+#include "clique/core/graph_decl.hpp"
+#include "clique/core/dist_graph_decl.hpp"
+#include "clique/core/sparse_matrix_decl.hpp"
+#include "clique/core/dist_sparse_matrix_decl.hpp"
+#include "clique/core/dist_vector_decl.hpp"
 
-#include "clique/core/dist_vector.hpp"
-#include "clique/core/dist_vector_main.hpp"
+// Data-structure implementations
+#include "clique/core/graph_impl.hpp"
+#include "clique/core/dist_graph_impl.hpp"
+#include "clique/core/sparse_matrix_impl.hpp"
+#include "clique/core/dist_sparse_matrix_impl.hpp"
+#include "clique/core/dist_vector_impl.hpp"
 
 //
 // Symbolic computation
@@ -61,12 +69,13 @@ template<typename F> class DistSparseMatrix;
 // Numerical computation
 //
 
-#include "clique/numeric/dist_nodal_vector.hpp"
-#include "clique/numeric/dist_nodal_vector_main.hpp"
-
 #include "clique/numeric/multiply.hpp"
 
-#include "clique/numeric/dist_symm_front_tree.hpp"
+#include "clique/numeric/dist_nodal_vector_decl.hpp"
+#include "clique/numeric/dist_nodal_vector_impl.hpp"
+
+#include "clique/numeric/dist_symm_front_tree_decl.hpp"
+#include "clique/numeric/dist_symm_front_tree_impl.hpp"
 #include "clique/numeric/set_solve_mode.hpp"
 
 #include "clique/numeric/ldl.hpp"
@@ -79,4 +88,4 @@ template<typename F> class DistSparseMatrix;
 #include "clique/numeric/block_ldl.hpp"
 #include "clique/numeric/block_ldl_solve.hpp"
 
-#endif /* CLIQUE_HPP */
+#endif // CLIQUE_HPP

@@ -17,8 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_DIST_LOWER_MULTIPLY
-#define CLIQUE_DIST_LOWER_MULTIPLY 1
 
 namespace cliq {
 
@@ -358,5 +356,3 @@ inline void DistLowerMultiplyTranspose
 }
 
 } // namespace cliq
-
-#endif // CLIQUE_DIST_LOWER_MULTIPLY

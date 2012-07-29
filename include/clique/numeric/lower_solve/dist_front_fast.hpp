@@ -17,8 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_DIST_FRONT_FAST_LOWER_SOLVE_HPP
-#define CLIQUE_DIST_FRONT_FAST_LOWER_SOLVE_HPP 1
 
 namespace cliq {
 
@@ -434,5 +432,3 @@ inline void DistFrontFastLowerBackwardSolve
 }
 
 } // namespace cliq
-
-#endif // CLIQUE_DIST_FRONT_FAST_LOWER_SOLVE_HPP

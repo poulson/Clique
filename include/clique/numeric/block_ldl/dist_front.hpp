@@ -17,8 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_DIST_FRONT_BLOCK_LDL_HPP
-#define CLIQUE_DIST_FRONT_BLOCK_LDL_HPP 1
 
 namespace cliq {
 
@@ -78,5 +76,3 @@ inline void DistFrontBlockLDL
 }
 
 } // namespace cliq
-
-#endif // CLIQUE_DIST_FRONT_BLOCK_LDL_HPP

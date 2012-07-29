@@ -17,100 +17,93 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_DIST_SPARSE_MATRIX_MAIN_HPP
-#define CLIQUE_DIST_SPARSE_MATRIX_MAIN_HPP 1
 
 namespace cliq {
 
 template<typename T>
-inline 
-DistSparseMatrix<T>::DistSparseMatrix()
-{ }
-
-template<typename T>
-inline 
-DistSparseMatrix<T>::DistSparseMatrix( mpi::Comm comm )
-: graph_(comm)
+inline
+SparseMatrix<T>::SparseMatrix()
 { }
 
 template<typename T>
 inline
-DistSparseMatrix<T>::DistSparseMatrix( int height, mpi::Comm comm )
-: graph_(height,comm)
+SparseMatrix<T>::SparseMatrix( int height )
+: graph_(height)
 { }
 
 template<typename T>
 inline 
-DistSparseMatrix<T>::DistSparseMatrix( int height, int width, mpi::Comm comm )
-: graph_(height,width,comm)
+SparseMatrix<T>::SparseMatrix( int height, int width )
+: graph_(height,width)
 { }
 
 template<typename T>
-inline 
-DistSparseMatrix<T>::~DistSparseMatrix()
+inline
+SparseMatrix<T>::SparseMatrix( const SparseMatrix<T>& A )
+{ 
+#ifndef RELEASE
+    PushCallStack("SparseMatrix::SparseMatrix");
+#endif
+    if( &A != this )
+        *this = A;
+    else
+        throw std::logic_error("Tried to construct sparse matrix with itself");
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename T>
+inline
+SparseMatrix<T>::SparseMatrix( const DistSparseMatrix<T>& A )
+{ 
+#ifndef RELEASE
+    PushCallStack("SparseMatrix::SparseMatrix");
+#endif
+    *this = A;
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename T>
+inline
+SparseMatrix<T>::~SparseMatrix()
 { }
 
 template<typename T>
 inline int 
-DistSparseMatrix<T>::Height() const
+SparseMatrix<T>::Height() const
 { return graph_.NumSources(); }
 
 template<typename T>
 inline int 
-DistSparseMatrix<T>::Width() const
+SparseMatrix<T>::Width() const
 { return graph_.NumTargets(); }
 
 template<typename T>
-inline const DistGraph& 
-DistSparseMatrix<T>::Graph() const
+inline const cliq::Graph& 
+SparseMatrix<T>::Graph() const
 { return graph_; }
 
 template<typename T>
-inline void
-DistSparseMatrix<T>::SetComm( mpi::Comm comm )
-{ 
-    graph_.SetComm( comm ); 
-    values_.clear();
-}
-
-template<typename T>
-inline mpi::Comm 
-DistSparseMatrix<T>::Comm() const
-{ return graph_.Comm(); }
-
-template<typename T>
 inline int
-DistSparseMatrix<T>::Blocksize() const
-{ return graph_.Blocksize(); }
-
-template<typename T>
-inline int
-DistSparseMatrix<T>::FirstLocalRow() const
-{ return graph_.FirstLocalSource(); }
-
-template<typename T>
-inline int
-DistSparseMatrix<T>::LocalHeight() const
-{ return graph_.NumLocalSources(); }
-
-template<typename T>
-inline int
-DistSparseMatrix<T>::NumLocalEntries() const
+SparseMatrix<T>::NumEntries() const
 {
 #ifndef RELEASE
-    PushCallStack("DistSparseMatrix::NumLocalEntries");
+    PushCallStack("SparseMatrix::NumEntries");
     EnsureConsistentSizes();
     PopCallStack();
 #endif
-    return graph_.NumLocalEdges();
+    return graph_.NumEdges();
 }
 
 template<typename T>
 inline int
-DistSparseMatrix<T>::Capacity() const
+SparseMatrix<T>::Capacity() const
 {
 #ifndef RELEASE
-    PushCallStack("DistSparseMatrix::Capacity");
+    PushCallStack("SparseMatrix::Capacity");
     EnsureConsistentSizes();
     EnsureConsistentCapacities();
     PopCallStack();
@@ -120,12 +113,12 @@ DistSparseMatrix<T>::Capacity() const
 
 template<typename T>
 inline int
-DistSparseMatrix<T>::Row( int localEntry ) const
+SparseMatrix<T>::Row( int entry ) const
 { 
 #ifndef RELEASE 
-    PushCallStack("DistSparseMatrix::Row");
+    PushCallStack("SparseMatrix::Row");
 #endif
-    const int row = graph_.Source( localEntry );
+    const int row = graph_.Source( entry );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -134,12 +127,12 @@ DistSparseMatrix<T>::Row( int localEntry ) const
 
 template<typename T>
 inline int
-DistSparseMatrix<T>::Col( int localEntry ) const
+SparseMatrix<T>::Col( int entry ) const
 { 
 #ifndef RELEASE 
-    PushCallStack("DistSparseMatrix::Col");
+    PushCallStack("SparseMatrix::Col");
 #endif
-    const int col = graph_.Target( localEntry );
+    const int col = graph_.Target( entry );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -148,26 +141,26 @@ DistSparseMatrix<T>::Col( int localEntry ) const
 
 template<typename T>
 inline int
-DistSparseMatrix<T>::LocalEntryOffset( int localRow ) const
+SparseMatrix<T>::EntryOffset( int row ) const
 {
 #ifndef RELEASE
-    PushCallStack("DistSparseMatrix::LocalEntryOffset");
+    PushCallStack("SparseMatrix::EntryOffset");
 #endif
-    const int localEntryOffset = graph_.LocalEdgeOffset( localRow );
+    const int entryOffset = graph_.EdgeOffset( row );
 #ifndef RELEASE
     PopCallStack();
 #endif
-    return localEntryOffset;
+    return entryOffset;
 }
 
 template<typename T>
 inline int
-DistSparseMatrix<T>::NumConnections( int localRow ) const
+SparseMatrix<T>::NumConnections( int row ) const
 {
 #ifndef RELEASE
-    PushCallStack("DistSparseMatrix::NumConnections");
+    PushCallStack("SparseMatrix::NumConnections");
 #endif
-    const int numConnections = graph_.NumConnections( localRow );
+    const int numConnections = graph_.NumConnections( row );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -176,30 +169,30 @@ DistSparseMatrix<T>::NumConnections( int localRow ) const
 
 template<typename T>
 inline T
-DistSparseMatrix<T>::Value( int localEntry ) const
+SparseMatrix<T>::Value( int entry ) const
 { 
 #ifndef RELEASE 
-    PushCallStack("DistSparseMatrix::Value");
-    if( localEntry < 0 || localEntry >= (int)values_.size() )
+    PushCallStack("SparseMatrix::Value");
+    if( entry < 0 || entry >= values_.size() )
         throw std::logic_error("Entry number out of bounds");
     PopCallStack();
 #endif
-    return values_[localEntry];
+    return values_[entry];
 }
 
 template<typename T>
 inline bool
-DistSparseMatrix<T>::CompareEntries( const Entry<T>& a, const Entry<T>& b )
+SparseMatrix<T>::CompareEntries( const Entry<T>& a, const Entry<T>& b )
 {
     return a.i < b.i || (a.i == b.i && a.j < b.j);
 }
 
 template<typename T>
 inline void
-DistSparseMatrix<T>::StartAssembly()
+SparseMatrix<T>::StartAssembly()
 {
 #ifndef RELEASE
-    PushCallStack("DistSparseMatrix::StartAssembly");
+    PushCallStack("SparseMatrix::StartAssembly");
 #endif
     graph_.EnsureNotAssembling();
     graph_.assembling_ = true;
@@ -210,10 +203,10 @@ DistSparseMatrix<T>::StartAssembly()
 
 template<typename T>
 inline void
-DistSparseMatrix<T>::StopAssembly()
+SparseMatrix<T>::StopAssembly()
 {
 #ifndef RELEASE
-    PushCallStack("DistSparseMatrix::StopAssembly");
+    PushCallStack("SparseMatrix::StopAssembly");
 #endif
     if( !graph_.assembling_ )
         throw std::logic_error("Cannot stop assembly without starting");
@@ -222,9 +215,9 @@ DistSparseMatrix<T>::StopAssembly()
     // Ensure that the connection pairs are sorted
     if( !graph_.sorted_ )
     {
-        const int numLocalEntries = values_.size();
-        std::vector<Entry<T> > entries( numLocalEntries );
-        for( int s=0; s<numLocalEntries; ++s )
+        const int numEntries = values_.size();
+        std::vector<Entry<T> > entries( numEntries );
+        for( int s=0; s<numEntries; ++s )
         {
             entries[s].i = graph_.sources_[s];
             entries[s].j = graph_.targets_[s];
@@ -234,7 +227,7 @@ DistSparseMatrix<T>::StopAssembly()
 
         // Compress out duplicates
         int lastUnique=0;
-        for( int s=1; s<numLocalEntries; ++s )
+        for( int s=1; s<numEntries; ++s )
         {
             if( entries[s].i != entries[lastUnique].i ||
                 entries[s].j != entries[lastUnique].j )
@@ -260,7 +253,7 @@ DistSparseMatrix<T>::StopAssembly()
         }
     }
 
-    graph_.ComputeLocalEdgeOffsets();
+    graph_.ComputeEdgeOffsets();
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -268,18 +261,18 @@ DistSparseMatrix<T>::StopAssembly()
 
 template<typename T>
 inline void
-DistSparseMatrix<T>::Reserve( int numLocalEntries )
+SparseMatrix<T>::Reserve( int numEntries )
 { 
-    graph_.Reserve( numLocalEntries );
-    values_.reserve( numLocalEntries );
+    graph_.Reserve( numEntries );
+    values_.reserve( numEntries );
 }
 
 template<typename T>
 inline void
-DistSparseMatrix<T>::Update( int row, int col, T value )
+SparseMatrix<T>::Update( int row, int col, T value )
 {
 #ifndef RELEASE
-    PushCallStack("DistSparseMatrix::Update");
+    PushCallStack("SparseMatrix::Update");
     EnsureConsistentSizes();
 #endif
     graph_.Insert( row, col );
@@ -291,7 +284,7 @@ DistSparseMatrix<T>::Update( int row, int col, T value )
 
 template<typename T>
 inline void
-DistSparseMatrix<T>::Empty()
+SparseMatrix<T>::Empty()
 {
     graph_.Empty();
     values_.clear();
@@ -299,24 +292,60 @@ DistSparseMatrix<T>::Empty()
 
 template<typename T>
 inline void
-DistSparseMatrix<T>::ResizeTo( int height, int width )
+SparseMatrix<T>::ResizeTo( int height, int width )
 {
     graph_.ResizeTo( height, width );
     values_.clear();
 }
 
 template<typename T>
+inline const SparseMatrix<T>&
+SparseMatrix<T>::operator=( const SparseMatrix<T>& A )
+{
+#ifndef RELEASE
+    PushCallStack("SparseMatrix::operator=");
+#endif
+    graph_ = A.graph_;
+    values_ = A.values_;
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return *this;
+}
+
+template<typename T>
+inline const SparseMatrix<T>&
+SparseMatrix<T>::operator=( const DistSparseMatrix<T>& A )
+{
+#ifndef RELEASE
+    PushCallStack("SparseMatrix::operator=");
+#endif
+    mpi::Comm comm = A.Comm();
+    const int commSize = mpi::CommSize( comm );
+    if( commSize != 1 )
+        throw std::logic_error
+        ("Can not yet construct from distributed sparse matrix");
+
+    graph_ = A.graph_;
+    values_ = A.values_;
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return *this;
+}
+
+template<typename T>
 inline void
-DistSparseMatrix<T>::EnsureConsistentSizes() const
+SparseMatrix<T>::EnsureConsistentSizes() const
 { 
     graph_.EnsureConsistentSizes();
-    if( graph_.NumLocalEdges() != (int)values_.size() )
+    if( graph_.NumEdges() != values_.size() )
         throw std::logic_error("Inconsistent sparsity sizes");
 }
 
 template<typename T>
 inline void
-DistSparseMatrix<T>::EnsureConsistentCapacities() const
+SparseMatrix<T>::EnsureConsistentCapacities() const
 { 
     graph_.EnsureConsistentCapacities();
     if( graph_.Capacity() != values_.capacity() )
@@ -324,5 +353,3 @@ DistSparseMatrix<T>::EnsureConsistentCapacities() const
 }
 
 } // namespace cliq
-
-#endif // CLIQUE_DIST_SPARSE_MATRIX_MAIN_HPP

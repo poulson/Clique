@@ -17,8 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_MULTIPLY_HPP
-#define CLIQUE_MULTIPLY_HPP 1
 
 namespace cliq {
 
@@ -154,5 +152,3 @@ void Multiply
 }
 
 } // namespace cliq
-
-#endif // CLIQUE_MULTIPLY_HPP

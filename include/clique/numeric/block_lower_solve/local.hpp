@@ -17,8 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_LOCAL_BLOCK_LOWER_SOLVE_HPP
-#define CLIQUE_LOCAL_BLOCK_LOWER_SOLVE_HPP 1
 
 namespace cliq {
 
@@ -188,5 +186,3 @@ inline void LocalBlockLowerBackwardSolve
 }
 
 } // namespace cliq
-
-#endif // CLIQUE_LOCAL_BLOCK_LOWER_SOLVE_HPP

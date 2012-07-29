@@ -17,8 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_DIST_SYMM_INFO_HPP
-#define CLIQUE_DIST_SYMM_INFO_HPP 1
 
 namespace cliq {
 
@@ -89,5 +87,3 @@ struct DistSymmInfo
 };
 
 } // namespace cliq
-
-#endif /* CLIQUE_DIST_SYMM_INFO_HPP */

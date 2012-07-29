@@ -17,15 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_CORE_ENVIRONMENT_HPP
-#define CLIQUE_CORE_ENVIRONMENT_HPP 1
-
-#include "elemental.hpp"
-#include <algorithm>
-#include <map>
-#include <set>
-
-#include "clique/config.h"
 
 namespace cliq {
 
@@ -143,5 +134,3 @@ SparseAllToAll
 }
 
 } // namespace cliq
-
-#endif /* CLIQUE_CORE_ENVIRONMENT_HPP */

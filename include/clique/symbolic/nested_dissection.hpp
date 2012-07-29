@@ -17,8 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_NESTED_DISSECTION_HPP
-#define CLIQUE_NESTED_DISSECTION_HPP 1
 
 #ifdef HAVE_PARMETIS
 
@@ -1484,5 +1482,3 @@ InvertMap
 } // namespace cliq
 
 #endif // HAVE_PARMETIS
-
-#endif // CLIQUE_NESTED_DISSECTION_HPP

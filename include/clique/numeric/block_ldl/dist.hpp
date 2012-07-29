@@ -17,8 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_DIST_BLOCK_LDL_HPP 
-#define CLIQUE_DIST_BLOCK_LDL_HPP 1
 
 // NOTE: This routine is almost identical to DistLDL, so perhaps it could
 //       be partially merged.
@@ -224,5 +222,3 @@ inline void DistBlockLDL
 }
 
 } // namespace cliq
-
-#endif // CLIQUE_DIST_BLOCK_LDL_HPP
