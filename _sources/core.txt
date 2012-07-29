@@ -11,3 +11,5 @@ Core functionality
    core/dist_sparse_matrix
    core/vector
    core/dist_vector
+   core/multi_vector
+   core/dist_multi_vector

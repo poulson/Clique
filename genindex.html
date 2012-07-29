@@ -78,7 +78,7 @@
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="core/vector.html#Axpy__T.Vector:T:CR.Vector:T:R">Axpy (C++ function)</a>, <a href="core/dist_vector.html#Axpy__T.DistVector:T:CR.DistVector:T:R">[1]</a>
+  <dt><a href="core/vector.html#Axpy__T.Vector:T:CR.Vector:T:R">Axpy (C++ function)</a>, <a href="core/multi_vector.html#Axpy__T.MultiVector:T:CR.MultiVector:T:R">[1]</a>, <a href="core/dist_vector.html#Axpy__T.DistVector:T:CR.DistVector:T:R">[2]</a>, <a href="core/dist_multi_vector.html#Axpy__T.DistMultiVector:T:CR.DistMultiVector:T:R">[3]</a>
   </dt>
 
   </dl></td>
@@ -222,6 +222,66 @@
   </dt>
 
       
+  <dt><a href="core/dist_multi_vector.html#DistMultiVector:T:">DistMultiVector&lt;T&gt; (C++ class)</a>
+  </dt>
+
+      
+  <dt><a href="core/dist_multi_vector.html#DistMultiVector:T:::BlocksizeC">DistMultiVector&lt;T&gt;::Blocksize (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="core/dist_multi_vector.html#DistMultiVector:T:::CommC">DistMultiVector&lt;T&gt;::Comm (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="core/dist_multi_vector.html#DistMultiVector:T:::DistMultiVector">DistMultiVector&lt;T&gt;::DistMultiVector (C++ function)</a>, <a href="core/dist_multi_vector.html#DistMultiVector:T:::DistMultiVector__mpi::Comm">[1]</a>, <a href="core/dist_multi_vector.html#DistMultiVector:T:::DistMultiVector__i.i.mpi::Comm">[2]</a>
+  </dt>
+
+      
+  <dt><a href="core/dist_multi_vector.html#DistMultiVector:T:::Empty">DistMultiVector&lt;T&gt;::Empty (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="core/dist_multi_vector.html#DistMultiVector:T:::FirstLocalRowC">DistMultiVector&lt;T&gt;::FirstLocalRow (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="core/dist_multi_vector.html#DistMultiVector:T:::GetLocal__i.iC">DistMultiVector&lt;T&gt;::GetLocal (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="core/dist_multi_vector.html#DistMultiVector:T:::HeightC">DistMultiVector&lt;T&gt;::Height (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="core/dist_multi_vector.html#DistMultiVector:T:::LocalHeightC">DistMultiVector&lt;T&gt;::LocalHeight (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="core/dist_multi_vector.html#DistMultiVector:T:::assign-operator__DistVector:T:CR">DistMultiVector&lt;T&gt;::operator= (C++ function)</a>, <a href="core/dist_multi_vector.html#DistMultiVector:T:::assign-operator__DistMultiVector:T:CR">[1]</a>
+  </dt>
+
+      
+  <dt><a href="core/dist_multi_vector.html#DistMultiVector:T:::ResizeTo__i.i">DistMultiVector&lt;T&gt;::ResizeTo (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="core/dist_multi_vector.html#DistMultiVector:T:::SetComm__mpi::Comm">DistMultiVector&lt;T&gt;::SetComm (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="core/dist_multi_vector.html#DistMultiVector:T:::SetLocal__i.i.T">DistMultiVector&lt;T&gt;::SetLocal (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="core/dist_multi_vector.html#DistMultiVector:T:::UpdateLocal__i.i.T">DistMultiVector&lt;T&gt;::UpdateLocal (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="core/dist_multi_vector.html#DistMultiVector:T:::WidthC">DistMultiVector&lt;T&gt;::Width (C++ function)</a>
+  </dt>
+
+      
   <dt><a href="core/environment.html#Distribution__enum">Distribution (C++ type)</a>
   </dt>
 
@@ -333,6 +393,8 @@
   <dt><a href="core/dist_sparse_matrix.html#DistSparseMatrix:T:::StopAssembly">DistSparseMatrix&lt;T&gt;::StopAssembly (C++ function)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="core/dist_sparse_matrix.html#DistSparseMatrix:T:::Update__i.i.T">DistSparseMatrix&lt;T&gt;::Update (C++ function)</a>
   </dt>
@@ -365,8 +427,6 @@
   <dt><a href="numeric/data_structures.html#DistSymmFront:F:::diag__DistMatrix:F.VC.STAR:">DistSymmFront&lt;F&gt;::diag (C++ member)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="numeric/data_structures.html#DistSymmFront:F:::front1dL__mutable-DistMatrix:F.VC.STAR:">DistSymmFront&lt;F&gt;::front1dL (C++ member)</a>
   </dt>
@@ -844,17 +904,57 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="core/vector.html#MakeUniform__Vector:T:R">MakeUniform (C++ function)</a>, <a href="core/dist_vector.html#MakeUniform__DistVector:T:R">[1]</a>
+  <dt><a href="core/vector.html#MakeUniform__Vector:T:R">MakeUniform (C++ function)</a>, <a href="core/multi_vector.html#MakeUniform__MultiVector:T:R">[1]</a>, <a href="core/dist_vector.html#MakeUniform__DistVector:T:R">[2]</a>, <a href="core/dist_multi_vector.html#MakeUniform__DistMultiVector:T:R">[3]</a>
   </dt>
 
       
-  <dt><a href="core/vector.html#MakeZeros__Vector:T:R">MakeZeros (C++ function)</a>, <a href="core/dist_vector.html#MakeZeros__DistVector:T:R">[1]</a>
+  <dt><a href="core/vector.html#MakeZeros__Vector:T:R">MakeZeros (C++ function)</a>, <a href="core/multi_vector.html#MakeZeros__MultiVector:T:R">[1]</a>, <a href="core/dist_vector.html#MakeZeros__DistVector:T:R">[2]</a>, <a href="core/dist_multi_vector.html#MakeZeros__DistMultiVector:T:R">[3]</a>
+  </dt>
+
+      
+  <dt><a href="core/environment.html#Matrix:T:">Matrix&lt;T&gt; (C++ class)</a>
+  </dt>
+
+      
+  <dt><a href="core/multi_vector.html#MultiVector:T:">MultiVector&lt;T&gt; (C++ class)</a>
+  </dt>
+
+      
+  <dt><a href="core/multi_vector.html#MultiVector:T:::Empty">MultiVector&lt;T&gt;::Empty (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="core/multi_vector.html#MultiVector:T:::Get__i.iC">MultiVector&lt;T&gt;::Get (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="core/multi_vector.html#MultiVector:T:::HeightC">MultiVector&lt;T&gt;::Height (C++ function)</a>
   </dt>
 
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="core/environment.html#Matrix:T:">Matrix&lt;T&gt; (C++ class)</a>
+  <dt><a href="core/multi_vector.html#MultiVector:T:::MultiVector">MultiVector&lt;T&gt;::MultiVector (C++ function)</a>, <a href="core/multi_vector.html#MultiVector:T:::MultiVector__i.i">[1]</a>
+  </dt>
+
+      
+  <dt><a href="core/multi_vector.html#MultiVector:T:::assign-operator__Vector:T:CR">MultiVector&lt;T&gt;::operator= (C++ function)</a>, <a href="core/multi_vector.html#MultiVector:T:::assign-operator__MultiVector:T:CR">[1]</a>
+  </dt>
+
+      
+  <dt><a href="core/multi_vector.html#MultiVector:T:::ResizeTo__i.i">MultiVector&lt;T&gt;::ResizeTo (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="core/multi_vector.html#MultiVector:T:::Set__i.i.T">MultiVector&lt;T&gt;::Set (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="core/multi_vector.html#MultiVector:T:::Update__i.i.T">MultiVector&lt;T&gt;::Update (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="core/multi_vector.html#MultiVector:T:::WidthC">MultiVector&lt;T&gt;::Width (C++ function)</a>
   </dt>
 
   </dl></td>
@@ -867,10 +967,14 @@
   <dt><a href="symbolic/nested_dissection.html#NestedDissection__DistGraphCR.std::vector:i:R.DistSeparatorTreeR.DistSymmInfoR.i.i.i.b">NestedDissection (C++ function)</a>
   </dt>
 
+      
+  <dt><a href="core/vector.html#Norm__Vector:F:CR">Norm (C++ function)</a>, <a href="core/dist_vector.html#Norm__DistVector:F:CR">[1]</a>, <a href="core/dist_multi_vector.html#Norm__DistMultiVector:F:CR.std::vector:typename-Base:F:::type:R">[2]</a>
+  </dt>
+
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="core/vector.html#Norm__Vector:F:CR">Norm (C++ function)</a>, <a href="core/dist_vector.html#Norm__DistVector:F:CR">[1]</a>
+  <dt><a href="core/multi_vector.html#Norms__MultiVector:F:CR.std::vector:typename-Base:F:::type:R">Norms (C++ function)</a>
   </dt>
 
   </dl></td>

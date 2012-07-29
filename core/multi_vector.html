@@ -1,0 +1,182 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>The MultiVector class &mdash; Clique 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/print.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/theme_extras.js"></script>
+    <link rel="top" title="Clique 0.1 documentation" href="../index.html" />
+    <link rel="up" title="Core functionality" href="../core.html" />
+    <link rel="next" title="The DistMultiVector class" href="dist_multi_vector.html" />
+    <link rel="prev" title="The DistVector class" href="dist_vector.html" /> 
+  </head>
+  <body>
+      <div class="header"><h1 class="heading"><a href="../index.html">
+          <span>Clique 0.1 documentation</span></a></h1>
+        <h2 class="heading"><span>The MultiVector class</span></h2>
+      </div>
+      <div class="topnav">
+      
+        <p>
+        «&#160;&#160;<a href="dist_vector.html">The DistVector class</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="dist_multi_vector.html">The DistMultiVector class</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="the-multivector-class">
+<h1>The MultiVector class<a class="headerlink" href="#the-multivector-class" title="Permalink to this headline">¶</a></h1>
+<p>The <a class="reference internal" href="#MultiVector:T:" title="MultiVector&lt;T&gt;"><tt class="xref cpp cpp-class docutils literal"><span class="pre">MultiVector&lt;T&gt;</span></tt></a> class is the standard interface in Clique for
+setting up multiple right-hand sides for sequential solves: it is a simplified
+version of <a class="reference internal" href="dist_multi_vector.html#DistMultiVector:T:" title="DistMultiVector&lt;T&gt;"><tt class="xref cpp cpp-class docutils literal"><span class="pre">DistMultiVector&lt;T&gt;</span></tt></a>.</p>
+<dl class="class">
+<dt id="MultiVector:T:">
+<em class="property">class </em><tt class="descname">MultiVector&lt;T&gt;</tt><a class="headerlink" href="#MultiVector:T:" title="Permalink to this definition">¶</a></dt>
+<dd><p class="rubric">Constructors</p>
+<dl class="function">
+<dt id="MultiVector:T:::MultiVector">
+ <tt class="descname">MultiVector</tt><big>(</big><big>)</big><a class="headerlink" href="#MultiVector:T:::MultiVector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructs a single vector of length zero.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="MultiVector:T:::MultiVector__i.i">
+ <tt class="descname">MultiVector</tt><big>(</big>int <em>height</em>, int <em>width</em><big>)</big><a class="headerlink" href="#MultiVector:T:::MultiVector__i.i" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructs <cite>width</cite> vectors, each of the specified height.</p>
+</dd></dl>
+
+<p class="rubric">High-level information</p>
+<dl class="function">
+<dt id="MultiVector:T:::HeightC">
+int <tt class="descname">Height</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#MultiVector:T:::HeightC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the length of the vectors.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="MultiVector:T:::WidthC">
+int <tt class="descname">Width</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#MultiVector:T:::WidthC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the number of vectors.</p>
+</dd></dl>
+
+<p class="rubric">Data</p>
+<dl class="function">
+<dt id="MultiVector:T:::Get__i.iC">
+T <tt class="descname">Get</tt><big>(</big>int <em>row</em>, int <em>col</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#MultiVector:T:::Get__i.iC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the value at the specified row of a particular vector.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="MultiVector:T:::Set__i.i.T">
+void <tt class="descname">Set</tt><big>(</big>int <em>row</em>, int <em>col</em>, T <em>value</em><big>)</big><a class="headerlink" href="#MultiVector:T:::Set__i.i.T" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the value at the specified row of a particular vector.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="MultiVector:T:::Update__i.i.T">
+void <tt class="descname">Update</tt><big>(</big>int <em>row</em>, int <em>col</em>, T <em>value</em><big>)</big><a class="headerlink" href="#MultiVector:T:::Update__i.i.T" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a value onto the specified row entry of a particular vector.</p>
+</dd></dl>
+
+<p class="rubric">For modifying the size of the vector</p>
+<dl class="function">
+<dt id="MultiVector:T:::Empty">
+void <tt class="descname">Empty</tt><big>(</big><big>)</big><a class="headerlink" href="#MultiVector:T:::Empty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Frees all resources and sets the multivector to a single vector of height
+zero.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="MultiVector:T:::ResizeTo__i.i">
+void <tt class="descname">ResizeTo</tt><big>(</big>int <em>height</em>, int <em>width</em><big>)</big><a class="headerlink" href="#MultiVector:T:::ResizeTo__i.i" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reconfigures the class to have <cite>width</cite> vectors, each of the given height.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="MultiVector:T:::assign-operator__Vector:T:CR">
+const MultiVector&lt;T&gt;&amp; <tt class="descname">operator=</tt><big>(</big>const Vector&lt;T&gt;&amp; <em>x</em><big>)</big><a class="headerlink" href="#MultiVector:T:::assign-operator__Vector:T:CR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Makes this multi-vector a copy of the given vector.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="MultiVector:T:::assign-operator__MultiVector:T:CR">
+const MultiVector&lt;T&gt;&amp; <tt class="descname">operator=</tt><big>(</big>const MultiVector&lt;T&gt;&amp; <em>X</em><big>)</big><a class="headerlink" href="#MultiVector:T:::assign-operator__MultiVector:T:CR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Makes this multi-vector a copy of the given multi-vector.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="MakeZeros__MultiVector:T:R">
+void <tt class="descname">MakeZeros</tt><big>(</big>MultiVector&lt;T&gt;&amp; <em>X</em><big>)</big><a class="headerlink" href="#MakeZeros__MultiVector:T:R" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets every entry in the multi-vector to zero.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="MakeUniform__MultiVector:T:R">
+void <tt class="descname">MakeUniform</tt><big>(</big>MultiVector&lt;T&gt;&amp; <em>X</em><big>)</big><a class="headerlink" href="#MakeUniform__MultiVector:T:R" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets each entry in the multi-vector to a sample from the unit ball
+appropriate for type <tt class="docutils literal"><span class="pre">T</span></tt>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="Norms__MultiVector:F:CR.std::vector:typename-Base:F:::type:R">
+void <tt class="descname">Norms</tt><big>(</big>const MultiVector&lt;F&gt;&amp; <em>X</em>, std::vector&lt;typename Base&lt;F&gt;::type&gt;&amp; <em>norms</em><big>)</big><a class="headerlink" href="#Norms__MultiVector:F:CR.std::vector:typename-Base:F:::type:R" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the Euclidean norms of each vector in the multi-vector.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="Axpy__T.MultiVector:T:CR.MultiVector:T:R">
+void <tt class="descname">Axpy</tt><big>(</big>T <em>alpha</em>, const MultiVector&lt;T&gt;&amp; <em>X</em>, MultiVector&lt;T&gt;&amp; <em>Y</em><big>)</big><a class="headerlink" href="#Axpy__T.MultiVector:T:CR.MultiVector:T:R" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates <span class="math">\(Y := \alpha X + Y\)</span>.</p>
+</dd></dl>
+
+</div>
+
+
+      </div>
+      <div class="bottomnav">
+      
+        <p>
+        «&#160;&#160;<a href="dist_vector.html">The DistVector class</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="dist_multi_vector.html">The DistMultiVector class</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer">
+        &copy; Copyright 2012, Jack Poulson.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

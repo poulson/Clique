@@ -1,0 +1,77 @@
+The MultiVector class
+=====================
+The :cpp:class:`MultiVector\<T>` class is the standard interface in Clique for
+setting up multiple right-hand sides for sequential solves: it is a simplified 
+version of :cpp:class:`DistMultiVector\<T>`.
+
+.. cpp:class:: MultiVector<T>
+
+   .. rubric:: Constructors
+
+   .. cpp:function:: MultiVector()
+
+      Constructs a single vector of length zero.
+
+   .. cpp:function:: MultiVector( int height, int width )
+
+      Constructs `width` vectors, each of the specified height.
+
+   .. rubric:: High-level information
+
+   .. cpp:function:: int Height() const
+
+      Returns the length of the vectors.
+
+   .. cpp:function:: int Width() const
+
+      Returns the number of vectors.
+
+   .. rubric:: Data
+
+   .. cpp:function:: T Get( int row, int col ) const
+
+      Returns the value at the specified row of a particular vector.
+
+   .. cpp:function:: void Set( int row, int col, T value )
+     
+      Sets the value at the specified row of a particular vector.
+
+   .. cpp:function:: void Update( int row, int col, T value )
+
+      Adds a value onto the specified row entry of a particular vector.
+
+   .. rubric:: For modifying the size of the vector
+
+   .. cpp:function:: void Empty()
+
+      Frees all resources and sets the multivector to a single vector of height 
+      zero.
+
+   .. cpp:function:: void ResizeTo( int height, int width )
+
+      Reconfigures the class to have `width` vectors, each of the given height.
+
+   .. cpp:function:: const MultiVector<T>& operator=( const Vector<T>& x )
+
+      Makes this multi-vector a copy of the given vector.
+
+   .. cpp:function:: const MultiVector<T>& operator=( const MultiVector<T>& X )
+
+      Makes this multi-vector a copy of the given multi-vector.
+
+.. cpp:function:: void MakeZeros( MultiVector<T>& X )
+
+   Sets every entry in the multi-vector to zero.
+
+.. cpp:function:: void MakeUniform( MultiVector<T>& X )
+
+   Sets each entry in the multi-vector to a sample from the unit ball 
+   appropriate for type ``T``.
+
+.. cpp:function:: void Norms( const MultiVector<F>& X, std::vector<typename Base<F>::type>& norms )
+
+   Returns the Euclidean norms of each vector in the multi-vector.
+
+.. cpp:function:: void Axpy( T alpha, const MultiVector<T>& X, MultiVector<T>& Y )
+
+   Updates :math:`Y := \alpha X + Y`.

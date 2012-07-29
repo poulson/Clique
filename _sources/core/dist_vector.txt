@@ -25,7 +25,7 @@ use.
 
    .. cpp:function:: int Height() const
 
-      Returns the length of the vector.
+      The length of the vector.
 
    .. rubric:: Communicator-management
 
@@ -57,7 +57,7 @@ use.
 
    .. cpp:function:: T GetLocal( int localRow ) const
 
-      Returns the value of the specified local entry.
+      The value of the specified local entry.
 
    .. cpp:function:: void SetLocal( int localRow, T value )
      
@@ -92,7 +92,7 @@ use.
 
 .. cpp:function:: typename Base<F>::type Norm( const DistVector<F>& x )
 
-   Returns the Euclidean norm of the vector.
+   The Euclidean norm of the vector.
 
 .. cpp:function:: void Axpy( T alpha, const DistVector<T>& x, DistVector<T>& y )
 
