@@ -23,7 +23,7 @@ using namespace cliq;
 void Usage()
 {
     std::cout
-      << "MultiVector <n1> <n2> <n3> <numRhs> "
+      << "MultiVectorSolve <n1> <n2> <n3> <numRhs> "
       << "[cutoff=128] [numDistSeps=10] [numSeqSeps=5]\n"
       << "  n1: first dimension of n1 x n2 x n3 mesh\n"
       << "  n2: second dimension of n1 x n2 x n3 mesh\n"

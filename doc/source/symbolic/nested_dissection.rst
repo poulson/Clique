@@ -24,5 +24,5 @@ as a means of producing such a separator tree from an arbitrary graph.
    factorization
 
    See `tests/NestedDissection <https://github.com/poulson/Clique/blob/master/tests/NestedDissection.cpp>`__ for an example of its usage directly on a 
-   distributed graph, and `tests/DistSparseMatrix.cpp <https://github.com/poulson/Clique/blob/master/tests/DistSparseMatrix.cpp>`__ for its application to the
+   distributed graph, and `tests/VectorSolve.cpp <https://github.com/poulson/Clique/blob/master/tests/VectorSolve.cpp>`__ for its application to the
    underlying graph of a sparse matrix.

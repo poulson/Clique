@@ -102,7 +102,7 @@ if(CLIQ_TESTS)
   set(TEST_DIR ${PROJECT_SOURCE_DIR}/tests)
   set(TESTS FileSpeed PanelLDL)
   if(HAVE_PARMETIS)
-    list(APPEND TESTS Bisection DistSparseMatrix MultiVector NestedDissection)
+    list(APPEND TESTS Bisection MultiVectorSolve NestedDissection VectorSolve)
   endif()
 
   # Build the tests
