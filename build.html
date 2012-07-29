@@ -90,7 +90,7 @@ functioning. Assuming that Clique&#8217;s source code sits in the directory <tt 
 create the following Makefile from any directory:</p>
 <div class="highlight-python"><pre>include /usr/local/conf/cliqvariables
 
-DistSparseMatrix: /home/username/clique/tests/DistSparseMatrix.cpp
+VectorSolve: /home/username/clique/tests/VectorSolve.cpp
     ${CXX} ${CLIQ_COMPILE_FLAGS} $&lt; -o $@ ${CLIQ_LINK_FLAGS} ${CLIQ_LIBS}</pre>
 </div>
 <p>and then simply running <tt class="docutils literal"><span class="pre">make</span></tt> should build the test driver.</p>

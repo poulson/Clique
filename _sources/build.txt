@@ -40,7 +40,7 @@ create the following Makefile from any directory::
 
     include /usr/local/conf/cliqvariables
 
-    DistSparseMatrix: /home/username/clique/tests/DistSparseMatrix.cpp
+    VectorSolve: /home/username/clique/tests/VectorSolve.cpp
         ${CXX} ${CLIQ_COMPILE_FLAGS} $< -o $@ ${CLIQ_LINK_FLAGS} ${CLIQ_LIBS}
 
 and then simply running ``make`` should build the test driver.
