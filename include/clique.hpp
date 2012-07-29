@@ -48,6 +48,8 @@ namespace cliq {
 #include "clique/core/dist_sparse_matrix_decl.hpp"
 #include "clique/core/vector_decl.hpp"
 #include "clique/core/dist_vector_decl.hpp"
+#include "clique/core/multi_vector_decl.hpp"
+#include "clique/core/dist_multi_vector_decl.hpp"
 
 // Data-structure implementations
 #include "clique/core/graph_impl.hpp"
@@ -56,6 +58,8 @@ namespace cliq {
 #include "clique/core/dist_sparse_matrix_impl.hpp"
 #include "clique/core/vector_impl.hpp"
 #include "clique/core/dist_vector_impl.hpp"
+#include "clique/core/multi_vector_impl.hpp"
+#include "clique/core/dist_multi_vector_impl.hpp"
 
 //
 // Symbolic computation
@@ -75,6 +79,9 @@ namespace cliq {
 
 #include "clique/numeric/dist_nodal_vector_decl.hpp"
 #include "clique/numeric/dist_nodal_vector_impl.hpp"
+
+#include "clique/numeric/dist_nodal_multi_vector_decl.hpp"
+#include "clique/numeric/dist_nodal_multi_vector_impl.hpp"
 
 #include "clique/numeric/dist_symm_front_tree_decl.hpp"
 #include "clique/numeric/dist_symm_front_tree_impl.hpp"
