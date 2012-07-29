@@ -20,13 +20,13 @@ setting up right-hand sides for sequential solves: it is a simplified version of
 
    .. cpp:function:: int Height() const
 
-      Returns the length of the vector.
+      The length of the vector.
 
    .. rubric:: Data
 
    .. cpp:function:: T Get( int row ) const
 
-      Returns the value of the specified entry.
+      The value of the specified entry.
 
    .. cpp:function:: void Set( int row, T value )
      
@@ -61,7 +61,7 @@ setting up right-hand sides for sequential solves: it is a simplified version of
 
 .. cpp:function:: typename Base<F>::type Norm( const Vector<F>& x )
 
-   Returns the Euclidean norm of the vector.
+   The Euclidean norm of the vector.
 
 .. cpp:function:: void Axpy( T alpha, const Vector<T>& x, Vector<T>& y )
 
