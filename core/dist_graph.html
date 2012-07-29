@@ -105,154 +105,197 @@ sorted lexicographically based upon their source and target indices
 <dl class="class">
 <dt id="DistGraph">
 <em class="property">class </em><tt class="descname">DistGraph</tt><a class="headerlink" href="#DistGraph" title="Permalink to this definition">¶</a></dt>
-<dd><p><strong>TODO: Briefly describe each member variable</strong></p>
-<p class="rubric">Constructors</p>
+<dd><p class="rubric">Constructors</p>
 <dl class="function">
 <dt id="DistGraph::DistGraph">
  <tt class="descname">DistGraph</tt><big>(</big><big>)</big><a class="headerlink" href="#DistGraph::DistGraph" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Constructs an empty graph with zero vertices over <tt class="docutils literal"><span class="pre">mpi::COMM_WORLD</span></tt>.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistGraph::DistGraph__mpi::Comm">
  <tt class="descname">DistGraph</tt><big>(</big>mpi::Comm <em>comm</em><big>)</big><a class="headerlink" href="#DistGraph::DistGraph__mpi::Comm" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Constructs an empty graph with zero vertices over the specified
+communicator.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistGraph::DistGraph__i.mpi::Comm">
  <tt class="descname">DistGraph</tt><big>(</big>int <em>numVertices</em>, mpi::Comm <em>comm</em><big>)</big><a class="headerlink" href="#DistGraph::DistGraph__i.mpi::Comm" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Constructs an empty graph with <cite>numVertices</cite> vertices over the specified
+communicator.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistGraph::DistGraph__i.i.mpi::Comm">
  <tt class="descname">DistGraph</tt><big>(</big>int <em>numSources</em>, int <em>numTargets</em>, mpi::Comm <em>comm</em><big>)</big><a class="headerlink" href="#DistGraph::DistGraph__i.i.mpi::Comm" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Constructs an empty graph with the specified numbers of source and
+target vertices over the given communicator.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistGraph::DistGraph__GraphCR">
  <tt class="descname">DistGraph</tt><big>(</big>const Graph&amp; <em>graph</em><big>)</big><a class="headerlink" href="#DistGraph::DistGraph__GraphCR" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Constructs a copy of the given local graph over a single-process
+communicator.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistGraph::DistGraph__DistGraphCR">
  <tt class="descname">DistGraph</tt><big>(</big>const DistGraph&amp; <em>graph</em><big>)</big><a class="headerlink" href="#DistGraph::DistGraph__DistGraphCR" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Constructs a copy of the given distributed graph.</p>
+</dd></dl>
 
 <p class="rubric">High-level information</p>
 <dl class="function">
 <dt id="DistGraph::NumSourcesC">
 int <tt class="descname">NumSources</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::NumSourcesC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The number of source vertices of this graph
+(this is analogous to the height of a sparse matrix).</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistGraph::NumTargetsC">
 int <tt class="descname">NumTargets</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::NumTargetsC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The number of target vertices of this graph
+(this is analogous to the width of a sparse matrix).</p>
+</dd></dl>
 
 <p class="rubric">Communicator-management</p>
 <dl class="function">
 <dt id="DistGraph::SetComm__mpi::Comm">
 void <tt class="descname">SetComm</tt><big>(</big>mpi::Comm <em>comm</em><big>)</big><a class="headerlink" href="#DistGraph::SetComm__mpi::Comm" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Empties the graph and switches to the specified team of processes.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistGraph::CommC">
 mpi::Comm <tt class="descname">Comm</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::CommC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The communicator for the distributed graph.</p>
+</dd></dl>
 
 <p class="rubric">Distribution information</p>
 <dl class="function">
 <dt id="DistGraph::BlocksizeC">
 int <tt class="descname">Blocksize</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::BlocksizeC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The distribution blocksize of the distributed graph:
+the process with rank <tt class="docutils literal"><span class="pre">r</span></tt>&#8216;s first local source is global source
+<tt class="docutils literal"><span class="pre">r*blocksize</span></tt>.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistGraph::FirstLocalSourceC">
 int <tt class="descname">FirstLocalSource</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::FirstLocalSourceC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The global index of the first source assigned to this process.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistGraph::NumLocalSourcesC">
 int <tt class="descname">NumLocalSources</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::NumLocalSourcesC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The number of sources assigned to this process.</p>
+</dd></dl>
 
 <p class="rubric">Assembly-related routines</p>
 <dl class="function">
 <dt id="DistGraph::StartAssembly">
 void <tt class="descname">StartAssembly</tt><big>(</big><big>)</big><a class="headerlink" href="#DistGraph::StartAssembly" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>This should be called before inserting any edges into the graph.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistGraph::StopAssembly">
 void <tt class="descname">StopAssembly</tt><big>(</big><big>)</big><a class="headerlink" href="#DistGraph::StopAssembly" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>This should be called after all edges have been inserted into the graph,
+as it handles converting the edges into the proper internal format.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistGraph::Reserve__i">
 void <tt class="descname">Reserve</tt><big>(</big>int <em>numLocalEdges</em><big>)</big><a class="headerlink" href="#DistGraph::Reserve__i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>This routine should be given an upper bound on the number of edges that
+will be inserted into the graph by this process so that an appropriate
+amount of memory can be allocated to store the local edge information.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistGraph::Insert__i.i">
 void <tt class="descname">Insert</tt><big>(</big>int <em>source</em>, int <em>target</em><big>)</big><a class="headerlink" href="#DistGraph::Insert__i.i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Inserts an edge into our local portion of the graph which connects the
+specified source and target vertices.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistGraph::CapacityC">
 int <tt class="descname">Capacity</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::CapacityC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The number of local edges which can be stored before a memory allocation
+will be required (including current local edges).</p>
+</dd></dl>
 
 <p class="rubric">Local data</p>
 <dl class="function">
 <dt id="DistGraph::NumLocalEdgesC">
 int <tt class="descname">NumLocalEdges</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::NumLocalEdgesC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The number of local edges in the graph.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistGraph::Source__iC">
 int <tt class="descname">Source</tt><big>(</big>int <em>localEdge</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::Source__iC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The source vertex of the specified local edge.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistGraph::Target__iC">
 int <tt class="descname">Target</tt><big>(</big>int <em>localEdge</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::Target__iC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The target vertex of the specified local edge.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistGraph::LocalEdgeOffset__iC">
 int <tt class="descname">LocalEdgeOffset</tt><big>(</big>int <em>localSource</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::LocalEdgeOffset__iC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The first local edge which begins from a local source with an
+index greater than or equal to the given index (assuming it exists).</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistGraph::NumConnections__iC">
 int <tt class="descname">NumConnections</tt><big>(</big>int <em>localSource</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::NumConnections__iC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The number of edges which begin from the specified local source.</p>
+</dd></dl>
 
 <p class="rubric">For modifying the size of the graph</p>
 <dl class="function">
 <dt id="DistGraph::Empty">
 void <tt class="descname">Empty</tt><big>(</big><big>)</big><a class="headerlink" href="#DistGraph::Empty" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Frees all resources and modifies this graph to have zero vertices.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistGraph::ResizeTo__i">
 void <tt class="descname">ResizeTo</tt><big>(</big>int <em>numVertices</em><big>)</big><a class="headerlink" href="#DistGraph::ResizeTo__i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Frees all resources and modifies this graph to have <tt class="docutils literal"><span class="pre">numVertices</span></tt>
+vertices.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistGraph::ResizeTo__i.i">
 void <tt class="descname">ResizeTo</tt><big>(</big>int <em>numSources</em>, int <em>numTargets</em><big>)</big><a class="headerlink" href="#DistGraph::ResizeTo__i.i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Frees all resources and modifies the graph to have the specified number
+of source and target vertices.</p>
+</dd></dl>
 
 <p class="rubric">For copying one graph into another</p>
 <dl class="function">
 <dt id="DistGraph::assign-operator__GraphCR">
 const DistGraph&amp; <tt class="descname">operator=</tt><big>(</big>const Graph&amp; <em>graph</em><big>)</big><a class="headerlink" href="#DistGraph::assign-operator__GraphCR" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Sets this graph equal to the given local graph.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistGraph::assign-operator__DistGraphCR">
 const DistGraph&amp; <tt class="descname">operator=</tt><big>(</big>const DistGraph&amp; <em>graph</em><big>)</big><a class="headerlink" href="#DistGraph::assign-operator__DistGraphCR" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Sets this graph equal to the given distributed graph.</p>
+</dd></dl>
 
 </dd></dl>
 

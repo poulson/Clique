@@ -113,138 +113,177 @@ sorted in lexicographical order based upon the row and column indices
 <dl class="class">
 <dt id="DistSparseMatrix:T:">
 <em class="property">class </em><tt class="descname">DistSparseMatrix&lt;T&gt;</tt><a class="headerlink" href="#DistSparseMatrix:T:" title="Permalink to this definition">¶</a></dt>
-<dd><p><strong>TODO: Briefly describe each member variable</strong></p>
-<p class="rubric">Constructors</p>
+<dd><p class="rubric">Constructors</p>
 <dl class="function">
 <dt id="DistSparseMatrix:T:::DistSparseMatrix">
  <tt class="descname">DistSparseMatrix</tt><big>(</big><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::DistSparseMatrix" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Constructs an empty <span class="math">\(0 \times 0\)</span> sparse matrix over
+<tt class="docutils literal"><span class="pre">mpi::COMM_WORLD</span></tt>.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistSparseMatrix:T:::DistSparseMatrix__mpi::Comm">
  <tt class="descname">DistSparseMatrix</tt><big>(</big>mpi::Comm <em>comm</em><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::DistSparseMatrix__mpi::Comm" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Constructs an empty <span class="math">\(0 \times 0\)</span> sparse matrix over the specified
+communicator.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistSparseMatrix:T:::DistSparseMatrix__i.mpi::Comm">
  <tt class="descname">DistSparseMatrix</tt><big>(</big>int <em>height</em>, mpi::Comm <em>comm</em><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::DistSparseMatrix__i.mpi::Comm" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Constructs a <cite>height</cite> <span class="math">\(\times\)</span> <cite>height</cite> sparse matrix over the
+specified communicator.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistSparseMatrix:T:::DistSparseMatrix__i.i.mpi::Comm">
  <tt class="descname">DistSparseMatrix</tt><big>(</big>int <em>height</em>, int <em>width</em>, mpi::Comm <em>comm</em><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::DistSparseMatrix__i.i.mpi::Comm" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Constructs a <cite>height</cite> <span class="math">\(\times\)</span> <cite>width</cite> sparse matrix over the
+specified communicator.</p>
+</dd></dl>
 
 <p class="rubric">High-level information</p>
 <dl class="function">
 <dt id="DistSparseMatrix:T:::HeightC">
 int <tt class="descname">Height</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::HeightC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The height of the sparse matrix.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistSparseMatrix:T:::WidthC">
 int <tt class="descname">Width</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::WidthC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The width of the sparse matrix.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistSparseMatrix:T:::GraphC">
 const DistGraph&amp; <tt class="descname">Graph</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::GraphC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The underlying graph of the sparse matrix.</p>
+</dd></dl>
 
 <p class="rubric">Communicator-management</p>
 <dl class="function">
 <dt id="DistSparseMatrix:T:::SetComm__mpi::Comm">
 void <tt class="descname">SetComm</tt><big>(</big>mpi::Comm <em>comm</em><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::SetComm__mpi::Comm" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Empties the sparse matrix and switches to the specified team of
+processes.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistSparseMatrix:T:::CommC">
 mpi::Comm <tt class="descname">Comm</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::CommC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The communicator for the distributed sparse matrix.</p>
+</dd></dl>
 
 <p class="rubric">Distribution information</p>
 <dl class="function">
 <dt id="DistSparseMatrix:T:::BlocksizeC">
 int <tt class="descname">Blocksize</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::BlocksizeC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The distribution blocksize of the distributed sparse matrix:
+the process with rank <tt class="docutils literal"><span class="pre">r</span></tt>&#8216;s first local row is global row
+<tt class="docutils literal"><span class="pre">r*blocksize</span></tt>.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistSparseMatrix:T:::FirstLocalRowC">
 int <tt class="descname">FirstLocalRow</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::FirstLocalRowC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The global index of the first row assigned to this process.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistSparseMatrix:T:::LocalHeightC">
 int <tt class="descname">LocalHeight</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::LocalHeightC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The number of rows assigned to this process.</p>
+</dd></dl>
 
 <p class="rubric">Assembly-related routines</p>
 <dl class="function">
 <dt id="DistSparseMatrix:T:::StartAssembly">
 void <tt class="descname">StartAssembly</tt><big>(</big><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::StartAssembly" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>This should be called before applying any updates to the sparse matrix.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistSparseMatrix:T:::StopAssembly">
 void <tt class="descname">StopAssembly</tt><big>(</big><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::StopAssembly" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>This should be called after all updates have been applied to the sparse
+matrix, as it handles combining updates to the same entry and converting
+the entry information into the proper internal format.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistSparseMatrix:T:::Reserve__i">
 void <tt class="descname">Reserve</tt><big>(</big>int <em>numLocalEntries</em><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::Reserve__i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>This routine should be given an upper bound on the number of updates
+that will be applied by this process so that an appropriate amount of
+memory can be allocated to store the update information.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistSparseMatrix:T:::Update__i.i.T">
 void <tt class="descname">Update</tt><big>(</big>int <em>row</em>, int <em>col</em>, T <em>value</em><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::Update__i.i.T" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Add the specified value onto the entry of our local portion of the
+sparse matrix with the specified indices.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistSparseMatrix:T:::CapacityC">
 int <tt class="descname">Capacity</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::CapacityC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The number of updates which can be applied before a memory allocation
+will be required (including current local updates).</p>
+</dd></dl>
 
 <p class="rubric">Local data</p>
 <dl class="function">
 <dt id="DistSparseMatrix:T:::NumLocalEntriesC">
 int <tt class="descname">NumLocalEntries</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::NumLocalEntriesC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The number of local nonzero entries in the sparse matrix.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistSparseMatrix:T:::Row__iC">
 int <tt class="descname">Row</tt><big>(</big>int <em>localEntry</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::Row__iC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The row index of the specified local nonzero entry.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistSparseMatrix:T:::Col__iC">
 int <tt class="descname">Col</tt><big>(</big>int <em>localEntry</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::Col__iC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The column index of the specified local nonzero entry.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistSparseMatrix:T:::Value__iC">
 T <tt class="descname">Value</tt><big>(</big>int <em>localEntry</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::Value__iC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The numerical value of the specified local nonzero entry.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistSparseMatrix:T:::LocalEntryOffset__iC">
 int <tt class="descname">LocalEntryOffset</tt><big>(</big>int <em>localRow</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::LocalEntryOffset__iC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The first local nonzero entry which lies within a row with local index
+greater than or equal to the specified value (assuming it exists).</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistSparseMatrix:T:::NumConnections__iC">
 int <tt class="descname">NumConnections</tt><big>(</big>int <em>localRow</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::NumConnections__iC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The number of nonzeros within the specified local row.</p>
+</dd></dl>
 
 <p class="rubric">For modifying the size of the matrix</p>
 <dl class="function">
 <dt id="DistSparseMatrix:T:::Empty">
 void <tt class="descname">Empty</tt><big>(</big><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::Empty" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Frees all resources and sets the sparse matrix to be zero by zero.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="DistSparseMatrix:T:::ResizeTo__i.i">
 void <tt class="descname">ResizeTo</tt><big>(</big>int <em>height</em>, int <em>width</em><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::ResizeTo__i.i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Frees all resources and sets the sparse matrix to be
+<cite>height</cite> <span class="math">\(\times\)</span> <cite>width</cite>.</p>
+</dd></dl>
 
 </dd></dl>
 

@@ -54,7 +54,10 @@
         
   <div class="section" id="environment">
 <h1>Environment<a class="headerlink" href="#environment" title="Permalink to this headline">¶</a></h1>
-<p><strong>TODO</strong></p>
+<p>This section describes the routines and data structures which help set up
+Clique&#8217;s programming environment: it discusses initialization of Clique,
+call stack manipulation, and data structures and routines imported from
+<a class="reference external" href="https://code.google.com/p/elemental">Elemental</a>.</p>
 <div class="section" id="set-up-and-clean-up">
 <h2>Set up and clean up<a class="headerlink" href="#set-up-and-clean-up" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
@@ -92,10 +95,38 @@ bool <tt class="descname">Initialized</tt><big>(</big><big>)</big><a class="head
 </dd></dl>
 
 </div>
+<div class="section" id="call-stack-manipulation">
+<h2>Call stack manipulation<a class="headerlink" href="#call-stack-manipulation" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The following call stack manipulation routines are only available in
+non-release builds (i.e., PureDebug and HybridDebug) and are meant to allow
+for the call stack to be printed (via <a class="reference internal" href="#DumpCallStack" title="DumpCallStack"><tt class="xref cpp cpp-func docutils literal"><span class="pre">DumpCallStack()</span></tt></a>) when an
+exception is caught.</p>
+</div>
+<dl class="function">
+<dt id="PushCallStack__ss">
+void <tt class="descname">PushCallStack</tt><big>(</big>std::string <em>s</em><big>)</big><a class="headerlink" href="#PushCallStack__ss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Push the given routine name onto the call stack.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="PopCallStack">
+void <tt class="descname">PopCallStack</tt><big>(</big><big>)</big><a class="headerlink" href="#PopCallStack" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove the routine name at the top of the call stack.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DumpCallStack">
+void <tt class="descname">DumpCallStack</tt><big>(</big><big>)</big><a class="headerlink" href="#DumpCallStack" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print (and empty) the contents of the call stack.</p>
+</dd></dl>
+
+</div>
 <div class="section" id="functionality-from-elemental">
 <h2>Functionality from Elemental<a class="headerlink" href="#functionality-from-elemental" title="Permalink to this headline">¶</a></h2>
 <p>Clique heavily relies on many of
-<a class="reference external" href="http://poulson.github.com/Elemental">Elemental&#8217;s</a> data structures,
+<a class="reference external" href="http://code.google.com/p/elemental">Elemental&#8217;s</a> data structures,
 particularly the <a class="reference internal" href="#DistMatrix:T.U.V:" title="DistMatrix&lt;T, U, V&gt;"><tt class="xref cpp cpp-class docutils literal"><span class="pre">DistMatrix&lt;T,U,V&gt;</span></tt></a> class for managing
 distributed matrices and vectors.</p>
 <p class="rubric">Complex data</p>
@@ -151,6 +182,18 @@ F <tt class="descname">Sqrt</tt><big>(</big>const F&amp; <em>alpha</em><big>)</b
 class.</p>
 </dd></dl>
 
+<p class="rubric">Imported libraries</p>
+<p>Elemental provides
+<a class="reference external" href="http://poulson.github.com/Elemental/core/imports.html">high-level interfaces to several libraries</a>,
+and several of those interfaces are used within Clique.</p>
+<ul class="simple">
+<li><a class="reference external" href="http://poulson.github.com/Elemental/core/imports/blas.html">BLAS</a>:
+exposed in the <tt class="docutils literal"><span class="pre">cliq::blas</span></tt> namespace</li>
+<li><a class="reference external" href="http://poulson.github.com/Elemental/core/imports/lapack.html">LAPACK</a>:
+exposed in the <tt class="docutils literal"><span class="pre">cliq::lapack</span></tt> namespace</li>
+<li><a class="reference external" href="http://poulson.github.com/Elemental/core/imports/mpi.html">MPI</a>:
+exposed in the <tt class="docutils literal"><span class="pre">cliq::mpi</span></tt> namespace</li>
+</ul>
 <p class="rubric">Enums</p>
 <dl class="type">
 <dt id="Distribution__enum">

@@ -53,53 +53,96 @@ sorted in lexicographical order based upon the row and column indices
 
 .. cpp:class:: SparseMatrix<T>
 
-   **TODO: Briefly describe each member variable**
-
    .. rubric:: Constructors
 
    .. cpp:function:: SparseMatrix()
 
+      Constructs an empty :math:`0 \times 0` sparse matrix.
+
    .. cpp:function:: SparseMatrix( int height )
 
+      Constructs an empty `height` :math:`\times` `height` sparse matrix.
+
    .. cpp:function:: SparseMatrix( int height, int width )
+
+      Constructs an empty `height` :math:`\times` `width` sparse matrix.
 
    .. rubric:: High-level information
 
    .. cpp:function:: int Height() const
 
+      The height of the sparse matrix.
+
    .. cpp:function:: int Width() const
 
+      The width of the sparse matrix.
+
    .. cpp:function:: const Graph& Graph() const
+
+      The underlying graph of the sparse matrix.
 
    .. rubric:: Assembly-related routines
 
    .. cpp:function:: void StartAssembly()
 
+      This should be called before updating any entries of the sparse matrix.
+
    .. cpp:function:: void StopAssembly()
+
+      This should be called after all updates have been applied to the sparse
+      matrix, as it handles combining updates of the same entry and then
+      sorting entry data into the proper internal format.
 
    .. cpp:function:: void Reserve( int numEntries )
 
+      This routine should be given an upper bound on the number of updates 
+      that will be applied to the sparse matrix so that a sufficient amount 
+      of memory can be allocated to store all of the update information.
+
    .. cpp:function:: void Update( int row, int col, T value )
 
+      Adds the specified value to the entry of the sparse matrix with the 
+      given row and column indices.
+
    .. cpp:function:: int Capacity() const
+
+      The number of updates that can be applied to the sparse matrix before
+      a memory allocation (including current updates).
 
    .. rubric:: Data
 
    .. cpp:function:: int NumEntries() const
 
+      The number of nonzero entries in the sparse matrix.
+
    .. cpp:function:: int Row( int entry ) const
+
+      The row index of the given nonzero entry.
 
    .. cpp:function:: int Col( int entry ) const
 
+      The column index of the given nonzero entry.
+
    .. cpp:function:: T Value( int entry ) const
+
+      The numerical value of the given nonzero entry.
 
    .. cpp:function:: int EntryOffset( int row ) const
 
+      The first nonzero entry within a row with index greater than or equal
+      to the given value (assuming it exists).
+
    .. cpp:function:: int NumConnections( int row ) const
+
+      The number of nonzero entries in the specified row.
 
    .. rubric:: For modifying the size of the matrix
 
    .. cpp:function:: void Empty()
 
+      Frees all resources and sets the sparse matrix to be zero by zero.
+
    .. cpp:function:: void ResizeTo( int height, int width )
 
+      Frees all resources and sets the sparse matrix to be 
+      `height` :math:`\times` `width`.

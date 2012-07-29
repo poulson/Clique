@@ -99,122 +99,163 @@ is the column index.</p>
 <dl class="class">
 <dt id="Graph">
 <em class="property">class </em><tt class="descname">Graph</tt><a class="headerlink" href="#Graph" title="Permalink to this definition">¶</a></dt>
-<dd><p><strong>TODO: Briefly describe each member variable</strong></p>
-<p class="rubric">Constructors</p>
+<dd><p class="rubric">Constructors</p>
 <dl class="function">
 <dt id="Graph::Graph">
  <tt class="descname">Graph</tt><big>(</big><big>)</big><a class="headerlink" href="#Graph::Graph" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Constructs an empty graph with zero vertices.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="Graph::Graph__i">
  <tt class="descname">Graph</tt><big>(</big>int <em>numVertices</em><big>)</big><a class="headerlink" href="#Graph::Graph__i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Constructs an empty graph with <cite>numVertices</cite> vertices.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="Graph::Graph__i.i">
  <tt class="descname">Graph</tt><big>(</big>int <em>numSources</em>, int <em>numTargets</em><big>)</big><a class="headerlink" href="#Graph::Graph__i.i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Constructs an empty graph with <cite>numSources</cite> source vertices and
+<cite>numTargets</cite> target vertices: this is analogous to creating an empty
+<cite>numSources</cite> <span class="math">\(\times\)</span> <cite>numTargets</cite> sparse matrix.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="Graph::Graph__GraphCR">
  <tt class="descname">Graph</tt><big>(</big>const Graph&amp; <em>graph</em><big>)</big><a class="headerlink" href="#Graph::Graph__GraphCR" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Constructs a copy of the given graph.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="Graph::Graph__DistGraphCR">
  <tt class="descname">Graph</tt><big>(</big>const DistGraph&amp; <em>graph</em><big>)</big><a class="headerlink" href="#Graph::Graph__DistGraphCR" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The distributed graph can only be distributed over a single process.</p>
+</div>
+<p>Converts a trivial distributed graph into an explicitly local graph.</p>
+</dd></dl>
 
 <p class="rubric">High-level information</p>
 <dl class="function">
 <dt id="Graph::NumSourcesC">
 int <tt class="descname">NumSources</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#Graph::NumSourcesC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The number of source vertices in the graph; this is analogous to the
+height of a sparse matrix.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="Graph::NumTargetsC">
 int <tt class="descname">NumTargets</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#Graph::NumTargetsC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The number of target vertices in the graph; this is analogous to the
+width of a sparse matrix.</p>
+</dd></dl>
 
 <p class="rubric">Assembly-related routines</p>
 <dl class="function">
 <dt id="Graph::StartAssembly">
 void <tt class="descname">StartAssembly</tt><big>(</big><big>)</big><a class="headerlink" href="#Graph::StartAssembly" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>This should be called before inserting any edges into the graph.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="Graph::StopAssembly">
 void <tt class="descname">StopAssembly</tt><big>(</big><big>)</big><a class="headerlink" href="#Graph::StopAssembly" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>This should be called after all edges have been inserted into the graph,
+as it handles converting the edges into the proper internal format.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="Graph::Reserve__i">
 void <tt class="descname">Reserve</tt><big>(</big>int <em>numEdges</em><big>)</big><a class="headerlink" href="#Graph::Reserve__i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>This routine should be given an upper bound on the number of edges that
+will be inserted into the graph so that a sufficient amount of memory
+can be allocated to store all of the edge information.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="Graph::Insert__i.i">
 void <tt class="descname">Insert</tt><big>(</big>int <em>source</em>, int <em>target</em><big>)</big><a class="headerlink" href="#Graph::Insert__i.i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Inserts an edge starting from the specified source vertex which ends
+at the target vertex.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="Graph::CapacityC">
 int <tt class="descname">Capacity</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#Graph::CapacityC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The total number of edges which can be stored before a memory allocation
+(including current edges).</p>
+</dd></dl>
 
 <p class="rubric">Data</p>
 <dl class="function">
 <dt id="Graph::NumEdgesC">
 int <tt class="descname">NumEdges</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#Graph::NumEdgesC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The number of edges which have been inserted into the graph.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="Graph::Source__iC">
 int <tt class="descname">Source</tt><big>(</big>int <em>edge</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#Graph::Source__iC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The source vertex of the specified edge.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="Graph::Target__iC">
 int <tt class="descname">Target</tt><big>(</big>int <em>edge</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#Graph::Target__iC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The target vertex of the specified edge.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="Graph::EdgeOffset__iC">
 int <tt class="descname">EdgeOffset</tt><big>(</big>int <em>source</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#Graph::EdgeOffset__iC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The first edge which begins at a source vertex with an equal or greater
+index (assuming it exists).</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="Graph::NumConnections__iC">
 int <tt class="descname">NumConnections</tt><big>(</big>int <em>source</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#Graph::NumConnections__iC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The number of edges which start from the specified source vertex.</p>
+</dd></dl>
 
 <p class="rubric">For modifying the size of the graph</p>
 <dl class="function">
 <dt id="Graph::Empty">
 void <tt class="descname">Empty</tt><big>(</big><big>)</big><a class="headerlink" href="#Graph::Empty" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Frees all resources and modified this graph to have zero vertices.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="Graph::ResizeTo__i">
 void <tt class="descname">ResizeTo</tt><big>(</big>int <em>numVertices</em><big>)</big><a class="headerlink" href="#Graph::ResizeTo__i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Frees all resources and modifies this graph to have <cite>numVertices</cite>
+vertices.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="Graph::ResizeTo__i.i">
 void <tt class="descname">ResizeTo</tt><big>(</big>int <em>numSources</em>, int <em>numTargets</em><big>)</big><a class="headerlink" href="#Graph::ResizeTo__i.i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Frees all resources and modifies this graph to have <cite>numSources</cite>
+source vertices and <cite>numTargets</cite> target vertices.</p>
+</dd></dl>
 
 <p class="rubric">For copying one graph into another</p>
 <dl class="function">
 <dt id="Graph::assign-operator__GraphCR">
 const Graph&amp; <tt class="descname">operator=</tt><big>(</big>const Graph&amp; <em>graph</em><big>)</big><a class="headerlink" href="#Graph::assign-operator__GraphCR" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Sets this graph equal to the given graph.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="Graph::assign-operator__DistGraphCR">
 const Graph&amp; <tt class="descname">operator=</tt><big>(</big>const DistGraph&amp; <em>graph</em><big>)</big><a class="headerlink" href="#Graph::assign-operator__DistGraphCR" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The distributed graph can only be distributed over a single process.</p>
+</div>
+<p>Sets this graph equal to the given graph.</p>
+</dd></dl>
 
 </dd></dl>
 

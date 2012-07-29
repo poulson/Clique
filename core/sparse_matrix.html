@@ -102,106 +102,132 @@ sorted in lexicographical order based upon the row and column indices
 <dl class="class">
 <dt id="SparseMatrix:T:">
 <em class="property">class </em><tt class="descname">SparseMatrix&lt;T&gt;</tt><a class="headerlink" href="#SparseMatrix:T:" title="Permalink to this definition">¶</a></dt>
-<dd><p><strong>TODO: Briefly describe each member variable</strong></p>
-<p class="rubric">Constructors</p>
+<dd><p class="rubric">Constructors</p>
 <dl class="function">
 <dt id="SparseMatrix:T:::SparseMatrix">
  <tt class="descname">SparseMatrix</tt><big>(</big><big>)</big><a class="headerlink" href="#SparseMatrix:T:::SparseMatrix" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Constructs an empty <span class="math">\(0 \times 0\)</span> sparse matrix.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="SparseMatrix:T:::SparseMatrix__i">
  <tt class="descname">SparseMatrix</tt><big>(</big>int <em>height</em><big>)</big><a class="headerlink" href="#SparseMatrix:T:::SparseMatrix__i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Constructs an empty <cite>height</cite> <span class="math">\(\times\)</span> <cite>height</cite> sparse matrix.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="SparseMatrix:T:::SparseMatrix__i.i">
  <tt class="descname">SparseMatrix</tt><big>(</big>int <em>height</em>, int <em>width</em><big>)</big><a class="headerlink" href="#SparseMatrix:T:::SparseMatrix__i.i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Constructs an empty <cite>height</cite> <span class="math">\(\times\)</span> <cite>width</cite> sparse matrix.</p>
+</dd></dl>
 
 <p class="rubric">High-level information</p>
 <dl class="function">
 <dt id="SparseMatrix:T:::HeightC">
 int <tt class="descname">Height</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#SparseMatrix:T:::HeightC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The height of the sparse matrix.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="SparseMatrix:T:::WidthC">
 int <tt class="descname">Width</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#SparseMatrix:T:::WidthC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The width of the sparse matrix.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="SparseMatrix:T:::GraphC">
 const Graph&amp; <tt class="descname">Graph</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#SparseMatrix:T:::GraphC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The underlying graph of the sparse matrix.</p>
+</dd></dl>
 
 <p class="rubric">Assembly-related routines</p>
 <dl class="function">
 <dt id="SparseMatrix:T:::StartAssembly">
 void <tt class="descname">StartAssembly</tt><big>(</big><big>)</big><a class="headerlink" href="#SparseMatrix:T:::StartAssembly" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>This should be called before updating any entries of the sparse matrix.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="SparseMatrix:T:::StopAssembly">
 void <tt class="descname">StopAssembly</tt><big>(</big><big>)</big><a class="headerlink" href="#SparseMatrix:T:::StopAssembly" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>This should be called after all updates have been applied to the sparse
+matrix, as it handles combining updates of the same entry and then
+sorting entry data into the proper internal format.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="SparseMatrix:T:::Reserve__i">
 void <tt class="descname">Reserve</tt><big>(</big>int <em>numEntries</em><big>)</big><a class="headerlink" href="#SparseMatrix:T:::Reserve__i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>This routine should be given an upper bound on the number of updates
+that will be applied to the sparse matrix so that a sufficient amount
+of memory can be allocated to store all of the update information.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="SparseMatrix:T:::Update__i.i.T">
 void <tt class="descname">Update</tt><big>(</big>int <em>row</em>, int <em>col</em>, T <em>value</em><big>)</big><a class="headerlink" href="#SparseMatrix:T:::Update__i.i.T" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Adds the specified value to the entry of the sparse matrix with the
+given row and column indices.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="SparseMatrix:T:::CapacityC">
 int <tt class="descname">Capacity</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#SparseMatrix:T:::CapacityC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The number of updates that can be applied to the sparse matrix before
+a memory allocation (including current updates).</p>
+</dd></dl>
 
 <p class="rubric">Data</p>
 <dl class="function">
 <dt id="SparseMatrix:T:::NumEntriesC">
 int <tt class="descname">NumEntries</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#SparseMatrix:T:::NumEntriesC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The number of nonzero entries in the sparse matrix.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="SparseMatrix:T:::Row__iC">
 int <tt class="descname">Row</tt><big>(</big>int <em>entry</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#SparseMatrix:T:::Row__iC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The row index of the given nonzero entry.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="SparseMatrix:T:::Col__iC">
 int <tt class="descname">Col</tt><big>(</big>int <em>entry</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#SparseMatrix:T:::Col__iC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The column index of the given nonzero entry.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="SparseMatrix:T:::Value__iC">
 T <tt class="descname">Value</tt><big>(</big>int <em>entry</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#SparseMatrix:T:::Value__iC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The numerical value of the given nonzero entry.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="SparseMatrix:T:::EntryOffset__iC">
 int <tt class="descname">EntryOffset</tt><big>(</big>int <em>row</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#SparseMatrix:T:::EntryOffset__iC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The first nonzero entry within a row with index greater than or equal
+to the given value (assuming it exists).</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="SparseMatrix:T:::NumConnections__iC">
 int <tt class="descname">NumConnections</tt><big>(</big>int <em>row</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#SparseMatrix:T:::NumConnections__iC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The number of nonzero entries in the specified row.</p>
+</dd></dl>
 
 <p class="rubric">For modifying the size of the matrix</p>
 <dl class="function">
 <dt id="SparseMatrix:T:::Empty">
 void <tt class="descname">Empty</tt><big>(</big><big>)</big><a class="headerlink" href="#SparseMatrix:T:::Empty" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Frees all resources and sets the sparse matrix to be zero by zero.</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="SparseMatrix:T:::ResizeTo__i.i">
 void <tt class="descname">ResizeTo</tt><big>(</big>int <em>height</em>, int <em>width</em><big>)</big><a class="headerlink" href="#SparseMatrix:T:::ResizeTo__i.i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Frees all resources and sets the sparse matrix to be
+<cite>height</cite> <span class="math">\(\times\)</span> <cite>width</cite>.</p>
+</dd></dl>
 
 </dd></dl>
 
