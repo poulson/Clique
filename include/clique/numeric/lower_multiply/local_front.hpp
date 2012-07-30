@@ -20,19 +20,19 @@
 
 namespace cliq {
 
-template<typename F>
+template<typename T>
 void LocalFrontLowerMultiply
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const Matrix<F>& L, Matrix<F>& X );
+  const Matrix<T>& L, Matrix<T>& X );
 
-template<typename F>
+template<typename T>
 void LocalFrontLowerMultiplyNormal
-( UnitOrNonUnit diag, int diagOffset, const Matrix<F>& L, Matrix<F>& X );
+( UnitOrNonUnit diag, int diagOffset, const Matrix<T>& L, Matrix<T>& X );
 
-template<typename F>
+template<typename T>
 void LocalFrontLowerMultiplyTranspose
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const Matrix<F>& L, Matrix<F>& X );
+  const Matrix<T>& L, Matrix<T>& X );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -41,10 +41,10 @@ void LocalFrontLowerMultiplyTranspose
 namespace internal {
 using namespace elem;
 
-template<typename F> 
+template<typename T> 
 void ModifyForTrmm
-( Matrix<F>& D, UnitOrNonUnit diag, int diagOffset, 
-  std::vector<Matrix<F> >& diagonals )
+( Matrix<T>& D, UnitOrNonUnit diag, int diagOffset, 
+  std::vector<Matrix<T> >& diagonals )
 {
 #ifndef RELEASE
     PushCallStack("ModifyForTrmm");
@@ -70,12 +70,12 @@ void ModifyForTrmm
         for( int i=0; i<length; ++i )    
         {
             diagonals[i].Set( j, 0, D.Get(j+i,j) );
-            D.Set( j+i, j, (F)0 );
+            D.Set( j+i, j, (T)0 );
         }
         if( diag == UNIT && j-diagOffset < height )
         {
             diagonals[-diagOffset].Set( j, 0, D.Get(j-diagOffset,j) );
-            D.Set( j-diagOffset, j, (F)1 );
+            D.Set( j-diagOffset, j, (T)1 );
         }
     }
 #ifndef RELEASE
@@ -83,10 +83,10 @@ void ModifyForTrmm
 #endif
 }
 
-template<typename F> // represents a real or complex ring
+template<typename T> 
 void ReplaceAfterTrmm
-( Matrix<F>& D, UnitOrNonUnit diag, int diagOffset, 
-  const std::vector<Matrix<F> >& diagonals )
+( Matrix<T>& D, UnitOrNonUnit diag, int diagOffset, 
+  const std::vector<Matrix<T> >& diagonals )
 {
 #ifndef RELEASE
     PushCallStack("ReplaceAfterTrmm");
@@ -107,10 +107,10 @@ void ReplaceAfterTrmm
 
 } // namespace internal
 
-template<typename F>
+template<typename T>
 inline void LocalFrontLowerMultiply
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const Matrix<F>& L, Matrix<F>& X )
+  const Matrix<T>& L, Matrix<T>& X )
 {
 #ifndef RELEASE
     PushCallStack("LocalFrontLowerMultiply");
@@ -124,9 +124,9 @@ inline void LocalFrontLowerMultiply
 #endif
 }
 
-template<typename F>
+template<typename T>
 inline void LocalFrontLowerMultiplyNormal
-( UnitOrNonUnit diag, int diagOffset, const Matrix<F>& L, Matrix<F>& X )
+( UnitOrNonUnit diag, int diagOffset, const Matrix<T>& L, Matrix<T>& X )
 {
 #ifndef RELEASE
     PushCallStack("LocalFrontLowerMultiplyNormal");
@@ -141,30 +141,30 @@ inline void LocalFrontLowerMultiplyNormal
     if( diagOffset > 0 )
         throw std::logic_error("Diagonal offsets cannot be positive");
 #endif
-    Matrix<F>* LMod = const_cast<Matrix<F>*>(&L);
-    Matrix<F> LT,
+    Matrix<T>* LMod = const_cast<Matrix<T>*>(&L);
+    Matrix<T> LT,
               LB;
     elem::PartitionDown
     ( *LMod, LT,
              LB, L.Width() );
 
-    Matrix<F> XT, 
+    Matrix<T> XT, 
               XB;
     elem::PartitionDown
     ( X, XT,
          XB, L.Width() );
 
-    elem::Gemm( NORMAL, NORMAL, (F)1, LB, XT, (F)1, XB );
+    elem::Gemm( NORMAL, NORMAL, (T)1, LB, XT, (T)1, XB );
 
     if( diagOffset == 0 )
     {
-        elem::Trmm( LEFT, LOWER, NORMAL, diag, (F)1, LT, XT );
+        elem::Trmm( LEFT, LOWER, NORMAL, diag, (T)1, LT, XT );
     }
     else
     {
-        std::vector<Matrix<F> > diagonals;
+        std::vector<Matrix<T> > diagonals;
         internal::ModifyForTrmm( LT, diag, diagOffset, diagonals );
-        elem::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, (F)1, LT, XT );
+        elem::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, (T)1, LT, XT );
         internal::ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
     }
 #ifndef RELEASE
@@ -172,10 +172,10 @@ inline void LocalFrontLowerMultiplyNormal
 #endif
 }
 
-template<typename F>
+template<typename T>
 inline void LocalFrontLowerMultiplyTranspose
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const Matrix<F>& L, Matrix<F>& X )
+  const Matrix<T>& L, Matrix<T>& X )
 {
 #ifndef RELEASE
     PushCallStack("LocalFrontLowerMultiplyTranspose");
@@ -192,14 +192,14 @@ inline void LocalFrontLowerMultiplyTranspose
     if( diagOffset > 0 )
         throw std::logic_error("Diagonal offsets cannot be positive");
 #endif
-    Matrix<F>* LMod = const_cast<Matrix<F>*>(&L);
-    Matrix<F> LT,
+    Matrix<T>* LMod = const_cast<Matrix<T>*>(&L);
+    Matrix<T> LT,
               LB;
     elem::PartitionDown
     ( *LMod, LT,
              LB, L.Width() );
 
-    Matrix<F> XT, 
+    Matrix<T> XT, 
               XB;
     elem::PartitionDown
     ( X, XT,
@@ -207,17 +207,17 @@ inline void LocalFrontLowerMultiplyTranspose
 
     if( diagOffset == 0 )
     {
-        elem::Trmm( LEFT, LOWER, orientation, diag, (F)1, LT, XT );
+        elem::Trmm( LEFT, LOWER, orientation, diag, (T)1, LT, XT );
     }
     else
     {
-        std::vector<Matrix<F> > diagonals;
+        std::vector<Matrix<T> > diagonals;
         internal::ModifyForTrmm( LT, diag, diagOffset, diagonals );
-        elem::Trmm( LEFT, LOWER, orientation, NON_UNIT, (F)1, LT, XT );
+        elem::Trmm( LEFT, LOWER, orientation, NON_UNIT, (T)1, LT, XT );
         internal::ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
     }
 
-    elem::Gemm( orientation, NORMAL, (F)1, LB, XB, (F)1, XT );
+    elem::Gemm( orientation, NORMAL, (T)1, LB, XB, (T)1, XT );
 #ifndef RELEASE
     PopCallStack();
 #endif

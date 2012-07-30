@@ -20,24 +20,24 @@
 
 namespace cliq {
 
-template<typename F>
+template<typename T>
 void LocalLowerMultiplyNormal
 ( UnitOrNonUnit diag, int diagOffset,
-  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& X );
+  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, Matrix<T>& X );
 
-template<typename F>
+template<typename T>
 void LocalLowerMultiplyTranspose
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& X );
+  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, Matrix<T>& X );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
-template<typename F> 
+template<typename T> 
 inline void LocalLowerMultiplyNormal
 ( UnitOrNonUnit diag, int diagOffset,
-  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& X )
+  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, Matrix<T>& X )
 {
 #ifndef RELEASE
     PushCallStack("LocalLowerMultiplyNormal");
@@ -47,18 +47,18 @@ inline void LocalLowerMultiplyNormal
     for( int s=0; s<numLocalNodes; ++s )
     {
         const LocalSymmNodeInfo& node = info.localNodes[s];
-        const Matrix<F>& frontL = L.localFronts[s].frontL;
-        Matrix<F>& W = L.localFronts[s].work;
+        const Matrix<T>& frontL = L.localFronts[s].frontL;
+        Matrix<T>& W = L.localFronts[s].work;
 
         // Set up a workspace
         W.ResizeTo( frontL.Height(), width );
-        Matrix<F> WT, WB;
+        Matrix<T> WT, WB;
         elem::PartitionDown
         ( W, WT,
              WB, node.size );
 
         // Pull in the relevant information from the RHS
-        Matrix<F> XT;
+        Matrix<T> XT;
         XT.View( X, node.myOffset, 0, node.size, width );
         WT = XT;
         elem::MakeZeros( WB );
@@ -73,15 +73,15 @@ inline void LocalLowerMultiplyNormal
         {
             const int leftIndex = node.children[0];
             const int rightIndex = node.children[1];
-            Matrix<F>& leftWork = L.localFronts[leftIndex].work;
-            Matrix<F>& rightWork = L.localFronts[rightIndex].work;
+            Matrix<T>& leftWork = L.localFronts[leftIndex].work;
+            Matrix<T>& rightWork = L.localFronts[rightIndex].work;
             const int leftNodeSize = info.localNodes[leftIndex].size;
             const int rightNodeSize = info.localNodes[rightIndex].size;
             const int leftUpdateSize = leftWork.Height()-leftNodeSize;
             const int rightUpdateSize = rightWork.Height()-rightNodeSize;
 
             // Add the left child's update onto ours
-            Matrix<F> leftUpdate;
+            Matrix<T> leftUpdate;
             leftUpdate.LockedView
             ( leftWork, leftNodeSize, 0, leftUpdateSize, width );
             for( int iChild=0; iChild<leftUpdateSize; ++iChild )
@@ -93,7 +93,7 @@ inline void LocalLowerMultiplyNormal
             leftWork.Empty();
 
             // Add the right child's update onto ours
-            Matrix<F> rightUpdate;
+            Matrix<T> rightUpdate;
             rightUpdate.LockedView
             ( rightWork, rightNodeSize, 0, rightUpdateSize, width );
             for( int iChild=0; iChild<rightUpdateSize; ++iChild )
@@ -114,10 +114,10 @@ inline void LocalLowerMultiplyNormal
 #endif
 }
 
-template<typename F> 
+template<typename T> 
 inline void LocalLowerMultiplyTranspose
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& X )
+  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, Matrix<T>& X )
 {
 #ifndef RELEASE
     PushCallStack("LocalLowerMultiplyTranspose");
@@ -128,25 +128,25 @@ inline void LocalLowerMultiplyTranspose
     for( int s=numLocalNodes-2; s>=0; --s )
     {
         const LocalSymmNodeInfo& node = info.localNodes[s];
-        const Matrix<F>& frontL = L.localFronts[s].frontL;
-        Matrix<F>& W = L.localFronts[s].work;
+        const Matrix<T>& frontL = L.localFronts[s].frontL;
+        Matrix<T>& W = L.localFronts[s].work;
 
         // Set up a workspace
         W.ResizeTo( frontL.Height(), width );
-        Matrix<F> WT, WB;
+        Matrix<T> WT, WB;
         elem::PartitionDown
         ( W, WT,
              WB, node.size );
 
         // Pull in the relevant information from the RHS
-        Matrix<F> XT;
+        Matrix<T> XT;
         XT.View( X, node.myOffset, 0, node.size, width );
         WT = XT;
 
         // Update using the parent's portion of the RHS
         const int parent = node.parent;
         const LocalSymmNodeInfo& parentNode = info.localNodes[parent];
-        Matrix<F>& parentWork = L.localFronts[parent].work;
+        Matrix<T>& parentWork = L.localFronts[parent].work;
         const int currentUpdateSize = WB.Height();
         const std::vector<int>& parentRelIndices = 
             ( node.isLeftChild ? 
@@ -169,14 +169,14 @@ inline void LocalLowerMultiplyTranspose
         }
 
         // Make a copy of the unmodified RHS
-        Matrix<F> XNode = W;
+        Matrix<T> XNode = W;
 
         // Multiply the (conjugate-)transpose of this block column of L against
         // this node's portion of the right-hand side.
         LocalFrontLowerMultiply( orientation, diag, diagOffset, frontL, XNode );
 
         // Store this node's portion of the result
-        Matrix<F> XNodeT, XNodeB;
+        Matrix<T> XNodeT, XNodeB;
         elem::PartitionDown
         ( XNode, XNodeT,
                  XNodeB, node.size );

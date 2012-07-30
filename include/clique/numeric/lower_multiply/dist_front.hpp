@@ -20,20 +20,20 @@
 
 namespace cliq {
 
-template<typename F>
+template<typename T>
 void DistFrontLowerMultiply
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
+  const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X );
 
-template<typename F>
+template<typename T>
 void DistFrontLowerMultiplyNormal
 ( UnitOrNonUnit diag, int diagOffset,
-  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
+  const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X );
 
-template<typename F>
+template<typename T>
 void DistFrontLowerMultiplyTranspose
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
+  const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -42,9 +42,9 @@ void DistFrontLowerMultiplyTranspose
 namespace internal {
 using namespace elem;
 
-template<typename F>
+template<typename T>
 void ModifyForTrmm
-( DistMatrix<F,STAR,STAR>& D, UnitOrNonUnit diag, int diagOffset )
+( DistMatrix<T,STAR,STAR>& D, UnitOrNonUnit diag, int diagOffset )
 {
 #ifndef RELEASE
     cliq::PushCallStack("ModifyForTrmm");
@@ -55,7 +55,7 @@ void ModifyForTrmm
         const int length = std::min(-diagOffset,height-j);
         MemZero( D.LocalBuffer(j,j), length );
         if( diag == UNIT && j-diagOffset < height )
-            D.SetLocal( j-diagOffset, j, (F)1 );
+            D.SetLocal( j-diagOffset, j, (T)1 );
     }
 #ifndef RELEASE
     cliq::PopCallStack();
@@ -64,10 +64,10 @@ void ModifyForTrmm
 
 } // namespace internal
 
-template<typename F>
+template<typename T>
 inline void DistFrontLowerMultiply
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
+  const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X )
 {
 #ifndef RELEASE
     PushCallStack("DistFrontLowerMultiply");
@@ -81,10 +81,10 @@ inline void DistFrontLowerMultiply
 #endif
 }
 
-template<typename F>
+template<typename T>
 inline void DistFrontLowerMultiplyNormal
 ( UnitOrNonUnit diag, int diagOffset,
-  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
+  const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X )
 {
 #ifndef RELEASE
     PushCallStack("DistFrontLowerMultiplyNormal");
@@ -107,18 +107,18 @@ inline void DistFrontLowerMultiplyNormal
     const Grid& g = L.Grid();
 
     // Matrix views
-    DistMatrix<F,VC,STAR>
+    DistMatrix<T,VC,STAR>
         LTL(g), LTR(g),  L00(g), L01(g), L02(g),
         LBL(g), LBR(g),  L10(g), L11(g), L12(g),
                          L20(g), L21(g), L22(g);
 
-    DistMatrix<F,VC,STAR> XT(g),  X0(g),
+    DistMatrix<T,VC,STAR> XT(g),  X0(g),
                           XB(g),  X1(g),
                                   X2(g);
 
     // Temporary distributions
-    DistMatrix<F,STAR,STAR> L11_STAR_STAR(g);
-    DistMatrix<F,STAR,STAR> X1_STAR_STAR(g);
+    DistMatrix<T,STAR,STAR> L11_STAR_STAR(g);
+    DistMatrix<T,STAR,STAR> X1_STAR_STAR(g);
 
     // Start the algorithm
     elem::LockedPartitionDownDiagonal
@@ -144,13 +144,13 @@ inline void DistFrontLowerMultiplyNormal
         //--------------------------------------------------------------------//
         X1_STAR_STAR = X1;
         elem::internal::LocalGemm
-        ( NORMAL, NORMAL, (F)1, L21, X1_STAR_STAR, (F)1, X2 );
+        ( NORMAL, NORMAL, (T)1, L21, X1_STAR_STAR, (T)1, X2 );
 
         if( diagOffset == 0 )
         {
             L11_STAR_STAR = L11;
             elem::internal::LocalTrmm
-            ( LEFT, LOWER, NORMAL, diag, (F)1, L11_STAR_STAR, X1_STAR_STAR );
+            ( LEFT, LOWER, NORMAL, diag, (T)1, L11_STAR_STAR, X1_STAR_STAR );
         }
         else
         {
@@ -158,7 +158,7 @@ inline void DistFrontLowerMultiplyNormal
             internal::ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
             elem::internal::LocalTrmm
             ( LEFT, LOWER, NORMAL, NON_UNIT, 
-              (F)1, L11_STAR_STAR, X1_STAR_STAR );
+              (T)1, L11_STAR_STAR, X1_STAR_STAR );
         }
         X1 = X1_STAR_STAR;
         //--------------------------------------------------------------------//
@@ -180,10 +180,10 @@ inline void DistFrontLowerMultiplyNormal
 #endif
 }
 
-template<typename F>
+template<typename T>
 inline void DistFrontLowerMultiplyTranspose
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
+  const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X )
 {
 #ifndef RELEASE
     PushCallStack("DistFrontLowerMultiplyTranspose");
@@ -208,19 +208,19 @@ inline void DistFrontLowerMultiplyTranspose
     const Grid& g = L.Grid();
 
     // Matrix views
-    DistMatrix<F,VC,STAR>
+    DistMatrix<T,VC,STAR>
         LTL(g), LTR(g),  L00(g), L01(g), L02(g),
         LBL(g), LBR(g),  L10(g), L11(g), L12(g),
                          L20(g), L21(g), L22(g);
 
-    DistMatrix<F,VC,STAR> XT(g),  X0(g),
+    DistMatrix<T,VC,STAR> XT(g),  X0(g),
                           XB(g),  X1(g),
                                   X2(g);
 
     // Temporary distributions
-    DistMatrix<F,STAR,STAR> X1_STAR_STAR(g);
-    DistMatrix<F,STAR,STAR> L11_STAR_STAR(g);
-    DistMatrix<F,STAR,STAR> Z1_STAR_STAR(g);
+    DistMatrix<T,STAR,STAR> X1_STAR_STAR(g);
+    DistMatrix<T,STAR,STAR> L11_STAR_STAR(g);
+    DistMatrix<T,STAR,STAR> Z1_STAR_STAR(g);
 
     LockedPartitionDownDiagonal
     ( L, LTL, LTR,
@@ -249,21 +249,21 @@ inline void DistFrontLowerMultiplyTranspose
         {
             elem::internal::LocalTrmm
             ( LEFT, LOWER, orientation, diag, 
-              (F)1, L11_STAR_STAR, X1_STAR_STAR );
+              (T)1, L11_STAR_STAR, X1_STAR_STAR );
         }
         else
         {
             internal::ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
             elem::internal::LocalTrmm
             ( LEFT, LOWER, orientation, NON_UNIT, 
-              (F)1, L11_STAR_STAR, X1_STAR_STAR );
+              (T)1, L11_STAR_STAR, X1_STAR_STAR );
         }
         X1 = X1_STAR_STAR;
 
         Z1_STAR_STAR.ResizeTo( X1.Height(), X1.Width() );
         elem::internal::LocalGemm
-        ( orientation, NORMAL, (F)1, L21, X2, (F)0, Z1_STAR_STAR );
-        X1.SumScatterUpdate( (F)1, Z1_STAR_STAR );
+        ( orientation, NORMAL, (T)1, L21, X2, (T)0, Z1_STAR_STAR );
+        X1.SumScatterUpdate( (T)1, Z1_STAR_STAR );
         //--------------------------------------------------------------------//
 
         SlideLockedPartitionDownDiagonal

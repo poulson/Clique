@@ -11,4 +11,3 @@ rely on numerical values.
    numeric/multiplication
    numeric/factorization
    numeric/solve
-   numeric/data_structures
