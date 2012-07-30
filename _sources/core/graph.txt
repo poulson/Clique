@@ -1,10 +1,10 @@
 The Graph class
 ===============
-The :cpp:class:`Graph` class is primarily used under-the-hood in Clique for 
+The :cpp:type:`Graph` class is primarily used under-the-hood in Clique for 
 graph partitioning and as the primary component of the 
-:cpp:class:`SparseMatrix\<T>` class.
+:cpp:type:`SparseMatrix\<T>` class.
 Nevertheless, it is possible to work directly with graphs in Clique. The usage
-is extremely similar to the :cpp:class:`SparseMatrix\<T>` class, and so the 
+is extremely similar to the :cpp:type:`SparseMatrix\<T>` class, and so the 
 construction of the graph corresponding to the 7-point stencil over a 
 :math:`n_1 \times n_2 \times n_3` grid is briefly demonstrated below:
 
@@ -46,7 +46,7 @@ lexicographically based upon the source and target indices (respectively).
 In the language of matrices, the *source* is the row index, and the *target*
 is the column index.
 
-.. cpp:class:: Graph
+.. cpp:type:: class Graph
 
    .. rubric:: Constructors
 

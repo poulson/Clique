@@ -65,7 +65,7 @@ Functionality from Elemental
 
 Clique heavily relies on many of 
 `Elemental's <http://code.google.com/p/elemental>`__ data structures, 
-particularly the :cpp:class:`DistMatrix\<T,U,V>` class for managing
+particularly the :cpp:type:`DistMatrix\<T,U,V>` class for managing
 distributed matrices and vectors. 
 
 .. rubric:: Complex data
@@ -74,33 +74,33 @@ distributed matrices and vectors.
 
    Import of Elemental's `Complex <http://poulson.github.com/Elemental/core/environment.html#Complex:R:__struct>`__ class.
 
-.. cpp:type:: struct Base<F>
+.. cpp:type:: struct Base<T>
 
    .. cpp:type:: type
 
-      Underlying real datatype of the field ``F``.
+      Underlying real datatype of the field ``T``.
 
-.. cpp:function:: typename Base<F>::type Abs( const F& alpha )
+.. cpp:function:: typename Base<T>::type Abs( const T& alpha )
 
    Returns the absolute value of the real or complex variable :math:`\alpha`.
 
-.. cpp:function:: F Sqrt( const F& alpha )
+.. cpp:function:: T Sqrt( const T& alpha )
 
    Returns the square-root of the real or complex variable :math:`\alpha`.
 
 .. rubric:: Classes
 
-.. cpp:class:: Matrix<T>
+.. cpp:type:: class Matrix<T>
 
    Import of Elemental's 
    `Matrix <http://poulson.github.com/Elemental/core/matrix.html>`__ class.
 
-.. cpp:class:: Grid
+.. cpp:type:: class Grid
 
    Import of Elemental's 
    `Grid <http://poulson.github.com/Elemental/core/grid.html>`__ class.
 
-.. cpp:class:: DistMatrix<T,U,V>
+.. cpp:type:: class DistMatrix<T,U,V>
 
    Import of Elemental's 
    `DistMatrix <http://poulson.github.com/Elemental/core/dist_matrix.html>`__ 

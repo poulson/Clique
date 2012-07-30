@@ -1,11 +1,11 @@
 The DistMultiVector class
 =========================
-The :cpp:class:`DistMultiVector\<T>` class is the standard interface in Clique 
+The :cpp:type:`DistMultiVector\<T>` class is the standard interface in Clique 
 for setting up several right-hand sides for solves: it uses the same simple 
-one-dimensional distribution as :cpp:class:`DistSparseMatrix\<T>` and is meant 
+one-dimensional distribution as :cpp:type:`DistSparseMatrix\<T>` and is meant 
 to be simple to use.
 
-.. cpp:class:: DistMultiVector<T>
+.. cpp:type:: class DistMultiVector<T>
 
    .. rubric:: Constructors
 
@@ -101,7 +101,7 @@ to be simple to use.
    Sets each entry in the multi-vector to a sample from the unit ball 
    appropriate for type ``T``.
 
-.. cpp:function:: void Norm( const DistMultiVector<F>& X, std::vector<typename Base<F>::type>& norms )
+.. cpp:function:: void Norm( const DistMultiVector<T>& X, std::vector<typename Base<T>::type>& norms )
 
    Returns the Euclidean norms of each of the vectors.
 

@@ -1,8 +1,8 @@
 The SparseMatrix class
 ======================
-The :cpp:class:`SparseMatrix\<T>` class is supposed to provide a simple means 
+The :cpp:type:`SparseMatrix\<T>` class is supposed to provide a simple means 
 of forming sequential sparse matrices within Clique and is a simplification of 
-the upcoming :cpp:class:`DistSparseMatrix\<T>` class 
+the upcoming :cpp:type:`DistSparseMatrix\<T>` class 
 (which most users will work with).
 One might start by first constructing an empty double-precision 
 :math:`N \times N` sparse matrix, e.g., with
@@ -51,7 +51,7 @@ nonzero triples, which contain the row index, column index, and value, are
 sorted in lexicographical order based upon the row and column indices 
 (respectively).
 
-.. cpp:class:: SparseMatrix<T>
+.. cpp:type:: class SparseMatrix<T>
 
    .. rubric:: Constructors
 

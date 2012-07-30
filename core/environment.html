@@ -127,7 +127,7 @@ void <tt class="descname">DumpCallStack</tt><big>(</big><big>)</big><a class="he
 <h2>Functionality from Elemental<a class="headerlink" href="#functionality-from-elemental" title="Permalink to this headline">¶</a></h2>
 <p>Clique heavily relies on many of
 <a class="reference external" href="http://code.google.com/p/elemental">Elemental&#8217;s</a> data structures,
-particularly the <a class="reference internal" href="#DistMatrix:T.U.V:" title="DistMatrix&lt;T, U, V&gt;"><tt class="xref cpp cpp-class docutils literal"><span class="pre">DistMatrix&lt;T,U,V&gt;</span></tt></a> class for managing
+particularly the <a class="reference internal" href="#DistMatrix:T.U.V:__class" title="DistMatrix&lt;T, U, V&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistMatrix&lt;T,U,V&gt;</span></tt></a> class for managing
 distributed matrices and vectors.</p>
 <p class="rubric">Complex data</p>
 <dl class="type">
@@ -137,46 +137,46 @@ distributed matrices and vectors.</p>
 </dd></dl>
 
 <dl class="type">
-<dt id="Base:F:__struct">
-<em class="property">type </em>struct <tt class="descname">Base&lt;F&gt;</tt><a class="headerlink" href="#Base:F:__struct" title="Permalink to this definition">¶</a></dt>
+<dt id="Base:T:__struct">
+<em class="property">type </em>struct <tt class="descname">Base&lt;T&gt;</tt><a class="headerlink" href="#Base:T:__struct" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="type">
-<dt id="Base:F:::type">
-<em class="property">type </em><tt class="descname">type</tt><a class="headerlink" href="#Base:F:::type" title="Permalink to this definition">¶</a></dt>
-<dd><p>Underlying real datatype of the field <tt class="docutils literal"><span class="pre">F</span></tt>.</p>
+<dt id="Base:T:::type">
+<em class="property">type </em><tt class="descname">type</tt><a class="headerlink" href="#Base:T:::type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Underlying real datatype of the field <tt class="docutils literal"><span class="pre">T</span></tt>.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="function">
-<dt id="Abs__FCR">
-<a class="reference internal" href="#Base:F:::type" title="Base&lt;F&gt;::type">typename Base&lt;F&gt;::type</a> <tt class="descname">Abs</tt><big>(</big>const F&amp; <em>alpha</em><big>)</big><a class="headerlink" href="#Abs__FCR" title="Permalink to this definition">¶</a></dt>
+<dt id="Abs__TCR">
+<a class="reference internal" href="#Base:T:::type" title="Base&lt;T&gt;::type">typename Base&lt;T&gt;::type</a> <tt class="descname">Abs</tt><big>(</big>const T&amp; <em>alpha</em><big>)</big><a class="headerlink" href="#Abs__TCR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the absolute value of the real or complex variable <span class="math">\(\alpha\)</span>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="Sqrt__FCR">
-F <tt class="descname">Sqrt</tt><big>(</big>const F&amp; <em>alpha</em><big>)</big><a class="headerlink" href="#Sqrt__FCR" title="Permalink to this definition">¶</a></dt>
+<dt id="Sqrt__TCR">
+T <tt class="descname">Sqrt</tt><big>(</big>const T&amp; <em>alpha</em><big>)</big><a class="headerlink" href="#Sqrt__TCR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the square-root of the real or complex variable <span class="math">\(\alpha\)</span>.</p>
 </dd></dl>
 
 <p class="rubric">Classes</p>
-<dl class="class">
-<dt id="Matrix:T:">
-<em class="property">class </em><tt class="descname">Matrix&lt;T&gt;</tt><a class="headerlink" href="#Matrix:T:" title="Permalink to this definition">¶</a></dt>
+<dl class="type">
+<dt id="Matrix:T:__class">
+<em class="property">type </em>class <tt class="descname">Matrix&lt;T&gt;</tt><a class="headerlink" href="#Matrix:T:__class" title="Permalink to this definition">¶</a></dt>
 <dd><p>Import of Elemental&#8217;s
 <a class="reference external" href="http://poulson.github.com/Elemental/core/matrix.html">Matrix</a> class.</p>
 </dd></dl>
 
-<dl class="class">
-<dt id="Grid">
-<em class="property">class </em><tt class="descname">Grid</tt><a class="headerlink" href="#Grid" title="Permalink to this definition">¶</a></dt>
+<dl class="type">
+<dt id="Grid__class">
+<em class="property">type </em>class <tt class="descname">Grid</tt><a class="headerlink" href="#Grid__class" title="Permalink to this definition">¶</a></dt>
 <dd><p>Import of Elemental&#8217;s
 <a class="reference external" href="http://poulson.github.com/Elemental/core/grid.html">Grid</a> class.</p>
 </dd></dl>
 
-<dl class="class">
-<dt id="DistMatrix:T.U.V:">
-<em class="property">class </em><tt class="descname">DistMatrix&lt;T, U, V&gt;</tt><a class="headerlink" href="#DistMatrix:T.U.V:" title="Permalink to this definition">¶</a></dt>
+<dl class="type">
+<dt id="DistMatrix:T.U.V:__class">
+<em class="property">type </em>class <tt class="descname">DistMatrix&lt;T, U, V&gt;</tt><a class="headerlink" href="#DistMatrix:T.U.V:__class" title="Permalink to this definition">¶</a></dt>
 <dd><p>Import of Elemental&#8217;s
 <a class="reference external" href="http://poulson.github.com/Elemental/core/dist_matrix.html">DistMatrix</a>
 class.</p>

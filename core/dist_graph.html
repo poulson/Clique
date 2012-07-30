@@ -30,7 +30,7 @@
     <script type="text/javascript" src="../_static/theme_extras.js"></script>
     <link rel="top" title="Clique 0.1 documentation" href="../index.html" />
     <link rel="up" title="Core functionality" href="../core.html" />
-    <link rel="next" title="The DistSparseMatrix class" href="dist_sparse_matrix.html" />
+    <link rel="next" title="The DistMap class" href="dist_map.html" />
     <link rel="prev" title="The Graph class" href="graph.html" /> 
   </head>
   <body>
@@ -45,7 +45,7 @@
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
         &#160;&#160;::&#160;&#160;
-        <a href="dist_sparse_matrix.html">The DistSparseMatrix class</a>&#160;&#160;»
+        <a href="dist_map.html">The DistMap class</a>&#160;&#160;»
         </p>
 
       </div>
@@ -54,11 +54,11 @@
         
   <div class="section" id="the-distgraph-class">
 <h1>The DistGraph class<a class="headerlink" href="#the-distgraph-class" title="Permalink to this headline">¶</a></h1>
-<p>Like the <a class="reference internal" href="graph.html#Graph" title="Graph"><tt class="xref cpp cpp-class docutils literal"><span class="pre">Graph</span></tt></a> class, the <a class="reference internal" href="#DistGraph" title="DistGraph"><tt class="xref cpp cpp-class docutils literal"><span class="pre">DistGraph</span></tt></a> class is mainly
+<p>Like the <a class="reference internal" href="graph.html#Graph__class" title="Graph"><tt class="xref cpp cpp-type docutils literal"><span class="pre">Graph</span></tt></a> class, the <a class="reference internal" href="#DistGraph__class" title="DistGraph"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistGraph</span></tt></a> class is mainly
 used internally by Clique for (distributed) graph partitioning and for most of
-the functionality of the <a class="reference internal" href="dist_sparse_matrix.html#DistSparseMatrix:T:" title="DistSparseMatrix&lt;T&gt;"><tt class="xref cpp cpp-class docutils literal"><span class="pre">DistSparseMatrix&lt;T&gt;</span></tt></a> class.
-The <a class="reference internal" href="#DistGraph" title="DistGraph"><tt class="xref cpp cpp-class docutils literal"><span class="pre">DistGraph</span></tt></a> class essentially provides of a subset of the
-functionality of the <a class="reference internal" href="dist_sparse_matrix.html#DistSparseMatrix:T:" title="DistSparseMatrix&lt;T&gt;"><tt class="xref cpp cpp-class docutils literal"><span class="pre">DistSparseMatrix&lt;T&gt;</span></tt></a> class, but an example
+the functionality of the <a class="reference internal" href="dist_sparse_matrix.html#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistSparseMatrix&lt;T&gt;</span></tt></a> class.
+The <a class="reference internal" href="#DistGraph__class" title="DistGraph"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistGraph</span></tt></a> class essentially provides of a subset of the
+functionality of the <a class="reference internal" href="dist_sparse_matrix.html#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistSparseMatrix&lt;T&gt;</span></tt></a> class, but an example
 of constructing the graph of a 7-point stencil over an
 <span class="math">\(n_1 \times n_2 \times n_3\)</span> grid is shown below:</p>
 <div class="highlight-cpp"><div class="highlight"><pre><span class="n">DistGraph</span> <span class="n">graph</span><span class="p">(</span> <span class="n">N</span><span class="p">,</span> <span class="n">comm</span> <span class="p">);</span>
@@ -102,9 +102,9 @@ before inserting any edges.</p>
 <p>After finishing assembly, all redundant edges are deleted and the edges are
 sorted lexicographically based upon their source and target indices
 (respectively).</p>
-<dl class="class">
-<dt id="DistGraph">
-<em class="property">class </em><tt class="descname">DistGraph</tt><a class="headerlink" href="#DistGraph" title="Permalink to this definition">¶</a></dt>
+<dl class="type">
+<dt id="DistGraph__class">
+<em class="property">type </em>class <tt class="descname">DistGraph</tt><a class="headerlink" href="#DistGraph__class" title="Permalink to this definition">¶</a></dt>
 <dd><p class="rubric">Constructors</p>
 <dl class="function">
 <dt id="DistGraph::DistGraph">
@@ -135,14 +135,14 @@ target vertices over the given communicator.</p>
 
 <dl class="function">
 <dt id="DistGraph::DistGraph__GraphCR">
- <tt class="descname">DistGraph</tt><big>(</big>const Graph&amp; <em>graph</em><big>)</big><a class="headerlink" href="#DistGraph::DistGraph__GraphCR" title="Permalink to this definition">¶</a></dt>
+ <tt class="descname">DistGraph</tt><big>(</big><a class="reference internal" href="graph.html#Graph__class" title="Graph">const Graph&amp;</a> <em>graph</em><big>)</big><a class="headerlink" href="#DistGraph::DistGraph__GraphCR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Constructs a copy of the given local graph over a single-process
 communicator.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="DistGraph::DistGraph__DistGraphCR">
- <tt class="descname">DistGraph</tt><big>(</big>const DistGraph&amp; <em>graph</em><big>)</big><a class="headerlink" href="#DistGraph::DistGraph__DistGraphCR" title="Permalink to this definition">¶</a></dt>
+ <tt class="descname">DistGraph</tt><big>(</big><a class="reference internal" href="#DistGraph__class" title="DistGraph">const DistGraph&amp;</a> <em>graph</em><big>)</big><a class="headerlink" href="#DistGraph::DistGraph__DistGraphCR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Constructs a copy of the given distributed graph.</p>
 </dd></dl>
 
@@ -287,13 +287,13 @@ of source and target vertices.</p>
 <p class="rubric">For copying one graph into another</p>
 <dl class="function">
 <dt id="DistGraph::assign-operator__GraphCR">
-const DistGraph&amp; <tt class="descname">operator=</tt><big>(</big>const Graph&amp; <em>graph</em><big>)</big><a class="headerlink" href="#DistGraph::assign-operator__GraphCR" title="Permalink to this definition">¶</a></dt>
+<a class="reference internal" href="#DistGraph__class" title="DistGraph">const DistGraph&amp;</a> <tt class="descname">operator=</tt><big>(</big><a class="reference internal" href="graph.html#Graph__class" title="Graph">const Graph&amp;</a> <em>graph</em><big>)</big><a class="headerlink" href="#DistGraph::assign-operator__GraphCR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets this graph equal to the given local graph.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="DistGraph::assign-operator__DistGraphCR">
-const DistGraph&amp; <tt class="descname">operator=</tt><big>(</big>const DistGraph&amp; <em>graph</em><big>)</big><a class="headerlink" href="#DistGraph::assign-operator__DistGraphCR" title="Permalink to this definition">¶</a></dt>
+<a class="reference internal" href="#DistGraph__class" title="DistGraph">const DistGraph&amp;</a> <tt class="descname">operator=</tt><big>(</big><a class="reference internal" href="#DistGraph__class" title="DistGraph">const DistGraph&amp;</a> <em>graph</em><big>)</big><a class="headerlink" href="#DistGraph::assign-operator__DistGraphCR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets this graph equal to the given distributed graph.</p>
 </dd></dl>
 
@@ -310,7 +310,7 @@ const DistGraph&amp; <tt class="descname">operator=</tt><big>(</big>const DistGr
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
         &#160;&#160;::&#160;&#160;
-        <a href="dist_sparse_matrix.html">The DistSparseMatrix class</a>&#160;&#160;»
+        <a href="dist_map.html">The DistMap class</a>&#160;&#160;»
         </p>
 
       </div>

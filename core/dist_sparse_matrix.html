@@ -31,7 +31,7 @@
     <link rel="top" title="Clique 0.1 documentation" href="../index.html" />
     <link rel="up" title="Core functionality" href="../core.html" />
     <link rel="next" title="The DistVector class" href="dist_vector.html" />
-    <link rel="prev" title="The DistGraph class" href="dist_graph.html" /> 
+    <link rel="prev" title="The SparseMatrix class" href="sparse_matrix.html" /> 
   </head>
   <body>
       <div class="header"><h1 class="heading"><a href="../index.html">
@@ -41,7 +41,7 @@
       <div class="topnav">
       
         <p>
-        «&#160;&#160;<a href="dist_graph.html">The DistGraph class</a>
+        «&#160;&#160;<a href="sparse_matrix.html">The SparseMatrix class</a>
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
         &#160;&#160;::&#160;&#160;
@@ -54,7 +54,7 @@
         
   <div class="section" id="the-distsparsematrix-class">
 <h1>The DistSparseMatrix class<a class="headerlink" href="#the-distsparsematrix-class" title="Permalink to this headline">¶</a></h1>
-<p>The <a class="reference internal" href="#DistSparseMatrix:T:" title="DistSparseMatrix&lt;T&gt;"><tt class="xref cpp cpp-class docutils literal"><span class="pre">DistSparseMatrix&lt;T&gt;</span></tt></a> class is meant to provide a convenient
+<p>The <a class="reference internal" href="#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistSparseMatrix&lt;T&gt;</span></tt></a> class is meant to provide a convenient
 means of building a distributed sparse matrix within Clique.
 After initializing a real double-precision <span class="math">\(N \times N\)</span> sparse matrix
 distributed over the communicator <tt class="docutils literal"><span class="pre">comm</span></tt>, e.g., with</p>
@@ -110,9 +110,9 @@ member function before performing any updates.</p>
 nonzero triples, which contain the row index, column index, and value, are
 sorted in lexicographical order based upon the row and column indices
 (respectively).</p>
-<dl class="class">
-<dt id="DistSparseMatrix:T:">
-<em class="property">class </em><tt class="descname">DistSparseMatrix&lt;T&gt;</tt><a class="headerlink" href="#DistSparseMatrix:T:" title="Permalink to this definition">¶</a></dt>
+<dl class="type">
+<dt id="DistSparseMatrix:T:__class">
+<em class="property">type </em>class <tt class="descname">DistSparseMatrix&lt;T&gt;</tt><a class="headerlink" href="#DistSparseMatrix:T:__class" title="Permalink to this definition">¶</a></dt>
 <dd><p class="rubric">Constructors</p>
 <dl class="function">
 <dt id="DistSparseMatrix:T:::DistSparseMatrix">
@@ -157,7 +157,7 @@ int <tt class="descname">Width</tt><big>(</big><big>)</big><tt class="descclassn
 
 <dl class="function">
 <dt id="DistSparseMatrix:T:::GraphC">
-const DistGraph&amp; <tt class="descname">Graph</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::GraphC" title="Permalink to this definition">¶</a></dt>
+<a class="reference internal" href="dist_graph.html#DistGraph__class" title="DistGraph">const DistGraph&amp;</a> <tt class="descname">Graph</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::GraphC" title="Permalink to this definition">¶</a></dt>
 <dd><p>The underlying graph of the sparse matrix.</p>
 </dd></dl>
 
@@ -294,7 +294,7 @@ void <tt class="descname">ResizeTo</tt><big>(</big>int <em>height</em>, int <em>
       <div class="bottomnav">
       
         <p>
-        «&#160;&#160;<a href="dist_graph.html">The DistGraph class</a>
+        «&#160;&#160;<a href="sparse_matrix.html">The SparseMatrix class</a>
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
         &#160;&#160;::&#160;&#160;

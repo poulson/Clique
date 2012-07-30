@@ -54,13 +54,13 @@
         
   <div class="section" id="the-distmultivector-class">
 <h1>The DistMultiVector class<a class="headerlink" href="#the-distmultivector-class" title="Permalink to this headline">¶</a></h1>
-<p>The <a class="reference internal" href="#DistMultiVector:T:" title="DistMultiVector&lt;T&gt;"><tt class="xref cpp cpp-class docutils literal"><span class="pre">DistMultiVector&lt;T&gt;</span></tt></a> class is the standard interface in Clique
+<p>The <a class="reference internal" href="#DistMultiVector:T:__class" title="DistMultiVector&lt;T&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistMultiVector&lt;T&gt;</span></tt></a> class is the standard interface in Clique
 for setting up several right-hand sides for solves: it uses the same simple
-one-dimensional distribution as <a class="reference internal" href="dist_sparse_matrix.html#DistSparseMatrix:T:" title="DistSparseMatrix&lt;T&gt;"><tt class="xref cpp cpp-class docutils literal"><span class="pre">DistSparseMatrix&lt;T&gt;</span></tt></a> and is meant
+one-dimensional distribution as <a class="reference internal" href="dist_sparse_matrix.html#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistSparseMatrix&lt;T&gt;</span></tt></a> and is meant
 to be simple to use.</p>
-<dl class="class">
-<dt id="DistMultiVector:T:">
-<em class="property">class </em><tt class="descname">DistMultiVector&lt;T&gt;</tt><a class="headerlink" href="#DistMultiVector:T:" title="Permalink to this definition">¶</a></dt>
+<dl class="type">
+<dt id="DistMultiVector:T:__class">
+<em class="property">type </em>class <tt class="descname">DistMultiVector&lt;T&gt;</tt><a class="headerlink" href="#DistMultiVector:T:__class" title="Permalink to this definition">¶</a></dt>
 <dd><p class="rubric">Constructors</p>
 <dl class="function">
 <dt id="DistMultiVector:T:::DistMultiVector">
@@ -164,13 +164,13 @@ height.</p>
 
 <dl class="function">
 <dt id="DistMultiVector:T:::assign-operator__DistVector:T:CR">
-const DistMultiVector&lt;T&gt;&amp; <tt class="descname">operator=</tt><big>(</big>const DistVector&lt;T&gt;&amp; <em>x</em><big>)</big><a class="headerlink" href="#DistMultiVector:T:::assign-operator__DistVector:T:CR" title="Permalink to this definition">¶</a></dt>
+<a class="reference internal" href="#DistMultiVector:T:__class" title="DistMultiVector&lt;T&gt;">const DistMultiVector&lt;T&gt;&amp;</a> <tt class="descname">operator=</tt><big>(</big><a class="reference internal" href="dist_vector.html#DistVector:T:__class" title="DistVector&lt;T&gt;">const DistVector&lt;T&gt;&amp;</a> <em>x</em><big>)</big><a class="headerlink" href="#DistMultiVector:T:::assign-operator__DistVector:T:CR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Makes this multi-vector a copy of the given vector.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="DistMultiVector:T:::assign-operator__DistMultiVector:T:CR">
-const DistMultiVector&lt;T&gt;&amp; <tt class="descname">operator=</tt><big>(</big>const DistMultiVector&lt;T&gt;&amp; <em>X</em><big>)</big><a class="headerlink" href="#DistMultiVector:T:::assign-operator__DistMultiVector:T:CR" title="Permalink to this definition">¶</a></dt>
+<a class="reference internal" href="#DistMultiVector:T:__class" title="DistMultiVector&lt;T&gt;">const DistMultiVector&lt;T&gt;&amp;</a> <tt class="descname">operator=</tt><big>(</big><a class="reference internal" href="#DistMultiVector:T:__class" title="DistMultiVector&lt;T&gt;">const DistMultiVector&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#DistMultiVector:T:::assign-operator__DistMultiVector:T:CR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Makes this multi-vector a copy of the given multi-vector.</p>
 </dd></dl>
 
@@ -178,26 +178,26 @@ const DistMultiVector&lt;T&gt;&amp; <tt class="descname">operator=</tt><big>(</b
 
 <dl class="function">
 <dt id="MakeZeros__DistMultiVector:T:R">
-void <tt class="descname">MakeZeros</tt><big>(</big>DistMultiVector&lt;T&gt;&amp; <em>X</em><big>)</big><a class="headerlink" href="#MakeZeros__DistMultiVector:T:R" title="Permalink to this definition">¶</a></dt>
+void <tt class="descname">MakeZeros</tt><big>(</big><a class="reference internal" href="#DistMultiVector:T:__class" title="DistMultiVector&lt;T&gt;">DistMultiVector&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#MakeZeros__DistMultiVector:T:R" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets every entry in the multi-vector to zero.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="MakeUniform__DistMultiVector:T:R">
-void <tt class="descname">MakeUniform</tt><big>(</big>DistMultiVector&lt;T&gt;&amp; <em>X</em><big>)</big><a class="headerlink" href="#MakeUniform__DistMultiVector:T:R" title="Permalink to this definition">¶</a></dt>
+void <tt class="descname">MakeUniform</tt><big>(</big><a class="reference internal" href="#DistMultiVector:T:__class" title="DistMultiVector&lt;T&gt;">DistMultiVector&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#MakeUniform__DistMultiVector:T:R" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets each entry in the multi-vector to a sample from the unit ball
 appropriate for type <tt class="docutils literal"><span class="pre">T</span></tt>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="Norm__DistMultiVector:F:CR.std::vector:typename-Base:F:::type:R">
-void <tt class="descname">Norm</tt><big>(</big>const DistMultiVector&lt;F&gt;&amp; <em>X</em>, std::vector&lt;typename Base&lt;F&gt;::type&gt;&amp; <em>norms</em><big>)</big><a class="headerlink" href="#Norm__DistMultiVector:F:CR.std::vector:typename-Base:F:::type:R" title="Permalink to this definition">¶</a></dt>
+<dt id="Norm__DistMultiVector:T:CR.std::vector:typename-Base:T:::type:R">
+void <tt class="descname">Norm</tt><big>(</big><a class="reference internal" href="#DistMultiVector:T:__class" title="DistMultiVector&lt;T&gt;">const DistMultiVector&lt;T&gt;&amp;</a> <em>X</em>, std::vector&lt;typename Base&lt;T&gt;::type&gt;&amp; <em>norms</em><big>)</big><a class="headerlink" href="#Norm__DistMultiVector:T:CR.std::vector:typename-Base:T:::type:R" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the Euclidean norms of each of the vectors.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="Axpy__T.DistMultiVector:T:CR.DistMultiVector:T:R">
-void <tt class="descname">Axpy</tt><big>(</big>T <em>alpha</em>, const DistMultiVector&lt;T&gt;&amp; <em>X</em>, DistMultiVector&lt;T&gt;&amp; <em>Y</em><big>)</big><a class="headerlink" href="#Axpy__T.DistMultiVector:T:CR.DistMultiVector:T:R" title="Permalink to this definition">¶</a></dt>
+void <tt class="descname">Axpy</tt><big>(</big>T <em>alpha</em>, <a class="reference internal" href="#DistMultiVector:T:__class" title="DistMultiVector&lt;T&gt;">const DistMultiVector&lt;T&gt;&amp;</a> <em>X</em>, <a class="reference internal" href="#DistMultiVector:T:__class" title="DistMultiVector&lt;T&gt;">DistMultiVector&lt;T&gt;&amp;</a> <em>Y</em><big>)</big><a class="headerlink" href="#Axpy__T.DistMultiVector:T:CR.DistMultiVector:T:R" title="Permalink to this definition">¶</a></dt>
 <dd><p>Updates <span class="math">\(Y := \alpha X + Y\)</span>.</p>
 </dd></dl>
 

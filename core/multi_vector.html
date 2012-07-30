@@ -47,12 +47,12 @@
         
   <div class="section" id="the-multivector-class">
 <h1>The MultiVector class<a class="headerlink" href="#the-multivector-class" title="Permalink to this headline">¶</a></h1>
-<p>The <a class="reference internal" href="#MultiVector:T:" title="MultiVector&lt;T&gt;"><tt class="xref cpp cpp-class docutils literal"><span class="pre">MultiVector&lt;T&gt;</span></tt></a> class is the standard interface in Clique for
+<p>The <a class="reference internal" href="#MultiVector:T:__class" title="MultiVector&lt;T&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">MultiVector&lt;T&gt;</span></tt></a> class is the standard interface in Clique for
 setting up multiple right-hand sides for sequential solves: it is a simplified
-version of <a class="reference internal" href="dist_multi_vector.html#DistMultiVector:T:" title="DistMultiVector&lt;T&gt;"><tt class="xref cpp cpp-class docutils literal"><span class="pre">DistMultiVector&lt;T&gt;</span></tt></a>.</p>
-<dl class="class">
-<dt id="MultiVector:T:">
-<em class="property">class </em><tt class="descname">MultiVector&lt;T&gt;</tt><a class="headerlink" href="#MultiVector:T:" title="Permalink to this definition">¶</a></dt>
+version of <a class="reference internal" href="dist_multi_vector.html#DistMultiVector:T:__class" title="DistMultiVector&lt;T&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistMultiVector&lt;T&gt;</span></tt></a>.</p>
+<dl class="type">
+<dt id="MultiVector:T:__class">
+<em class="property">type </em>class <tt class="descname">MultiVector&lt;T&gt;</tt><a class="headerlink" href="#MultiVector:T:__class" title="Permalink to this definition">¶</a></dt>
 <dd><p class="rubric">Constructors</p>
 <dl class="function">
 <dt id="MultiVector:T:::MultiVector">
@@ -114,13 +114,13 @@ void <tt class="descname">ResizeTo</tt><big>(</big>int <em>height</em>, int <em>
 
 <dl class="function">
 <dt id="MultiVector:T:::assign-operator__Vector:T:CR">
-const MultiVector&lt;T&gt;&amp; <tt class="descname">operator=</tt><big>(</big>const Vector&lt;T&gt;&amp; <em>x</em><big>)</big><a class="headerlink" href="#MultiVector:T:::assign-operator__Vector:T:CR" title="Permalink to this definition">¶</a></dt>
+<a class="reference internal" href="#MultiVector:T:__class" title="MultiVector&lt;T&gt;">const MultiVector&lt;T&gt;&amp;</a> <tt class="descname">operator=</tt><big>(</big><a class="reference internal" href="vector.html#Vector:T:__class" title="Vector&lt;T&gt;">const Vector&lt;T&gt;&amp;</a> <em>x</em><big>)</big><a class="headerlink" href="#MultiVector:T:::assign-operator__Vector:T:CR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Makes this multi-vector a copy of the given vector.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="MultiVector:T:::assign-operator__MultiVector:T:CR">
-const MultiVector&lt;T&gt;&amp; <tt class="descname">operator=</tt><big>(</big>const MultiVector&lt;T&gt;&amp; <em>X</em><big>)</big><a class="headerlink" href="#MultiVector:T:::assign-operator__MultiVector:T:CR" title="Permalink to this definition">¶</a></dt>
+<a class="reference internal" href="#MultiVector:T:__class" title="MultiVector&lt;T&gt;">const MultiVector&lt;T&gt;&amp;</a> <tt class="descname">operator=</tt><big>(</big><a class="reference internal" href="#MultiVector:T:__class" title="MultiVector&lt;T&gt;">const MultiVector&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#MultiVector:T:::assign-operator__MultiVector:T:CR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Makes this multi-vector a copy of the given multi-vector.</p>
 </dd></dl>
 
@@ -128,26 +128,26 @@ const MultiVector&lt;T&gt;&amp; <tt class="descname">operator=</tt><big>(</big>c
 
 <dl class="function">
 <dt id="MakeZeros__MultiVector:T:R">
-void <tt class="descname">MakeZeros</tt><big>(</big>MultiVector&lt;T&gt;&amp; <em>X</em><big>)</big><a class="headerlink" href="#MakeZeros__MultiVector:T:R" title="Permalink to this definition">¶</a></dt>
+void <tt class="descname">MakeZeros</tt><big>(</big><a class="reference internal" href="#MultiVector:T:__class" title="MultiVector&lt;T&gt;">MultiVector&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#MakeZeros__MultiVector:T:R" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets every entry in the multi-vector to zero.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="MakeUniform__MultiVector:T:R">
-void <tt class="descname">MakeUniform</tt><big>(</big>MultiVector&lt;T&gt;&amp; <em>X</em><big>)</big><a class="headerlink" href="#MakeUniform__MultiVector:T:R" title="Permalink to this definition">¶</a></dt>
+void <tt class="descname">MakeUniform</tt><big>(</big><a class="reference internal" href="#MultiVector:T:__class" title="MultiVector&lt;T&gt;">MultiVector&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#MakeUniform__MultiVector:T:R" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets each entry in the multi-vector to a sample from the unit ball
 appropriate for type <tt class="docutils literal"><span class="pre">T</span></tt>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="Norms__MultiVector:F:CR.std::vector:typename-Base:F:::type:R">
-void <tt class="descname">Norms</tt><big>(</big>const MultiVector&lt;F&gt;&amp; <em>X</em>, std::vector&lt;typename Base&lt;F&gt;::type&gt;&amp; <em>norms</em><big>)</big><a class="headerlink" href="#Norms__MultiVector:F:CR.std::vector:typename-Base:F:::type:R" title="Permalink to this definition">¶</a></dt>
+<dt id="Norms__MultiVector:T:CR.std::vector:typename-Base:T:::type:R">
+void <tt class="descname">Norms</tt><big>(</big><a class="reference internal" href="#MultiVector:T:__class" title="MultiVector&lt;T&gt;">const MultiVector&lt;T&gt;&amp;</a> <em>X</em>, std::vector&lt;typename Base&lt;T&gt;::type&gt;&amp; <em>norms</em><big>)</big><a class="headerlink" href="#Norms__MultiVector:T:CR.std::vector:typename-Base:T:::type:R" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the Euclidean norms of each vector in the multi-vector.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="Axpy__T.MultiVector:T:CR.MultiVector:T:R">
-void <tt class="descname">Axpy</tt><big>(</big>T <em>alpha</em>, const MultiVector&lt;T&gt;&amp; <em>X</em>, MultiVector&lt;T&gt;&amp; <em>Y</em><big>)</big><a class="headerlink" href="#Axpy__T.MultiVector:T:CR.MultiVector:T:R" title="Permalink to this definition">¶</a></dt>
+void <tt class="descname">Axpy</tt><big>(</big>T <em>alpha</em>, <a class="reference internal" href="#MultiVector:T:__class" title="MultiVector&lt;T&gt;">const MultiVector&lt;T&gt;&amp;</a> <em>X</em>, <a class="reference internal" href="#MultiVector:T:__class" title="MultiVector&lt;T&gt;">MultiVector&lt;T&gt;&amp;</a> <em>Y</em><big>)</big><a class="headerlink" href="#Axpy__T.MultiVector:T:CR.MultiVector:T:R" title="Permalink to this definition">¶</a></dt>
 <dd><p>Updates <span class="math">\(Y := \alpha X + Y\)</span>.</p>
 </dd></dl>
 

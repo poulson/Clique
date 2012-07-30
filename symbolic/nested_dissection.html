@@ -62,8 +62,8 @@ yields a node in a <em>separator tree</em>, which can be used to guide a multifr
 algorithm. The following routine uses a parallel graph partitioner (ParMETIS)
 as a means of producing such a separator tree from an arbitrary graph.</p>
 <dl class="function">
-<dt id="NestedDissection__DistGraphCR.std::vector:i:R.DistSeparatorTreeR.DistSymmInfoR.i.i.i.b">
-void <tt class="descname">NestedDissection</tt><big>(</big>const DistGraph&amp; <em>graph</em>, std::vector&lt;int&gt;&amp; <em>localMap</em>, <a class="reference internal" href="#DistSeparatorTree__struct" title="DistSeparatorTree">DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="#DistSymmInfo__struct" title="DistSymmInfo">DistSymmInfo&amp;</a> <em>info</em>, int <em>cutoff</em><em>=128</em>, int <em>numDistSeps</em><em>=10</em>, int <em>numSeqSeps</em><em>=5</em>, bool <em>storeFactRecvIndices</em><em>=true </em><big>)</big><a class="headerlink" href="#NestedDissection__DistGraphCR.std::vector:i:R.DistSeparatorTreeR.DistSymmInfoR.i.i.i.b" title="Permalink to this definition">¶</a></dt>
+<dt id="NestedDissection__DistGraphCR.DistMapR.DistSeparatorTreeR.DistSymmInfoR.i.i.i.b">
+void <tt class="descname">NestedDissection</tt><big>(</big><a class="reference internal" href="../core/dist_graph.html#DistGraph__class" title="DistGraph">const DistGraph&amp;</a> <em>graph</em>, <a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">DistMap&amp;</a> <em>map</em>, <a class="reference internal" href="#DistSeparatorTree__struct" title="DistSeparatorTree">DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="#DistSymmInfo__struct" title="DistSymmInfo">DistSymmInfo&amp;</a> <em>info</em>, int <em>cutoff</em><em>=128</em>, int <em>numDistSeps</em><em>=10</em>, int <em>numSeqSeps</em><em>=5</em>, bool <em>storeFactRecvIndices</em><em>=true </em><big>)</big><a class="headerlink" href="#NestedDissection__DistGraphCR.DistMapR.DistSeparatorTreeR.DistSymmInfoR.i.i.i.b" title="Permalink to this definition">¶</a></dt>
 <dd><p>In addition to generating the separator tree, which simply stores the indices
 of each separator, each process computes its portion of the mapping from the
 original to the reordered indices (implied by nested dissection) within the
@@ -269,7 +269,7 @@ mpi::Comm <tt class="descname">comm</tt><a class="headerlink" href="#DistSymmNod
 <p class="rubric">Computed during analysis</p>
 <dl class="member">
 <dt id="DistSymmNodeInfo::grid__GridP">
-Grid* <tt class="descname">grid</tt><a class="headerlink" href="#DistSymmNodeInfo::grid__GridP" title="Permalink to this definition">¶</a></dt>
+<a class="reference internal" href="../core/environment.html#Grid__class" title="Grid">Grid*</a> <tt class="descname">grid</tt><a class="headerlink" href="#DistSymmNodeInfo::grid__GridP" title="Permalink to this definition">¶</a></dt>
 <dd><p>The process grid which will be used to distribute the frontal matrix for
 this node.</p>
 </dd></dl>

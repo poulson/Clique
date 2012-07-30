@@ -54,11 +54,11 @@
         
   <div class="section" id="the-graph-class">
 <h1>The Graph class<a class="headerlink" href="#the-graph-class" title="Permalink to this headline">¶</a></h1>
-<p>The <a class="reference internal" href="#Graph" title="Graph"><tt class="xref cpp cpp-class docutils literal"><span class="pre">Graph</span></tt></a> class is primarily used under-the-hood in Clique for
+<p>The <a class="reference internal" href="#Graph__class" title="Graph"><tt class="xref cpp cpp-type docutils literal"><span class="pre">Graph</span></tt></a> class is primarily used under-the-hood in Clique for
 graph partitioning and as the primary component of the
-<a class="reference internal" href="sparse_matrix.html#SparseMatrix:T:" title="SparseMatrix&lt;T&gt;"><tt class="xref cpp cpp-class docutils literal"><span class="pre">SparseMatrix&lt;T&gt;</span></tt></a> class.
+<a class="reference internal" href="sparse_matrix.html#SparseMatrix:T:__class" title="SparseMatrix&lt;T&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">SparseMatrix&lt;T&gt;</span></tt></a> class.
 Nevertheless, it is possible to work directly with graphs in Clique. The usage
-is extremely similar to the <a class="reference internal" href="sparse_matrix.html#SparseMatrix:T:" title="SparseMatrix&lt;T&gt;"><tt class="xref cpp cpp-class docutils literal"><span class="pre">SparseMatrix&lt;T&gt;</span></tt></a> class, and so the
+is extremely similar to the <a class="reference internal" href="sparse_matrix.html#SparseMatrix:T:__class" title="SparseMatrix&lt;T&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">SparseMatrix&lt;T&gt;</span></tt></a> class, and so the
 construction of the graph corresponding to the 7-point stencil over a
 <span class="math">\(n_1 \times n_2 \times n_3\)</span> grid is briefly demonstrated below:</p>
 <div class="highlight-cpp"><div class="highlight"><pre><span class="n">Graph</span> <span class="n">graph</span><span class="p">(</span> <span class="n">N</span> <span class="p">);</span>
@@ -96,9 +96,9 @@ and then to add edges into the graph in various locations.</p>
 lexicographically based upon the source and target indices (respectively).
 In the language of matrices, the <em>source</em> is the row index, and the <em>target</em>
 is the column index.</p>
-<dl class="class">
-<dt id="Graph">
-<em class="property">class </em><tt class="descname">Graph</tt><a class="headerlink" href="#Graph" title="Permalink to this definition">¶</a></dt>
+<dl class="type">
+<dt id="Graph__class">
+<em class="property">type </em>class <tt class="descname">Graph</tt><a class="headerlink" href="#Graph__class" title="Permalink to this definition">¶</a></dt>
 <dd><p class="rubric">Constructors</p>
 <dl class="function">
 <dt id="Graph::Graph">
@@ -122,13 +122,13 @@ is the column index.</p>
 
 <dl class="function">
 <dt id="Graph::Graph__GraphCR">
- <tt class="descname">Graph</tt><big>(</big>const Graph&amp; <em>graph</em><big>)</big><a class="headerlink" href="#Graph::Graph__GraphCR" title="Permalink to this definition">¶</a></dt>
+ <tt class="descname">Graph</tt><big>(</big><a class="reference internal" href="#Graph__class" title="Graph">const Graph&amp;</a> <em>graph</em><big>)</big><a class="headerlink" href="#Graph::Graph__GraphCR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Constructs a copy of the given graph.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="Graph::Graph__DistGraphCR">
- <tt class="descname">Graph</tt><big>(</big>const DistGraph&amp; <em>graph</em><big>)</big><a class="headerlink" href="#Graph::Graph__DistGraphCR" title="Permalink to this definition">¶</a></dt>
+ <tt class="descname">Graph</tt><big>(</big><a class="reference internal" href="dist_graph.html#DistGraph__class" title="DistGraph">const DistGraph&amp;</a> <em>graph</em><big>)</big><a class="headerlink" href="#Graph::Graph__DistGraphCR" title="Permalink to this definition">¶</a></dt>
 <dd><div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">The distributed graph can only be distributed over a single process.</p>
@@ -243,13 +243,13 @@ source vertices and <cite>numTargets</cite> target vertices.</p>
 <p class="rubric">For copying one graph into another</p>
 <dl class="function">
 <dt id="Graph::assign-operator__GraphCR">
-const Graph&amp; <tt class="descname">operator=</tt><big>(</big>const Graph&amp; <em>graph</em><big>)</big><a class="headerlink" href="#Graph::assign-operator__GraphCR" title="Permalink to this definition">¶</a></dt>
+<a class="reference internal" href="#Graph__class" title="Graph">const Graph&amp;</a> <tt class="descname">operator=</tt><big>(</big><a class="reference internal" href="#Graph__class" title="Graph">const Graph&amp;</a> <em>graph</em><big>)</big><a class="headerlink" href="#Graph::assign-operator__GraphCR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets this graph equal to the given graph.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="Graph::assign-operator__DistGraphCR">
-const Graph&amp; <tt class="descname">operator=</tt><big>(</big>const DistGraph&amp; <em>graph</em><big>)</big><a class="headerlink" href="#Graph::assign-operator__DistGraphCR" title="Permalink to this definition">¶</a></dt>
+<a class="reference internal" href="#Graph__class" title="Graph">const Graph&amp;</a> <tt class="descname">operator=</tt><big>(</big><a class="reference internal" href="dist_graph.html#DistGraph__class" title="DistGraph">const DistGraph&amp;</a> <em>graph</em><big>)</big><a class="headerlink" href="#Graph::assign-operator__DistGraphCR" title="Permalink to this definition">¶</a></dt>
 <dd><div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">The distributed graph can only be distributed over a single process.</p>
