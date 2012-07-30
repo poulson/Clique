@@ -137,25 +137,25 @@ distributed matrices and vectors.</p>
 </dd></dl>
 
 <dl class="type">
-<dt id="Base:T:__struct">
-<em class="property">type </em>struct <tt class="descname">Base&lt;T&gt;</tt><a class="headerlink" href="#Base:T:__struct" title="Permalink to this definition">¶</a></dt>
+<dt id="Base:F:__struct">
+<em class="property">type </em>struct <tt class="descname">Base&lt;F&gt;</tt><a class="headerlink" href="#Base:F:__struct" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="type">
-<dt id="Base:T:::type">
-<em class="property">type </em><tt class="descname">type</tt><a class="headerlink" href="#Base:T:::type" title="Permalink to this definition">¶</a></dt>
-<dd><p>Underlying real datatype of the field <tt class="docutils literal"><span class="pre">T</span></tt>.</p>
+<dt id="Base:F:::type">
+<em class="property">type </em><tt class="descname">type</tt><a class="headerlink" href="#Base:F:::type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Underlying real datatype of the field <tt class="docutils literal"><span class="pre">F</span></tt>.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="function">
-<dt id="Abs__TCR">
-<a class="reference internal" href="#Base:T:::type" title="Base&lt;T&gt;::type">typename Base&lt;T&gt;::type</a> <tt class="descname">Abs</tt><big>(</big>const T&amp; <em>alpha</em><big>)</big><a class="headerlink" href="#Abs__TCR" title="Permalink to this definition">¶</a></dt>
+<dt id="Abs__FCR">
+<a class="reference internal" href="#Base:F:::type" title="Base&lt;F&gt;::type">typename Base&lt;F&gt;::type</a> <tt class="descname">Abs</tt><big>(</big>const F&amp; <em>alpha</em><big>)</big><a class="headerlink" href="#Abs__FCR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the absolute value of the real or complex variable <span class="math">\(\alpha\)</span>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="Sqrt__TCR">
-T <tt class="descname">Sqrt</tt><big>(</big>const T&amp; <em>alpha</em><big>)</big><a class="headerlink" href="#Sqrt__TCR" title="Permalink to this definition">¶</a></dt>
+<dt id="Sqrt__FCR">
+F <tt class="descname">Sqrt</tt><big>(</big>const F&amp; <em>alpha</em><big>)</big><a class="headerlink" href="#Sqrt__FCR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the square-root of the real or complex variable <span class="math">\(\alpha\)</span>.</p>
 </dd></dl>
 
@@ -165,6 +165,12 @@ T <tt class="descname">Sqrt</tt><big>(</big>const T&amp; <em>alpha</em><big>)</b
 <em class="property">type </em>class <tt class="descname">Matrix&lt;T&gt;</tt><a class="headerlink" href="#Matrix:T:__class" title="Permalink to this definition">¶</a></dt>
 <dd><p>Import of Elemental&#8217;s
 <a class="reference external" href="http://poulson.github.com/Elemental/core/matrix.html">Matrix</a> class.</p>
+</dd></dl>
+
+<dl class="type">
+<dt id="Matrix:F:__class">
+<em class="property">type </em>class <tt class="descname">Matrix&lt;F&gt;</tt><a class="headerlink" href="#Matrix:F:__class" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as above, but this implies that the underlying datatype <cite>F</cite> is a field.</p>
 </dd></dl>
 
 <dl class="type">
@@ -180,6 +186,48 @@ T <tt class="descname">Sqrt</tt><big>(</big>const T&amp; <em>alpha</em><big>)</b
 <dd><p>Import of Elemental&#8217;s
 <a class="reference external" href="http://poulson.github.com/Elemental/core/dist_matrix.html">DistMatrix</a>
 class.</p>
+</dd></dl>
+
+<dl class="type">
+<dt id="DistMatrix:F.U.V:__class">
+<em class="property">type </em>class <tt class="descname">DistMatrix&lt;F, U, V&gt;</tt><a class="headerlink" href="#DistMatrix:F.U.V:__class" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as above, but this implies that the underlying datatype <cite>F</cite> is a field.</p>
+</dd></dl>
+
+<dl class="type">
+<dt id="DistMatrix:T:__class">
+<em class="property">type </em>class <tt class="descname">DistMatrix&lt;T&gt;</tt><a class="headerlink" href="#DistMatrix:T:__class" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="type">
+<dt id="DistMatrix:T.MC.MR:__class">
+<em class="property">type </em>class <tt class="descname">DistMatrix&lt;T, MC, MR&gt;</tt><a class="headerlink" href="#DistMatrix:T.MC.MR:__class" title="Permalink to this definition">¶</a></dt>
+<dd><p>A partial specialization of the <a class="reference internal" href="#DistMatrix:T.U.V:__class" title="DistMatrix&lt;T, U, V&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistMatrix&lt;T,U,V&gt;</span></tt></a> class to the
+<a class="reference external" href="http://poulson.github.com/Elemental/core/dist_matrix.html#mc-mr">standard matrix distribution</a>, <tt class="docutils literal"><span class="pre">[MC,MR]</span></tt>.</p>
+</dd></dl>
+
+<dl class="type">
+<dt id="DistMatrix:F:__class">
+<em class="property">type </em>class <tt class="descname">DistMatrix&lt;F&gt;</tt><a class="headerlink" href="#DistMatrix:F:__class" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="type">
+<dt id="DistMatrix:F.MC.MR:__class">
+<em class="property">type </em>class <tt class="descname">DistMatrix&lt;F, MC, MR&gt;</tt><a class="headerlink" href="#DistMatrix:F.MC.MR:__class" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as above, but this implies that the underlying datatype <cite>F</cite> is a field.</p>
+</dd></dl>
+
+<dl class="type">
+<dt id="DistMatrix:T.VC.STAR:__class">
+<em class="property">type </em>class <tt class="descname">DistMatrix&lt;T, VC, STAR&gt;</tt><a class="headerlink" href="#DistMatrix:T.VC.STAR:__class" title="Permalink to this definition">¶</a></dt>
+<dd><p>A partial specialization of the <a class="reference internal" href="#DistMatrix:T.U.V:__class" title="DistMatrix&lt;T, U, V&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistMatrix&lt;T,U,V&gt;</span></tt></a> class to a
+<a class="reference external" href="http://poulson.github.com/Elemental/core/dist_matrix.html#vc">column-major vector distribution</a>, <tt class="docutils literal"><span class="pre">[VC,*]</span></tt>.</p>
+</dd></dl>
+
+<dl class="type">
+<dt id="DistMatrix:F.VC.STAR:__class">
+<em class="property">type </em>class <tt class="descname">DistMatrix&lt;F, VC, STAR&gt;</tt><a class="headerlink" href="#DistMatrix:F.VC.STAR:__class" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as above, but this implies that the underlying datatype <cite>F</cite> is a field.</p>
 </dd></dl>
 
 <p class="rubric">Imported libraries</p>

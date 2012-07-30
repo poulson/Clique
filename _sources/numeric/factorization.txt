@@ -4,7 +4,7 @@ Factorization
 LDL factorization
 -----------------
 
-.. cpp:function:: void LDL( Orientation orientation, DistSymmInfo& info, DistSymmFrontTree<T>& L )
+.. cpp:function:: void LDL( Orientation orientation, DistSymmInfo& info, DistSymmFrontTree<F>& L )
 
    Performs either an :math:`LDL^T` or :math:`LDL^H` factorization, depending 
    on whether `orientation` is set to ``TRANSPOSE`` or ``ADJOINT``. See 
@@ -15,7 +15,7 @@ LDL factorization
       This routine does not pivot, so it should be used with caution on matrices
       which are not Hermitian positive-definite.
 
-.. cpp:function:: void BlockLDL( Orientation orientation, DistSymmInfo& info, DistSymmFrontTree<T>& L )
+.. cpp:function:: void BlockLDL( Orientation orientation, DistSymmInfo& info, DistSymmFrontTree<F>& L )
 
    Performs a block-diagonal :math:`LDL^T` or :math:`LDL^H` factorization, 
    depending on whether `orientation` is set to ``TRANSPOSE`` or ``ADJOINT``.
@@ -109,3 +109,7 @@ This data structure represents a distributed symmetric :math:`LDL^T` or
       A constructor which converts a distributed sparse matrix into a symmetric
       frontal tree which is ready for factorization (e.g., with 
       :cpp:func:`LDL` or :cpp:func:`BlockLDL`).
+
+.. cpp:type:: struct DistSymmFrontTree<F>
+
+   Same as above, but this implies that the underlying datatype `F` is a field.

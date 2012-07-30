@@ -57,8 +57,8 @@
 <div class="section" id="ldl-factorization">
 <h2>LDL factorization<a class="headerlink" href="#ldl-factorization" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
-<dt id="LDL__Orientation.DistSymmInfoR.DistSymmFrontTree:T:R">
-void <tt class="descname">LDL</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="#DistSymmFrontTree:T:__struct" title="DistSymmFrontTree&lt;T&gt;">DistSymmFrontTree&lt;T&gt;&amp;</a> <em>L</em><big>)</big><a class="headerlink" href="#LDL__Orientation.DistSymmInfoR.DistSymmFrontTree:T:R" title="Permalink to this definition">¶</a></dt>
+<dt id="LDL__Orientation.DistSymmInfoR.DistSymmFrontTree:F:R">
+void <tt class="descname">LDL</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="#DistSymmFrontTree:F:__struct" title="DistSymmFrontTree&lt;F&gt;">DistSymmFrontTree&lt;F&gt;&amp;</a> <em>L</em><big>)</big><a class="headerlink" href="#LDL__Orientation.DistSymmInfoR.DistSymmFrontTree:F:R" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performs either an <span class="math">\(LDL^T\)</span> or <span class="math">\(LDL^H\)</span> factorization, depending
 on whether <cite>orientation</cite> is set to <tt class="docutils literal"><span class="pre">TRANSPOSE</span></tt> or <tt class="docutils literal"><span class="pre">ADJOINT</span></tt>. See
 <a class="reference external" href="https://github.com/poulson/Clique/blob/master/tests/VectorSolve.cpp">tests/VectorSolve</a> for an example usage.</p>
@@ -70,8 +70,8 @@ which are not Hermitian positive-definite.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="BlockLDL__Orientation.DistSymmInfoR.DistSymmFrontTree:T:R">
-void <tt class="descname">BlockLDL</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="#DistSymmFrontTree:T:__struct" title="DistSymmFrontTree&lt;T&gt;">DistSymmFrontTree&lt;T&gt;&amp;</a> <em>L</em><big>)</big><a class="headerlink" href="#BlockLDL__Orientation.DistSymmInfoR.DistSymmFrontTree:T:R" title="Permalink to this definition">¶</a></dt>
+<dt id="BlockLDL__Orientation.DistSymmInfoR.DistSymmFrontTree:F:R">
+void <tt class="descname">BlockLDL</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="#DistSymmFrontTree:F:__struct" title="DistSymmFrontTree&lt;F&gt;">DistSymmFrontTree&lt;F&gt;&amp;</a> <em>L</em><big>)</big><a class="headerlink" href="#BlockLDL__Orientation.DistSymmInfoR.DistSymmFrontTree:F:R" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performs a block-diagonal <span class="math">\(LDL^T\)</span> or <span class="math">\(LDL^H\)</span> factorization,
 depending on whether <cite>orientation</cite> is set to <tt class="docutils literal"><span class="pre">TRANSPOSE</span></tt> or <tt class="docutils literal"><span class="pre">ADJOINT</span></tt>.</p>
 <div class="admonition note">
@@ -118,7 +118,7 @@ and the lower structure is of size <span class="math">\(m-n\)</span>.</p>
 <em class="property">type </em>struct <tt class="descname">DistSymmFront&lt;T&gt;</tt><a class="headerlink" href="#DistSymmFront:T:__struct" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="member">
 <dt id="DistSymmFront:T:::front1dL__mutable-DistMatrix:T.VC.STAR:">
-mutable DistMatrix&lt;T, VC, STAR&gt; <tt class="descname">front1dL</tt><a class="headerlink" href="#DistSymmFront:T:::front1dL__mutable-DistMatrix:T.VC.STAR:" title="Permalink to this definition">¶</a></dt>
+<a class="reference internal" href="../core/environment.html#DistMatrix:T.VC.STAR:__class" title="DistMatrix&lt;T, VC, STAR&gt;">mutable DistMatrix&lt;T, VC, STAR&gt;</a> <tt class="descname">front1dL</tt><a class="headerlink" href="#DistSymmFront:T:::front1dL__mutable-DistMatrix:T.VC.STAR:" title="Permalink to this definition">¶</a></dt>
 <dd><p>The left half of a frontal matrix in a 1D distribution. If <cite>front1dL</cite> is
 <span class="math">\(m \times n\)</span>, then the associated node has <span class="math">\(n\)</span> vertices
 and the lower structure is of size <span class="math">\(m-n\)</span>.</p>
@@ -126,25 +126,25 @@ and the lower structure is of size <span class="math">\(m-n\)</span>.</p>
 
 <dl class="member">
 <dt id="DistSymmFront:T:::work1d__mutable-DistMatrix:T.VC.STAR:">
-mutable DistMatrix&lt;T, VC, STAR&gt; <tt class="descname">work1d</tt><a class="headerlink" href="#DistSymmFront:T:::work1d__mutable-DistMatrix:T.VC.STAR:" title="Permalink to this definition">¶</a></dt>
+<a class="reference internal" href="../core/environment.html#DistMatrix:T.VC.STAR:__class" title="DistMatrix&lt;T, VC, STAR&gt;">mutable DistMatrix&lt;T, VC, STAR&gt;</a> <tt class="descname">work1d</tt><a class="headerlink" href="#DistSymmFront:T:::work1d__mutable-DistMatrix:T.VC.STAR:" title="Permalink to this definition">¶</a></dt>
 <dd><p>Used for temporary results which are in a 1D distribution.</p>
 </dd></dl>
 
 <dl class="member">
 <dt id="DistSymmFront:T:::front2dL__mutable-DistMatrix:T:">
-mutable DistMatrix&lt;T&gt; <tt class="descname">front2dL</tt><a class="headerlink" href="#DistSymmFront:T:::front2dL__mutable-DistMatrix:T:" title="Permalink to this definition">¶</a></dt>
+<a class="reference internal" href="../core/environment.html#DistMatrix:T:__class" title="DistMatrix&lt;T&gt;">mutable DistMatrix&lt;T&gt;</a> <tt class="descname">front2dL</tt><a class="headerlink" href="#DistSymmFront:T:::front2dL__mutable-DistMatrix:T:" title="Permalink to this definition">¶</a></dt>
 <dd><p>The left half of a frontal matrix in a 2D distribution.</p>
 </dd></dl>
 
 <dl class="member">
 <dt id="DistSymmFront:T:::work2d__mutable-DistMatrix:T:">
-mutable DistMatrix&lt;T&gt; <tt class="descname">work2d</tt><a class="headerlink" href="#DistSymmFront:T:::work2d__mutable-DistMatrix:T:" title="Permalink to this definition">¶</a></dt>
+<a class="reference internal" href="../core/environment.html#DistMatrix:T:__class" title="DistMatrix&lt;T&gt;">mutable DistMatrix&lt;T&gt;</a> <tt class="descname">work2d</tt><a class="headerlink" href="#DistSymmFront:T:::work2d__mutable-DistMatrix:T:" title="Permalink to this definition">¶</a></dt>
 <dd><p>Used for temporary results which are in a 2D distribution.</p>
 </dd></dl>
 
 <dl class="member">
 <dt id="DistSymmFront:T:::diag__DistMatrix:T.VC.STAR:">
-DistMatrix&lt;T, VC, STAR&gt; <tt class="descname">diag</tt><a class="headerlink" href="#DistSymmFront:T:::diag__DistMatrix:T.VC.STAR:" title="Permalink to this definition">¶</a></dt>
+<a class="reference internal" href="../core/environment.html#DistMatrix:T.VC.STAR:__class" title="DistMatrix&lt;T, VC, STAR&gt;">DistMatrix&lt;T, VC, STAR&gt;</a> <tt class="descname">diag</tt><a class="headerlink" href="#DistSymmFront:T:::diag__DistMatrix:T.VC.STAR:" title="Permalink to this definition">¶</a></dt>
 <dd><p>Used for storing the diagonal of the frontal matrix.</p>
 </dd></dl>
 
@@ -190,9 +190,15 @@ std::vector&lt;DistSymmFront&lt;T&gt;&gt; <tt class="descname">distFronts</tt><a
  <tt class="descname">DistSymmFrontTree</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../core/dist_sparse_matrix.html#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;">const DistSparseMatrix&lt;T&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>map</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSeparatorTree__struct" title="DistSeparatorTree">const DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em><big>)</big><a class="headerlink" href="#DistSymmFrontTree:T:::DistSymmFrontTree__Orientation.DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR" title="Permalink to this definition">¶</a></dt>
 <dd><p>A constructor which converts a distributed sparse matrix into a symmetric
 frontal tree which is ready for factorization (e.g., with
-<a class="reference internal" href="#LDL__Orientation.DistSymmInfoR.DistSymmFrontTree:T:R" title="LDL"><tt class="xref cpp cpp-func docutils literal"><span class="pre">LDL()</span></tt></a> or <a class="reference internal" href="#BlockLDL__Orientation.DistSymmInfoR.DistSymmFrontTree:T:R" title="BlockLDL"><tt class="xref cpp cpp-func docutils literal"><span class="pre">BlockLDL()</span></tt></a>).</p>
+<a class="reference internal" href="#LDL__Orientation.DistSymmInfoR.DistSymmFrontTree:F:R" title="LDL"><tt class="xref cpp cpp-func docutils literal"><span class="pre">LDL()</span></tt></a> or <a class="reference internal" href="#BlockLDL__Orientation.DistSymmInfoR.DistSymmFrontTree:F:R" title="BlockLDL"><tt class="xref cpp cpp-func docutils literal"><span class="pre">BlockLDL()</span></tt></a>).</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="type">
+<dt id="DistSymmFrontTree:F:__struct">
+<em class="property">type </em>struct <tt class="descname">DistSymmFrontTree&lt;F&gt;</tt><a class="headerlink" href="#DistSymmFrontTree:F:__struct" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as above, but this implies that the underlying datatype <cite>F</cite> is a field.</p>
 </dd></dl>
 
 </div>

@@ -81,6 +81,11 @@ use.
 
       Makes this vector a copy of the given vector.
 
+.. cpp:type:: class DistVector<F>
+
+   The same as :cpp:type:`DistVector\<T>`, but the implication is that the 
+   underlying datatype `F` is a field rather than just a ring.
+
 .. cpp:function:: void MakeZeros( DistVector<T>& x )
 
    Sets every entry in the vector to zero.
@@ -90,7 +95,7 @@ use.
    Sets each entry in the vector to a sample from the unit ball appropriate 
    for type ``T``.
 
-.. cpp:function:: typename Base<T>::type Norm( const DistVector<T>& x )
+.. cpp:function:: typename Base<F>::type Norm( const DistVector<F>& x )
 
    The Euclidean norm of the vector.
 

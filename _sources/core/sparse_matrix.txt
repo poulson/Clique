@@ -146,3 +146,8 @@ sorted in lexicographical order based upon the row and column indices
 
       Frees all resources and sets the sparse matrix to be 
       `height` :math:`\times` `width`.
+
+.. cpp:type:: class SparseMatrix<F>
+
+   This is the same as :cpp:type:`SparseMatrix\<T>`, but the implication is that
+   the underlying datatype `F` is a field rather than just a ring.
