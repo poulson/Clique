@@ -50,6 +50,11 @@ setting up right-hand sides for sequential solves: it is a simplified version of
 
       Makes this vector a copy of the given vector.
 
+.. cpp:type:: class Vector<F>
+
+   The same as :cpp:type:`Vector\<T>`, but the implication is that the 
+   underlying datatype `F` is a field rather than just a ring.
+
 .. cpp:function:: void MakeZeros( Vector<T>& x )
 
    Sets every entry in the vector to zero.
@@ -59,7 +64,7 @@ setting up right-hand sides for sequential solves: it is a simplified version of
    Sets each entry in the vector to a sample from the unit ball appropriate 
    for type ``T``.
 
-.. cpp:function:: typename Base<T>::type Norm( const Vector<T>& x )
+.. cpp:function:: typename Base<F>::type Norm( const Vector<F>& x )
 
    The Euclidean norm of the vector.
 

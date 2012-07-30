@@ -74,17 +74,17 @@ distributed matrices and vectors.
 
    Import of Elemental's `Complex <http://poulson.github.com/Elemental/core/environment.html#Complex:R:__struct>`__ class.
 
-.. cpp:type:: struct Base<T>
+.. cpp:type:: struct Base<F>
 
    .. cpp:type:: type
 
-      Underlying real datatype of the field ``T``.
+      Underlying real datatype of the field ``F``.
 
-.. cpp:function:: typename Base<T>::type Abs( const T& alpha )
+.. cpp:function:: typename Base<F>::type Abs( const F& alpha )
 
    Returns the absolute value of the real or complex variable :math:`\alpha`.
 
-.. cpp:function:: T Sqrt( const T& alpha )
+.. cpp:function:: F Sqrt( const F& alpha )
 
    Returns the square-root of the real or complex variable :math:`\alpha`.
 
@@ -94,6 +94,10 @@ distributed matrices and vectors.
 
    Import of Elemental's 
    `Matrix <http://poulson.github.com/Elemental/core/matrix.html>`__ class.
+
+.. cpp:type:: class Matrix<F>
+
+   Same as above, but this implies that the underlying datatype `F` is a field.
 
 .. cpp:type:: class Grid
 
@@ -105,6 +109,32 @@ distributed matrices and vectors.
    Import of Elemental's 
    `DistMatrix <http://poulson.github.com/Elemental/core/dist_matrix.html>`__ 
    class.
+
+.. cpp:type:: class DistMatrix<F,U,V>
+
+   Same as above, but this implies that the underlying datatype `F` is a field.
+
+.. cpp:type:: class DistMatrix<T>
+
+.. cpp:type:: class DistMatrix<T,MC,MR>
+
+   A partial specialization of the :cpp:type:`DistMatrix\<T,U,V>` class to the 
+   `standard matrix distribution <http://poulson.github.com/Elemental/core/dist_matrix.html#mc-mr>`__, ``[MC,MR]``.
+
+.. cpp:type:: class DistMatrix<F>
+
+.. cpp:type:: class DistMatrix<F,MC,MR>
+
+   Same as above, but this implies that the underlying datatype `F` is a field.
+
+.. cpp:type:: class DistMatrix<T,VC,STAR>
+
+   A partial specialization of the :cpp:type:`DistMatrix\<T,U,V>` class to a 
+   `column-major vector distribution <http://poulson.github.com/Elemental/core/dist_matrix.html#vc>`__, ``[VC,*]``.
+
+.. cpp:type:: class DistMatrix<F,VC,STAR>
+
+   Same as above, but this implies that the underlying datatype `F` is a field.
 
 .. rubric:: Imported libraries
 

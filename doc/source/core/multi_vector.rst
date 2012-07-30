@@ -59,6 +59,11 @@ version of :cpp:type:`DistMultiVector\<T>`.
 
       Makes this multi-vector a copy of the given multi-vector.
 
+.. cpp:type:: class MultiVector<F>
+
+   The same as :cpp:type:`MultiVector\<T>`, but the implication is that the 
+   underlying datatype `F` is a field rather than just a ring.
+
 .. cpp:function:: void MakeZeros( MultiVector<T>& X )
 
    Sets every entry in the multi-vector to zero.
@@ -68,7 +73,7 @@ version of :cpp:type:`DistMultiVector\<T>`.
    Sets each entry in the multi-vector to a sample from the unit ball 
    appropriate for type ``T``.
 
-.. cpp:function:: void Norms( const MultiVector<T>& X, std::vector<typename Base<T>::type>& norms )
+.. cpp:function:: void Norms( const MultiVector<F>& X, std::vector<typename Base<F>::type>& norms )
 
    Returns the Euclidean norms of each vector in the multi-vector.
 
