@@ -54,11 +54,32 @@
         
   <div class="section" id="multiplication">
 <h1>Multiplication<a class="headerlink" href="#multiplication" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="with-sparse-matrices">
+<h2>With sparse matrices<a class="headerlink" href="#with-sparse-matrices" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
-<dt id="LowerMultiply__Orientation.UnitOrNonUnit.i.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R">
-void <tt class="descname">LowerMultiply</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../core/environment.html#UnitOrNonUnit__enum" title="UnitOrNonUnit">UnitOrNonUnit</a> <em>diag</em>, int <em>diagOffset</em>, <a class="reference internal" href="../symbolic/data_structures.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="data_structures.html#DistSymmFrontTree:F:" title="DistSymmFrontTree&lt;F&gt;">const DistSymmFrontTree&lt;F&gt;&amp;</a> <em>L</em>, Matrix&lt;F&gt;&amp; <em>localX</em><big>)</big><a class="headerlink" href="#LowerMultiply__Orientation.UnitOrNonUnit.i.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt id="Multiply__T.DistSparseMatrix:T:CR.DistVector:T:CR.T.DistVector:T:R">
+void <tt class="descname">Multiply</tt><big>(</big>T <em>alpha</em>, const DistSparseMatrix&lt;T&gt;&amp; <em>A</em>, const DistVector&lt;T&gt;&amp; <em>x</em>, T <em>beta</em>, DistVector&lt;T&gt;&amp; <em>y</em><big>)</big><a class="headerlink" href="#Multiply__T.DistSparseMatrix:T:CR.DistVector:T:CR.T.DistVector:T:R" title="Permalink to this definition">¶</a></dt>
+<dd><p>Forms <span class="math">\(y := \alpha A x + \beta y\)</span>.</p>
+</dd></dl>
 
+<dl class="function">
+<dt id="Multiply__T.DistSparseMatrix:T:CR.DistMultiVector:T:CR.T.DistMultiVector:T:R">
+void <tt class="descname">Multiply</tt><big>(</big>T <em>alpha</em>, const DistSparseMatrix&lt;T&gt;&amp; <em>A</em>, const DistMultiVector&lt;T&gt;&amp; <em>X</em>, T <em>beta</em>, DistMultiVector&lt;T&gt;&amp; <em>Y</em><big>)</big><a class="headerlink" href="#Multiply__T.DistSparseMatrix:T:CR.DistMultiVector:T:CR.T.DistMultiVector:T:R" title="Permalink to this definition">¶</a></dt>
+<dd><p>Forms <span class="math">\(Y := \alpha A X + \beta Y\)</span>.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="with-frontal-trees">
+<h2>With frontal trees<a class="headerlink" href="#with-frontal-trees" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="LowerMultiply__Orientation.UnitOrNonUnit.i.DistSymmInfoCR.DistSymmFrontTree:T:CR.Matrix:T:R">
+void <tt class="descname">LowerMultiply</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../core/environment.html#UnitOrNonUnit__enum" title="UnitOrNonUnit">UnitOrNonUnit</a> <em>diag</em>, int <em>diagOffset</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="factorization.html#DistSymmFrontTree:T:__struct" title="DistSymmFrontTree&lt;T&gt;">const DistSymmFrontTree&lt;T&gt;&amp;</a> <em>L</em>, Matrix&lt;T&gt;&amp; <em>localX</em><big>)</big><a class="headerlink" href="#LowerMultiply__Orientation.UnitOrNonUnit.i.DistSymmInfoCR.DistSymmFrontTree:T:CR.Matrix:T:R" title="Permalink to this definition">¶</a></dt>
+<dd><p>Overwrites <span class="math">\(X\)</span> with the lower triangle of the frontal tree multiplied
+by the original contents of <span class="math">\(X\)</span>. <strong>TODO: More detailed description of
+the effects of the `orientation`, `diag`, and `diagOffset` parameters</strong></p>
+</dd></dl>
+
+</div>
 </div>
 
 

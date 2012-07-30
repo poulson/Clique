@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Solving after factorization &mdash; Clique 0.1 documentation</title>
+    <title>Solves &mdash; Clique 0.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -30,13 +30,13 @@
     <script type="text/javascript" src="../_static/theme_extras.js"></script>
     <link rel="top" title="Clique 0.1 documentation" href="../index.html" />
     <link rel="up" title="Numerics" href="../numeric.html" />
-    <link rel="next" title="Factorization-related data structures" href="data_structures.html" />
+    <link rel="next" title="Indices" href="../indices.html" />
     <link rel="prev" title="Factorization" href="factorization.html" /> 
   </head>
   <body>
       <div class="header"><h1 class="heading"><a href="../index.html">
           <span>Clique 0.1 documentation</span></a></h1>
-        <h2 class="heading"><span>Solving after factorization</span></h2>
+        <h2 class="heading"><span>Solves</span></h2>
       </div>
       <div class="topnav">
       
@@ -45,45 +45,105 @@
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
         &#160;&#160;::&#160;&#160;
-        <a href="data_structures.html">Factorization-related data structures</a>&#160;&#160;»
+        <a href="../indices.html">Indices</a>&#160;&#160;»
         </p>
 
       </div>
       <div class="content">
         
         
-  <div class="section" id="solving-after-factorization">
-<h1>Solving after factorization<a class="headerlink" href="#solving-after-factorization" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="after-ldl-factorization">
-<h2>After LDL factorization<a class="headerlink" href="#after-ldl-factorization" title="Permalink to this headline">¶</a></h2>
+  <div class="section" id="solves">
+<h1>Solves<a class="headerlink" href="#solves" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="solving-after-ldl-factorization">
+<h2>Solving after LDL factorization<a class="headerlink" href="#solving-after-ldl-factorization" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="LDLSolve__Orientation.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R">
-void <tt class="descname">LDLSolve</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../symbolic/data_structures.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="data_structures.html#DistSymmFrontTree:F:" title="DistSymmFrontTree&lt;F&gt;">const DistSymmFrontTree&lt;F&gt;&amp;</a> <em>L</em>, Matrix&lt;F&gt;&amp; <em>localX</em><big>)</big><a class="headerlink" href="#LDLSolve__Orientation.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R" title="Permalink to this definition">¶</a></dt>
+void <tt class="descname">LDLSolve</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, const DistSymmFrontTree&lt;F&gt;&amp; <em>L</em>, Matrix&lt;F&gt;&amp; <em>localX</em><big>)</big><a class="headerlink" href="#LDLSolve__Orientation.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="LowerSolve__Orientation.UnitOrNonUnit.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R">
-void <tt class="descname">LowerSolve</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../core/environment.html#UnitOrNonUnit__enum" title="UnitOrNonUnit">UnitOrNonUnit</a> <em>diag</em>, <a class="reference internal" href="../symbolic/data_structures.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="data_structures.html#DistSymmFrontTree:F:" title="DistSymmFrontTree&lt;F&gt;">const DistSymmFrontTree&lt;F&gt;&amp;</a> <em>L</em>, Matrix&lt;F&gt;&amp; <em>localX</em><big>)</big><a class="headerlink" href="#LowerSolve__Orientation.UnitOrNonUnit.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R" title="Permalink to this definition">¶</a></dt>
+void <tt class="descname">LowerSolve</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../core/environment.html#UnitOrNonUnit__enum" title="UnitOrNonUnit">UnitOrNonUnit</a> <em>diag</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, const DistSymmFrontTree&lt;F&gt;&amp; <em>L</em>, Matrix&lt;F&gt;&amp; <em>localX</em><big>)</big><a class="headerlink" href="#LowerSolve__Orientation.UnitOrNonUnit.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="DiagonalSolve__DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R">
-void <tt class="descname">DiagonalSolve</tt><big>(</big><a class="reference internal" href="../symbolic/data_structures.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="data_structures.html#DistSymmFrontTree:F:" title="DistSymmFrontTree&lt;F&gt;">const DistSymmFrontTree&lt;F&gt;&amp;</a> <em>L</em>, Matrix&lt;F&gt;&amp; <em>localX</em><big>)</big><a class="headerlink" href="#DiagonalSolve__DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R" title="Permalink to this definition">¶</a></dt>
+void <tt class="descname">DiagonalSolve</tt><big>(</big><a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, const DistSymmFrontTree&lt;F&gt;&amp; <em>L</em>, Matrix&lt;F&gt;&amp; <em>localX</em><big>)</big><a class="headerlink" href="#DiagonalSolve__DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
-<div class="section" id="after-block-ldl-factorization">
-<h2>After block LDL factorization<a class="headerlink" href="#after-block-ldl-factorization" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="solving-after-block-ldl-factorization">
+<h2>Solving after block LDL factorization<a class="headerlink" href="#solving-after-block-ldl-factorization" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="BlockLDLSolve__Orientation.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R">
-void <tt class="descname">BlockLDLSolve</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../symbolic/data_structures.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="data_structures.html#DistSymmFrontTree:F:" title="DistSymmFrontTree&lt;F&gt;">const DistSymmFrontTree&lt;F&gt;&amp;</a> <em>L</em>, Matrix&lt;F&gt;&amp; <em>localX</em><big>)</big><a class="headerlink" href="#BlockLDLSolve__Orientation.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R" title="Permalink to this definition">¶</a></dt>
+void <tt class="descname">BlockLDLSolve</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, const DistSymmFrontTree&lt;F&gt;&amp; <em>L</em>, Matrix&lt;F&gt;&amp; <em>localX</em><big>)</big><a class="headerlink" href="#BlockLDLSolve__Orientation.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="BlockLowerSolve__Orientation.UnitOrNonUnit.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R">
-void <tt class="descname">BlockLowerSolve</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../core/environment.html#UnitOrNonUnit__enum" title="UnitOrNonUnit">UnitOrNonUnit</a> <em>diag</em>, <a class="reference internal" href="../symbolic/data_structures.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="data_structures.html#DistSymmFrontTree:F:" title="DistSymmFrontTree&lt;F&gt;">const DistSymmFrontTree&lt;F&gt;&amp;</a> <em>L</em>, Matrix&lt;F&gt;&amp; <em>localX</em><big>)</big><a class="headerlink" href="#BlockLowerSolve__Orientation.UnitOrNonUnit.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R" title="Permalink to this definition">¶</a></dt>
+void <tt class="descname">BlockLowerSolve</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../core/environment.html#UnitOrNonUnit__enum" title="UnitOrNonUnit">UnitOrNonUnit</a> <em>diag</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, const DistSymmFrontTree&lt;F&gt;&amp; <em>L</em>, Matrix&lt;F&gt;&amp; <em>localX</em><big>)</big><a class="headerlink" href="#BlockLowerSolve__Orientation.UnitOrNonUnit.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+</div>
+<div class="section" id="data-structures">
+<h2>Data structures<a class="headerlink" href="#data-structures" title="Permalink to this headline">¶</a></h2>
+<p><strong>TODO</strong></p>
+<div class="section" id="distnodalvector">
+<h3>DistNodalVector<a class="headerlink" href="#distnodalvector" title="Permalink to this headline">¶</a></h3>
+<dl class="type">
+<dt id="DistNodalVector:F:__struct">
+<em class="property">type </em>struct <tt class="descname">DistNodalVector&lt;F&gt;</tt><a class="headerlink" href="#DistNodalVector:F:__struct" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="member">
+<dt id="DistNodalVector:F:::localVec__Matrix:F:">
+Matrix&lt;F&gt; <tt class="descname">localVec</tt><a class="headerlink" href="#DistNodalVector:F:::localVec__Matrix:F:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="DistNodalVector:F:::Pull__std::vector:i:CR.DistSymmInfoCR.DistVector:F:CR">
+void <tt class="descname">Pull</tt><big>(</big>const std::vector&lt;int&gt;&amp; <em>localInverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, const DistVector&lt;F&gt;&amp; <em>x</em><big>)</big><a class="headerlink" href="#DistNodalVector:F:::Pull__std::vector:i:CR.DistSymmInfoCR.DistVector:F:CR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="DistNodalVector:F:::Push__std::vector:i:CR.DistSymmInfoCR.DistVector:F:R">
+void <tt class="descname">Push</tt><big>(</big>const std::vector&lt;int&gt;&amp; <em>localInverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, DistVector&lt;F&gt;&amp; <em>x</em><big>)</big><a class="headerlink" href="#DistNodalVector:F:::Push__std::vector:i:CR.DistSymmInfoCR.DistVector:F:R" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="DistNodalVector:F:::DistNodalVector__std::vector:i:CR.DistSymmInfoCR.DistVector:F:CR">
+ <tt class="descname">DistNodalVector</tt><big>(</big>const std::vector&lt;int&gt;&amp; <em>localInverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, const DistVector&lt;F&gt;&amp; <em>x</em><big>)</big><a class="headerlink" href="#DistNodalVector:F:::DistNodalVector__std::vector:i:CR.DistSymmInfoCR.DistVector:F:CR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="distnodalmultivector">
+<h3>DistNodalMultiVector<a class="headerlink" href="#distnodalmultivector" title="Permalink to this headline">¶</a></h3>
+<dl class="type">
+<dt id="DistNodalMultiVector:F:__struct">
+<em class="property">type </em>struct <tt class="descname">DistNodalMultiVector&lt;F&gt;</tt><a class="headerlink" href="#DistNodalMultiVector:F:__struct" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="member">
+<dt id="DistNodalMultiVector:F:::localMultiVec__Matrix:F:">
+Matrix&lt;F&gt; <tt class="descname">localMultiVec</tt><a class="headerlink" href="#DistNodalMultiVector:F:::localMultiVec__Matrix:F:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="DistNodalMultiVector:F:::Pull__std::vector:i:CR.DistSymmInfoCR.DistMultiVector:F:CR">
+void <tt class="descname">Pull</tt><big>(</big>const std::vector&lt;int&gt;&amp; <em>localInverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, const DistMultiVector&lt;F&gt;&amp; <em>X</em><big>)</big><a class="headerlink" href="#DistNodalMultiVector:F:::Pull__std::vector:i:CR.DistSymmInfoCR.DistMultiVector:F:CR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="DistNodalMultiVector:F:::Push__std::vector:i:CR.DistSymmInfoCR.DistMultiVector:F:R">
+void <tt class="descname">Push</tt><big>(</big>const std::vector&lt;int&gt;&amp; <em>localInverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, DistMultiVector&lt;F&gt;&amp; <em>X</em><big>)</big><a class="headerlink" href="#DistNodalMultiVector:F:::Push__std::vector:i:CR.DistSymmInfoCR.DistMultiVector:F:R" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="DistNodalMultiVector:F:::DistNodalMultiVector__std::vector:i:CR.DistSymmInfoCR.DistMultiVector:F:CR">
+ <tt class="descname">DistNodalMultiVector</tt><big>(</big>const std::vector&lt;int&gt;&amp; <em>localInverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, const DistMultiVector&lt;F&gt;&amp; <em>X</em><big>)</big><a class="headerlink" href="#DistNodalMultiVector:F:::DistNodalMultiVector__std::vector:i:CR.DistSymmInfoCR.DistMultiVector:F:CR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
 </div>
 </div>
 
@@ -96,7 +156,7 @@ void <tt class="descname">BlockLowerSolve</tt><big>(</big><a class="reference in
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
         &#160;&#160;::&#160;&#160;
-        <a href="data_structures.html">Factorization-related data structures</a>&#160;&#160;»
+        <a href="../indices.html">Indices</a>&#160;&#160;»
         </p>
 
       </div>

@@ -1,0 +1,11 @@
+Solve-related data structures
+=============================
+**TODO**
+
+DistNodalVector
+---------------
+**TODO**
+
+DistNodalMultiVector
+--------------------
+**TODO**

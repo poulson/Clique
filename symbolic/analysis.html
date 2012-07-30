@@ -30,7 +30,7 @@
     <script type="text/javascript" src="../_static/theme_extras.js"></script>
     <link rel="top" title="Clique 0.1 documentation" href="../index.html" />
     <link rel="up" title="Symbolic computation" href="../symbolic.html" />
-    <link rel="next" title="Analysis-related data structures" href="data_structures.html" />
+    <link rel="next" title="Numerics" href="../numeric.html" />
     <link rel="prev" title="Nested dissection" href="nested_dissection.html" /> 
   </head>
   <body>
@@ -45,7 +45,7 @@
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
         &#160;&#160;::&#160;&#160;
-        <a href="data_structures.html">Analysis-related data structures</a>&#160;&#160;»
+        <a href="../numeric.html">Numerics</a>&#160;&#160;»
         </p>
 
       </div>
@@ -68,15 +68,113 @@ symbolic factorization, it also computes and stores other data which is
 useful for numerical factorization and solves.</p>
 <dl class="function">
 <dt id="SymmetricAnalysis__DistSymmElimTreeCR.DistSymmInfoR.b">
-void <tt class="descname">SymmetricAnalysis</tt><big>(</big><a class="reference internal" href="data_structures.html#DistSymmElimTree__struct" title="DistSymmElimTree">const DistSymmElimTree&amp;</a> <em>eTree</em>, <a class="reference internal" href="data_structures.html#DistSymmInfo__struct" title="DistSymmInfo">DistSymmInfo&amp;</a> <em>info</em>, bool <em>storeFactRecvIndices</em><em>=true </em><big>)</big><a class="headerlink" href="#SymmetricAnalysis__DistSymmElimTreeCR.DistSymmInfoR.b" title="Permalink to this definition">¶</a></dt>
+void <tt class="descname">SymmetricAnalysis</tt><big>(</big><a class="reference internal" href="#DistSymmElimTree__struct" title="DistSymmElimTree">const DistSymmElimTree&amp;</a> <em>eTree</em>, <a class="reference internal" href="nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">DistSymmInfo&amp;</a> <em>info</em>, bool <em>storeFactRecvIndices</em><em>=true </em><big>)</big><a class="headerlink" href="#SymmetricAnalysis__DistSymmElimTreeCR.DistSymmInfoR.b" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">Most users will not need to directly call this routine, as it is
-part of <tt class="docutils literal"><span class="pre">NestedDissection</span></tt>. It will only need to be manually called in
-cases where someone has manually computed the elimination tree of their
-sparse matrix.</p>
+part of <a class="reference internal" href="nested_dissection.html#NestedDissection__DistGraphCR.std::vector:i:R.DistSeparatorTreeR.DistSymmInfoR.i.i.i.b" title="NestedDissection"><tt class="xref cpp cpp-func docutils literal"><span class="pre">NestedDissection()</span></tt></a>. It will only need to be manually
+called in cases where someone has manually computed the elimination tree of
+their sparse matrix.</p>
+</div>
+<div class="section" id="data-structures">
+<h2>Data structures<a class="headerlink" href="#data-structures" title="Permalink to this headline">¶</a></h2>
+<p><strong>The data structures used for symbolic analysis are meant to serve as
+black-boxes for the vast majority of users.</strong> Nevertheless, they are
+briefly documented here for the sake of posterity.</p>
+<div class="section" id="distsymmelimtree">
+<h3>DistSymmElimTree<a class="headerlink" href="#distsymmelimtree" title="Permalink to this headline">¶</a></h3>
+<dl class="type">
+<dt id="LocalSymmNode__struct">
+<em class="property">type </em>struct <tt class="descname">LocalSymmNode</tt><a class="headerlink" href="#LocalSymmNode__struct" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="member">
+<dt id="LocalSymmNode::size__i">
+int <tt class="descname">size</tt><a class="headerlink" href="#LocalSymmNode::size__i" title="Permalink to this definition">¶</a></dt>
+<dd><p>The size of this node in the elimination tree.</p>
+</dd></dl>
+
+<dl class="member">
+<dt id="LocalSymmNode::offset__i">
+int <tt class="descname">offset</tt><a class="headerlink" href="#LocalSymmNode::offset__i" title="Permalink to this definition">¶</a></dt>
+<dd><p>The first reordered index of the vertices in this node.</p>
+</dd></dl>
+
+<dl class="member">
+<dt id="LocalSymmNode::parent__i">
+int <tt class="descname">parent</tt><a class="headerlink" href="#LocalSymmNode::parent__i" title="Permalink to this definition">¶</a></dt>
+<dd><p>The index of the local parent (<span class="math">\(-1\)</span> if it does not exist).</p>
+</dd></dl>
+
+<dl class="member">
+<dt id="LocalSymmNode::children__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">children</tt><a class="headerlink" href="#LocalSymmNode::children__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd><p>The indices of the child nodes.</p>
+</dd></dl>
+
+<dl class="member">
+<dt id="LocalSymmNode::lowerStruct__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">lowerStruct</tt><a class="headerlink" href="#LocalSymmNode::lowerStruct__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd><p>The sorted reordered indices of the connections to ancestor nodes.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="type">
+<dt id="DistSymmNode__struct">
+<em class="property">type </em>struct <tt class="descname">DistSymmNode</tt><a class="headerlink" href="#DistSymmNode__struct" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="member">
+<dt id="DistSymmNode::onLeft__b">
+bool <tt class="descname">onLeft</tt><a class="headerlink" href="#DistSymmNode::onLeft__b" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether or not this node is the left child of its parent
+(assuming it has a parent).</p>
+</dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNode::comm__mpi::Comm">
+mpi::Comm <tt class="descname">comm</tt><a class="headerlink" href="#DistSymmNode::comm__mpi::Comm" title="Permalink to this definition">¶</a></dt>
+<dd><p>The communicator for the distributed node.</p>
+</dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNode::size__i">
+int <tt class="descname">size</tt><a class="headerlink" href="#DistSymmNode::size__i" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of vertices in this node.</p>
+</dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNode::offset__i">
+int <tt class="descname">offset</tt><a class="headerlink" href="#DistSymmNode::offset__i" title="Permalink to this definition">¶</a></dt>
+<dd><p>The first reordered index for the vertices in this node.</p>
+</dd></dl>
+
+<dl class="member">
+<dt id="DistSymmNode::lowerStruct__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">lowerStruct</tt><a class="headerlink" href="#DistSymmNode::lowerStruct__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd><p>The sorted reordered indices of the connections to ancestor nodes.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="type">
+<dt id="DistSymmElimTree__struct">
+<em class="property">type </em>struct <tt class="descname">DistSymmElimTree</tt><a class="headerlink" href="#DistSymmElimTree__struct" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="member">
+<dt id="DistSymmElimTree::localNodes__std::vector:LocalSymmNodeP:">
+std::vector&lt;LocalSymmNode*&gt; <tt class="descname">localNodes</tt><a class="headerlink" href="#DistSymmElimTree::localNodes__std::vector:LocalSymmNodeP:" title="Permalink to this definition">¶</a></dt>
+<dd><p>An array of <em>pointers</em> to the local nodes.</p>
+</dd></dl>
+
+<dl class="member">
+<dt id="DistSymmElimTree::distNodes__std::vector:DistSymmNode:">
+std::vector&lt;DistSymmNode&gt; <tt class="descname">distNodes</tt><a class="headerlink" href="#DistSymmElimTree::distNodes__std::vector:DistSymmNode:" title="Permalink to this definition">¶</a></dt>
+<dd><p>An array of distributed nodes, including the single-process
+separator or leaf.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 </div>
 </div>
 
@@ -89,7 +187,7 @@ sparse matrix.</p>
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
         &#160;&#160;::&#160;&#160;
-        <a href="data_structures.html">Analysis-related data structures</a>&#160;&#160;»
+        <a href="../numeric.html">Numerics</a>&#160;&#160;»
         </p>
 
       </div>
