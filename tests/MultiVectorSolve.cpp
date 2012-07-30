@@ -28,6 +28,7 @@ void Usage()
       << "  n1: first dimension of n1 x n2 x n3 mesh\n"
       << "  n2: second dimension of n1 x n2 x n3 mesh\n"
       << "  n3: third dimension of n1 x n2 x n3 mesh\n"
+      << "  numRhs: the number of random right-hand sides to solve against\n"
       << "  cutoff: maximum size of leaf node\n"
       << "  numDistSeps: number of distributed separators to try\n"
       << "  numSeqSeps: number of sequential separators to try\n"
