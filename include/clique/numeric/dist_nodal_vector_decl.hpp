@@ -32,15 +32,15 @@ public:
     Matrix<F> localVec;
 
     void Pull
-    ( const std::vector<int>& localInverseMap, const DistSymmInfo& info,
+    ( const DistMap& inverseMap, const DistSymmInfo& info,
       const DistVector<F>& x );
     void Push
-    ( const std::vector<int>& localInverseMap, const DistSymmInfo& info,
+    ( const DistMap& inverseMap, const DistSymmInfo& info,
             DistVector<F>& x ) const;
 
     DistNodalVector();
     DistNodalVector
-    ( const std::vector<int>& localInverseMap, const DistSymmInfo& info, 
+    ( const DistMap& inverseMap, const DistSymmInfo& info, 
       const DistVector<F>& x );
 };
 

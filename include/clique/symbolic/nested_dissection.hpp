@@ -26,55 +26,38 @@ namespace cliq {
 
 void NestedDissection
 ( const DistGraph& graph, 
-  std::vector<int>& localMap,
-  DistSeparatorTree& sepTree, DistSymmInfo& info,
-  int cutoff=128, int numDistSeps=10, int numSeqSeps=5, 
-  bool storeFactRecvIndices=false );
+        DistMap& map,
+        DistSeparatorTree& sepTree, 
+        DistSymmInfo& info,
+        int cutoff=128, 
+        int numDistSeps=10, 
+        int numSeqSeps=5, 
+        bool storeFactRecvIndices=false );
 
 int Bisect
-( const Graph& graph, Graph& leftChild, Graph& rightChild, 
-  std::vector<int>& map, int numSeps=5 );
+( const Graph& graph, 
+        Graph& leftChild, 
+        Graph& rightChild, 
+        std::vector<int>& map, 
+        int numSeps=5 );
 
 // NOTE: for two or more processes
 int Bisect
-( const DistGraph& graph, DistGraph& child, 
-  std::vector<int>& localMap, bool& onLeft, 
-  int numDistSeps=10, int numSeqSeps=5 );
-
-void MapIndices
-( const std::vector<int>& localMap, 
-        std::vector<int>& localIndices, int numSources, mpi::Comm comm );
-
-// third(i) := second(first(i))
-void ComposeMaps
-( const std::vector<int>& localFirstMap, 
-  const std::vector<int>& localSecondMap,
-        std::vector<int>& localThirdMap, int numSources, mpi::Comm comm );
-
-void InvertMap
-( const std::vector<int>& localMap,
-        std::vector<int>& localInverseMap, int numSources, mpi::Comm comm );
+( const DistGraph& graph, 
+        DistGraph& child, 
+        DistMap& perm,
+        bool& onLeft,
+        int numDistSeps=10, 
+        int numSeqSeps=5 );
 
 void BuildMap
-( const DistGraph& graph, const DistSeparatorTree& sepTree, 
-  std::vector<int>& localMap );
-
-int DistributedDepth( mpi::Comm comm );
-
-int RowToProcess( int i, int blocksize, int commSize );
+( const DistGraph& graph, 
+  const DistSeparatorTree& sepTree, 
+        DistMap& map );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
-
-inline int
-RowToProcess( int i, int blocksize, int commSize )
-{
-    if( blocksize > 0 )
-        return std::min( i/blocksize, commSize-1 );
-    else
-        return commSize-1;
-}
 
 inline void
 DistributedDepthRecursion
@@ -105,9 +88,14 @@ DistributedDepth( mpi::Comm comm )
 
 inline void
 NestedDissectionRecursion
-( const Graph& graph, const std::vector<int>& perm,
-  DistSeparatorTree& sepTree, DistSymmElimTree& eTree,
-  int parent, int offset, int cutoff=128, int numSeps=5 )
+( const Graph& graph, 
+  const std::vector<int>& perm,
+        DistSeparatorTree& sepTree, 
+        DistSymmElimTree& eTree,
+        int parent, 
+        int offset, 
+        int cutoff=128, 
+        int numSeps=5 )
 {
 #ifndef RELEASE
     PushCallStack("NestedDissectionRecursion");
@@ -230,10 +218,16 @@ NestedDissectionRecursion
 
 inline void
 NestedDissectionRecursion
-( const DistGraph& graph, const std::vector<int>& localPerm,
-  DistSeparatorTree& sepTree, DistSymmElimTree& eTree,
-  int depth, int offset, bool onLeft,
-  int cutoff=128, int numDistSeps=10, int numSeqSeps=5 )
+( const DistGraph& graph, 
+  const DistMap& perm,
+        DistSeparatorTree& sepTree, 
+        DistSymmElimTree& eTree,
+        int depth, 
+        int offset, 
+        bool onLeft,
+        int cutoff=128, 
+        int numDistSeps=10, 
+        int numSeqSeps=5 )
 {
 #ifndef RELEASE
     PushCallStack("NestedDissectionRecursion");
@@ -245,17 +239,16 @@ NestedDissectionRecursion
         // Partition the graph and construct the inverse map
         DistGraph child;
         bool childIsOnLeft;
-        std::vector<int> localMap;
+        DistMap map;
         const int sepSize = 
-            Bisect
-            ( graph, child, localMap, childIsOnLeft, numDistSeps, numSeqSeps );
+            Bisect( graph, child, map, childIsOnLeft, numDistSeps, numSeqSeps );
         const int numSources = graph.NumSources();
         const int childSize = child.NumSources();
         const int leftChildSize = 
             ( childIsOnLeft ? childSize : numSources-sepSize-childSize );
 
-        std::vector<int> localInverseMap;
-        InvertMap( localMap, localInverseMap, numSources, comm );
+        DistMap inverseMap;
+        map.FormInverse( inverseMap );
 
         // Mostly fill this node of the DistSeparatorTree
         // (we will finish computing the separator indices at the end)
@@ -265,7 +258,7 @@ NestedDissectionRecursion
         sep.indices.resize( sepSize );
         for( int s=0; s<sepSize; ++s )
             sep.indices[s] = s + (numSources-sepSize);
-        MapIndices( localInverseMap, sep.indices, numSources, comm );
+        inverseMap.Translate( sep.indices );
 
         // Fill in this node of the DistSymmElimTree
         DistSymmNode& node = eTree.distNodes[distDepth-depth];
@@ -322,25 +315,25 @@ NestedDissectionRecursion
           node.lowerStruct.begin() );
 
         // Finish computing the separator indices
-        MapIndices( localPerm, sep.indices, numSources, comm );
+        perm.Translate( sep.indices );
 
         // Construct map from child indices to the original ordering
+        DistMap newPerm( child.NumSources(), child.Comm() );
         const int localChildSize = child.NumLocalSources();
         const int firstLocalChildSource = child.FirstLocalSource();
-        std::vector<int> newLocalPerm( localChildSize );
         if( childIsOnLeft )
             for( int s=0; s<localChildSize; ++s )
-                newLocalPerm[s] = s+firstLocalChildSource;
+                newPerm.SetLocal( s, s+firstLocalChildSource );
         else
             for( int s=0; s<localChildSize; ++s )
-                newLocalPerm[s] = s+firstLocalChildSource+leftChildSize;
-        MapIndices( localInverseMap, newLocalPerm, numSources, comm );
-        MapIndices( localPerm, newLocalPerm, numSources, comm );
+                newPerm.SetLocal( s, s+firstLocalChildSource+leftChildSize );
+        inverseMap.Extend( newPerm );
+        perm.Extend( newPerm );
 
         // Recurse
         const int newOffset = ( childIsOnLeft ? offset : offset+leftChildSize );
         NestedDissectionRecursion
-        ( child, newLocalPerm, sepTree, eTree, depth+1, newOffset, 
+        ( child, newPerm, sepTree, eTree, depth+1, newOffset, 
           childIsOnLeft, cutoff, numDistSeps, numSeqSeps );
     }
     else if( graph.NumSources() <= cutoff )
@@ -354,7 +347,7 @@ NestedDissectionRecursion
         LocalSepOrLeaf& leaf = *sepTree.localSepsAndLeaves.back();
         leaf.parent = -1;
         leaf.offset = offset;
-        leaf.indices = localPerm;
+        leaf.indices = perm.LocalMap();
 
         // Fill in this node of the local and distributed parts of the 
         // elimination tree
@@ -444,19 +437,20 @@ NestedDissectionRecursion
         distNode.lowerStruct = localNode.lowerStruct;
 
         // Finish computing the separator indices
+        // (This is a faster version of the Translate member function)
         for( int s=0; s<sepSize; ++s )
-            sep.indices[s] = localPerm[sep.indices[s]];
+            sep.indices[s] = perm.GetLocal( sep.indices[s] );
 
         // Construct the inverse maps from the child indices to the original
         // degrees of freedom
         const int leftChildSize = leftChild.NumSources();
         std::vector<int> leftPerm( leftChildSize );
         for( int s=0; s<leftChildSize; ++s )
-            leftPerm[s] = localPerm[inverseMap[s]];
+            leftPerm[s] = perm.GetLocal( inverseMap[s] );
         const int rightChildSize = rightChild.NumSources();
         std::vector<int> rightPerm( rightChildSize );
         for( int s=0; s<rightChildSize; ++s )
-            rightPerm[s] = localPerm[inverseMap[s+leftChildSize]];
+            rightPerm[s] = perm.GetLocal( inverseMap[s+leftChildSize] );
 
         // Update right then left so that, once we later reverse the order 
         // of the nodes, the left node will be ordered first
@@ -477,33 +471,37 @@ NestedDissectionRecursion
 
 inline void 
 NestedDissection
-( const DistGraph& graph, std::vector<int>& localMap,
-  DistSeparatorTree& sepTree, DistSymmInfo& info,
-  int cutoff, int numDistSeps, int numSeqSeps, bool storeFactRecvIndices )
+( const DistGraph& graph, 
+        DistMap& map,
+        DistSeparatorTree& sepTree, 
+        DistSymmInfo& info,
+        int cutoff, 
+        int numDistSeps, 
+        int numSeqSeps, 
+        bool storeFactRecvIndices )
 {
 #ifndef RELEASE
     PushCallStack("NestedDissection");
 #endif
-    mpi::Comm comm = graph.Comm();
-    const int distDepth = DistributedDepth( comm );
-    DistSymmElimTree eTree;
-
     // NOTE: There is a potential memory leak here if these data structures 
     //       are reused. Their destructors should call a member function which
     //       we can simply call here to clear the data
+    DistSymmElimTree eTree;
     eTree.localNodes.clear();
     sepTree.localSepsAndLeaves.clear();
 
+    mpi::Comm comm = graph.Comm();
+    const int distDepth = DistributedDepth( comm );
     eTree.distNodes.resize( distDepth+1 );
     sepTree.distSeps.resize( distDepth );
 
-    const int numLocalSources = graph.NumLocalSources();
-    const int firstLocalSource = graph.FirstLocalSource();
-    std::vector<int> localPerm( numLocalSources );
+    DistMap perm( graph.NumSources(), graph.Comm() );
+    const int firstLocalSource = perm.FirstLocalSource();
+    const int numLocalSources = perm.NumLocalSources();
     for( int s=0; s<numLocalSources; ++s )
-        localPerm[s] = s + firstLocalSource;
+        perm.SetLocal( s, s+firstLocalSource );
     NestedDissectionRecursion
-    ( graph, localPerm, sepTree, eTree, 0, 0, false, cutoff, 
+    ( graph, perm, sepTree, eTree, 0, 0, false, cutoff, 
       numDistSeps, numSeqSeps );
 
     // Reverse the order of the pointers and indices in the elimination and 
@@ -573,14 +571,14 @@ NestedDissection
             middleNode->children[c] = lastIndex - middleNode->children[c];
     }
 
-    // Construct the distributed reordering
-    BuildMap( graph, sepTree, localMap );
+    // Construct the distributed reordering    
+    BuildMap( graph, sepTree, map );
 #ifndef RELEASE
     const int commRank = mpi::CommRank( comm );
     const int numSources = graph.NumSources();
     std::vector<int> timesMapped( numSources, 0 );
-    for( int i=0; i<numLocalSources; ++i )
-        ++timesMapped[localMap[i]];
+    for( int iLocal=0; iLocal<numLocalSources; ++iLocal )
+        ++timesMapped[map.GetLocal(iLocal)];
     mpi::Reduce( &timesMapped[0], numSources, MPI_SUM, 0, comm );
     if( commRank == 0 )
     {
@@ -606,16 +604,22 @@ NestedDissection
 
 inline void
 BuildMap
-( const DistGraph& graph, const DistSeparatorTree& sepTree, 
-  std::vector<int>& localMap )
+( const DistGraph& graph, 
+  const DistSeparatorTree& sepTree, 
+        DistMap& map )
 {
 #ifndef RELEASE
     PushCallStack("BuildMap");
 #endif
     mpi::Comm comm = graph.Comm();
     const int commSize = mpi::CommSize( comm );
-    const int blocksize = graph.Blocksize();
-    const int numLocalSources = graph.NumLocalSources();
+    const int numSources = graph.NumSources();
+
+    map.SetComm( comm );
+    map.ResizeTo( numSources );
+    const int blocksize = map.Blocksize();
+    const int numLocalSources = map.NumLocalSources();
+
     const int numLocal = sepTree.localSepsAndLeaves.size();
     // NOTE: The dist separator tree does not double-count the first 
     //       single-process node, but DistSymmInfo does. Thus their number of
@@ -746,7 +750,6 @@ BuildMap
 
     // Unpack the indices
     const int firstLocalSource = graph.FirstLocalSource();
-    localMap.resize( numLocalSources );
     for( int s=0; s<numRecvs; ++s )
     {
         const int i = recvOrigIndices[s];
@@ -770,7 +773,7 @@ BuildMap
             throw std::logic_error( msg.str().c_str() );
         }
 #endif
-        localMap[iLocal] = iMapped;
+        map.SetLocal( iLocal, iMapped );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -937,8 +940,12 @@ Bisect
 
 inline int 
 Bisect
-( const DistGraph& graph, DistGraph& child, 
-  std::vector<int>& localMap, bool& onLeft, int numDistSeps, int numSeqSeps )
+( const DistGraph& graph, 
+        DistGraph& child, 
+        DistMap& perm,
+        bool& onLeft, 
+        int numDistSeps, 
+        int numSeqSeps )
 {
 #ifndef RELEASE
     PushCallStack("Bisect");
@@ -1001,7 +1008,8 @@ Bisect
     xAdj[numLocalSources] = numLocalValidEdges;
 
     // Create space for the result
-    localMap.resize( numLocalSources );
+    perm.SetComm( comm );
+    perm.ResizeTo( numSources );
 
     // Use the custom ParMETIS interface
     idx_t nparseps = numDistSeps;
@@ -1010,11 +1018,11 @@ Bisect
     idx_t sizes[3];
     CliqBisect
     ( &vtxDist[0], &xAdj[0], &adjacency[0], &nparseps, &nseqseps, 
-      &imbalance, NULL, &localMap[0], sizes, &comm );
+      &imbalance, NULL, perm.LocalBuffer(), sizes, &comm );
 #ifndef RELEASE
     std::vector<int> timesMapped( numSources, 0 );
-    for( int i=0; i<numLocalSources; ++i )
-        ++timesMapped[localMap[i]];
+    for( int iLocal=0; iLocal<numLocalSources; ++iLocal )
+        ++timesMapped[perm.GetLocal(iLocal)];
     mpi::Reduce( &timesMapped[0], numSources, MPI_SUM, 0, comm );
     if( commRank == 0 )
     {
@@ -1053,7 +1061,7 @@ Bisect
     std::vector<int> rowSendSizes( commSize, 0 );
     for( int s=0; s<numLocalSources; ++s )
     {
-        const int i = localMap[s];
+        const int i = perm.GetLocal(s);
         if( i < leftChildSize )
         {
             const int q = leftTeamOffset + 
@@ -1096,7 +1104,7 @@ Bisect
     std::vector<int> offsets = rowSendOffsets;
     for( int s=0; s<numLocalSources; ++s )
     {
-        const int i = localMap[s];
+        const int i = perm.GetLocal(s);
         if( i < leftChildSize )
         {
             const int q = leftTeamOffset + 
@@ -1165,7 +1173,7 @@ Bisect
     offsets = indexSendOffsets;
     for( int s=0; s<numLocalSources; ++s )
     {
-        const int i = localMap[s];
+        const int i = perm.GetLocal(s);
         if( i < leftChildSize )
         {
             const int q = leftTeamOffset + 
@@ -1201,7 +1209,7 @@ Bisect
     indexSendOffsets.clear();
 
     // Get the indices after reordering
-    MapIndices( localMap, recvIndices, numSources, comm );
+    perm.Translate( recvIndices );
 
     // Put the connections into our new graph
     const int childTeamRank = 
@@ -1262,221 +1270,6 @@ Bisect
     PopCallStack();
 #endif
     return sepSize;
-}
-
-// Overwrite the array of indices with the distributed map defined by each 
-// processes's localMap. If the index is not within the set of indices, it is 
-// preserved.
-inline void 
-MapIndices
-( const std::vector<int>& localMap, 
-        std::vector<int>& localIndices, int numSources, mpi::Comm comm )
-{
-#ifndef RELEASE
-    PushCallStack("MapIndices");
-#endif
-    const int commRank = mpi::CommRank( comm );
-    const int commSize = mpi::CommSize( comm );
-
-    const int blocksize = numSources/commSize;
-    const int firstLocalSource = blocksize*commRank;
-    const int numLocalIndices = localIndices.size();
-
-    // Count how many indices we need each process to map
-    std::vector<int> requestSizes( commSize, 0 );
-    for( int s=0; s<numLocalIndices; ++s )
-    {
-        const int i = localIndices[s];
-#ifndef RELEASE
-        if( i < 0 )
-            throw std::logic_error("Index was negative");
-#endif
-        if( i < numSources )
-        {
-            const int q = RowToProcess( i, blocksize, commSize );
-            ++requestSizes[q];
-        }
-    }
-
-    // Send our requests and find out what we need to fulfill
-    std::vector<int> fulfillSizes( commSize );
-    mpi::AllToAll
-    ( &requestSizes[0], 1, 
-      &fulfillSizes[0], 1, comm );
-
-    // Prepare for the AllToAll to exchange request sizes
-    int numRequests=0;
-    std::vector<int> requestOffsets( commSize );
-    for( int q=0; q<commSize; ++q )
-    {
-        requestOffsets[q] = numRequests;
-        numRequests += requestSizes[q];
-    }
-    int numFulfills=0;
-    std::vector<int> fulfillOffsets( commSize );
-    for( int q=0; q<commSize; ++q )
-    {
-        fulfillOffsets[q] = numFulfills;
-        numFulfills += fulfillSizes[q];
-    }
-
-    // Pack the requested information 
-    std::vector<int> requests( numRequests );
-    std::vector<int> offsets = requestOffsets;
-    for( int s=0; s<numLocalIndices; ++s )
-    {
-        const int i = localIndices[s];
-        if( i < numSources )
-        {
-            const int q = RowToProcess( i, blocksize, commSize );
-            requests[offsets[q]++] = i;
-        }
-    }
-
-    // Perform the first index exchange
-    std::vector<int> fulfills( numFulfills );
-    mpi::AllToAll
-    ( &requests[0], &requestSizes[0], &requestOffsets[0],
-      &fulfills[0], &fulfillSizes[0], &fulfillOffsets[0], comm );
-
-    // Map all of the indices in 'fulfills'
-    for( int s=0; s<numFulfills; ++s )
-    {
-        const int i = fulfills[s];
-        const int iLocal = i - firstLocalSource;
-#ifndef RELEASE
-        if( iLocal < 0 || iLocal >= (int)localMap.size() )
-        {
-            std::ostringstream msg;
-            msg << "invalid request: i=" << i << ", iLocal=" << iLocal 
-                << ", commRank=" << commRank << ", blocksize=" << blocksize;
-            throw std::logic_error( msg.str().c_str() );
-        }
-#endif
-        fulfills[s] = localMap[iLocal];
-    }
-
-    // Send everything back
-    mpi::AllToAll
-    ( &fulfills[0], &fulfillSizes[0], &fulfillOffsets[0],
-      &requests[0], &requestSizes[0], &requestOffsets[0], comm );
-
-    // Unpack in the same way we originally packed
-    offsets = requestOffsets;
-    for( int s=0; s<numLocalIndices; ++s )
-    {
-        const int i = localIndices[s];
-        if( i < numSources )
-        {
-            const int q = RowToProcess( i, blocksize, commSize );
-            localIndices[s] = requests[offsets[q]++];
-        }
-    }
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
-// third(i) := second(first(i))
-inline void 
-ComposeMaps
-( const std::vector<int>& localFirstMap, 
-  const std::vector<int>& localSecondMap,
-        std::vector<int>& localThirdMap, int numSources, mpi::Comm comm )
-{
-#ifndef RELEASE
-    PushCallStack("ComposeMaps");
-#endif
-    localThirdMap = localFirstMap;
-    MapIndices( localSecondMap, localThirdMap, numSources, comm );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
-// Generate our local portion of the inverse of a distributed map
-inline void 
-InvertMap
-( const std::vector<int>& localMap, 
-        std::vector<int>& localInverseMap, int numSources, mpi::Comm comm )
-{
-#ifndef RELEASE
-    PushCallStack("InvertMap");
-#endif
-    const int commRank = mpi::CommRank( comm );
-    const int commSize = mpi::CommSize( comm );
-
-    const int blocksize = numSources/commSize;
-    const int firstLocalSource = blocksize*commRank;
-    const int numLocalSources = localMap.size();
-
-    // How many pairs of original and mapped indices to send to each process
-    std::vector<int> sendSizes( commSize, 0 );
-    for( int s=0; s<numLocalSources; ++s )
-    {
-        const int i = localMap[s];
-        const int q = RowToProcess( i, blocksize, commSize );
-        sendSizes[q] += 2;
-    }
-
-    // Coordinate all of the processes on their send sizes
-    std::vector<int> recvSizes( commSize );
-    mpi::AllToAll
-    ( &sendSizes[0], 1,
-      &recvSizes[0], 1, comm );
-
-    // Prepare for the AllToAll to exchange send sizes
-    int numSends=0;
-    std::vector<int> sendOffsets( commSize );
-    for( int q=0; q<commSize; ++q )
-    {
-        sendOffsets[q] = numSends;
-        numSends += sendSizes[q];
-    }
-#ifndef RELEASE
-    if( numSends != 2*numLocalSources )
-        throw std::logic_error("Miscalculated numSends");
-#endif
-    int numReceives=0;
-    std::vector<int> recvOffsets( commSize );
-    for( int q=0; q<commSize; ++q )
-    {
-        recvOffsets[q] = numReceives;
-        numReceives += recvSizes[q];
-    }
-#ifndef RELEASE
-    if( numReceives != 2*numLocalSources )
-        throw std::logic_error("Mistake in number of receives");
-#endif
-
-    // Pack our map information
-    std::vector<int> sends( numSends );
-    std::vector<int> offsets = sendOffsets;
-    for( int s=0; s<numLocalSources; ++s )
-    {
-        const int i = localMap[s];
-        const int q = RowToProcess( i, blocksize, commSize );
-        sends[offsets[q]++] = s+firstLocalSource;
-        sends[offsets[q]++] = i;
-    }
-
-    // Send out the map information
-    std::vector<int> recvs( numReceives );
-    mpi::AllToAll
-    ( &sends[0], &sendSizes[0], &sendOffsets[0],
-      &recvs[0], &recvSizes[0], &recvOffsets[0], comm );
-
-    // Form our part of the inverse map
-    localInverseMap.resize( numLocalSources );
-    for( int s=0; s<numReceives; s+=2 )
-    {
-        const int origIndex = recvs[s];
-        const int mappedIndex = recvs[s+1];
-        localInverseMap[mappedIndex-firstLocalSource] = origIndex;
-    }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

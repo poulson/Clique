@@ -1,11 +1,11 @@
 The DistVector class
 ====================
-The :cpp:class:`DistVector\<T>` class is the standard interface in Clique for
+The :cpp:type:`DistVector\<T>` class is the standard interface in Clique for
 setting up right-hand sides for solves: it uses the same simple one-dimensional
-distribution as :cpp:class:`DistSparseMatrix\<T>` and is meant to be simple to
+distribution as :cpp:type:`DistSparseMatrix\<T>` and is meant to be simple to
 use.
 
-.. cpp:class:: DistVector<T>
+.. cpp:type:: class DistVector<T>
 
    .. rubric:: Constructors
 
@@ -90,7 +90,7 @@ use.
    Sets each entry in the vector to a sample from the unit ball appropriate 
    for type ``T``.
 
-.. cpp:function:: typename Base<F>::type Norm( const DistVector<F>& x )
+.. cpp:function:: typename Base<T>::type Norm( const DistVector<T>& x )
 
    The Euclidean norm of the vector.
 

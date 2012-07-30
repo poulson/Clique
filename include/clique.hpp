@@ -44,6 +44,8 @@ namespace cliq {
 } 
 #include "clique/core/graph_decl.hpp"
 #include "clique/core/dist_graph_decl.hpp"
+//TODO: include "clique/core/map_decl.hpp"
+#include "clique/core/dist_map_decl.hpp"
 #include "clique/core/sparse_matrix_decl.hpp"
 #include "clique/core/dist_sparse_matrix_decl.hpp"
 #include "clique/core/vector_decl.hpp"
@@ -54,6 +56,8 @@ namespace cliq {
 // Data-structure implementations
 #include "clique/core/graph_impl.hpp"
 #include "clique/core/dist_graph_impl.hpp"
+//TODO: include "clique/core/map_impl.hpp"
+#include "clique/core/dist_map_impl.hpp"
 #include "clique/core/sparse_matrix_impl.hpp"
 #include "clique/core/dist_sparse_matrix_impl.hpp"
 #include "clique/core/vector_impl.hpp"

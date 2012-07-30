@@ -86,12 +86,11 @@ main( int argc, char* argv[] )
         if( commSize > 1 )
         {
             DistGraph child;
-            std::vector<int> localMap;
+            DistMap map;
             bool haveLeftChild;
             const int sepSize = 
                 Bisect
-                ( graph, child, localMap, haveLeftChild, 
-                  numDistSeps, numSeqSeps );
+                ( graph, child, map, haveLeftChild, numDistSeps, numSeqSeps );
 
             int leftChildSize, rightChildSize;
             if( haveLeftChild )

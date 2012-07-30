@@ -4,18 +4,18 @@ Solves
 Solving after LDL factorization
 -------------------------------
 
-.. cpp:function:: void LDLSolve( Orientation orientation, const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
+.. cpp:function:: void LDLSolve( Orientation orientation, const DistSymmInfo& info, const DistSymmFrontTree<T>& L, Matrix<T>& localX )
 
-.. cpp:function:: void LowerSolve( Orientation orientation, UnitOrNonUnit diag, const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
+.. cpp:function:: void LowerSolve( Orientation orientation, UnitOrNonUnit diag, const DistSymmInfo& info, const DistSymmFrontTree<T>& L, Matrix<T>& localX )
 
-.. cpp:function:: void DiagonalSolve( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
+.. cpp:function:: void DiagonalSolve( const DistSymmInfo& info, const DistSymmFrontTree<T>& L, Matrix<T>& localX )
 
 Solving after block LDL factorization
 -------------------------------------
 
-.. cpp:function:: void BlockLDLSolve( Orientation orientation, const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
+.. cpp:function:: void BlockLDLSolve( Orientation orientation, const DistSymmInfo& info, const DistSymmFrontTree<T>& L, Matrix<T>& localX )
 
-.. cpp:function:: void BlockLowerSolve( Orientation orientation, UnitOrNonUnit diag, const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
+.. cpp:function:: void BlockLowerSolve( Orientation orientation, UnitOrNonUnit diag, const DistSymmInfo& info, const DistSymmFrontTree<T>& L, Matrix<T>& localX )
 
 Data structures
 ---------------
@@ -24,26 +24,26 @@ Data structures
 DistNodalVector
 ^^^^^^^^^^^^^^^
 
-.. cpp:type:: struct DistNodalVector<F>
+.. cpp:type:: struct DistNodalVector<T>
 
-   .. cpp:member:: Matrix<F> localVec
+   .. cpp:member:: Matrix<T> localVec
 
-   .. cpp:function:: void Pull( const std::vector<int>& localInverseMap, const DistSymmInfo& info, const DistVector<F>& x )
+   .. cpp:function:: void Pull( const DistMap& inverseMap, const DistSymmInfo& info, const DistVector<T>& x )
 
-   .. cpp:function:: void Push( const std::vector<int>& localInverseMap, const DistSymmInfo& info, DistVector<F>& x )
+   .. cpp:function:: void Push( const DistMap& inverseMap, const DistSymmInfo& info, DistVector<T>& x )
 
-   .. cpp:function:: DistNodalVector( const std::vector<int>& localInverseMap, const DistSymmInfo& info, const DistVector<F>& x )
+   .. cpp:function:: DistNodalVector( const DistMap& inverseMap, const DistSymmInfo& info, const DistVector<T>& x )
 
 DistNodalMultiVector
 ^^^^^^^^^^^^^^^^^^^^
 
-.. cpp:type:: struct DistNodalMultiVector<F>
+.. cpp:type:: struct DistNodalMultiVector<T>
 
-   .. cpp:member:: Matrix<F> localMultiVec
+   .. cpp:member:: Matrix<T> localMultiVec
 
-   .. cpp:function:: void Pull( const std::vector<int>& localInverseMap, const DistSymmInfo& info, const DistMultiVector<F>& X )
+   .. cpp:function:: void Pull( const DistMap& inverseMap, const DistSymmInfo& info, const DistMultiVector<T>& X )
 
-   .. cpp:function:: void Push( const std::vector<int>& localInverseMap, const DistSymmInfo& info, DistMultiVector<F>& X )
+   .. cpp:function:: void Push( const DistMap& inverseMap, const DistSymmInfo& info, DistMultiVector<T>& X )
 
-   .. cpp:function:: DistNodalMultiVector( const std::vector<int>& localInverseMap, const DistSymmInfo& info, const DistMultiVector<F>& X )
+   .. cpp:function:: DistNodalMultiVector( const DistMap& inverseMap, const DistSymmInfo& info, const DistMultiVector<T>& X )
 

@@ -28,13 +28,13 @@ DistNodalMultiVector<F>::DistNodalMultiVector()
 template<typename F>
 inline
 DistNodalMultiVector<F>::DistNodalMultiVector
-( const std::vector<int>& localInverseMap, const DistSymmInfo& info,
+( const DistMap& inverseMap, const DistSymmInfo& info,
   const DistMultiVector<F>& X )
 {
 #ifndef RELEASE
     PushCallStack("DistNodalMultiVector::DistNodalMultiVector");
 #endif
-    Pull( localInverseMap, info, X );
+    Pull( inverseMap, info, X );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -43,7 +43,7 @@ DistNodalMultiVector<F>::DistNodalMultiVector
 template<typename F>
 inline void
 DistNodalMultiVector<F>::Pull
-( const std::vector<int>& localInverseMap, const DistSymmInfo& info,
+( const DistMap& inverseMap, const DistSymmInfo& info,
   const DistMultiVector<F>& X )
 {
 #ifndef RELEASE
@@ -105,7 +105,7 @@ DistNodalMultiVector<F>::Pull
 #endif
 
     // Convert the indices to the original ordering
-    MapIndices( localInverseMap, mappedIndices, height, comm );
+    inverseMap.Translate( mappedIndices );
 
     // Figure out how many entries each process owns that we need
     std::vector<int> recvSizes( commSize, 0 );
@@ -217,7 +217,7 @@ DistNodalMultiVector<F>::Pull
 template<typename F>
 inline void
 DistNodalMultiVector<F>::Push
-( const std::vector<int>& localInverseMap, const DistSymmInfo& info,
+( const DistMap& inverseMap, const DistSymmInfo& info,
         DistMultiVector<F>& X ) const
 {
 #ifndef RELEASE
@@ -260,7 +260,7 @@ DistNodalMultiVector<F>::Push
     }
 
     // Convert the indices to the original ordering
-    MapIndices( localInverseMap, mappedIndices, height, comm );
+    inverseMap.Translate( mappedIndices );
 
     // Figure out how many indices each process owns that we need to send
     std::vector<int> sendSizes( commSize, 0 );

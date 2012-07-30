@@ -76,7 +76,7 @@ struct DistSymmFrontTree
     DistSymmFrontTree
     ( Orientation orientation,
       const DistSparseMatrix<F>& A, 
-      const std::vector<int>& localMap,
+      const DistMap& map,
       const DistSeparatorTree& sepTree,
       const DistSymmInfo& info );
 };

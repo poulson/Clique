@@ -100,9 +100,9 @@ main( int argc, char* argv[] )
         }
         DistSymmInfo info;
         DistSeparatorTree sepTree;
-        std::vector<int> localMap;
+        DistMap map;
         NestedDissection
-        ( graph, localMap, sepTree, info, cutoff, numDistSeps, numSeqSeps );
+        ( graph, map, sepTree, info, cutoff, numDistSeps, numSeqSeps );
         mpi::Barrier( comm );
         if( commRank == 0 )
             std::cout << "done" << std::endl;

@@ -59,6 +59,15 @@ using elem::DistMatrix;
 using elem::Shift;
 using elem::LocalLength;
 
+inline int
+RowToProcess( int i, int blocksize, int commSize )
+{
+    if( blocksize > 0 )
+        return std::min( i/blocksize, commSize-1 );
+    else
+        return commSize-1;
+}
+
 inline void
 VerifySendsAndRecvs
 ( const std::vector<int>& sendCounts,

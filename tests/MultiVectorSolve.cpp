@@ -129,11 +129,10 @@ main( int argc, char* argv[] )
         const DistGraph& graph = A.Graph();
         DistSymmInfo info;
         DistSeparatorTree sepTree;
-        std::vector<int> localMap;
+        DistMap map, inverseMap;
         NestedDissection
-        ( graph, localMap, sepTree, info, cutoff, numDistSeps, numSeqSeps );
-        std::vector<int> inverseLocalMap;
-        InvertMap( localMap, inverseLocalMap, N, comm );
+        ( graph, map, sepTree, info, cutoff, numDistSeps, numSeqSeps );
+        map.FormInverse( inverseMap );
         mpi::Barrier( comm );
         const double nestedStop = mpi::Time();
         if( commRank == 0 )
@@ -161,8 +160,7 @@ main( int argc, char* argv[] )
         }
         mpi::Barrier( comm );
         const double buildStart = mpi::Time();
-        DistSymmFrontTree<double> 
-            frontTree( TRANSPOSE, A, localMap, sepTree, info );
+        DistSymmFrontTree<double> frontTree( TRANSPOSE, A, map, sepTree, info );
         mpi::Barrier( comm );
         const double buildStop = mpi::Time();
         if( commRank == 0 )
@@ -191,9 +189,9 @@ main( int argc, char* argv[] )
         }
         const double solveStart = mpi::Time();
         DistNodalMultiVector<double> YNodal;
-        YNodal.Pull( inverseLocalMap, info, Y );
+        YNodal.Pull( inverseMap, info, Y );
         LDLSolve( TRANSPOSE, info, frontTree, YNodal.localMultiVec );
-        YNodal.Push( inverseLocalMap, info, Y );
+        YNodal.Push( inverseMap, info, Y );
         mpi::Barrier( comm );
         const double solveStop = mpi::Time();
         if( commRank == 0 )

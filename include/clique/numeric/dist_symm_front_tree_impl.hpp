@@ -28,14 +28,14 @@ template<typename F>
 DistSymmFrontTree<F>::DistSymmFrontTree
 ( Orientation orientation,
   const DistSparseMatrix<F>& A, 
-  const std::vector<int>& localMap,
+  const DistMap& map,
   const DistSeparatorTree& sepTree, 
   const DistSymmInfo& info )
 : mode(NORMAL_2D)
 {
 #ifndef RELEASE
     PushCallStack("DistSymmFrontTree::DistSymmFrontTree");
-    if( A.LocalHeight() != (int)localMap.size() )
+    if( A.LocalHeight() != map.NumLocalSources() )
         throw std::logic_error("Local mapping was not the right size");
 #endif
     mpi::Comm comm = A.Comm();
@@ -52,7 +52,7 @@ DistSymmFrontTree<F>::DistSymmFrontTree
     std::vector<int> targets( targetSet.size() );
     std::copy( targetSet.begin(), targetSet.end(), targets.begin() );
     std::vector<int> mappedTargets = targets;
-    MapIndices( localMap, mappedTargets, numSources, comm );
+    map.Translate( mappedTargets );
 
     // Set up the indices for the rows we need from each process
     std::vector<int> recvRowSizes( commSize, 0 );

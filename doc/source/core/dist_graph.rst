@@ -1,10 +1,10 @@
 The DistGraph class
 ===================
-Like the :cpp:class:`Graph` class, the :cpp:class:`DistGraph` class is mainly 
+Like the :cpp:type:`Graph` class, the :cpp:type:`DistGraph` class is mainly 
 used internally by Clique for (distributed) graph partitioning and for most of 
-the functionality of the :cpp:class:`DistSparseMatrix\<T>` class. 
-The :cpp:class:`DistGraph` class essentially provides of a subset of the 
-functionality of the :cpp:class:`DistSparseMatrix\<T>` class, but an example 
+the functionality of the :cpp:type:`DistSparseMatrix\<T>` class. 
+The :cpp:type:`DistGraph` class essentially provides of a subset of the 
+functionality of the :cpp:type:`DistSparseMatrix\<T>` class, but an example 
 of constructing the graph of a 7-point stencil over an 
 :math:`n_1 \times n_2 \times n_3` grid is shown below:
 
@@ -52,7 +52,7 @@ After finishing assembly, all redundant edges are deleted and the edges are
 sorted lexicographically based upon their source and target indices 
 (respectively).
 
-.. cpp:class:: DistGraph
+.. cpp:type:: class DistGraph
 
    .. rubric:: Constructors
 

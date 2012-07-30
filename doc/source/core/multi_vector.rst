@@ -1,10 +1,10 @@
 The MultiVector class
 =====================
-The :cpp:class:`MultiVector\<T>` class is the standard interface in Clique for
+The :cpp:type:`MultiVector\<T>` class is the standard interface in Clique for
 setting up multiple right-hand sides for sequential solves: it is a simplified 
-version of :cpp:class:`DistMultiVector\<T>`.
+version of :cpp:type:`DistMultiVector\<T>`.
 
-.. cpp:class:: MultiVector<T>
+.. cpp:type:: class MultiVector<T>
 
    .. rubric:: Constructors
 
@@ -68,7 +68,7 @@ version of :cpp:class:`DistMultiVector\<T>`.
    Sets each entry in the multi-vector to a sample from the unit ball 
    appropriate for type ``T``.
 
-.. cpp:function:: void Norms( const MultiVector<F>& X, std::vector<typename Base<F>::type>& norms )
+.. cpp:function:: void Norms( const MultiVector<T>& X, std::vector<typename Base<T>::type>& norms )
 
    Returns the Euclidean norms of each vector in the multi-vector.
 

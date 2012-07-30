@@ -1,6 +1,6 @@
 The DistSparseMatrix class
 ==========================
-The :cpp:class:`DistSparseMatrix\<T>` class is meant to provide a convenient 
+The :cpp:type:`DistSparseMatrix\<T>` class is meant to provide a convenient 
 means of building a distributed sparse matrix within Clique. 
 After initializing a real double-precision :math:`N \times N` sparse matrix 
 distributed over the communicator ``comm``, e.g., with
@@ -64,7 +64,7 @@ nonzero triples, which contain the row index, column index, and value, are
 sorted in lexicographical order based upon the row and column indices 
 (respectively).
 
-.. cpp:class:: DistSparseMatrix<T>
+.. cpp:type:: class DistSparseMatrix<T>
 
    .. rubric:: Constructors
 
