@@ -618,7 +618,6 @@ BuildMap
     map.SetComm( comm );
     map.ResizeTo( numSources );
     const int blocksize = map.Blocksize();
-    const int numLocalSources = map.NumLocalSources();
 
     const int numLocal = sepTree.localSepsAndLeaves.size();
     // NOTE: The dist separator tree does not double-count the first 
@@ -734,6 +733,7 @@ BuildMap
         numRecvs += recvSizes[q];
     }
 #ifndef RELEASE
+    const int numLocalSources = map.NumLocalSources();
     if( numRecvs != numLocalSources )
         throw std::logic_error("incorrect number of recv indices");
 #endif

@@ -104,7 +104,7 @@ SparseAllToAll
 #ifdef USE_CUSTOM_ALLTOALLV
     const int commSize = mpi::CommSize( comm );
     int numSends=0,numRecvs=0;
-    for( unsigned proc=0; proc<commSize; ++proc )
+    for( int proc=0; proc<commSize; ++proc )
     {
         if( sendCounts[proc] != 0 )
             ++numSends;
@@ -114,7 +114,7 @@ SparseAllToAll
     std::vector<mpi::Status> statuses(numSends+numRecvs);
     std::vector<mpi::Request> requests(numSends+numRecvs);
     int rCount=0;
-    for( unsigned proc=0; proc<commSize; ++proc )
+    for( int proc=0; proc<commSize; ++proc )
     {
         int count = recvCounts[proc];
         int displ = recvDispls[proc];
@@ -123,7 +123,7 @@ SparseAllToAll
             ( &recvBuffer[displ], count, proc, 0, comm,
               requests[rCount++] );
     }
-    for( unsigned proc=0; proc<commSize; ++proc )
+    for( int proc=0; proc<commSize; ++proc )
     {
         int count = sendCounts[proc];
         int displ = sendDispls[proc];

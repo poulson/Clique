@@ -363,6 +363,7 @@ DistMap::operator=( const DistMap& map )
     numSources_ = map.numSources_;
     SetComm( map.comm_ );
     localMap_ = map.localMap_;
+    return *this;
 }
 
 } // namespace cliq
