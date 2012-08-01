@@ -8,7 +8,7 @@ yields a node in a *separator tree*, which can be used to guide a multifrontal
 algorithm. The following routine uses a parallel graph partitioner (ParMETIS)
 as a means of producing such a separator tree from an arbitrary graph.
 
-.. cpp:function:: void NestedDissection( const DistGraph& graph, DistMap& map, DistSeparatorTree& sepTree, DistSymmInfo& info, int cutoff=128, int numDistSeps=10, int numSeqSeps=5, bool storeFactRecvIndices=true )
+.. cpp:function:: void NestedDissection( const DistGraph& graph, DistMap& map, DistSeparatorTree& sepTree, DistSymmInfo& info, int cutoff=128, int numDistSeps=1, int numSeqSeps=1, bool storeFactRecvIndices=true )
 
    In addition to generating the separator tree, which simply stores the indices
    of each separator, each process computes its portion of the mapping from the

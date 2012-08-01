@@ -30,8 +30,8 @@ void NestedDissection
         DistSeparatorTree& sepTree, 
         DistSymmInfo& info,
         int cutoff=128, 
-        int numDistSeps=10, 
-        int numSeqSeps=5, 
+        int numDistSeps=1, 
+        int numSeqSeps=1, 
         bool storeFactRecvIndices=false );
 
 int Bisect
@@ -47,8 +47,8 @@ int Bisect
         DistGraph& child, 
         DistMap& perm,
         bool& onLeft,
-        int numDistSeps=10, 
-        int numSeqSeps=5 );
+        int numDistSeps=1, 
+        int numSeqSeps=1 );
 
 void BuildMap
 ( const DistGraph& graph, 
@@ -226,8 +226,8 @@ NestedDissectionRecursion
         int offset, 
         bool onLeft,
         int cutoff=128, 
-        int numDistSeps=10, 
-        int numSeqSeps=5 )
+        int numDistSeps=1, 
+        int numSeqSeps=1 )
 {
 #ifndef RELEASE
     PushCallStack("NestedDissectionRecursion");

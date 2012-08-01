@@ -176,7 +176,7 @@ main( int argc, char* argv[] )
         mpi::Barrier( comm );
         const double ldlStart = mpi::Time();
         LDL( TRANSPOSE, info, frontTree );
-        SetSolveMode( frontTree, FAST_2D_LDL );
+        SetSolveMode( frontTree, NORMAL_1D );
         mpi::Barrier( comm );
         const double ldlStop = mpi::Time();
         if( commRank == 0 )
