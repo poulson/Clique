@@ -24,7 +24,7 @@ void Usage()
 {
     std::cout
       << "VectorSolve <n1> <n2> <n3> "
-      << "[cutoff=128] [numDistSeps=10] [numSeqSeps=5]\n"
+      << "[cutoff=128] [numDistSeps=1] [numSeqSeps=1]\n"
       << "  n1: first dimension of n1 x n2 x n3 mesh\n"
       << "  n2: second dimension of n1 x n2 x n3 mesh\n"
       << "  n3: third dimension of n1 x n2 x n3 mesh\n"
@@ -52,8 +52,8 @@ main( int argc, char* argv[] )
     const int n2 = atoi( argv[2] );
     const int n3 = atoi( argv[3] );
     const int cutoff = ( argc >= 5 ? atoi( argv[4] ) : 128 );
-    const int numDistSeps = ( argc >= 6 ? atoi( argv[5] ) : 10 );
-    const int numSeqSeps = ( argc >= 7 ? atoi( argv[6] ) : 5 );
+    const int numDistSeps = ( argc >= 6 ? atoi( argv[5] ) : 1 );
+    const int numSeqSeps = ( argc >= 7 ? atoi( argv[6] ) : 1 );
 
     try
     {

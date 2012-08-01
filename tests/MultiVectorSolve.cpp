@@ -24,7 +24,7 @@ void Usage()
 {
     std::cout
       << "MultiVectorSolve <n1> <n2> <n3> <numRhs> "
-      << "[cutoff=128] [numDistSeps=10] [numSeqSeps=5]\n"
+      << "[cutoff=128] [numDistSeps=1] [numSeqSeps=1]\n"
       << "  n1: first dimension of n1 x n2 x n3 mesh\n"
       << "  n2: second dimension of n1 x n2 x n3 mesh\n"
       << "  n3: third dimension of n1 x n2 x n3 mesh\n"
@@ -54,8 +54,8 @@ main( int argc, char* argv[] )
     const int n3 = atoi( argv[3] );
     const int numRhs = atoi( argv[4] );
     const int cutoff = ( argc >= 6 ? atoi( argv[5] ) : 128 );
-    const int numDistSeps = ( argc >= 7 ? atoi( argv[6] ) : 10 );
-    const int numSeqSeps = ( argc >= 8 ? atoi( argv[7] ) : 5 );
+    const int numDistSeps = ( argc >= 7 ? atoi( argv[6] ) : 1 );
+    const int numSeqSeps = ( argc >= 8 ? atoi( argv[7] ) : 1 );
 
     try
     {
