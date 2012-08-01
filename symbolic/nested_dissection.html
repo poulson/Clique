@@ -62,9 +62,15 @@ yields a node in a <em>separator tree</em>, which can be used to guide a multifr
 algorithm. The following routine uses a parallel graph partitioner (ParMETIS)
 as a means of producing such a separator tree from an arbitrary graph.</p>
 <dl class="function">
-<dt id="NestedDissection__DistGraphCR.DistMapR.DistSeparatorTreeR.DistSymmInfoR.i.i.i.b">
-void <tt class="descname">NestedDissection</tt><big>(</big><a class="reference internal" href="../core/dist_graph.html#DistGraph__class" title="DistGraph">const DistGraph&amp;</a> <em>graph</em>, <a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">DistMap&amp;</a> <em>map</em>, <a class="reference internal" href="#DistSeparatorTree__struct" title="DistSeparatorTree">DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="#DistSymmInfo__struct" title="DistSymmInfo">DistSymmInfo&amp;</a> <em>info</em>, int <em>cutoff</em><em>=128</em>, int <em>numDistSeps</em><em>=10</em>, int <em>numSeqSeps</em><em>=5</em>, bool <em>storeFactRecvIndices</em><em>=true </em><big>)</big><a class="headerlink" href="#NestedDissection__DistGraphCR.DistMapR.DistSeparatorTreeR.DistSymmInfoR.i.i.i.b" title="Permalink to this definition">¶</a></dt>
-<dd><p>In addition to generating the separator tree, which simply stores the indices
+<dt id="NestedDissection__DistGraphCR.DistMapR.DistSeparatorTreeR.DistSymmInfoR.b.i.i.i.b">
+void <tt class="descname">NestedDissection</tt><big>(</big><a class="reference internal" href="../core/dist_graph.html#DistGraph__class" title="DistGraph">const DistGraph&amp;</a> <em>graph</em>, <a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">DistMap&amp;</a> <em>map</em>, <a class="reference internal" href="#DistSeparatorTree__struct" title="DistSeparatorTree">DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="#DistSymmInfo__struct" title="DistSymmInfo">DistSymmInfo&amp;</a> <em>info</em>, bool <em>sequential</em><em>=true</em>, int <em>cutoff</em><em>=128</em>, int <em>numDistSeps</em><em>=1</em>, int <em>numSeqSeps</em><em>=1</em>, bool <em>storeFactRecvIndices</em><em>=true </em><big>)</big><a class="headerlink" href="#NestedDissection__DistGraphCR.DistMapR.DistSeparatorTreeR.DistSymmInfoR.b.i.i.i.b" title="Permalink to this definition">¶</a></dt>
+<dd><div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Since partition refinement via KL-FM is not very scalable from the runtime
+perspective, by default, graph bisection happens on a single processor
+for each node of the frontal tree.</p>
+</div>
+<p>In addition to generating the separator tree, which simply stores the indices
 of each separator, each process computes its portion of the mapping from the
 original to the reordered indices (implied by nested dissection) within the
 <cite>localMap</cite> vector, and the symbolic factorization, as well as a variety of
