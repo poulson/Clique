@@ -12,10 +12,11 @@
 
 #include <parmetislib.h>
 
-int CliqBisect(idx_t *vtxdist, idx_t *xadj, idx_t *adjncy, 
-              idx_t *p_nseps, idx_t *s_nseps, 
-              real_t *ubfrac, idx_t *idbglvl, idx_t *order, idx_t *sizes, 
-              MPI_Comm *comm)
+int CliqParallelBisect
+( idx_t *vtxdist, idx_t *xadj, idx_t *adjncy, 
+  idx_t *p_nseps, idx_t *s_nseps, 
+  real_t *ubfrac, idx_t *idbglvl, idx_t *order, idx_t *sizes, 
+  MPI_Comm *comm )
 {
   idx_t i, j, npes, npesNonzero, mype, mypeNonzero, dbglvl, status, haveData;
   ctrl_t *ctrl;
@@ -76,7 +77,7 @@ int CliqBisect(idx_t *vtxdist, idx_t *xadj, idx_t *adjncy,
   ctrl->dbglvl    = dbglvl;
   ctrl->ipart     = ISEP_NODE;
   ctrl->CoarsenTo = gk_min(graph->gnvtxs-1,1500*npesNonzero); 
-  CliqOrder(ctrl, graph, order, sizes);
+  CliqParallelOrder(ctrl, graph, order, sizes);
 
   FreeInitialGraphAndRemap(graph);
 
@@ -100,7 +101,7 @@ DONE:
   return (int)status;
 }
 
-void CliqOrder(ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *sizes)
+void CliqParallelOrder(ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *sizes)
 {
   idx_t i, nvtxs;
 
@@ -119,10 +120,10 @@ void CliqOrder(ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *sizes)
 
   Order_Partition_Multiple(ctrl, graph);
 
-  CliqLabelVertices(ctrl, graph, order, sizes);
+  CliqParallelLabelVertices(ctrl, graph, order, sizes);
 }
 
-void CliqLabelVertices
+void CliqParallelLabelVertices
 (ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *sizes)
 { 
   idx_t i, j, nvtxs, id; 

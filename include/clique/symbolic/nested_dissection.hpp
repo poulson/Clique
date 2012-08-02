@@ -794,16 +794,9 @@ Bisect
 #ifndef RELEASE
     PushCallStack("Bisect");
 #endif
-    // TODO: Use a wrapper to METIS instead of ParMETIS
-
-    // Describe the source distribution
-    const int numSources = graph.NumSources();
-    std::vector<idx_t> vtxDist( 2 );
-    vtxDist[0] = 0;
-    vtxDist[1] = numSources;
-
-    // ParMETIS assumes that there are no self-connections or connections 
+    // METIS assumes that there are no self-connections or connections 
     // outside the sources, so we must manually remove them from our graph
+    const int numSources = graph.NumSources();
     const int numEdges = graph.NumEdges();
     int numValidEdges = 0;
     for( int i=0; i<numEdges; ++i )
@@ -844,15 +837,13 @@ Bisect
     // Create space for the result
     map.resize( numSources );
 
-    // Use the custom ParMETIS interface
-    mpi::Comm comm = mpi::COMM_SELF;
-    idx_t nparseps = 1;
-    idx_t nseqseps = numSeps;
+    // Use the custom METIS interface
+    idx_t nvtxs = numSources;
+    idx_t nseps = numSeps;
     real_t imbalance = 1.1;
     idx_t sizes[3];
     CliqBisect
-    ( &vtxDist[0], &xAdj[0], &adjacency[0], &nparseps, &nseqseps, 
-      &imbalance, NULL, &map[0], sizes, &comm );
+    ( &nvtxs, &xAdj[0], &adjacency[0], &nseps, &imbalance, &map[0], sizes );
 #ifndef RELEASE
     std::vector<int> timesMapped( numSources, 0 );
     for( int i=0; i<numSources; ++i )
@@ -1081,13 +1072,12 @@ Bisect
         std::vector<int> seqPerm;
         if( commRank == 0 )
         {
-            // Use the custom ParMETIS interface (for now...)
-            int vtxDist[2] = { 0, numSources };
-            seqPerm.resize( numSources );
-            mpi::Comm commSelf = mpi::COMM_SELF;
+            // Use the custom METIS interface
+            idx_t nvtxs = numSources;
+            idx_t sizes[3];
             CliqBisect
-            ( vtxDist, &globalXAdj[0], &globalAdj[0], &nparseps, &nseqseps,
-              &imbalance, NULL, &seqPerm[0], sizes, &commSelf );
+            ( &nvtxs, &globalXAdj[0], &globalAdj[0], &nseqseps,
+              &imbalance, &seqPerm[0], sizes );
         }
 
         // Set up space for the distributed permutation
@@ -1123,7 +1113,7 @@ Bisect
         perm.ResizeTo( numSources );
 
         // Use the custom ParMETIS interface
-        CliqBisect
+        CliqParallelBisect
         ( &vtxDist[0], &xAdj[0], &adjacency[0], &nparseps, &nseqseps, 
           &imbalance, NULL, perm.LocalBuffer(), sizes, &comm );
     }

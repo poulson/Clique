@@ -62,7 +62,7 @@ extern "C" {
 /*-------------------------------------------------------------------
 * Added for usage in Clique by Jack Poulson
 *--------------------------------------------------------------------*/
-int __cdecl CliqBisect
+int __cdecl CliqParallelBisect
 (idx_t *vtxdist, idx_t *xadj, idx_t *adjncy, idx_t *p_nseps, idx_t *s_nseps,
  real_t *ubfrac, idx_t *dbglvl, idx_t *order, idx_t *size, MPI_Comm *comm);
 
