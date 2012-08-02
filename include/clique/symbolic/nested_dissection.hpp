@@ -841,9 +841,9 @@ Bisect
     idx_t nvtxs = numSources;
     idx_t nseps = numSeps;
     real_t imbalance = 1.1;
-    idx_t sizes[3];
+    std::vector<idx_t> sizes(3);
     CliqBisect
-    ( &nvtxs, &xAdj[0], &adjacency[0], &nseps, &imbalance, &map[0], sizes );
+    ( &nvtxs, &xAdj[0], &adjacency[0], &nseps, &imbalance, &map[0], &sizes[0] );
 #ifndef RELEASE
     std::vector<int> timesMapped( numSources, 0 );
     for( int i=0; i<numSources; ++i )
@@ -1002,7 +1002,7 @@ Bisect
     idx_t nparseps = numDistSeps;
     idx_t nseqseps = numSeqSeps;
     real_t imbalance = 1.1;
-    idx_t sizes[3];
+    std::vector<idx_t> sizes(3);
     if( sequential )
     {
         // Gather the number of local valid edges on the root process
@@ -1074,10 +1074,10 @@ Bisect
         {
             // Use the custom METIS interface
             idx_t nvtxs = numSources;
-            idx_t sizes[3];
+            seqPerm.resize( nvtxs );
             CliqBisect
             ( &nvtxs, &globalXAdj[0], &globalAdj[0], &nseqseps,
-              &imbalance, &seqPerm[0], sizes );
+              &imbalance, &seqPerm[0], &sizes[0] );
         }
 
         // Set up space for the distributed permutation
@@ -1098,7 +1098,7 @@ Bisect
               0, comm );
 
         // Broadcast the sizes information from the root
-        mpi::Broadcast( (byte*)sizes, 3*sizeof(idx_t), 0, comm );
+        mpi::Broadcast( (byte*)&sizes[0], 3*sizeof(idx_t), 0, comm );
     }
     else
     {
@@ -1115,7 +1115,7 @@ Bisect
         // Use the custom ParMETIS interface
         CliqParallelBisect
         ( &vtxDist[0], &xAdj[0], &adjacency[0], &nparseps, &nseqseps, 
-          &imbalance, NULL, perm.LocalBuffer(), sizes, &comm );
+          &imbalance, NULL, perm.LocalBuffer(), &sizes[0], &comm );
     }
 
 #ifndef RELEASE

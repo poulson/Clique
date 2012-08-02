@@ -35,6 +35,7 @@ int CliqBisect
 
   /* set up the run time parameters */
   METIS_SetDefaultOptions(options);
+  options[METIS_OPTION_COMPRESS] = 0;
   options[METIS_OPTION_NSEPS] = *numSeps;
   options[METIS_OPTION_UFACTOR] = (int)((*imbalance-1)*1000);
   ctrl = SetupCtrl(METIS_OP_OMETIS, options, 1, 3, NULL, NULL);
