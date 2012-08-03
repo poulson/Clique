@@ -264,7 +264,10 @@ main( int argc, char* argv[] )
             std::cout << "|| x     ||_2 = " << xNorm << "\n"
                       << "|| xComp ||_2 = " << yNorm << "\n"
                       << "|| A x   ||_2 = " << yOrigNorm << "\n"
-                      << "|| error ||_2 / || A x ||_2 = " << errorNorm/yOrigNorm 
+                      << "|| error ||_2 / || x ||_2 = " 
+                      << errorNorm/xNorm << "\n"
+                      << "|| error ||_2 / || A x ||_2 = " 
+                      << errorNorm/yOrigNorm
                       << std::endl;
         }
     }
