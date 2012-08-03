@@ -23,7 +23,7 @@ using namespace cliq;
 void Usage()
 {
     std::cout
-      << "HelmholtzDirichlet2D <n1> <n2> <omega> <damping>"
+      << "HelmholtzDirichlet2D <n1> <n2> <omega> <damping> "
       << "[sequential=true] [cutoff=128] [numDistSeps=1] [numSeqSeps=1]\n"
       << "  n1: first dimension of n1 x n2 x n3 mesh\n"
       << "  n2: second dimension of n1 x n2 x n3 mesh\n"
@@ -144,11 +144,11 @@ main( int argc, char* argv[] )
             std::cout << "done, " << nestedStop-nestedStart << " seconds"
                       << std::endl;
 
+        const int rootSepSize = info.distNodes.back().size;
         if( commRank == 0 )
         {
             const int numDistNodes = info.distNodes.size();
             const int numLocalNodes = info.localNodes.size();
-            const int rootSepSize = info.distNodes.back().size;
             std::cout << "\n"
                       << "On the root process:\n"
                       << "-----------------------------------------\n"
@@ -174,18 +174,59 @@ main( int argc, char* argv[] )
 
         if( commRank == 0 )
         {
-            std::cout << "Running LDL^T and redistribution...";
+            std::cout << "Running block LDL^T...";
             std::cout.flush();
         }
         mpi::Barrier( comm );
         const double ldlStart = mpi::Time();
-        LDL( TRANSPOSE, info, frontTree );
-        SetSolveMode( frontTree, NORMAL_1D );
+        BlockLDL( TRANSPOSE, info, frontTree );
         mpi::Barrier( comm );
         const double ldlStop = mpi::Time();
         if( commRank == 0 )
             std::cout << "done, " << ldlStop-ldlStart << " seconds" 
                       << std::endl;
+
+        if( commRank == 0 )
+        {
+            std::cout << "Computing SVD of the largest off-diagonal block of "
+                         "numerical Green's function on root separator...";
+            std::cout.flush();
+        }
+        const double svdStart = mpi::Time();
+        const DistMatrix<C>& rootFront = frontTree.distFronts.back().front2dL;
+        const Grid& rootGrid = rootFront.Grid();
+        const int lowerHalf = rootSepSize/2;
+        const int upperHalf = rootSepSize - lowerHalf;
+        if( commRank == 0 )
+            std::cout << "lowerHalf=" << lowerHalf 
+                      << ", upperHalf=" << upperHalf << std::endl;
+        DistMatrix<C> offDiagBlock;
+        offDiagBlock.LockedView
+        ( rootFront, lowerHalf, 0, upperHalf, lowerHalf );
+        DistMatrix<C> offDiagBlockCopy( offDiagBlock );
+        DistMatrix<R,VR,STAR> singVals_VR_STAR( rootGrid );
+        elem::SingularValues( offDiagBlockCopy, singVals_VR_STAR );
+        const R twoNorm = elem::Norm( singVals_VR_STAR, elem::INFINITY_NORM );
+        const R tolerance = 1e-4;
+        DistMatrix<R,STAR,STAR> singVals( singVals_VR_STAR );
+        int numRank = lowerHalf;
+        for( int j=0; j<lowerHalf; ++j )
+        {
+            if( singVals.GetLocal(j,0) <= twoNorm*tolerance )
+            {
+                numRank = j;
+                break;
+            }
+        }
+        mpi::Barrier( comm );
+        const double svdStop = mpi::Time();
+        if( commRank == 0 )
+        {
+            std::cout << "done, " << svdStop-svdStart << " seconds\n"
+                      << "  two norm=" << twoNorm << "\n"
+                      << "  numerical rank=" << numRank << "/" << lowerHalf
+                      << std::endl;
+        }
 
         if( commRank == 0 )
         {
@@ -195,7 +236,7 @@ main( int argc, char* argv[] )
         const double solveStart = mpi::Time();
         DistNodalVector<C> yNodal;
         yNodal.Pull( inverseMap, info, y );
-        LDLSolve( TRANSPOSE, info, frontTree, yNodal.localVec );
+        BlockLDLSolve( TRANSPOSE, info, frontTree, yNodal.localVec );
         yNodal.Push( inverseMap, info, y );
         mpi::Barrier( comm );
         const double solveStop = mpi::Time();
@@ -214,7 +255,8 @@ main( int argc, char* argv[] )
             std::cout << "|| x     ||_2 = " << xNorm << "\n"
                       << "|| xComp ||_2 = " << yNorm << "\n"
                       << "|| A x   ||_2 = " << yOrigNorm << "\n"
-                      << "|| error ||_2 = " << errorNorm << std::endl;
+                      << "|| error ||_2 / || A x ||_2 = " << errorNorm/yOrigNorm 
+                      << std::endl;
         }
     }
     catch( std::exception& e )

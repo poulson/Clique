@@ -22,19 +22,20 @@ using namespace cliq;
 
 void Usage()
 {
-    std::cout << "PanelLDL <nx> <ny> <nz> [cutoff=16] [fact blocksize=96] "
+    std::cout << "PanelLDL <nx> <ny> <nz> "
+                 "[block LDL=false] [cutoff=16] [fact blocksize=96] "
                  "[solve blocksize=64] [useFast1d=0] [write info=0] "
                  "[basename=out]\n"
-              << "<nx>: size of panel in x direction\n"
-              << "<ny>: size of panel in y direction\n"
-              << "<nz>: size of panel in z direction\n"
-              << "[block LDL=0]: use block LDL iff != 0\n"
-              << "[cutoff=16]: minimum required leaf size\n" 
-              << "[fact blocksize=96]: factorization algorithmic blocksize\n"
-              << "[solve blocksize=64]: solve algorithmic blocksize\n"
-              << "[useFast1d=0]: use 1d distributions iff != 0\n"
-              << "[write info=0]: write basic local info to file? [0/1]\n"
-              << "[basename=out]: basename for each process's info file\n"
+              << "  nx: size of panel in x direction\n"
+              << "  ny: size of panel in y direction\n"
+              << "  nz: size of panel in z direction\n"
+              << "  block LDL: use block LDL iff != 0\n"
+              << "  cutoff: minimum required leaf size\n" 
+              << "  fact blocksize: factorization algorithmic blocksize\n"
+              << "  solve blocksize: solve algorithmic blocksize\n"
+              << "  useFast1d: use 1d distributions iff != 0\n"
+              << "  write info: write basic local info to file? [0/1]\n"
+              << "  basename: basename for each process's info file\n"
               << std::endl;
 }
 
