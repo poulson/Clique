@@ -73,6 +73,8 @@ main( int argc, char* argv[] )
         const double h2Inv = ny;
         const double h1InvSquared = h1Inv*h1Inv;
         const double h2InvSquared = h2Inv*h2Inv;
+        const C mainTerm = 
+            2*(h1InvSquared+h2InvSquared) - dampedOmega*dampedOmega;
 
         // Fill our portion of the 2D Helmholtz operator over the unit-square 
         // using a nx x ny 7-point stencil in natural ordering: 
@@ -93,7 +95,7 @@ main( int argc, char* argv[] )
             const int x = i % nx;
             const int y = i/nx;
 
-            A.Update( i, i, 6.-dampedOmega*dampedOmega );
+            A.Update( i, i, mainTerm );
             if( x != 0 )
                 A.Update( i, i-1, -h1InvSquared );
             if( x != nx-1 )
