@@ -23,11 +23,12 @@ using namespace cliq;
 void Usage()
 {
     std::cout
-      << "HelmholtzDirichlet2D <nx> <ny> <omega> <damping> "
+      << "HelmholtzDirichlet3D <nx> <ny> <nz> <omega> <damping> "
       << "[analytic=true] [sequential=true] [cutoff=128] \n"
       << "[numDistSeps=1] [numSeqSeps=1]\n"
-      << "  nx: first dimension of nx x ny mesh\n"
-      << "  ny: second dimension of nx x ny mesh\n"
+      << "  nx: first dimension of nx x ny x nz mesh\n"
+      << "  ny: second dimension of nx x ny x nz mesh\n"
+      << "  nz: third dimension of nx x ny x nz mesh\n"
       << "  omega: frequency of problem in radians per second\n"
       << "  damping: imaginary damping in radians per second\n"
       << "  analytic: if nonzero, use an analytical reordering\n"
@@ -47,7 +48,7 @@ main( int argc, char* argv[] )
     typedef double R;
     typedef Complex<R> C;
 
-    if( argc < 5 )
+    if( argc < 6 )
     {
         if( commRank == 0 )
             Usage();
@@ -56,29 +57,33 @@ main( int argc, char* argv[] )
     }
     const int nx = atoi( argv[1] );
     const int ny = atoi( argv[2] );
-    const double omega = atof( argv[3] );
-    const double damping = atof( argv[4] );
-    const bool analytic = ( argc >= 6 ? atoi( argv[5] ) : true );
-    const bool sequential = ( argc >= 7 ? atoi( argv[6] ) : true );
-    const int cutoff = ( argc >= 8 ? atoi( argv[7] ) : 128 );
-    const int numDistSeps = ( argc >= 9 ? atoi( argv[8] ) : 1 );
-    const int numSeqSeps = ( argc >= 10 ? atoi( argv[9] ) : 1 );
+    const int nz = atoi( argv[3] );
+    const double omega = atof( argv[4] );
+    const double damping = atof( argv[5] );
+    const bool analytic = ( argc >= 7 ? atoi( argv[6] ) : true );
+    const bool sequential = ( argc >= 8 ? atoi( argv[7] ) : true );
+    const int cutoff = ( argc >= 9 ? atoi( argv[8] ) : 128 );
+    const int numDistSeps = ( argc >= 10 ? atoi( argv[9] ) : 1 );
+    const int numSeqSeps = ( argc >= 11 ? atoi( argv[10] ) : 1 );
 
     try
     {
-        const int N = nx*ny;
+        const int N = nx*ny*nz;
         DistSparseMatrix<C> A( N, comm );
         C dampedOmega( omega, damping );
         const double h1Inv = nx;
         const double h2Inv = ny;
+        const double h3Inv = nz;
         const double h1InvSquared = h1Inv*h1Inv;
         const double h2InvSquared = h2Inv*h2Inv;
+        const double h3InvSquared = h3Inv*h3Inv;
         const C mainTerm = 
-            2*(h1InvSquared+h2InvSquared) - dampedOmega*dampedOmega;
+            2*(h1InvSquared+h2InvSquared+h3InvSquared) - 
+            dampedOmega*dampedOmega;
 
-        // Fill our portion of the 2D Helmholtz operator over the unit-square 
-        // using a nx x ny 5-point stencil in natural ordering: 
-        // (x,y) at x + y*nx
+        // Fill our portion of the 3D Helmholtz operator over the unit-square 
+        // using a nx x ny x nz 7-point stencil in natural ordering: 
+        // (x,y,z) at x + y*nx + z*nx*ny
         if( commRank == 0 )
         {
             std::cout << "Filling local portion of matrix...";
@@ -88,12 +93,13 @@ main( int argc, char* argv[] )
         const int firstLocalRow = A.FirstLocalRow();
         const int localHeight = A.LocalHeight();
         A.StartAssembly();
-        A.Reserve( 5*localHeight );
+        A.Reserve( 7*localHeight );
         for( int iLocal=0; iLocal<localHeight; ++iLocal )
         {
             const int i = firstLocalRow + iLocal;
             const int x = i % nx;
-            const int y = i/nx;
+            const int y = (i/nx) % ny;
+            const int z = i/(nx*ny);
 
             A.Update( i, i, mainTerm );
             if( x != 0 )
@@ -104,6 +110,10 @@ main( int argc, char* argv[] )
                 A.Update( i, i-nx, -h2InvSquared );
             if( y != ny-1 )
                 A.Update( i, i+nx, -h2InvSquared );
+            if( z != 0 )
+                A.Update( i, i-nx*ny, -h3InvSquared );
+            if( z != nz-1 )
+                A.Update( i, i+nx*ny, -h3InvSquared );
         } 
         A.StopAssembly();
         mpi::Barrier( comm );
@@ -141,7 +151,7 @@ main( int argc, char* argv[] )
         DistMap map, inverseMap;
         if( analytic )
             NaturalNestedDissection
-            ( nx, ny, 1, graph, map, sepTree, info, cutoff );
+            ( nx, ny, nz, graph, map, sepTree, info, cutoff );
         else
             NestedDissection
             ( graph, map, sepTree, info, 
