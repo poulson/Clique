@@ -74,6 +74,7 @@ namespace cliq {
 #include "clique/symbolic/dist_symm_info.hpp"
 #include "clique/symbolic/symm_analysis.hpp"
 #include "clique/symbolic/nested_dissection.hpp"
+#include "clique/symbolic/natural_nested_dissection.hpp"
 
 //
 // Numerical computation

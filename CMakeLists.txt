@@ -100,7 +100,7 @@ include_directories("${PROJECT_BINARY_DIR}/include")
 # Build the test drivers if necessary
 if(CLIQ_TESTS)
   set(TEST_DIR ${PROJECT_SOURCE_DIR}/tests)
-  set(TESTS FileSpeed PanelLDL)
+  set(TESTS FileSpeed NaturalVectorSolve)
   if(HAVE_PARMETIS)
     list(APPEND TESTS Bisection MultiVectorSolve NestedDissection VectorSolve)
   endif()
