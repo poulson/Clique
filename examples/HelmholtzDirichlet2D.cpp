@@ -23,12 +23,14 @@ using namespace cliq;
 void Usage()
 {
     std::cout
-      << "HelmholtzDirichlet2D <n1> <n2> <omega> <damping> "
-      << "[sequential=true] [cutoff=128] [numDistSeps=1] [numSeqSeps=1]\n"
-      << "  n1: first dimension of n1 x n2 x n3 mesh\n"
-      << "  n2: second dimension of n1 x n2 x n3 mesh\n"
+      << "HelmholtzDirichlet2D <nx> <ny> <omega> <damping> "
+      << "[analytic=true] [sequential=true] [cutoff=128] \n"
+      << "[numDistSeps=1] [numSeqSeps=1]\n"
+      << "  nx: first dimension of nx x ny x n3 mesh\n"
+      << "  ny: second dimension of nx x ny x n3 mesh\n"
       << "  omega: frequency of problem in radians per second\n"
       << "  damping: imaginary damping in radians per second\n"
+      << "  analytic: if nonzero, use an analytical reordering\n"
       << "  sequential: if nonzero, then run a sequential symbolic reordering\n"
       << "  cutoff: maximum size of leaf node\n"
       << "  numDistSeps: number of distributed separators to try\n"
@@ -52,28 +54,29 @@ main( int argc, char* argv[] )
         cliq::Finalize();
         return 0;
     }
-    const int n1 = atoi( argv[1] );
-    const int n2 = atoi( argv[2] );
+    const int nx = atoi( argv[1] );
+    const int ny = atoi( argv[2] );
     const double omega = atof( argv[3] );
     const double damping = atof( argv[4] );
-    const bool sequential = ( argc >= 6 ? atoi( argv[5] ) : true );
-    const int cutoff = ( argc >= 7 ? atoi( argv[6] ) : 128 );
-    const int numDistSeps = ( argc >= 8 ? atoi( argv[7] ) : 1 );
-    const int numSeqSeps = ( argc >= 9 ? atoi( argv[8] ) : 1 );
+    const bool analytic = ( argc >= 6 ? atoi( argv[5] ) : true );
+    const bool sequential = ( argc >= 7 ? atoi( argv[6] ) : true );
+    const int cutoff = ( argc >= 8 ? atoi( argv[7] ) : 128 );
+    const int numDistSeps = ( argc >= 9 ? atoi( argv[8] ) : 1 );
+    const int numSeqSeps = ( argc >= 10 ? atoi( argv[9] ) : 1 );
 
     try
     {
-        const int N = n1*n2;
+        const int N = nx*ny;
         DistSparseMatrix<C> A( N, comm );
         C dampedOmega( omega, damping );
-        const double h1Inv = n1;
-        const double h2Inv = n2;
+        const double h1Inv = nx;
+        const double h2Inv = ny;
         const double h1InvSquared = h1Inv*h1Inv;
         const double h2InvSquared = h2Inv*h2Inv;
 
         // Fill our portion of the 2D Helmholtz operator over the unit-square 
-        // using a n1 x n2 7-point stencil in natural ordering: 
-        // (x,y) at x + y*n1
+        // using a nx x ny 7-point stencil in natural ordering: 
+        // (x,y) at x + y*nx
         if( commRank == 0 )
         {
             std::cout << "Filling local portion of matrix...";
@@ -87,18 +90,18 @@ main( int argc, char* argv[] )
         for( int iLocal=0; iLocal<localHeight; ++iLocal )
         {
             const int i = firstLocalRow + iLocal;
-            const int x = i % n1;
-            const int y = i/n1;
+            const int x = i % nx;
+            const int y = i/nx;
 
             A.Update( i, i, 6.-dampedOmega*dampedOmega );
             if( x != 0 )
                 A.Update( i, i-1, -h1InvSquared );
-            if( x != n1-1 )
+            if( x != nx-1 )
                 A.Update( i, i+1, -h1InvSquared );
             if( y != 0 )
-                A.Update( i, i-n1, -h2InvSquared );
-            if( y != n2-1 )
-                A.Update( i, i+n1, -h2InvSquared );
+                A.Update( i, i-nx, -h2InvSquared );
+            if( y != ny-1 )
+                A.Update( i, i+nx, -h2InvSquared );
         } 
         A.StopAssembly();
         mpi::Barrier( comm );
@@ -134,9 +137,13 @@ main( int argc, char* argv[] )
         DistSymmInfo info;
         DistSeparatorTree sepTree;
         DistMap map, inverseMap;
-        NestedDissection
-        ( graph, map, sepTree, info, 
-          sequential, cutoff, numDistSeps, numSeqSeps );
+        if( analytic )
+            NaturalNestedDissection
+            ( nx, ny, 1, graph, map, sepTree, info, cutoff );
+        else
+            NestedDissection
+            ( graph, map, sepTree, info, 
+              sequential, cutoff, numDistSeps, numSeqSeps );
         map.FormInverse( inverseMap );
         mpi::Barrier( comm );
         const double nestedStop = mpi::Time();

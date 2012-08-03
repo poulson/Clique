@@ -57,7 +57,7 @@ int Bisect
 int DistributedDepth( mpi::Comm comm );
 void EnsurePermutation( const std::vector<int>& map );
 void EnsurePermutation( const DistMap& map );
-void ReverseOrder( DistSymmElimTree& eTree, DistSeparatorTree& sepTree );
+void ReverseOrder( DistSeparatorTree& sepTree, DistSymmElimTree& eTree );
 
 void BuildChildrenFromPerm
 ( const Graph& graph, const std::vector<int>& perm, 
@@ -527,7 +527,7 @@ NestedDissection
     ( graph, perm, sepTree, eTree, 0, 0, false, sequential, cutoff, 
       numDistSeps, numSeqSeps );
 
-    ReverseOrder( eTree, sepTree );
+    ReverseOrder( sepTree, eTree );
 
     // Construct the distributed reordering    
     BuildMap( graph, sepTree, map );
@@ -863,7 +863,7 @@ EnsurePermutation( const DistMap& map )
 }
 
 inline void
-ReverseOrder( DistSymmElimTree& eTree, DistSeparatorTree& sepTree )
+ReverseOrder( DistSeparatorTree& sepTree, DistSymmElimTree& eTree )
 {
     // Reverse the order of the pointers and indices in the elimination and 
     // separator trees (so that the leaves come first)

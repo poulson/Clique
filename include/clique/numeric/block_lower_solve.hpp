@@ -49,12 +49,16 @@ inline void BlockLowerSolve
 #endif
     if( orientation == NORMAL )
     {
+        std::cout << "Starting local lower forward..." << std::endl;
         LocalBlockLowerForwardSolve( info, L, localX );
+        std::cout << "Starting dist lower forward..." << std::endl;
         DistBlockLowerForwardSolve( info, L, localX );
     }
     else
     {
+        std::cout << "Starting dist lower backward..." << std::endl;
         DistBlockLowerBackwardSolve( orientation, info, L, localX );
+        std::cout << "Starting local lower backward..." << std::endl;
         LocalBlockLowerBackwardSolve( orientation, info, L, localX );
     }
 #ifndef RELEASE

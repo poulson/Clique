@@ -495,7 +495,7 @@ NaturalNestedDissection
     NaturalNestedDissectionRecursion
     ( nx, ny, nz, graph, perm, sepTree, eTree, 0, 0, false, cutoff );
 
-    ReverseOrder( eTree, sepTree );
+    ReverseOrder( sepTree, eTree );
 
     // Construct the distributed reordering    
     BuildMap( graph, sepTree, map );

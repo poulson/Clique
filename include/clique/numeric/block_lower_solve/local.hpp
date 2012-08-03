@@ -122,10 +122,6 @@ inline void LocalBlockLowerBackwardSolve
     const int numLocalNodes = info.localNodes.size();
     const int width = X.Width();
 
-    // Pull in the top local information from the bottom distributed information
-    L.localFronts.back().work.LockedView
-    ( L.distFronts[0].work1d.LocalMatrix() );
-
     for( int s=numLocalNodes-2; s>=0; --s )
     {
         const LocalSymmNodeInfo& node = info.localNodes[s];
