@@ -57,23 +57,11 @@
 <div class="section" id="ldl-factorization">
 <h2>LDL factorization<a class="headerlink" href="#ldl-factorization" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
-<dt id="LDL__Orientation.DistSymmInfoR.DistSymmFrontTree:F:R">
-void <tt class="descname">LDL</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="#DistSymmFrontTree:F:__struct" title="DistSymmFrontTree&lt;F&gt;">DistSymmFrontTree&lt;F&gt;&amp;</a> <em>L</em><big>)</big><a class="headerlink" href="#LDL__Orientation.DistSymmInfoR.DistSymmFrontTree:F:R" title="Permalink to this definition">¶</a></dt>
+<dt id="LDL__DistSymmInfoR.DistSymmFrontTree:F:R.FrontType">
+void <tt class="descname">LDL</tt><big>(</big><a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="#DistSymmFrontTree:F:__struct" title="DistSymmFrontTree&lt;F&gt;">DistSymmFrontTree&lt;F&gt;&amp;</a> <em>L</em>, <a class="reference internal" href="#FrontType__enum" title="FrontType">FrontType</a> <em>newFrontType</em><big>)</big><a class="headerlink" href="#LDL__DistSymmInfoR.DistSymmFrontTree:F:R.FrontType" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performs either an <span class="math">\(LDL^T\)</span> or <span class="math">\(LDL^H\)</span> factorization, depending
-on whether <cite>orientation</cite> is set to <tt class="docutils literal"><span class="pre">TRANSPOSE</span></tt> or <tt class="docutils literal"><span class="pre">ADJOINT</span></tt>. See
+on whether <cite>L</cite> is marked as Hermitian. See
 <a class="reference external" href="https://github.com/poulson/Clique/blob/master/tests/VectorSolve.cpp">tests/VectorSolve</a> for an example usage.</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">This routine does not pivot, so it should be used with caution on matrices
-which are not Hermitian positive-definite.</p>
-</div>
-</dd></dl>
-
-<dl class="function">
-<dt id="BlockLDL__Orientation.DistSymmInfoR.DistSymmFrontTree:F:R">
-void <tt class="descname">BlockLDL</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="#DistSymmFrontTree:F:__struct" title="DistSymmFrontTree&lt;F&gt;">DistSymmFrontTree&lt;F&gt;&amp;</a> <em>L</em><big>)</big><a class="headerlink" href="#BlockLDL__Orientation.DistSymmInfoR.DistSymmFrontTree:F:R" title="Permalink to this definition">¶</a></dt>
-<dd><p>Performs a block-diagonal <span class="math">\(LDL^T\)</span> or <span class="math">\(LDL^H\)</span> factorization,
-depending on whether <cite>orientation</cite> is set to <tt class="docutils literal"><span class="pre">TRANSPOSE</span></tt> or <tt class="docutils literal"><span class="pre">ADJOINT</span></tt>.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">This routine does not pivot, so it should be used with caution on matrices
@@ -151,16 +139,18 @@ and the lower structure is of size <span class="math">\(m-n\)</span>.</p>
 </dd></dl>
 
 <dl class="type">
-<dt id="SolveMode__enum">
-<em class="property">type </em>enum <tt class="descname">SolveMode</tt><a class="headerlink" href="#SolveMode__enum" title="Permalink to this definition">¶</a></dt>
+<dt id="FrontType__enum">
+<em class="property">type </em>enum <tt class="descname">FrontType</tt><a class="headerlink" href="#FrontType__enum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Can be set to either</p>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">NORMAL_1D</span></tt>: frontal matrices are distributed in a 1D manner</li>
-<li><tt class="docutils literal"><span class="pre">NORMAL_2D</span></tt>: frontal matrices are distributed in a 2D manner (default)</li>
-<li><tt class="docutils literal"><span class="pre">FAST_1D_LDL</span></tt>: frontal matrices are inverted and distributed in a 1D
-manner</li>
-<li><tt class="docutils literal"><span class="pre">FAST_2D_LDL</span></tt>: frontal matrices are inverted and distributed in a 2D
-manner</li>
+<li><tt class="docutils literal"><span class="pre">SYMM_1D</span></tt>: Symmetric/Hermitian fronts distributed in a 1D manner</li>
+<li><tt class="docutils literal"><span class="pre">SYMM_2D</span></tt>: Symmetric/Hermitian fronts distributed in a 2D manner</li>
+<li><tt class="docutils literal"><span class="pre">LDL_1D</span></tt>: LDL factorization distributed in a 1D manner</li>
+<li><tt class="docutils literal"><span class="pre">LDL_2D</span></tt>: LDL factorization distributed in a 2D manner</li>
+<li><tt class="docutils literal"><span class="pre">LDL_SELINV_1D</span></tt>: LDL factorization with inverted diagonal blocks
+distributed in a 1D manner</li>
+<li><tt class="docutils literal"><span class="pre">LDL_SELINV_2D</span></tt>: LDL factorization with inverted diagonal blocks
+distributed in a 2D manner</li>
 </ul>
 </dd></dl>
 
@@ -168,9 +158,16 @@ manner</li>
 <dt id="DistSymmFrontTree:T:__struct">
 <em class="property">type </em>struct <tt class="descname">DistSymmFrontTree&lt;T&gt;</tt><a class="headerlink" href="#DistSymmFrontTree:T:__struct" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="member">
-<dt id="DistSymmFrontTree:T:::mode__SolveMode">
-<a class="reference internal" href="#SolveMode__enum" title="SolveMode">SolveMode</a> <tt class="descname">mode</tt><a class="headerlink" href="#DistSymmFrontTree:T:::mode__SolveMode" title="Permalink to this definition">¶</a></dt>
-<dd><p>Determines which format the distributed frontal matrices are in.</p>
+<dt id="DistSymmFrontTree:T:::isHermitian__b">
+bool <tt class="descname">isHermitian</tt><a class="headerlink" href="#DistSymmFrontTree:T:::isHermitian__b" title="Permalink to this definition">¶</a></dt>
+<dd><p>If true, the matrix is assumed to be Hermitian; otherwise, it is
+treated as symmetric.</p>
+</dd></dl>
+
+<dl class="member">
+<dt id="DistSymmFrontTree:T:::frontType__FrontType">
+<a class="reference internal" href="#FrontType__enum" title="FrontType">FrontType</a> <tt class="descname">frontType</tt><a class="headerlink" href="#DistSymmFrontTree:T:::frontType__FrontType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specifies the form of the frontal matrices.</p>
 </dd></dl>
 
 <dl class="member">
@@ -190,7 +187,7 @@ std::vector&lt;DistSymmFront&lt;T&gt;&gt; <tt class="descname">distFronts</tt><a
  <tt class="descname">DistSymmFrontTree</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../core/dist_sparse_matrix.html#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;">const DistSparseMatrix&lt;T&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>map</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSeparatorTree__struct" title="DistSeparatorTree">const DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em><big>)</big><a class="headerlink" href="#DistSymmFrontTree:T:::DistSymmFrontTree__Orientation.DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR" title="Permalink to this definition">¶</a></dt>
 <dd><p>A constructor which converts a distributed sparse matrix into a symmetric
 frontal tree which is ready for factorization (e.g., with
-<a class="reference internal" href="#LDL__Orientation.DistSymmInfoR.DistSymmFrontTree:F:R" title="LDL"><tt class="xref cpp cpp-func docutils literal"><span class="pre">LDL()</span></tt></a> or <a class="reference internal" href="#BlockLDL__Orientation.DistSymmInfoR.DistSymmFrontTree:F:R" title="BlockLDL"><tt class="xref cpp cpp-func docutils literal"><span class="pre">BlockLDL()</span></tt></a>).</p>
+<a class="reference internal" href="#LDL__DistSymmInfoR.DistSymmFrontTree:F:R.FrontType" title="LDL"><tt class="xref cpp cpp-func docutils literal"><span class="pre">LDL()</span></tt></a> or <a class="reference external" href="http://poulson.github.com/Clique/numeric/factorization.html#BlockLDL" title="(in Clique v0.1)"><tt class="xref cpp cpp-func docutils literal"><span class="pre">BlockLDL()</span></tt></a>).</p>
 </dd></dl>
 
 </dd></dl>

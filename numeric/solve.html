@@ -54,13 +54,13 @@
         
   <div class="section" id="solves">
 <h1>Solves<a class="headerlink" href="#solves" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="solving-after-ldl-factorization">
-<h2>Solving after LDL factorization<a class="headerlink" href="#solving-after-ldl-factorization" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="solving-after-factorization">
+<h2>Solving after factorization<a class="headerlink" href="#solving-after-factorization" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
-<dt id="LDLSolve__Orientation.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R">
-void <tt class="descname">LDLSolve</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="factorization.html#DistSymmFrontTree:F:__struct" title="DistSymmFrontTree&lt;F&gt;">const DistSymmFrontTree&lt;F&gt;&amp;</a> <em>L</em>, <a class="reference internal" href="../core/environment.html#Matrix:F:__class" title="Matrix&lt;F&gt;">Matrix&lt;F&gt;&amp;</a> <em>localX</em><big>)</big><a class="headerlink" href="#LDLSolve__Orientation.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R" title="Permalink to this definition">¶</a></dt>
+<dt id="Solve__DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R">
+void <tt class="descname">Solve</tt><big>(</big><a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="factorization.html#DistSymmFrontTree:F:__struct" title="DistSymmFrontTree&lt;F&gt;">const DistSymmFrontTree&lt;F&gt;&amp;</a> <em>L</em>, <a class="reference internal" href="../core/environment.html#Matrix:F:__class" title="Matrix&lt;F&gt;">Matrix&lt;F&gt;&amp;</a> <em>localX</em><big>)</big><a class="headerlink" href="#Solve__DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R" title="Permalink to this definition">¶</a></dt>
 <dd><p>After having performed an <span class="math">\(LDL^T\)</span> or <span class="math">\(LDL^H\)</span> factorization
-(e.g., via <a class="reference internal" href="factorization.html#LDL__Orientation.DistSymmInfoR.DistSymmFrontTree:F:R" title="LDL"><tt class="xref cpp cpp-func docutils literal"><span class="pre">LDL()</span></tt></a>), this routine can be used to solve a set of
+(via <a class="reference internal" href="factorization.html#LDL__DistSymmInfoR.DistSymmFrontTree:F:R.FrontType" title="LDL"><tt class="xref cpp cpp-func docutils literal"><span class="pre">LDL()</span></tt></a>), this routine can be used to solve a set of
 right-hand sides. Note that <cite>localX</cite> can be easily generated using the
 <a class="reference internal" href="#DistNodalMultiVector:F:__struct" title="DistNodalMultiVector&lt;F&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistNodalMultiVector&lt;F&gt;</span></tt></a> class. See
 <a class="reference external" href="https://github.com/poulson/Clique/blob/master/tests/MultiVectorSolve.cpp">tests/MultiVectorSolve</a> for an example usage.</p>
@@ -85,19 +85,6 @@ void <tt class="descname">DiagonalSolve</tt><big>(</big><a class="reference inte
 </dd></dl>
 
 </div>
-</div>
-<div class="section" id="solving-after-block-ldl-factorization">
-<h2>Solving after block LDL factorization<a class="headerlink" href="#solving-after-block-ldl-factorization" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="BlockLDLSolve__Orientation.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R">
-void <tt class="descname">BlockLDLSolve</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="factorization.html#DistSymmFrontTree:F:__struct" title="DistSymmFrontTree&lt;F&gt;">const DistSymmFrontTree&lt;F&gt;&amp;</a> <em>L</em>, <a class="reference internal" href="../core/environment.html#Matrix:F:__class" title="Matrix&lt;F&gt;">Matrix&lt;F&gt;&amp;</a> <em>localX</em><big>)</big><a class="headerlink" href="#BlockLDLSolve__Orientation.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R" title="Permalink to this definition">¶</a></dt>
-<dd><p>After having performed a block <span class="math">\(LDL^T\)</span> or <span class="math">\(LDL^H\)</span> factorization
-(e.g., via <a class="reference internal" href="factorization.html#BlockLDL__Orientation.DistSymmInfoR.DistSymmFrontTree:F:R" title="BlockLDL"><tt class="xref cpp cpp-func docutils literal"><span class="pre">BlockLDL()</span></tt></a>), this routine can be used to solve a set of
-right-hand sides. Note that <cite>localX</cite> can be easily generated using the
-<a class="reference internal" href="#DistNodalMultiVector:F:__struct" title="DistNodalMultiVector&lt;F&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistNodalMultiVector&lt;F&gt;</span></tt></a> class. See
-<a class="reference external" href="https://github.com/poulson/Clique/blob/master/tests/MultiVectorSolve.cpp">tests/MultiVectorSolve</a> for an example usage with the <a class="reference internal" href="factorization.html#LDL__Orientation.DistSymmInfoR.DistSymmFrontTree:F:R" title="LDL"><tt class="xref cpp cpp-func docutils literal"><span class="pre">LDL()</span></tt></a> routine.</p>
-</dd></dl>
-
 <div class="section" id="id1">
 <h3>Finer-grain access<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <p>The following routine is an analogue to <a class="reference internal" href="#LowerSolve__Orientation.UnitOrNonUnit.DistSymmInfoCR.DistSymmFrontTree:F:CR.Matrix:F:R" title="LowerSolve"><tt class="xref cpp cpp-func docutils literal"><span class="pre">LowerSolve()</span></tt></a> for the case

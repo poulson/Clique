@@ -1,13 +1,13 @@
 Solves
 ======
 
-Solving after LDL factorization
--------------------------------
+Solving after factorization
+---------------------------
 
-.. cpp:function:: void LDLSolve( Orientation orientation, const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
+.. cpp:function:: void Solve( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
 
    After having performed an :math:`LDL^T` or :math:`LDL^H` factorization 
-   (e.g., via :cpp:func:`LDL`), this routine can be used to solve a set of 
+   (via :cpp:func:`LDL`), this routine can be used to solve a set of 
    right-hand sides. Note that `localX` can be easily generated using the 
    :cpp:type:`DistNodalMultiVector\<F>` class. See
    `tests/MultiVectorSolve <https://github.com/poulson/Clique/blob/master/tests/MultiVectorSolve.cpp>`__ for an example usage.
@@ -27,17 +27,6 @@ data of a frontal tree.
 .. cpp:function:: void DiagonalSolve( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
 
    **TODO: More detailed description.**
-
-Solving after block LDL factorization
--------------------------------------
-
-.. cpp:function:: void BlockLDLSolve( Orientation orientation, const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
-
-   After having performed a block :math:`LDL^T` or :math:`LDL^H` factorization 
-   (e.g., via :cpp:func:`BlockLDL`), this routine can be used to solve a set of 
-   right-hand sides. Note that `localX` can be easily generated using the 
-   :cpp:type:`DistNodalMultiVector\<F>` class. See
-   `tests/MultiVectorSolve <https://github.com/poulson/Clique/blob/master/tests/MultiVectorSolve.cpp>`__ for an example usage with the :cpp:func:`LDL` routine.
 
 Finer-grain access
 ^^^^^^^^^^^^^^^^^^

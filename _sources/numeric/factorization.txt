@@ -4,21 +4,11 @@ Factorization
 LDL factorization
 -----------------
 
-.. cpp:function:: void LDL( Orientation orientation, DistSymmInfo& info, DistSymmFrontTree<F>& L )
+.. cpp:function:: void LDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, FrontType newFrontType )
 
    Performs either an :math:`LDL^T` or :math:`LDL^H` factorization, depending 
-   on whether `orientation` is set to ``TRANSPOSE`` or ``ADJOINT``. See 
+   on whether `L` is marked as Hermitian. See 
    `tests/VectorSolve <https://github.com/poulson/Clique/blob/master/tests/VectorSolve.cpp>`__ for an example usage.
-
-   .. note::
-
-      This routine does not pivot, so it should be used with caution on matrices
-      which are not Hermitian positive-definite.
-
-.. cpp:function:: void BlockLDL( Orientation orientation, DistSymmInfo& info, DistSymmFrontTree<F>& L )
-
-   Performs a block-diagonal :math:`LDL^T` or :math:`LDL^H` factorization, 
-   depending on whether `orientation` is set to ``TRANSPOSE`` or ``ADJOINT``.
 
    .. note::
 
@@ -76,25 +66,34 @@ This data structure represents a distributed symmetric :math:`LDL^T` or
 
       Used for storing the diagonal of the frontal matrix.
 
-.. cpp:type:: enum SolveMode
+.. cpp:type:: enum FrontType
 
    Can be set to either
    
-   * ``NORMAL_1D``: frontal matrices are distributed in a 1D manner
+   * ``SYMM_1D``: Symmetric/Hermitian fronts distributed in a 1D manner
 
-   * ``NORMAL_2D``: frontal matrices are distributed in a 2D manner (default)
+   * ``SYMM_2D``: Symmetric/Hermitian fronts distributed in a 2D manner 
 
-   * ``FAST_1D_LDL``: frontal matrices are inverted and distributed in a 1D 
-     manner
+   * ``LDL_1D``: LDL factorization distributed in a 1D manner
 
-   * ``FAST_2D_LDL``: frontal matrices are inverted and distributed in a 2D 
-     manner
+   * ``LDL_2D``: LDL factorization distributed in a 2D manner 
+
+   * ``LDL_SELINV_1D``: LDL factorization with inverted diagonal blocks 
+     distributed in a 1D manner
+
+   * ``LDL_SELINV_2D``: LDL factorization with inverted diagonal blocks 
+     distributed in a 2D manner
 
 .. cpp:type:: struct DistSymmFrontTree<T>
 
-   .. cpp:member:: SolveMode mode
+   .. cpp:member:: bool isHermitian
 
-      Determines which format the distributed frontal matrices are in.
+      If true, the matrix is assumed to be Hermitian; otherwise, it is 
+      treated as symmetric.
+
+   .. cpp:member:: FrontType frontType
+
+      Specifies the form of the frontal matrices.
 
    .. cpp:member:: std::vector<LocalSymmFront<T> > localFronts
 
