@@ -151,6 +151,8 @@ and the lower structure is of size <span class="math">\(m-n\)</span>.</p>
 distributed in a 1D manner</li>
 <li><tt class="docutils literal"><span class="pre">LDL_SELINV_2D</span></tt>: LDL factorization with inverted diagonal blocks
 distributed in a 2D manner</li>
+<li><tt class="docutils literal"><span class="pre">BLOCK_LDL_2D</span></tt>: Block LDL factorization with fronts distributed in a
+2D manner</li>
 </ul>
 </dd></dl>
 
@@ -187,7 +189,7 @@ std::vector&lt;DistSymmFront&lt;T&gt;&gt; <tt class="descname">distFronts</tt><a
  <tt class="descname">DistSymmFrontTree</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../core/dist_sparse_matrix.html#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;">const DistSparseMatrix&lt;T&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>map</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSeparatorTree__struct" title="DistSeparatorTree">const DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em><big>)</big><a class="headerlink" href="#DistSymmFrontTree:T:::DistSymmFrontTree__Orientation.DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR" title="Permalink to this definition">¶</a></dt>
 <dd><p>A constructor which converts a distributed sparse matrix into a symmetric
 frontal tree which is ready for factorization (e.g., with
-<a class="reference internal" href="#LDL__DistSymmInfoR.DistSymmFrontTree:F:R.FrontType" title="LDL"><tt class="xref cpp cpp-func docutils literal"><span class="pre">LDL()</span></tt></a> or <a class="reference external" href="http://poulson.github.com/Clique/numeric/factorization.html#BlockLDL" title="(in Clique v0.1)"><tt class="xref cpp cpp-func docutils literal"><span class="pre">BlockLDL()</span></tt></a>).</p>
+<a class="reference internal" href="#LDL__DistSymmInfoR.DistSymmFrontTree:F:R.FrontType" title="LDL"><tt class="xref cpp cpp-func docutils literal"><span class="pre">LDL()</span></tt></a> or <tt class="xref cpp cpp-func docutils literal"><span class="pre">BlockLDL()</span></tt>).</p>
 </dd></dl>
 
 </dd></dl>

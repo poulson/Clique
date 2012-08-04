@@ -84,6 +84,9 @@ This data structure represents a distributed symmetric :math:`LDL^T` or
    * ``LDL_SELINV_2D``: LDL factorization with inverted diagonal blocks 
      distributed in a 2D manner
 
+   * ``BLOCK_LDL_2D``: Block LDL factorization with fronts distributed in a 
+     2D manner
+
 .. cpp:type:: struct DistSymmFrontTree<T>
 
    .. cpp:member:: bool isHermitian

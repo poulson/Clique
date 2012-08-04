@@ -88,6 +88,16 @@ distributed graph, and <a class="reference external" href="https://github.com/po
 underlying graph of a sparse matrix.</p>
 </dd></dl>
 
+<dl class="function">
+<dt id="NaturalNestedDissection__i.i.i.DistGraphCR.DistMapR.DistSeparatorTreeR.DistSymmInfoR.i.b">
+void <tt class="descname">NaturalNestedDissection</tt><big>(</big>int <em>nx</em>, int <em>ny</em>, int <em>nz</em>, <a class="reference internal" href="../core/dist_graph.html#DistGraph__class" title="DistGraph">const DistGraph&amp;</a> <em>graph</em>, <a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">DistMap&amp;</a> <em>map</em>, <a class="reference internal" href="#DistSeparatorTree__struct" title="DistSeparatorTree">DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="#DistSymmInfo__struct" title="DistSymmInfo">DistSymmInfo&amp;</a> <em>info</em>, int <em>cutoff</em><em>=128</em>, bool <em>storeFactRecvIndices</em><em>=true </em><big>)</big><a class="headerlink" href="#NaturalNestedDissection__i.i.i.DistGraphCR.DistMapR.DistSeparatorTreeR.DistSymmInfoR.i.b" title="Permalink to this definition">¶</a></dt>
+<dd><p>Similar to <a class="reference internal" href="#NestedDissection__DistGraphCR.DistMapR.DistSeparatorTreeR.DistSymmInfoR.b.i.i.i.b" title="NestedDissection"><tt class="xref cpp cpp-func docutils literal"><span class="pre">NestedDissection()</span></tt></a>, but this version is specialized for
+regular 3D grids where vertices are only connected to their nearest
+neighbors. In this case, the graph can analytically be recursively bisected,
+and so the difficulties in parallelizing the KL-FM refinement can be avoided.</p>
+<p>See <a class="reference external" href="https://github.com/poulson/Clique/blob/master/tests/NaturalVectorSolve.cpp">tests/NaturalVectorSolve</a> for an example.</p>
+</dd></dl>
+
 <div class="section" id="data-structures">
 <h2>Data structures<a class="headerlink" href="#data-structures" title="Permalink to this headline">¶</a></h2>
 <p><strong>The data structures used for nested dissection are meant to serve as
