@@ -34,6 +34,15 @@ as a means of producing such a separator tree from an arbitrary graph.
    distributed graph, and `tests/VectorSolve.cpp <https://github.com/poulson/Clique/blob/master/tests/VectorSolve.cpp>`__ for its application to the
    underlying graph of a sparse matrix.
 
+.. cpp:function:: void NaturalNestedDissection( int nx, int ny, int nz, const DistGraph& graph, DistMap& map, DistSeparatorTree& sepTree, DistSymmInfo& info, int cutoff=128, bool storeFactRecvIndices=true )
+
+   Similar to :cpp:func:`NestedDissection`, but this version is specialized for 
+   regular 3D grids where vertices are only connected to their nearest 
+   neighbors. In this case, the graph can analytically be recursively bisected,
+   and so the difficulties in parallelizing the KL-FM refinement can be avoided.
+
+   See `tests/NaturalVectorSolve <https://github.com/poulson/Clique/blob/master/tests/NaturalVectorSolve.cpp>`__ for an example.
+
 Data structures
 ---------------
 **The data structures used for nested dissection are meant to serve as 
