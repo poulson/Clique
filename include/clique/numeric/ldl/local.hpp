@@ -22,7 +22,7 @@ namespace cliq {
 
 template<typename F> 
 void LocalLDL
-( Orientation orientation, DistSymmInfo& info, DistSymmFrontTree<F>& L );
+( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL=false );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -30,12 +30,10 @@ void LocalLDL
 
 template<typename F> 
 inline void LocalLDL
-( Orientation orientation, DistSymmInfo& info, DistSymmFrontTree<F>& L )
+( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
 {
 #ifndef RELEASE
     PushCallStack("LocalLDL");
-    if( orientation == NORMAL )
-        throw std::logic_error("LDL must be (conjugate-)transposed");
 #endif
     const int numLocalNodes = info.localNodes.size();
     for( int s=0; s<numLocalNodes; ++s )
@@ -99,7 +97,20 @@ inline void LocalLDL
         }
 
         // Call the custom partial LDL
-        LocalFrontLDL( orientation, frontL, frontBR );
+        if( !blockLDL )
+        {
+            if( L.isHermitian )
+                LocalFrontLDL( ADJOINT, frontL, frontBR );
+            else
+                LocalFrontLDL( TRANSPOSE, frontL, frontBR );
+        }
+        else
+        {
+            if( L.isHermitian )
+                LocalFrontBlockLDL( ADJOINT, frontL, frontBR );
+            else
+                LocalFrontBlockLDL( TRANSPOSE, frontL, frontBR );
+        }
     }
 #ifndef RELEASE
     PopCallStack();

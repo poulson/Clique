@@ -21,41 +21,45 @@
 namespace cliq {
 
 template<typename F>
-void BlockLowerSolve
-( Orientation orientation, 
-  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX );
-
-} // namespace cliq
+void Solve
+( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
-#include "./block_lower_solve/local_front.hpp"
-#include "./block_lower_solve/dist_front.hpp"
-
-#include "./block_lower_solve/local.hpp"
-#include "./block_lower_solve/dist.hpp"
-
-namespace cliq {
-
 template<typename F>
-inline void BlockLowerSolve
-( Orientation orientation,
-  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
+inline void Solve
+( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
 {
 #ifndef RELEASE
-    PushCallStack("BlockLowerSolve");
+    PushCallStack("Solve");
 #endif
-    if( orientation == NORMAL )
+    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
+    if( !blockLDL )
     {
-        LocalBlockLowerForwardSolve( info, L, localX );
-        DistBlockLowerForwardSolve( info, L, localX );
+        // Solve against unit diagonal L
+        LowerSolve( NORMAL, UNIT, info, L, localX );
+
+        // Solve against diagonal
+        DiagonalSolve( info, L, localX );
+
+        // Solve against the (conjugate-)transpose of the unit diagonal L
+        if( L.isHermitian )
+            LowerSolve( ADJOINT, UNIT, info, L, localX );
+        else
+            LowerSolve( TRANSPOSE, UNIT, info, L, localX );
     }
     else
     {
-        DistBlockLowerBackwardSolve( orientation, info, L, localX );
-        LocalBlockLowerBackwardSolve( orientation, info, L, localX );
+        // Solve against block diagonal factor, L D
+        LowerSolve( NORMAL, NON_UNIT, info, L, localX );
+
+        // Solve against the (conjugate-)transpose of the block unit diagonal L
+        if( L.isHermitian )
+            LowerSolve( ADJOINT, NON_UNIT, info, L, localX );
+        else
+            LowerSolve( TRANSPOSE, NON_UNIT, info, L, localX );
     }
 #ifndef RELEASE
     PopCallStack();

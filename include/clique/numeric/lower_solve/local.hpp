@@ -42,6 +42,11 @@ inline void LocalLowerForwardSolve
 #ifndef RELEASE
     PushCallStack("LocalLowerForwardSolve");
 #endif
+    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
+#ifndef RELEASE
+    if( blockLDL && diag == UNIT )
+        throw std::logic_error("Unit diagonal is nonsensical for block LDL");
+#endif
     const int numLocalNodes = info.localNodes.size();
     const int width = X.Width();
     for( int s=0; s<numLocalNodes; ++s )
@@ -103,7 +108,10 @@ inline void LocalLowerForwardSolve
         // else numChildren == 0
 
         // Solve against this front
-        LocalFrontLowerForwardSolve( diag, frontL, W );
+        if( !blockLDL )
+            LocalFrontLowerForwardSolve( diag, frontL, W );
+        else
+            LocalFrontBlockLowerForwardSolve( frontL, W );
 
         // Store this node's portion of the result
         XT = WT;
@@ -121,9 +129,13 @@ inline void LocalLowerBackwardSolve
 #ifndef RELEASE
     PushCallStack("LocalLowerBackwardSolve");
 #endif
+    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
+#ifndef RELEASE
+    if( blockLDL && diag == UNIT )
+        throw std::logic_error("Unit diagonal is nonsensical for block LDL");
+#endif
     const int numLocalNodes = info.localNodes.size();
     const int width = X.Width();
-
     for( int s=numLocalNodes-2; s>=0; --s )
     {
         const LocalSymmNodeInfo& node = info.localNodes[s];
@@ -183,7 +195,10 @@ inline void LocalLowerBackwardSolve
         }
 
         // Solve against this front
-        LocalFrontLowerBackwardSolve( orientation, diag, frontL, W );
+        if( !blockLDL )
+            LocalFrontLowerBackwardSolve( orientation, diag, frontL, W );
+        else
+            LocalFrontBlockLowerBackwardSolve( orientation, frontL, W );
 
         // Store this node's portion of the result
         XT = WT;

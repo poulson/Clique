@@ -178,8 +178,7 @@ main( int argc, char* argv[] )
         }
         mpi::Barrier( comm );
         const double ldlStart = mpi::Time();
-        LDL( TRANSPOSE, info, frontTree );
-        SetSolveMode( frontTree, NORMAL_1D );
+        LDL( info, frontTree, LDL_1D );
         mpi::Barrier( comm );
         const double ldlStop = mpi::Time();
         if( commRank == 0 )
@@ -194,7 +193,7 @@ main( int argc, char* argv[] )
         const double solveStart = mpi::Time();
         DistNodalMultiVector<double> YNodal;
         YNodal.Pull( inverseMap, info, Y );
-        LDLSolve( TRANSPOSE, info, frontTree, YNodal.localMultiVec );
+        Solve( info, frontTree, YNodal.localMultiVec );
         YNodal.Push( inverseMap, info, Y );
         mpi::Barrier( comm );
         const double solveStop = mpi::Time();

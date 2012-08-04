@@ -31,10 +31,13 @@ DistSymmFrontTree<F>::DistSymmFrontTree
   const DistMap& map,
   const DistSeparatorTree& sepTree, 
   const DistSymmInfo& info )
-: mode(NORMAL_2D)
+: isHermitian(orientation!=TRANSPOSE),
+  frontType(SYMM_2D)
 {
 #ifndef RELEASE
     PushCallStack("DistSymmFrontTree::DistSymmFrontTree");
+    if( orientation == NORMAL )
+        throw std::logic_error("Matrix must be symmetric or Hermitian");
     if( A.LocalHeight() != map.NumLocalSources() )
         throw std::logic_error("Local mapping was not the right size");
 #endif
@@ -178,7 +181,6 @@ DistSymmFrontTree<F>::DistSymmFrontTree
             sendRowLengths[s+offset] = numConnections;
         }
     }
-    const bool conjugate = ( orientation == ADJOINT ? true : false );
     std::vector<F> sendEntries( numSendEntries );
     std::vector<int> sendTargets( numSendEntries );
     std::vector<int>::const_iterator vecIt;
@@ -209,7 +211,7 @@ DistSymmFrontTree<F>::DistSymmFrontTree
                 if( index >= numSendEntries )
                     throw std::logic_error("send entry index got too big");
 #endif
-                sendEntries[index] = ( conjugate ? elem::Conj(value) : value );
+                sendEntries[index] = (isHermitian ? elem::Conj(value) : value);
                 sendTargets[index] = mappedTarget;
                 ++index;
             }

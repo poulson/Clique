@@ -21,7 +21,7 @@
 namespace cliq {
 
 template<typename F>
-void SetSolveMode( DistSymmFrontTree<F>& L, SolveMode mode );
+void ChangeFrontType( DistSymmFrontTree<F>& L, FrontType frontType );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -30,13 +30,13 @@ void SetSolveMode( DistSymmFrontTree<F>& L, SolveMode mode );
 // This routine could be modified later so that it uses much less memory
 // by replacing the '=' redistributions with piece-by-piece redistributions.
 template<typename F>
-inline void SetSolveMode( DistSymmFrontTree<F>& L, SolveMode mode )
+inline void ChangeFrontType( DistSymmFrontTree<F>& L, FrontType frontType )
 {
 #ifndef RELEASE
-    PushCallStack("SetSolveMode");
+    PushCallStack("ChangeFrontType");
 #endif
     // Check if this call can be a no-op
-    if( mode == L.mode ) 
+    if( frontType == L.frontType ) 
     {
 #ifndef RELEASE
         PopCallStack();
@@ -45,10 +45,14 @@ inline void SetSolveMode( DistSymmFrontTree<F>& L, SolveMode mode )
     }
     const int numDistNodes = L.distFronts.size();    
     DistSymmFront<F>& leafFront = L.distFronts[0];
-    const SolveMode oldMode = L.mode;
+    const FrontType oldFrontType = L.frontType;
 
-    if( mode == NORMAL_1D && oldMode == NORMAL_2D )
+    if( (frontType == LDL_1D && oldFrontType == LDL_2D) ||
+        (frontType == LDL_SELINV_1D && oldFrontType == LDL_SELINV_2D) ||
+        (frontType == SYMM_1D && oldFrontType == SYMM_2D) )
+
     {
+        // 2d -> 1d
         leafFront.front1dL.LockedView
         ( leafFront.front2dL.Height(), 
           leafFront.front2dL.Width(), 0,
@@ -64,8 +68,29 @@ inline void SetSolveMode( DistSymmFrontTree<F>& L, SolveMode mode )
             front.front2dL.Empty();
         }
     }
-    else if( mode == FAST_2D_LDL && oldMode == NORMAL_2D )
+    else if( (frontType == LDL_2D && oldFrontType == LDL_1D) || 
+             (frontType == LDL_SELINV_2D && oldFrontType == LDL_SELINV_1D) ||
+             (frontType == SYMM_2D && oldFrontType == SYMM_1D) )
     {
+        // 1d -> 2d
+        leafFront.front2dL.LockedView
+        ( leafFront.front1dL.Height(), 
+          leafFront.front1dL.Width(), 0, 0,
+          leafFront.front1dL.LockedLocalBuffer(), 
+          leafFront.front1dL.LocalLDim(),
+          leafFront.front1dL.Grid() );
+        for( int s=1; s<numDistNodes; ++s )
+        {
+            DistSymmFront<F>& front = L.distFronts[s];
+            front.front2dL.Empty();
+            front.front2dL.SetGrid( front.front1dL.Grid() );
+            front.front2dL = front.front1dL;
+            front.front1dL.Empty();
+        }
+    }
+    else if( frontType == LDL_SELINV_2D && oldFrontType == LDL_2D )
+    {
+        // Perform selective inversion
         for( int s=1; s<numDistNodes; ++s )
         {
             DistSymmFront<F>& front = L.distFronts[s];
@@ -80,8 +105,9 @@ inline void SetSolveMode( DistSymmFrontTree<F>& L, SolveMode mode )
             elem::MakeTrapezoidal( LEFT, LOWER, 0, LT );
         }
     }
-    else if( mode == FAST_1D_LDL && oldMode == NORMAL_2D )
+    else if( frontType == LDL_SELINV_1D && oldFrontType == LDL_2D )
     {
+        // Perform selective inversion and then redistribute to 1d
         leafFront.front1dL.LockedView
         ( leafFront.front2dL.Height(), 
           leafFront.front2dL.Width(), 0,
@@ -107,26 +133,9 @@ inline void SetSolveMode( DistSymmFrontTree<F>& L, SolveMode mode )
             elem::MakeTrapezoidal( LEFT, LOWER, 0, front.front1dL );
         }
     }
-    else if( mode == NORMAL_2D && oldMode == NORMAL_1D )
-    {
-        leafFront.front2dL.LockedView
-        ( leafFront.front1dL.Height(), 
-          leafFront.front1dL.Width(), 0, 0,
-          leafFront.front1dL.LockedLocalBuffer(), 
-          leafFront.front1dL.LocalLDim(),
-          leafFront.front1dL.Grid() );
-        for( int s=1; s<numDistNodes; ++s )
-        {
-            DistSymmFront<F>& front = L.distFronts[s];
-            front.front2dL.Empty();
-            front.front2dL.SetGrid( front.front1dL.Grid() );
-            front.front2dL = front.front1dL;
-            front.front1dL.Empty();
-        }
-    }
     else
-        throw std::logic_error("Unavailable solve mode change");
-    L.mode = mode;
+        throw std::logic_error("Unavailable front type change");
+    L.frontType = frontType;
 #ifndef RELEASE
     PopCallStack();
 #endif

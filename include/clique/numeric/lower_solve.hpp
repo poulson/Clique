@@ -32,8 +32,10 @@ void LowerSolve
 //----------------------------------------------------------------------------//
 
 #include "./lower_solve/local_front.hpp"
+#include "./lower_solve/local_front_block.hpp"
 #include "./lower_solve/dist_front.hpp"
 #include "./lower_solve/dist_front_fast.hpp"
+#include "./lower_solve/dist_front_block.hpp"
 
 #include "./lower_solve/local.hpp"
 #include "./lower_solve/dist.hpp"

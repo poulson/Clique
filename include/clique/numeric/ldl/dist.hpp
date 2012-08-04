@@ -22,7 +22,7 @@ namespace cliq {
 
 template<typename F> 
 void DistLDL
-( Orientation orientation, DistSymmInfo& info, DistSymmFrontTree<F>& L );
+( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL=false );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -30,15 +30,11 @@ void DistLDL
 
 template<typename F> 
 inline void DistLDL
-( Orientation orientation, DistSymmInfo& info, DistSymmFrontTree<F>& L )
+( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
 {
 #ifndef RELEASE
     PushCallStack("DistLDL");
-    if( orientation == NORMAL )
-        throw std::logic_error("LDL must be (conjugate-)transposed");
 #endif
-    L.mode = NORMAL_2D;
-
     // The bottom front is already computed, so just view it
     LocalSymmFront<F>& topLocalFront = L.localFronts.back();
     DistSymmFront<F>& bottomDistFront = L.distFronts[0];
@@ -202,13 +198,26 @@ inline void DistLDL
             node.childFactRecvIndices.clear();
 
         // Now that the frontal matrix is set up, perform the factorization
-        DistFrontLDL( orientation, front.front2dL, front.work2d );
+        if( !blockLDL )
+        {
+            if( L.isHermitian )
+                DistFrontLDL( ADJOINT, front.front2dL, front.work2d );
+            else
+                DistFrontLDL( TRANSPOSE, front.front2dL, front.work2d );
 
-        // Store the diagonal in a [VC,* ] distribution
-        DistMatrix<F,MD,STAR> diag( grid );
-        front.front2dL.GetDiagonal( diag );
-        front.diag.SetGrid( grid );
-        front.diag = diag;
+            // Store the diagonal in a [VC,* ] distribution
+            DistMatrix<F,MD,STAR> diag( grid );
+            front.front2dL.GetDiagonal( diag );
+            front.diag.SetGrid( grid );
+            front.diag = diag;
+        }
+        else
+        {
+            if( L.isHermitian )
+                DistFrontBlockLDL( ADJOINT, front.front2dL, front.work2d );
+            else
+                DistFrontBlockLDL( TRANSPOSE, front.front2dL, front.work2d );
+        }
     }
     L.localFronts.back().work.Empty();
     L.distFronts.back().work2d.Empty();

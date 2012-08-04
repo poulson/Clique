@@ -28,7 +28,7 @@ void InitializeDistLeaf( const DistSymmInfo& info, DistSymmFrontTree<F>& L );
 
 template<typename F>
 void LDL
-( Orientation orientation, DistSymmInfo& info, DistSymmFrontTree<F>& L );
+( DistSymmInfo& info, DistSymmFrontTree<F>& L, FrontType newFrontType=LDL_2D );
 
 } // namespace cliq
 
@@ -37,7 +37,9 @@ void LDL
 //----------------------------------------------------------------------------//
 
 #include "./ldl/local_front.hpp"
+#include "./ldl/local_front_block.hpp"
 #include "./ldl/dist_front.hpp"
+#include "./ldl/dist_front_block.hpp"
 
 #include "./ldl/local.hpp"
 #include "./ldl/dist.hpp"
@@ -65,14 +67,36 @@ inline void InitializeDistLeaf
 }
 
 template<typename F>
-inline void LDL
-( Orientation orientation, DistSymmInfo& info, DistSymmFrontTree<F>& L )
+inline void 
+LDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, FrontType newFrontType )
 {
 #ifndef RELEASE
     PushCallStack("LDL");
 #endif
-    LocalLDL( orientation, info, L );
-    DistLDL( orientation, info, L );
+    if( L.frontType != SYMM_2D )
+        throw std::logic_error
+        ("Should only perform LDL factorization of 2D "
+         "symmetric/Hermitian matrices");
+
+    bool blockLDL;
+    if( newFrontType == LDL_2D || newFrontType == LDL_1D || 
+        newFrontType == LDL_SELINV_2D || newFrontType == LDL_SELINV_1D )
+    {
+        blockLDL = false;
+        L.frontType = LDL_2D;
+    }
+    else if( newFrontType == BLOCK_LDL_2D )
+    {
+        blockLDL = true;
+        L.frontType = BLOCK_LDL_2D;
+    }
+    else
+        throw std::logic_error("Invalid new front type");
+
+    LocalLDL( info, L, blockLDL );
+    DistLDL( info, L, blockLDL );
+
+    ChangeFrontType( L, newFrontType );
 #ifndef RELEASE
     PopCallStack();
 #endif

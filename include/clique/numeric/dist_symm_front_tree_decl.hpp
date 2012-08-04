@@ -20,12 +20,21 @@
 
 namespace cliq {
 
-enum SolveMode { NORMAL_1D, NORMAL_2D, FAST_1D_LDL, FAST_2D_LDL };
+enum FrontType
+{ 
+  SYMM_1D,
+  SYMM_2D, 
+  LDL_1D, 
+  LDL_2D, 
+  LDL_SELINV_1D, 
+  LDL_SELINV_2D, 
+  BLOCK_LDL_2D 
+};
 
 inline bool 
-ModeIs1d( SolveMode mode )
+FrontsAre1d( FrontType frontType )
 {
-    if( mode == NORMAL_1D || mode == FAST_1D_LDL )
+    if( frontType == LDL_1D || frontType == LDL_SELINV_1D )
         return true;
     else
         return false;
@@ -45,10 +54,10 @@ struct LocalSymmFront
 template<typename F>
 struct DistSymmFront
 {
-    // The 'SolveMode' member variable of the parent 'DistSymmFrontTree' 
+    // The 'frontType' member variable of the parent 'DistSymmFrontTree' 
     // determines which of the following fronts is active.
-    //   {NORMAL_1D,FAST_1D_LDL} -> front1d
-    //   {NORMAL_2D,FAST_2D_LDL} -> front2d
+    //   {LDL_1D,LDL_SELINV_1D} -> front1d
+    //   {LDL_2D,LDL_SELINV_2D} -> front2d
     //
     // Split each front into a left and right piece such that the right piece
     // is not needed after the factorization (and can be freed).
@@ -67,7 +76,8 @@ struct DistSymmFront
 template<typename F>
 struct DistSymmFrontTree
 {
-    SolveMode mode;
+    bool isHermitian;
+    FrontType frontType;
     std::vector<LocalSymmFront<F> > localFronts;
     std::vector<DistSymmFront<F> > distFronts;
 

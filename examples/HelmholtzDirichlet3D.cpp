@@ -198,7 +198,7 @@ main( int argc, char* argv[] )
         }
         mpi::Barrier( comm );
         const double ldlStart = mpi::Time();
-        BlockLDL( TRANSPOSE, info, frontTree );
+        LDL( info, frontTree, BLOCK_LDL_2D );
         mpi::Barrier( comm );
         const double ldlStop = mpi::Time();
         if( commRank == 0 )
@@ -255,7 +255,7 @@ main( int argc, char* argv[] )
         const double solveStart = mpi::Time();
         DistNodalVector<C> yNodal;
         yNodal.Pull( inverseMap, info, y );
-        BlockLDLSolve( TRANSPOSE, info, frontTree, yNodal.localVec );
+        Solve( info, frontTree, yNodal.localVec );
         yNodal.Push( inverseMap, info, y );
         mpi::Barrier( comm );
         const double solveStop = mpi::Time();

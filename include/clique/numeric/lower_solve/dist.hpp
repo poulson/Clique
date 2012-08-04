@@ -44,16 +44,24 @@ inline void DistLowerForwardSolve
 #endif
     const int numDistNodes = info.distNodes.size();
     const int width = localX.Width();
-    const SolveMode mode = L.mode;
-    const bool modeIs1d = ModeIs1d( mode );
-    if( mode != NORMAL_1D && mode != FAST_1D_LDL && mode != FAST_2D_LDL )
+    const FrontType frontType = L.frontType;
+    const bool frontsAre1d = FrontsAre1d( frontType );
+    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
+    if( frontType != LDL_1D && 
+        frontType != LDL_SELINV_1D && 
+        frontType != LDL_SELINV_2D && 
+        frontType != BLOCK_LDL_2D )
         throw std::logic_error("This solve mode is not yet implemented");
+#ifndef RELEASE
+    if( blockLDL && diag == UNIT )
+        throw std::logic_error("Unit diagonal is nonsensical for block LDL");
+#endif
 
     // Copy the information from the local portion into the distributed leaf
     const LocalSymmFront<F>& localRootFront = L.localFronts.back();
     const DistSymmFront<F>& distLeafFront = L.distFronts[0];
-    const Grid& leafGrid = ( modeIs1d ? distLeafFront.front1dL.Grid() 
-                                      : distLeafFront.front2dL.Grid() );
+    const Grid& leafGrid = ( frontsAre1d ? distLeafFront.front1dL.Grid() 
+                                         : distLeafFront.front2dL.Grid() );
     distLeafFront.work1d.LockedView
     ( localRootFront.work.Height(), localRootFront.work.Width(), 0,
       localRootFront.work.LockedBuffer(), localRootFront.work.LDim(), 
@@ -66,16 +74,16 @@ inline void DistLowerForwardSolve
         const DistSymmNodeInfo& node = info.distNodes[s];
         const DistSymmFront<F>& childFront = L.distFronts[s-1];
         const DistSymmFront<F>& front = L.distFronts[s];
-        const Grid& childGrid = ( modeIs1d ? childFront.front1dL.Grid()
-                                           : childFront.front2dL.Grid() );
-        const Grid& grid = ( modeIs1d ? front.front1dL.Grid()
-                                      : front.front2dL.Grid() );
+        const Grid& childGrid = ( frontsAre1d ? childFront.front1dL.Grid()
+                                              : childFront.front2dL.Grid() );
+        const Grid& grid = ( frontsAre1d ? front.front1dL.Grid()
+                                         : front.front2dL.Grid() );
         mpi::Comm comm = grid.VCComm();
         mpi::Comm childComm = childGrid.VCComm();
         const int commSize = mpi::CommSize( comm );
         const int childCommSize = mpi::CommSize( childComm );
-        const int frontHeight = ( modeIs1d ? front.front1dL.Height()
-                                           : front.front2dL.Height() );
+        const int frontHeight = ( frontsAre1d ? front.front1dL.Height()
+                                              : front.front2dL.Height() );
 
         // Set up a workspace
         DistMatrix<F,VC,STAR>& W = front.work1d;
@@ -173,12 +181,14 @@ inline void DistLowerForwardSolve
         recvDispls.clear();
 
         // Now that the RHS is set up, perform this node's solve
-        if( mode == NORMAL_1D )
+        if( frontType == LDL_1D )
             DistFrontLowerForwardSolve( diag, front.front1dL, W );
-        else if( mode == FAST_1D_LDL )
+        else if( frontType == LDL_SELINV_1D )
             DistFrontFastLowerForwardSolve( diag, front.front1dL, W );
-        else // mode == FAST_2D_LDL
+        else if( frontType == LDL_SELINV_2D )
             DistFrontFastLowerForwardSolve( diag, front.front2dL, W );
+        else // frontType == BLOCK_LDL_2D
+            DistFrontBlockLowerForwardSolve( front.front2dL, W );
 
         // Store this node's portion of the result
         localXT = WT.LocalMatrix();
@@ -200,10 +210,18 @@ inline void DistLowerBackwardSolve
 #endif
     const int numDistNodes = info.distNodes.size();
     const int width = localX.Width();
-    const SolveMode mode = L.mode;
-    const bool modeIs1d = ModeIs1d( mode );
-    if( mode != NORMAL_1D && mode != FAST_1D_LDL && mode != FAST_2D_LDL )
+    const FrontType frontType = L.frontType;
+    const bool frontsAre1d = FrontsAre1d( frontType );
+    const bool blockLDL = ( frontType == BLOCK_LDL_2D );
+    if( frontType != LDL_1D && 
+        frontType != LDL_SELINV_1D && 
+        frontType != LDL_SELINV_2D && 
+        frontType != BLOCK_LDL_2D )
         throw std::logic_error("This solve mode is not yet implemented");
+#ifndef RELEASE
+    if( blockLDL && diag == UNIT )
+        throw std::logic_error("Unit diagonal is nonsensical for block LDL");
+#endif
 
     // Directly operate on the root separator's portion of the right-hand sides
     const DistSymmNodeInfo& rootNode = info.distNodes.back();
@@ -213,26 +231,33 @@ inline void DistLowerBackwardSolve
         localRootFront.work.View
         ( rootNode.size, width, 
           localX.Buffer(rootNode.localOffset1d,0), localX.LDim() );
-        LocalFrontLowerBackwardSolve
-        ( orientation, diag, localRootFront.frontL, localRootFront.work );
+        if( !blockLDL )
+            LocalFrontLowerBackwardSolve
+            ( orientation, diag, localRootFront.frontL, localRootFront.work );
+        else
+            LocalFrontBlockLowerBackwardSolve
+            ( orientation, localRootFront.frontL, localRootFront.work );
     }
     else
     {
         const DistSymmFront<F>& rootFront = L.distFronts.back();
-        const Grid& rootGrid = ( modeIs1d ? rootFront.front1dL.Grid() 
-                                          : rootFront.front2dL.Grid() );
+        const Grid& rootGrid = ( frontsAre1d ? rootFront.front1dL.Grid() 
+                                             : rootFront.front2dL.Grid() );
         rootFront.work1d.View
         ( rootNode.size, width, 0,
           localX.Buffer(rootNode.localOffset1d,0), localX.LDim(), rootGrid );
-        if( mode == NORMAL_1D )
+        if( frontType == LDL_1D )
             DistFrontLowerBackwardSolve
             ( orientation, diag, rootFront.front1dL, rootFront.work1d );
-        else if( mode == FAST_1D_LDL )
+        else if( frontType == LDL_SELINV_1D )
             DistFrontFastLowerBackwardSolve
             ( orientation, diag, rootFront.front1dL, rootFront.work1d );
-        else // mode == FAST_2D_LDL
+        else if( frontType == LDL_SELINV_2D )
             DistFrontFastLowerBackwardSolve
             ( orientation, diag, rootFront.front2dL, rootFront.work1d );
+        else
+            DistFrontBlockLowerBackwardSolve
+            ( orientation, rootFront.front2dL, rootFront.work1d );
     }
 
     for( int s=numDistNodes-2; s>=0; --s )
@@ -241,16 +266,16 @@ inline void DistLowerBackwardSolve
         const DistSymmNodeInfo& node = info.distNodes[s];
         const DistSymmFront<F>& parentFront = L.distFronts[s+1];
         const DistSymmFront<F>& front = L.distFronts[s];
-        const Grid& grid = ( modeIs1d ? front.front1dL.Grid() 
-                                      : front.front2dL.Grid() );
-        const Grid& parentGrid = ( modeIs1d ? parentFront.front1dL.Grid()
-                                            : parentFront.front2dL.Grid() );
+        const Grid& grid = ( frontsAre1d ? front.front1dL.Grid() 
+                                         : front.front2dL.Grid() );
+        const Grid& parentGrid = ( frontsAre1d ? parentFront.front1dL.Grid()
+                                               : parentFront.front2dL.Grid() );
         mpi::Comm comm = grid.VCComm(); 
         mpi::Comm parentComm = parentGrid.VCComm();
         const int commSize = mpi::CommSize( comm );
         const int parentCommSize = mpi::CommSize( parentComm );
-        const int frontHeight = ( modeIs1d ? front.front1dL.Height()
-                                           : front.front2dL.Height() );
+        const int frontHeight = ( frontsAre1d ? front.front1dL.Height()
+                                              : front.front2dL.Height() );
 
         // Set up a workspace
         DistMatrix<F,VC,STAR>& W = front.work1d;
@@ -350,21 +375,29 @@ inline void DistLowerBackwardSolve
         // Call the custom node backward solve
         if( s > 0 )
         {
-            if( mode == NORMAL_1D )
+            if( frontType == LDL_1D )
                 DistFrontLowerBackwardSolve
                 ( orientation, diag, front.front1dL, W );
-            else if( mode == FAST_1D_LDL )
+            else if( frontType == LDL_SELINV_1D )
                 DistFrontFastLowerBackwardSolve
                 ( orientation, diag, front.front1dL, W );
-            else // mode == FAST_2D_LDL
+            else if( frontType == LDL_SELINV_2D )
                 DistFrontFastLowerBackwardSolve
                 ( orientation, diag, front.front2dL, W );
+            else // frontType == BLOCK_LDL_2D
+                DistFrontBlockLowerBackwardSolve
+                ( orientation, front.front2dL, front.work1d );
         }
         else
         {
             localRootFront.work.View( W.LocalMatrix() );
-            LocalFrontLowerBackwardSolve
-            ( orientation, diag, localRootFront.frontL, localRootFront.work );
+            if( !blockLDL )
+                LocalFrontLowerBackwardSolve
+                ( orientation, diag, localRootFront.frontL, 
+                  localRootFront.work );
+            else
+                LocalFrontBlockLowerBackwardSolve
+                ( orientation, localRootFront.frontL, localRootFront.work );
         }
 
         // Store this node's portion of the result
