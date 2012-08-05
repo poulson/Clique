@@ -24,13 +24,21 @@ int CliqBisect
   graph_t *graph=NULL;
   ctrl_t *ctrl;
 
+  if( *nvtxs == 0 )
+  {
+    sizes[0] = 0;
+    sizes[1] = 0;
+    sizes[2] = 0;
+    return;
+  }
+
   /* set up malloc cleaning code and signal catchers */
-  if (!gk_malloc_init()) 
+  if( !gk_malloc_init() )
     return METIS_ERROR_MEMORY;
 
   gk_sigtrap();
 
-  if ((sigrval = gk_sigcatch()) != 0) 
+  if( (sigrval = gk_sigcatch()) != 0 ) 
     goto SIGTHROW;
 
   /* set up the run time parameters */

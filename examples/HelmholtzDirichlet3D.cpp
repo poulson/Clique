@@ -226,14 +226,29 @@ main( int argc, char* argv[] )
         DistMatrix<R,VR,STAR> singVals_VR_STAR( rootGrid );
         elem::SingularValues( offDiagBlockCopy, singVals_VR_STAR );
         const R twoNorm = elem::Norm( singVals_VR_STAR, elem::INFINITY_NORM );
-        const R tolerance = 1e-4;
         DistMatrix<R,STAR,STAR> singVals( singVals_VR_STAR );
-        int numRank = lowerHalf;
+        int numRankE4=lowerHalf, numRankE6=lowerHalf, numRankE8=lowerHalf;
         for( int j=0; j<lowerHalf; ++j )
         {
-            if( singVals.GetLocal(j,0) <= twoNorm*tolerance )
+            if( singVals.GetLocal(j,0) <= twoNorm*1e-4 )
             {
-                numRank = j;
+                numRankE4 = j;
+                break;
+            }
+        }
+        for( int j=0; j<lowerHalf; ++j )
+        {
+            if( singVals.GetLocal(j,0) <= twoNorm*1e-6 )
+            {
+                numRankE6 = j;
+                break;
+            }
+        }
+        for( int j=0; j<lowerHalf; ++j )
+        {
+            if( singVals.GetLocal(j,0) <= twoNorm*1e-8 )
+            {
+                numRankE8 = j;
                 break;
             }
         }
@@ -243,7 +258,9 @@ main( int argc, char* argv[] )
         {
             std::cout << "done, " << svdStop-svdStart << " seconds\n"
                       << "  two norm=" << twoNorm << "\n"
-                      << "  numerical rank=" << numRank << "/" << lowerHalf
+                      << "      rank (1e-4)=" << numRankE4 << "/" << lowerHalf
+                      << "      rank (1e-6)=" << numRankE6 << "/" << lowerHalf
+                      << "      rank (1e-8)=" << numRankE8 << "/" << lowerHalf
                       << std::endl;
         }
 

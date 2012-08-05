@@ -23,11 +23,13 @@ using namespace cliq;
 void Usage()
 {
     std::cout 
-      << "NestedDissection <n> [cutoff=128] [numDistSeps=10] [numSeqSeps=5]\n" 
+      << "NestedDissection <n> "
+         "[sequential=true] [numDistSeps=10] [numSeqSeps=5] [cutoff=128]\n" 
       << "  n: size of n x n x n mesh\n"
-      << "  cutoff: maximum size of leaf node\n"
+      << "  sequential: if nonzero, partition graph sequentially\n"
       << "  numDistSeps: number of distributed separators to try\n"
       << "  numSeqSeps: number of sequential separators to try\n"
+      << "  cutoff: maximum size of leaf node\n"
       << std::endl;
 }
 
@@ -46,9 +48,10 @@ main( int argc, char* argv[] )
         return 0;
     }
     const int n = atoi( argv[1] );
-    const int cutoff = ( argc >= 3 ? atoi( argv[2] ) : 128 );
+    const bool sequential = ( argc >= 3 ? atoi( argv[2] ) : true );
     const int numDistSeps = ( argc >= 4 ? atoi( argv[3] ) : 10 );
     const int numSeqSeps = ( argc >= 5 ? atoi( argv[4] ) : 5 );
+    const int cutoff = ( argc >= 6 ? atoi( argv[5] ) : 128 );
 
     try
     {
@@ -102,7 +105,8 @@ main( int argc, char* argv[] )
         DistSeparatorTree sepTree;
         DistMap map;
         NestedDissection
-        ( graph, map, sepTree, info, cutoff, numDistSeps, numSeqSeps );
+        ( graph, map, sepTree, info, 
+          sequential, numDistSeps, numSeqSeps, cutoff );
         mpi::Barrier( comm );
         if( commRank == 0 )
             std::cout << "done" << std::endl;

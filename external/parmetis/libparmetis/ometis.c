@@ -27,11 +27,19 @@ int CliqParallelBisect
   gkMPI_Comm_size(*comm, &npes);
   gkMPI_Comm_rank(*comm, &mype);
 
+  if( vtxdist[npes] == 0 )
+  {
+      sizes[0] = 0;
+      sizes[1] = 0;
+      sizes[2] = 0;
+      return;
+  }
+
   haveData = ( vtxdist[mype+1]-vtxdist[mype] != 0 );
   if( haveData )
-    gkMPI_Comm_split(*comm, 1, mype, &nonzeroComm);
+      gkMPI_Comm_split(*comm, 1, mype, &nonzeroComm);
   else
-    gkMPI_Comm_split(*comm, MPI_UNDEFINED, 0, &nullComm);
+      gkMPI_Comm_split(*comm, MPI_UNDEFINED, 0, &nullComm);
 
   if( !haveData )
   {
@@ -101,7 +109,8 @@ DONE:
   return (int)status;
 }
 
-void CliqParallelOrder(ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *sizes)
+void CliqParallelOrder
+( ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *sizes )
 {
   idx_t i, nvtxs;
 
@@ -124,7 +133,7 @@ void CliqParallelOrder(ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *sizes)
 }
 
 void CliqParallelLabelVertices
-(ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *sizes)
+( ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *sizes )
 { 
   idx_t i, j, nvtxs, id; 
   idx_t *where, *lpwgts, *gpwgts;
@@ -138,7 +147,7 @@ void CliqParallelLabelVertices
   /* Compute the local sizes of the left side, right side, and separator */
   iset(3, 0, lpwgts);
   for (i=0; i<nvtxs; i++) 
-    lpwgts[where[i]]++;
+      lpwgts[where[i]]++;
 
   /* Perform a Prefix scan of the separator size to determine the boundaries */
   gkMPI_Scan((void *)lpwgts, (void *)sizescan, 3, IDX_T, MPI_SUM, ctrl->comm);
@@ -150,18 +159,19 @@ void CliqParallelLabelVertices
   sizes[1] = gpwgts[1];
   sizes[2] = gpwgts[2];
 
-  for (i=2; i>=0; --i)
-    for (j=i+1; j<3; ++j )
-        sizescan[i] += gpwgts[j];
-  for (i=0; i<3; i++)
-    sizescan[i] -= lpwgts[i];
+  for( i=2; i>=0; --i )
+      for( j=i+1; j<3; ++j )
+          sizescan[i] += gpwgts[j];
+  for( i=0; i<3; i++ )
+      sizescan[i] -= lpwgts[i];
 
-  for (i=0; i<nvtxs; i++) {
-    id = where[i];
-    PASSERT(ctrl, id <= 2);
-    sizescan[id]++;
-    PASSERT(ctrl, order[i] == -1);
-    order[i] = graph->gnvtxs - sizescan[id];
+  for( i=0; i<nvtxs; i++ ) 
+  {
+      id = where[i];
+      PASSERT(ctrl, id <= 2);
+      sizescan[id]++;
+      PASSERT(ctrl, order[i] == -1);
+      order[i] = graph->gnvtxs - sizescan[id];
   }
 }
 

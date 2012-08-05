@@ -22,8 +22,10 @@ using namespace cliq;
 
 void Usage()
 {
-    std::cout << "Bisection <n> [numDistSeps=10] [numSeqSeps=5]\n" 
+    std::cout << "Bisection <n> "
+              << "[sequential=true] [numDistSeps=10] [numSeqSeps=5]\n" 
               << "  n: size of n x n x n mesh\n"
+              << "  sequential: if nonzero, partition graph sequentially\n"
               << "  numDistSeps: number of distributed separators to try\n"
               << "  numSeqSeps: number of sequential separators to try\n"
               << std::endl;
@@ -45,19 +47,19 @@ main( int argc, char* argv[] )
         return 0;
     }
     const int n = atoi( argv[1] );
-    const int numDistSeps = ( argc >= 3 ? atoi( argv[2] ) : 10 );
-    const int numSeqSeps = ( argc >= 4 ? atoi( argv[3] ) : 5 );
+    const bool sequential = ( argc >= 3 ? atoi( argv[2] ) : true );
+    const int numDistSeps = ( argc >= 4 ? atoi( argv[3] ) : 10 );
+    const int numSeqSeps = ( argc >= 5 ? atoi( argv[4] ) : 5 );
 
     try
     {
         const int numVertices = n*n*n;
         DistGraph graph( numVertices, comm );
 
-        const int firstLocalSource = graph.FirstLocalSource();
-        const int numLocalSources = graph.NumLocalSources();
-
         // Fill our portion of the graph of a 3D n x n x n 7-point stencil
         // in natural ordering: (x,y,z) at x + y*n + z*n*n
+        const int firstLocalSource = graph.FirstLocalSource();
+        const int numLocalSources = graph.NumLocalSources();
         graph.StartAssembly();
         graph.Reserve( 7*numLocalSources );
         for( int iLocal=0; iLocal<numLocalSources; ++iLocal )
@@ -90,7 +92,8 @@ main( int argc, char* argv[] )
             bool haveLeftChild;
             const int sepSize = 
                 Bisect
-                ( graph, child, map, haveLeftChild, numDistSeps, numSeqSeps );
+                ( graph, child, map, haveLeftChild, 
+                  sequential, numDistSeps, numSeqSeps );
 
             int leftChildSize, rightChildSize;
             if( haveLeftChild )
