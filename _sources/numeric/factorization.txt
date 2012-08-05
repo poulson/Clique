@@ -112,6 +112,11 @@ This data structure represents a distributed symmetric :math:`LDL^T` or
       frontal tree which is ready for factorization (e.g., with 
       :cpp:func:`LDL` or :cpp:func:`BlockLDL`).
 
+   .. cpp:function:: void Initialize( Orientation orientation, const DistSparseMatrix<T>& A, const DistMap& map, const DistSeparatorTree& sepTree, const DistSymmInfo& info )
+
+      The same as the :cpp:func:`DistSymmFrontTree\<T>::DistSymmFrontTree`
+      constructor, but callable after construction.
+
 .. cpp:type:: struct DistSymmFrontTree<F>
 
    Same as above, but this implies that the underlying datatype `F` is a field.
