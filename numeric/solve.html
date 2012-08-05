@@ -54,6 +54,43 @@
         
   <div class="section" id="solves">
 <h1>Solves<a class="headerlink" href="#solves" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="black-box-solvers">
+<h2>Black-box solvers<a class="headerlink" href="#black-box-solvers" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="SymmetricSolve__DistSparseMatrix:F:CR.DistVector:F:R.b.i.i.i">
+void <tt class="descname">SymmetricSolve</tt><big>(</big><a class="reference internal" href="../core/dist_sparse_matrix.html#DistSparseMatrix:F:__class" title="DistSparseMatrix&lt;F&gt;">const DistSparseMatrix&lt;F&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/dist_vector.html#DistVector:F:__class" title="DistVector&lt;F&gt;">DistVector&lt;F&gt;&amp;</a> <em>x</em>, bool <em>sequential</em><em>=true</em>, int <em>numDistSeps</em><em>=1</em>, int <em>numSeqSeps</em><em>=1</em>, int <em>cutoff</em><em>=128 </em><big>)</big><a class="headerlink" href="#SymmetricSolve__DistSparseMatrix:F:CR.DistVector:F:R.b.i.i.i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="SymmetricSolve__DistSparseMatrix:F:CR.DistMultiVector:F:R.b.i.i.i">
+void <tt class="descname">SymmetricSolve</tt><big>(</big><a class="reference internal" href="../core/dist_sparse_matrix.html#DistSparseMatrix:F:__class" title="DistSparseMatrix&lt;F&gt;">const DistSparseMatrix&lt;F&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/dist_multi_vector.html#DistMultiVector:F:__class" title="DistMultiVector&lt;F&gt;">DistMultiVector&lt;F&gt;&amp;</a> <em>X</em>, bool <em>sequential</em><em>=true</em>, int <em>numDistSeps</em><em>=1</em>, int <em>numSeqSeps</em><em>=1</em>, int <em>cutoff</em><em>=128 </em><big>)</big><a class="headerlink" href="#SymmetricSolve__DistSparseMatrix:F:CR.DistMultiVector:F:R.b.i.i.i" title="Permalink to this definition">¶</a></dt>
+<dd><p>Overwrites <span class="math">\(x\)</span> with <span class="math">\(A^{-1} x\)</span>, where <span class="math">\(A\)</span> is assumed to be
+symmetric. The main optional argument is
+whether or not graph partitioning should be performed sequentially or in
+parallel. For modest-to-large numbers of processes, one should only use
+parallel graph partitioning if the entire graph for the sparse matrix cannot
+be stored on a single process. The remaining optional arguments determine
+how many distributed and sequential separators should be tested for each
+separator (<cite>numDistSeps</cite> and <cite>numSeqSeps</cite>) and what the maximum allowed
+subdomain size is (<cite>cutoff</cite>). See
+<a class="reference external" href="https://github.com/poulson/Clique/blob/master/tests/SimpleVectorSolve.cpp">tests/SimpleVectorSolve</a> and
+<a class="reference external" href="https://github.com/poulson/Clique/blob/master/tests/SimpleMultiVectorSolve.cpp">tests/SimpleMultiVectorSolve</a> for an example usages.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="HermitianSolve__DistSparseMatrix:F:CR.DistVector:F:R.b.i.i.i">
+void <tt class="descname">HermitianSolve</tt><big>(</big><a class="reference internal" href="../core/dist_sparse_matrix.html#DistSparseMatrix:F:__class" title="DistSparseMatrix&lt;F&gt;">const DistSparseMatrix&lt;F&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/dist_vector.html#DistVector:F:__class" title="DistVector&lt;F&gt;">DistVector&lt;F&gt;&amp;</a> <em>x</em>, bool <em>sequential</em><em>=true</em>, int <em>numDistSeps</em><em>=1</em>, int <em>numSeqSeps</em><em>=1</em>, int <em>cutoff</em><em>=128 </em><big>)</big><a class="headerlink" href="#HermitianSolve__DistSparseMatrix:F:CR.DistVector:F:R.b.i.i.i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="HermitianSolve__DistSparseMatrix:F:CR.DistMultiVector:F:R.b.i.i.i">
+void <tt class="descname">HermitianSolve</tt><big>(</big><a class="reference internal" href="../core/dist_sparse_matrix.html#DistSparseMatrix:F:__class" title="DistSparseMatrix&lt;F&gt;">const DistSparseMatrix&lt;F&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/dist_multi_vector.html#DistMultiVector:F:__class" title="DistMultiVector&lt;F&gt;">DistMultiVector&lt;F&gt;&amp;</a> <em>X</em>, bool <em>sequential</em><em>=true</em>, int <em>numDistSeps</em><em>=1</em>, int <em>numSeqSeps</em><em>=1</em>, int <em>cutoff</em><em>=128 </em><big>)</big><a class="headerlink" href="#HermitianSolve__DistSparseMatrix:F:CR.DistMultiVector:F:R.b.i.i.i" title="Permalink to this definition">¶</a></dt>
+<dd><p>Overwrites <span class="math">\(x\)</span> with <span class="math">\(A^{-1} x\)</span>, where <span class="math">\(A\)</span> is assumed to be
+Hermitian. The optional arguments are identical to those of
+<a class="reference internal" href="#SymmetricSolve__DistSparseMatrix:F:CR.DistVector:F:R.b.i.i.i" title="SymmetricSolve"><tt class="xref cpp cpp-func docutils literal"><span class="pre">SymmetricSolve()</span></tt></a>.</p>
+</dd></dl>
+
+</div>
 <div class="section" id="solving-after-factorization">
 <h2>Solving after factorization<a class="headerlink" href="#solving-after-factorization" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
