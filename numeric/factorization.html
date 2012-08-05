@@ -57,8 +57,8 @@
 <div class="section" id="ldl-factorization">
 <h2>LDL factorization<a class="headerlink" href="#ldl-factorization" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
-<dt id="LDL__DistSymmInfoR.DistSymmFrontTree:F:R.FrontType">
-void <tt class="descname">LDL</tt><big>(</big><a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="#DistSymmFrontTree:F:__struct" title="DistSymmFrontTree&lt;F&gt;">DistSymmFrontTree&lt;F&gt;&amp;</a> <em>L</em>, <a class="reference internal" href="#FrontType__enum" title="FrontType">FrontType</a> <em>newFrontType</em><big>)</big><a class="headerlink" href="#LDL__DistSymmInfoR.DistSymmFrontTree:F:R.FrontType" title="Permalink to this definition">¶</a></dt>
+<dt id="LDL__DistSymmInfoR.DistSymmFrontTree:F:R.SymmFrontType">
+void <tt class="descname">LDL</tt><big>(</big><a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="#DistSymmFrontTree:F:__struct" title="DistSymmFrontTree&lt;F&gt;">DistSymmFrontTree&lt;F&gt;&amp;</a> <em>L</em>, <a class="reference internal" href="#SymmFrontType__enum" title="SymmFrontType">SymmFrontType</a> <em>newFrontType</em><big>)</big><a class="headerlink" href="#LDL__DistSymmInfoR.DistSymmFrontTree:F:R.SymmFrontType" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performs either an <span class="math">\(LDL^T\)</span> or <span class="math">\(LDL^H\)</span> factorization, depending
 on whether <cite>L</cite> is marked as Hermitian. See
 <a class="reference external" href="https://github.com/poulson/Clique/blob/master/tests/VectorSolve.cpp">tests/VectorSolve</a> for an example usage.</p>
@@ -139,8 +139,8 @@ and the lower structure is of size <span class="math">\(m-n\)</span>.</p>
 </dd></dl>
 
 <dl class="type">
-<dt id="FrontType__enum">
-<em class="property">type </em>enum <tt class="descname">FrontType</tt><a class="headerlink" href="#FrontType__enum" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmFrontType__enum">
+<em class="property">type </em>enum <tt class="descname">SymmFrontType</tt><a class="headerlink" href="#SymmFrontType__enum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Can be set to either</p>
 <ul class="simple">
 <li><tt class="docutils literal"><span class="pre">SYMM_1D</span></tt>: Symmetric/Hermitian fronts distributed in a 1D manner</li>
@@ -167,8 +167,8 @@ treated as symmetric.</p>
 </dd></dl>
 
 <dl class="member">
-<dt id="DistSymmFrontTree:T:::frontType__FrontType">
-<a class="reference internal" href="#FrontType__enum" title="FrontType">FrontType</a> <tt class="descname">frontType</tt><a class="headerlink" href="#DistSymmFrontTree:T:::frontType__FrontType" title="Permalink to this definition">¶</a></dt>
+<dt id="DistSymmFrontTree:T:::frontType__SymmFrontType">
+<a class="reference internal" href="#SymmFrontType__enum" title="SymmFrontType">SymmFrontType</a> <tt class="descname">frontType</tt><a class="headerlink" href="#DistSymmFrontTree:T:::frontType__SymmFrontType" title="Permalink to this definition">¶</a></dt>
 <dd><p>Specifies the form of the frontal matrices.</p>
 </dd></dl>
 
@@ -189,7 +189,7 @@ std::vector&lt;DistSymmFront&lt;T&gt;&gt; <tt class="descname">distFronts</tt><a
  <tt class="descname">DistSymmFrontTree</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../core/dist_sparse_matrix.html#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;">const DistSparseMatrix&lt;T&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>map</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSeparatorTree__struct" title="DistSeparatorTree">const DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em><big>)</big><a class="headerlink" href="#DistSymmFrontTree:T:::DistSymmFrontTree__Orientation.DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR" title="Permalink to this definition">¶</a></dt>
 <dd><p>A constructor which converts a distributed sparse matrix into a symmetric
 frontal tree which is ready for factorization (e.g., with
-<a class="reference internal" href="#LDL__DistSymmInfoR.DistSymmFrontTree:F:R.FrontType" title="LDL"><tt class="xref cpp cpp-func docutils literal"><span class="pre">LDL()</span></tt></a> or <tt class="xref cpp cpp-func docutils literal"><span class="pre">BlockLDL()</span></tt>).</p>
+<a class="reference internal" href="#LDL__DistSymmInfoR.DistSymmFrontTree:F:R.SymmFrontType" title="LDL"><tt class="xref cpp cpp-func docutils literal"><span class="pre">LDL()</span></tt></a> or <tt class="xref cpp cpp-func docutils literal"><span class="pre">BlockLDL()</span></tt>).</p>
 </dd></dl>
 
 </dd></dl>
