@@ -21,26 +21,29 @@
 namespace cliq {
 
 template<typename F>
+inline
 DistSymmFrontTree<F>::DistSymmFrontTree()
 { }
 
 template<typename F>
-DistSymmFrontTree<F>::DistSymmFrontTree
+inline void
+DistSymmFrontTree<F>::Initialize
 ( Orientation orientation,
   const DistSparseMatrix<F>& A, 
   const DistMap& map,
   const DistSeparatorTree& sepTree, 
   const DistSymmInfo& info )
-: isHermitian(orientation!=TRANSPOSE),
-  frontType(SYMM_2D)
 {
 #ifndef RELEASE
-    PushCallStack("DistSymmFrontTree::DistSymmFrontTree");
+    PushCallStack("DistSymmFrontTree::Initialize");
     if( orientation == NORMAL )
         throw std::logic_error("Matrix must be symmetric or Hermitian");
     if( A.LocalHeight() != map.NumLocalSources() )
         throw std::logic_error("Local mapping was not the right size");
 #endif
+    isHermitian = ( orientation != TRANSPOSE );
+    frontType = SYMM_2D;
+    
     mpi::Comm comm = A.Comm();
     const DistGraph& graph = A.Graph();
     const int blocksize = A.Blocksize();
@@ -401,6 +404,24 @@ DistSymmFrontTree<F>::DistSymmFrontTree
         ( topLocal.Height(), topLocal.Width(), 0, 0,
           topLocal.LockedBuffer(), topLocal.LDim(), *node.grid );
     }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename F>
+inline
+DistSymmFrontTree<F>::DistSymmFrontTree
+( Orientation orientation,
+  const DistSparseMatrix<F>& A, 
+  const DistMap& map,
+  const DistSeparatorTree& sepTree, 
+  const DistSymmInfo& info )
+{
+#ifndef RELEASE
+    PushCallStack("DistSymmFrontTree::DistSymmFrontTree");
+#endif
+    Initialize( orientation, A, map, sepTree, info );
 #ifndef RELEASE
     PopCallStack();
 #endif

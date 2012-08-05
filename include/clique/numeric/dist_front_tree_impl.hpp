@@ -21,10 +21,12 @@
 namespace cliq {
 
 template<typename F>
+inline
 DistFrontTree<F>::DistFrontTree()
 { }
 
 template<typename F>
+inline
 DistFrontTree<F>::DistFrontTree
 ( const DistSparseMatrix<F>& A, 
   const DistMap& map,
