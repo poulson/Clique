@@ -1,6 +1,31 @@
 Solves
 ======
 
+Black-box solvers
+-----------------
+
+.. cpp:function:: void SymmetricSolve( const DistSparseMatrix<F>& A, DistVector<F>& x, bool sequential=true, int numDistSeps=1, int numSeqSeps=1, int cutoff=128 )
+.. cpp:function:: void SymmetricSolve( const DistSparseMatrix<F>& A, DistMultiVector<F>& X, bool sequential=true, int numDistSeps=1, int numSeqSeps=1, int cutoff=128 )
+
+   Overwrites :math:`x` with :math:`A^{-1} x`, where :math:`A` is assumed to be 
+   symmetric. The main optional argument is 
+   whether or not graph partitioning should be performed sequentially or in 
+   parallel. For modest-to-large numbers of processes, one should only use 
+   parallel graph partitioning if the entire graph for the sparse matrix cannot
+   be stored on a single process. The remaining optional arguments determine 
+   how many distributed and sequential separators should be tested for each 
+   separator (`numDistSeps` and `numSeqSeps`) and what the maximum allowed 
+   subdomain size is (`cutoff`). See
+   `tests/SimpleVectorSolve <https://github.com/poulson/Clique/blob/master/tests/SimpleVectorSolve.cpp>`__ and 
+   `tests/SimpleMultiVectorSolve <https://github.com/poulson/Clique/blob/master/tests/SimpleMultiVectorSolve.cpp>`__ for an example usages.
+
+.. cpp:function:: void HermitianSolve( const DistSparseMatrix<F>& A, DistVector<F>& x, bool sequential=true, int numDistSeps=1, int numSeqSeps=1, int cutoff=128 )
+.. cpp:function:: void HermitianSolve( const DistSparseMatrix<F>& A, DistMultiVector<F>& X, bool sequential=true, int numDistSeps=1, int numSeqSeps=1, int cutoff=128 )
+
+   Overwrites :math:`x` with :math:`A^{-1} x`, where :math:`A` is assumed to be
+   Hermitian. The optional arguments are identical to those of 
+   :cpp:func:`SymmetricSolve`.
+
 Solving after factorization
 ---------------------------
 

@@ -155,7 +155,7 @@ main( int argc, char* argv[] )
         else
             NestedDissection
             ( graph, map, sepTree, info, 
-              sequential, cutoff, numDistSeps, numSeqSeps );
+              sequential, numDistSeps, numSeqSeps, cutoff );
         map.FormInverse( inverseMap );
         mpi::Barrier( comm );
         const double nestedStop = mpi::Time();

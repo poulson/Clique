@@ -23,13 +23,12 @@ using namespace cliq;
 void Usage()
 {
     std::cout
-      << "MultiVectorSolve <n1> <n2> <n3> <numRhs> "
+      << "SimpleMultiVectorSolve <n1> <n2> <n3> <numRhs> "
       << "[sequential=true] [numDistSeps=1] [numSeqSeps=1] [cutoff=128]\n"
       << "  n1: first dimension of n1 x n2 x n3 mesh\n"
       << "  n2: second dimension of n1 x n2 x n3 mesh\n"
       << "  n3: third dimension of n1 x n2 x n3 mesh\n"
-      << "  numRhs: the number of random right-hand sides to solve against\n"
-      << "  sequential: use a sequential symbolic reordering if nonzero\n"
+      << "  sequential: if nonzero, then run a sequential symbolic reordering\n"
       << "  numDistSeps: number of distributed separators to try\n"
       << "  numSeqSeps: number of sequential separators to try\n"
       << "  cutoff: maximum size of leaf node\n"
@@ -106,7 +105,7 @@ main( int argc, char* argv[] )
 
         if( commRank == 0 )
         {
-            std::cout << "Generating random X and forming Y := A X...";
+            std::cout << "Generating random vector X and forming Y := A X...";
             std::cout.flush();
         }
         const double multiplyStart = mpi::Time();
@@ -124,77 +123,11 @@ main( int argc, char* argv[] )
 
         if( commRank == 0 )
         {
-            std::cout << "Running nested dissection...";
-            std::cout.flush();
-        }
-        const double nestedStart = mpi::Time();
-        const DistGraph& graph = A.Graph();
-        DistSymmInfo info;
-        DistSeparatorTree sepTree;
-        DistMap map, inverseMap;
-        NestedDissection
-        ( graph, map, sepTree, info, 
-          sequential, numDistSeps, numSeqSeps, cutoff );
-        map.FormInverse( inverseMap );
-        mpi::Barrier( comm );
-        const double nestedStop = mpi::Time();
-        if( commRank == 0 )
-            std::cout << "done, " << nestedStop-nestedStart << " seconds"
-                      << std::endl;
-
-        if( commRank == 0 )
-        {
-            const int numDistNodes = info.distNodes.size();
-            const int numLocalNodes = info.localNodes.size();
-            const int rootSepSize = info.distNodes.back().size;
-            std::cout << "\n"
-                      << "On the root process:\n"
-                      << "-----------------------------------------\n"
-                      << numLocalNodes << " local nodes\n"
-                      << numDistNodes  << " distributed nodes\n"
-                      << rootSepSize << " vertices in root separator\n"
-                      << std::endl;
-        }
-
-        if( commRank == 0 )
-        {
-            std::cout << "Building DistSymmFrontTree...";
-            std::cout.flush();
-        }
-        mpi::Barrier( comm );
-        const double buildStart = mpi::Time();
-        DistSymmFrontTree<double> frontTree( TRANSPOSE, A, map, sepTree, info );
-        mpi::Barrier( comm );
-        const double buildStop = mpi::Time();
-        if( commRank == 0 )
-            std::cout << "done, " << buildStop-buildStart << " seconds"
-                      << std::endl;
-
-        if( commRank == 0 )
-        {
-            std::cout << "Running LDL^T and redistribution...";
-            std::cout.flush();
-        }
-        mpi::Barrier( comm );
-        const double ldlStart = mpi::Time();
-        LDL( info, frontTree, LDL_1D );
-        mpi::Barrier( comm );
-        const double ldlStop = mpi::Time();
-        if( commRank == 0 )
-            std::cout << "done, " << ldlStop-ldlStart << " seconds" 
-                      << std::endl;
-
-        if( commRank == 0 )
-        {
-            std::cout << "Solving against Y...";
+            std::cout << "Solving...";
             std::cout.flush();
         }
         const double solveStart = mpi::Time();
-        DistNodalMultiVector<double> YNodal;
-        YNodal.Pull( inverseMap, info, Y );
-        Solve( info, frontTree, YNodal.localMultiVec );
-        YNodal.Push( inverseMap, info, Y );
-        mpi::Barrier( comm );
+        SymmetricSolve( A, Y, sequential, numDistSeps, numSeqSeps, cutoff );
         const double solveStop = mpi::Time();
         if( commRank == 0 )
             std::cout << "done, " << solveStop-solveStart << " seconds"
@@ -212,7 +145,8 @@ main( int argc, char* argv[] )
         {
             for( int j=0; j<numRhs; ++j )
             {
-                std::cout << "Right-hand side " << j << ":\n"
+                std::cout << "Right-hand side " << j << "\n"
+                          << "------------------------------------------\n"
                           << "|| x     ||_2 = " << XNorms[j] << "\n"
                           << "|| xComp ||_2 = " << YNorms[j] << "\n"
                           << "|| A x   ||_2 = " << YOrigNorms[j] << "\n"

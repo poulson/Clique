@@ -31,9 +31,9 @@ void NestedDissection
         DistSeparatorTree& sepTree, 
         DistSymmInfo& info,
         bool sequential=true,
-        int cutoff=128, 
         int numDistSeps=1, 
         int numSeqSeps=1, 
+        int cutoff=128, 
         bool storeFactRecvIndices=false );
 
 int Bisect
@@ -113,8 +113,8 @@ NestedDissectionRecursion
         DistSymmElimTree& eTree,
         int parent, 
         int offset, 
-        int cutoff=128, 
-        int numSeps=5 )
+        int numSeps=5,
+        int cutoff=128 )
 {
 #ifndef RELEASE
     PushCallStack("NestedDissectionRecursion");
@@ -224,11 +224,11 @@ NestedDissectionRecursion
         node.children[1] = eTree.localNodes.size();
         NestedDissectionRecursion
         ( rightChild, rightPerm, sepTree, eTree, parent, offset+leftChildSize,
-          cutoff, numSeps );
+          numSeps, cutoff );
         node.children[0] = eTree.localNodes.size();
         NestedDissectionRecursion
         ( leftChild, leftPerm, sepTree, eTree, parent, offset, 
-          cutoff, numSeps );
+          numSeps, cutoff );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -245,9 +245,9 @@ NestedDissectionRecursion
         int offset, 
         bool onLeft,
         bool sequential=true,
-        int cutoff=128, 
         int numDistSeps=1, 
-        int numSeqSeps=1 )
+        int numSeqSeps=1,
+        int cutoff=128 )
 {
 #ifndef RELEASE
     PushCallStack("NestedDissectionRecursion");
@@ -356,7 +356,7 @@ NestedDissectionRecursion
         const int newOffset = ( childIsOnLeft ? offset : offset+leftChildSize );
         NestedDissectionRecursion
         ( child, newPerm, sepTree, eTree, depth+1, newOffset, 
-          childIsOnLeft, sequential, cutoff, numDistSeps, numSeqSeps );
+          childIsOnLeft, sequential, numDistSeps, numSeqSeps, cutoff );
     }
     else if( graph.NumSources() <= cutoff )
     {
@@ -480,11 +480,11 @@ NestedDissectionRecursion
         localNode.children[1] = eTree.localNodes.size();
         NestedDissectionRecursion
         ( rightChild, rightPerm, sepTree, eTree, parent, offset+leftChildSize, 
-          cutoff, numSeqSeps );
+          numSeqSeps, cutoff );
         localNode.children[0] = eTree.localNodes.size();
         NestedDissectionRecursion
         ( leftChild, leftPerm, sepTree, eTree, parent, offset, 
-          cutoff, numSeqSeps );
+          numSeqSeps, cutoff );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -498,9 +498,9 @@ NestedDissection
         DistSeparatorTree& sepTree, 
         DistSymmInfo& info,
         bool sequential,
-        int cutoff, 
         int numDistSeps, 
         int numSeqSeps, 
+        int cutoff,
         bool storeFactRecvIndices )
 {
 #ifndef RELEASE
@@ -524,8 +524,8 @@ NestedDissection
     for( int s=0; s<numLocalSources; ++s )
         perm.SetLocal( s, s+firstLocalSource );
     NestedDissectionRecursion
-    ( graph, perm, sepTree, eTree, 0, 0, false, sequential, cutoff, 
-      numDistSeps, numSeqSeps );
+    ( graph, perm, sepTree, eTree, 0, 0, false, sequential, 
+      numDistSeps, numSeqSeps, cutoff );
 
     ReverseOrder( sepTree, eTree );
 

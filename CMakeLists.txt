@@ -103,7 +103,8 @@ if(CLIQ_TESTS)
   set(TEST_DIR ${PROJECT_SOURCE_DIR}/tests)
   set(TESTS FileSpeed NaturalVectorSolve)
   if(HAVE_PARMETIS)
-    list(APPEND TESTS Bisection MultiVectorSolve NestedDissection VectorSolve)
+    list(APPEND TESTS Bisection MultiVectorSolve NestedDissection 
+                      SimpleVectorSolve SimpleMultiVectorSolve VectorSolve)
   endif()
 
   # Build the tests
