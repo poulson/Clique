@@ -88,6 +88,8 @@ namespace cliq {
 #include "clique/numeric/dist_nodal_multi_vector_decl.hpp"
 #include "clique/numeric/dist_nodal_multi_vector_impl.hpp"
 
+#include "clique/numeric/dist_front_tree_decl.hpp"
+#include "clique/numeric/dist_front_tree_impl.hpp"
 #include "clique/numeric/dist_symm_front_tree_decl.hpp"
 #include "clique/numeric/dist_symm_front_tree_impl.hpp"
 #include "clique/numeric/change_front_type.hpp"

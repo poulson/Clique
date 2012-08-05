@@ -21,7 +21,7 @@
 namespace cliq {
 
 template<typename F>
-void ChangeFrontType( DistSymmFrontTree<F>& L, FrontType frontType );
+void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -30,7 +30,7 @@ void ChangeFrontType( DistSymmFrontTree<F>& L, FrontType frontType );
 // This routine could be modified later so that it uses much less memory
 // by replacing the '=' redistributions with piece-by-piece redistributions.
 template<typename F>
-inline void ChangeFrontType( DistSymmFrontTree<F>& L, FrontType frontType )
+inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
 {
 #ifndef RELEASE
     PushCallStack("ChangeFrontType");
@@ -45,7 +45,7 @@ inline void ChangeFrontType( DistSymmFrontTree<F>& L, FrontType frontType )
     }
     const int numDistNodes = L.distFronts.size();    
     DistSymmFront<F>& leafFront = L.distFronts[0];
-    const FrontType oldFrontType = L.frontType;
+    const SymmFrontType oldFrontType = L.frontType;
 
     if( (frontType == LDL_1D && oldFrontType == LDL_2D) ||
         (frontType == LDL_SELINV_1D && oldFrontType == LDL_SELINV_2D) ||

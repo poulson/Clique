@@ -4,7 +4,7 @@ Factorization
 LDL factorization
 -----------------
 
-.. cpp:function:: void LDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, FrontType newFrontType )
+.. cpp:function:: void LDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, SymmFrontType newFrontType )
 
    Performs either an :math:`LDL^T` or :math:`LDL^H` factorization, depending 
    on whether `L` is marked as Hermitian. See 
@@ -66,7 +66,7 @@ This data structure represents a distributed symmetric :math:`LDL^T` or
 
       Used for storing the diagonal of the frontal matrix.
 
-.. cpp:type:: enum FrontType
+.. cpp:type:: enum SymmFrontType
 
    Can be set to either
    
@@ -94,7 +94,7 @@ This data structure represents a distributed symmetric :math:`LDL^T` or
       If true, the matrix is assumed to be Hermitian; otherwise, it is 
       treated as symmetric.
 
-   .. cpp:member:: FrontType frontType
+   .. cpp:member:: SymmFrontType frontType
 
       Specifies the form of the frontal matrices.
 

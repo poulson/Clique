@@ -20,72 +20,66 @@
 
 namespace cliq {
 
-enum SymmFrontType
+enum FrontType
 {
-  SYMM_1D,
-  SYMM_2D,
-  LDL_1D,
-  LDL_2D,
-  LDL_SELINV_1D,
-  LDL_SELINV_2D,
-  BLOCK_LDL_2D
+  GENERAL_1D,
+  GENERAL_2D,
+  STRUCT_SYMM_1D,
+  STRUCT_SYMM_2D,
+  LU_1D,
+  LU_2D,
+  LU_SELINV_1D,
+  LU_SELINV_2D,
+  BLOCK_LU_2D
 };
 
 inline bool
-FrontsAre1d( SymmFrontType frontType )
+FrontsAre1d( FrontType frontType )
 {
-    if( frontType == SYMM_1D ||
-        frontType == LDL_1D || 
-        frontType == LDL_SELINV_1D )
+    if( frontType == GENERAL_1D || 
+        frontType == STRUCT_SYMM_1D || 
+        frontType == LU_1D || 
+        frontType == LU_SELINV_1D )
         return true;
     else
         return false;
 }
 
-// Only keep track of the left and bottom-right piece of the fronts
-// (with the bottom-right piece stored in workspace) since only the left side
-// needs to be kept after the factorization is complete.
-
 template<typename F>
-struct LocalSymmFront
+struct LocalFront
 {
-    Matrix<F> frontL;
+    Matrix<F> frontTL, frontBL, frontTR;
     mutable Matrix<F> work;
 };
 
 template<typename F>
-struct DistSymmFront
+struct DistFront
 {
-    // The 'frontType' member variable of the parent 'DistSymmFrontTree' 
+    // The 'frontType' member variable of the parent 'DistFrontTree' 
     // determines which of the following fronts is active.
-    //
-    // Split each front into a left and right piece such that the right piece
-    // is not needed after the factorization (and can be freed).
 
     // TODO: Think about the fact that almost everything is now mutable...
+    DistMatrix<int,VC,STAR> pivots;
 
-    mutable DistMatrix<F,VC,STAR> front1dL;
+    mutable DistMatrix<F,VC,STAR> front1dTL, front1dBL, front1dTR;
     mutable DistMatrix<F,VC,STAR> work1d;
 
-    mutable DistMatrix<F> front2dL;
+    mutable DistMatrix<F> front2dTL, front2dBL, front2dTR;
     mutable DistMatrix<F> work2d;
-
-    DistMatrix<F,VC,STAR> diag;
 };
 
 template<typename F>
-struct DistSymmFrontTree
+struct DistFrontTree
 {
-    bool isHermitian;
-    SymmFrontType frontType;
-    std::vector<LocalSymmFront<F> > localFronts;
-    std::vector<DistSymmFront<F> > distFronts;
+    FrontType frontType;
+    std::vector<LocalFront<F> > localFronts;
+    std::vector<DistFront<F> > distFronts;
 
-    DistSymmFrontTree();
+    DistFrontTree();
 
-    DistSymmFrontTree
-    ( Orientation orientation,
-      const DistSparseMatrix<F>& A, 
+    // For constructing structurally symmetric frontal matrices
+    DistFrontTree
+    ( const DistSparseMatrix<F>& A, 
       const DistMap& map,
       const DistSeparatorTree& sepTree,
       const DistSymmInfo& info );

@@ -28,7 +28,8 @@ void InitializeDistLeaf( const DistSymmInfo& info, DistSymmFrontTree<F>& L );
 
 template<typename F>
 void LDL
-( DistSymmInfo& info, DistSymmFrontTree<F>& L, FrontType newFrontType=LDL_2D );
+( DistSymmInfo& info, DistSymmFrontTree<F>& L, 
+  SymmFrontType newFrontType=LDL_2D );
 
 } // namespace cliq
 
@@ -68,7 +69,7 @@ inline void InitializeDistLeaf
 
 template<typename F>
 inline void 
-LDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, FrontType newFrontType )
+LDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, SymmFrontType newFrontType )
 {
 #ifndef RELEASE
     PushCallStack("LDL");

@@ -44,7 +44,7 @@ inline void DistLowerForwardSolve
 #endif
     const int numDistNodes = info.distNodes.size();
     const int width = localX.Width();
-    const FrontType frontType = L.frontType;
+    const SymmFrontType frontType = L.frontType;
     const bool frontsAre1d = FrontsAre1d( frontType );
     const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
     if( frontType != LDL_1D && 
@@ -210,7 +210,7 @@ inline void DistLowerBackwardSolve
 #endif
     const int numDistNodes = info.distNodes.size();
     const int width = localX.Width();
-    const FrontType frontType = L.frontType;
+    const SymmFrontType frontType = L.frontType;
     const bool frontsAre1d = FrontsAre1d( frontType );
     const bool blockLDL = ( frontType == BLOCK_LDL_2D );
     if( frontType != LDL_1D && 
