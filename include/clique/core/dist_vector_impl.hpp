@@ -148,6 +148,48 @@ DistVector<T>::DistVector( int height, mpi::Comm comm )
 
 template<typename T>
 inline 
+DistVector<T>::DistVector( int height, T* buffer, mpi::Comm comm )
+: height_(height)
+{
+    if( comm_ != mpi::COMM_WORLD )
+        mpi::CommDup( comm, comm_ );
+    else
+        comm_ = comm;
+
+    const int commRank = mpi::CommRank( comm );
+    const int commSize = mpi::CommSize( comm );
+    blocksize_ = height_/commSize;
+    firstLocalRow_ = blocksize_*commRank;
+    const int localHeight =
+        ( commRank<commSize-1 ?
+          blocksize_ :
+          height_ - (commSize-1)*blocksize_ );
+    localVec_.View( localHeight, 1, buffer, localHeight );
+}
+
+template<typename T>
+inline 
+DistVector<T>::DistVector( int height, const T* buffer, mpi::Comm comm )
+: height_(height)
+{
+    if( comm_ != mpi::COMM_WORLD )
+        mpi::CommDup( comm, comm_ );
+    else
+        comm_ = comm;
+
+    const int commRank = mpi::CommRank( comm );
+    const int commSize = mpi::CommSize( comm );
+    blocksize_ = height_/commSize;
+    firstLocalRow_ = blocksize_*commRank;
+    const int localHeight =
+        ( commRank<commSize-1 ?
+          blocksize_ :
+          height_ - (commSize-1)*blocksize_ );
+    localVec_.LockedView( localHeight, 1, buffer, localHeight );
+}
+
+template<typename T>
+inline 
 DistVector<T>::~DistVector()
 { 
     if( comm_ != mpi::COMM_WORLD )

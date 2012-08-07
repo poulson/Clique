@@ -31,6 +31,8 @@ public:
     DistVector();
     DistVector( mpi::Comm comm );
     DistVector( int height, mpi::Comm comm );
+    DistVector( int height, T* buffer, mpi::Comm comm );
+    DistVector( int height, const T* buffer, mpi::Comm comm );
     // TODO: Constructor for building from a DistVector
     ~DistVector();
 

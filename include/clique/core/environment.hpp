@@ -68,6 +68,46 @@ RowToProcess( int i, int blocksize, int commSize )
         return commSize-1;
 }
 
+inline int
+Find( const std::vector<int>& sortedIndices, int index )
+{
+#ifndef RELEASE
+    PushCallStack("Find");
+#endif
+    std::vector<int>::const_iterator vecIt;
+    vecIt = std::lower_bound
+        ( sortedIndices.begin(), sortedIndices.end(), index );
+#ifndef RELEASE
+    if( vecIt == sortedIndices.end() )
+        throw std::logic_error("Could not find index");
+#endif
+    const int indexOffset = vecIt - sortedIndices.begin();
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return indexOffset;
+}
+    
+inline int
+Find( const std::vector<int>& sortedIndices, int index, std::string msg )
+{
+#ifndef RELEASE
+    PushCallStack("Find");
+#endif
+    std::vector<int>::const_iterator vecIt;
+    vecIt = std::lower_bound
+        ( sortedIndices.begin(), sortedIndices.end(), index );
+#ifndef RELEASE
+    if( vecIt == sortedIndices.end() )
+        throw std::logic_error( msg.c_str() );
+#endif
+    const int indexOffset = vecIt - sortedIndices.begin();
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return indexOffset;
+}
+
 inline void
 VerifySendsAndRecvs
 ( const std::vector<int>& sendCounts,

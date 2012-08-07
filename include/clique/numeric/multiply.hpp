@@ -131,7 +131,6 @@ void Multiply
       &recvValues[0], &recvSizes[0], &recvOffsets[0], comm );
      
     // Perform the local multiply-accumulate, y := alpha A x + y
-    std::vector<int>::const_iterator vecIt;
     for( int iLocal=0; iLocal<yLocalHeight; ++iLocal )
     {
         const int offset = A.LocalEntryOffset( iLocal );
@@ -139,13 +138,7 @@ void Multiply
         for( int k=0; k<rowSize; ++k )
         {
             const int col = A.Col( offset+k );
-            vecIt = std::lower_bound
-            ( recvIndices.begin(), recvIndices.end(), col );
-#ifndef RELEASE            
-            if( vecIt == recvIndices.end() )
-                throw std::logic_error("Could not find recv index");
-#endif
-            const int colOffset = vecIt - recvIndices.begin();
+            const int colOffset = Find( recvIndices, col );
             const T AValue = A.Value(k+offset);
             const T xValue = recvValues[colOffset];
             const T update = alpha*AValue*xValue;
@@ -263,7 +256,6 @@ void Multiply
       &recvValues[0], &recvSizes[0], &recvOffsets[0], comm );
      
     // Perform the local multiply-accumulate, y := alpha A x + y
-    std::vector<int>::const_iterator vecIt;
     for( int iLocal=0; iLocal<YLocalHeight; ++iLocal )
     {
         const int offset = A.LocalEntryOffset( iLocal );
@@ -271,13 +263,7 @@ void Multiply
         for( int k=0; k<rowSize; ++k )
         {
             const int col = A.Col( offset+k );
-            vecIt = std::lower_bound
-            ( recvIndices.begin(), recvIndices.end(), col );
-#ifndef RELEASE            
-            if( vecIt == recvIndices.end() )
-                throw std::logic_error("Could not find recv index");
-#endif
-            const int colOffset = vecIt - recvIndices.begin();
+            const int colOffset = Find( recvIndices, col );
             const T AValue = A.Value(k+offset);
             for( int j=0; j<width; ++j )
             {

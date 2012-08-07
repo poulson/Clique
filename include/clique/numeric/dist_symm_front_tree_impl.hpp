@@ -186,7 +186,6 @@ DistSymmFrontTree<F>::Initialize
     }
     std::vector<F> sendEntries( numSendEntries );
     std::vector<int> sendTargets( numSendEntries );
-    std::vector<int>::const_iterator vecIt;
     for( int q=0; q<commSize; ++q )
     {
         int index = sendEntriesOffsets[q];
@@ -202,13 +201,7 @@ DistSymmFrontTree<F>::Initialize
             {
                 const F value = A.Value( localEntryOffset+t );
                 const int col = A.Col( localEntryOffset+t );
-                vecIt = std::lower_bound
-                    ( targets.begin(), targets.end(), col );
-#ifndef RELEASE
-                if( vecIt == targets.end() )
-                    throw std::logic_error("Could not find target");
-#endif
-                const int targetOffset = vecIt - targets.begin();
+                const int targetOffset = Find( targets, col );
                 const int mappedTarget = mappedTargets[targetOffset];
 #ifndef RELEASE
                 if( index >= numSendEntries )
@@ -295,14 +288,7 @@ DistSymmFrontTree<F>::Initialize
                 }
                 else
                 {
-                    vecIt = std::lower_bound
-                        ( origLowerStruct.begin(), 
-                          origLowerStruct.end(), target );
-#ifndef RELEASE
-                    if( vecIt == origLowerStruct.end() )
-                        throw std::logic_error("No match in origLowerStruct");
-#endif
-                    const int origOffset = vecIt - origLowerStruct.begin();
+                    const int origOffset = Find( origLowerStruct, target );
 #ifndef RELEASE
                     if( origOffset >= (int)node.origLowerRelIndices.size() )
                         throw std::logic_error("origLowerRelIndices too small");
@@ -367,14 +353,7 @@ DistSymmFrontTree<F>::Initialize
                 }
                 else 
                 {
-                    vecIt = std::lower_bound
-                        ( origLowerStruct.begin(),
-                          origLowerStruct.end(), target );
-#ifndef RELEASE
-                    if( vecIt == origLowerStruct.end() )
-                        throw std::logic_error("No match in origLowerStruct");
-#endif
-                    const int origOffset = vecIt - origLowerStruct.begin();
+                    const int origOffset = Find( origLowerStruct, target );
 #ifndef RELEASE
                     if( origOffset >= (int)node.origLowerRelIndices.size() )
                         throw std::logic_error("origLowerRelIndices too small");
