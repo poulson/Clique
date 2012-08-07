@@ -34,6 +34,12 @@ public:
     // TODO: Constructor for building from a DistMap
     ~DistMap();
 
+    // If the total number of sources is partitioned among the processes, 
+    // calling this routine will have the DistMap map the indices to the 
+    // owning process
+    void StoreOwners
+    ( int numSource, std::vector<int>& localIndices, mpi::Comm comm );
+
     // Map manipulation
     // Collectively map each process's local set of indices
     void Translate( std::vector<int>& localIndices ) const;

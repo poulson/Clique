@@ -30,7 +30,7 @@ inline void
 DistSymmFrontTree<F>::Initialize
 ( Orientation orientation,
   const DistSparseMatrix<F>& A, 
-  const DistMap& map,
+  const DistMap& reordering,
   const DistSeparatorTree& sepTree, 
   const DistSymmInfo& info )
 {
@@ -38,7 +38,7 @@ DistSymmFrontTree<F>::Initialize
     PushCallStack("DistSymmFrontTree::Initialize");
     if( orientation == NORMAL )
         throw std::logic_error("Matrix must be symmetric or Hermitian");
-    if( A.LocalHeight() != map.NumLocalSources() )
+    if( A.LocalHeight() != reordering.NumLocalSources() )
         throw std::logic_error("Local mapping was not the right size");
 #endif
     isHermitian = ( orientation != TRANSPOSE );
@@ -58,7 +58,7 @@ DistSymmFrontTree<F>::Initialize
     std::vector<int> targets( targetSet.size() );
     std::copy( targetSet.begin(), targetSet.end(), targets.begin() );
     std::vector<int> mappedTargets = targets;
-    map.Translate( mappedTargets );
+    reordering.Translate( mappedTargets );
 
     // Set up the indices for the rows we need from each process
     std::vector<int> recvRowSizes( commSize, 0 );
@@ -414,14 +414,14 @@ inline
 DistSymmFrontTree<F>::DistSymmFrontTree
 ( Orientation orientation,
   const DistSparseMatrix<F>& A, 
-  const DistMap& map,
+  const DistMap& reordering,
   const DistSeparatorTree& sepTree, 
   const DistSymmInfo& info )
 {
 #ifndef RELEASE
     PushCallStack("DistSymmFrontTree::DistSymmFrontTree");
 #endif
-    Initialize( orientation, A, map, sepTree, info );
+    Initialize( orientation, A, reordering, sepTree, info );
 #ifndef RELEASE
     PopCallStack();
 #endif

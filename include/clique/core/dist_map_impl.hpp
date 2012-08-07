@@ -43,6 +43,75 @@ DistMap::~DistMap()
 }
 
 inline void
+DistMap::StoreOwners
+( int numSources, std::vector<int>& localIndices, mpi::Comm comm )
+{
+#ifndef RELEASE
+    PushCallStack("DistMap::StoreOwners");
+#endif
+    SetComm( comm );
+    ResizeTo( numSources );
+    const int commSize = mpi::CommSize( comm );
+    const int blocksize = Blocksize();
+    const int numLocalSources = NumLocalSources();
+    const int firstLocalSource = FirstLocalSource();
+
+    // Exchange via AllToAlls
+    std::vector<int> sendSizes( commSize, 0 );
+    const int numLocalIndices = localIndices.size();
+    for( int s=0; s<numLocalIndices; ++s )
+    {
+        const int i = localIndices[s];
+        const int q = RowToProcess( i, blocksize, commSize );
+        ++sendSizes[q];
+    }
+    std::vector<int> recvSizes( commSize );
+    mpi::AllToAll( &sendSizes[0], 1, &recvSizes[0], 1, comm );
+    std::vector<int> sendOffsets( commSize ),
+                     recvOffsets( commSize );
+    int numSends=0, numRecvs=0;
+    for( int q=0; q<commSize; ++q )
+    {
+        sendOffsets[q] = numSends;
+        recvOffsets[q] = numRecvs;
+        numSends += sendSizes[q];
+        numRecvs += recvSizes[q];
+    }
+#ifndef RELEASE
+    if( numRecvs != numLocalSources )
+        throw std::logic_error("Incorrect number of recv indices");
+#endif
+    std::vector<int> offsets = sendOffsets;
+    std::vector<int> sendIndices( numSends );
+    for( int s=0; s<numLocalIndices; ++s )
+    {
+        const int i = localIndices[s];
+        const int q = RowToProcess( i, blocksize, commSize );
+        sendIndices[offsets[q]++] = i;
+    }
+    std::vector<int> recvIndices( numRecvs );
+    mpi::AllToAll
+    ( &sendIndices[0], &sendSizes[0], &sendOffsets[0],
+      &recvIndices[0], &recvSizes[0], &recvOffsets[0], comm );
+
+    // Form map
+    for( int q=0; q<commSize; ++q )
+    {
+        const int size = recvSizes[q];
+        const int offset = recvOffsets[q];
+        for( int s=0; s<size; ++s )
+        {
+            const int i = recvIndices[offset+s];
+            const int iLocal = i - firstLocalSource;
+            SetLocal( iLocal, q );
+        }
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+inline void
 DistMap::Translate( std::vector<int>& localIndices ) const
 {
 #ifndef RELEASE

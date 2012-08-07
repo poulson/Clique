@@ -83,17 +83,17 @@ struct DistSymmFrontTree
 
     DistSymmFrontTree();
 
-    void Initialize
-    ( Orientation orientation,
-      const DistSparseMatrix<F>& A,
-      const DistMap& map,
-      const DistSeparatorTree& sepTree,
-      const DistSymmInfo& info );
-
     DistSymmFrontTree
     ( Orientation orientation,
       const DistSparseMatrix<F>& A, 
-      const DistMap& map,
+      const DistMap& reordering,
+      const DistSeparatorTree& sepTree,
+      const DistSymmInfo& info );
+
+    void Initialize
+    ( Orientation orientation,
+      const DistSparseMatrix<F>& A,
+      const DistMap& reordering,
       const DistSeparatorTree& sepTree,
       const DistSymmInfo& info );
 };
