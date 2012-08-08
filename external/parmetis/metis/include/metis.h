@@ -182,13 +182,6 @@ typedef __int64 int64_t;
 extern "C" {
 #endif
 
-/*-------------------------------------------------------------------
-* Added for usage in Clique by Jack Poulson
-*--------------------------------------------------------------------*/
-METIS_API(int) CliqBisect
-(idx_t *nvtxs, idx_t *xadj, idx_t *adjncy,
- idx_t *numSeps, real_t *imbalance, idx_t *order, idx_t *sizes);
-
 METIS_API(int) METIS_PartGraphRecursive(idx_t *nvtxs, idx_t *ncon, idx_t *xadj, 
                   idx_t *adjncy, idx_t *vwgt, idx_t *vsize, idx_t *adjwgt, 
                   idx_t *nparts, real_t *tpwgts, real_t *ubvec, idx_t *options, 

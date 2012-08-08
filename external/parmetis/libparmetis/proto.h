@@ -12,12 +12,6 @@
  *
  */
 
-/* Added by Jack Poulson to support Clique's interface with ParMETIS */
-void CliqParallelOrder
-( ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *sizes );
-void CliqParallelLabelVertices
-( ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *sizes );
-
 /* ctrl.c */
 ctrl_t *SetupCtrl(pmoptype_et optype, idx_t *options, idx_t ncon, idx_t nparts,
             real_t *tpwgts, real_t *ubvec, MPI_Comm comm);

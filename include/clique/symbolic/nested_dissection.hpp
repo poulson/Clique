@@ -20,6 +20,19 @@
 
 #ifdef HAVE_PARMETIS
 # include "parmetis.h"
+
+extern "C" {
+
+void CliqBisect
+( idx_t* nvtxs, idx_t* xAdj, idx_t* adjacency, idx_t* nseps, real_t* imbalance,
+  idx_t* perm, idx_t* sizes );
+
+void CliqParallelBisect
+( idx_t* vtxDist, idx_t* xAdj, idx_t* adjacency, 
+  idx_t* nparseps, idx_t* nseqseps, real_t* imbalance, idx_t* options, 
+  idx_t* perm, idx_t* sizes, MPI_Comm* comm );
+
+} // extern "C"
 #endif 
 
 namespace cliq {

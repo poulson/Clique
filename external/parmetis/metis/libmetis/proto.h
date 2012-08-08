@@ -15,9 +15,6 @@
 #ifndef _LIBMETIS_PROTO_H_
 #define _LIBMETIS_PROTO_H_
 
-/* Added by Jack Poulson to support Clique's interface with METIS */
-void CliqOrder( ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *sizes );
-
 /* auxapi.c */
 
 /* balance.c */
