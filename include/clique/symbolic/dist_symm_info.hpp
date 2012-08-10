@@ -84,6 +84,7 @@ struct DistSymmInfo
 {
     std::vector<LocalSymmNodeInfo> localNodes;
     std::vector<DistSymmNodeInfo> distNodes;
+    ~DistSymmInfo();
 
     void StoreReordered( std::vector<int>& reordered ) const;
 };
@@ -91,6 +92,14 @@ struct DistSymmInfo
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
+
+inline
+DistSymmInfo::~DistSymmInfo()
+{
+    const int numDist = distNodes.size();
+    for( int s=0; s<numDist; ++s )
+        mpi::CommFree( distNodes[s].comm );
+}
 
 inline void
 DistSymmInfo::StoreReordered( std::vector<int>& reordered ) const
