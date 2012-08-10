@@ -28,8 +28,7 @@ option(CLIQ_TESTS "Build a collection of test executables" OFF)
 option(CLIQ_EXAMPLES "Build a few example drivers" OFF)
 option(USE_CUSTOM_ALLTOALLV "Avoid MPI_Alltoallv for performance reasons" ON)
 
-# Add Elemental, but don't worry about the Hermitian eigensolver
-option(BUILD_PMRRR "Build the parallel tridiagonal eigensolver" OFF)
+# Add Elemental
 add_subdirectory(external/elemental)
 include_directories("${PROJECT_BINARY_DIR}/external/elemental/include")
 include_directories(${MPI_CXX_INCLUDE_PATH})
