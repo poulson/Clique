@@ -98,7 +98,10 @@ DistSymmInfo::~DistSymmInfo()
 {
     const int numDist = distNodes.size();
     for( int s=0; s<numDist; ++s )
+    {
+        delete distNodes[s].grid;
         mpi::CommFree( distNodes[s].comm );
+    }
 }
 
 inline void
