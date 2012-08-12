@@ -248,41 +248,43 @@ main( int argc, char* argv[] )
                          "numerical Green's function on root separator...";
             std::cout.flush();
         }
-        const double svdStart = mpi::Time();
-        const DistMatrix<C>& rootFront = frontTree.distFronts.back().front2dL;
-        const Grid& rootGrid = rootFront.Grid();
-        const int lowerHalf = rootSepSize/2;
-        const int upperHalf = rootSepSize - lowerHalf;
-        if( commRank == 0 )
-            std::cout << "lowerHalf=" << lowerHalf 
-                      << ", upperHalf=" << upperHalf << std::endl;
-        DistMatrix<C> offDiagBlock;
-        offDiagBlock.LockedView
-        ( rootFront, lowerHalf, 0, upperHalf, lowerHalf );
-        DistMatrix<C> offDiagBlockCopy( offDiagBlock );
-        DistMatrix<R,VR,STAR> singVals_VR_STAR( rootGrid );
-        elem::SingularValues( offDiagBlockCopy, singVals_VR_STAR );
-        const R twoNorm = elem::Norm( singVals_VR_STAR, elem::MAX_NORM );
-        const R tolerance = 1e-4;
-        DistMatrix<R,STAR,STAR> singVals( singVals_VR_STAR );
-        mpi::Barrier( comm );
-        const double svdStop = mpi::Time();
-        if( commRank == 0 ) 
-            std::cout << "done, " << svdStop-svdStart << " seconds\n";
-        for( double tol=1e-1; tol>=1e-10; tol/=10 )
         {
-            int numRank = lowerHalf;
-            for( int j=0; j<lowerHalf; ++j )
-            {
-                if( singVals.GetLocal(j,0) <= twoNorm*tol )
-                {
-                    numRank = j;
-                    break;
-                }
-            }
+            const double svdStart = mpi::Time();
+            const DistMatrix<C>& front = frontTree.distFronts.back().front2dL;
+            const Grid& grid = front.Grid();
+            const int lowerHalf = rootSepSize/2;
+            const int upperHalf = rootSepSize - lowerHalf;
             if( commRank == 0 )
-                std::cout << "  rank (" << tol << ")=" << numRank
-                          << "/" << lowerHalf << std::endl;
+                std::cout << "lowerHalf=" << lowerHalf 
+                          << ", upperHalf=" << upperHalf << std::endl;
+            DistMatrix<C> offDiagBlock;
+            offDiagBlock.LockedView
+            ( front, lowerHalf, 0, upperHalf, lowerHalf );
+            DistMatrix<C> offDiagBlockCopy( offDiagBlock );
+            DistMatrix<R,VR,STAR> singVals_VR_STAR( grid );
+            elem::SingularValues( offDiagBlockCopy, singVals_VR_STAR );
+            const R twoNorm = elem::Norm( singVals_VR_STAR, elem::MAX_NORM );
+            const R tolerance = 1e-4;
+            DistMatrix<R,STAR,STAR> singVals( singVals_VR_STAR );
+            mpi::Barrier( comm );
+            const double svdStop = mpi::Time();
+            if( commRank == 0 ) 
+                std::cout << "done, " << svdStop-svdStart << " seconds\n";
+            for( double tol=1e-1; tol>=1e-10; tol/=10 )
+            {
+                int numRank = lowerHalf;
+                for( int j=0; j<lowerHalf; ++j )
+                {
+                    if( singVals.GetLocal(j,0) <= twoNorm*tol )
+                    {
+                        numRank = j;
+                        break;
+                    }
+                }
+                if( commRank == 0 )
+                    std::cout << "  rank (" << tol << ")=" << numRank
+                              << "/" << lowerHalf << std::endl;
+            }
         }
 
         if( commRank == 0 )
