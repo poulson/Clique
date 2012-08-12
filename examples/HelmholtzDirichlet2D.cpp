@@ -69,12 +69,12 @@ main( int argc, char* argv[] )
         const int N = nx*ny;
         DistSparseMatrix<C> A( N, comm );
         C dampedOmega( omega, damping );
-        const double h1Inv = nx;
-        const double h2Inv = ny;
-        const double h1InvSquared = h1Inv*h1Inv;
-        const double h2InvSquared = h2Inv*h2Inv;
+        const double hxInv = nx+1;
+        const double hyInv = ny+1;
+        const double hxInvSquared = hxInv*hxInv;
+        const double hyInvSquared = hyInv*hyInv;
         const C mainTerm = 
-            2*(h1InvSquared+h2InvSquared) - dampedOmega*dampedOmega;
+            2*(hxInvSquared+hyInvSquared) - dampedOmega*dampedOmega;
 
         // Fill our portion of the 2D Helmholtz operator over the unit-square 
         // using a nx x ny 5-point stencil in natural ordering: 
@@ -97,13 +97,13 @@ main( int argc, char* argv[] )
 
             A.Update( i, i, mainTerm );
             if( x != 0 )
-                A.Update( i, i-1, -h1InvSquared );
+                A.Update( i, i-1, -hxInvSquared );
             if( x != nx-1 )
-                A.Update( i, i+1, -h1InvSquared );
+                A.Update( i, i+1, -hxInvSquared );
             if( y != 0 )
-                A.Update( i, i-nx, -h2InvSquared );
+                A.Update( i, i-nx, -hyInvSquared );
             if( y != ny-1 )
-                A.Update( i, i+nx, -h2InvSquared );
+                A.Update( i, i+nx, -hyInvSquared );
         } 
         A.StopAssembly();
         mpi::Barrier( comm );
@@ -197,6 +197,53 @@ main( int argc, char* argv[] )
 
         if( commRank == 0 )
         {
+            std::cout << "Computing SVD of connectivity of second separator to "
+                         "the root separator...";
+            std::cout.flush();
+        }
+        const int numDistFronts = frontTree.distFronts.size();
+        if( numDistFronts >= 2 && info.distNodes[numDistFronts-2].onLeft )
+        {
+            const double svdStart = mpi::Time();
+            const DistMatrix<C>& frontL =
+                frontTree.distFronts[numDistFronts-2].front2dL;
+            const Grid& grid = frontL.Grid();
+            const int gridRank = grid.Rank();
+            const int height = frontL.Height();
+            const int width = frontL.Width();
+            const int minDim = std::min(height,width);
+            DistMatrix<C> B( grid );
+            B.LockedView( frontL, width, 0, height-width, width );
+            DistMatrix<C> BCopy( B );
+            DistMatrix<R,VR,STAR> singVals_VR_STAR( grid );
+            elem::SingularValues( BCopy, singVals_VR_STAR );
+            const R twoNorm =
+                elem::Norm( singVals_VR_STAR, elem::MAX_NORM );
+            DistMatrix<R,STAR,STAR> singVals( singVals_VR_STAR );
+            mpi::Barrier( grid.Comm() );
+            const double svdStop = mpi::Time();
+            if( gridRank == 0 )
+                std::cout << "done, " << svdStop-svdStart << " seconds\n"
+                          << "  two norm=" << twoNorm << "\n";
+            for( double tol=1e-1; tol>=1e-10; tol/=10 )
+            {
+                int numRank = minDim;
+                for( int j=0; j<minDim; ++j )
+                {
+                    if( singVals.GetLocal(j,0) <= twoNorm*tol )
+                    {
+                        numRank = j;
+                        break;
+                    }
+                }
+                if( gridRank == 0 )
+                    std::cout << "  rank (" << tol << ")=" << numRank
+                              << "/" << minDim << std::endl;
+            }
+        }
+
+        if( commRank == 0 )
+        {
             std::cout << "Computing SVD of the largest off-diagonal block of "
                          "numerical Green's function on root separator...";
             std::cout.flush();
@@ -215,26 +262,27 @@ main( int argc, char* argv[] )
         DistMatrix<C> offDiagBlockCopy( offDiagBlock );
         DistMatrix<R,VR,STAR> singVals_VR_STAR( rootGrid );
         elem::SingularValues( offDiagBlockCopy, singVals_VR_STAR );
-        const R twoNorm = elem::Norm( singVals_VR_STAR, elem::INFINITY_NORM );
+        const R twoNorm = elem::Norm( singVals_VR_STAR, elem::MAX_NORM );
         const R tolerance = 1e-4;
         DistMatrix<R,STAR,STAR> singVals( singVals_VR_STAR );
-        int numRank = lowerHalf;
-        for( int j=0; j<lowerHalf; ++j )
-        {
-            if( singVals.GetLocal(j,0) <= twoNorm*tolerance )
-            {
-                numRank = j;
-                break;
-            }
-        }
         mpi::Barrier( comm );
         const double svdStop = mpi::Time();
-        if( commRank == 0 )
+        if( commRank == 0 ) 
+            std::cout << "done, " << svdStop-svdStart << " seconds\n";
+        for( double tol=1e-1; tol>=1e-10; tol/=10 )
         {
-            std::cout << "done, " << svdStop-svdStart << " seconds\n"
-                      << "  two norm=" << twoNorm << "\n"
-                      << "  numerical rank=" << numRank << "/" << lowerHalf
-                      << std::endl;
+            int numRank = lowerHalf;
+            for( int j=0; j<lowerHalf; ++j )
+            {
+                if( singVals.GetLocal(j,0) <= twoNorm*tol )
+                {
+                    numRank = j;
+                    break;
+                }
+            }
+            if( commRank == 0 )
+                std::cout << "  rank (" << tol << ")=" << numRank
+                          << "/" << lowerHalf << std::endl;
         }
 
         if( commRank == 0 )

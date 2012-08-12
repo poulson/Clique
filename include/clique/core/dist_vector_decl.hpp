@@ -52,6 +52,8 @@ public:
     T GetLocal( int localRow ) const;
     void SetLocal( int localRow, T value );
     void UpdateLocal( int localRow, T value );
+    Matrix<T>& LocalVector();
+    const Matrix<T>& LocalVector() const;
 
     // For modifying the size of the vector
     void Empty();

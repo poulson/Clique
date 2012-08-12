@@ -282,6 +282,16 @@ DistVector<T>::UpdateLocal( int localRow, T value )
 }
 
 template<typename T>
+inline Matrix<T>&
+DistVector<T>::LocalVector()
+{ return localVec_; }
+
+template<typename T>
+inline const Matrix<T>&
+DistVector<T>::LocalVector() const
+{ return localVec_; }
+
+template<typename T>
 inline void
 DistVector<T>::Empty()
 {
