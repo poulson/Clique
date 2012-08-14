@@ -87,7 +87,7 @@ inline void Solve
 template<typename F>
 inline void SymmetricSolve
 ( const DistSparseMatrix<F>& A, DistVector<F>& x, 
-  bool sequential=true, int numDistSeps=1, int numSeqSeps=1, int cutoff=128 )
+  bool sequential, int numDistSeps, int numSeqSeps, int cutoff )
 {
 #ifndef RELEASE
     PushCallStack("SymmetricSolve");
@@ -115,7 +115,7 @@ inline void SymmetricSolve
 template<typename F>
 inline void HermitianSolve
 ( const DistSparseMatrix<F>& A, DistVector<F>& x, 
-  bool sequential=true, int numDistSeps=1, int numSeqSeps=1, int cutoff=128 )
+  bool sequential, int numDistSeps, int numSeqSeps, int cutoff )
 {
 #ifndef RELEASE
     PushCallStack("HermitianSolve");
@@ -143,7 +143,7 @@ inline void HermitianSolve
 template<typename F>
 inline void SymmetricSolve
 ( const DistSparseMatrix<F>& A, DistMultiVector<F>& X, 
-  bool sequential=true, int numDistSeps=1, int numSeqSeps=1, int cutoff=128 )
+  bool sequential, int numDistSeps, int numSeqSeps, int cutoff )
 {
 #ifndef RELEASE
     PushCallStack("SymmetricSolve");
@@ -171,7 +171,7 @@ inline void SymmetricSolve
 template<typename F>
 inline void HermitianSolve
 ( const DistSparseMatrix<F>& A, DistMultiVector<F>& X, 
-  bool sequential=true, int numDistSeps=1, int numSeqSeps=1, int cutoff=128 )
+  bool sequential, int numDistSeps, int numSeqSeps, int cutoff )
 {
 #ifndef RELEASE
     PushCallStack("HermitianSolve");
