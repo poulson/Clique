@@ -192,7 +192,7 @@ template<typename T>
 inline void
 DistMultiVector<T>::SetComm( mpi::Comm comm )
 { 
-    if( comm_ != mpi::COMM_WORLD )
+    if( comm != mpi::COMM_WORLD )
         mpi::CommDup( comm, comm_ );
     else
         comm_ = comm;

@@ -151,7 +151,7 @@ inline
 DistVector<T>::DistVector( int height, T* buffer, mpi::Comm comm )
 : height_(height)
 {
-    if( comm_ != mpi::COMM_WORLD )
+    if( comm != mpi::COMM_WORLD )
         mpi::CommDup( comm, comm_ );
     else
         comm_ = comm;
@@ -172,7 +172,7 @@ inline
 DistVector<T>::DistVector( int height, const T* buffer, mpi::Comm comm )
 : height_(height)
 {
-    if( comm_ != mpi::COMM_WORLD )
+    if( comm != mpi::COMM_WORLD )
         mpi::CommDup( comm, comm_ );
     else
         comm_ = comm;
@@ -205,7 +205,7 @@ template<typename T>
 inline void
 DistVector<T>::SetComm( mpi::Comm comm )
 { 
-    if( comm_ != mpi::COMM_WORLD )
+    if( comm != mpi::COMM_WORLD )
         mpi::CommDup( comm, comm_ );
     else
         comm_ = comm;
