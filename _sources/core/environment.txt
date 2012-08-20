@@ -11,9 +11,9 @@ Set up and clean up
 
 .. cpp:function:: void Initialize( int& argc, char**& argv )
 
-   Initialized Clique and (if necessary) Elemental. The usage is very similar
+   Initializes Clique and (if necessary) Elemental. The usage is very similar
    to ``MPI_Init``, but the command-line information, ``argc`` and ``argv``, 
-   do not have to be passed in as pointers:
+   does not have to be passed in as pointers:
 
    .. code-block:: cpp
 
@@ -23,10 +23,9 @@ Set up and clean up
       main( int argc, char* argv[] )
       {
           cliq::Initialize( argc, argv );
-
           // ...
-
           cliq::Finalize();
+          return 0;
       }
 
 .. cpp:function:: void Finalize()

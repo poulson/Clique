@@ -63,19 +63,18 @@ call stack manipulation, and data structures and routines imported from
 <dl class="function">
 <dt id="Initialize__iR.cPPR">
 void <tt class="descname">Initialize</tt><big>(</big>int&amp; <em>argc</em>, char**&amp; <em>argv</em><big>)</big><a class="headerlink" href="#Initialize__iR.cPPR" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialized Clique and (if necessary) Elemental. The usage is very similar
+<dd><p>Initializes Clique and (if necessary) Elemental. The usage is very similar
 to <tt class="docutils literal"><span class="pre">MPI_Init</span></tt>, but the command-line information, <tt class="docutils literal"><span class="pre">argc</span></tt> and <tt class="docutils literal"><span class="pre">argv</span></tt>,
-do not have to be passed in as pointers:</p>
+does not have to be passed in as pointers:</p>
 <div class="highlight-cpp"><div class="highlight"><pre><span class="cp">#include &quot;clique.hpp&quot;</span>
 
 <span class="kt">int</span>
 <span class="n">main</span><span class="p">(</span> <span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">argv</span><span class="p">[]</span> <span class="p">)</span>
 <span class="p">{</span>
     <span class="n">cliq</span><span class="o">::</span><span class="n">Initialize</span><span class="p">(</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span> <span class="p">);</span>
-
     <span class="c1">// ...</span>
-
     <span class="n">cliq</span><span class="o">::</span><span class="n">Finalize</span><span class="p">();</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 <span class="p">}</span>
 </pre></div>
 </div>
