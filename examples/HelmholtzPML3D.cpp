@@ -23,19 +23,44 @@ using namespace cliq;
 void Usage()
 {
     std::cout
-      << "HelmholtzDirichlet2D <nx> <ny> <omega> <damping> "
+      << "HelmholtzPML3D <nx> <ny> <nz> <omega> <Lx> <Ly> <Lz> <b> <sigma> <p>"
       << "[analytic=true] [sequential=true] [cutoff=128] \n"
       << "[numDistSeps=1] [numSeqSeps=1]\n"
-      << "  nx: first dimension of nx x ny mesh\n"
-      << "  ny: second dimension of nx x ny mesh\n"
+      << "  nx,ny,nz: dimensions of nx x ny x nz mesh\n"
       << "  omega: frequency of problem in radians per second\n"
-      << "  damping: imaginary damping in radians per second\n"
+      << "  Lx,Ly,Lz: dimensions of [0,Lx] x [0,Ly] x [0,Lz] domain\n"
+      << "  b: with of PML in grid points\n"
+      << "  sigma: coefficient for PML profile\n"
+      << "  p: polynomial order for PML profile\n"
       << "  analytic: if nonzero, use an analytical reordering\n"
       << "  sequential: if nonzero, then run a sequential symbolic reordering\n"
       << "  cutoff: maximum size of leaf node\n"
       << "  numDistSeps: number of distributed separators to try\n"
       << "  numSeqSeps: number of sequential separators to try\n"
       << std::endl;
+}
+
+Complex<double> PML( double x, double w, double p, double sigma, double k )
+{
+#ifndef RELEASE
+    if( x < 0 || x > w+1e-10 )
+        throw std::logic_error("Evaluation point not in PML interval");
+#endif
+    const double realPart = 1.0;
+    const double arg = x/w;
+    const double imagPart = sigma*std::pow(arg,p)/k;
+    return Complex<double>(realPart,imagPart); 
+}
+
+Complex<double> 
+sInv( int j, int n, int b, double h, double p, double sigma, double k )
+{
+    if( j < b-1 )
+        return PML( b-1-j, b, p, sigma, k );
+    else if( j > n-b )
+        return PML( j-(n-b), b, p, sigma, k );
+    else
+        return Complex<double>(1.0,0.0);
 }
 
 int
@@ -47,7 +72,7 @@ main( int argc, char* argv[] )
     typedef double R;
     typedef Complex<R> C;
 
-    if( argc < 5 )
+    if( argc < 11 )
     {
         if( commRank == 0 )
             Usage();
@@ -57,8 +82,14 @@ main( int argc, char* argv[] )
     int argNum = 1;
     const int nx = atoi(argv[argNum++]);
     const int ny = atoi(argv[argNum++]);
+    const int nz = atoi(argv[argNum++]);
     const double omega = atof(argv[argNum++]);
-    const double damping = atof(argv[argNum++]);
+    const double Lx = atof(argv[argNum++]);
+    const double Ly = atof(argv[argNum++]);
+    const double Lz = atof(argv[argNum++]);
+    const int b = atoi(argv[argNum++]);
+    const double sigma = atof(argv[argNum++]);
+    const double p = atof(argv[argNum++]);
     const bool analytic = ( argc>argNum ? atoi(argv[argNum++]) : true );
     const bool sequential = ( argc>argNum ? atoi(argv[argNum++]) : true );
     const int cutoff = ( argc>argNum ? atoi(argv[argNum++]) : 128 );
@@ -67,19 +98,17 @@ main( int argc, char* argv[] )
 
     try
     {
-        const int N = nx*ny;
+        const double k = omega/(2*M_PI);
+        const int N = nx*ny*nz;
         DistSparseMatrix<C> A( N, comm );
-        C dampedOmega( omega, damping );
-        const double hxInv = nx+1;
-        const double hyInv = ny+1;
-        const double hxInvSquared = hxInv*hxInv;
-        const double hyInvSquared = hyInv*hyInv;
-        const C mainTerm = 
-            2*(hxInvSquared+hyInvSquared) - dampedOmega*dampedOmega;
+        const double hx = Lx/(nx+1);
+        const double hy = Ly/(ny+1);
+        const double hz = Lz/(nz+1);
+        const double hxSquared = hx*hx;
+        const double hySquared = hy*hy;
+        const double hzSquared = hz*hz;
 
-        // Fill our portion of the 2D Helmholtz operator over the unit-square 
-        // using a nx x ny 5-point stencil in natural ordering: 
-        // (x,y) at x + y*nx
+        // Fill our portion of the 3D Helmholtz operator 
         if( commRank == 0 )
         {
             std::cout << "Filling local portion of matrix...";
@@ -89,22 +118,61 @@ main( int argc, char* argv[] )
         const int firstLocalRow = A.FirstLocalRow();
         const int localHeight = A.LocalHeight();
         A.StartAssembly();
-        A.Reserve( 5*localHeight );
+        A.Reserve( 7*localHeight );
         for( int iLocal=0; iLocal<localHeight; ++iLocal )
         {
             const int i = firstLocalRow + iLocal;
             const int x = i % nx;
-            const int y = i/nx;
+            const int y = (i/nx) % ny;
+            const int z = i/(nx*ny);
+
+            const C s1InvL = sInv( x-1, nx, b, hx, p, sigma, k );
+            const C s1InvM = sInv( x,   nx, b, hx, p, sigma, k );
+            const C s1InvR = sInv( x+1, nx, b, hx, p, sigma, k );
+            const C s2InvL = sInv( y-1, ny, b, hy, p, sigma, k );
+            const C s2InvM = sInv( y,   ny, b, hy, p, sigma, k );
+            const C s2InvR = sInv( y+1, ny, b, hy, p, sigma, k );
+            const C s3InvL = sInv( z-1, nz, b, hz, p, sigma, k );
+            const C s3InvM = sInv( z,   nz, b, hz, p, sigma, k );
+            const C s3InvR = sInv( z+1, nz, b, hz, p, sigma, k );
+
+            const C xTop = s2InvM*s3InvM;
+            const C xTempL = xTop/s1InvL;
+            const C xTempM = xTop/s1InvM;
+            const C xTempR = xTop/s1InvR;
+            const C xTermL = (xTempL+xTempM) / (2*hxSquared);
+            const C xTermR = (xTempM+xTempR) / (2*hxSquared);
+
+            const C yTop = s1InvM*s3InvM;
+            const C yTempL = yTop/s2InvL;
+            const C yTempM = yTop/s2InvM;
+            const C yTempR = yTop/s2InvR;
+            const C yTermL = (yTempL+yTempM) / (2*hySquared);
+            const C yTermR = (yTempM+yTempR) / (2*hySquared);
+
+            const C zTop = s1InvM*s2InvM;
+            const C zTempL = zTop/s3InvL;
+            const C zTempM = zTop/s3InvM;
+            const C zTempR = zTop/s3InvR;
+            const C zTermL = (zTempL+zTempM) / (2*hzSquared);
+            const C zTermR = (zTempM+zTempR) / (2*hzSquared);
+
+            const C mainTerm = -(xTermL+xTermR+yTermL+yTermR+zTermL+zTermR)
+                + omega*omega*s1InvM*s2InvM*s3InvM;
 
             A.Update( i, i, mainTerm );
             if( x != 0 )
-                A.Update( i, i-1, -hxInvSquared );
+                A.Update( i, i-1, xTermL );
             if( x != nx-1 )
-                A.Update( i, i+1, -hxInvSquared );
+                A.Update( i, i+1, xTermR );
             if( y != 0 )
-                A.Update( i, i-nx, -hyInvSquared );
+                A.Update( i, i-nx, yTermL );
             if( y != ny-1 )
-                A.Update( i, i+nx, -hyInvSquared );
+                A.Update( i, i+nx, yTermR );
+            if( z != 0 )
+                A.Update( i, i-nx*ny, zTermL );
+            if( z != nz-1 )
+                A.Update( i, i+nx*ny, zTermR );
         } 
         A.StopAssembly();
         mpi::Barrier( comm );
@@ -114,21 +182,16 @@ main( int argc, char* argv[] )
                       << std::endl;
 
         if( commRank == 0 )
-        {
-            std::cout << "Generating random vector x and forming y := A x...";
-            std::cout.flush();
-        }
-        const double multiplyStart = mpi::Time();
-        DistVector<C> x( N, comm ), y( N, comm );
-        MakeUniform( x );
-        MakeZeros( y );
-        Multiply( (C)1., A, x, (C)0., y );
-        const double yOrigNorm = Norm( y );
-        mpi::Barrier( comm );
-        const double multiplyStop = mpi::Time();
-        if( commRank == 0 )
-            std::cout << "done, " << multiplyStop-multiplyStart << " seconds"
-                      << std::endl;
+            std::cout << "Generating point-source for y..." << std::endl;
+        DistVector<C> y( N, comm ), z( N, comm );
+        MakeZeros( z );
+        const int xSource = nx/2;
+        const int ySource = ny/2;
+        const int zSource = nz/2;
+        const int iSource = xSource + ySource*nx + zSource*nx*ny;
+        if( iSource >= firstLocalRow && iSource < firstLocalRow+localHeight )
+            z.SetLocal( iSource-firstLocalRow, Complex<double>(1.0,0.0) );
+        y = z;
 
         if( commRank == 0 )
         {
@@ -142,7 +205,7 @@ main( int argc, char* argv[] )
         DistMap map, inverseMap;
         if( analytic )
             NaturalNestedDissection
-            ( nx, ny, 1, graph, map, sepTree, info, cutoff );
+            ( nx, ny, nz, graph, map, sepTree, info, cutoff );
         else
             NestedDissection
             ( graph, map, sepTree, info, 
@@ -206,7 +269,7 @@ main( int argc, char* argv[] )
         if( numDistFronts >= 2 && info.distNodes[numDistFronts-2].onLeft )
         {
             const double svdStart = mpi::Time();
-            const DistMatrix<C>& frontL =
+            const DistMatrix<C>& frontL = 
                 frontTree.distFronts[numDistFronts-2].front2dL;
             const Grid& grid = frontL.Grid();
             const int gridRank = grid.Rank();
@@ -218,7 +281,7 @@ main( int argc, char* argv[] )
             DistMatrix<C> BCopy( B );
             DistMatrix<R,VR,STAR> singVals_VR_STAR( grid );
             elem::SingularValues( BCopy, singVals_VR_STAR );
-            const R twoNorm =
+            const R twoNorm = 
                 elem::Norm( singVals_VR_STAR, elem::MAX_NORM );
             DistMatrix<R,STAR,STAR> singVals( singVals_VR_STAR );
             mpi::Barrier( grid.Comm() );
@@ -238,7 +301,7 @@ main( int argc, char* argv[] )
                     }
                 }
                 if( gridRank == 0 )
-                    std::cout << "  rank (" << tol << ")=" << numRank
+                    std::cout << "  rank (" << tol << ")=" << numRank 
                               << "/" << minDim << std::endl;
             }
         }
@@ -256,7 +319,7 @@ main( int argc, char* argv[] )
             const int lowerHalf = rootSepSize/2;
             const int upperHalf = rootSepSize - lowerHalf;
             if( commRank == 0 )
-                std::cout << "lowerHalf=" << lowerHalf 
+                std::cout << "lowerHalf=" << lowerHalf
                           << ", upperHalf=" << upperHalf << std::endl;
             DistMatrix<C> offDiagBlock;
             offDiagBlock.LockedView
@@ -269,7 +332,7 @@ main( int argc, char* argv[] )
             DistMatrix<R,STAR,STAR> singVals( singVals_VR_STAR );
             mpi::Barrier( comm );
             const double svdStop = mpi::Time();
-            if( commRank == 0 ) 
+            if( commRank == 0 )
                 std::cout << "done, " << svdStop-svdStart << " seconds\n";
             for( double tol=1e-1; tol>=1e-10; tol/=10 )
             {
@@ -304,21 +367,19 @@ main( int argc, char* argv[] )
             std::cout << "done, " << solveStop-solveStart << " seconds"
                       << std::endl;
 
+        if( mpi::CommSize( comm ) == 1 )
+            y.LocalVector().Print("solution");
+
         if( commRank == 0 )
-            std::cout << "Checking error in computed solution..." << std::endl;
-        const double xNorm = Norm( x );
-        const double yNorm = Norm( y );
-        Axpy( (C)-1., x, y );
-        const double errorNorm = Norm( y );
+            std::cout << "Checking residual norm of solution..." << std::endl;
+        const double bNorm = Norm( z );
+        Multiply( (C)-1, A, y, (C)1, z );
+        const double errorNorm = Norm( z );
         if( commRank == 0 )
         {
-            std::cout << "|| x     ||_2 = " << xNorm << "\n"
-                      << "|| xComp ||_2 = " << yNorm << "\n"
-                      << "|| A x   ||_2 = " << yOrigNorm << "\n"
-                      << "|| error ||_2 / || x ||_2 = " 
-                      << errorNorm/xNorm << "\n"
-                      << "|| error ||_2 / || A x ||_2 = " 
-                      << errorNorm/yOrigNorm
+            std::cout << "|| b     ||_2 = " << bNorm << "\n"
+                      << "|| error ||_2 / || b ||_2 = " 
+                      << errorNorm/bNorm << "\n"
                       << std::endl;
         }
     }

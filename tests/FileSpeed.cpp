@@ -46,10 +46,10 @@ main( int argc, char* argv[] )
     }
 
     int argNum = 1;
-    const unsigned numMB = atoi( argv[argNum++] );
-    const unsigned numPieces = atoi( argv[argNum++] );
-    const unsigned numFiles = atoi( argv[argNum++] );
-    const char* baseName = ( argc >= 5 ? argv[argNum++] : "out" );
+    const unsigned numMB = atoi(argv[argNum++]);
+    const unsigned numPieces = atoi(argv[argNum++] );
+    const unsigned numFiles = atoi(argv[argNum++]);
+    const char* baseName = ( argc>argNum ? argv[argNum++] : "out" );
     if( numPieces == 0 && commRank == 0 )
     {
         std::cout << "Number of pieces must be positive." << std::endl;

@@ -125,7 +125,7 @@ endif()
 # Build the example drivers if necessary
 if(CLIQ_EXAMPLES)
   set(EXAMPLE_DIR ${PROJECT_SOURCE_DIR}/examples)
-  set(EXAMPLES HelmholtzDirichlet2D HelmholtzDirichlet3D)
+  set(EXAMPLES HelmholtzDirichlet2D HelmholtzDirichlet3D HelmholtzPML3D)
 
   # Build the examples
   set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/examples")

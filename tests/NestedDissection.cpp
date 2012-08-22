@@ -47,11 +47,12 @@ main( int argc, char* argv[] )
         cliq::Finalize();
         return 0;
     }
-    const int n = atoi( argv[1] );
-    const bool sequential = ( argc >= 3 ? atoi( argv[2] ) : true );
-    const int numDistSeps = ( argc >= 4 ? atoi( argv[3] ) : 10 );
-    const int numSeqSeps = ( argc >= 5 ? atoi( argv[4] ) : 5 );
-    const int cutoff = ( argc >= 6 ? atoi( argv[5] ) : 128 );
+    int argNum = 1;
+    const int n = atoi(argv[argNum++]);
+    const bool sequential = ( argc>argNum ? atoi(argv[argNum++]) : true );
+    const int numDistSeps = ( argc>argNum ? atoi(argv[argNum++]) : 10 );
+    const int numSeqSeps = ( argc>argNum ? atoi(argv[argNum++]) : 5 );
+    const int cutoff = ( argc>argNum ? atoi(argv[argNum++]) : 128 );
 
     try
     {

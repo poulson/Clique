@@ -55,16 +55,17 @@ main( int argc, char* argv[] )
         cliq::Finalize();
         return 0;
     }
-    const int nx = atoi( argv[1] );
-    const int ny = atoi( argv[2] );
-    const int nz = atoi( argv[3] );
-    const double omega = atof( argv[4] );
-    const double damping = atof( argv[5] );
-    const bool analytic = ( argc >= 7 ? atoi( argv[6] ) : true );
-    const bool sequential = ( argc >= 8 ? atoi( argv[7] ) : true );
-    const int cutoff = ( argc >= 9 ? atoi( argv[8] ) : 128 );
-    const int numDistSeps = ( argc >= 10 ? atoi( argv[9] ) : 1 );
-    const int numSeqSeps = ( argc >= 11 ? atoi( argv[10] ) : 1 );
+    int argNum = 1;
+    const int nx = atoi(argv[argNum++]);
+    const int ny = atoi(argv[argNum++]);
+    const int nz = atoi(argv[argNum++]);
+    const double omega = atof(argv[argNum++]);
+    const double damping = atof(argv[argNum++]);
+    const bool analytic = ( argc>argNum ? atoi(argv[argNum++]) : true );
+    const bool sequential = ( argc>argNum ? atoi(argv[argNum++]) : true );
+    const int cutoff = ( argc>argNum ? atoi(argv[argNum++]) : 128 );
+    const int numDistSeps = ( argc>argNum ? atoi(argv[argNum++]) : 1 );
+    const int numSeqSeps = ( argc>argNum ? atoi(argv[argNum++]) : 1 );
 
     try
     {

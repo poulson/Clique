@@ -45,10 +45,11 @@ main( int argc, char* argv[] )
         cliq::Finalize();
         return 0;
     }
-    const int nx = atoi( argv[1] );
-    const int ny = atoi( argv[2] );
-    const int nz = atoi( argv[3] );
-    const int cutoff = ( argc >= 5 ? atoi( argv[4] ) : 128 );
+    int argNum = 1;
+    const int nx = atoi(argv[argNum++]);
+    const int ny = atoi(argv[argNum++]);
+    const int nz = atoi(argv[argNum++]);
+    const int cutoff = ( argc>argNum ? atoi(argv[argNum++]) : 128 );
 
     try
     {
