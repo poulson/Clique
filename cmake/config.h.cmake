@@ -24,6 +24,7 @@
 #define Clique_VERSION_MINOR @Clique_VERSION_MINOR@
 
 #cmakedefine USE_CUSTOM_ALLTOALLV
+#cmakedefine BARRIER_IN_ALLTOALLV
 #cmakedefine HAVE_PARMETIS
 
 #endif /* CLIQUE_CONFIG_HPP */

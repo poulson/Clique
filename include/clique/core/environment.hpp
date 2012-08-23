@@ -163,6 +163,10 @@ SparseAllToAll
             ( &recvBuffer[displ], count, proc, 0, comm,
               requests[rCount++] );
     }
+# ifdef BARRIER_IN_ALLTOALLV
+    // This should help ensure that recvs are posted before the sends
+    mpi::Barrier( comm );
+# endif
     for( int proc=0; proc<commSize; ++proc )
     {
         int count = sendCounts[proc];

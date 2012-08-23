@@ -27,6 +27,7 @@ set(Clique_VERSION_MINOR 1)
 option(CLIQ_TESTS "Build a collection of test executables" OFF)
 option(CLIQ_EXAMPLES "Build a few example drivers" OFF)
 option(USE_CUSTOM_ALLTOALLV "Avoid MPI_Alltoallv for performance reasons" ON)
+option(BARRIER_IN_ALLTOALLV "Barrier before posting non-blocking recvs" ON)
 
 # Add Elemental
 add_subdirectory(external/elemental)
@@ -147,6 +148,7 @@ endif()
 # Uncomment if including Clique as a subproject in another build system        #
 ################################################################################
 #set(USE_CUSTOM_ALLTOALLV ${USE_CUSTOM_ALLTOALLV} PARENT_SCOPE)
+#set(BARRIER_IN_ALLTOALLV ${BARRIER_IN_ALLTOALLV} PARENT_SCOPE)
 #set(HAVE_PARMETIS ${HAVE_PARMETIS} PARENT_SCOPE)
 #
 #set(LIBRARY_TYPE ${LIBRARY_TYPE} PARENT_SCOPE)
