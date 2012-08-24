@@ -6,7 +6,8 @@ CLIQ_LINK_FLAGS = ${ELEM_LINK_FLAGS}
 
 HAVE_PARMETIS = @HAVE_PARMETIS@
 ifeq (${HAVE_PARMETIS},TRUE)
-  CLIQ_LIBS = -lclique -lparmetis -lmetis ${ELEM_LIBS}
+  CLIQ_LIBS = -lclique -lparmetis-addons -lmetis-addons -lparmetis -lmetis \
+              ${ELEM_LIBS}
 else
   CLIQ_LIBS = -lclique ${ELEM_LIBS}
 endif

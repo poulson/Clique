@@ -27,19 +27,23 @@ set(Clique_VERSION_MINOR 1)
 option(CLIQ_TESTS "Build a collection of test executables" OFF)
 option(CLIQ_EXAMPLES "Build a few example drivers" OFF)
 option(USE_CUSTOM_ALLTOALLV "Avoid MPI_Alltoallv for performance reasons" ON)
-option(BARRIER_IN_ALLTOALLV "Barrier before posting non-blocking recvs" ON)
+option(BARRIER_IN_ALLTOALLV "Barrier before posting non-blocking recvs" OFF)
 
 # Add Elemental
 add_subdirectory(external/elemental)
-include_directories("${PROJECT_BINARY_DIR}/external/elemental/include")
+include_directories(${PROJECT_BINARY_DIR}/external/elemental/include)
 include_directories(${MPI_CXX_INCLUDE_PATH})
 
 option(BUILD_PARMETIS "Build the parallel metis library" ON)
 if(BUILD_PARMETIS)
   add_subdirectory(external/parmetis)
-  include_directories("${PROJECT_SOURCE_DIR}/external/parmetis/include")
-  include_directories("${PROJECT_SOURCE_DIR}/external/parmetis/metis/include")
   set(HAVE_PARMETIS TRUE)
+
+  add_subdirectory(src/metis)
+  add_subdirectory(src/parmetis)
+
+  include_directories(${PROJECT_SOURCE_DIR}/external/parmetis/include)
+  include_directories(${PROJECT_SOURCE_DIR}/external/parmetis/metis/include)
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")
@@ -62,8 +66,7 @@ install(FILES ${PROJECT_BINARY_DIR}/conf/cliqvariables
         DESTINATION conf)
 
 # Grab all of the .c, .cpp, .h, and .hpp Clique files
-file(GLOB_RECURSE CLIQUE_CPP RELATIVE ${PROJECT_SOURCE_DIR} 
-     "src/*.c" "src/*.cpp")
+file(GLOB_RECURSE CLIQUE_CPP RELATIVE ${PROJECT_SOURCE_DIR} "src/*.cpp")
 file(GLOB_RECURSE CLIQUE_HEADERS RELATIVE ${PROJECT_SOURCE_DIR} 
      "include/*.h" "include/*.hpp")
 set(CLIQUE_SRC "${CLIQUE_CPP};${CLIQUE_HEADERS}")
@@ -71,7 +74,7 @@ set(CLIQUE_SRC "${CLIQUE_CPP};${CLIQUE_HEADERS}")
 # The main library
 add_library(clique ${LIBRARY_TYPE} ${CLIQUE_SRC})
 if(BUILD_PARMETIS)
-  target_link_libraries(clique elemental parmetis)
+  target_link_libraries(clique elemental parmetis-addons metis-addons parmetis)
 else()
   target_link_libraries(clique elemental)
 endif()
