@@ -1,0 +1,3 @@
+#ifndef metis__thread
+#define metis__thread @GKlib_TLS@
+#endif

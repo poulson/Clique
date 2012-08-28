@@ -14,11 +14,16 @@
 /*************************************************************************
 * Extern variable definition. Hopefully, the __thread makes them thread-safe.
 **************************************************************************/
+
+/* include the definition of metis__thread; it is assumed that
+   gklib_tls.h will be installed 'globally' i.e. into $PREFIX */
+#include <gklib_tls.h>
+
 #ifndef _GK_ERROR_C_
 /* declared in error.c */
-extern __thread int gk_cur_jbufs;
-extern __thread jmp_buf gk_jbufs[];
-extern __thread jmp_buf gk_jbuf;
+extern metis__thread int gk_cur_jbufs;
+extern metis__thread jmp_buf gk_jbufs[];
+extern metis__thread jmp_buf gk_jbuf;
 
 #endif
 

@@ -39,6 +39,7 @@ if(BUILD_PARMETIS)
   add_subdirectory(external/parmetis)
   set(HAVE_PARMETIS TRUE)
 
+  include_directories(${PROJECT_BINARY_DIR}/external/parmetis/include)
   add_subdirectory(src/metis)
   add_subdirectory(src/parmetis)
 
