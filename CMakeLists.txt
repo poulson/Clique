@@ -29,23 +29,38 @@ option(CLIQ_EXAMPLES "Build a few example drivers" OFF)
 option(USE_CUSTOM_ALLTOALLV "Avoid MPI_Alltoallv for performance reasons" ON)
 option(BARRIER_IN_ALLTOALLV "Barrier before posting non-blocking recvs" OFF)
 
-# Add Elemental
-add_subdirectory(external/elemental)
-include_directories(${PROJECT_BINARY_DIR}/external/elemental/include)
-include_directories(${MPI_CXX_INCLUDE_PATH})
+if(MANUAL_ELEMENTAL)
+  include_directories(${ELEMENTAL_INCLUDE_DIR})
+  include_directories(${MPI_CXX_INCLUDE_PATH})
+else()
+  add_subdirectory(external/elemental)
+  include_directories(${PROJECT_BINARY_DIR}/external/elemental/include)
+  include_directories(${MPI_CXX_INCLUDE_PATH})
+endif()
 
 option(BUILD_PARMETIS "Build the parallel metis library" ON)
 if(BUILD_PARMETIS)
   add_subdirectory(external/parmetis)
   set(HAVE_PARMETIS TRUE)
 
-  include_directories(${PROJECT_BINARY_DIR}/external/parmetis/include)
+  set(PARMETIS_ROOT ${PROJECT_SOURCE_DIR}/external/parmetis)
+  set(METIS_ROOT ${PROJECT_SOURCE_DIR}/external/parmetis/metis)
+  set(GKLIB_INCLUDE_DIR ${PROJECT_BINARY_DIR}/external/parmetis/include)
+
+  include_directories(${GKLIB_INCLUDE_DIR})
   add_subdirectory(src/metis)
   add_subdirectory(src/parmetis)
 
-  include_directories(${PROJECT_SOURCE_DIR}/external/parmetis/include)
-  include_directories(${PROJECT_SOURCE_DIR}/external/parmetis/metis/include)
+  include_directories(${METIS_ROOT}/include)
+  include_directories(${PARMETIS_ROOT}/include)
 elseif(MANUAL_PARMETIS)
+  # The following variables need to be specified:
+  #   PARMETIS_TLS_PATCH: defined iff there is a GKlib configure file
+  #   GKLIB_INCLUDE_DIR: if PARMETIS_TLS_PATCH is defined, this should point
+  #                      to the directory containing gklib_tls.h
+  #   METIS_ROOT: the full path to the root of the MeTiS source tree
+  #   PARMETIS_ROOT: the full path to the root of the ParMeTiS source tree
+
   set(HAVE_PARMETIS TRUE)
 
   if(PARMETIS_TLS_PATCH)
@@ -54,8 +69,8 @@ elseif(MANUAL_PARMETIS)
   add_subdirectory(src/metis)
   add_subdirectory(src/parmetis)
 
-  include_directories(${METIS_INCLUDE_DIR})
-  include_directories(${PARMETIS_INCLUDE_DIR})
+  include_directories(${METIS_ROOT}/include)
+  include_directories(${PARMETIS_ROOT}/include)
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")
@@ -85,12 +100,15 @@ set(CLIQUE_SRC "${CLIQUE_CPP};${CLIQUE_HEADERS}")
 
 # The main library
 add_library(clique ${LIBRARY_TYPE} ${CLIQUE_SRC})
-if(BUILD_PARMETIS)
-  target_link_libraries(clique elemental parmetis-addons metis-addons parmetis)
-elseif(MANUAL_PARMETIS)
-  target_link_libraries(clique elemental parmetis-addons metis-addons ${PARMETIS_LIBS})
+if(MANUAL_ELEMENTAL)
+  target_link_libraries(clique ${ELEM_LIBS})
 else()
   target_link_libraries(clique elemental)
+endif()
+if(BUILD_PARMETIS)
+  target_link_libraries(clique parmetis-addons metis-addons parmetis)
+elseif(MANUAL_PARMETIS)
+  target_link_libraries(clique parmetis-addons metis-addons ${PARMETIS_LIBS})
 endif()
 set(MPI_LINK_FLAGS "${MPI_CXX_LINK_FLAGS}")
 install(TARGETS clique DESTINATION lib)

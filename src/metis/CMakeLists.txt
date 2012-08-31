@@ -1,4 +1,3 @@
-set(METIS_ROOT ${PROJECT_SOURCE_DIR}/external/parmetis/metis)
 include_directories(${METIS_ROOT}/GKlib)
 include_directories(${METIS_ROOT}/include)
 include_directories(${METIS_ROOT}/libmetis)
