@@ -48,7 +48,9 @@ if(BUILD_PARMETIS)
 elseif(MANUAL_PARMETIS)
   set(HAVE_PARMETIS TRUE)
 
-  include_directories(${GKLIB_CONFIG_DIR})
+  if(PARMETIS_TLS_PATCH)
+    include_directories(${GKLIB_CONFIG_DIR})
+  endif()
   add_subdirectory(src/metis)
   add_subdirectory(src/parmetis)
 
