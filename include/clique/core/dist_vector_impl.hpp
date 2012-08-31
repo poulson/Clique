@@ -133,7 +133,7 @@ DistVector<T>::DistVector()
 template<typename T>
 inline 
 DistVector<T>::DistVector( mpi::Comm comm )
-: height_(0), blocksize_(0), firstLocalRow_(0)
+: height_(0), comm_(mpi::COMM_WORLD), blocksize_(0), firstLocalRow_(0)
 { 
     SetComm( comm );
 }
@@ -141,7 +141,7 @@ DistVector<T>::DistVector( mpi::Comm comm )
 template<typename T>
 inline 
 DistVector<T>::DistVector( int height, mpi::Comm comm )
-: height_(height)
+: height_(height), comm_(mpi::COMM_WORLD)
 { 
     SetComm( comm );
 }
@@ -205,6 +205,9 @@ template<typename T>
 inline void
 DistVector<T>::SetComm( mpi::Comm comm )
 { 
+    if( comm_ != mpi::COMM_WORLD )
+        mpi::CommFree( comm_ );
+
     if( comm != mpi::COMM_WORLD )
         mpi::CommDup( comm, comm_ );
     else

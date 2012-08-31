@@ -22,17 +22,17 @@ namespace cliq {
 
 inline
 DistMap::DistMap()
-: numSources_(0)
+: numSources_(0), comm_(mpi::COMM_WORLD)
 { SetComm( mpi::COMM_WORLD ); } 
 
 inline
 DistMap::DistMap( mpi::Comm comm )
-: numSources_(0)
+: numSources_(0), comm_(mpi::COMM_WORLD)
 { SetComm( comm ); }
 
 inline
 DistMap::DistMap( int numSources, mpi::Comm comm )
-: numSources_(numSources)
+: numSources_(numSources), comm_(mpi::COMM_WORLD)
 { SetComm( comm ); }
 
 inline
@@ -326,6 +326,9 @@ DistMap::NumSources() const
 inline void
 DistMap::SetComm( mpi::Comm comm )
 {
+    if( comm_ != mpi::COMM_WORLD )
+        mpi::CommFree( comm_ );
+
     if( comm != mpi::COMM_WORLD )
         mpi::CommDup( comm, comm_ );
     else

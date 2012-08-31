@@ -157,7 +157,8 @@ DistMultiVector<T>::DistMultiVector()
 template<typename T>
 inline 
 DistMultiVector<T>::DistMultiVector( mpi::Comm comm )
-: height_(0), width_(0), blocksize_(0), firstLocalRow_(0)
+: height_(0), width_(0), comm_(mpi::COMM_WORLD), 
+  blocksize_(0), firstLocalRow_(0)
 { 
     SetComm( comm );
 }
@@ -165,7 +166,7 @@ DistMultiVector<T>::DistMultiVector( mpi::Comm comm )
 template<typename T>
 inline 
 DistMultiVector<T>::DistMultiVector( int height, int width, mpi::Comm comm )
-: height_(height), width_(width)
+: height_(height), width_(width), comm_(mpi::COMM_WORLD)
 { 
     SetComm( comm );
 }
@@ -192,6 +193,9 @@ template<typename T>
 inline void
 DistMultiVector<T>::SetComm( mpi::Comm comm )
 { 
+    if( comm_ != mpi::COMM_WORLD )
+        mpi::CommFree( comm_ );
+
     if( comm != mpi::COMM_WORLD )
         mpi::CommDup( comm, comm_ );
     else

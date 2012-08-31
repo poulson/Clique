@@ -22,28 +22,28 @@ namespace cliq {
 
 inline 
 DistGraph::DistGraph()
-: numSources_(0), numTargets_(0)
+: numSources_(0), numTargets_(0), comm_(mpi::COMM_WORLD)
 {
     SetComm( mpi::COMM_WORLD );
 }
 
 inline
 DistGraph::DistGraph( mpi::Comm comm )
-: numSources_(0), numTargets_(0)
+: numSources_(0), numTargets_(0), comm_(mpi::COMM_WORLD)
 {
     SetComm( comm );
 }
 
 inline 
 DistGraph::DistGraph( int numVertices, mpi::Comm comm )
-: numSources_(numVertices), numTargets_(numVertices)
+: numSources_(numVertices), numTargets_(numVertices), comm_(mpi::COMM_WORLD)
 {
     SetComm( comm );
 }
 
 inline 
 DistGraph::DistGraph( int numSources, int numTargets, mpi::Comm comm )
-: numSources_(numSources), numTargets_(numTargets)
+: numSources_(numSources), numTargets_(numTargets), comm_(mpi::COMM_WORLD)
 {
     SetComm( comm );
 }
@@ -93,6 +93,9 @@ DistGraph::NumTargets() const
 inline void 
 DistGraph::SetComm( mpi::Comm comm )
 {
+    if( comm_ != mpi::COMM_WORLD )
+        mpi::CommFree( comm_ );
+
     sources_.clear();
     targets_.clear();
     sorted_ = true;
