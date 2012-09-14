@@ -671,7 +671,6 @@ NaturalBisect
     const int numLocalSources = graph.NumLocalSources();
     mpi::Comm comm = graph.Comm();
     const int commSize = mpi::CommSize( comm );
-    const int commRank = mpi::CommRank( comm );
     if( commSize == 1 )
         throw std::logic_error
         ("This routine assumes at least two processes are used, "
