@@ -48,7 +48,7 @@ Complex<double> PML( double x, double w, double p, double sigma, double k )
 #endif
     const double realPart = 1.0;
     const double arg = x/w;
-    const double imagPart = sigma*std::pow(arg,p)/k;
+    const double imagPart = (sigma/w)*std::pow(arg,p)/k;
     return Complex<double>(realPart,imagPart); 
 }
 
@@ -56,9 +56,9 @@ Complex<double>
 sInv( int j, int n, int b, double h, double p, double sigma, double k )
 {
     if( j < b-1 )
-        return PML( b-1-j, b, p, sigma, k );
+        return PML( (b-1-j)*h, b*h, p, sigma, k );
     else if( j > n-b )
-        return PML( j-(n-b), b, p, sigma, k );
+        return PML( (j-(n-b))*h, b*h, p, sigma, k );
     else
         return Complex<double>(1.0,0.0);
 }
@@ -147,13 +147,13 @@ main( int argc, char* argv[] )
 
             A.Update( i, i, mainTerm );
             if( x != 0 )
-                A.Update( i, i-1, xTermL );
+                A.Update( i, i-1, -xTermL );
             if( x != nx-1 )
-                A.Update( i, i+1, xTermR );
+                A.Update( i, i+1, -xTermR );
             if( y != 0 )
-                A.Update( i, i-nx, yTermL );
+                A.Update( i, i-nx, -yTermL );
             if( y != ny-1 )
-                A.Update( i, i+nx, yTermR );
+                A.Update( i, i+nx, -yTermR );
         } 
         A.StopAssembly();
         mpi::Barrier( comm );
