@@ -70,6 +70,8 @@ public:
 
     // TODO: operator=
 
+    void Print( std::string msg ) const;
+
 private:
     DistGraph graph_;
     std::vector<T> values_;

@@ -72,6 +72,8 @@ public:
     const DistGraph& operator=( const Graph& graph );
     const DistGraph& operator=( const DistGraph& graph );
 
+    void Print( std::string msg ) const;
+
 private:
     int numSources_, numTargets_;
     mpi::Comm comm_;

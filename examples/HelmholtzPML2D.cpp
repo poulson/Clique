@@ -23,12 +23,12 @@ using namespace cliq;
 void Usage()
 {
     std::cout
-      << "HelmholtzPML3D <nx> <ny> <nz> <omega> <Lx> <Ly> <Lz> <b> <sigma> <p> "
+      << "HelmholtzPML2D <nx> <ny> <omega> <Lx> <Ly> <b> <sigma> <p> "
       << "[analytic=true] [sequential=true] [cutoff=128] \n"
       << "[numDistSeps=1] [numSeqSeps=1]\n"
-      << "  nx,ny,nz: dimensions of nx x ny x nz mesh\n"
+      << "  nx,ny: dimensions of nx x ny mesh\n"
       << "  omega: frequency of problem in radians per second\n"
-      << "  Lx,Ly,Lz: dimensions of [0,Lx] x [0,Ly] x [0,Lz] domain\n"
+      << "  Lx,Ly: dimensions of [0,Lx] x [0,Ly] domain\n"
       << "  b: width of PML in grid points\n"
       << "  sigma: coefficient for PML profile\n"
       << "  p: polynomial order for PML profile\n"
@@ -72,7 +72,7 @@ main( int argc, char* argv[] )
     typedef double R;
     typedef Complex<R> C;
 
-    if( argc < 11 )
+    if( argc < 9 )
     {
         if( commRank == 0 )
             Usage();
@@ -82,11 +82,9 @@ main( int argc, char* argv[] )
     int argNum = 1;
     const int nx = atoi(argv[argNum++]);
     const int ny = atoi(argv[argNum++]);
-    const int nz = atoi(argv[argNum++]);
     const double omega = atof(argv[argNum++]);
     const double Lx = atof(argv[argNum++]);
     const double Ly = atof(argv[argNum++]);
-    const double Lz = atof(argv[argNum++]);
     const int b = atoi(argv[argNum++]);
     const double sigma = atof(argv[argNum++]);
     const double p = atof(argv[argNum++]);
@@ -99,16 +97,14 @@ main( int argc, char* argv[] )
     try
     {
         const double k = omega/(2*M_PI);
-        const int N = nx*ny*nz;
+        const int N = nx*ny;
         DistSparseMatrix<C> A( N, comm );
         const double hx = Lx/(nx+1);
         const double hy = Ly/(ny+1);
-        const double hz = Lz/(nz+1);
         const double hxSquared = hx*hx;
         const double hySquared = hy*hy;
-        const double hzSquared = hz*hz;
 
-        // Fill our portion of the 3D Helmholtz operator 
+        // Fill our portion of the 2D Helmholtz operator 
         if( commRank == 0 )
         {
             std::cout << "Filling local portion of matrix...";
@@ -118,13 +114,12 @@ main( int argc, char* argv[] )
         const int firstLocalRow = A.FirstLocalRow();
         const int localHeight = A.LocalHeight();
         A.StartAssembly();
-        A.Reserve( 7*localHeight );
+        A.Reserve( 5*localHeight );
         for( int iLocal=0; iLocal<localHeight; ++iLocal )
         {
             const int i = firstLocalRow + iLocal;
             const int x = i % nx;
-            const int y = (i/nx) % ny;
-            const int z = i/(nx*ny);
+            const int y = i/nx;
 
             const C s1InvL = sInv( x-1, nx, b, hx, p, sigma, k );
             const C s1InvM = sInv( x,   nx, b, hx, p, sigma, k );
@@ -132,33 +127,23 @@ main( int argc, char* argv[] )
             const C s2InvL = sInv( y-1, ny, b, hy, p, sigma, k );
             const C s2InvM = sInv( y,   ny, b, hy, p, sigma, k );
             const C s2InvR = sInv( y+1, ny, b, hy, p, sigma, k );
-            const C s3InvL = sInv( z-1, nz, b, hz, p, sigma, k );
-            const C s3InvM = sInv( z,   nz, b, hz, p, sigma, k );
-            const C s3InvR = sInv( z+1, nz, b, hz, p, sigma, k );
 
-            const C xTop = s2InvM*s3InvM;
+            const C xTop = s2InvM;
             const C xTempL = xTop/s1InvL;
             const C xTempM = xTop/s1InvM;
             const C xTempR = xTop/s1InvR;
             const C xTermL = (xTempL+xTempM) / (2*hxSquared);
             const C xTermR = (xTempM+xTempR) / (2*hxSquared);
 
-            const C yTop = s1InvM*s3InvM;
+            const C yTop = s1InvM;
             const C yTempL = yTop/s2InvL;
             const C yTempM = yTop/s2InvM;
             const C yTempR = yTop/s2InvR;
             const C yTermL = (yTempL+yTempM) / (2*hySquared);
             const C yTermR = (yTempM+yTempR) / (2*hySquared);
 
-            const C zTop = s1InvM*s2InvM;
-            const C zTempL = zTop/s3InvL;
-            const C zTempM = zTop/s3InvM;
-            const C zTempR = zTop/s3InvR;
-            const C zTermL = (zTempL+zTempM) / (2*hzSquared);
-            const C zTermR = (zTempM+zTempR) / (2*hzSquared);
-
-            const C mainTerm = (xTermL+xTermR+yTermL+yTermR+zTermL+zTermR)
-                - omega*omega*s1InvM*s2InvM*s3InvM;
+            const C mainTerm = (xTermL+xTermR+yTermL+yTermR)
+                - omega*omega*s1InvM*s2InvM;
 
             A.Update( i, i, mainTerm );
             if( x != 0 )
@@ -169,10 +154,6 @@ main( int argc, char* argv[] )
                 A.Update( i, i-nx, yTermL );
             if( y != ny-1 )
                 A.Update( i, i+nx, yTermR );
-            if( z != 0 )
-                A.Update( i, i-nx*ny, zTermL );
-            if( z != nz-1 )
-                A.Update( i, i+nx*ny, zTermR );
         } 
         A.StopAssembly();
         mpi::Barrier( comm );
@@ -187,8 +168,7 @@ main( int argc, char* argv[] )
         MakeZeros( z );
         const int xSource = nx/2;
         const int ySource = ny/2;
-        const int zSource = nz/2;
-        const int iSource = xSource + ySource*nx + zSource*nx*ny;
+        const int iSource = xSource + ySource*nx;
         if( iSource >= firstLocalRow && iSource < firstLocalRow+localHeight )
             z.SetLocal( iSource-firstLocalRow, Complex<double>(1.0,0.0) );
         y = z;
@@ -205,7 +185,7 @@ main( int argc, char* argv[] )
         DistMap map, inverseMap;
         if( analytic )
             NaturalNestedDissection
-            ( nx, ny, nz, graph, map, sepTree, info, cutoff );
+            ( nx, ny, 1, graph, map, sepTree, info, cutoff );
         else
             NestedDissection
             ( graph, map, sepTree, info, 

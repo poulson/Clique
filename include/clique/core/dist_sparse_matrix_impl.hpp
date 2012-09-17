@@ -305,6 +305,59 @@ DistSparseMatrix<T>::ResizeTo( int height, int width )
 
 template<typename T>
 inline void
+DistSparseMatrix<T>::Print( std::string msg ) const
+{
+#ifndef RELEASE
+    PushCallStack("DistSparseMatrix::Print");
+#endif
+    const int commSize = mpi::CommSize( graph_.comm_ );
+    const int commRank = mpi::CommRank( graph_.comm_ );
+
+    const int numLocalNonzeros = values_.size();
+    std::vector<int> nonzeroSizes(commSize), nonzeroOffsets(commSize);
+    mpi::AllGather( &numLocalNonzeros, 1, &nonzeroSizes[0], 1, graph_.comm_ );
+    int numNonzeros=0;
+    for( int q=0; q<commSize; ++q )
+    {
+        nonzeroOffsets[q] = numNonzeros;
+        numNonzeros += nonzeroSizes[q];
+    }
+
+    std::vector<int> sources, targets;
+    std::vector<T> values;
+    if( commRank == 0 )
+    {
+        sources.resize( numNonzeros );
+        targets.resize( numNonzeros );
+        values.resize( numNonzeros );
+    }
+    mpi::Gather
+    ( &graph_.sources_[0], numLocalNonzeros,
+      &sources[0], &nonzeroSizes[0], &nonzeroOffsets[0], 0, graph_.comm_ );
+    mpi::Gather
+    ( &graph_.targets_[0], numLocalNonzeros,
+      &targets[0], &nonzeroSizes[0], &nonzeroOffsets[0], 0, graph_.comm_ );
+    mpi::Gather
+    ( &values_[0], numLocalNonzeros,
+      &values[0], &nonzeroSizes[0], &nonzeroOffsets[0], 0, graph_.comm_ );
+
+    if( commRank == 0 )
+    {
+        if( msg != "" )
+            std::cout << msg << std::endl;
+        for( int s=0; s<numNonzeros; ++s )
+            std::cout << sources[s] << " " 
+                      << targets[s] << " " 
+                      << values[s] << "\n";
+        std::cout << std::endl;
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename T>
+inline void
 DistSparseMatrix<T>::EnsureConsistentSizes() const
 { 
     graph_.EnsureConsistentSizes();

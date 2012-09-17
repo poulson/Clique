@@ -211,6 +211,23 @@ Graph::operator=( const DistGraph& graph )
     return *this;
 }
 
+inline void
+Graph::Print( std::string msg ) const
+{
+#ifndef RELEASE
+    PushCallStack("Graph::Print");
+#endif
+    if( msg != "" )
+        std::cout << msg << std::endl;
+    const int numEdges = sources_.size();
+    for( int e=0; e<numEdges; ++e )
+        std::cout << sources_[e] << " " << targets_[e] << "\n";
+    std::cout << std::endl;
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
 inline bool
 Graph::ComparePairs
 ( const std::pair<int,int>& a, const std::pair<int,int>& b )

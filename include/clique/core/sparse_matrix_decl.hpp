@@ -62,6 +62,8 @@ public:
     // NOTE: This requires A to be distributed over a single process
     const SparseMatrix<T>& operator=( const DistSparseMatrix<T>& A );
 
+    void Print( std::string msg ) const;
+
 private:
     cliq::Graph graph_;
     std::vector<T> values_;

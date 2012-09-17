@@ -336,6 +336,26 @@ SparseMatrix<T>::operator=( const DistSparseMatrix<T>& A )
 
 template<typename T>
 inline void
+SparseMatrix<T>::Print( std::string msg ) const
+{
+#ifndef RELEASE
+    PushCallStack("SparseMatrix::Print");
+#endif
+    if( msg != "" )
+        std::cout << msg << std::endl;
+    const int numNonzeros = values_.size();
+    for( int s=0; s<numNonzeros; ++s )
+        std::cout << graph_.sources_[s] << " "
+                  << graph_.targets_[s] << " "
+                  << values_[s] << "\n";
+    std::cout << std::endl;
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename T>
+inline void
 SparseMatrix<T>::EnsureConsistentSizes() const
 { 
     graph_.EnsureConsistentSizes();

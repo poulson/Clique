@@ -60,6 +60,8 @@ public:
     // NOTE: This requires the DistGraph to be over a single process
     const Graph& operator=( const DistGraph& graph );
 
+    void Print( std::string msg ) const;
+
 private:
     int numSources_, numTargets_;
     std::vector<int> sources_, targets_;

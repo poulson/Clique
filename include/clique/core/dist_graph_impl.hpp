@@ -267,6 +267,51 @@ DistGraph::operator=( const DistGraph& graph )
     return *this;
 }
 
+inline void
+DistGraph::Print( std::string msg ) const
+{
+#ifndef RELEASE
+    PushCallStack("DistGraph::Print");
+#endif
+    const int commSize = mpi::CommSize( comm_ );
+    const int commRank = mpi::CommRank( comm_ );
+
+    const int numLocalEdges = sources_.size();
+    std::vector<int> edgeSizes(commSize), edgeOffsets(commSize);
+    mpi::AllGather( &numLocalEdges, 1, &edgeSizes[0], 1, comm_ );
+    int numEdges=0;
+    for( int q=0; q<commSize; ++q )
+    {
+        edgeOffsets[q] = numEdges;
+        numEdges += edgeSizes[q];
+    }
+
+    std::vector<int> sources, targets;
+    if( commRank == 0 )
+    {
+        sources.resize( numEdges );
+        targets.resize( numEdges );
+    }
+    mpi::Gather
+    ( &sources_[0], numLocalEdges,
+      &sources[0], &edgeSizes[0], &edgeOffsets[0], 0, comm_ );
+    mpi::Gather
+    ( &targets_[0], numLocalEdges,
+      &targets[0], &edgeSizes[0], &edgeOffsets[0], 0, comm_ );
+
+    if( commRank == 0 )
+    {
+        if( msg != "" )
+            std::cout << msg << std::endl;
+        for( int e=0; e<numEdges; ++e )
+            std::cout << sources[e] << " " << targets[e] << "\n";
+        std::cout << std::endl;
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
 inline bool
 DistGraph::ComparePairs
 ( const std::pair<int,int>& a, const std::pair<int,int>& b )
