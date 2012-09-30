@@ -47,9 +47,9 @@ inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
     DistSymmFront<F>& leafFront = L.distFronts[0];
     const SymmFrontType oldFrontType = L.frontType;
 
-    if( (frontType == LDL_1D && oldFrontType == LDL_2D) ||
+    if( (frontType == LDL_1D        && oldFrontType == LDL_2D)        ||
         (frontType == LDL_SELINV_1D && oldFrontType == LDL_SELINV_2D) ||
-        (frontType == SYMM_1D && oldFrontType == SYMM_2D) )
+        (frontType == SYMM_1D       && oldFrontType == SYMM_2D) )
 
     {
         // 2d -> 1d
@@ -68,9 +68,13 @@ inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
             front.front2dL.Empty();
         }
     }
-    else if( (frontType == LDL_2D && oldFrontType == LDL_1D) || 
+    else if( (frontType == LDL_2D        && oldFrontType == LDL_1D)        || 
              (frontType == LDL_SELINV_2D && oldFrontType == LDL_SELINV_1D) ||
-             (frontType == SYMM_2D && oldFrontType == SYMM_1D) )
+             (frontType == SYMM_2D       && oldFrontType == SYMM_1D)       || 
+             // The following reset the fronts for manual modification
+             (frontType == SYMM_2D       && oldFrontType == LDL_1D)        || 
+             (frontType == SYMM_2D       && oldFrontType == LDL_SELINV_1D) ||
+             (frontType == SYMM_2D       && oldFrontType == BLOCK_LDL_2D) )
     {
         // 1d -> 2d
         leafFront.front2dL.LockedView
