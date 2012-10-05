@@ -107,11 +107,11 @@ MakeHermitianUniformSpectrum
         v.Set( i, 0, d[i]*u.Get(i,0) );
 
     // Update A := A - 2(u v^H + v u^H)
-    Ger( (F)-2, u, v, A );
-    Ger( (F)-2, v, u, A );
+    Ger( F(-2), u, v, A );
+    Ger( F(-2), v, u, A );
 
     // Form gamma := 4 u^H (D u) = 4 (u,Du)
-    const F gamma = static_cast<F>(4)*Dot(u,v);
+    const F gamma = F(4)*Dot(u,v);
 
     // Update A := A + gamma u u^H
     Ger( gamma, u, u, A );
@@ -121,7 +121,7 @@ MakeHermitianUniformSpectrum
     {
         const int n = A.Height();
         for( int j=0; j<n; ++j )
-            A.SetImagPart( j, j, (R)0 );
+            A.SetImagPart( j, j, R(0) );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -197,17 +197,17 @@ MakeHermitianUniformSpectrum
     // Update A := A - 2(u v^H + v u^H)
     if( standardDist )
     {
-        Ger( (F)-2, u, v, A );
-        Ger( (F)-2, v, u, A );
+        Ger( F(-2), u, v, A );
+        Ger( F(-2), v, u, A );
     }
     else
     {
-        Ger( (F)-2, u, v, ABackup );
-        Ger( (F)-2, v, u, ABackup );
+        Ger( F(-2), u, v, ABackup );
+        Ger( F(-2), v, u, ABackup );
     }
 
     // Form gamma := 4 u^H (D u) = 4 (u,Du)
-    const F gamma = static_cast<F>(4)*Dot(u,v);
+    const F gamma = F(4)*Dot(u,v);
 
     // Update A := A + gamma u u^H
     if( standardDist )
@@ -235,7 +235,7 @@ MakeHermitianUniformSpectrum
             {
                 const int i = colShift + iLocal*colStride;
                 if( i == j )
-                    A.SetLocalImagPart( iLocal, jLocal, (R)0 );
+                    A.SetLocalImagPart( iLocal, jLocal, R(0) );
             }
         }
     }

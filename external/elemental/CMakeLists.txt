@@ -35,7 +35,7 @@ cmake_minimum_required(VERSION 2.8.5)
 
 project(Elemental)
 set(Elemental_VERSION_MAJOR 0)
-set(Elemental_VERSION_MINOR 76-dev)
+set(Elemental_VERSION_MINOR 77-dev)
 
 ################################################################################
 # Common build options                                                         #
@@ -712,7 +712,7 @@ if(ELEM_EXAMPLES)
                       HPDInverse LDL LDLInverse Polar Pseudoinverse QDWH 
                       SequentialQR QR SequentialSVD SimpleSVD SVD)
   set(SPECIAL_EXAMPLES Cauchy CauchyLike Circulant Diagonal DiscreteFourier 
-                       Hankel HermitianUniformSpectrum Hilbert Identity 
+                       Hankel HermitianUniformSpectrum Hilbert Identity Legendre
                        NormalUniformSpectrum Ones OneTwoOne Toeplitz Uniform
                        Walsh Wilkinson Zeros)
 

@@ -96,6 +96,10 @@ struct DistSymmFrontTree
       const DistMap& reordering,
       const DistSeparatorTree& sepTree,
       const DistSymmInfo& info );
+
+    void MemoryInfo
+    ( double& numLocalEntries, double& minLocalEntries, double& maxLocalEntries,
+      double& numGlobalEntries ) const;
 };
 
 } // namespace cliq

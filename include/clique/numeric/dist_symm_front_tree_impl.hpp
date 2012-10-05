@@ -406,4 +406,51 @@ DistSymmFrontTree<F>::DistSymmFrontTree
 #endif
 }
 
+template<typename F>
+inline void
+DistSymmFrontTree<F>::MemoryInfo
+( double& numLocalEntries, double& minLocalEntries, double& maxLocalEntries, 
+  double& numGlobalEntries ) const
+{
+#ifndef RELEASE
+    PushCallStack("DistSymmFrontTree::MemInfo");
+#endif
+    numLocalEntries = numGlobalEntries = 0;
+    const int numLocalFronts = localFronts.size();
+    const int numDistFronts = distFronts.size();
+    const bool frontsAre1d = FrontsAre1d( frontType );
+    const Grid& grid = ( frontsAre1d ? distFronts.back().front1dL.Grid() 
+                                     : distFronts.back().front2dL.Grid() );
+    mpi::Comm comm = grid.Comm();
+
+    for( int s=0; s<numLocalFronts; ++s )
+    {
+        const LocalSymmFront<F>& front = localFronts[s];
+        numLocalEntries += front.frontL.MemorySize();
+        numLocalEntries += front.work.MemorySize();
+    }
+    for( int s=1; s<numDistFronts; ++s )
+    {
+        const DistSymmFront<F>& front = distFronts[s];
+        if( frontsAre1d )
+        {
+            numLocalEntries += front.front1dL.AllocatedMemory();
+            numLocalEntries += front.work1d.AllocatedMemory();
+        }
+        else
+        {
+            numLocalEntries += front.front2dL.AllocatedMemory();
+            numLocalEntries += front.work2d.AllocatedMemory();
+        }
+        numLocalEntries += front.diag.AllocatedMemory();
+    }
+
+    mpi::AllReduce( &numLocalEntries, &minLocalEntries, 1, mpi::MIN, comm );
+    mpi::AllReduce( &numLocalEntries, &maxLocalEntries, 1, mpi::MAX, comm );
+    mpi::AllReduce( &numLocalEntries, &numGlobalEntries, 1, mpi::SUM, comm );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
 } // namespace cliq

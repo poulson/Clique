@@ -113,6 +113,8 @@ main( int argc, char* argv[] )
             std::cout << "done, " << fillStop-fillStart << " seconds" 
                       << std::endl;
 
+        A.Print("A");
+
         if( commRank == 0 )
         {
             std::cout << "Generating random vector x and forming y := A x...";

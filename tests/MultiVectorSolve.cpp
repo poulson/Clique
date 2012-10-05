@@ -172,6 +172,23 @@ main( int argc, char* argv[] )
                       << std::endl;
 
         if( commRank == 0 )
+            std::cout << "Original memory usage for fronts..." << std::endl;
+        double numLocalEntries, minLocalEntries, maxLocalEntries, 
+               numGlobalEntries;
+        frontTree.MemoryInfo
+        ( numLocalEntries, minLocalEntries, maxLocalEntries, numGlobalEntries );
+        if( commRank == 0 )
+        {
+            std::cout << "  min local: " << minLocalEntries*sizeof(double)/1e6 
+                      << " MB\n"
+                      << "  max local: " << maxLocalEntries*sizeof(double)/1e6 
+                      << " MB\n"
+                      << "  global:    " << numGlobalEntries*sizeof(double)/1e6
+                      << " MB\n"
+                      << std::endl;
+        }
+
+        if( commRank == 0 )
         {
             std::cout << "Running LDL^T and redistribution...";
             std::cout.flush();
@@ -184,6 +201,22 @@ main( int argc, char* argv[] )
         if( commRank == 0 )
             std::cout << "done, " << ldlStop-ldlStart << " seconds" 
                       << std::endl;
+
+        if( commRank == 0 )
+            std::cout << "Memory usage for fronts after factorization..."
+                      << std::endl;
+        frontTree.MemoryInfo
+        ( numLocalEntries, minLocalEntries, maxLocalEntries, numGlobalEntries );
+        if( commRank == 0 )
+        {
+            std::cout << "  min local: " << minLocalEntries*sizeof(double)/1e6 
+                      << " MB\n"
+                      << "  max local: " << maxLocalEntries*sizeof(double)/1e6 
+                      << " MB\n"
+                      << "  global:    " << numGlobalEntries*sizeof(double)/1e6
+                      << " MB\n"
+                      << std::endl;
+        }
 
         if( commRank == 0 )
         {

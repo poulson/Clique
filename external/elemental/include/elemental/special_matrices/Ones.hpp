@@ -72,7 +72,7 @@ MakeOnes( Matrix<T>& A )
     const int n = A.Width();
     for( int j=0; j<n; ++j )
         for( int i=0; i<m; ++i )
-            A.Set( i, j, (T)1 );
+            A.Set( i, j, T(1) );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -89,7 +89,7 @@ MakeOnes( DistMatrix<T,U,V>& A )
     const int localWidth = A.LocalWidth();
     for( int jLocal=0; jLocal<localWidth; ++jLocal )
         for( int iLocal=0; iLocal<localHeight; ++iLocal )
-            A.SetLocal( iLocal, jLocal, (T)1 );
+            A.SetLocal( iLocal, jLocal, T(1) );
 #ifndef RELEASE
     PopCallStack();
 #endif
