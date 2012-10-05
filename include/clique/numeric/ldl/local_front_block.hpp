@@ -59,14 +59,14 @@ inline void LocalFrontBlockLDL
         Matrix<F> ATLTrans;
         elem::Transpose( ATL, ATLTrans );
         elem::MakeTrapezoidal( LEFT, UPPER, 1, ATLTrans );
-        elem::Axpy( (F)1, ATLTrans, ATL );
+        elem::Axpy( F(1), ATLTrans, ATL );
     }
     else
     {
         Matrix<F> ATLAdj;
         elem::Adjoint( ATL, ATLAdj );
         elem::MakeTrapezoidal( LEFT, UPPER, 1, ATLAdj );
-        elem::Axpy( (F)1, ATLAdj, ATL );
+        elem::Axpy( F(1), ATLAdj, ATL );
     }
 #ifndef RELEASE
     PopCallStack();

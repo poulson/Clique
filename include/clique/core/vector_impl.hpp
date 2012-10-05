@@ -29,7 +29,7 @@ MakeZeros( Vector<T>& x )
 #endif
     const int height = x.Height();
     for( int i=0; i<height; ++i )
-        x.Set( i, (T)0 );
+        x.Set( i, T(0) );
 #ifndef RELEASE
     PopCallStack();
 #endif

@@ -103,7 +103,7 @@ inline void DistFrontLDLGeneral
         AL21_VC_STAR = AL21;
         elem::internal::LocalTrsm
         ( RIGHT, LOWER, orientation, UNIT, 
-          (F)1, AL11_STAR_STAR, AL21_VC_STAR );
+          F(1), AL11_STAR_STAR, AL21_VC_STAR );
 
         S21Trans_STAR_MC.TransposeFrom( AL21_VC_STAR );
         elem::DiagonalSolve
@@ -125,11 +125,11 @@ inline void DistFrontLDLGeneral
         ( AL22, AL22T,
                 AL22B, AL22.Width() );
         elem::internal::LocalTrrk
-        ( LOWER, orientation, (F)-1, leftL, rightL, (F)1, AL22T );
+        ( LOWER, orientation, F(-1), leftL, rightL, F(1), AL22T );
         elem::internal::LocalGemm
-        ( orientation, NORMAL, (F)-1, leftR, rightL, (F)1, AL22B );
+        ( orientation, NORMAL, F(-1), leftR, rightL, F(1), AL22B );
         elem::internal::LocalTrrk
-        ( LOWER, orientation, (F)-1, leftR, rightR, (F)1, ABR );
+        ( LOWER, orientation, F(-1), leftR, rightR, F(1), ABR );
 
         elem::DiagonalSolve
         ( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
@@ -237,7 +237,7 @@ inline void DistFrontLDLSquare
         AL21_VC_STAR = AL21;
         elem::internal::LocalTrsm
         ( RIGHT, LOWER, orientation, UNIT, 
-          (F)1, AL11_STAR_STAR, AL21_VC_STAR );
+          F(1), AL11_STAR_STAR, AL21_VC_STAR );
 
         S21Trans_STAR_MC.TransposeFrom( AL21_VC_STAR );
         // SendRecv to form AL21^T[* ,MR] from S21^T[* ,MC], then conjugate
@@ -280,11 +280,11 @@ inline void DistFrontLDLSquare
         ( AL22, AL22T,
                 AL22B, AL22.Width() );
         elem::internal::LocalTrrk
-        ( LOWER, orientation, (F)-1, leftL, rightL, (F)1, AL22T );
+        ( LOWER, orientation, F(-1), leftL, rightL, F(1), AL22T );
         elem::internal::LocalGemm
-        ( orientation, NORMAL, (F)-1, leftR, rightL, (F)1, AL22B );
+        ( orientation, NORMAL, F(-1), leftR, rightL, F(1), AL22B );
         elem::internal::LocalTrrk
-        ( LOWER, orientation, (F)-1, leftR, rightR, (F)1, ABR );
+        ( LOWER, orientation, F(-1), leftR, rightR, F(1), ABR );
 
         elem::DiagonalSolve
         ( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );

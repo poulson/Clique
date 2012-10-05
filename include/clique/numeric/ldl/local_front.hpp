@@ -73,7 +73,7 @@ inline void LocalFrontLDL
         // an (ideally) faster blocked algorithm.
         elem::internal::LDLVar3( orientation, AL11, d1 );
 
-        elem::Trsm( RIGHT, LOWER, orientation, UNIT, (F)1, AL11, AL21 );
+        elem::Trsm( RIGHT, LOWER, orientation, UNIT, F(1), AL11, AL21 );
 
         S21 = AL21;
         elem::DiagonalSolve( RIGHT, NORMAL, d1, AL21 );
@@ -84,9 +84,9 @@ inline void LocalFrontLDL
         elem::PartitionDown
         ( AL21, AL21T,
                 AL21B, AL22.Width() );
-        elem::Gemm( NORMAL, orientation, (F)-1, S21, AL21T, (F)1, AL22 );
+        elem::Gemm( NORMAL, orientation, F(-1), S21, AL21T, F(1), AL22 );
         elem::internal::TrrkNT
-        ( LOWER, orientation, (F)-1, S21B, AL21B, (F)1, ABR );
+        ( LOWER, orientation, F(-1), S21B, AL21B, F(1), ABR );
         //--------------------------------------------------------------------//
 
         elem::SlidePartitionDownDiagonal

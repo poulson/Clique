@@ -70,12 +70,12 @@ void ModifyForTrmm
         for( int i=0; i<length; ++i )    
         {
             diagonals[i].Set( j, 0, D.Get(j+i,j) );
-            D.Set( j+i, j, (T)0 );
+            D.Set( j+i, j, T(0) );
         }
         if( diag == UNIT && j-diagOffset < height )
         {
             diagonals[-diagOffset].Set( j, 0, D.Get(j-diagOffset,j) );
-            D.Set( j-diagOffset, j, (T)1 );
+            D.Set( j-diagOffset, j, T(1) );
         }
     }
 #ifndef RELEASE
@@ -154,17 +154,17 @@ inline void LocalFrontLowerMultiplyNormal
     ( X, XT,
          XB, L.Width() );
 
-    elem::Gemm( NORMAL, NORMAL, (T)1, LB, XT, (T)1, XB );
+    elem::Gemm( NORMAL, NORMAL, T(1), LB, XT, T(1), XB );
 
     if( diagOffset == 0 )
     {
-        elem::Trmm( LEFT, LOWER, NORMAL, diag, (T)1, LT, XT );
+        elem::Trmm( LEFT, LOWER, NORMAL, diag, T(1), LT, XT );
     }
     else
     {
         std::vector<Matrix<T> > diagonals;
         internal::ModifyForTrmm( LT, diag, diagOffset, diagonals );
-        elem::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, (T)1, LT, XT );
+        elem::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, T(1), LT, XT );
         internal::ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
     }
 #ifndef RELEASE
@@ -207,17 +207,17 @@ inline void LocalFrontLowerMultiplyTranspose
 
     if( diagOffset == 0 )
     {
-        elem::Trmm( LEFT, LOWER, orientation, diag, (T)1, LT, XT );
+        elem::Trmm( LEFT, LOWER, orientation, diag, T(1), LT, XT );
     }
     else
     {
         std::vector<Matrix<T> > diagonals;
         internal::ModifyForTrmm( LT, diag, diagOffset, diagonals );
-        elem::Trmm( LEFT, LOWER, orientation, NON_UNIT, (T)1, LT, XT );
+        elem::Trmm( LEFT, LOWER, orientation, NON_UNIT, T(1), LT, XT );
         internal::ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
     }
 
-    elem::Gemm( orientation, NORMAL, (T)1, LB, XB, (T)1, XT );
+    elem::Gemm( orientation, NORMAL, T(1), LB, XB, T(1), XT );
 #ifndef RELEASE
     PopCallStack();
 #endif

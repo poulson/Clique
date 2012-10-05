@@ -132,7 +132,7 @@ main( int argc, char* argv[] )
         DistVector<C> x( N, comm ), y( N, comm );
         MakeUniform( x );
         MakeZeros( y );
-        Multiply( (C)1., A, x, (C)0., y );
+        Multiply( C(1), A, x, C(0), y );
         const double yOrigNorm = Norm( y );
         mpi::Barrier( comm );
         const double multiplyStop = mpi::Time();
@@ -318,7 +318,7 @@ main( int argc, char* argv[] )
             std::cout << "Checking error in computed solution..." << std::endl;
         const double xNorm = Norm( x );
         const double yNorm = Norm( y );
-        Axpy( (C)-1., x, y );
+        Axpy( C(-1), x, y );
         const double errorNorm = Norm( y );
         if( commRank == 0 )
         {

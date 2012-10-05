@@ -109,7 +109,7 @@ inline void DistFrontFastLowerForwardSolve
 
     // XT := LT XT
     elem::internal::LocalGemm
-    ( NORMAL, NORMAL, (F)1, LT, XT_STAR_STAR, (F)0, XT );
+    ( NORMAL, NORMAL, F(1), LT, XT_STAR_STAR, F(0), XT );
 
     if( diag == UNIT )
     {
@@ -130,7 +130,7 @@ inline void DistFrontFastLowerForwardSolve
 
         // XB := XB - LB XT
         elem::internal::LocalGemm
-        ( NORMAL, NORMAL, (F)-1, LB, XT_STAR_STAR, (F)1, XB );
+        ( NORMAL, NORMAL, F(-1), LB, XT_STAR_STAR, F(1), XB );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -189,7 +189,7 @@ inline void DistFrontFastLowerForwardSolve
         dTReplacement.AlignWith( dTOrig );
         dTReplacement.ResizeTo( dTOrig.Height(), 1 );
         for( int iLocal=0; iLocal<localHeight; ++iLocal )
-            dTReplacement.SetLocal( iLocal, 0, (F)1 );
+            dTReplacement.SetLocal( iLocal, 0, F(1) );
         LT.SetDiagonal( dTReplacement );
     }
 
@@ -204,7 +204,7 @@ inline void DistFrontFastLowerForwardSolve
         Zeros( LT.Height(), XT.Width(), ZT_MC_STAR );
         XT_MR_STAR = XT;
         elem::internal::LocalGemm
-        ( NORMAL, NORMAL, (F)1, LT, XT_MR_STAR, (F)0, ZT_MC_STAR );
+        ( NORMAL, NORMAL, F(1), LT, XT_MR_STAR, F(0), ZT_MC_STAR );
 
         // XT[VC,* ].SumScatterFrom( ZT[MC,* ] )
         XT.SumScatterFrom( ZT_MC_STAR );
@@ -223,10 +223,10 @@ inline void DistFrontFastLowerForwardSolve
         ZB_MC_STAR.AlignWith( LB );
         ZB_MC_STAR.ResizeTo( LB.Height(), XT.Width() );
         elem::internal::LocalGemm
-        ( NORMAL, NORMAL, (F)-1, LB, XT_MR_STAR, (F)0, ZB_MC_STAR );
+        ( NORMAL, NORMAL, F(-1), LB, XT_MR_STAR, F(0), ZB_MC_STAR );
 
         // XB[VC,* ] += ZB[MC,* ]
-        XB.SumScatterUpdate( (F)1, ZB_MC_STAR );
+        XB.SumScatterUpdate( F(1), ZB_MC_STAR );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -286,8 +286,8 @@ inline void DistFrontFastLowerBackwardSolve
     if( XB.Height() != 0 )
     {
         elem::internal::LocalGemm
-        ( orientation, NORMAL, (F)-1, LB, XB, (F)0, Z );
-        XT.SumScatterUpdate( (F)1, Z );
+        ( orientation, NORMAL, F(-1), LB, XB, F(0), Z );
+        XT.SumScatterUpdate( F(1), Z );
     }
 
     const int localTopHeight = LT.LocalHeight();
@@ -307,7 +307,7 @@ inline void DistFrontFastLowerBackwardSolve
     }
 
     // XT := LT^{T/H} XT
-    elem::internal::LocalGemm( orientation, NORMAL, (F)1, LT, XT, (F)0, Z );
+    elem::internal::LocalGemm( orientation, NORMAL, F(1), LT, XT, F(0), Z );
     XT.SumScatterFrom( Z );
 
     if( diag == UNIT )
@@ -382,7 +382,7 @@ inline void DistFrontFastLowerBackwardSolve
         XB_MC_STAR.AlignWith( LB );
         XB_MC_STAR = XB;
         elem::internal::LocalGemm
-        ( orientation, NORMAL, (F)-1, LB, XB_MC_STAR, (F)0, ZT_MR_STAR );
+        ( orientation, NORMAL, F(-1), LB, XB_MC_STAR, F(0), ZT_MR_STAR );
 
         // ZT[VR,* ].SumScatterFrom( ZT[MR,* ] )
         ZT_VR_STAR.SumScatterFrom( ZT_MR_STAR );
@@ -393,7 +393,7 @@ inline void DistFrontFastLowerBackwardSolve
         ZT_VC_STAR = ZT_VR_STAR;
 
         // XT[VC,* ] += ZT[VC,* ]
-        elem::Axpy( (F)1, ZT_VC_STAR, XT );
+        elem::Axpy( F(1), ZT_VC_STAR, XT );
     }
 
     DistMatrix<F,MD,STAR> dTOrig(g), dTReplacement(g);
@@ -405,7 +405,7 @@ inline void DistFrontFastLowerBackwardSolve
         dTReplacement.ResizeTo( dTOrig.Height(), 1 );
         const int localHeight = dTOrig.LocalHeight();
         for( int iLocal=0; iLocal<localHeight; ++iLocal )
-            dTReplacement.SetLocal( iLocal, 0, (F)1 );
+            dTReplacement.SetLocal( iLocal, 0, F(1) );
         LT.SetDiagonal( dTReplacement );
     }
 
@@ -415,7 +415,7 @@ inline void DistFrontFastLowerBackwardSolve
         XT_MC_STAR.AlignWith( LT );
         XT_MC_STAR = XT;
         elem::internal::LocalGemm
-        ( orientation, NORMAL, (F)1, LT, XT_MC_STAR, (F)0, ZT_MR_STAR );
+        ( orientation, NORMAL, F(1), LT, XT_MC_STAR, F(0), ZT_MR_STAR );
 
         // ZT[VR,* ].SumScatterFrom( ZT[MR,* ] )
         ZT_VR_STAR.SumScatterFrom( ZT_MR_STAR );

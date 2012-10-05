@@ -91,7 +91,7 @@ inline void DistFrontBlockLowerForwardSolve
 
     // XT := inv(ATL) XT
     elem::internal::LocalGemm
-    ( NORMAL, NORMAL, (F)1, LT, XT_STAR_STAR, (F)0, XT );
+    ( NORMAL, NORMAL, F(1), LT, XT_STAR_STAR, F(0), XT );
 
     if( LB.Height() != 0 )
     {
@@ -100,7 +100,7 @@ inline void DistFrontBlockLowerForwardSolve
 
         // XB := XB - LB XT
         elem::internal::LocalGemm
-        ( NORMAL, NORMAL, (F)-1, LB, XT_STAR_STAR, (F)1, XB );
+        ( NORMAL, NORMAL, F(-1), LB, XT_STAR_STAR, F(1), XB );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -163,7 +163,7 @@ inline void DistFrontBlockLowerForwardSolve
         // ZT[MC,* ] := inv(ATL)[MC,MR] XT[MR,* ], 
         XT_MR_STAR = XT;
         elem::internal::LocalGemm
-        ( NORMAL, NORMAL, (F)1, LT, XT_MR_STAR, (F)0, ZT_MC_STAR );
+        ( NORMAL, NORMAL, F(1), LT, XT_MR_STAR, F(0), ZT_MC_STAR );
 
         // XT[VC,* ] := SumScatterFrom( ZT[MC,* ] )
         XT.SumScatterFrom( ZT_MC_STAR );
@@ -179,10 +179,10 @@ inline void DistFrontBlockLowerForwardSolve
         // ZB[MC,* ] := LB[MC,MR] XT[MR,* ]
         XT_MR_STAR = XT;
         elem::internal::LocalGemm
-        ( NORMAL, NORMAL, (F)1, LB, XT_MR_STAR, (F)0, ZB_MC_STAR );
+        ( NORMAL, NORMAL, F(1), LB, XT_MR_STAR, F(0), ZB_MC_STAR );
 
         // XB[VC,* ] -= ZB[MC,* ] = LB[MC,MR] XT[MR,* ]
-        XB.SumScatterUpdate( (F)-1, ZB_MC_STAR );
+        XB.SumScatterUpdate( F(-1), ZB_MC_STAR );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -250,13 +250,12 @@ inline void DistFrontBlockLowerBackwardSolve
     Zeros( XT.Height(), XT.Width(), YT );
     DistMatrix<F,STAR,STAR> Z( g );
     Zeros( snSize, XT.Width(), Z );
-    elem::internal::LocalGemm
-    ( orientation, NORMAL, (F)1, LB, XB, (F)0, Z );
+    elem::internal::LocalGemm( orientation, NORMAL, F(1), LB, XB, F(0), Z );
     YT.SumScatterFrom( Z );
 
     // XT := XT - inv(ATL) YT
-    elem::internal::LocalGemm( NORMAL, NORMAL, (F)1, LT, YT, (F)0, Z );
-    XT.SumScatterUpdate( (F)-1, Z );
+    elem::internal::LocalGemm( NORMAL, NORMAL, F(1), LT, YT, F(0), Z );
+    XT.SumScatterUpdate( F(-1), Z );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -331,7 +330,7 @@ inline void DistFrontBlockLowerBackwardSolve
         XB_MC_STAR.AlignWith( LB );
         XB_MC_STAR = XB;
         elem::internal::LocalGemm
-        ( orientation, NORMAL, (F)1, LB, XB_MC_STAR, (F)0, ZT_MR_STAR );
+        ( orientation, NORMAL, F(1), LB, XB_MC_STAR, F(0), ZT_MR_STAR );
 
         // ZT[VR,* ].SumScatterFrom( ZT[MR,* ] )
         ZT_VR_STAR.SumScatterFrom( ZT_MR_STAR );
@@ -346,7 +345,7 @@ inline void DistFrontBlockLowerBackwardSolve
         YT_MC_STAR.AlignWith( LT );
         YT_MC_STAR = YT;
         elem::internal::LocalGemm
-        ( orientation, NORMAL, (F)1, LT, YT_MC_STAR, (F)0, ZT_MR_STAR );
+        ( orientation, NORMAL, F(1), LT, YT_MC_STAR, F(0), ZT_MR_STAR );
 
         // ZT[VR,* ].SumScatterFrom( ZT[MR,* ] )
         ZT_VR_STAR.SumScatterFrom( ZT_MR_STAR );
@@ -357,7 +356,7 @@ inline void DistFrontBlockLowerBackwardSolve
         ZT_VC_STAR = ZT_VR_STAR;
 
         // XT[VC,* ] -= ZT[VC,* ]
-        elem::Axpy( (F)-1, ZT_VC_STAR, XT );
+        elem::Axpy( F(-1), ZT_VC_STAR, XT );
     }
 #ifndef RELEASE
     PopCallStack();

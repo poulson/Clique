@@ -60,8 +60,8 @@ inline void LocalFrontLowerForwardSolve
     ( X, XT,
          XB, L.Width() );
 
-    elem::Trsm( LEFT, LOWER, NORMAL, diag, (F)1, LT, XT, true );
-    elem::Gemm( NORMAL, NORMAL, (F)-1, LB, XT, (F)1, XB );
+    elem::Trsm( LEFT, LOWER, NORMAL, diag, F(1), LT, XT, true );
+    elem::Gemm( NORMAL, NORMAL, F(-1), LB, XT, F(1), XB );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -97,8 +97,8 @@ inline void LocalFrontLowerBackwardSolve
     ( X, XT,
          XB, L.Width() );
 
-    elem::Gemm( orientation, NORMAL, (F)-1, LB, XB, (F)1, XT );
-    elem::Trsm( LEFT, LOWER, orientation, diag, (F)1, LT, XT, true );
+    elem::Gemm( orientation, NORMAL, F(-1), LB, XB, F(1), XT );
+    elem::Trsm( LEFT, LOWER, orientation, diag, F(1), LT, XT, true );
 #ifndef RELEASE
     PopCallStack();
 #endif

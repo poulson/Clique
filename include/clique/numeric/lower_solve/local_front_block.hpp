@@ -59,10 +59,10 @@ inline void LocalFrontBlockLowerForwardSolve( const Matrix<F>& L, Matrix<F>& X )
 
     // XT := inv(ATL) XT
     Matrix<F> YT( XT );
-    elem::Gemm( NORMAL, NORMAL, (F)1, LT, YT, (F)0, XT );
+    elem::Gemm( NORMAL, NORMAL, F(1), LT, YT, F(0), XT );
 
     // XB := XB - LB XT
-    elem::Gemm( NORMAL, NORMAL, (F)-1, LB, XT, (F)1, XB );
+    elem::Gemm( NORMAL, NORMAL, F(-1), LB, XT, F(1), XB );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -100,10 +100,10 @@ inline void LocalFrontBlockLowerBackwardSolve
     // YT := LB^[T/H] XB
     Matrix<F> YT;
     Zeros( XT.Height(), XT.Width(), YT );
-    elem::Gemm( orientation, NORMAL, (F)1, LB, XB, (F)0, YT );
+    elem::Gemm( orientation, NORMAL, F(1), LB, XB, F(0), YT );
 
     // XT := XT - inv(ATL) YT
-    elem::Gemm( NORMAL, NORMAL, (F)-1, LT, YT, (F)1, XT );
+    elem::Gemm( NORMAL, NORMAL, F(-1), LT, YT, F(1), XT );
 #ifndef RELEASE
     PopCallStack();
 #endif

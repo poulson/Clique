@@ -29,7 +29,7 @@ MakeZeros( DistVector<T>& x )
 #endif
     const int localHeight = x.LocalHeight();
     for( int iLocal=0; iLocal<localHeight; ++iLocal )
-        x.SetLocal( iLocal, (T)0 );
+        x.SetLocal( iLocal, T(0) );
 #ifndef RELEASE
     PopCallStack();
 #endif

@@ -31,7 +31,7 @@ MakeZeros( MultiVector<T>& X )
     const int width = X.Width();
     for( int j=0; j<width; ++j )
         for( int i=0; i<height; ++i )
-            X.Set( i, j, (T)0 );
+            X.Set( i, j, T(0) );
 #ifndef RELEASE
     PopCallStack();
 #endif

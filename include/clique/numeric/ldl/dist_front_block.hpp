@@ -51,7 +51,6 @@ inline void DistFrontBlockLDL
     // Copy the original contents of ABL back
     ABL = BBL;
 
-    // Overwrite ATL with inv(L D L^{T/H}) = L^{-T/H} D^{-1} L^{-1}
     // Overwrite ATL with inv(L D L^[T/H]) = L^[-T/H] D^{-1} L^{-1}
     elem::TriangularInverse( LOWER, UNIT, ATL );
     elem::Trdtrmm( orientation, LOWER, ATL );
@@ -61,14 +60,14 @@ inline void DistFrontBlockLDL
         DistMatrix<F> ATLTrans( g );
         elem::Transpose( ATL, ATLTrans );
         elem::MakeTrapezoidal( LEFT, UPPER, 1, ATLTrans );
-        elem::Axpy( (F)1, ATLTrans, ATL );
+        elem::Axpy( F(1), ATLTrans, ATL );
     }
     else
     {
         DistMatrix<F> ATLAdj( g );
         elem::Adjoint( ATL, ATLAdj );
         elem::MakeTrapezoidal( LEFT, UPPER, 1, ATLAdj );
-        elem::Axpy( (F)1, ATLAdj, ATL );
+        elem::Axpy( F(1), ATLAdj, ATL );
     }
 #ifndef RELEASE
     PopCallStack();
