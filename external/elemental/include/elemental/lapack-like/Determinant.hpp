@@ -33,12 +33,14 @@
 
 namespace elem {
 
-template<typename F> 
+namespace internal {
+
+template<typename F>
 inline SafeProduct<F> 
-SafeDeterminant( DistMatrix<F>& A )
+SafeDeterminantWithOverwrite( Matrix<F>& A )
 {
 #ifndef RELEASE
-    PushCallStack("SafeDeterminant");
+    PushCallStack("internal::SafeDeterminantWithOverwrite");
 #endif
     if( A.Height() != A.Width() )
         throw std::logic_error
@@ -46,12 +48,58 @@ SafeDeterminant( DistMatrix<F>& A )
 
     typedef typename Base<F>::type R;
     const int n = A.Height();
+    const R scale(n);
+    SafeProduct<F> det( n );
+
+    try
+    {
+        Matrix<int> p;
+        LU( A, p ); 
+        const bool isOdd = PivotParity( p );
+        
+        Matrix<F> d;
+        A.GetDiagonal( d );
+        for( int i=0; i<n; ++i )
+        {
+            const F delta = d.Get(i,0);
+            R alpha = Abs(delta);
+            det.rho *= delta/alpha;
+            det.kappa += Log(alpha)/scale;
+        }
+        if( isOdd )
+            det.rho = -det.rho;
+    }
+    catch( SingularMatrixException& e )
+    {
+        det.rho = 0;
+        det.kappa = 0;
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return det;
+}
+
+template<typename F> 
+inline SafeProduct<F> 
+SafeDeterminantWithOverwrite( DistMatrix<F>& A )
+{
+#ifndef RELEASE
+    PushCallStack("internal::SafeDeterminantWithOverwrite");
+#endif
+    if( A.Height() != A.Width() )
+        throw std::logic_error
+        ("Cannot compute determinant of nonsquare matrix");
+
+    typedef typename Base<F>::type R;
+    const int n = A.Height();
+    const R scale(n);
     SafeProduct<F> det( n );
     const Grid& g = A.Grid();
 
     try
     {
-        DistMatrix<int,VC,STAR> p;
+        DistMatrix<int,VC,STAR> p(g);
         LU( A, p );
         const bool isOdd = PivotParity( p );
 
@@ -67,7 +115,7 @@ SafeDeterminant( DistMatrix<F>& A )
                 const F delta = d.GetLocal(iLocal,0);
                 R alpha = Abs(delta);
                 localRho *= delta/alpha;
-                localKappa += std::log(alpha)/n;
+                localKappa += Log(alpha)/scale;
             }
         }
         mpi::AllReduce( &localRho, &det.rho, 1, mpi::PROD, g.VCComm() );
@@ -86,14 +134,17 @@ SafeDeterminant( DistMatrix<F>& A )
     return det;
 }
 
-template<typename F> 
-inline F Determinant( DistMatrix<F>& A )
+} // namespace internal
+
+template<typename F>
+inline SafeProduct<F> 
+SafeDeterminant( const Matrix<F>& A )
 {
 #ifndef RELEASE
-    PushCallStack("Determinant");
+    PushCallStack("SafeDeterminant");
 #endif
-    SafeProduct<F> safeDet = SafeDeterminant( A );
-    F det = safeDet.rho * std::exp(safeDet.kappa*safeDet.n);
+    Matrix<F> B( A );
+    SafeProduct<F> det = internal::SafeDeterminantWithOverwrite( B ); 
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -102,42 +153,17 @@ inline F Determinant( DistMatrix<F>& A )
 
 template<typename F>
 inline SafeProduct<F> 
-SafeDeterminant( Matrix<F>& A )
+SafeDeterminant( Matrix<F>& A, bool canOverwrite )
 {
 #ifndef RELEASE
     PushCallStack("SafeDeterminant");
 #endif
-    if( A.Height() != A.Width() )
-        throw std::logic_error
-        ("Cannot compute determinant of nonsquare matrix");
-
-    typedef typename Base<F>::type R;
-    const int n = A.Height();
-    SafeProduct<F> det( n );
-
-    try
-    {
-        Matrix<int> p;
-        LU( A, p ); 
-        const bool isOdd = PivotParity( p );
-        
-        Matrix<F> d;
-        A.GetDiagonal( d );
-        for( int i=0; i<n; ++i )
-        {
-            const F delta = d.Get(i,0);
-            R alpha = Abs(delta);
-            det.rho *= delta/alpha;
-            det.kappa += std::log(alpha)/n;
-        }
-        if( isOdd )
-            det.rho = -det.rho;
-    }
-    catch( SingularMatrixException& e )
-    {
-        det.rho = 0;
-        det.kappa = 0;
-    }
+    Matrix<F> B;
+    if( canOverwrite )
+        B.View( A );
+    else
+        B = A;
+    SafeProduct<F> det = internal::SafeDeterminantWithOverwrite( B ); 
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -145,13 +171,89 @@ SafeDeterminant( Matrix<F>& A )
 }
 
 template<typename F>
-inline F Determinant( Matrix<F>& A )
+inline F Determinant( const Matrix<F>& A )
 {
 #ifndef RELEASE
     PushCallStack("Determinant");
 #endif
     SafeProduct<F> safeDet = SafeDeterminant( A );
-    F det = safeDet.rho * std::exp(safeDet.kappa*safeDet.n);
+    F det = safeDet.rho * Exp(safeDet.kappa*safeDet.n);
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return det;
+}
+
+template<typename F>
+inline F Determinant( Matrix<F>& A, bool canOverwrite )
+{
+#ifndef RELEASE
+    PushCallStack("Determinant");
+#endif
+    SafeProduct<F> safeDet = SafeDeterminant( A, canOverwrite );
+    F det = safeDet.rho * Exp(safeDet.kappa*safeDet.n);
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return det;
+}
+
+template<typename F> 
+inline SafeProduct<F> 
+SafeDeterminant( const DistMatrix<F>& A )
+{
+#ifndef RELEASE
+    PushCallStack("SafeDeterminant");
+#endif
+    DistMatrix<F> B( A );
+    SafeProduct<F> det = internal::SafeDeterminantWithOverwrite( B );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return det;
+}
+
+template<typename F> 
+inline SafeProduct<F> 
+SafeDeterminant( DistMatrix<F>& A, bool canOverwrite )
+{
+#ifndef RELEASE
+    PushCallStack("SafeDeterminant");
+#endif
+    DistMatrix<F> B( A.Grid() );
+    if( canOverwrite )
+        B.View( A );
+    else
+        B = A;
+    SafeProduct<F> det = internal::SafeDeterminantWithOverwrite( B );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return det;
+}
+
+template<typename F> 
+inline F Determinant( const DistMatrix<F>& A )
+{
+#ifndef RELEASE
+    PushCallStack("Determinant");
+#endif
+    SafeProduct<F> safeDet = SafeDeterminant( A );
+    F det = safeDet.rho * Exp(safeDet.kappa*safeDet.n);
+#ifndef RELEASE
+    PopCallStack();
+#endif
+    return det;
+}
+
+template<typename F> 
+inline F Determinant( DistMatrix<F>& A, bool canOverwrite )
+{
+#ifndef RELEASE
+    PushCallStack("Determinant");
+#endif
+    SafeProduct<F> safeDet = SafeDeterminant( A, canOverwrite );
+    F det = safeDet.rho * Exp(safeDet.kappa*safeDet.n);
 #ifndef RELEASE
     PopCallStack();
 #endif

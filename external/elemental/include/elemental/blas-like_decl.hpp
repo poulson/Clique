@@ -112,6 +112,33 @@ void Axpy
   const DistMatrix<T,U,V>& X, DistMatrix<T,U,V>& Y );
 
 //
+// AxpyTriangle (Alpha X Plus Y):
+//
+// Y := alpha X + Y,
+//
+// where X and Y are triangular.
+//
+
+// Serial version
+template<typename T>
+void AxpyTriangle
+( UpperOrLower uplo, T alpha, const Matrix<T>& X, Matrix<T>& Y );
+template<typename T>
+void AxpyTriangle
+( UpperOrLower uplo, typename Base<T>::type alpha, 
+  const Matrix<T>& X, Matrix<T>& Y );
+
+// Parallel version
+template<typename T, Distribution U, Distribution V>
+void AxpyTriangle
+( UpperOrLower uplo, T alpha, 
+  const DistMatrix<T,U,V>& X, DistMatrix<T,U,V>& Y );
+template<typename T, Distribution U, Distribution V>
+void AxpyTriangle
+( UpperOrLower uplo, typename Base<T>::type alpha, 
+  const DistMatrix<T,U,V>& X, DistMatrix<T,U,V>& Y );
+
+//
 // Copy:
 //
 // Y := X
@@ -356,6 +383,8 @@ template<typename T,Distribution U,Distribution V>
 void MakeTrapezoidal
 ( LeftOrRight side, UpperOrLower uplo, int offset, DistMatrix<T,U,V>& A );
 
+// TODO: MakeTriangular
+
 //
 // MakeHermitian:
 //
@@ -407,6 +436,8 @@ template<typename T,Distribution U,Distribution V>
 void ScaleTrapezoid
 ( T alpha, LeftOrRight side, UpperOrLower uplo, int offset, 
   DistMatrix<T,U,V>& A );
+
+// TODO: ScaleTriangle
 
 //
 // Transpose:
@@ -933,6 +964,34 @@ void Trsm
 // Parallel version
 template<typename F>
 void Trsm
+( LeftOrRight side, UpperOrLower uplo, 
+  Orientation orientation, UnitOrNonUnit diag,
+  F alpha, const DistMatrix<F>& A, DistMatrix<F>& B,
+  bool checkIfSingular=false );
+
+//
+// Trtrsm (TRiangular TRiangular Solve with Multiple right-hand sides):
+//
+// Performs the update
+//   B := alpha orientation( A )^-1 B,  { side = LEFT }
+// or
+//   B := alpha B orientation( A )^-1,  { side = RIGHT }
+// where 'uplo' determines whether A and B are assumed to be upper or lower
+// triangular and 'diag' determines whether A has an implicit unit
+// diagonal.
+//
+
+// Serial version
+template<typename F>
+void Trtrsm
+( LeftOrRight side, UpperOrLower uplo, 
+  Orientation orientation, UnitOrNonUnit diag,
+  F alpha, const Matrix<F>& A, Matrix<F>& B, 
+  bool checkIfSingular=false ); 
+        
+// Parallel version
+template<typename F>
+void Trtrsm
 ( LeftOrRight side, UpperOrLower uplo, 
   Orientation orientation, UnitOrNonUnit diag,
   F alpha, const DistMatrix<F>& A, DistMatrix<F>& B,

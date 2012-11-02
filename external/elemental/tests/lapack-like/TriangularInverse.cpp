@@ -50,7 +50,7 @@ void Usage()
          << "  print matrices?: false iff 0\n" << endl;
 }
 
-template<typename F> // represents a real or complex number
+template<typename F> 
 void TestCorrectness
 ( bool printMatrices,
   UpperOrLower uplo, UnitOrNonUnit diag,
@@ -70,15 +70,15 @@ void TestCorrectness
     Trmm( LEFT, uplo, NORMAL, diag, F(1), AOrig, Y );
     Axpy( F(-1), X, Y );
 
-    R oneNormOrig = Norm( AOrig, ONE_NORM );
-    R infNormOrig = Norm( AOrig, INFINITY_NORM );
-    R frobNormOrig = Norm( AOrig, FROBENIUS_NORM );
-    R oneNormFinal = Norm( A, ONE_NORM );
-    R infNormFinal = Norm( A, INFINITY_NORM );
-    R frobNormFinal = Norm( A, FROBENIUS_NORM );
-    R oneNormOfError = Norm( Y, ONE_NORM );
-    R infNormOfError = Norm( Y, INFINITY_NORM );
-    R frobNormOfError = Norm( Y, FROBENIUS_NORM );
+    const R oneNormOrig = Norm( AOrig, ONE_NORM );
+    const R infNormOrig = Norm( AOrig, INFINITY_NORM );
+    const R frobNormOrig = Norm( AOrig, FROBENIUS_NORM );
+    const R oneNormFinal = Norm( A, ONE_NORM );
+    const R infNormFinal = Norm( A, INFINITY_NORM );
+    const R frobNormFinal = Norm( A, FROBENIUS_NORM );
+    const R oneNormOfError = Norm( Y, ONE_NORM );
+    const R infNormOfError = Norm( Y, INFINITY_NORM );
+    const R frobNormOfError = Norm( Y, FROBENIUS_NORM );
     if( g.Rank() == 0 )
     {
         cout << "||A||_1           = " << oneNormOrig << "\n"
@@ -93,12 +93,11 @@ void TestCorrectness
     }
 }
 
-template<typename F> // represents a real or complex number
+template<typename F> 
 void TestTriangularInverse
 ( bool testCorrectness, bool printMatrices,
   UpperOrLower uplo, UnitOrNonUnit diag, int m, const Grid& g )
 {
-    double startTime, endTime, runTime, gFlops;
     DistMatrix<F> A(g), AOrig(g);
     HermitianUniformSpectrum( m, A, 1, 10 );
     MakeTrapezoidal( LEFT, uplo, 0, A );
@@ -122,12 +121,12 @@ void TestTriangularInverse
         cout.flush();
     }
     mpi::Barrier( g.Comm() );
-    startTime = mpi::Time();
+    const double startTime = mpi::Time();
     TriangularInverse( uplo, diag, A );
     mpi::Barrier( g.Comm() );
-    endTime = mpi::Time();
-    runTime = endTime - startTime;
-    gFlops = internal::TriangularInverseGFlops<F>( m, runTime );
+    const double runTime = mpi::Time() - startTime;
+    const double realGFlops = 1./3.*Pow(double(m),3.)/(1.e9*runTime);
+    const double gFlops = ( IsComplex<F>::val ? 4*realGFlops : realGFlops );
     if( g.Rank() == 0 )
     {
         cout << "DONE. " << endl

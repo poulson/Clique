@@ -40,6 +40,22 @@
 
 namespace elem {
 
+template<typename F>
+inline void
+Cholesky( UpperOrLower uplo, Matrix<F>& A )
+{
+#ifndef RELEASE
+    PushCallStack("Cholesky");
+    if( A.Height() != A.Width() )
+        throw std::logic_error("A must be square");
+#endif
+    const char uploChar = UpperOrLowerToChar( uplo );
+    lapack::Cholesky( uploChar, A.Height(), A.Buffer(), A.LDim() );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
 template<typename F> 
 inline void
 Cholesky( UpperOrLower uplo, DistMatrix<F>& A )

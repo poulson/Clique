@@ -62,6 +62,29 @@ main( int argc, char* argv[] )
         DistMatrix<double> H;
         Hilbert( n, H );
         H.Print("Hilbert matrix:");
+
+        // This is grossly inefficient due to recomputing the singular values
+        // and Cholesky decomposition for several different operations, 
+        // but it serves as an example of each function's usage
+        const double cond = ConditionNumber( H );
+        const double det = HPDDeterminant( LOWER, H );
+        const double logBarrier = LogBarrier( LOWER, H );
+        const double hilbertSchmidt = HilbertSchmidt( H, H );
+        const double twoNorm = HermitianNorm( LOWER, H, TWO_NORM );
+        const double frobNorm = HermitianNorm( LOWER, H, FROBENIUS_NORM );
+        const double nuclearNorm = HermitianNorm( LOWER, H, NUCLEAR_NORM );
+
+        if( commRank == 0 )
+        {
+            std::cout << "kappa_2(H)   = " << cond << "\n"
+                      << "det(H)       = " << det << "\n"
+                      << "-log(det(H)) = " << logBarrier << "\n"
+                      << "Tr(H' H)     = " << hilbertSchmidt << "\n"
+                      << "|| H ||_F    = " << frobNorm << "\n"
+                      << "|| H ||_*    = " << nuclearNorm << "\n"
+                      << "|| H ||_2    = " << twoNorm << "\n"
+                      << std::endl;
+        }
     }
     catch( std::exception& e )
     {

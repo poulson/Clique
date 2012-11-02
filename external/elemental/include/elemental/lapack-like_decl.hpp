@@ -34,21 +34,148 @@
 namespace elem {
 
 //----------------------------------------------------------------------------//
-// Norms                                                                      //
+// Invariants, inner products, and divergences                                //
 //----------------------------------------------------------------------------//
+
+//
+// Condition number
+//
+template<typename F>
+typename Base<F>::type ConditionNumber( const Matrix<F>& A );
+template<typename F,Distribution U,Distribution V>
+typename Base<F>::type ConditionNumber( const DistMatrix<F,U,V>& A );
+// TODO: Allow for destructive versions which overwrite the input matrix but
+//       do not require a temporary matrix
+//
+// TODO: Generalize to condition number with respect to various norms
+
+//
+// Determinant: 
+//
+// Return the determinant of the matrix A.
+//
+template<typename F>
+F Determinant( const Matrix<F>& A );
+template<typename F>
+F Determinant( Matrix<F>& A, bool canOverwrite=false );
+template<typename F>
+F Determinant( const DistMatrix<F>& A );
+template<typename F>
+F Determinant( DistMatrix<F>& A, bool canOverwrite=false );
+
+//
+// SafeDeterminant:
+//
+// Return (rho,kappa,n) such that det(A) = rho exp(kappa n).
+// This decomposition of the determinant is done in order to reduce the
+// possibility of (under/over)flow. 
+//
+template<typename F>
+SafeProduct<F> SafeDeterminant( const Matrix<F>& A );
+template<typename F>
+SafeProduct<F> SafeDeterminant( Matrix<F>& A, bool canOverwrite=false );
+template<typename F>
+SafeProduct<F> SafeDeterminant( const DistMatrix<F>& A );
+template<typename F>
+SafeProduct<F> SafeDeterminant( DistMatrix<F>& A, bool canOverwrite=false );
+
+//
+// HPDDeterminant: 
+//
+// Return the determinant of the Hermitian positive-definite (HPD) matrix A.
+//
+template<typename F>
+typename Base<F>::type 
+HPDDeterminant( UpperOrLower uplo, const Matrix<F>& A );
+template<typename F>
+typename Base<F>::type 
+HPDDeterminant( UpperOrLower uplo, Matrix<F>& A, bool canOverwrite=false );
+template<typename F>
+typename Base<F>::type 
+HPDDeterminant( UpperOrLower uplo, const DistMatrix<F>& A );
+template<typename F>
+typename Base<F>::type 
+HPDDeterminant( UpperOrLower uplo, DistMatrix<F>& A, bool canOverwrite=false );
+
+//
+// SafeHPDDeterminant:
+//
+// Return (rho,kappa,n) such that det(A) = rho exp(kappa n).
+// This decomposition of the determinant is done in order to reduce the
+// possibility of (under/over)flow. 
+//
+// In the case of an HPD matrix, after successful completion, rho=1.
+//
+template<typename F>
+SafeProduct<F> 
+SafeHPDDeterminant( UpperOrLower uplo, const Matrix<F>& A );
+template<typename F>
+SafeProduct<F> 
+SafeHPDDeterminant( UpperOrLower uplo, Matrix<F>& A, bool canOverwrite=false );
+template<typename F>
+SafeProduct<F> 
+SafeHPDDeterminant( UpperOrLower uplo, const DistMatrix<F>& A );
+template<typename F>
+SafeProduct<F> 
+SafeHPDDeterminant
+( UpperOrLower uplo, DistMatrix<F>& A, bool canOverwrite=false );
+
+//
+// LogBarrier
+//
+// Returns -log(det(A)), where A is a Hermitian positive-definite matrix.
+//
+template<typename F>
+typename Base<F>::type 
+LogBarrier( UpperOrLower uplo, const Matrix<F>& A );
+template<typename F>
+typename Base<F>::type 
+LogBarrier( UpperOrLower uplo, Matrix<F>& A, bool canOverwrite=false );
+template<typename F>
+typename Base<F>::type 
+LogBarrier( UpperOrLower uplo, const DistMatrix<F>& A );
+template<typename F>
+typename Base<F>::type 
+LogBarrier( UpperOrLower uplo, DistMatrix<F>& A, bool canOverwrite=false );
+
+//
+// LogDetDivergence
+//
+// Returns 
+//     D_{ld}(A,B) = tr(A inv(B)) - log(det(A inv(B))) - n,
+// where A and B are n x n HPD matrices.
+//
+template<typename F>
+typename Base<F>::type 
+LogDetDivergence
+( UpperOrLower uplo, const Matrix<F>& A, const Matrix<F>& B );
+template<typename F>
+typename Base<F>::type 
+LogDetDivergence
+( UpperOrLower uplo, const DistMatrix<F>& A, const DistMatrix<F>& B );
+// TODO: versions which can be overwritten
+
+//
+// Trace
+//
+// Returns the sum of the diagonal entries of a square matrix.
+//
+template<typename F>
+F Trace( const Matrix<F>& A );
+template<typename F>
+F Trace( const DistMatrix<F>& A );
 
 //
 // Norm
 //
-
 template<typename F>
 typename Base<F>::type 
 Norm( const Matrix<F>& A, NormType type=FROBENIUS_NORM );
 template<typename F,Distribution U,Distribution V>
 typename Base<F>::type 
 Norm( const DistMatrix<F,U,V>& A, NormType type=FROBENIUS_NORM );
-
-// TODO: provide an option to compute more accurate estimates
+// TODO: Allow for destructive versions for cases which require computing 
+//       singular values in case the extra memory usage is unacceptable (rare)
 template<typename F>
 typename Base<F>::type TwoNormLowerBound( const Matrix<F>& A );
 template<typename F>
@@ -82,53 +209,15 @@ typename Base<F>::type
 SymmetricNorm
 ( UpperOrLower uplo, const DistMatrix<F>& A, NormType type=FROBENIUS_NORM );
 
-//----------------------------------------------------------------------------//
-// Invariants                                                                 //
-//----------------------------------------------------------------------------//
-
 //
-// Determinant: 
+// HilbertSchmidt
 //
-// Return the determinant of the matrix A.
+// Returns trace(A^H B)
 //
 template<typename F>
-F Determinant( Matrix<F>& A );
-template<typename F>
-F Determinant( DistMatrix<F>& A );
-
-//
-// SafeDeterminant:
-//
-// Return (rho,kappa,n) such that det(A) = rho exp(kappa n).
-// This decomposition of the determinant is done in order to reduce the
-// possibility of (under/over)flow. 
-//
-template<typename F>
-SafeProduct<F> SafeDeterminant( Matrix<F>& A );
-template<typename F>
-SafeProduct<F> SafeDeterminant( DistMatrix<F>& A );
-
-// TODO
-/*
-template<typename F>
-F HPDDeterminant( UpperOrLower uplo, Matrix<F>& A );
-template<typename F>
-F HPDDeterminant( UpperOrLower uplo, DistMatrix<F>& A );
-template<typename F>
-SafeProduct<F> SafeHPDDeterminant( UpperOrLower uplo, Matrix<F>& A );
-template<typename F>
-SafeProduct<F> SafeHPDDeterminant( UpperOrLower uplo, DistMatrix<F>& A );
-*/
-
-//
-// Trace
-//
-// Returns the sum of the diagonal entries of a square matrix.
-//
-template<typename F>
-F Trace( const Matrix<F>& A );
-template<typename F>
-F Trace( const DistMatrix<F>& A );
+F HilbertSchmidt( const Matrix<F>& A, const Matrix<F>& B );
+template<typename F,Distribution U,Distribution V>
+F HilbertSchmidt( const DistMatrix<F,U,V>& A, const DistMatrix<F,U,V>& B );
 
 //----------------------------------------------------------------------------//
 // Factorizations                                                             //
@@ -912,7 +1001,8 @@ void SingularValues
 //
 // Uses a Singular Value Decomposition to form the pseudoinverse of A. 
 //
-// TODO: Serial version
+template<typename F>
+void PseudoInverse( Matrix<F>& A );
 template<typename F>
 void Pseudoinverse( DistMatrix<F>& A );
 

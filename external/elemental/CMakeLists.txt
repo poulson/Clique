@@ -648,7 +648,7 @@ if(ELEM_TESTS)
   set(TEST_DIR ${PROJECT_SOURCE_DIR}/tests)
 
   set(CORE_TESTS AxpyInterface Complex DifferentGrids DistMatrix Matrix)
-  set(BLAS_TESTS Gemm Hemm Her2k Herk Symm Symv Syr2k Syrk Trmm Trsm
+  set(BLAS_TESTS Gemm Hemm Her2k Herk Symm Symv Syr2k Syrk Trmm Trsm Trsv
                  TwoSidedTrmm TwoSidedTrsm)
   set(LAPACK_TESTS ApplyPackedReflectors Cholesky HermitianTridiag LDL 
                    LU LQ QR TriangularInverse)
@@ -709,8 +709,9 @@ if(ELEM_EXAMPLES)
   set(CORE_EXAMPLES Constructors)
   set(BLAS_EXAMPLES Gemv)
   set(LAPACK_EXAMPLES GaussianElimination HermitianQDWH HouseholderSolve 
-                      HPDInverse LDL LDLInverse Polar Pseudoinverse QDWH 
-                      SequentialQR QR SequentialSVD SimpleSVD SVD)
+                      HPDInverse LDL LDLInverse LogDetDivergence Polar 
+                      Pseudoinverse QDWH SequentialQR QR SequentialSVD SimpleSVD
+                      SVD)
   set(SPECIAL_EXAMPLES Cauchy CauchyLike Circulant Diagonal DiscreteFourier 
                        Hankel HermitianUniformSpectrum Hilbert Identity Legendre
                        NormalUniformSpectrum Ones OneTwoOne Toeplitz Uniform
