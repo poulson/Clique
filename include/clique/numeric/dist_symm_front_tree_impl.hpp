@@ -478,7 +478,7 @@ DistSymmFrontTree<F>::TopLeftMemoryInfo
         elem::PartitionDown
         ( front.frontL, FTL,
                         FBL, front.frontL.Width() );
-        numLocalEntries += FTL.Width()*FTL.Width();
+        numLocalEntries += FTL.Height()*FTL.Width();
     }
     for( int s=1; s<numDistFronts; ++s )
     {
@@ -537,7 +537,7 @@ DistSymmFrontTree<F>::BottomLeftMemoryInfo
         elem::PartitionDown
         ( front.frontL, FTL,
                         FBL, front.frontL.Width() );
-        numLocalEntries += FBL.Width()*FBL.Width();
+        numLocalEntries += FBL.Height()*FBL.Width();
     }
     for( int s=1; s<numDistFronts; ++s )
     {
