@@ -453,4 +453,122 @@ DistSymmFrontTree<F>::MemoryInfo
 #endif
 }
 
+template<typename F>
+inline void
+DistSymmFrontTree<F>::TopLeftMemoryInfo
+( double& numLocalEntries, double& minLocalEntries, double& maxLocalEntries, 
+  double& numGlobalEntries ) const
+{
+#ifndef RELEASE
+    PushCallStack("DistSymmFrontTree::TopLeftMemInfo");
+#endif
+    numLocalEntries = numGlobalEntries = 0;
+    const int numLocalFronts = localFronts.size();
+    const int numDistFronts = distFronts.size();
+    const bool frontsAre1d = FrontsAre1d( frontType );
+    const Grid& grid = ( frontsAre1d ? distFronts.back().front1dL.Grid() 
+                                     : distFronts.back().front2dL.Grid() );
+    mpi::Comm comm = grid.Comm();
+
+    for( int s=0; s<numLocalFronts; ++s )
+    {
+        const LocalSymmFront<F>& front = localFronts[s];
+        Matrix<F> FTL,
+                  FBL;
+        elem::PartitionDown
+        ( front.frontL, FTL,
+                        FBL, front.frontL.Width() );
+        numLocalEntries += FTL.Width()*FTL.Width();
+    }
+    for( int s=1; s<numDistFronts; ++s )
+    {
+        const DistSymmFront<F>& front = distFronts[s];
+        if( frontsAre1d )
+        {
+            DistMatrix<F,VC,STAR> FTL(grid),
+                                  FBL(grid);
+            elem::PartitionDown
+            ( front.front1dL, FTL,
+                              FBL, front.front1dL.Width() );
+            numLocalEntries += FTL.LocalHeight()*FTL.LocalWidth();
+        }
+        else
+        {
+            DistMatrix<F> FTL(grid),
+                          FBL(grid);
+            elem::PartitionDown
+            ( front.front2dL, FTL,
+                              FBL, front.front2dL.Width() );
+            numLocalEntries += FTL.LocalHeight()*FTL.LocalWidth();
+        }
+        numLocalEntries += front.diag.AllocatedMemory();
+    }
+
+    mpi::AllReduce( &numLocalEntries, &minLocalEntries, 1, mpi::MIN, comm );
+    mpi::AllReduce( &numLocalEntries, &maxLocalEntries, 1, mpi::MAX, comm );
+    mpi::AllReduce( &numLocalEntries, &numGlobalEntries, 1, mpi::SUM, comm );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename F>
+inline void
+DistSymmFrontTree<F>::BottomLeftMemoryInfo
+( double& numLocalEntries, double& minLocalEntries, double& maxLocalEntries, 
+  double& numGlobalEntries ) const
+{
+#ifndef RELEASE
+    PushCallStack("DistSymmFrontTree::BottomLeftMemInfo");
+#endif
+    numLocalEntries = numGlobalEntries = 0;
+    const int numLocalFronts = localFronts.size();
+    const int numDistFronts = distFronts.size();
+    const bool frontsAre1d = FrontsAre1d( frontType );
+    const Grid& grid = ( frontsAre1d ? distFronts.back().front1dL.Grid() 
+                                     : distFronts.back().front2dL.Grid() );
+    mpi::Comm comm = grid.Comm();
+
+    for( int s=0; s<numLocalFronts; ++s )
+    {
+        const LocalSymmFront<F>& front = localFronts[s];
+        Matrix<F> FTL,
+                  FBL;
+        elem::PartitionDown
+        ( front.frontL, FTL,
+                        FBL, front.frontL.Width() );
+        numLocalEntries += FBL.Width()*FBL.Width();
+    }
+    for( int s=1; s<numDistFronts; ++s )
+    {
+        const DistSymmFront<F>& front = distFronts[s];
+        if( frontsAre1d )
+        {
+            DistMatrix<F,VC,STAR> FTL(grid),
+                                  FBL(grid);
+            elem::PartitionDown
+            ( front.front1dL, FTL,
+                              FBL, front.front1dL.Width() );
+            numLocalEntries += FBL.LocalHeight()*FBL.LocalWidth();
+        }
+        else
+        {
+            DistMatrix<F> FTL(grid),
+                          FBL(grid);
+            elem::PartitionDown
+            ( front.front2dL, FTL,
+                              FBL, front.front2dL.Width() );
+            numLocalEntries += FBL.LocalHeight()*FBL.LocalWidth();
+        }
+        numLocalEntries += front.diag.AllocatedMemory();
+    }
+
+    mpi::AllReduce( &numLocalEntries, &minLocalEntries, 1, mpi::MIN, comm );
+    mpi::AllReduce( &numLocalEntries, &maxLocalEntries, 1, mpi::MAX, comm );
+    mpi::AllReduce( &numLocalEntries, &numGlobalEntries, 1, mpi::SUM, comm );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
 } // namespace cliq

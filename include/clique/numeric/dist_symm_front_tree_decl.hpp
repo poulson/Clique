@@ -97,6 +97,14 @@ struct DistSymmFrontTree
       const DistSeparatorTree& sepTree,
       const DistSymmInfo& info );
 
+    void TopLeftMemoryInfo
+    ( double& numLocalEntries, double& minLocalEntries, double& maxLocalEntries,
+      double& numGlobalEntries ) const;
+
+    void BottomLeftMemoryInfo
+    ( double& numLocalEntries, double& minLocalEntries, double& maxLocalEntries,
+      double& numGlobalEntries ) const;
+
     void MemoryInfo
     ( double& numLocalEntries, double& minLocalEntries, double& maxLocalEntries,
       double& numGlobalEntries ) const;
