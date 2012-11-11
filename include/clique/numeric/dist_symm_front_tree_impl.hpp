@@ -475,7 +475,7 @@ DistSymmFrontTree<F>::TopLeftMemoryInfo
         const LocalSymmFront<F>& front = localFronts[s];
         Matrix<F> FTL,
                   FBL;
-        elem::PartitionDown
+        elem::LockedPartitionDown
         ( front.frontL, FTL,
                         FBL, front.frontL.Width() );
         numLocalEntries += FTL.Height()*FTL.Width();
@@ -487,7 +487,7 @@ DistSymmFrontTree<F>::TopLeftMemoryInfo
         {
             DistMatrix<F,VC,STAR> FTL(grid),
                                   FBL(grid);
-            elem::PartitionDown
+            elem::LockedPartitionDown
             ( front.front1dL, FTL,
                               FBL, front.front1dL.Width() );
             numLocalEntries += FTL.LocalHeight()*FTL.LocalWidth();
@@ -496,7 +496,7 @@ DistSymmFrontTree<F>::TopLeftMemoryInfo
         {
             DistMatrix<F> FTL(grid),
                           FBL(grid);
-            elem::PartitionDown
+            elem::LockedPartitionDown
             ( front.front2dL, FTL,
                               FBL, front.front2dL.Width() );
             numLocalEntries += FTL.LocalHeight()*FTL.LocalWidth();
@@ -534,7 +534,7 @@ DistSymmFrontTree<F>::BottomLeftMemoryInfo
         const LocalSymmFront<F>& front = localFronts[s];
         Matrix<F> FTL,
                   FBL;
-        elem::PartitionDown
+        elem::LockedPartitionDown
         ( front.frontL, FTL,
                         FBL, front.frontL.Width() );
         numLocalEntries += FBL.Height()*FBL.Width();
@@ -546,7 +546,7 @@ DistSymmFrontTree<F>::BottomLeftMemoryInfo
         {
             DistMatrix<F,VC,STAR> FTL(grid),
                                   FBL(grid);
-            elem::PartitionDown
+            elem::LockedPartitionDown
             ( front.front1dL, FTL,
                               FBL, front.front1dL.Width() );
             numLocalEntries += FBL.LocalHeight()*FBL.LocalWidth();
@@ -555,7 +555,7 @@ DistSymmFrontTree<F>::BottomLeftMemoryInfo
         {
             DistMatrix<F> FTL(grid),
                           FBL(grid);
-            elem::PartitionDown
+            elem::LockedPartitionDown
             ( front.front2dL, FTL,
                               FBL, front.front2dL.Width() );
             numLocalEntries += FBL.LocalHeight()*FBL.LocalWidth();
