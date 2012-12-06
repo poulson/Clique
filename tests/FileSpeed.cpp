@@ -20,16 +20,6 @@
 #include "clique.hpp"
 using namespace cliq;
 
-void Usage()
-{
-    std::cout << "FileSpeed <num MB> <num pieces> <num files> [basename=out]\n"
-              << "  <num MB>:       number of megabytes to write to file\n"
-              << "  <num pieces>:   number of pieces to break it into\n"
-              << "  <num files>:    number of files to read/write\n"
-              << "  [basename=out]: base file name to write/read\n"
-              << std::endl;
-}
-
 int
 main( int argc, char* argv[] )
 {
@@ -37,40 +27,37 @@ main( int argc, char* argv[] )
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
 
-    if( argc < 4 )
-    {
-        if( commRank == 0 )        
-            Usage();
-        cliq::Finalize();
-        return 0;
-    }
-
-    int argNum = 1;
-    const unsigned numMB = atoi(argv[argNum++]);
-    const unsigned numPieces = atoi(argv[argNum++] );
-    const unsigned numFiles = atoi(argv[argNum++]);
-    const char* baseName = ( argc>argNum ? argv[argNum++] : "out" );
-    if( numPieces == 0 && commRank == 0 )
-    {
-        std::cout << "Number of pieces must be positive." << std::endl;
-        cliq::Finalize();
-        return 0;
-    }
-    if( numFiles == 0 && commRank == 0 )
-    {
-        std::cout << "Number of files must be positive." << std::endl;
-        cliq::Finalize();
-        return 0;
-    }
-    if( commRank == 0 )
-        std::cout << "numMB:     " << numMB << "\n"
-                  << "numPieces: " << numPieces << "\n"
-                  << "numFiles:  " << numFiles << "\n"
-                  << "baseName:  " << baseName << "\n"
-                  << std::endl;
-
     try
     {
+        const unsigned numMB = Input
+            ("--numMB","number of megabytes to read/write",100u);
+        const unsigned numPieces = Input
+            ("--numPieces","number of pieces to break transfer into",5);
+        const unsigned numFiles = Input
+            ("--numFiles","number of files to read/write",5);
+        const std::string baseName = Input
+            ("--baseName","base name for files",std::string("scratch"));
+        ProcessInput();
+
+        if( numPieces == 0 && commRank == 0 )
+        {
+            std::cout << "Number of pieces must be positive." << std::endl;
+            cliq::Finalize();
+            return 0;
+        }
+        if( numFiles == 0 && commRank == 0 )
+        {
+            std::cout << "Number of files must be positive." << std::endl;
+            cliq::Finalize();
+            return 0;
+        }
+        if( commRank == 0 )
+            std::cout << "numMB:     " << numMB << "\n"
+                      << "numPieces: " << numPieces << "\n"
+                      << "numFiles:  " << numFiles << "\n"
+                      << "baseName:  " << baseName << "\n"
+                      << std::endl;
+
         const std::size_t bufferSize = numMB<<20;
         std::vector<char> buffer( bufferSize );
 
@@ -122,16 +109,17 @@ main( int argc, char* argv[] )
                           << " secs." << std::endl;
         }
     }
+    catch( ArgException& e ) { }
     catch( std::exception& e )
     {
+        std::ostringstream msg;
+        msg << "Process " << commRank << " caught message:\n"
+            << e.what() << std::endl;
+        std::cerr << msg.str();
 #ifndef RELEASE
         elem::DumpCallStack();
         cliq::DumpCallStack();
 #endif
-        std::ostringstream msg;
-        msg << "Process " << commRank << " caught message:\n"
-            << e.what() << "\n";
-        std::cerr << msg.str() << std::endl;
     }
 
     cliq::Finalize();

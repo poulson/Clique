@@ -33,34 +33,20 @@
 #include "elemental.hpp"
 using namespace elem;
 
-void Usage()
-{
-    std::cout << "Toeplitz <m> <n>\n"
-              << "  m: Height of matrix, m >= 1\n"
-              << "  n: Width of matrix, n >= 1\n"
-              << std::endl;
-}
-
 int 
 main( int argc, char* argv[] )
 {
     Initialize( argc, argv );
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
-    const int commSize = mpi::CommSize( comm );
-
-    if( argc < 3 )
-    {
-        if( commRank == 0 )
-            Usage();
-        Finalize();
-        return 0;
-    }
-    const int m = atoi( argv[1] );
-    const int n = atoi( argv[2] );
 
     try
     {
+        const int m = Input("--height","height of matrix",10);
+        const int n = Input("--width","width of matrix",10);
+        const bool print = Input("--print","print matrix?",true);
+        ProcessInput();
+
         const int length = m+n-1;
         std::vector<double> a( length );
         for( int j=0; j<length; ++j )
@@ -68,18 +54,20 @@ main( int argc, char* argv[] )
 
         DistMatrix<double> A;
         Toeplitz( m, n, a, A );
-        A.Print("Toeplitz matrix:");
+        if( print )
+            A.Print("Toeplitz matrix:");
     }
     catch( std::exception& e )
     {
+        std::ostringstream os;
+        os << "Process " << commRank << " caught error message:\n" << e.what()
+           << std::endl;
+        std::cerr << os.str();
 #ifndef RELEASE
         DumpCallStack();
 #endif
-        std::cerr << "Process " << commRank << " caught error message:\n"
-                  << e.what() << std::endl;
     }
 
     Finalize();
     return 0;
 }
-

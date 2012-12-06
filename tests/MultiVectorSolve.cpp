@@ -20,22 +20,6 @@
 #include "clique.hpp"
 using namespace cliq;
 
-void Usage()
-{
-    std::cout
-      << "MultiVectorSolve <n1> <n2> <n3> <numRhs> "
-      << "[sequential=true] [numDistSeps=1] [numSeqSeps=1] [cutoff=128]\n"
-      << "  n1: first dimension of n1 x n2 x n3 mesh\n"
-      << "  n2: second dimension of n1 x n2 x n3 mesh\n"
-      << "  n3: third dimension of n1 x n2 x n3 mesh\n"
-      << "  numRhs: the number of random right-hand sides to solve against\n"
-      << "  sequential: use a sequential symbolic reordering if nonzero\n"
-      << "  numDistSeps: number of distributed separators to try\n"
-      << "  numSeqSeps: number of sequential separators to try\n"
-      << "  cutoff: maximum size of leaf node\n"
-      << std::endl;
-}
-
 int
 main( int argc, char* argv[] )
 {
@@ -43,25 +27,23 @@ main( int argc, char* argv[] )
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
 
-    if( argc < 5 )
-    {
-        if( commRank == 0 )
-            Usage();
-        cliq::Finalize();
-        return 0;
-    }
-    int argNum = 1;
-    const int n1 = atoi(argv[argNum++]);
-    const int n2 = atoi(argv[argNum++]);
-    const int n3 = atoi(argv[argNum++]);
-    const int numRhs = atoi(argv[argNum++]);
-    const bool sequential = ( argc>argNum ? atoi(argv[argNum++]) : true );
-    const int numDistSeps = ( argc>argNum ? atoi(argv[argNum++]) : 1 );
-    const int numSeqSeps = ( argc>argNum ? atoi(argv[argNum++]) : 1 );
-    const int cutoff = ( argc>argNum ? atoi(argv[argNum++]) : 128 );
-
     try
     {
+        const int n1 = Input("--n1","first grid dimension",30);
+        const int n2 = Input("--n2","second grid dimension",30);
+        const int n3 = Input("--n3","third grid dimension",30);
+        const int numRhs = Input("--numRhs","number of right-hand sides",5);
+        const bool sequential = Input
+            ("--sequential","sequential partitions?",true);
+        const int numDistSeps = Input
+            ("--numDistSeps",
+             "number of separators to try per distributed partition",1);
+        const int numSeqSeps = Input
+            ("--numSeqSeps",
+             "number of separators to try per sequential partition",1);
+        const int cutoff = Input("--cutoff","cutoff for nested dissection",128);
+        ProcessInput();
+
         const int N = n1*n2*n3;
         DistSparseMatrix<double> A( N, comm );
 
@@ -255,16 +237,17 @@ main( int argc, char* argv[] )
             }
         }
     }
+    catch( ArgException& e ) { }
     catch( std::exception& e )
     {
+        std::ostringstream msg;
+        msg << "Process " << commRank << " caught message:\n"
+            << e.what() << std::endl;
+        std::cerr << msg.str();
 #ifndef RELEASE
         elem::DumpCallStack();
         cliq::DumpCallStack();
 #endif
-        std::ostringstream msg;
-        msg << "Process " << commRank << " caught message:\n"
-            << e.what() << "\n";
-        std::cerr << msg.str() << std::endl;
     }
 
     cliq::Finalize();

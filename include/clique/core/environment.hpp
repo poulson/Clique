@@ -59,6 +59,11 @@ using elem::DistMatrix;
 using elem::Shift;
 using elem::LocalLength;
 
+// Pull in command-line processing
+using elem::Input;
+using elem::ProcessInput;
+using elem::ArgException;
+
 inline int
 RowToProcess( int i, int blocksize, int commSize )
 {

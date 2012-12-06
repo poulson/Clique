@@ -33,52 +33,46 @@
 #include "elemental.hpp"
 using namespace elem;
 
-void Usage()
-{
-    std::cout << "LogDetDivergence <n> <lower> <upper>\n"
-              << "  n: height of random Hermitian matrix\n"
-              << "  lower: (non-inclusive) lower bound on spectrum\n"
-              << "  upper: (inclusive) upper bound on spectrum\n"
-              << std::endl;
-}
-
 int 
 main( int argc, char* argv[] )
 {
     Initialize( argc, argv );
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
-    const int commSize = mpi::CommSize( comm );
-
-    if( argc < 4 )
-    {
-        if( commRank == 0 )
-            Usage();
-        Finalize();
-        return 0;
-    }
-    const int n = atoi( argv[1] );
-    const double lower = atof( argv[2] );
-    const double upper = atof( argv[3] );
 
     try
     {
+        const int n = Input("--size","size of HPD matrix",100);
+        const double lower = Input("--lower","lower bound on spectrum",1.);
+        const double upper = Input("--upper","upper bound on spectrum",10.);
+        const bool print = Input("--print","print matrices",false);
+        ProcessInput();
+
         DistMatrix<double> A, B;
         HermitianUniformSpectrum( n, A, lower, upper );
         HermitianUniformSpectrum( n, B, lower, upper );
-        A.Print("A");
-        B.Print("B");
+        if( print )
+        {
+            A.Print("A");
+            B.Print("B");
+        }
         const double logDetDiv = LogDetDivergence( LOWER, A, B );
         if( commRank == 0 )
             std::cout << "LogDetDiv(A,B) = " << logDetDiv << std::endl;
     }
+    catch( ArgException& e )
+    {
+        // There is nothing to do
+    }
     catch( std::exception& e )
     {
+        std::ostringstream os;
+        os << "Process " << commRank << " caught error message:\n" << e.what()
+           << std::endl;
+        std::cerr << os.str();
 #ifndef RELEASE
         DumpCallStack();
 #endif
-        std::cerr << "Process " << commRank << " caught error message:\n"
-                  << e.what() << std::endl;
     }
 
     Finalize();

@@ -33,35 +33,23 @@
 #include "elemental.hpp"
 using namespace elem;
 
-void Usage()
-{
-    std::cout << "Hilbert <n>\n"
-              << "  n: Generate a Hilbert matrix of size n x n, n >= 1"
-              << std::endl;
-}
-
 int 
 main( int argc, char* argv[] )
 {
     Initialize( argc, argv );
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
-    const int commSize = mpi::CommSize( comm );
-
-    if( argc < 2 )
-    {
-        if( commRank == 0 )
-            Usage();
-        Finalize();
-        return 0;
-    }
-    const int n = atoi( argv[1] );
 
     try
     {
+        const int n = Input("--size","size of matrix",10);
+        const bool print = Input("--print","print matrix?",true);
+        ProcessInput();
+
         DistMatrix<double> H;
         Hilbert( n, H );
-        H.Print("Hilbert matrix:");
+        if( print )
+            H.Print("Hilbert matrix:");
 
         // This is grossly inefficient due to recomputing the singular values
         // and Cholesky decomposition for several different operations, 
@@ -86,16 +74,21 @@ main( int argc, char* argv[] )
                       << std::endl;
         }
     }
+    catch( ArgException& e )
+    {
+        // There is nothing to do
+    }
     catch( std::exception& e )
     {
+        std::ostringstream os;
+        os << "Process " << commRank << " caught error message:\n" << e.what()
+           << std::endl;
+        std::cerr << os.str();
 #ifndef RELEASE
         DumpCallStack();
 #endif
-        std::cerr << "Process " << commRank << " caught error message:\n"
-                  << e.what() << std::endl;
     }
 
     Finalize();
     return 0;
 }
-

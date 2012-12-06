@@ -38,14 +38,6 @@ using namespace elem;
 typedef double R;
 typedef Complex<R> C;
 
-void Usage()
-{
-    cout << "SVD <m> <n>\n"
-         << "  <m>: height of random matrix to test SVD on\n"
-         << "  <n>: width of random matrix to test SVD on\n"
-         << endl;
-}
-
 int
 main( int argc, char* argv[] )
 {
@@ -54,21 +46,19 @@ main( int argc, char* argv[] )
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
 
-    if( argc < 3 )
-    {
-        if( commRank == 0 )
-            Usage();
-        Finalize();
-        return 0;
-    }
-    const int m = atoi( argv[1] );
-    const int n = atoi( argv[2] );
-
     try 
     {
+        const int m = Input("--height","height of matrix",100);
+        const int n = Input("--width","width of matrix",100);
+        const bool print = Input("--print","print matrices?",false);
+        ProcessInput();
+
         Grid g( comm );
         DistMatrix<C> A( g );
         Uniform( m, n, A );
+
+        if( print )
+            A.Print("A");
 
         // Compute just the singular values 
         DistMatrix<R,VR,STAR> sOnly( g );
@@ -80,6 +70,13 @@ main( int argc, char* argv[] )
         DistMatrix<R,VR,STAR> s( g );
         U = A;
         SVD( U, s, V );
+
+        if( print )
+        {
+            U.Print("U");
+            V.Print("V");
+            s.Print("s");
+        }
 
         // Compare the singular values from both methods
         Axpy( R(-1), s, sOnly );
@@ -118,10 +115,16 @@ main( int argc, char* argv[] )
                  << "|| sError ||_2 = " << singValDiff << std::endl;
         }
     }
+    catch( ArgException& e )
+    {
+        // There is nothing to do
+    }
     catch( exception& e )
     {
-        cerr << "Process " << commRank << " caught exception with message: "
-             << e.what() << endl;
+        ostringstream os;
+        os << "Process " << commRank << " caught exception with message: "
+           << e.what() << endl;
+        cerr << os.str();
 #ifndef RELEASE
         DumpCallStack();
 #endif
@@ -130,4 +133,3 @@ main( int argc, char* argv[] )
     Finalize();
     return 0;
 }
-

@@ -34,25 +34,11 @@
 using namespace std;
 using namespace elem;
 
-void Usage()
-{
-    cout << "SYmmetric Matrix Matrix multiplication.\n\n"
-         << "  Symm <r> <c> <side> <uplo> <m> <n> <nb> <print?>\n\n"
-         << "  r: number of process rows\n"
-         << "  c: number of process cols\n"
-         << "  side: {L,R}\n"
-         << "  uplo: {L,U}\n"
-         << "  m: height of C\n" 
-         << "  n: width  of C\n"
-         << "  nb: algorithmic blocksize\n"
-         << "  print?: [0/1]\n" << endl;
-}
-
 template<typename T>
 void TestSymm
 ( const LeftOrRight side, const UpperOrLower uplo,
   const int m, const int n, const T alpha, const T beta,
-  const bool printMatrices, const Grid& g )
+  const bool print, const Grid& g )
 {
     DistMatrix<T> A(g), B(g), C(g);
 
@@ -62,7 +48,7 @@ void TestSymm
         Uniform( n, n, A );
     Uniform( m, n, B );
     Uniform( m, n, C );
-    if( printMatrices )
+    if( print )
     {
         A.Print("A");
         B.Print("B");
@@ -91,7 +77,7 @@ void TestSymm
              << "  Time = " << runTime << " seconds. GFlops = " 
              << gFlops << endl;
     }
-    if( printMatrices )
+    if( print )
     {
         ostringstream msg;
         if( side == LEFT )
@@ -107,72 +93,67 @@ main( int argc, char* argv[] )
 {
     Initialize( argc, argv );
     mpi::Comm comm = mpi::COMM_WORLD;
-    const int rank = mpi::CommRank( comm );
-
-    if( argc < 9 )
-    {
-        if( rank == 0 )
-            Usage();
-        Finalize();
-        return 0;
-    }
+    const int commRank = mpi::CommRank( comm );
+    const int commSize = mpi::CommSize( comm );
 
     try
     {
-        int argNum = 0;
-        const int r = atoi(argv[++argNum]);
-        const int c = atoi(argv[++argNum]);
-        const LeftOrRight side = CharToLeftOrRight(*argv[++argNum]);
-        const UpperOrLower uplo = CharToUpperOrLower(*argv[++argNum]);
-        const int m = atoi(argv[++argNum]);
-        const int n = atoi(argv[++argNum]);
-        const int nb = atoi(argv[++argNum]);
-        const bool printMatrices = atoi(argv[++argNum]);
+        int r = Input("--r","height of process grid",0);
+        const char sideChar = Input("--side","side to apply from: L/R",'L');
+        const char uploChar = Input("--uplo","upper or lower storage: L/U",'L');
+        const int m = Input("--m","height of result",100);
+        const int n = Input("--n","width of result",100);
+        const int nb = Input("--nb","algorithmic blocksize",96);
+        const bool print = Input("--print","print matrices?",false);
+        ProcessInput();
+
+        if( r == 0 )
+            r = Grid::FindFactor( commSize );
+        const int c = commSize / r;
+        const Grid g( comm, r, c );
+        const LeftOrRight side = CharToLeftOrRight( sideChar );
+        const UpperOrLower uplo = CharToUpperOrLower( uploChar );
+        SetBlocksize( nb );
+
 #ifndef RELEASE
-        if( rank == 0 )
+        if( commRank == 0 )
         {
             cout << "==========================================\n"
                  << " In debug mode! Performance will be poor! \n"
                  << "==========================================" << endl;
         }
 #endif
-        const Grid g( comm, r, c );
-        SetBlocksize( nb );
+        if( commRank == 0 )
+            cout << "Will test Symm" << sideChar << uploChar << endl;
 
-        if( rank == 0 )
-        {
-            cout << "Will test Symm" << LeftOrRightToChar(side) 
-                                     << UpperOrLowerToChar(uplo) << endl;
-        }
-
-        if( rank == 0 )
+        if( commRank == 0 )
         {
             cout << "---------------------\n"
                  << "Testing with doubles:\n"
                  << "---------------------" << endl;
         }
-        TestSymm<double>
-        ( side, uplo, m, n, (double)3, (double)4, printMatrices, g ); 
+        TestSymm<double>( side, uplo, m, n, (double)3, (double)4, print, g ); 
 
-        if( rank == 0 )
+        if( commRank == 0 )
         {
             cout << "--------------------------------------\n"
                  << "Testing with double-precision complex:\n"
                  << "--------------------------------------" << endl;
         }
         TestSymm<Complex<double> >
-        ( side, uplo, m, n, 
-          Complex<double>(3), Complex<double>(4), printMatrices, g ); 
+        ( side, uplo, m, n, Complex<double>(3), Complex<double>(4), print, g ); 
     }
+    catch( ArgException& e ) { }
     catch( exception& e )
     {
+        ostringstream os;
+        os << "Process " << commRank << " caught error message:\n" << e.what()
+           << endl;
+        cerr << os.str();
 #ifndef RELEASE
         DumpCallStack();
 #endif
-        cerr << "Process " << rank << " caught error message:" << endl 
-             << e.what() << endl;
     }
     Finalize();
     return 0;
 }
-

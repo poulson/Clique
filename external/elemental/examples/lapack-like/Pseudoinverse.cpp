@@ -38,14 +38,6 @@ using namespace elem;
 typedef double R;
 typedef Complex<R> C;
 
-void Usage()
-{
-    cout << "Pseudoinverse <m> <n>\n"
-         << "  <m>: height of random matrix to test pseudoinverse\n"
-         << "  <n>: width of random matrix to test pseudoinverse\n"
-         << endl;
-}
-
 int
 main( int argc, char* argv[] )
 {
@@ -54,18 +46,13 @@ main( int argc, char* argv[] )
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
 
-    if( argc < 3 )
-    {
-        if( commRank == 0 )
-            Usage();
-        Finalize();
-        return 0;
-    }
-    const int m = atoi( argv[1] );
-    const int n = atoi( argv[2] );
-
     try 
     {
+        const int m = Input("--height","height of matrix",100);
+        const int n = Input("--width","width of matrix",100);
+        const bool print = Input("--print","print matrices?",false);
+        ProcessInput();
+
         Grid g( comm );
         DistMatrix<C> A( g );
         Uniform( m, n, A );
@@ -74,8 +61,11 @@ main( int argc, char* argv[] )
         DistMatrix<C> pinvA( A );
         Pseudoinverse( pinvA );
 
-        A.Print("A");
-        pinvA.Print("pinv(A)");
+        if( print )
+        {
+            A.Print("A");
+            pinvA.Print("pinv(A)");
+        }
 
         const R frobOfA = Norm( A, FROBENIUS_NORM );
         const R frobOfPinvA = Norm( pinvA, FROBENIUS_NORM );
@@ -87,10 +77,16 @@ main( int argc, char* argv[] )
                  << endl;
         }
     }
+    catch( ArgException& e )
+    {
+        // There is nothing to do
+    }
     catch( exception& e )
     {
-        cerr << "Process " << commRank << " caught exception with message: "
-             << e.what() << endl;
+        ostringstream os;
+        os << "Process " << commRank << " caught exception with message: "
+           << e.what() << endl;
+        cerr << os.str();
 #ifndef RELEASE
         DumpCallStack();
 #endif
@@ -99,4 +95,3 @@ main( int argc, char* argv[] )
     Finalize();
     return 0;
 }
-

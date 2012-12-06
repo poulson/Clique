@@ -20,19 +20,6 @@
 #include "clique.hpp"
 using namespace cliq;
 
-void Usage()
-{
-    std::cout 
-      << "NestedDissection <n> "
-         "[sequential=true] [numDistSeps=10] [numSeqSeps=5] [cutoff=128]\n" 
-      << "  n: size of n x n x n mesh\n"
-      << "  sequential: if nonzero, partition graph sequentially\n"
-      << "  numDistSeps: number of distributed separators to try\n"
-      << "  numSeqSeps: number of sequential separators to try\n"
-      << "  cutoff: maximum size of leaf node\n"
-      << std::endl;
-}
-
 int
 main( int argc, char* argv[] )
 {
@@ -40,22 +27,20 @@ main( int argc, char* argv[] )
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
 
-    if( argc < 2 )
-    {
-        if( commRank == 0 )
-            Usage();
-        cliq::Finalize();
-        return 0;
-    }
-    int argNum = 1;
-    const int n = atoi(argv[argNum++]);
-    const bool sequential = ( argc>argNum ? atoi(argv[argNum++]) : true );
-    const int numDistSeps = ( argc>argNum ? atoi(argv[argNum++]) : 10 );
-    const int numSeqSeps = ( argc>argNum ? atoi(argv[argNum++]) : 5 );
-    const int cutoff = ( argc>argNum ? atoi(argv[argNum++]) : 128 );
-
     try
     {
+        const int n = Input("--n","size of n x n x n grid",30);
+        const bool sequential = Input
+            ("--sequential","sequential partitions?",true);
+        const int numDistSeps = Input
+            ("--numDistSeps",
+             "number of separators to try per distributed partition",1);
+        const int numSeqSeps = Input
+            ("--numSeqSeps",
+             "number of separators to try per sequential partition",1);
+        const int cutoff = Input("--cutoff","cutoff for nested dissection",128);
+        ProcessInput();
+
         const int numVertices = n*n*n;
         DistGraph graph( numVertices, comm );
 
@@ -139,16 +124,17 @@ main( int argc, char* argv[] )
             std::cout << std::endl;
         }
     }
+    catch( ArgException& e ) { }
     catch( std::exception& e )
     {
+        std::ostringstream msg;
+        msg << "Process " << commRank << " caught message:\n"
+            << e.what() << std::endl;
+        std::cerr << msg.str();
 #ifndef RELEASE
         elem::DumpCallStack();
         cliq::DumpCallStack();
 #endif
-        std::ostringstream msg;
-        msg << "Process " << commRank << " caught message:\n"
-            << e.what() << "\n";
-        std::cerr << msg.str() << std::endl;
     }
 
     cliq::Finalize();

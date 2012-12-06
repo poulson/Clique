@@ -53,9 +53,11 @@ main( int argc, char* argv[] )
 
     try 
     {
+        const int n = Input("--size","size of matrix",100);
+        const bool print = Input("--print","print matrices?",false);
+        ProcessInput();
+
         Grid g( comm );
-    
-        const int n = 6; // choose a small problem size since we will print
         DistMatrix<R> H( n, n, g );
 
         // Fill the matrix since we did not pass in a buffer. 
@@ -82,19 +84,28 @@ main( int argc, char* argv[] )
             }
         }
 
-        // Print our matrix.
-        H.Print("H");
+        if( print )
+            H.Print("H");
 
         // Reform the matrix with the exponentials of the original eigenvalues
         RealHermitianFunction( LOWER, H, ExpFunctor() );
 
-        // Print the exponential of the original matrix
-        H.Print("exp(H)");
+        if( print )
+        {
+            MakeHermitian( LOWER, H );
+            H.Print("exp(H)");
+        }
+    }
+    catch( ArgException& e )
+    {
+        // There is nothing to do
     }
     catch( exception& e )
     {
-        cerr << "Process " << commRank << " caught exception with message: "
-             << e.what() << endl;
+        ostringstream os;
+        os << "Process " << commRank << " caught exception with message: "
+           << e.what() << endl;
+        cerr << os.str();
 #ifndef RELEASE
         DumpCallStack();
 #endif
@@ -103,4 +114,3 @@ main( int argc, char* argv[] )
     Finalize();
     return 0;
 }
-

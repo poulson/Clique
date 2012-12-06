@@ -38,13 +38,6 @@ using namespace elem;
 typedef double R;
 typedef Complex<R> C;
 
-void Usage()
-{
-    cout << "SequentialSVD <n>\n"
-         << "  <k>: size of random matrix to test SVD on (in some cases 2k+1)\n"
-         << endl;
-}
-
 int
 main( int argc, char* argv[] )
 {
@@ -53,20 +46,14 @@ main( int argc, char* argv[] )
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
 
-    if( argc < 2 )
-    {
-        if( commRank == 0 )
-            Usage();
-        Finalize();
-        return 0;
-    }
-    const int k = atoi( argv[1] );
-
     enum TestType { FOURIER=0, HILBERT=1, IDENTITY=2, ONES=3, ONE_TWO_ONE=4,
                     UNIFORM=5, WILKINSON=6, ZEROS=7 }; 
 
     try 
     {
+        const int k = Input("--size","problem size",100);
+        ProcessInput();
+
         Matrix<C> A, U, V;
         Matrix<R> s;
 
@@ -171,10 +158,16 @@ main( int argc, char* argv[] )
             }
         }
     }
+    catch( ArgException& e )
+    {
+        // There is nothing to do
+    }
     catch( exception& e )
     {
-        cerr << "Process " << commRank << " caught exception with message: "
-             << e.what() << endl;
+        ostringstream os;
+        os << "Process " << commRank << " caught exception with message: "
+           << e.what() << endl;
+        cerr << os.str();
 #ifndef RELEASE
         DumpCallStack();
 #endif
@@ -183,4 +176,3 @@ main( int argc, char* argv[] )
     Finalize();
     return 0;
 }
-

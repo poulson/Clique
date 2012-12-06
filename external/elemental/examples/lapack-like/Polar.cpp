@@ -38,14 +38,6 @@ using namespace elem;
 typedef double R;
 typedef Complex<R> C;
 
-void Usage()
-{
-    cout << "Polar <m> <n>\n"
-         << "  <m>: height of random matrix to test polar decomp. on\n"
-         << "  <n>: width of random matrix to test polar decomp. on\n"
-         << endl;
-}
-
 int
 main( int argc, char* argv[] )
 {
@@ -54,18 +46,13 @@ main( int argc, char* argv[] )
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
 
-    if( argc < 3 )
-    {
-        if( commRank == 0 )
-            Usage();
-        Finalize();
-        return 0;
-    }
-    const int m = atoi( argv[1] );
-    const int n = atoi( argv[2] );
-
     try 
     {
+        const int m = Input("--height","matrix height",100);
+        const int n = Input("--width","matrix width",100);
+        const bool print = Input("--print","print matrices?",false);
+        ProcessInput();
+
         Grid g( comm );
         DistMatrix<C> A( g ), Q( g ), P( g );
         Uniform( m, n, A );
@@ -74,14 +61,23 @@ main( int argc, char* argv[] )
         Q = A;
         Polar( Q, P );
 
-        A.Print("A");
-        Q.Print("Q");
-        P.Print("P");
+        if( print )
+        {
+            A.Print("A");
+            Q.Print("Q");
+            P.Print("P");
+        }
+    }
+    catch( ArgException& e )
+    {
+        // There is nothing to do
     }
     catch( exception& e )
     {
-        cerr << "Process " << commRank << " caught exception with message: "
-             << e.what() << endl;
+        ostringstream os;
+        os << "Process " << commRank << " caught error message: " << e.what()
+           << endl;
+        cerr << os.str();
 #ifndef RELEASE
         DumpCallStack();
 #endif

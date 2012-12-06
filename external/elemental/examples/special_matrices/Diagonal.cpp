@@ -33,50 +33,43 @@
 #include "elemental.hpp"
 using namespace elem;
 
-void Usage()
-{
-    std::cout << "Diagonal <n>\n"
-              << "  n: Generate a diagonal matrix of size n x n, n >= 1"
-              << std::endl;
-}
-
 int 
 main( int argc, char* argv[] )
 {
     Initialize( argc, argv );
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
-    const int commSize = mpi::CommSize( comm );
-
-    if( argc < 2 )
-    {
-        if( commRank == 0 )
-            Usage();
-        Finalize();
-        return 0;
-    }
-    const int n = atoi( argv[1] );
 
     try
     {
+        const int n = Input("--size","size of matrix",10);
+        const bool print = Input("--print","print matrices?",true);
+        ProcessInput();
+
         std::vector<double> d( n );
         for( int j=0; j<n; ++j )
             d[j] = j;
 
         DistMatrix<double> D;
         Diagonal( d, D );
-        D.Print("D:");
+        if( print )
+            D.Print("D:");
+    }
+    catch( ArgException& e )
+    {
+        // There is nothing to do
     }
     catch( std::exception& e )
     {
+        std::ostringstream os;
+        os << "Process " << commRank << " caught error message:\n"
+           << e.what() << std::endl;
+        std::cerr << os.str();
 #ifndef RELEASE
         DumpCallStack();
 #endif
-        std::cerr << "Process " << commRank << " caught error message:\n"
-                  << e.what() << std::endl;
     }
 
     Finalize();
     return 0;
 }
-

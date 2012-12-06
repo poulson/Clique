@@ -34,25 +34,9 @@
 using namespace std;
 using namespace elem;
 
-void Usage()
-{
-    cout << "SYmmetric Rank-K update.\n\n"
-         << "  Syrk <r> <c> <uplo> <trans?> <m> <k> <nb> <rankK local nb> "
-            "<print?>\n\n"
-         << "  r: number of process rows\n"
-         << "  c: number of process cols\n"
-         << "  uplo: {L,U}\n"
-         << "  trans?: {N,T}\n"
-         << "  m: height of C\n"
-         << "  k: inner dimension\n"
-         << "  nb: algorithmic blocksize\n"
-         << "  rankK local nb: local blocksize for rank-k update\n"
-         << "  print?: false iff 0\n" << endl;
-}
-
 template<typename T> 
 void TestSyrk
-( bool printMatrices, UpperOrLower uplo, Orientation orientation,
+( bool print, UpperOrLower uplo, Orientation orientation,
   int m, int k, T alpha, T beta, const Grid& g )
 {
     DistMatrix<T> A(g), C(g);
@@ -62,8 +46,8 @@ void TestSyrk
     else
         Uniform( k, m, A );
     Uniform( m, m, C );
-    MakeTrapezoidal( LEFT, uplo, 0, C );
-    if( printMatrices )
+    MakeTriangular( uplo, C );
+    if( print )
     {
         A.Print("A");
         C.Print("C");
@@ -87,7 +71,7 @@ void TestSyrk
              << "  Time = " << runTime << " seconds. GFlops = " 
              << gFlops << endl;
     }
-    if( printMatrices )
+    if( print )
     {
         ostringstream msg;
         if( orientation == NORMAL )
@@ -103,76 +87,73 @@ main( int argc, char* argv[] )
 {
     Initialize( argc, argv );
     mpi::Comm comm = mpi::COMM_WORLD;
-    const int rank = mpi::CommRank( comm );
-
-    if( argc < 10 )
-    {
-        if( rank == 0 )
-            Usage();
-        Finalize();
-        return 0;
-    }
+    const int commRank = mpi::CommRank( comm );
+    const int commSize = mpi::CommSize( comm );
 
     try
     {
-        int argNum = 0;
-        const int r = atoi(argv[++argNum]);
-        const int c = atoi(argv[++argNum]);
-        const UpperOrLower uplo = CharToUpperOrLower(*argv[++argNum]);
-        const Orientation orientation = CharToOrientation(*argv[++argNum]);
-        const int m = atoi(argv[++argNum]);
-        const int k = atoi(argv[++argNum]);
-        const int nb = atoi(argv[++argNum]);
-        const int nbLocal = atoi(argv[++argNum]);
-        const bool printMatrices = atoi(argv[++argNum]);
+        int r = Input("--r","height of process grid",0);
+        const char uploChar = Input("--uplo","upper or lower storage: L/U",'L');
+        const char transChar = Input
+            ("--trans","orientation of update: N/T",'N');
+        const int m = Input("--m","size of result",100);
+        const int k = Input("--k","inner dimension",100);
+        const int nb = Input("--nb","algorithmic blocksize",96);
+        const int nbLocal = Input("--nbLocal","local blocksize",32);
+        const bool print = Input("--print","print matrices?",false);
+        ProcessInput();
+
+        if( r == 0 )
+            r = Grid::FindFactor( commSize );
+        const int c = commSize / r;
+        const Grid g( comm, r, c );
+        const UpperOrLower uplo = CharToUpperOrLower( uploChar );
+        const Orientation orientation = CharToOrientation( transChar );
+        SetBlocksize( nb );
+        SetLocalTrrkBlocksize<double>( nbLocal );
+        SetLocalTrrkBlocksize<Complex<double> >( nbLocal );
+
 #ifndef RELEASE
-        if( rank == 0 )
+        if( commRank == 0 )
         {
             cout << "==========================================\n"
                  << " In debug mode! Performance will be poor! \n"
                  << "==========================================" << endl;
         }
 #endif
-        const Grid g( comm, r, c );
-        SetBlocksize( nb );
-        SetLocalTrrkBlocksize<double>( nbLocal );
-        SetLocalTrrkBlocksize<Complex<double> >( nbLocal );
+        if( commRank == 0 )
+            cout << "Will test Syrk" << uploChar << transChar << endl;
 
-        if( rank == 0 )
-        {
-            cout << "Will test Syrk" << UpperOrLowerToChar(uplo) 
-                                     << OrientationToChar(orientation) << endl;
-        }
-
-        if( rank == 0 )
+        if( commRank == 0 )
         {
             cout << "---------------------\n"
                  << "Testing with doubles:\n"
                  << "---------------------" << endl;
         }
         TestSyrk<double>
-        ( printMatrices, uplo, orientation, 
-          m, k, (double)3, (double)4, g );
+        ( print, uplo, orientation, m, k, (double)3, (double)4, g );
 
-        if( rank == 0 )
+        if( commRank == 0 )
         {
             cout << "--------------------------------------\n"
                  << "Testing with double-precision complex:\n"
                  << "--------------------------------------" << endl;
         }
         TestSyrk<Complex<double> >
-        ( printMatrices, uplo, orientation, 
-          m, k, Complex<double>(3), Complex<double>(4), g );
+        ( print, uplo, orientation, m, k,
+          Complex<double>(3), Complex<double>(4), g );
     }
+    catch( ArgException& e ) { }
     catch( exception& e )
     {
+        ostringstream os;
+        os << "Process " << commRank << " caught error message:\n" << e.what()
+           << endl;
+        cerr << os.str();
 #ifndef RELEASE
         DumpCallStack();
 #endif
-        cerr << "Process " << rank << " caught error message:" << endl 
-             << e.what() << endl;
     }
     Finalize();
     return 0;
 }
-

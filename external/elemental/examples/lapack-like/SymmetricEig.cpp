@@ -53,6 +53,10 @@ main( int argc, char* argv[] )
     // safely handle any exceptions that were thrown during execution.
     try 
     {
+        const int n = Input("--size","matrix size",100);
+        const bool print = Input("--print","print matrices?",false);
+        ProcessInput();
+
         // Create a 2d process grid from a communicator. In our case, it is
         // MPI_COMM_WORLD. There is another constructor that allows you to 
         // specify the grid dimensions, Grid g( comm, r, c ), which creates an 
@@ -66,7 +70,6 @@ main( int argc, char* argv[] )
         // allow you to pass in your own local buffer and to specify the 
         // distribution alignments (i.e., which process row and column owns the
         // top-left element)
-        const int n = 6; // choose a small problem size since we will print
         DistMatrix<R> H( n, n, g );
 
         // Fill the matrix since we did not pass in a buffer. 
@@ -100,8 +103,8 @@ main( int argc, char* argv[] )
         // More convenient interfaces are being investigated.
         //
 
-        // Print our matrix.
-        H.Print("H");
+        if( print )
+            H.Print("H");
 
         // Print its trace
         const R trace = Trace( H );
@@ -116,19 +119,31 @@ main( int argc, char* argv[] )
         //           'Tuning' section of the README for details.
         HermitianEig( LOWER, H, w, X ); // only access lower half of H
 
-        // Print the eigensolution
-        w.Print("Eigenvalues of H");
-        X.Print("Eigenvectors of H");
+        if( print )
+        {
+            w.Print("Eigenvalues of H");
+            X.Print("Eigenvectors of H");
+        }
 
-        // Sort the eigensolution, then reprint
+        // Sort the eigensolution,
         SortEig( w, X );
-        w.Print("Sorted eigenvalues of H");
-        X.Print("Sorted eigenvectors of H");
+
+        if( print )
+        {
+            w.Print("Sorted eigenvalues of H");
+            X.Print("Sorted eigenvectors of H");
+        }
+    }
+    catch( ArgException& e )
+    {
+        // There is nothing to do
     }
     catch( exception& e )
     {
-        cerr << "Process " << commRank << " caught exception with message: "
-             << e.what() << endl;
+        ostringstream os;
+        os << "Process " << commRank << " caught exception with message: "
+           << e.what() << endl;
+        cerr << os.str();
 #ifndef RELEASE
         DumpCallStack();
 #endif
@@ -137,4 +152,3 @@ main( int argc, char* argv[] )
     Finalize();
     return 0;
 }
-

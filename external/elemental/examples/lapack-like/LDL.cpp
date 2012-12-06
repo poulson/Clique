@@ -38,14 +38,6 @@ using namespace elem;
 typedef double R;
 typedef Complex<R> C;
 
-void Usage()
-{
-    cout << "LDL <conjugate> <n>\n"
-         << "  <conjugate>: use LDL^T if 0, LDL^H if otherwise\n"
-         << "  <n>: size of random matrix to test LDL on\n"
-         << endl;
-}
-
 int
 main( int argc, char* argv[] )
 {
@@ -54,20 +46,13 @@ main( int argc, char* argv[] )
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
 
-    if( argc < 3 )
-    {
-        if( commRank == 0 )
-            Usage();
-        Finalize();
-        return 0;
-    }
-    const bool conjugate = atoi( argv[1] );
-    const int n = atoi( argv[2] );
-
-    const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
-
     try 
     {
+        const int n = Input("--size","size of matrix to factor",100);
+        const bool conjugate = Input("--conjugate","LDL^H?",false);
+        ProcessInput();
+        const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
+
         Grid g( comm );
         DistMatrix<C> A( g );
         if( conjugate )
@@ -92,21 +77,27 @@ main( int argc, char* argv[] )
             LDLT( factA, d );
 
         DistMatrix<C> L( factA );
-        MakeTrapezoidal( LEFT, LOWER, 0, L );
+        MakeTriangular( LOWER, L );
         internal::SetDiagonalToOne( LEFT, 0, L );
 
         DistMatrix<C> LD( L );
         DiagonalScale( RIGHT, NORMAL, d, LD );
         Gemm( NORMAL, orientation, C(-1), LD, L, C(1), A );
         const R frobNormOfError = Norm( A, FROBENIUS_NORM );
-        if( g.Rank() == 0 )
+        if( commRank == 0 )
             std::cout << "|| A - L D L^[T/H] ||_F = " << frobNormOfError << "\n"
                       << std::endl;
     }
+    catch( ArgException& e )
+    {
+        // There is nothing to do
+    }
     catch( exception& e )
     {
-        cerr << "Process " << commRank << " caught exception with message: "
-             << e.what() << endl;
+        ostringstream os;
+        os << "Process " << commRank << " caught exception with message: "
+           << e.what() << endl;
+        cerr << os.str();
 #ifndef RELEASE
         DumpCallStack();
 #endif

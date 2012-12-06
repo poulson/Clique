@@ -33,37 +33,25 @@
 #include "elemental.hpp"
 using namespace elem;
 
-void Usage()
-{
-    std::cout << "Legendre <n>\n"
-              << "  n: generate n x n Jacobi matrix for Legendre polynomials"
-              << std::endl;
-}
-
 int 
 main( int argc, char* argv[] )
 {
     Initialize( argc, argv );
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
-    const int commSize = mpi::CommSize( comm );
-
-    if( argc < 2 )
-    {
-        if( commRank == 0 )
-            Usage();
-        Finalize();
-        return 0;
-    }
-    const int n = atoi( argv[1] );
 
     try
     {
+        const int n = Input("--size","size of matrix",10);
+        const bool print = Input("--print","print matrix?",true);
+        ProcessInput();
+
         DistMatrix<double> J;
         Legendre( n, J );
 
 #ifdef WITHOUT_PMRRR
-        J.Print("Jacobi matrix for Legendre polynomials");
+        if( print )
+            J.Print("Jacobi matrix for Legendre polynomials");
 #else
         // This will perform a lot of unnecessary work, but the code is simpler
         // than directly calling PMRRR
@@ -76,7 +64,8 @@ main( int argc, char* argv[] )
         DistMatrix<double> X;
         HermitianEig( LOWER, J, points, X );
         SortEig( points, X );
-        points.Print("points");
+        if( print )
+            points.Print("points");
         DistMatrix<double> firstRow;
         firstRow.View( X, 0, 0, 1, n );
         DistMatrix<double,STAR,STAR> weights = firstRow;
@@ -85,19 +74,24 @@ main( int argc, char* argv[] )
             const double gamma = weights.Get( 0, j );
             weights.Set( 0, j, 2*gamma*gamma );
         }
-        weights.Print("weights");
+        if( print )
+            weights.Print("weights");
 #endif
+    }
+    catch( ArgException& e )
+    {
+        // There is nothing to do
     }
     catch( std::exception& e )
     {
+        std::ostringstream os;
+        os << "Process " << commRank << " caught error message:\n" << e.what()
+           << std::endl;
 #ifndef RELEASE
         DumpCallStack();
 #endif
-        std::cerr << "Process " << commRank << " caught error message:\n"
-                  << e.what() << std::endl;
     }
 
     Finalize();
     return 0;
 }
-

@@ -20,25 +20,6 @@
 #include "clique.hpp"
 using namespace cliq;
 
-void Usage()
-{
-    std::cout
-      << "HelmholtzDirichlet3D <nx> <ny> <nz> <omega> <damping> "
-      << "[analytic=true] [sequential=true] [cutoff=128] \n"
-      << "[numDistSeps=1] [numSeqSeps=1]\n"
-      << "  nx: first dimension of nx x ny x nz mesh\n"
-      << "  ny: second dimension of nx x ny x nz mesh\n"
-      << "  nz: third dimension of nx x ny x nz mesh\n"
-      << "  omega: frequency of problem in radians per second\n"
-      << "  damping: imaginary damping in radians per second\n"
-      << "  analytic: if nonzero, use an analytical reordering\n"
-      << "  sequential: if nonzero, then run a sequential symbolic reordering\n"
-      << "  cutoff: maximum size of leaf node\n"
-      << "  numDistSeps: number of distributed separators to try\n"
-      << "  numSeqSeps: number of sequential separators to try\n"
-      << std::endl;
-}
-
 int
 main( int argc, char* argv[] )
 {
@@ -48,33 +29,31 @@ main( int argc, char* argv[] )
     typedef double R;
     typedef Complex<R> C;
 
-    if( argc < 6 )
-    {
-        if( commRank == 0 )
-            Usage();
-        cliq::Finalize();
-        return 0;
-    }
-    int argNum = 1;
-    const int nx = atoi(argv[argNum++]);
-    const int ny = atoi(argv[argNum++]);
-    const int nz = atoi(argv[argNum++]);
-    const double omega = atof(argv[argNum++]);
-    const double damping = atof(argv[argNum++]);
-    const bool analytic = ( argc>argNum ? atoi(argv[argNum++]) : true );
-    const bool sequential = ( argc>argNum ? atoi(argv[argNum++]) : true );
-    const int cutoff = ( argc>argNum ? atoi(argv[argNum++]) : 128 );
-    const int numDistSeps = ( argc>argNum ? atoi(argv[argNum++]) : 1 );
-    const int numSeqSeps = ( argc>argNum ? atoi(argv[argNum++]) : 1 );
-
     try
     {
-        const int N = nx*ny*nz;
+        const int n1 = Input("--n1","first grid dimension",30);
+        const int n2 = Input("--n2","second grid dimension",30);
+        const int n3 = Input("--n3","third grid dimension",30);
+        const double omega = Input("--omega","angular frequency",18.);
+        const double damping = Input("--damping","damping parameter",7.);
+        const bool analytic = Input("--analytic","analytic partitions?",true);
+        const bool sequential = Input
+            ("--sequential","sequential partitions?",true);
+        const int numDistSeps = Input
+            ("--numDistSeps",
+             "number of separators to try per distributed partition",1);
+        const int numSeqSeps = Input
+            ("--numSeqSeps",
+             "number of separators to try per sequential partition",1);
+        const int cutoff = Input("--cutoff","cutoff for nested dissection",128);
+        ProcessInput();
+
+        const int N = n1*n2*n3;
         DistSparseMatrix<C> A( N, comm );
         C dampedOmega( omega, damping );
-        const double hxInv = nx+1;
-        const double hyInv = ny+1;
-        const double hzInv = nz+1;
+        const double hxInv = n1+1;
+        const double hyInv = n2+1;
+        const double hzInv = n3+1;
         const double hxInvSquared = hxInv*hxInv;
         const double hyInvSquared = hyInv*hyInv;
         const double hzInvSquared = hzInv*hzInv;
@@ -83,8 +62,8 @@ main( int argc, char* argv[] )
             dampedOmega*dampedOmega;
 
         // Fill our portion of the 3D Helmholtz operator over the unit-square 
-        // using a nx x ny x nz 7-point stencil in natural ordering: 
-        // (x,y,z) at x + y*nx + z*nx*ny
+        // using a n1 x n2 x n3 7-point stencil in natural ordering: 
+        // (x,y,z) at x + y*n1 + z*n1*n2
         if( commRank == 0 )
         {
             std::cout << "Filling local portion of matrix...";
@@ -98,23 +77,23 @@ main( int argc, char* argv[] )
         for( int iLocal=0; iLocal<localHeight; ++iLocal )
         {
             const int i = firstLocalRow + iLocal;
-            const int x = i % nx;
-            const int y = (i/nx) % ny;
-            const int z = i/(nx*ny);
+            const int x = i % n1;
+            const int y = (i/n1) % n2;
+            const int z = i/(n1*n2);
 
             A.Update( i, i, mainTerm );
             if( x != 0 )
                 A.Update( i, i-1, -hxInvSquared );
-            if( x != nx-1 )
+            if( x != n1-1 )
                 A.Update( i, i+1, -hxInvSquared );
             if( y != 0 )
-                A.Update( i, i-nx, -hyInvSquared );
-            if( y != ny-1 )
-                A.Update( i, i+nx, -hyInvSquared );
+                A.Update( i, i-n1, -hyInvSquared );
+            if( y != n2-1 )
+                A.Update( i, i+n1, -hyInvSquared );
             if( z != 0 )
-                A.Update( i, i-nx*ny, -hzInvSquared );
-            if( z != nz-1 )
-                A.Update( i, i+nx*ny, -hzInvSquared );
+                A.Update( i, i-n1*n2, -hzInvSquared );
+            if( z != n3-1 )
+                A.Update( i, i+n1*n2, -hzInvSquared );
         } 
         A.StopAssembly();
         mpi::Barrier( comm );
@@ -152,7 +131,7 @@ main( int argc, char* argv[] )
         DistMap map, inverseMap;
         if( analytic )
             NaturalNestedDissection
-            ( nx, ny, nz, graph, map, sepTree, info, cutoff );
+            ( n1, n2, n3, graph, map, sepTree, info, cutoff );
         else
             NestedDissection
             ( graph, map, sepTree, info, 
@@ -332,16 +311,17 @@ main( int argc, char* argv[] )
                       << std::endl;
         }
     }
+    catch( ArgException& e ) { }
     catch( std::exception& e )
     {
+        std::ostringstream msg;
+        msg << "Process " << commRank << " caught message:\n"
+            << e.what() << std::endl;
+        std::cerr << msg.str();
 #ifndef RELEASE
         elem::DumpCallStack();
         cliq::DumpCallStack();
 #endif
-        std::ostringstream msg;
-        msg << "Process " << commRank << " caught message:\n"
-            << e.what() << "\n";
-        std::cerr << msg.str() << std::endl;
     }
 
     cliq::Finalize();

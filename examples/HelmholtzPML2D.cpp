@@ -20,26 +20,6 @@
 #include "clique.hpp"
 using namespace cliq;
 
-void Usage()
-{
-    std::cout
-      << "HelmholtzPML2D <nx> <ny> <omega> <Lx> <Ly> <b> <sigma> <p> "
-      << "[analytic=true] [sequential=true] [cutoff=128] \n"
-      << "[numDistSeps=1] [numSeqSeps=1]\n"
-      << "  nx,ny: dimensions of nx x ny mesh\n"
-      << "  omega: frequency of problem in radians per second\n"
-      << "  Lx,Ly: dimensions of [0,Lx] x [0,Ly] domain\n"
-      << "  b: width of PML in grid points\n"
-      << "  sigma: coefficient for PML profile\n"
-      << "  p: polynomial order for PML profile\n"
-      << "  analytic: if nonzero, use an analytical reordering\n"
-      << "  sequential: if nonzero, then run a sequential symbolic reordering\n"
-      << "  cutoff: maximum size of leaf node\n"
-      << "  numDistSeps: number of distributed separators to try\n"
-      << "  numSeqSeps: number of sequential separators to try\n"
-      << std::endl;
-}
-
 Complex<double> PML( double x, double w, double p, double sigma, double k )
 {
 #ifndef RELEASE
@@ -72,37 +52,36 @@ main( int argc, char* argv[] )
     typedef double R;
     typedef Complex<R> C;
 
-    if( argc < 9 )
-    {
-        if( commRank == 0 )
-            Usage();
-        cliq::Finalize();
-        return 0;
-    }
-    int argNum = 1;
-    const int nx = atoi(argv[argNum++]);
-    const int ny = atoi(argv[argNum++]);
-    const double omega = atof(argv[argNum++]);
-    const double Lx = atof(argv[argNum++]);
-    const double Ly = atof(argv[argNum++]);
-    const int b = atoi(argv[argNum++]);
-    const double sigma = atof(argv[argNum++]);
-    const double p = atof(argv[argNum++]);
-    const bool analytic = ( argc>argNum ? atoi(argv[argNum++]) : true );
-    const bool sequential = ( argc>argNum ? atoi(argv[argNum++]) : true );
-    const int cutoff = ( argc>argNum ? atoi(argv[argNum++]) : 128 );
-    const int numDistSeps = ( argc>argNum ? atoi(argv[argNum++]) : 1 );
-    const int numSeqSeps = ( argc>argNum ? atoi(argv[argNum++]) : 1 );
-
     try
     {
+        const int n1 = Input("--n1","first grid dimension",30);
+        const int n2 = Input("--n2","second grid dimension",30);
+        const double omega = Input("--omega","angular frequency",18.);
+        const double L1 = Input("--L1","length of domain in first dir",1.);
+        const double L2 = Input("--L2","length of domain in second dir",2.);
+        const int b = Input("--pmlWidth","number of grid points of PML",5);
+        const double sigma = Input("--sigma","magnitude of PML profile",1.5);
+        const double p = Input("--exponent","exponent of PML profile",3.);
+        const double damping = Input("--damping","damping parameter",7.);
+        const bool analytic = Input("--analytic","analytic partitions?",true);
+        const bool sequential = Input
+            ("--sequential","sequential partitions?",true);
+        const int numDistSeps = Input
+            ("--numDistSeps",
+             "number of separators to try per distributed partition",1);
+        const int numSeqSeps = Input
+            ("--numSeqSeps",
+             "number of separators to try per sequential partition",1);
+        const int cutoff = Input("--cutoff","cutoff for nested dissection",128);
+        ProcessInput();
+
         const double k = omega/(2*M_PI);
-        const int N = nx*ny;
+        const int N = n1*n2;
         DistSparseMatrix<C> A( N, comm );
-        const double hx = Lx/(nx+1);
-        const double hy = Ly/(ny+1);
-        const double hxSquared = hx*hx;
-        const double hySquared = hy*hy;
+        const double h1 = L1/(n1+1);
+        const double h2 = L2/(n2+1);
+        const double h1Squared = h1*h1;
+        const double h2Squared = h2*h2;
 
         // Fill our portion of the 2D Helmholtz operator 
         if( commRank == 0 )
@@ -118,29 +97,29 @@ main( int argc, char* argv[] )
         for( int iLocal=0; iLocal<localHeight; ++iLocal )
         {
             const int i = firstLocalRow + iLocal;
-            const int x = i % nx;
-            const int y = i/nx;
+            const int x = i % n1;
+            const int y = i/n1;
 
-            const C s1InvL = sInv( x-1, nx, b, hx, p, sigma, k );
-            const C s1InvM = sInv( x,   nx, b, hx, p, sigma, k );
-            const C s1InvR = sInv( x+1, nx, b, hx, p, sigma, k );
-            const C s2InvL = sInv( y-1, ny, b, hy, p, sigma, k );
-            const C s2InvM = sInv( y,   ny, b, hy, p, sigma, k );
-            const C s2InvR = sInv( y+1, ny, b, hy, p, sigma, k );
+            const C s1InvL = sInv( x-1, n1, b, h1, p, sigma, k );
+            const C s1InvM = sInv( x,   n1, b, h1, p, sigma, k );
+            const C s1InvR = sInv( x+1, n1, b, h1, p, sigma, k );
+            const C s2InvL = sInv( y-1, n2, b, h2, p, sigma, k );
+            const C s2InvM = sInv( y,   n2, b, h2, p, sigma, k );
+            const C s2InvR = sInv( y+1, n2, b, h2, p, sigma, k );
 
             const C xTop = s2InvM;
             const C xTempL = xTop/s1InvL;
             const C xTempM = xTop/s1InvM;
             const C xTempR = xTop/s1InvR;
-            const C xTermL = (xTempL+xTempM) / (2*hxSquared);
-            const C xTermR = (xTempM+xTempR) / (2*hxSquared);
+            const C xTermL = (xTempL+xTempM) / (2*h1Squared);
+            const C xTermR = (xTempM+xTempR) / (2*h1Squared);
 
             const C yTop = s1InvM;
             const C yTempL = yTop/s2InvL;
             const C yTempM = yTop/s2InvM;
             const C yTempR = yTop/s2InvR;
-            const C yTermL = (yTempL+yTempM) / (2*hySquared);
-            const C yTermR = (yTempM+yTempR) / (2*hySquared);
+            const C yTermL = (yTempL+yTempM) / (2*h2Squared);
+            const C yTermR = (yTempM+yTempR) / (2*h2Squared);
 
             const C mainTerm = (xTermL+xTermR+yTermL+yTermR)
                 - omega*omega*s1InvM*s2InvM;
@@ -148,13 +127,13 @@ main( int argc, char* argv[] )
             A.Update( i, i, mainTerm );
             if( x != 0 )
                 A.Update( i, i-1, -xTermL );
-            if( x != nx-1 )
+            if( x != n1-1 )
                 A.Update( i, i+1, -xTermR );
             if( y != 0 )
-                A.Update( i, i-nx, -yTermL );
-            if( y != ny-1 )
-                A.Update( i, i+nx, -yTermR );
-        } 
+                A.Update( i, i-n1, -yTermL );
+            if( y != n2-1 )
+                A.Update( i, i+n1, -yTermR );
+        }
         A.StopAssembly();
         mpi::Barrier( comm );
         const double fillStop =  mpi::Time();
@@ -168,9 +147,9 @@ main( int argc, char* argv[] )
             std::cout << "Generating point-source for y..." << std::endl;
         DistVector<C> y( N, comm ), z( N, comm );
         MakeZeros( z );
-        const int xSource = nx/2;
-        const int ySource = ny/2;
-        const int iSource = xSource + ySource*nx;
+        const int xSource = n1/2;
+        const int ySource = n2/2;
+        const int iSource = xSource + ySource*n1;
         if( iSource >= firstLocalRow && iSource < firstLocalRow+localHeight )
             z.SetLocal( iSource-firstLocalRow, Complex<double>(1.0,0.0) );
         y = z;
@@ -187,7 +166,7 @@ main( int argc, char* argv[] )
         DistMap map, inverseMap;
         if( analytic )
             NaturalNestedDissection
-            ( nx, ny, 1, graph, map, sepTree, info, cutoff );
+            ( n1, n2, 1, graph, map, sepTree, info, cutoff );
         else
             NestedDissection
             ( graph, map, sepTree, info, 
@@ -365,16 +344,17 @@ main( int argc, char* argv[] )
                       << std::endl;
         }
     }
+    catch( ArgException& e ) { }
     catch( std::exception& e )
     {
+        std::ostringstream msg;
+        msg << "Process " << commRank << " caught message:\n"
+            << e.what() << std::endl;
+        std::cerr << msg.str();
 #ifndef RELEASE
         elem::DumpCallStack();
         cliq::DumpCallStack();
 #endif
-        std::ostringstream msg;
-        msg << "Process " << commRank << " caught message:\n"
-            << e.what() << "\n";
-        std::cerr << msg.str() << std::endl;
     }
 
     cliq::Finalize();

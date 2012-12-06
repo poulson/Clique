@@ -38,13 +38,6 @@ using namespace elem;
 typedef double R;
 typedef Complex<R> C;
 
-void Usage()
-{
-    cout << "HPDInverse <n>\n"
-         << "  <n>: size of random matrix to test HPDInverse on\n"
-         << endl;
-}
-
 int
 main( int argc, char* argv[] )
 {
@@ -53,24 +46,28 @@ main( int argc, char* argv[] )
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
 
-    if( argc < 2 )
-    {
-        if( commRank == 0 )
-            Usage();
-        Finalize();
-        return 0;
-    }
-    const int n = atoi( argv[1] );
-
     try 
     {
+        const int n = Input("--size","size of HPD matrix",100);
+        const bool print = Input("--print","print matrices?",false);
+        ProcessInput();
+
         Grid g( comm );
         DistMatrix<C> A( g );
         HermitianUniformSpectrum( n, A, R(1), R(20) );
 
+        if( print )
+            A.Print("A");
+
         // Make a copy of A and then overwrite it with its inverse
         DistMatrix<C> invA( A );
         HPDInverse( LOWER, invA );
+
+        if( print )
+        {
+            MakeHermitian( LOWER, invA );
+            invA.Print("inv(A)");
+        }
 
         // Form I - invA*A and print the relevant norms
         DistMatrix<C> E( g );
@@ -88,10 +85,16 @@ main( int argc, char* argv[] )
                       << std::endl;
         }
     }
+    catch( ArgException& e )
+    {
+        // There is nothing to do
+    }
     catch( exception& e )
     {
-        cerr << "Process " << commRank << " caught exception with message: "
-             << e.what() << endl;
+        ostringstream os;
+        os << "Process " << commRank << " caught exception with message: "
+           << e.what() << endl;
+        cerr << os.str();
 #ifndef RELEASE
         DumpCallStack();
 #endif
