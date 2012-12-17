@@ -113,6 +113,8 @@ Clique source tree in a subdirectory of your main project folder, say
 <span class="c">#set(HAVE_PARMETIS ${HAVE_PARMETIS} PARENT_SCOPE)</span>
 <span class="c">#</span>
 <span class="c">#set(LIBRARY_TYPE ${LIBRARY_TYPE} PARENT_SCOPE)</span>
+<span class="c">#string(TOUPPER ${CMAKE_BUILD_TYPE} UPPER_BUILD_TYPE)</span>
+<span class="c">#set(CMAKE_CXX_FLAGS_${UPPER_BUILD_TYPE} ${CMAKE_CXX_FLAGS_${UPPER_BUILD_TYPE}} PARENT_SCOPE)</span>
 <span class="c">#set(MPI_C_COMPILER ${MPI_C_COMPILER} PARENT_SCOPE)</span>
 <span class="c">#set(MPI_C_INCLUDE_PATH ${MPI_C_INCLUDE_PATH} PARENT_SCOPE)</span>
 <span class="c">#set(MPI_C_COMPILE_FLAGS ${MPI_C_COMPILE_FLAGS} PARENT_SCOPE)</span>
@@ -145,6 +147,8 @@ set(BARRIER_IN_ALLTOALLV ${BARRIER_IN_ALLTOALLV} PARENT_SCOPE)
 set(HAVE_PARMETIS ${HAVE_PARMETIS} PARENT_SCOPE)
 
 set(LIBRARY_TYPE ${LIBRARY_TYPE} PARENT_SCOPE)
+string(TOUPPER ${CMAKE_BUILD_TYPE} UPPER_BUILD_TYPE)
+set(CMAKE_CXX_FLAGS_${UPPER_BUILD_TYPE} ${CMAKE_CXX_FLAGS_${UPPER_BUILD_TYPE}} PARENT_SCOPE)
 set(MPI_C_COMPILER ${MPI_C_COMPILER} PARENT_SCOPE)
 set(MPI_C_INCLUDE_PATH ${MPI_C_INCLUDE_PATH} PARENT_SCOPE)
 set(MPI_C_COMPILE_FLAGS ${MPI_C_COMPILE_FLAGS} PARENT_SCOPE)
@@ -186,8 +190,6 @@ include_directories(
   "${PROJECT_BINARY_DIR}/external/clique/external/elemental/include")
 )
 include_directories(${MPI_CXX_INCLUDE_PATH})
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")
 
 # Build your project here
 # e.g.,
