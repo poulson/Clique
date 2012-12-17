@@ -1,4 +1,4 @@
-set(CMAKE_SYSTEM_NAME BlueGeneQ-static)
+#set(CMAKE_SYSTEM_NAME BlueGeneQ-static)
 
 set(XLF_ROOT  "/opt/ibmcmp/xlf/bg/14.1")
 set(GCC_ROOT  "/bgsys/drivers/ppcfloor/gnu-linux")
@@ -25,15 +25,14 @@ set(MPI_C_INCLUDE_PATH   "${MPI_ROOT}/include")
 set(MPI_CXX_INCLUDE_PATH "${MPI_ROOT}/include")
 set(MPI_C_LINK_FLAGS   "-L${MPI_ROOT}/lib -L${PAMI_ROOT}/lib -L${SPI_ROOT}/lib")
 set(MPI_CXX_LINK_FLAGS "-L${MPI_ROOT}/lib -L${PAMI_ROOT}/lib -L${SPI_ROOT}/lib")
-set(MPI_C_LIBRARIES              "-lmpich -lopa -lmpl -lrt -ldl -lpami
--lSPI -lSPI_cnk -lpthread -lrt -lstdc++")
-set(MPI_CXX_LIBRARIES "-lcxxmpich -lmpich -lopa -lmpl -lrt -ldl -lpami
--lSPI -lSPI_cnk -lpthread -lrt -lstdc++")
+# -lstdc++ can probably be removed from MPI_C_LIBRARIES...
+set(MPI_C_LIBRARIES "-lmpich -lopa -lmpl -lrt -ldl -lpami -lSPI -lSPI_cnk -lpthread -lrt -lstdc++")
+set(MPI_CXX_LIBRARIES "-lcxxmpich -lmpich -lopa -lmpl -lrt -ldl -lpami -lSPI -lSPI_cnk -lpthread -lrt -lstdc++")
 
-set(CXX_PURE_DEBUG_FLAGS "-g")
-set(CXX_PURE_RELEASE_FLAGS "-g -O2")
-set(CXX_HYBRID_DEBUG_FLAGS "-g")
-set(CXX_HYBRID_RELEASE_FLAGS "-g -O2")
+set(CXX_FLAGS_PUREDEBUG "-g")
+set(CXX_FLAGS_PURERELEASE "-g -O2")
+set(CXX_FLAGS_HYBRIDDEBUG "-g")
+set(CXX_FLAGS_HYBRIDRELEASE "-g -O2")
 
 set(CMAKE_THREAD_LIBS_INIT "-fopenmp")
 set(OpenMP_CXX_FLAGS "-fopenmp")
@@ -59,5 +58,4 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
 ##############################################################
 
-set(MATH_LIBS "-L/soft/libraries/alcf/current/gcc/LAPACK/lib -llapack
--L/soft/libraries/alcf/current/gcc/BLAS/lib -lblas -lgfortran -lm")
+set(MATH_LIBS "-L/soft/libraries/alcf/current/gcc/LAPACK/lib -llapack -L/soft/libraries/alcf/current/gcc/BLAS/lib -lblas -lgfortran -lm")

@@ -73,8 +73,6 @@ elseif(MANUAL_PARMETIS)
   include_directories(${PARMETIS_ROOT}/include)
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")
-
 # Create the Clique configuration header
 configure_file( 
   ${PROJECT_SOURCE_DIR}/cmake/config.h.cmake
@@ -100,17 +98,16 @@ set(CLIQUE_SRC "${CLIQUE_CPP};${CLIQUE_HEADERS}")
 
 # The main library
 add_library(clique ${LIBRARY_TYPE} ${CLIQUE_SRC})
-if(MANUAL_ELEMENTAL)
-  target_link_libraries(clique ${ELEM_LIBS})
-else()
-  target_link_libraries(clique elemental)
-endif()
 if(BUILD_PARMETIS)
   target_link_libraries(clique parmetis-addons metis-addons parmetis)
 elseif(MANUAL_PARMETIS)
   target_link_libraries(clique parmetis-addons metis-addons ${PARMETIS_LIBS})
 endif()
-set(MPI_LINK_FLAGS "${MPI_CXX_LINK_FLAGS}")
+if(MANUAL_ELEMENTAL)
+  target_link_libraries(clique ${ELEM_LIBS})
+else()
+  target_link_libraries(clique elemental)
+endif()
 install(TARGETS clique DESTINATION lib)
 
 # Define the header-file preparation rules
@@ -188,6 +185,8 @@ endif()
 #set(HAVE_PARMETIS ${HAVE_PARMETIS} PARENT_SCOPE)
 #
 #set(LIBRARY_TYPE ${LIBRARY_TYPE} PARENT_SCOPE)
+#string(TOUPPER ${CMAKE_BUILD_TYPE} UPPER_BUILD_TYPE)
+#set(CMAKE_CXX_FLAGS_${UPPER_BUILD_TYPE} ${CMAKE_CXX_FLAGS_${UPPER_BUILD_TYPE}} PARENT_SCOPE)
 #set(MPI_C_COMPILER ${MPI_C_COMPILER} PARENT_SCOPE)
 #set(MPI_C_INCLUDE_PATH ${MPI_C_INCLUDE_PATH} PARENT_SCOPE)
 #set(MPI_C_COMPILE_FLAGS ${MPI_C_COMPILE_FLAGS} PARENT_SCOPE)
@@ -198,6 +197,7 @@ endif()
 #set(MPI_CXX_COMPILE_FLAGS ${MPI_CXX_COMPILE_FLAGS} PARENT_SCOPE)
 #set(MPI_CXX_LINK_FLAGS ${MPI_CXX_LINK_FLAGS} PARENT_SCOPE)
 #set(MPI_CXX_LIBRARIES ${MPI_CXX_LIBRARIES} PARENT_SCOPE)
+#set(MPI_LINK_FLAGS ${MPI_LINK_FLAGS} PARENT_SCOPE)
 #set(MATH_LIBS ${MATH_LIBS} PARENT_SCOPE)
 #set(RESTRICT ${RESTRICT} PARENT_SCOPE)
 #set(RELEASE ${RELEASE} PARENT_SCOPE)

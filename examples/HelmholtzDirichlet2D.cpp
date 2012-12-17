@@ -45,6 +45,7 @@ main( int argc, char* argv[] )
             ("--numSeqSeps",
              "number of separators to try per sequential partition",1);
         const int cutoff = Input("--cutoff","cutoff for nested dissection",128);
+        const bool print = Input("--print","print matrix?",false);
         ProcessInput();
 
         const int N = n1*n2;
@@ -93,7 +94,8 @@ main( int argc, char* argv[] )
             std::cout << "done, " << fillStop-fillStart << " seconds" 
                       << std::endl;
 
-        A.Print("A");
+        if( print )
+            A.Print("A");
 
         if( commRank == 0 )
         {

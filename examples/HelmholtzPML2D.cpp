@@ -73,6 +73,7 @@ main( int argc, char* argv[] )
             ("--numSeqSeps",
              "number of separators to try per sequential partition",1);
         const int cutoff = Input("--cutoff","cutoff for nested dissection",128);
+        const bool print = Input("--print","print matrix?",false);
         ProcessInput();
 
         const double k = omega/(2*M_PI);
@@ -141,7 +142,8 @@ main( int argc, char* argv[] )
             std::cout << "done, " << fillStop-fillStart << " seconds" 
                       << std::endl;
 
-        A.Print("A");
+        if( print )
+            A.Print("A");
 
         if( commRank == 0 )
             std::cout << "Generating point-source for y..." << std::endl;
@@ -327,9 +329,6 @@ main( int argc, char* argv[] )
         if( commRank == 0 )
             std::cout << "done, " << solveStop-solveStart << " seconds"
                       << std::endl;
-
-        if( mpi::CommSize( comm ) == 1 )
-            y.LocalVector().Print("solution");
 
         if( commRank == 0 )
             std::cout << "Checking residual norm of solution..." << std::endl;
