@@ -48,9 +48,7 @@ elseif(MANUAL_PARMETIS)
   #                      to the directory containing gklib_tls.h
   #   METIS_ROOT: the full path to the root of the MeTiS source tree
   #   PARMETIS_ROOT: the full path to the root of the ParMeTiS source tree
-
   set(HAVE_PARMETIS TRUE)
-
   if(PARMETIS_TLS_PATCH)
     include_directories(${GKLIB_INCLUDE_DIR})
   endif()
@@ -64,24 +62,21 @@ endif()
 # Create the Clique configuration header
 configure_file( 
   ${PROJECT_SOURCE_DIR}/cmake/config.h.cmake
-  ${PROJECT_BINARY_DIR}/include/clique/config.h 
-) 
+  ${PROJECT_BINARY_DIR}/include/clique/config.h)
 install(FILES ${PROJECT_BINARY_DIR}/include/clique/config.h 
-        DESTINATION include/clique)
+  DESTINATION include/clique)
 
 # Create a file which can be included in Makefile's.
 # This is meant to be analogous to PETSc's 'conf/petscvariables' file
 configure_file(
   ${PROJECT_SOURCE_DIR}/cmake/cliqvariables.cmake
-  ${PROJECT_BINARY_DIR}/conf/cliqvariables @ONLY
-)
-install(FILES ${PROJECT_BINARY_DIR}/conf/cliqvariables
-        DESTINATION conf)
+  ${PROJECT_BINARY_DIR}/conf/cliqvariables @ONLY)
+install(FILES ${PROJECT_BINARY_DIR}/conf/cliqvariables DESTINATION conf)
 
 # Grab all of the .c, .cpp, .h, and .hpp Clique files
 file(GLOB_RECURSE CLIQUE_CPP RELATIVE ${PROJECT_SOURCE_DIR} "src/*.cpp")
 file(GLOB_RECURSE CLIQUE_HEADERS RELATIVE ${PROJECT_SOURCE_DIR} 
-     "include/*.h" "include/*.hpp")
+  "include/*.h" "include/*.hpp")
 set(CLIQUE_SRC "${CLIQUE_CPP};${CLIQUE_HEADERS}")
 
 # The main library
@@ -101,12 +96,10 @@ install(TARGETS clique DESTINATION lib)
 # Define the header-file preparation rules
 set(PREPARED_HEADERS)
 foreach(HEADER ${CLIQUE_HEADERS})
-  add_custom_command(
-    OUTPUT ${PROJECT_BINARY_DIR}/${HEADER}
+  add_custom_command(OUTPUT ${PROJECT_BINARY_DIR}/${HEADER}
     COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/${HEADER}
             ${PROJECT_BINARY_DIR}/${HEADER}
-    DEPENDS "${PROJECT_SOURCE_DIR}/${HEADER}"
-  )
+    DEPENDS "${PROJECT_SOURCE_DIR}/${HEADER}")
   list(APPEND PREPARED_HEADERS ${PROJECT_BINARY_DIR}/${HEADER})
 
   get_filename_component(HEADER_PATH ${HEADER} PATH)
@@ -124,7 +117,7 @@ if(CLIQ_TESTS)
   set(TESTS FileSpeed NaturalVectorSolve)
   if(HAVE_PARMETIS)
     list(APPEND TESTS Bisection MultiVectorSolve NestedDissection Refactor
-                      SimpleVectorSolve SimpleMultiVectorSolve VectorSolve)
+      SimpleVectorSolve SimpleMultiVectorSolve VectorSolve)
   endif()
 
   # Build the tests
@@ -133,11 +126,10 @@ if(CLIQ_TESTS)
     add_executable(tests-${TEST} ${TEST_DIR}/${TEST}.cpp)
     target_link_libraries(tests-${TEST} clique)
     set_target_properties(tests-${TEST} PROPERTIES
-                          OUTPUT_NAME ${TEST}
-                          RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
+      OUTPUT_NAME ${TEST} RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
     if(MPI_LINK_FLAGS)
       set_target_properties(tests-${TEST} PROPERTIES
-                            LINK_FLAGS ${MPI_LINK_FLAGS})
+        LINK_FLAGS ${MPI_LINK_FLAGS})
     endif()
     install(TARGETS tests-${TEST} DESTINATION bin/tests)
   endforeach()
@@ -155,46 +147,16 @@ if(CLIQ_EXAMPLES)
     add_executable(examples-${EXAMPLE} ${EXAMPLE_DIR}/${EXAMPLE}.cpp)
     target_link_libraries(examples-${EXAMPLE} clique)
     set_target_properties(examples-${EXAMPLE} PROPERTIES
-                          OUTPUT_NAME ${EXAMPLE}
-                          RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
+      OUTPUT_NAME ${EXAMPLE} RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
     if(MPI_LINK_FLAGS)
       set_target_properties(examples-${EXAMPLE} PROPERTIES
-                            LINK_FLAGS ${MPI_LINK_FLAGS})
+        LINK_FLAGS ${MPI_LINK_FLAGS})
     endif()
     install(TARGETS examples-${EXAMPLE} DESTINATION bin/examples)
   endforeach()
 endif()
 
-################################################################################
-# Uncomment if including Clique as a subproject in another build system        #
-################################################################################
-#set(USE_CUSTOM_ALLTOALLV ${USE_CUSTOM_ALLTOALLV} PARENT_SCOPE)
-#set(BARRIER_IN_ALLTOALLV ${BARRIER_IN_ALLTOALLV} PARENT_SCOPE)
-#set(HAVE_PARMETIS ${HAVE_PARMETIS} PARENT_SCOPE)
-#
-#set(LIBRARY_TYPE ${LIBRARY_TYPE} PARENT_SCOPE)
-#string(TOUPPER ${CMAKE_BUILD_TYPE} UPPER_BUILD_TYPE)
-#set(CMAKE_CXX_FLAGS_${UPPER_BUILD_TYPE} ${CMAKE_CXX_FLAGS_${UPPER_BUILD_TYPE}} PARENT_SCOPE)
-#set(MPI_C_COMPILER ${MPI_C_COMPILER} PARENT_SCOPE)
-#set(MPI_C_INCLUDE_PATH ${MPI_C_INCLUDE_PATH} PARENT_SCOPE)
-#set(MPI_C_COMPILE_FLAGS ${MPI_C_COMPILE_FLAGS} PARENT_SCOPE)
-#set(MPI_C_LINK_FLAGS ${MPI_C_LINK_FLAGS} PARENT_SCOPE)
-#set(MPI_C_LIBRARIES ${MPI_C_LIBRARIES} PARENT_SCOPE)
-#set(MPI_CXX_COMPILER ${MPI_CXX_COMPILER} PARENT_SCOPE)
-#set(MPI_CXX_INCLUDE_PATH ${MPI_CXX_INCLUDE_PATH} PARENT_SCOPE)
-#set(MPI_CXX_COMPILE_FLAGS ${MPI_CXX_COMPILE_FLAGS} PARENT_SCOPE)
-#set(MPI_CXX_LINK_FLAGS ${MPI_CXX_LINK_FLAGS} PARENT_SCOPE)
-#set(MPI_CXX_LIBRARIES ${MPI_CXX_LIBRARIES} PARENT_SCOPE)
-#set(MPI_LINK_FLAGS ${MPI_LINK_FLAGS} PARENT_SCOPE)
-#set(MATH_LIBS ${MATH_LIBS} PARENT_SCOPE)
-#set(RESTRICT ${RESTRICT} PARENT_SCOPE)
-#set(RELEASE ${RELEASE} PARENT_SCOPE)
-#set(BLAS_POST ${BLAS_POST} PARENT_SCOPE)
-#set(LAPACK_POST ${LAPACK_POST} PARENT_SCOPE)
-#set(HAVE_OPENMP ${HAVE_OPENMP} PARENT_SCOPE)
-#set(HAVE_F90_INTERFACE ${HAVE_F90_INTERFACE} PARENT_SCOPE)
-#set(WITHOUT_PMRRR ${WITHOUT_PMRRR} PARENT_SCOPE)
-#set(AVOID_COMPLEX_MPI ${AVOID_COMPLEX_MPI} PARENT_SCOPE)
-#set(HAVE_REDUCE_SCATTER_BLOCK ${HAVE_REDUCE_SCATTER_BLOCK} PARENT_SCOPE)
-#set(REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE ${REDUCE_SCATTER_BLOCK_VIA_ALLREDUCE} PARENT_SCOPE)
-#set(USE_BYTE_ALLGATHERS ${USE_BYTE_ALLGATHERS} PARENT_SCOPE)
+# If Clique is a subproject, then pass some variables to the parent
+if(NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  include(./cmake/clique_sub.cmake)
+endif()
