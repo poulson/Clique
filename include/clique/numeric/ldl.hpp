@@ -47,7 +47,7 @@ inline void InitializeDistLeaf
     Matrix<F>& topLocalFrontL = L.localFronts.back().frontL;
     DistMatrix<F>& front2dL = L.distFronts[0].front2dL;
 
-    front2dL.LockedView
+    front2dL.LockedAttach
     ( topLocalFrontL.Height(), topLocalFrontL.Width(), 0, 0,
       topLocalFrontL.LockedBuffer(), topLocalFrontL.LDim(), 
       *node.grid );

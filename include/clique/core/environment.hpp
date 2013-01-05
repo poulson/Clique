@@ -43,6 +43,8 @@ using elem::Sqrt;
 using elem::Matrix;
 using elem::Grid;
 using elem::DistMatrix;
+using elem::View;
+using elem::LockedView;
 
 // Pull in a few indexing routines
 using elem::Shift;

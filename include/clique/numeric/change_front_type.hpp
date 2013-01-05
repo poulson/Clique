@@ -42,7 +42,7 @@ inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
 
     {
         // 2d -> 1d
-        leafFront.front1dL.LockedView
+        leafFront.front1dL.LockedAttach
         ( leafFront.front2dL.Height(), 
           leafFront.front2dL.Width(), 0,
           leafFront.front2dL.LockedLocalBuffer(), 
@@ -66,7 +66,7 @@ inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
              (frontType == SYMM_2D       && oldFrontType == BLOCK_LDL_2D) )
     {
         // 1d -> 2d
-        leafFront.front2dL.LockedView
+        leafFront.front2dL.LockedAttach
         ( leafFront.front1dL.Height(), 
           leafFront.front1dL.Width(), 0, 0,
           leafFront.front1dL.LockedLocalBuffer(), 
@@ -93,7 +93,7 @@ inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
             // Invert the strictly lower portion of the diagonal block, and
             // then make the strictly upper triangle zero
             DistMatrix<F> LT( grid );
-            LT.View( front.front2dL, 0, 0, snSize, snSize );
+            View( LT, front.front2dL, 0, 0, snSize, snSize );
             elem::TriangularInverse( LOWER, UNIT, LT );
             elem::MakeTrapezoidal( LEFT, LOWER, 0, LT );
         }
@@ -101,7 +101,7 @@ inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
     else if( frontType == LDL_SELINV_1D && oldFrontType == LDL_2D )
     {
         // Perform selective inversion and then redistribute to 1d
-        leafFront.front1dL.LockedView
+        leafFront.front1dL.LockedAttach
         ( leafFront.front2dL.Height(), 
           leafFront.front2dL.Width(), 0,
           leafFront.front2dL.LockedLocalBuffer(), 
@@ -115,7 +115,7 @@ inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
 
             // Invert the strictly lower portion of the diagonal block 
             DistMatrix<F> LT( grid );
-            LT.View( front.front2dL, 0, 0, snSize, snSize );
+            View( LT, front.front2dL, 0, 0, snSize, snSize );
             elem::TriangularInverse( LOWER, UNIT, LT );
 
             // Copy the data and make the strictly upper triangle zero

@@ -39,10 +39,10 @@ inline void LocalDiagonalSolve
     {
         const LocalSymmNodeInfo& node = info.localNodes[s];
         const Matrix<F>& frontL = L.localFronts[s].frontL;
-        XSub.View( X, node.myOffset, 0, node.size, width );
+        View( XSub, X, node.myOffset, 0, node.size, width );
 
         Matrix<F> frontTL;
-        frontTL.LockedView( frontL, 0, 0, node.size, node.size );
+        LockedView( frontTL, frontL, 0, 0, node.size, node.size );
         Matrix<F> d;
         frontTL.GetDiagonal( d );
         elem::DiagonalSolve( LEFT, NORMAL, d, XSub, true );
@@ -68,7 +68,7 @@ void DistDiagonalSolve
         const DistSymmFront<F>& front = L.distFronts[s];
 
         Matrix<F> localXT;
-        localXT.View( localX, node.localOffset1d, 0, node.localSize1d, width );
+        View( localXT, localX, node.localOffset1d, 0, node.localSize1d, width );
 
         elem::DiagonalSolve
         ( LEFT, NORMAL, front.diag.LockedLocalMatrix(), localXT, true );

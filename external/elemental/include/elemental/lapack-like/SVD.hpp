@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2012, Jack Poulson
+   Copyright (c) 2009-2013, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental and is under the BSD 2-Clause License, 
@@ -44,7 +44,7 @@ SimpleSVDUpper
     DistMatrix<Real,STAR,STAR> d_STAR_STAR( d_MD_STAR );
     DistMatrix<Real,STAR,STAR> eHat_STAR_STAR( k, 1, g );
     DistMatrix<Real,STAR,STAR> e_STAR_STAR( g );
-    e_STAR_STAR.View( eHat_STAR_STAR, 0, 0, k-1, 1 );
+    View( e_STAR_STAR, eHat_STAR_STAR, 0, 0, k-1, 1 );
     e_STAR_STAR = e_MD_STAR;
 
     // Initialize U and VTrans to the appropriate identity matrices.
@@ -86,8 +86,7 @@ SimpleSVDUpper
     {
         DistMatrix<Real> VT( g ), 
                          VB( g );
-        DistMatrix<Real,STAR,VC> 
-            VTransL_STAR_VC( g ), VTransR_STAR_VC( g );
+        DistMatrix<Real,STAR,VC> VTransL_STAR_VC( g ), VTransR_STAR_VC( g );
         PartitionDown( V, VT, 
                           VB, m );
         PartitionRight( VTrans_STAR_VC, VTransL_STAR_VC, VTransR_STAR_VC, m );
@@ -98,17 +97,13 @@ SimpleSVDUpper
     // Backtransform U and V
     if( m >= n )
     {
-        ApplyPackedReflectors
-        ( LEFT, LOWER, VERTICAL, BACKWARD, 0, B, A );
-        ApplyPackedReflectors
-        ( LEFT, UPPER, HORIZONTAL, BACKWARD, 1, B, V );
+        ApplyPackedReflectors( LEFT, LOWER, VERTICAL, BACKWARD, 0, B, A );
+        ApplyPackedReflectors( LEFT, UPPER, HORIZONTAL, BACKWARD, 1, B, V );
     }
     else
     {
-        ApplyPackedReflectors
-        ( LEFT, LOWER, VERTICAL, BACKWARD, -1, B, A );
-        ApplyPackedReflectors
-        ( LEFT, UPPER, HORIZONTAL, BACKWARD, 0, B, V );
+        ApplyPackedReflectors( LEFT, LOWER, VERTICAL, BACKWARD, -1, B, A );
+        ApplyPackedReflectors( LEFT, UPPER, HORIZONTAL, BACKWARD, 0, B, V );
     }
 
     // Copy out the appropriate subset of the singular values
@@ -150,7 +145,7 @@ SimpleSVDUpper
     DistMatrix<Real,STAR,STAR> d_STAR_STAR( d_MD_STAR );
     DistMatrix<Real,STAR,STAR> eHat_STAR_STAR( k, 1, g );
     DistMatrix<Real,STAR,STAR> e_STAR_STAR( g );
-    e_STAR_STAR.View( eHat_STAR_STAR, 0, 0, k-1, 1 );
+    View( e_STAR_STAR, eHat_STAR_STAR, 0, 0, k-1, 1 );
     e_STAR_STAR = e_MD_STAR;
 
     // Initialize U and VAdj to the appropriate identity matrices
@@ -320,17 +315,13 @@ SimpleSVDUpper
     // Backtransform U and V
     if( m >= n )
     {
-        ApplyPackedReflectors
-        ( LEFT, LOWER, VERTICAL, BACKWARD, 0, B, A );
-        ApplyPackedReflectors
-        ( LEFT, UPPER, HORIZONTAL, BACKWARD, 1, B, V );
+        ApplyPackedReflectors( LEFT, LOWER, VERTICAL, BACKWARD, 0, B, A );
+        ApplyPackedReflectors( LEFT, UPPER, HORIZONTAL, BACKWARD, 1, B, V );
     }
     else
     {
-        ApplyPackedReflectors
-        ( LEFT, LOWER, VERTICAL, BACKWARD, -1, B, A );
-        ApplyPackedReflectors
-        ( LEFT, UPPER, HORIZONTAL, BACKWARD, 0, B, V );
+        ApplyPackedReflectors( LEFT, LOWER, VERTICAL, BACKWARD, -1, B, A );
+        ApplyPackedReflectors( LEFT, UPPER, HORIZONTAL, BACKWARD, 0, B, V );
     }
 
     // Copy out the appropriate subset of the singular values
@@ -532,7 +523,7 @@ SimpleSingularValuesUpper
     DistMatrix<Real,STAR,STAR> d_STAR_STAR( d_MD_STAR );
     DistMatrix<Real,STAR,STAR> eHat_STAR_STAR( k, 1, g );
     DistMatrix<Real,STAR,STAR> e_STAR_STAR( g );
-    e_STAR_STAR.View( eHat_STAR_STAR, 0, 0, k-1, 1 );
+    View( e_STAR_STAR, eHat_STAR_STAR, 0, 0, k-1, 1 );
     e_STAR_STAR = e_MD_STAR;
 
     // Compute the singular values of the bidiagonal matrix
@@ -582,7 +573,7 @@ SimpleSingularValuesUpper
     DistMatrix<Real,STAR,STAR> d_STAR_STAR( d_MD_STAR );
     DistMatrix<Real,STAR,STAR> eHat_STAR_STAR( k, 1, g );
     DistMatrix<Real,STAR,STAR> e_STAR_STAR( g );
-    e_STAR_STAR.View( eHat_STAR_STAR, 0, 0, k-1, 1 );
+    View( e_STAR_STAR, eHat_STAR_STAR, 0, 0, k-1, 1 );
     e_STAR_STAR = e_MD_STAR;
 
     // Compute the singular values of the bidiagonal matrix

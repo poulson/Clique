@@ -249,7 +249,7 @@ main( int argc, char* argv[] )
             const int width = frontL.Width();
             const int minDim = std::min(height,width);
             DistMatrix<C> B( grid );
-            B.LockedView( frontL, width, 0, height-width, width );
+            LockedView( B, frontL, width, 0, height-width, width );
             DistMatrix<C> BCopy( B );
             DistMatrix<R,VR,STAR> singVals_VR_STAR( grid );
             elem::SingularValues( BCopy, singVals_VR_STAR );
@@ -294,8 +294,8 @@ main( int argc, char* argv[] )
                 std::cout << "lowerHalf=" << lowerHalf
                           << ", upperHalf=" << upperHalf << std::endl;
             DistMatrix<C> offDiagBlock;
-            offDiagBlock.LockedView
-            ( front, lowerHalf, 0, upperHalf, lowerHalf );
+            LockedView
+            ( offDiagBlock, front, lowerHalf, 0, upperHalf, lowerHalf );
             DistMatrix<C> offDiagBlockCopy( offDiagBlock );
             DistMatrix<R,VR,STAR> singVals_VR_STAR( grid );
             elem::SingularValues( offDiagBlockCopy, singVals_VR_STAR );

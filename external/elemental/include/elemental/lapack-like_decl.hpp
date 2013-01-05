@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2012, Jack Poulson
+   Copyright (c) 2009-2013, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental and is under the BSD 2-Clause License, 
@@ -467,7 +467,8 @@ void SolveAfterLU
 //
 // Inverts a Hermitian positive-definite matrix. 
 //
-// TODO: Serial version
+template<typename F>
+void HPDInverse( UpperOrLower uplo, Matrix<F>& A );
 template<typename F>
 void HPDInverse( UpperOrLower uplo, DistMatrix<F>& A );
 
@@ -637,11 +638,16 @@ void HermitianEig
 //
 // SortEig
 //
-// TODO: Serial versions
+template<typename R>
+void SortEig( Matrix<R>& w );
 template<typename R>
 void SortEig( DistMatrix<R,VR,STAR>& w );
 template<typename R>
+void SortEig( Matrix<R>& w, Matrix<R>& Z );
+template<typename R>
 void SortEig( DistMatrix<R,VR,STAR>& w, DistMatrix<R>& Z );
+template<typename R>
+void SortEig( Matrix<R>& w, Matrix<Complex<R> >& Z );
 template<typename R>
 void SortEig( DistMatrix<R,VR,STAR>& w, DistMatrix<Complex<R> >& Z );
 

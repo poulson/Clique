@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2012, Jack Poulson
+   Copyright (c) 2009-2013, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental and is under the BSD 2-Clause License, 
@@ -98,7 +98,7 @@ LogDetDivergence
     R localLogDet(0);
     DistMatrix<F,MD,STAR> d(g);
     ACopy.GetDiagonal( d );
-    if( d.InDiagonal() )
+    if( d.Participating() )
     {
         const int nLocalDiag = d.LocalHeight();
         for( int iLocal=0; iLocal<nLocalDiag; ++iLocal )

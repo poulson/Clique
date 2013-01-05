@@ -39,8 +39,9 @@ inline void DistLowerMultiplyNormal
     // Copy the information from the local portion into the distributed leaf
     const LocalSymmFront<T>& localRootFront = L.localFronts.back();
     const DistSymmFront<T>& distLeafFront = L.distFronts[0];
-    distLeafFront.work1d.LockedView
-    ( localRootFront.work.Height(), localRootFront.work.Width(), 0,
+    LockedView
+    ( distLeafFront.work1d,
+      localRootFront.work.Height(), localRootFront.work.Width(), 0,
       localRootFront.work.LockedBuffer(), localRootFront.work.LDim(),
       distLeafFront.front1dL.Grid() );
     
@@ -69,7 +70,7 @@ inline void DistLowerMultiplyNormal
 
         // Pull in the relevant information from the RHS
         Matrix<T> localXT;
-        localXT.View( localX, node.localOffset1d, 0, node.localSize1d, width );
+        View( localXT, localX, node.localOffset1d, 0, node.localSize1d, width );
         WT.LocalMatrix() = localXT;
         elem::MakeZeros( WB );
 
@@ -80,7 +81,7 @@ inline void DistLowerMultiplyNormal
         DistMatrix<T,VC,STAR>& childW = childFront.work1d;
         const int updateSize = childW.Height()-childNode.size;
         DistMatrix<T,VC,STAR> childUpdate;
-        childUpdate.LockedView( childW, childNode.size, 0, updateSize, width );
+        LockedView( childUpdate, childW, childNode.size, 0, updateSize, width );
         int sendBufferSize = 0;
         std::vector<int> sendCounts(commSize), sendDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
@@ -186,8 +187,8 @@ inline void DistLowerMultiplyTranspose
     if( numDistNodes == 1 )
     {
         Matrix<T> XRoot;
-        XRoot.View
-        ( rootNode.size, width, 
+        View
+        ( XRoot, rootNode.size, width, 
           localX.Buffer(rootNode.localOffset1d,0), localX.LDim() );
         localRootFront.work = XRoot;
         LocalFrontLowerMultiply
@@ -198,8 +199,8 @@ inline void DistLowerMultiplyTranspose
         const DistSymmFront<T>& rootFront = L.distFronts.back();
         const Grid& rootGrid = rootFront.front1dL.Grid();
         DistMatrix<T,VC,STAR> XRoot(rootGrid);
-        XRoot.View
-        ( rootNode.size, width, 0,
+        View
+        ( XRoot, rootNode.size, width, 0,
           localX.Buffer(rootNode.localOffset1d,0), localX.LDim(), rootGrid );
         rootFront.work1d = XRoot; // store the RHS for use by the children
         DistFrontLowerMultiply
@@ -230,7 +231,7 @@ inline void DistLowerMultiplyTranspose
 
         // Pull in the relevant information from the RHS
         Matrix<T> localXT;
-        localXT.View( localX, node.localOffset1d, 0, node.localSize1d, width );
+        View( localXT, localX, node.localOffset1d, 0, node.localSize1d, width );
         WT.LocalMatrix() = localXT;
 
         //

@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2012, Jack Poulson
+   Copyright (c) 2009-2013, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental and is under the BSD 2-Clause License, 
@@ -51,10 +51,8 @@ Syrk
 template<typename T>
 inline void
 Syrk
-( UpperOrLower uplo, 
-  Orientation orientation,
-  T alpha, const DistMatrix<T,MC,MR>& A,
-  T beta,        DistMatrix<T,MC,MR>& C )
+( UpperOrLower uplo, Orientation orientation,
+  T alpha, const DistMatrix<T>& A, T beta, DistMatrix<T>& C )
 {
 #ifndef RELEASE
     PushCallStack("Syrk");

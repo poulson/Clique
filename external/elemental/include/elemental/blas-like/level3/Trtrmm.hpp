@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2012, Jack Poulson
+   Copyright (c) 2009-2013, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental and is under the BSD 2-Clause License, 
@@ -33,7 +33,7 @@ Trtrmm( Orientation orientation, UpperOrLower uplo, Matrix<T>& A )
 
 template<typename T>
 inline void
-Trtrmm( Orientation orientation, UpperOrLower uplo, DistMatrix<T,MC,MR>& A )
+Trtrmm( Orientation orientation, UpperOrLower uplo, DistMatrix<T>& A )
 {
 #ifndef RELEASE
     PushCallStack("Trtrmm");

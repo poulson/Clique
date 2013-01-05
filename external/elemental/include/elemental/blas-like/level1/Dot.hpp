@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2012, Jack Poulson
+   Copyright (c) 2009-2013, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental and is under the BSD 2-Clause License, 
@@ -75,12 +75,12 @@ namespace internal {
 
      template<typename T,Distribution U,Distribution V>
      T internal::DotHelper
-     ( const DistMatrix<T,U,V>& x, const DistMatrix<T,MC,MR>& y );
+     ( const DistMatrix<T,U,V>& x, const DistMatrix<T>& y );
 */
 template<typename T,Distribution U,Distribution V>
 inline T
 DotHelper
-( const DistMatrix<T,U,V>& x, const DistMatrix<T,MC,MR>& y )
+( const DistMatrix<T,U,V>& x, const DistMatrix<T>& y )
 {
 #ifndef RELEASE
     PushCallStack("internal::DotHelper");
@@ -99,7 +99,7 @@ DotHelper
     T globalDot;
     if( x.Width() == 1 && y.Width() == 1 )
     {
-        DistMatrix<T,MC,MR> xRedist(g);
+        DistMatrix<T> xRedist(g);
         xRedist.AlignWith( y );
         xRedist = x;
 
@@ -144,7 +144,7 @@ DotHelper
     }
     else
     {
-        DistMatrix<T,MC,MR> xRedist(g);
+        DistMatrix<T> xRedist(g);
         xRedist.AlignWith( y );
         xRedist = x;
 
@@ -345,7 +345,7 @@ DotHelper( const DistMatrix<T,U,V>& x, const DistMatrix<T,MR,MC>& y )
     }
     else if( x.Width() == 1 )
     {
-        DistMatrix<T,MC,MR> xRedist(g);
+        DistMatrix<T> xRedist(g);
         xRedist.AlignWith( y );
         xRedist = x;
 
@@ -360,7 +360,7 @@ DotHelper( const DistMatrix<T,U,V>& x, const DistMatrix<T,MR,MC>& y )
     }
     else if( y.Width() == 1 )
     {
-        DistMatrix<T,MC,MR> xRedist(g);
+        DistMatrix<T> xRedist(g);
         xRedist.AlignWith( y );
         xRedist = x;
 

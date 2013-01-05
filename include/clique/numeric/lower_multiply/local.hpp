@@ -48,7 +48,7 @@ inline void LocalLowerMultiplyNormal
 
         // Pull in the relevant information from the RHS
         Matrix<T> XT;
-        XT.View( X, node.myOffset, 0, node.size, width );
+        View( XT, X, node.myOffset, 0, node.size, width );
         WT = XT;
         elem::MakeZeros( WB );
 
@@ -71,8 +71,8 @@ inline void LocalLowerMultiplyNormal
 
             // Add the left child's update onto ours
             Matrix<T> leftUpdate;
-            leftUpdate.LockedView
-            ( leftWork, leftNodeSize, 0, leftUpdateSize, width );
+            LockedView
+            ( leftUpdate, leftWork, leftNodeSize, 0, leftUpdateSize, width );
             for( int iChild=0; iChild<leftUpdateSize; ++iChild )
             {
                 const int iFront = node.leftChildRelIndices[iChild];
@@ -83,8 +83,9 @@ inline void LocalLowerMultiplyNormal
 
             // Add the right child's update onto ours
             Matrix<T> rightUpdate;
-            rightUpdate.LockedView
-            ( rightWork, rightNodeSize, 0, rightUpdateSize, width );
+            LockedView
+            ( rightUpdate, 
+              rightWork, rightNodeSize, 0, rightUpdateSize, width );
             for( int iChild=0; iChild<rightUpdateSize; ++iChild )
             {
                 const int iFront = node.rightChildRelIndices[iChild];
@@ -129,7 +130,7 @@ inline void LocalLowerMultiplyTranspose
 
         // Pull in the relevant information from the RHS
         Matrix<T> XT;
-        XT.View( X, node.myOffset, 0, node.size, width );
+        View( XT, X, node.myOffset, 0, node.size, width );
         WT = XT;
 
         // Update using the parent's portion of the RHS

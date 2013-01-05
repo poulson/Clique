@@ -29,12 +29,12 @@ inline void DistLDL
     DistSymmFront<F>& bottomDistFront = L.distFronts[0];
     const Grid& bottomGrid = *info.distNodes[0].grid;
     bottomDistFront.front2dL.Empty();
-    bottomDistFront.front2dL.LockedView
+    bottomDistFront.front2dL.LockedAttach
     ( topLocalFront.frontL.Height(), topLocalFront.frontL.Width(), 0, 0, 
       topLocalFront.frontL.LockedBuffer(), topLocalFront.frontL.LDim(), 
       bottomGrid );
     bottomDistFront.work2d.Empty();
-    bottomDistFront.work2d.LockedView
+    bottomDistFront.work2d.LockedAttach
     ( topLocalFront.work.Height(), topLocalFront.work.Width(), 0, 0,
       topLocalFront.work.LockedBuffer(), topLocalFront.work.LDim(),
       bottomGrid );

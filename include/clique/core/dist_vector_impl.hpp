@@ -153,7 +153,7 @@ DistVector<T>::DistVector( int height, T* buffer, mpi::Comm comm )
         ( commRank<commSize-1 ?
           blocksize_ :
           height_ - (commSize-1)*blocksize_ );
-    localVec_.View( localHeight, 1, buffer, localHeight );
+    localVec_.Attach( localHeight, 1, buffer, localHeight );
 }
 
 template<typename T>
@@ -174,7 +174,7 @@ DistVector<T>::DistVector( int height, const T* buffer, mpi::Comm comm )
         ( commRank<commSize-1 ?
           blocksize_ :
           height_ - (commSize-1)*blocksize_ );
-    localVec_.LockedView( localHeight, 1, buffer, localHeight );
+    localVec_.LockedAttach( localHeight, 1, buffer, localHeight );
 }
 
 template<typename T>

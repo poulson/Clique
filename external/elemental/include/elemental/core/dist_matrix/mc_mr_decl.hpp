@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2012, Jack Poulson
+   Copyright (c) 2009-2013, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental and is under the BSD 2-Clause License, 
@@ -109,6 +109,8 @@ public:
 
     virtual Int ColStride() const;
     virtual Int RowStride() const;
+    virtual Int ColRank() const;
+    virtual Int RowRank() const;
 
     //
     // Collective routines
@@ -219,53 +221,13 @@ public:
     template<typename S,typename N> 
     void AlignRowsWith( const DistMatrix<S,STAR,VR,N>& A );
 
-    // (Immutable) view of a distributed matrix
-    void View( DistMatrix<T,MC,MR,Int>& A );
-    void LockedView( const DistMatrix<T,MC,MR,Int>& A );
-
     // (Immutable) view of a distributed matrix's buffer
-    void View
+    void Attach
     ( Int height, Int width, Int colAlignment, Int rowAlignment,
       T* buffer, Int ldim, const elem::Grid& grid );
-    void LockedView
+    void LockedAttach
     ( Int height, Int width, Int colAlignment, Int rowAlignment,
       const T* buffer, Int ldim, const elem::Grid& grid );      
-
-    // (Immutable) view of a portion of a distributed matrix
-    void View
-    ( DistMatrix<T,MC,MR,Int>& A, 
-      Int i, Int j, Int height, Int width );
-    void LockedView
-    ( const DistMatrix<T,MC,MR,Int>& A, 
-      Int i, Int j, Int height, Int width );
-
-    // (Immutable) view of two horizontally contiguous partitions of a 
-    // distributed matrix
-    void View1x2
-    ( DistMatrix<T,MC,MR,Int>& AL, DistMatrix<T,MC,MR,Int>& AR );
-    void LockedView1x2
-    ( const DistMatrix<T,MC,MR,Int>& AL, 
-      const DistMatrix<T,MC,MR,Int>& AR );
-
-    // (Immutable) view of two vertically contiguous partitions of a 
-    // distributed matrix
-    void View2x1
-    ( DistMatrix<T,MC,MR,Int>& AT,
-      DistMatrix<T,MC,MR,Int>& AB );
-    void LockedView2x1
-    ( const DistMatrix<T,MC,MR,Int>& AT,
-      const DistMatrix<T,MC,MR,Int>& AB );
-
-    // (Immutable) view of a contiguous 2x2 set of partitions of a 
-    // distributed matrix
-    void View2x2 
-    ( DistMatrix<T,MC,MR,Int>& ATL, DistMatrix<T,MC,MR,Int>& ATR,
-      DistMatrix<T,MC,MR,Int>& ABL, DistMatrix<T,MC,MR,Int>& ABR );
-    void LockedView2x2
-    ( const DistMatrix<T,MC,MR,Int>& ATL, 
-      const DistMatrix<T,MC,MR,Int>& ATR,
-      const DistMatrix<T,MC,MR,Int>& ABL, 
-      const DistMatrix<T,MC,MR,Int>& ABR );
 
     // Equate/Update with the scattered summation of A[MC,* ] across process
     // rows
@@ -321,6 +283,9 @@ public:
 
 private:
     virtual void PrintBase( std::ostream& os, const std::string msg="" ) const;
+
+    template<typename S,Distribution U,Distribution V,typename Ord>
+    friend class DistMatrix;
 };
 
 } // namespace elem

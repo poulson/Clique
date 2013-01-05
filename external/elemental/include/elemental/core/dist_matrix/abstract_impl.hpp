@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2012, Jack Poulson
+   Copyright (c) 2009-2013, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental and is under the BSD 2-Clause License, 
@@ -402,6 +402,11 @@ AbstractDistMatrix<T,Int>::Empty()
     constrainedColAlignment_ = false;
     constrainedRowAlignment_ = false;
 }
+
+template<typename T,typename Int>
+inline bool
+AbstractDistMatrix<T,Int>::Participating() const
+{ return grid_->InGrid(); }
 
 template<typename T,typename Int>
 inline void

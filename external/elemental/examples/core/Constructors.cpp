@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2012, Jack Poulson
+   Copyright (c) 2009-2013, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental and is under the BSD 2-Clause License, 
@@ -77,7 +77,7 @@ main( int argc, char* argv[] )
             // Build another set of local buffers and attach it to X.
             // This time, make it all two's.
             std::vector<double> localTwos( localHeight*localWidth, 2 ); 
-            X.View( n, n, 0, 0, &localTwos[0], localHeight, grid );
+            X.Attach( n, n, 0, 0, &localTwos[0], localHeight, grid );
             if( print )
                 X.Print("After viewing local buffers of all two's");
         }

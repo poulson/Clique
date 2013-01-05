@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2012, Jack Poulson
+   Copyright (c) 2009-2013, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental and is under the BSD 2-Clause License, 
@@ -8,35 +8,6 @@
 */
 
 namespace elem {
-
-template<typename T>
-inline void
-Uniform( int m, int n, Matrix<T>& A, T center, typename Base<T>::type radius )
-{
-#ifndef RELEASE
-    PushCallStack("Uniform");
-#endif
-    A.ResizeTo( m, n );
-    MakeUniform( A, center, radius );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
-template<typename T,Distribution U,Distribution V>
-inline void
-Uniform
-( int m, int n, DistMatrix<T,U,V>& A, T center, typename Base<T>::type radius )
-{
-#ifndef RELEASE
-    PushCallStack("Uniform");
-#endif
-    A.ResizeTo( m, n );
-    MakeUniform( A, center, radius );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
 
 // Draw each entry from a uniform PDF over the closed unit ball.
 template<typename T>
@@ -51,6 +22,20 @@ MakeUniform( Matrix<T>& A, T center, typename Base<T>::type radius )
     for( int j=0; j<n; ++j )
         for( int i=0; i<m; ++i )
             A.Set( i, j, center+radius*SampleUnitBall<T>() );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename T>
+inline void
+Uniform( int m, int n, Matrix<T>& A, T center, typename Base<T>::type radius )
+{
+#ifndef RELEASE
+    PushCallStack("Uniform");
+#endif
+    A.ResizeTo( m, n );
+    MakeUniform( A, center, radius );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -125,7 +110,7 @@ struct MakeUniformHelper<T,MD,STAR>
     static void Func
     ( DistMatrix<T,MD,STAR>& A, T center, typename Base<T>::type radius )
     {
-        if( A.InDiagonal() )
+        if( A.Participating() )
         {
             const int n = A.Width();
             const int localHeight = A.LocalHeight();
@@ -225,7 +210,7 @@ struct MakeUniformHelper<T,STAR,MD>
     static void Func
     ( DistMatrix<T,STAR,MD>& A, T center, typename Base<T>::type radius )
     {
-        if( A.InDiagonal() )
+        if( A.Participating() )
         {
             const int m = A.Height();
             const int localWidth = A.LocalWidth();
@@ -378,6 +363,21 @@ MakeUniform
     PushCallStack("Uniform");
 #endif
     internal::MakeUniformHelper<T,U,V>::Func( A, center, radius );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename T,Distribution U,Distribution V>
+inline void
+Uniform
+( int m, int n, DistMatrix<T,U,V>& A, T center, typename Base<T>::type radius )
+{
+#ifndef RELEASE
+    PushCallStack("Uniform");
+#endif
+    A.ResizeTo( m, n );
+    MakeUniform( A, center, radius );
 #ifndef RELEASE
     PopCallStack();
 #endif

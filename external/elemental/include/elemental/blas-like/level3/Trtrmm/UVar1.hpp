@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2012, Jack Poulson
+   Copyright (c) 2009-2013, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental and is under the BSD 2-Clause License, 
@@ -52,7 +52,7 @@ TrtrmmUVar1( Orientation orientation, Matrix<T>& U )
 
 template<typename T>
 inline void
-TrtrmmUVar1( Orientation orientation, DistMatrix<T,MC,MR>& U )
+TrtrmmUVar1( Orientation orientation, DistMatrix<T>& U )
 {
 #ifndef RELEASE
     PushCallStack("internal::TrtrmmUVar1");
@@ -62,7 +62,7 @@ TrtrmmUVar1( Orientation orientation, DistMatrix<T,MC,MR>& U )
     const Grid& g = U.Grid();
 
     // Matrix views
-    DistMatrix<T,MC,MR>
+    DistMatrix<T>
         UTL(g), UTR(g),  U00(g), U01(g), U02(g),
         UBL(g), UBR(g),  U10(g), U11(g), U12(g),
                          U20(g), U21(g), U22(g);

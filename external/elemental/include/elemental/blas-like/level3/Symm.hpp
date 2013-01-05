@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2012, Jack Poulson
+   Copyright (c) 2009-2013, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental and is under the BSD 2-Clause License, 
@@ -39,9 +39,8 @@ template<typename T>
 inline void
 Symm
 ( LeftOrRight side, UpperOrLower uplo,
-  T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C )
+  T alpha, const DistMatrix<T>& A, const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C )
 {
 #ifndef RELEASE
     PushCallStack("Symm");

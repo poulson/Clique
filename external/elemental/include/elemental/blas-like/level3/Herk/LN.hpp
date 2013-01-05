@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2012, Jack Poulson
+   Copyright (c) 2009-2013, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental and is under the BSD 2-Clause License, 
@@ -12,9 +12,7 @@ namespace internal {
 
 template<typename T>
 inline void
-HerkLN
-( T alpha, const DistMatrix<T,MC,MR>& A,
-  T beta,        DistMatrix<T,MC,MR>& C )
+HerkLN( T alpha, const DistMatrix<T>& A, T beta, DistMatrix<T>& C )
 {
 #ifndef RELEASE
     PushCallStack("internal::HerkLN");
@@ -33,8 +31,8 @@ HerkLN
     const Grid& g = A.Grid();
 
     // Matrix views
-    DistMatrix<T,MC,MR> AL(g), AR(g),
-                        A0(g), A1(g), A2(g);
+    DistMatrix<T> AL(g), AR(g),
+                  A0(g), A1(g), A2(g);
 
     // Temporary distributions
     DistMatrix<T,MC,  STAR> A1_MC_STAR(g);

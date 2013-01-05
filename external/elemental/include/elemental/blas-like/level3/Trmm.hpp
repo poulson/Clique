@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2012, Jack Poulson
+   Copyright (c) 2009-2013, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental and is under the BSD 2-Clause License, 
@@ -58,7 +58,7 @@ inline void
 Trmm
 ( LeftOrRight side, UpperOrLower uplo, 
   Orientation orientation, UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,MC,MR>& A, DistMatrix<T,MC,MR>& X )
+  T alpha, const DistMatrix<T>& A, DistMatrix<T>& X )
 {
 #ifndef RELEASE
     PushCallStack("Trmm");

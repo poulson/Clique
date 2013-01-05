@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2012, Jack Poulson
+   Copyright (c) 2009-2013, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental and is under the BSD 2-Clause License, 
@@ -106,6 +106,8 @@ public:
 
     virtual Int ColStride() const;
     virtual Int RowStride() const;
+    virtual Int ColRank() const;
+    virtual Int RowRank() const;
 
     //
     // Collective routines
@@ -155,40 +157,28 @@ public:
     // of the argument DistMatrix.
     template<typename S,typename N> 
     void AlignWith( const DistMatrix<S,MR,MC,N>& A );
-
     template<typename S,typename N> 
     void AlignWith( const DistMatrix<S,STAR,MC,N>& A );
-
     template<typename S,typename N> 
     void AlignWith( const DistMatrix<S,MC,MR,N>& A );
-
     template<typename S,typename N> 
     void AlignWith( const DistMatrix<S,MC,STAR,N>& A );
-
     template<typename S,typename N> 
     void AlignWith( const DistMatrix<S,VC,STAR,N>& A );
-
     template<typename S,typename N> 
     void AlignWith( const DistMatrix<S,STAR,VC,N>& A ); 
-
     template<typename S,typename N> 
     void AlignWith( const DistMatrix<S,STAR,MD,N>& A ) {}
-
     template<typename S,typename N> 
     void AlignWith( const DistMatrix<S,STAR,MR,N>& A ) {}
-
     template<typename S,typename N> 
     void AlignWith( const DistMatrix<S,STAR,VR,N>& A ) {}
-
     template<typename S,typename N> 
     void AlignWith( const DistMatrix<S,STAR,STAR,N>& A ) {}
-
     template<typename S,typename N> 
     void AlignWith( const DistMatrix<S,MD,STAR,N>& A ) {}
-
     template<typename S,typename N> 
     void AlignWith( const DistMatrix<S,MR,STAR,N>& A ) {}
-
     template<typename S,typename N> 
     void AlignWith( const DistMatrix<S,VR,STAR,N>& A ) {}
 
@@ -246,51 +236,13 @@ public:
     template<typename S,typename N>
     void AlignWithDiagonal( const DistMatrix<S,STAR,MC,N>& A, Int offset=0 );
 
-    // (Immutable) view of a distributed matrix
-    void View( DistMatrix<T,STAR,MC,Int>& A );
-    void LockedView( const DistMatrix<T,STAR,MC,Int>& A );
-
     // (Immutable) view of a distributed matrix's buffer
-    void View
+    void Attach
     ( Int height, Int width, Int rowAlignment,
       T* buffer, Int ldim, const elem::Grid& grid );
-    void LockedView
+    void LockedAttach
     ( Int height, Int width, Int rowAlignment,
       const T* buffer, Int ldim, const elem::Grid& grid );
-
-    // (Immutable) view of a portion of a distributed matrix
-    void View
-    ( DistMatrix<T,STAR,MC,Int>& A, Int i, Int j, Int height, Int width );
-    void LockedView
-    ( const DistMatrix<T,STAR,MC,Int>& A, Int i, Int j, Int height, Int width );
-
-    // (Immutable) view of two horizontally contiguous partitions of a
-    // distributed matrix
-    void View1x2
-    ( DistMatrix<T,STAR,MC,Int>& AL, DistMatrix<T,STAR,MC,Int>& AR );
-    void LockedView1x2
-    ( const DistMatrix<T,STAR,MC,Int>& AL, 
-      const DistMatrix<T,STAR,MC,Int>& AR );
-
-    // (Immutable) view of two vertically contiguous partitions of a
-    // distributed matrix
-    void View2x1
-    ( DistMatrix<T,STAR,MC,Int>& AT,
-      DistMatrix<T,STAR,MC,Int>& AB );
-    void LockedView2x1
-    ( const DistMatrix<T,STAR,MC,Int>& AT,
-      const DistMatrix<T,STAR,MC,Int>& AB );
-
-    // (Immutable) view of a contiguous 2x2 set of partitions of a
-    // distributed matrix
-    void View2x2
-    ( DistMatrix<T,STAR,MC,Int>& ATL, DistMatrix<T,STAR,MC,Int>& ATR,
-      DistMatrix<T,STAR,MC,Int>& ABL, DistMatrix<T,STAR,MC,Int>& ABR );
-    void LockedView2x2
-    ( const DistMatrix<T,STAR,MC,Int>& ATL, 
-      const DistMatrix<T,STAR,MC,Int>& ATR,
-      const DistMatrix<T,STAR,MC,Int>& ABL, 
-      const DistMatrix<T,STAR,MC,Int>& ABR );
 
     // AllReduce over process row
     void SumOverRow();
@@ -302,6 +254,9 @@ public:
 
 private:
     virtual void PrintBase( std::ostream& os, const std::string msg="" ) const;
+
+    template<typename S,Distribution U,Distribution V,typename Ord>
+    friend class DistMatrix;
 };
 
 } // namespace elem

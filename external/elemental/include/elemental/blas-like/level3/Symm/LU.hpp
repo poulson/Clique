@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2012, Jack Poulson
+   Copyright (c) 2009-2013, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental and is under the BSD 2-Clause License, 
@@ -13,9 +13,8 @@ namespace internal {
 template<typename T>
 inline void
 SymmLUA
-( T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C )
+( T alpha, const DistMatrix<T>& A, const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C )
 {
 #ifndef RELEASE
     PushCallStack("internal::SymmLUA");
@@ -25,18 +24,18 @@ SymmLUA
 #endif
     const Grid& g = A.Grid();
 
-    DistMatrix<T,MC,MR>
+    DistMatrix<T>
         BL(g), BR(g),
         B0(g), B1(g), B2(g);
 
-    DistMatrix<T,MC,MR>
+    DistMatrix<T>
         CL(g), CR(g),
         C0(g), C1(g), C2(g);
 
     DistMatrix<T,MC,STAR> B1_MC_STAR(g);
     DistMatrix<T,VR,STAR> B1_VR_STAR(g);
     DistMatrix<T,STAR,MR> B1Trans_STAR_MR(g);
-    DistMatrix<T,MC,MR  > Z1(g);
+    DistMatrix<T> Z1(g);
     DistMatrix<T,MC,STAR> Z1_MC_STAR(g);
     DistMatrix<T,MR,STAR> Z1_MR_STAR(g);
     DistMatrix<T,MR,MC  > Z1_MR_MC(g);
@@ -96,9 +95,8 @@ SymmLUA
 template<typename T>
 inline void
 SymmLUC
-( T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C )
+( T alpha, const DistMatrix<T>& A, const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C )
 {
 #ifndef RELEASE
     PushCallStack("internal::SymmLUC");
@@ -109,16 +107,16 @@ SymmLUC
     const Grid& g = A.Grid();
 
     // Matrix views
-    DistMatrix<T,MC,MR> 
+    DistMatrix<T> 
         ATL(g), ATR(g),  A00(g), A01(g), A02(g),  AColPan(g),
         ABL(g), ABR(g),  A10(g), A11(g), A12(g),  ARowPan(g),
                          A20(g), A21(g), A22(g);
-    DistMatrix<T,MC,MR> BT(g),  B0(g),
-                        BB(g),  B1(g),
+    DistMatrix<T> BT(g),  B0(g),
+                  BB(g),  B1(g),
                                 B2(g);
-    DistMatrix<T,MC,MR> CT(g),  C0(g),  CAbove(g),
-                        CB(g),  C1(g),  CBelow(g),
-                                C2(g);
+    DistMatrix<T> CT(g),  C0(g),  CAbove(g),
+                  CB(g),  C1(g),  CBelow(g),
+                          C2(g);
 
     // Temporary distributions
     DistMatrix<T,MC,  STAR> AColPan_MC_STAR(g);
@@ -158,17 +156,17 @@ SymmLUC
                C1,
           CB,  C2 );
 
-        ARowPan.LockedView1x2( A11, A12 );
-        AColPan.LockedView2x1
-        ( A01,
-          A11 );
+        LockedView1x2( ARowPan, A11, A12 );
+        LockedView2x1
+        ( AColPan, A01,
+                   A11 );
 
-        CAbove.View2x1
-        ( C0,
-          C1 );
-        CBelow.View2x1
-        ( C1,
-          C2 );
+        View2x1
+        ( CAbove, C0,
+                  C1 );
+        View2x1
+        ( CBelow, C1,
+                  C2 );
 
         AColPan_MC_STAR.AlignWith( CAbove );
         ARowPan_STAR_MC.AlignWith( CBelow );
@@ -217,9 +215,8 @@ SymmLUC
 template<typename T>
 inline void
 SymmLU
-( T alpha, const DistMatrix<T,MC,MR>& A,
-           const DistMatrix<T,MC,MR>& B,
-  T beta,        DistMatrix<T,MC,MR>& C )
+( T alpha, const DistMatrix<T>& A, const DistMatrix<T>& B,
+  T beta,        DistMatrix<T>& C )
 {
 #ifndef RELEASE
     PushCallStack("internal::SymmLU");

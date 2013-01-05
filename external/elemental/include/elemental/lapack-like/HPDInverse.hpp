@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2012, Jack Poulson
+   Copyright (c) 2009-2013, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental and is under the BSD 2-Clause License, 
@@ -11,6 +11,39 @@
 #include "./HPDInverse/UVar2.hpp"
 
 namespace elem {
+
+namespace internal {
+
+template<typename F>
+inline void
+LocalHPDInverse( UpperOrLower uplo, DistMatrix<F,STAR,STAR>& A )
+{
+#ifndef RELEASE
+    PushCallStack("internal::LocalHPDInverse");
+#endif
+    HPDInverse( uplo, A.LocalMatrix() );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+} // namespace internal
+
+template<typename F>
+inline void
+HPDInverse( UpperOrLower uplo, Matrix<F>& A  )
+{
+#ifndef RELEASE
+    PushCallStack("HPDInverse");
+#endif
+    if( uplo == LOWER )
+        internal::HPDInverseLVar2( A );
+    else
+        internal::HPDInverseUVar2( A );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
 
 template<typename F>
 inline void

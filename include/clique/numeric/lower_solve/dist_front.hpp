@@ -244,8 +244,8 @@ void ForwardSingle
                X1,
           XB,  X2, L11.Height() );
 
-        L11Trans_STAR_STAR.LockedView
-        ( D, 0, L00.Height(), L11.Height(), L11.Height() );
+        LockedView
+        ( L11Trans_STAR_STAR, D, 0, L00.Height(), L11.Height(), L11.Height() );
 
         //--------------------------------------------------------------------//
         AccumulateRHS( X1, X1_STAR_STAR ); // X1[* ,* ] <- X1[VC,* ]
@@ -339,7 +339,7 @@ void BackwardSingle
          /**/ /**/
           XB,  X2, b );
 
-        L11AdjOrTrans_STAR_STAR.LockedView( D, 0, L00.Height(), b, b );
+        LockedView( L11AdjOrTrans_STAR_STAR, D, 0, L00.Height(), b, b );
 
         //--------------------------------------------------------------------//
         // X1 -= L21' X2

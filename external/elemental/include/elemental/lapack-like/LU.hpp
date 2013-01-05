@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2012, Jack Poulson
+   Copyright (c) 2009-2013, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental and is under the BSD 2-Clause License, 
@@ -11,6 +11,23 @@
 #include "./LU/Panel.hpp"
 
 namespace elem {
+
+namespace internal {
+
+template<typename F>
+inline void
+LocalLU( DistMatrix<F,STAR,STAR>& A )
+{
+#ifndef RELEASE
+    PushCallStack("internal::LocalLU");
+#endif
+    LU( A.LocalMatrix() );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+} // namespace internal
 
 // Performs LU factorization without pivoting
 
@@ -40,7 +57,7 @@ LU( Matrix<F>& A )
           ABL, /**/ ABR,  A20, /**/ A21, A22 );
 
         //--------------------------------------------------------------------//
-        internal::UnblockedLU( A11 );
+        internal::LUUnb( A11 );
         Trsm( RIGHT, UPPER, NORMAL, NON_UNIT, F(1), A11, A21 );
         Trsm( LEFT, LOWER, NORMAL, UNIT, F(1), A11, A12 );
         Gemm( NORMAL, NORMAL, F(-1), A21, A12, F(1), A22 );
@@ -270,7 +287,7 @@ LU( DistMatrix<F>& A, DistMatrix<int,VC,STAR>& p )
                p1,
           pB,  p2 );
 
-        AB.View1x2( ABL, ABR );
+        View1x2( AB, ABL, ABR );
 
         const int pivotOffset = A01.Height();
         A12_STAR_VR.AlignWith( A22 );

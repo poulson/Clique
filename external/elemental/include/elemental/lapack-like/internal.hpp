@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2012, Jack Poulson
+   Copyright (c) 2009-2013, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental and is under the BSD 2-Clause License, 
@@ -37,32 +37,28 @@ void LocalTriangularInverse
 //----------------------------------------------------------------------------//
 
 template<typename F>
-void CholeskyLVar2( DistMatrix<F>& A );
-
+void CholeskyLVar3Unb( Matrix<F>& A );
 template<typename F>
-void CholeskyLVar2Naive( DistMatrix<F>& A );
-
+void CholeskyLVar2( Matrix<F>& A );
+template<typename F>
+void CholeskyLVar2( DistMatrix<F>& A );
+template<typename F>
+void CholeskyLVar3( Matrix<F>& A );
 template<typename F>
 void CholeskyLVar3( DistMatrix<F>& A );
-
-template<typename F>
-void CholeskyLVar3Naive( DistMatrix<F>& A );
-
 template<typename F>
 void CholeskyLVar3Square( DistMatrix<F>& A );
 
 template<typename F>
-void CholeskyUVar2( DistMatrix<F>& A );
-
+void CholeskyUVar3Unb( Matrix<F>& A );
 template<typename F>
-void CholeskyUVar2Naive( DistMatrix<F>& A );
- 
+void CholeskyUVar2( Matrix<F>& A );
+template<typename F>
+void CholeskyUVar2( DistMatrix<F>& A );
+template<typename F>
+void CholeskyUVar3( Matrix<F>& A );
 template<typename F>
 void CholeskyUVar3( DistMatrix<F>& A );
-
-template<typename F>
-void CholeskyUVar3Naive( DistMatrix<F>& A );
-
 template<typename F>
 void CholeskyUVar3Square( DistMatrix<F>& A );
             
@@ -350,7 +346,6 @@ void HermitianTridiagUSquare
 
 template<typename F>
 void HPDInverseLVar2( DistMatrix<F>& A );
-
 template<typename F>
 void HPDInverseUVar2( DistMatrix<F>& A );
 
@@ -360,97 +355,24 @@ void HPDInverseUVar2( DistMatrix<F>& A );
 
 template<typename F>
 void TriangularInverseVar3
+( UpperOrLower uplo, UnitOrNonUnit diag, Matrix<F>& A  );
+template<typename F>
+void TriangularInverseVar3
 ( UpperOrLower uplo, UnitOrNonUnit diag, DistMatrix<F>& A  );
 
+template<typename F>
+void TriangularInverseLVar3
+( UnitOrNonUnit diag, Matrix<F>& L );
 template<typename F>
 void TriangularInverseLVar3
 ( UnitOrNonUnit diag, DistMatrix<F>& L );
 
 template<typename F>
 void TriangularInverseUVar3
+( UnitOrNonUnit diag, Matrix<F>& U );
+template<typename F>
+void TriangularInverseUVar3
 ( UnitOrNonUnit diag, DistMatrix<F>& U );
-
-//----------------------------------------------------------------------------//
-// Implementation begins here                                                 //
-//----------------------------------------------------------------------------//
-
-//
-// Local LAPACK-like routines
-//
-
-template<typename F>
-inline void
-LocalCholesky
-( UpperOrLower uplo, DistMatrix<F,STAR,STAR>& A )
-{
-#ifndef RELEASE
-    PushCallStack("internal::LocalCholesky");
-#endif
-    Cholesky( uplo, A.LocalMatrix() );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
-template<typename F>
-inline void
-LocalLDL
-( Orientation orientation, 
-  DistMatrix<F,STAR,STAR>& A, DistMatrix<F,STAR,STAR>& d )
-{
-#ifndef RELEASE
-    PushCallStack("internal::LocalLDL");
-    if( d.Viewing() && (d.Height() != A.Height() || d.Width() != 1) )
-        throw std::logic_error
-        ("d must be a column vector of the same height as A");
-#endif
-    if( !d.Viewing() )
-        d.ResizeTo( A.Height(), 1 );
-    LDLVar3( orientation, A.LocalMatrix(), d.LocalMatrix() );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
-template<typename F>
-inline void
-LocalLU( DistMatrix<F,STAR,STAR>& A )
-{
-#ifndef RELEASE
-    PushCallStack("internal::LocalLU");
-#endif
-    LU( A.LocalMatrix() );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
-template<typename F>
-inline void
-LocalHPDInverse( UpperOrLower uplo, DistMatrix<F,STAR,STAR>& A )
-{ 
-#ifndef RELEASE
-    PushCallStack("internal::LocalHPDInverse");
-#endif
-    HPDInverse( uplo, A.LocalMatrix() );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
-template<typename F>
-inline void
-LocalTriangularInverse
-( UpperOrLower uplo, UnitOrNonUnit diag, DistMatrix<F,STAR,STAR>& A )
-{ 
-#ifndef RELEASE
-    PushCallStack("internal::LocalTriangularInverse");
-#endif
-    TriangularInverse( uplo, diag, A.LocalMatrix() );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
 
 } // namespace internal
 } // namespace elem

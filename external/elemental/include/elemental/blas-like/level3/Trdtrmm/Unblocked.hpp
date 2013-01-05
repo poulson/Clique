@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2012, Jack Poulson
+   Copyright (c) 2009-2013, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental and is under the BSD 2-Clause License, 
@@ -96,7 +96,7 @@ TrdtrmmUUnblocked( Orientation orientation, Matrix<F>& U )
             {
                 const F gamma = Conj(u01[k]) / delta11;
                 F* RESTRICT U00Col = &UBuffer[k*ldim];
-                for( int i=0; i<k; ++i )
+                for( int i=0; i<=k; ++i )
                     U00Col[i] += u01[i]*gamma;
             }
         }
@@ -107,7 +107,7 @@ TrdtrmmUUnblocked( Orientation orientation, Matrix<F>& U )
             {
                 const F gamma = u01[k] / delta11;
                 F* RESTRICT U00Col = &UBuffer[k*ldim];
-                for( int i=0; i<k; ++i )
+                for( int i=0; i<=k; ++i )
                     U00Col[i] += u01[i]*gamma;
             }
         }

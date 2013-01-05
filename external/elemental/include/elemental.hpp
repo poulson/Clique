@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2012, Jack Poulson
+   Copyright (c) 2009-2013, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental and is under the BSD 2-Clause License, 
@@ -16,7 +16,8 @@
 
 #include "elemental/core.hpp"
 
-#include "elemental/special_matrices.hpp"
+#include "elemental/special_matrices_decl.hpp"
+#include "elemental/special_matrices_incl.hpp"
 
 #include "elemental/blas-like_decl.hpp"
 #include "elemental/blas-like_impl.hpp"

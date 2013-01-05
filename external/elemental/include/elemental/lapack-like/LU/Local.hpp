@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2012, Jack Poulson
+   Copyright (c) 2009-2013, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental and is under the BSD 2-Clause License, 
@@ -15,10 +15,10 @@ namespace internal {
 
 template<typename F> 
 inline void
-UnblockedLU_FLAME( Matrix<F>& A )
+LUUnb_FLAME( Matrix<F>& A )
 {
 #ifndef RELEASE
-    PushCallStack("internal::UnblockedLU_FLAME");
+    PushCallStack("internal::LUUnb_FLAME");
 #endif
     // Matrix views 
     Matrix<F>
@@ -60,10 +60,10 @@ UnblockedLU_FLAME( Matrix<F>& A )
 
 template<typename F>
 inline void
-UnblockedLU( Matrix<F>& A )
+LUUnb( Matrix<F>& A )
 {
 #ifndef RELEASE
-    PushCallStack("internal::UnblockedLU");
+    PushCallStack("internal::LUUnb");
 #endif
     const int m = A.Height();
     const int n = A.Width();

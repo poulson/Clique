@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2009-2012, Jack Poulson
+   Copyright (c) 2009-2013, Jack Poulson
    All rights reserved.
 
    This file is part of Elemental and is under the BSD 2-Clause License, 
@@ -16,6 +16,24 @@
 
 namespace elem {
 
+namespace internal {
+
+template<typename F>
+inline void
+LocalCholesky
+( UpperOrLower uplo, DistMatrix<F,STAR,STAR>& A )
+{
+#ifndef RELEASE
+    PushCallStack("internal::LocalCholesky");
+#endif
+    Cholesky( uplo, A.LocalMatrix() );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+} // namespace internal
+
 template<typename F>
 inline void
 Cholesky( UpperOrLower uplo, Matrix<F>& A )
@@ -25,8 +43,10 @@ Cholesky( UpperOrLower uplo, Matrix<F>& A )
     if( A.Height() != A.Width() )
         throw std::logic_error("A must be square");
 #endif
-    const char uploChar = UpperOrLowerToChar( uplo );
-    lapack::Cholesky( uploChar, A.Height(), A.Buffer(), A.LDim() );
+    if( uplo == LOWER )
+        internal::CholeskyLVar3( A );
+    else
+        internal::CholeskyUVar3( A );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -41,7 +61,6 @@ Cholesky( UpperOrLower uplo, DistMatrix<F>& A )
 #endif
     const Grid& g = A.Grid();
 
-    // TODO: Come up with a better routing mechanism
     if( g.Height() == g.Width() )
     {
         if( uplo == LOWER )
