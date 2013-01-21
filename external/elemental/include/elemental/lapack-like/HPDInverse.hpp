@@ -6,6 +6,12 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef LAPACK_HPDINVERSE_HPP
+#define LAPACK_HPDINVERSE_HPP
+
+#include "elemental/lapack-like/Cholesky.hpp"
+#include "elemental/lapack-like/TriangularInverse.hpp"
 
 #include "./HPDInverse/LVar2.hpp"
 #include "./HPDInverse/UVar2.hpp"
@@ -62,3 +68,5 @@ HPDInverse( UpperOrLower uplo, DistMatrix<F>& A  )
 }
 
 } // namespace elem
+
+#endif // ifndef LAPACK_HPDINVERSE_HPP

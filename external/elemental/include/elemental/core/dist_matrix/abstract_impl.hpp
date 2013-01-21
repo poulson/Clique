@@ -6,6 +6,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef CORE_DISTMATRIX_ABSTRACT_IMPL_HPP
+#define CORE_DISTMATRIX_ABSTRACT_IMPL_HPP
 
 namespace elem {
 
@@ -485,4 +488,6 @@ AbstractDistMatrix<T,Int>::UpdateLocalImagPart
 ( Int iLocal, Int jLocal, typename Base<T>::type alpha )
 { this->localMatrix_.UpdateImagPart(iLocal,jLocal,alpha); }
 
-} // elem
+} // namespace elem
+
+#endif // ifndef CORE_DISTMATRIX_ABSTRACT_IMPL_HPP

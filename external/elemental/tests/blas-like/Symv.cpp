@@ -6,7 +6,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
-#include "elemental.hpp"
+#include "elemental-lite.hpp"
+#include "elemental/blas-like/level2/Symv.hpp"
+#include "elemental/matrices/Uniform.hpp"
 using namespace std;
 using namespace elem;
 
@@ -102,7 +104,7 @@ main( int argc, char* argv[] )
                  << "Testing with doubles:\n"
                  << "---------------------" << endl;
         }
-        TestSymv<double>( uplo, m, (double)3, (double)4, print, g );
+        TestSymv<double>( uplo, m, 3., 4., print, g );
 
         if( commRank == 0 )
         {

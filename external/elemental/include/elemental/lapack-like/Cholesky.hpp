@@ -6,11 +6,15 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef LAPACK_CHOLESKY_HPP
+#define LAPACK_CHOLESKY_HPP
 
-#include "./Cholesky/LVar2.hpp"
+// TODO: Avoid this by defining sequential Cholesky first?
+#include "elemental/lapack-like/internal.hpp"
+
 #include "./Cholesky/LVar3.hpp"
 #include "./Cholesky/LVar3Square.hpp"
-#include "./Cholesky/UVar2.hpp"
 #include "./Cholesky/UVar3.hpp"
 #include "./Cholesky/UVar3Square.hpp"
 
@@ -81,3 +85,5 @@ Cholesky( UpperOrLower uplo, DistMatrix<F>& A )
 }
 
 } // namespace elem
+
+#endif // ifndef LAPACK_CHOLESKY_HPP

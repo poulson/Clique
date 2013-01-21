@@ -6,7 +6,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
-#include "elemental.hpp"
+#include "elemental-lite.hpp"
+#include "elemental/blas-like/level3/Trmm.hpp"
+#include "elemental/matrices/Uniform.hpp"
 using namespace std;
 using namespace elem;
 
@@ -104,8 +106,7 @@ main( int argc, char* argv[] )
                  << "Testing with doubles:\n"
                  << "---------------------" << endl;
         }
-        TestTrmm<double>
-        ( print, side, uplo, orientation, diag, m, n, (double)3, g );
+        TestTrmm<double>( print, side, uplo, orientation, diag, m, n, 3., g );
 
         if( commRank == 0 )
         {

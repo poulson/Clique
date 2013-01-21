@@ -6,6 +6,11 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef LAPACK_CHOLESKYSOLVE_HPP
+#define LAPACK_CHOLESKYSOLVE_HPP
+
+#include "elemental/lapack-like/Cholesky.hpp"
 
 namespace elem {
 
@@ -64,3 +69,5 @@ CholeskySolve( UpperOrLower uplo, DistMatrix<F>& A, DistMatrix<F>& B )
 }
 
 } // namespace elem
+
+#endif // ifndef LAPACK_CHOLESKYSOLVE_HPP

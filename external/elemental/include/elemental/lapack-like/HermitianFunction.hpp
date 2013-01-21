@@ -6,6 +6,11 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef LAPACK_HERMITIANFUNCTION_HPP
+#define LAPACK_HERMITIANFUNCTION_HPP
+
+#include "elemental/lapack-like/HermitianEig.hpp"
 
 namespace elem {
 
@@ -366,3 +371,5 @@ ComplexHermitianFunction
 #endif // WITHOUT_PMRRR
 
 } // namespace elem
+
+#endif // ifndef LAPACK_HERMITIANFUNCTION_HPP

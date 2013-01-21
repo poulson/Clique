@@ -6,8 +6,13 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef LAPACK_HERMITIANPSEUDOINVERSE_HPP
+#define LAPACK_HERMITIANPSEUDOINVERSE_HPP
 
 #ifndef WITHOUT_PMRRR
+
+#include "elemental/lapack-like/HermitianFunction.hpp"
 
 namespace elem {
 
@@ -66,3 +71,5 @@ HermitianPseudoinverse
 } // namespace elem
 
 #endif // WITHOUT_PMRRR
+
+#endif // ifndef LAPACK_HERMITIANPSEUDOINVERSE_HPP

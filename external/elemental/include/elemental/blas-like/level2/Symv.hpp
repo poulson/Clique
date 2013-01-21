@@ -6,6 +6,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef BLAS_SYMV_HPP
+#define BLAS_SYMV_HPP
 
 #include "./Symv/L.hpp"
 #include "./Symv/U.hpp"
@@ -16,7 +19,8 @@ template<typename T>
 inline void
 Symv
 ( UpperOrLower uplo,
-  T alpha, const Matrix<T>& A, const Matrix<T>& x, T beta, Matrix<T>& y )
+  T alpha, const Matrix<T>& A, const Matrix<T>& x, T beta, Matrix<T>& y,
+  bool conjugate )
 {
 #ifndef RELEASE
     PushCallStack("Symv");
@@ -34,10 +38,20 @@ Symv
     const int m = A.Height();
     const int incx = ( x.Width()==1 ? 1 : x.LDim() );
     const int incy = ( y.Width()==1 ? 1 : y.LDim() );
-    blas::Symv
-    ( uploChar, m,
-      alpha, A.LockedBuffer(), A.LDim(), x.LockedBuffer(), incx,
-      beta,  y.Buffer(), incy );
+    if( conjugate )
+    {
+        blas::Hemv
+        ( uploChar, m,
+          alpha, A.LockedBuffer(), A.LDim(), x.LockedBuffer(), incx,
+          beta,  y.Buffer(), incy );
+    }
+    else
+    {
+        blas::Symv
+        ( uploChar, m,
+          alpha, A.LockedBuffer(), A.LDim(), x.LockedBuffer(), incx,
+          beta,  y.Buffer(), incy );
+    }
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -49,7 +63,8 @@ Symv
 ( UpperOrLower uplo,
   T alpha, const DistMatrix<T>& A,
            const DistMatrix<T>& x,
-  T beta,        DistMatrix<T>& y )
+  T beta,        DistMatrix<T>& y,
+  bool conjugate )
 {
 #ifndef RELEASE
     PushCallStack("Symv");
@@ -102,12 +117,12 @@ Symv
         if( uplo == LOWER )
         {
             internal::LocalSymvColAccumulateL
-            ( alpha, A, x_MC_STAR, x_MR_STAR, z_MC_STAR, z_MR_STAR );
+            ( alpha, A, x_MC_STAR, x_MR_STAR, z_MC_STAR, z_MR_STAR, conjugate );
         }
         else
         {
             internal::LocalSymvColAccumulateU
-            ( alpha, A, x_MC_STAR, x_MR_STAR, z_MC_STAR, z_MR_STAR );
+            ( alpha, A, x_MC_STAR, x_MR_STAR, z_MC_STAR, z_MR_STAR, conjugate );
         }
 
         z_MR_MC.SumScatterFrom( z_MR_STAR );
@@ -149,12 +164,12 @@ Symv
         if( uplo == LOWER )
         {
             internal::LocalSymvColAccumulateL
-            ( alpha, A, x_MC_STAR, x_MR_STAR, z_MC_STAR, z_MR_STAR );
+            ( alpha, A, x_MC_STAR, x_MR_STAR, z_MC_STAR, z_MR_STAR, conjugate );
         }
         else
         {
             internal::LocalSymvColAccumulateU
-            ( alpha, A, x_MC_STAR, x_MR_STAR, z_MC_STAR, z_MR_STAR );
+            ( alpha, A, x_MC_STAR, x_MR_STAR, z_MC_STAR, z_MR_STAR, conjugate );
         }
 
         z.SumScatterFrom( z_MC_STAR );
@@ -198,12 +213,12 @@ Symv
         if( uplo == LOWER )
         {
             internal::LocalSymvRowAccumulateL
-            ( alpha, A, x_STAR_MC, x_STAR_MR, z_STAR_MC, z_STAR_MR );
+            ( alpha, A, x_STAR_MC, x_STAR_MR, z_STAR_MC, z_STAR_MR, conjugate );
         }
         else
         {
             internal::LocalSymvRowAccumulateU
-            ( alpha, A, x_STAR_MC, x_STAR_MR, z_STAR_MC, z_STAR_MR );
+            ( alpha, A, x_STAR_MC, x_STAR_MR, z_STAR_MC, z_STAR_MR, conjugate );
         }
 
         z.SumScatterFrom( z_STAR_MR );
@@ -247,12 +262,12 @@ Symv
         if( uplo == LOWER )
         {
             internal::LocalSymvRowAccumulateL
-            ( alpha, A, x_STAR_MC, x_STAR_MR, z_STAR_MC, z_STAR_MR );
+            ( alpha, A, x_STAR_MC, x_STAR_MR, z_STAR_MC, z_STAR_MR, conjugate );
         }
         else
         {
             internal::LocalSymvRowAccumulateU
-            ( alpha, A, x_STAR_MC, x_STAR_MR, z_STAR_MC, z_STAR_MR );
+            ( alpha, A, x_STAR_MC, x_STAR_MR, z_STAR_MC, z_STAR_MR, conjugate );
         }
 
         z_MR_MC.SumScatterFrom( z_STAR_MC );
@@ -273,3 +288,5 @@ Symv
 }
 
 } // namespace elem
+
+#endif // ifndef BLAS_SYMV_HPP

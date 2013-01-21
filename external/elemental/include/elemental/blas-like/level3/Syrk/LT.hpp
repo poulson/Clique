@@ -6,13 +6,17 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef BLAS_SYRK_LT_HPP
+#define BLAS_SYRK_LT_HPP
 
 namespace elem {
 namespace internal {
 
 template<typename T>
 inline void
-SyrkLT( T alpha, const DistMatrix<T>& A, T beta, DistMatrix<T>& C )
+SyrkLT
+( T alpha, const DistMatrix<T>& A, T beta, DistMatrix<T>& C, bool conjugate )
 {
 #ifndef RELEASE
     PushCallStack("internal::SyrkLT");
@@ -29,6 +33,7 @@ SyrkLT( T alpha, const DistMatrix<T>& A, T beta, DistMatrix<T>& C )
     }
 #endif
     const Grid& g = A.Grid();
+    const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
 
     // Matrix views
     DistMatrix<T> AT(g),  A0(g),
@@ -62,7 +67,7 @@ SyrkLT( T alpha, const DistMatrix<T>& A, T beta, DistMatrix<T>& C )
         A1_STAR_MC = A1_STAR_VR;
 
         LocalTrrk
-        ( LOWER, TRANSPOSE, TRANSPOSE, 
+        ( LOWER, orientation, TRANSPOSE, 
           alpha, A1_STAR_MC, A1Trans_MR_STAR, T(1), C );
         //--------------------------------------------------------------------//
 
@@ -79,3 +84,5 @@ SyrkLT( T alpha, const DistMatrix<T>& A, T beta, DistMatrix<T>& C )
 
 } // namespace internal
 } // namespace elem
+
+#endif // ifndef BLAS_SYRK_LT_HPP

@@ -6,6 +6,11 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef LAPACK_APPLYROWPIVOTS_HPP
+#define LAPACK_APPLYROWPIVOTS_HPP
+
+#include "elemental/lapack-like/ComposePivots.hpp"
 
 namespace elem {
 
@@ -150,6 +155,68 @@ ApplyInverseRowPivots
 template<typename F> 
 inline void
 ApplyRowPivots
+( Matrix<F>& A, 
+  const std::vector<int>& image,
+  const std::vector<int>& preimage )
+{
+    const int b = image.size();
+#ifndef RELEASE
+    PushCallStack("ApplyRowPivots");
+    if( A.Height() < b || b != (int)preimage.size() )
+        throw std::logic_error
+        ("image and preimage must be vectors of equal length that are not "
+         "taller than A.");
+#endif
+    const int m = A.Height();
+    const int n = A.Width();
+    if( m == 0 || n == 0 )
+    {
+#ifndef RELEASE
+        PopCallStack();
+#endif
+        return;
+    }
+
+    // TODO: Optimize this routine
+
+    // Make a copy of the first b rows
+    Matrix<F> ARowPanView;
+    LockedView( ARowPanView, A, 0, 0, b, n );
+    Matrix<F> ARowPanCopy( ARowPanView );
+
+    // Make a copy of the preimage rows
+    Matrix<F> APreimageCopy( b, n );
+    for( int i=0; i<b; ++i ) 
+    {
+        const int iPre = preimage[i];
+        if( iPre >= b )
+            for( int j=0; j<n; ++j )
+                APreimageCopy.Set(i,j,A.Get(iPre,j));
+    }
+
+    // Apply the permutations
+    for( int i=0; i<b; ++i )
+    {
+        const int iPre = preimage[i];
+        const int iPost = image[i];
+        // Move row[i] into row[image[i]]
+        for( int j=0; j<n; ++j )
+            A.Set(iPost,j,ARowPanCopy.Get(i,j));
+        if( iPre >= b )
+        {
+            // Move row[preimage[i]] into row[i]
+            for( int j=0; j<n; ++j )
+                A.Set(i,j,APreimageCopy.Get(i,j));
+        }
+    }
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename F> 
+inline void
+ApplyRowPivots
 ( DistMatrix<F>& A, 
   const std::vector<int>& image,
   const std::vector<int>& preimage )
@@ -182,21 +249,21 @@ ApplyRowPivots
     // This process's sends may be logically partitioned into two sets:
     //   (a) sends from rows [0,...,b-1]
     //   (b) sends from rows [b,...]
-    // The latter is analyzed with image, the former deduced with preimage.
+    // The latter is analyzed with preimage, the former deduced with image.
     std::vector<int> sendCounts(r,0), recvCounts(r,0);
     for( int i=colShift; i<b; i+=r )
     {
-        const int sendRow = preimage[i];         
+        const int sendRow = image[i];         
         const int sendTo = (colAlignment+sendRow) % r; 
         sendCounts[sendTo] += localWidth;
 
-        const int recvRow = image[i];
+        const int recvRow = preimage[i];
         const int recvFrom = (colAlignment+recvRow) % r;
         recvCounts[recvFrom] += localWidth;
     }
     for( int i=0; i<b; ++i )
     {
-        const int sendRow = preimage[i];
+        const int sendRow = image[i];
         if( sendRow >= b )
         {
             const int sendTo = (colAlignment+sendRow) % r;
@@ -207,7 +274,7 @@ ApplyRowPivots
             }
         }
 
-        const int recvRow = image[i];
+        const int recvRow = preimage[i];
         if( recvRow >= b )
         {
             const int recvFrom = (colAlignment+recvRow) % r;
@@ -246,7 +313,7 @@ ApplyRowPivots
     const int localHeight = LocalLength( b, colShift, r );
     for( int iLocal=0; iLocal<localHeight; ++iLocal )
     {
-        const int sendRow = preimage[colShift+iLocal*r];
+        const int sendRow = image[colShift+iLocal*r];
         const int sendTo = (colAlignment+sendRow) % r;
         const int offset = sendDispls[sendTo]+offsets[sendTo];
         const F* ABuffer = A.LocalBuffer(iLocal,0);
@@ -256,7 +323,7 @@ ApplyRowPivots
     }
     for( int i=0; i<b; ++i )
     {
-        const int recvRow = image[i];
+        const int recvRow = preimage[i];
         if( recvRow >= b )
         {
             const int recvFrom = (colAlignment+recvRow) % r; 
@@ -286,7 +353,7 @@ ApplyRowPivots
         int thisColShift = Shift( k, colAlignment, r );
         for( int i=thisColShift; i<b; i+=r )
         {
-            const int sendRow = preimage[i];
+            const int sendRow = image[i];
             const int sendTo = (colAlignment+sendRow) % r;
             if( sendTo == myRow )
             {
@@ -301,7 +368,7 @@ ApplyRowPivots
     }
     for( int i=0; i<b; ++i )
     {
-        const int recvRow = image[i];
+        const int recvRow = preimage[i];
         if( recvRow >= b )
         {
             const int recvTo = (colAlignment+i) % r;
@@ -323,3 +390,5 @@ ApplyRowPivots
 }
 
 } // namespace elem
+
+#endif // ifndef LAPACK_APPLYROWPIVOTS_HPP

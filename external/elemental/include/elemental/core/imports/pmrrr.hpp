@@ -6,6 +6,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef CORE_PMRRR_HPP
+#define CORE_PMRRR_HPP
 
 namespace elem {
 namespace pmrrr {
@@ -57,3 +60,5 @@ Info Eig
 
 } // namespace pmrrr
 } // namespace elem
+
+#endif // ifndef CORE_PMRRR_HPP

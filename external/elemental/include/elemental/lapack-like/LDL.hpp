@@ -6,6 +6,11 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef LAPACK_LDL_HPP
+#define LAPACK_LDL_HPP
+
+#include "elemental/lapack-like/internal.hpp"
 
 #include "./LDL/Var3.hpp"
 
@@ -144,3 +149,5 @@ LDLT( DistMatrix<F>& A, DistMatrix<F,MC,STAR>& d )
 }
 
 } // namespace elem
+
+#endif // ifndef LAPACK_LDL_HPP

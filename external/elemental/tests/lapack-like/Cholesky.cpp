@@ -6,8 +6,10 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
-#include <ctime>
-#include "elemental.hpp"
+#include "elemental-lite.hpp"
+#include "elemental/lapack-like/Cholesky.hpp"
+#include "elemental/lapack-like/HermitianNorm.hpp"
+#include "elemental/matrices/HermitianUniformSpectrum.hpp"
 using namespace std;
 using namespace elem;
 

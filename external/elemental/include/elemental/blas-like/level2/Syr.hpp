@@ -6,12 +6,16 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef BLAS_SYR_HPP
+#define BLAS_SYR_HPP
 
 namespace elem {
 
 template<typename T>
 inline void
-Syr( UpperOrLower uplo, T alpha, const Matrix<T>& x, Matrix<T>& A )
+Syr
+( UpperOrLower uplo, T alpha, const Matrix<T>& x, Matrix<T>& A, bool conjugate )
 {
 #ifndef RELEASE
     PushCallStack("Syr");
@@ -26,8 +30,16 @@ Syr( UpperOrLower uplo, T alpha, const Matrix<T>& x, Matrix<T>& A )
     const char uploChar = UpperOrLowerToChar( uplo );
     const int m = A.Height();
     const int incx = ( x.Width()==1 ? 1 : x.LDim() );
-    blas::Syr
-    ( uploChar, m, alpha, x.LockedBuffer(), incx, A.Buffer(), A.LDim() );
+    if( conjugate )
+    {
+        blas::Her
+        ( uploChar, m, alpha, x.LockedBuffer(), incx, A.Buffer(), A.LDim() );
+    }
+    else
+    {
+        blas::Syr
+        ( uploChar, m, alpha, x.LockedBuffer(), incx, A.Buffer(), A.LDim() );
+    }
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -38,7 +50,8 @@ inline void
 Syr
 ( UpperOrLower uplo,
   T alpha, const DistMatrix<T>& x,
-                 DistMatrix<T>& A )
+                 DistMatrix<T>& A,
+  bool conjugate )
 {
 #ifndef RELEASE
     PushCallStack("Syr");
@@ -85,7 +98,8 @@ Syr
                 const int j = rowShift + jLocal*c;
                 const int heightAboveDiag = LocalLength(j,colShift,r);
 
-                const T gamma = alpha*x_MR_STAR.GetLocal(jLocal,0);
+                const T beta = x_MR_STAR.GetLocal(jLocal,0);
+                const T gamma = ( conjugate ? alpha*Conj(beta) : alpha*beta );
                 T* ALocalCol = A.LocalBuffer(0,jLocal);
                 for( int iLocal=heightAboveDiag; iLocal<localHeight; ++iLocal )
                     ALocalCol[iLocal] += gamma*xLocal[iLocal];
@@ -98,7 +112,8 @@ Syr
                 const int j = rowShift + jLocal*c;
                 const int heightToDiag = LocalLength(j+1,colShift,r);
 
-                const T gamma = alpha*x_MR_STAR.GetLocal(jLocal,0);
+                const T beta = x_MR_STAR.GetLocal(jLocal,0);
+                const T gamma = ( conjugate ? alpha*Conj(beta) : alpha*beta );
                 T* ALocalCol = A.LocalBuffer(0,jLocal);
                 for( int iLocal=0; iLocal<heightToDiag; ++iLocal )
                     ALocalCol[iLocal] += gamma*xLocal[iLocal];
@@ -128,7 +143,8 @@ Syr
                 const int j = rowShift + jLocal*c;
                 const int heightAboveDiag = LocalLength(j,colShift,r);
 
-                const T gamma = alpha*x_STAR_MR.GetLocal(0,jLocal);
+                const T beta = x_STAR_MR.GetLocal(0,jLocal);
+                const T gamma = ( conjugate ? alpha*Conj(beta) : alpha*beta );
                 T* ALocalCol = A.LocalBuffer(0,jLocal);
                 for( int iLocal=heightAboveDiag; iLocal<localHeight; ++iLocal )
                     ALocalCol[iLocal] += gamma*xLocal[iLocal*incx];
@@ -141,7 +157,8 @@ Syr
                 const int j = rowShift + jLocal*c;
                 const int heightToDiag = LocalLength(j+1,colShift,r);
 
-                const T gamma = alpha*x_STAR_MR.GetLocal(0,jLocal);
+                const T beta = x_STAR_MR.GetLocal(0,jLocal);
+                const T gamma = ( conjugate ? alpha*Conj(beta) : alpha*beta );
                 T* ALocalCol = A.LocalBuffer(0,jLocal);
                 for( int iLocal=0; iLocal<heightToDiag; ++iLocal )
                     ALocalCol[iLocal] += gamma*xLocal[iLocal*incx];
@@ -157,3 +174,5 @@ Syr
 }
 
 } // namespace elem
+
+#endif // ifndef BLAS_SYR_HPP

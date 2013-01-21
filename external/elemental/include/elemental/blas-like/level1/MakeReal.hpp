@@ -6,6 +6,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef BLAS_MAKEREAL_HPP
+#define BLAS_MAKEREAL_HPP
 
 namespace elem {
 
@@ -42,3 +45,5 @@ MakeReal( DistMatrix<T,U,V>& A )
 }
 
 } // namespace elem
+
+#endif // ifndef BLAS_MAKEREAL_HPP

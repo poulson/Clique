@@ -6,10 +6,37 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef BLAS_TRTRSM_HPP
+#define BLAS_TRTRSM_HPP
 
 #include "./Trtrsm/LLN.hpp"
 
 namespace elem {
+
+namespace internal {
+
+template<typename F>
+inline void
+LocalTrtrsm
+( LeftOrRight side, UpperOrLower uplo,
+  Orientation orientation, UnitOrNonUnit diag,
+  F alpha, const DistMatrix<F,STAR,STAR>& A,
+                 DistMatrix<F,STAR,STAR>& X,
+  bool checkIfSingular )
+{
+#ifndef RELEASE
+    PushCallStack("internal::LocalTrtrsm");
+#endif
+    Trtrsm
+    ( side, uplo, orientation, diag,
+      alpha, A.LockedLocalMatrix(), X.LocalMatrix(), checkIfSingular );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+} // namespace internal
 
 template<typename F>
 inline void
@@ -126,3 +153,5 @@ Trtrsm
 }
 
 } // namespace elem
+
+#endif // ifndef BLAS_TRTRSM_HPP

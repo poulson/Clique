@@ -6,6 +6,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef BLAS_MAKETRIANGULAR_HPP
+#define BLAS_MAKETRIANGULAR_HPP
 
 namespace elem {
 
@@ -109,3 +112,5 @@ MakeTriangular( UpperOrLower uplo, DistMatrix<T,U,V>& A )
 }
 
 } // namespace elem
+
+#endif // ifndef BLAS_MAKETRIANGULAR_HPP

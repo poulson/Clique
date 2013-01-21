@@ -6,6 +6,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef LAPACK_COMPOSEPIVOTS_HPP
+#define LAPACK_COMPOSEPIVOTS_HPP
 
 namespace elem {
 
@@ -25,22 +28,22 @@ ComposePivots
     const int n = p.Height();
     const int* pBuffer = p.LockedBuffer();
 
-    // Construct the image of {0,...,n-1} under the permutation in O(n) work
-    image.resize( n );
-    for( int i=0; i<n; ++i )
-        image[i] = i;
-    for( int i=0; i<n; ++i )
-    {
-        const int j = pBuffer[i];
-        const int k = image[j];
-        image[j] = image[i];
-        image[i] = k;
-    }
-
     // Construct the preimage of {0,...,n-1} under the permutation in O(n) work
     preimage.resize( n );
     for( int i=0; i<n; ++i )
-        preimage[image[i]] = i;
+        preimage[i] = i;
+    for( int i=0; i<n; ++i )
+    {
+        const int j = pBuffer[i];
+        const int k = preimage[j];
+        preimage[j] = preimage[i];
+        preimage[i] = k;
+    }
+
+    // Construct the image of {0,...,n-1} under the permutation in O(n) work
+    image.resize( n );
+    for( int i=0; i<n; ++i )
+        image[preimage[i]] = i;
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -88,8 +91,8 @@ ComposePanelPivots
     const int b = p.Height();
     const int* pBuffer = p.LockedBuffer();
 
-    // Construct the image of {0,...,b-1} under the permutation in O(b^2) work
-    image.resize( b );
+    // Construct the preimage of {0,...,b-1} under permutation in O(b^2) work
+    preimage.resize( b );
     for( int i=0; i<b; ++i )
     {
         int k = pBuffer[i]-pivotOffset;
@@ -100,12 +103,11 @@ ComposePanelPivots
             else if( j == k )
                 k = pBuffer[j]-pivotOffset;
         }
-        image[i] = k;
+        preimage[i] = k;
     }
     
-    // Construct the preimage of {0,...,b-1} under the permutation in 
-    // O(b^2) work
-    preimage.resize( b );
+    // Construct the image of {0,...,b-1} under the permutation in O(b^2) work
+    image.resize( b );
     for( int i=0; i<b; ++i )
     {
         int k = i;
@@ -116,7 +118,7 @@ ComposePanelPivots
             else if( j == k )
                 k = pBuffer[j]-pivotOffset;
         }
-        preimage[i] = k;
+        image[i] = k;
     }
 #ifndef RELEASE
     PopCallStack();
@@ -132,3 +134,5 @@ ComposePanelPivots
 } // namespace internal
 
 } // namespace elem
+
+#endif // ifndef LAPACK_COMPOSEPIVOTS_HPP

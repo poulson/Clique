@@ -6,6 +6,12 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef LAPACK_POLAR_HPP
+#define LAPACK_POLAR_HPP
+
+#include "elemental/lapack-like/HermitianFunction.hpp"
+#include "elemental/lapack-like/SVD.hpp"
 
 namespace elem {
 
@@ -72,3 +78,5 @@ Polar( DistMatrix<F>& A, DistMatrix<F>& P )
 }
 
 } // namespace elem
+
+#endif // ifndef LAPACK_POLAR_HPP

@@ -6,8 +6,13 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef LAPACK_HPSDSQUAREROOT_HPP
+#define LAPACK_HPSDSQUAREROOT_HPP
 
 #ifndef WITHOUT_PMRRR
+
+#include "elemental/lapack-like/HermitianFunction.hpp"
 
 namespace elem {
 
@@ -82,3 +87,5 @@ HPSDSquareRoot( UpperOrLower uplo, DistMatrix<F>& A )
 } // namespace elem
 
 #endif // WITHOUT_PMRRR
+
+#endif // ifndef LAPACK_HPSDSQUAREROOT_HPP

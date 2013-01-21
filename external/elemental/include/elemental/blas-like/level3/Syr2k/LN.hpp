@@ -6,6 +6,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef BLAS_SYR2K_LN_HPP
+#define BLAS_SYR2K_LN_HPP
 
 namespace elem {
 namespace internal {
@@ -14,7 +17,8 @@ template<typename T>
 inline void
 Syr2kLN
 ( T alpha, const DistMatrix<T>& A, const DistMatrix<T>& B,
-  T beta,        DistMatrix<T>& C )
+  T beta,        DistMatrix<T>& C,
+  bool conjugate )
 {
 #ifndef RELEASE
     PushCallStack("internal::Syr2kLN");
@@ -72,10 +76,10 @@ Syr2kLN
 
         //--------------------------------------------------------------------//
         A1_VR_STAR = A1_MC_STAR = A1;
-        A1Trans_STAR_MR.TransposeFrom( A1_VR_STAR );
+        A1Trans_STAR_MR.TransposeFrom( A1_VR_STAR, conjugate );
 
         B1_VR_STAR = B1_MC_STAR = B1;
-        B1Trans_STAR_MR.TransposeFrom( B1_VR_STAR );
+        B1Trans_STAR_MR.TransposeFrom( B1_VR_STAR, conjugate );
 
         LocalTrr2k
         ( LOWER, 
@@ -99,3 +103,5 @@ Syr2kLN
 
 } // namespace internal
 } // namespace elem
+
+#endif // ifndef BLAS_SYR2K_LN_HPP

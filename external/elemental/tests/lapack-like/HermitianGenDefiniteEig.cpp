@@ -6,8 +6,13 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
-#include <ctime>
-#include "elemental.hpp"
+#include "elemental-lite.hpp"
+#include "elemental/blas-like/level3/Hemm.hpp"
+#include "elemental/blas-like/level3/Trmm.hpp"
+#include "elemental/blas-like/level3/Trsm.hpp"
+#include "elemental/lapack-like/HermitianGenDefiniteEig.hpp"
+#include "elemental/lapack-like/HermitianNorm.hpp"
+#include "elemental/matrices/HermitianUniformSpectrum.hpp"
 using namespace std;
 using namespace elem;
 
@@ -687,7 +692,7 @@ main( int argc, char* argv[] )
         const UpperOrLower uplo = CharToUpperOrLower( uploChar );
         SetBlocksize( nb );
         SetLocalSymvBlocksize<double>( nbLocal );
-        SetLocalHemvBlocksize<Complex<double> >( nbLocal );
+        SetLocalSymvBlocksize<Complex<double> >( nbLocal );
         if( range != 'A' && range != 'I' && range != 'V' )
             throw runtime_error("'range' must be 'A', 'I', or 'V'");
         if( testCorrectness && onlyEigvals && commRank==0 )

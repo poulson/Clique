@@ -6,8 +6,10 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
-#include <ctime>
-#include "elemental.hpp"
+#include "elemental-lite.hpp"
+#include "elemental/lapack-like/HermitianNorm.hpp"
+#include "elemental/lapack-like/HermitianTridiag.hpp"
+#include "elemental/matrices/HermitianUniformSpectrum.hpp"
 using namespace std;
 using namespace elem;
 
@@ -282,7 +284,7 @@ main( int argc, char* argv[] )
         const UpperOrLower uplo = CharToUpperOrLower( uploChar );
         SetBlocksize( nb );
         SetLocalSymvBlocksize<double>( nbLocal );
-        SetLocalHemvBlocksize<Complex<double> >( nbLocal );
+        SetLocalSymvBlocksize<Complex<double> >( nbLocal );
 #ifndef RELEASE
         if( commRank == 0 )
         {

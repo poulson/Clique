@@ -6,7 +6,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
-#include "elemental.hpp"
+#include "elemental-lite.hpp"
+#include "elemental/blas-like/level3/Herk.hpp"
+#include "elemental/matrices/HermitianUniformSpectrum.hpp"
 using namespace std;
 using namespace elem;
 
@@ -105,8 +107,7 @@ main( int argc, char* argv[] )
                  << "Testing with doubles:                 \n"
                  << "--------------------------------------" << endl;
         }
-        TestHerk<double>
-        ( print, uplo, orientation, m, k, (double)3, (double)4, g );
+        TestHerk<double>( print, uplo, orientation, m, k, 3., 4., g );
 
         if( commRank == 0 )
         {

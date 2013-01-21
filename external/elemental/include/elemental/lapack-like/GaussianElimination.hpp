@@ -6,56 +6,19 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef LAPACK_GAUSSIANELIMINATION_HPP
+#define LAPACK_GAUSSIANELIMINATION_HPP
+
+#include "elemental/lapack-like/LU.hpp"
 
 namespace elem {
 
-template<typename F> 
-inline void
-GaussianElimination( Matrix<F>& A, Matrix<F>& B )
-{
-#ifndef RELEASE
-    PushCallStack("GaussianElimination");
-    if( A.Height() != A.Width() )
-        throw std::logic_error("A must be square");
-    if( A.Height() != B.Height() )
-        throw std::logic_error("A and B must be the same height");
-#endif
-    internal::ReduceToRowEchelon( A, B );
-    if( B.Width() == 1 )
-        Trsv( UPPER, NORMAL, NON_UNIT, A, B );
-    else
-        Trsm( LEFT, UPPER, NORMAL, NON_UNIT, F(1), A, B );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
+namespace internal {
 
 template<typename F> 
 inline void
-GaussianElimination( DistMatrix<F>& A, DistMatrix<F>& B )
-{
-#ifndef RELEASE
-    PushCallStack("GaussianElimination");
-    if( A.Grid() != B.Grid() )
-        throw std::logic_error("{A,B} must be distributed over the same grid");
-    if( A.Height() != A.Width() )
-        throw std::logic_error("A must be square");
-    if( A.Height() != B.Height() )
-        throw std::logic_error("A and B must be the same height");
-#endif
-    internal::ReduceToRowEchelon( A, B );
-    if( B.Width() == 1 )
-        Trsv( UPPER, NORMAL, NON_UNIT, A, B );
-    else
-        Trsm( LEFT, UPPER, NORMAL, NON_UNIT, F(1), A, B );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
-template<typename F> 
-inline void
-internal::ReduceToRowEchelon( Matrix<F>& A, Matrix<F>& B )
+ReduceToRowEchelon( Matrix<F>& A, Matrix<F>& B )
 {
 #ifndef RELEASE
     PushCallStack("internal::ReduceToRowEchelon");
@@ -104,8 +67,8 @@ internal::ReduceToRowEchelon( Matrix<F>& A, Matrix<F>& B )
                 A22 );
 
         //--------------------------------------------------------------------//
-        internal::PanelLU( APan, p1, A00.Height() );
-        internal::ComposePanelPivots( p1, A00.Height(), image, preimage );
+        PanelLU( APan, p1, A00.Height() );
+        ComposePanelPivots( p1, A00.Height(), image, preimage );
         ApplyRowPivots( BB, image, preimage );
 
         Trsm( LEFT, LOWER, NORMAL, UNIT, F(1), A11, A12 );
@@ -134,7 +97,7 @@ internal::ReduceToRowEchelon( Matrix<F>& A, Matrix<F>& B )
 
 template<typename F> 
 inline void
-internal::ReduceToRowEchelon( DistMatrix<F>& A, DistMatrix<F>& B )
+ReduceToRowEchelon( DistMatrix<F>& A, DistMatrix<F>& B )
 {
 #ifndef RELEASE
     PushCallStack("internal::ReduceToRowEchelon");
@@ -209,33 +172,29 @@ internal::ReduceToRowEchelon( DistMatrix<F>& A, DistMatrix<F>& B )
         //--------------------------------------------------------------------//
         A11_STAR_STAR = A11;
         A21_MC_STAR = A21;
-        internal::PanelLU
-        ( A11_STAR_STAR, A21_MC_STAR, p1_STAR_STAR, A00.Height() );
-        internal::ComposePanelPivots
-        ( p1_STAR_STAR, A00.Height(), image, preimage );
+        PanelLU( A11_STAR_STAR, A21_MC_STAR, p1_STAR_STAR, A00.Height() );
+        ComposePanelPivots( p1_STAR_STAR, A00.Height(), image, preimage );
         ApplyRowPivots( APan, image, preimage );
         ApplyRowPivots( BB,   image, preimage );
 
         A12_STAR_VR = A12;
         B1_STAR_VR = B1;
-        internal::LocalTrsm
+        LocalTrsm
         ( LEFT, LOWER, NORMAL, UNIT, F(1), A11_STAR_STAR, A12_STAR_VR );
-        internal::LocalTrsm
-        ( LEFT, LOWER, NORMAL, UNIT, F(1), A11_STAR_STAR, B1_STAR_VR );
+        LocalTrsm( LEFT, LOWER, NORMAL, UNIT, F(1), A11_STAR_STAR, B1_STAR_VR );
 
         A12_STAR_MR = A12_STAR_VR;
         B1_STAR_MR = B1_STAR_VR;
-        internal::LocalGemm
-        ( NORMAL, NORMAL, F(-1), A21_MC_STAR, A12_STAR_MR, F(1), A22 );
+        LocalGemm( NORMAL, NORMAL, F(-1), A21_MC_STAR, A12_STAR_MR, F(1), A22 );
         if( BAligned )
         {
-            internal::LocalGemm
+            LocalGemm
             ( NORMAL, NORMAL, F(-1), A21_MC_STAR, B1_STAR_MR, F(1), B2 );
         }
         else
         {
             A21_MC_STAR_B = A21_MC_STAR;
-            internal::LocalGemm
+            LocalGemm
             ( NORMAL, NORMAL, F(-1), A21_MC_STAR_B, B1_STAR_MR, F(1), B2 );
         }
 
@@ -268,4 +227,52 @@ internal::ReduceToRowEchelon( DistMatrix<F>& A, DistMatrix<F>& B )
 #endif
 }
 
+} // namespace internal
+
+template<typename F> 
+inline void
+GaussianElimination( Matrix<F>& A, Matrix<F>& B )
+{
+#ifndef RELEASE
+    PushCallStack("GaussianElimination");
+    if( A.Height() != A.Width() )
+        throw std::logic_error("A must be square");
+    if( A.Height() != B.Height() )
+        throw std::logic_error("A and B must be the same height");
+#endif
+    internal::ReduceToRowEchelon( A, B );
+    if( B.Width() == 1 )
+        Trsv( UPPER, NORMAL, NON_UNIT, A, B );
+    else
+        Trsm( LEFT, UPPER, NORMAL, NON_UNIT, F(1), A, B );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+template<typename F> 
+inline void
+GaussianElimination( DistMatrix<F>& A, DistMatrix<F>& B )
+{
+#ifndef RELEASE
+    PushCallStack("GaussianElimination");
+    if( A.Grid() != B.Grid() )
+        throw std::logic_error("{A,B} must be distributed over the same grid");
+    if( A.Height() != A.Width() )
+        throw std::logic_error("A must be square");
+    if( A.Height() != B.Height() )
+        throw std::logic_error("A and B must be the same height");
+#endif
+    internal::ReduceToRowEchelon( A, B );
+    if( B.Width() == 1 )
+        Trsv( UPPER, NORMAL, NON_UNIT, A, B );
+    else
+        Trsm( LEFT, UPPER, NORMAL, NON_UNIT, F(1), A, B );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
 } // namespace elem
+
+#endif // ifndef LAPACK_GAUSSIANELIMINATION_HPP

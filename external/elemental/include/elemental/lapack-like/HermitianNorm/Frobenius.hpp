@@ -6,6 +6,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef LAPACK_HERMITIANNORM_FROBENIUS_HPP
+#define LAPACK_HERMITIANNORM_FROBENIUS_HPP
 
 namespace elem {
 namespace internal {
@@ -231,3 +234,5 @@ HermitianFrobeniusNorm
 
 } // namespace internal
 } // namespace elem
+
+#endif // ifndef LAPACK_HERMITIANNORM_FROBENIUS_HPP

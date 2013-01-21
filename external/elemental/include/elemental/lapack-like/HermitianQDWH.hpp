@@ -6,6 +6,13 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef LAPACK_HERMITIANQDWH_HPP
+#define LAPACK_HERMITIANQDWH_HPP
+
+#include "elemental/lapack-like/Cholesky.hpp"
+#include "elemental/lapack-like/ExplicitQR.hpp"
+#include "elemental/lapack-like/HermitianNorm.hpp"
 
 namespace elem {
 
@@ -232,3 +239,5 @@ int HermitianQDWH
 }
 
 } // namespace elem
+
+#endif // ifndef LAPACK_HERMITIANQDWH_HPP

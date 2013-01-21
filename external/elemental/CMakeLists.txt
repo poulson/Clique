@@ -11,7 +11,7 @@ cmake_minimum_required(VERSION 2.8.5)
 
 project(Elemental)
 set(Elemental_VERSION_MAJOR 0)
-set(Elemental_VERSION_MINOR 77-dev)
+set(Elemental_VERSION_MINOR 78-dev)
 
 ################################################################################
 # Common build options                                                         #
@@ -465,13 +465,13 @@ if(ELEM_TESTS)
   set(TEST_DIR ${PROJECT_SOURCE_DIR}/tests)
   set(TEST_TYPES core blas-like lapack-like)
 
-  set(CORE_TESTS AxpyInterface Complex DifferentGrids DistMatrix Matrix)
+  set(core_TESTS AxpyInterface Complex DifferentGrids DistMatrix Matrix)
   set(blas-like_TESTS 
     Gemm Hemm Her2k Herk Symm Symv Syr2k Syrk Trmm Trsm Trsv TwoSidedTrmm
     TwoSidedTrsm)
   set(lapack-like_TESTS 
     ApplyPackedReflectors Cholesky HermitianTridiag LDL LU LQ QR
-    TriangularInverse)
+    SequentialLU TriangularInverse)
   if(BUILD_PMRRR AND NOT FAILED_PMRRR)
     list(APPEND lapack-like_TESTS HermitianEig HermitianGenDefiniteEig)
   endif()
@@ -495,7 +495,7 @@ endif()
 # Build the example drivers if necessary
 if(ELEM_EXAMPLES)
   set(EXAMPLE_DIR ${PROJECT_SOURCE_DIR}/examples)
-  set(EXAMPLE_TYPES core blas-like lapack-like special_matrices)
+  set(EXAMPLE_TYPES core blas-like lapack-like matrices)
 
   set(core_EXAMPLES Constructors)
   set(blas-like_EXAMPLES Gemv)
@@ -503,10 +503,10 @@ if(ELEM_EXAMPLES)
     GaussianElimination HermitianQDWH HouseholderSolve HPDInverse LDL LDLInverse
     LogDetDivergence Polar Pseudoinverse QDWH SequentialQR QR SequentialSVD
     SimpleSVD SVD)
-  set(SPECIAL_EXAMPLES 
+  set(matrices_EXAMPLES 
     Cauchy CauchyLike Circulant Diagonal DiscreteFourier Hankel
     HermitianUniformSpectrum Hilbert Identity Legendre NormalUniformSpectrum
-    Ones OneTwoOne Toeplitz Uniform Walsh Wilkinson Zeros)
+    Ones OneTwoOne PSFW Toeplitz Uniform Walsh Wilkinson Zeros)
   if(BUILD_PMRRR AND NOT FAILED_PMRRR)
     list(APPEND lapack-like_EXAMPLES
       HermitianEig HermitianEigFromSequential HermitianSVD 

@@ -6,6 +6,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef BLAS_INTERNAL_HPP
+#define BLAS_INTERNAL_HPP
 
 namespace elem {
 namespace internal {
@@ -86,66 +89,6 @@ void LocalTrtrsm
 //
 // Returns the unreduced components z[MC,* ] and z[MR,* ]:
 //     z[MC,* ] := alpha tril(A)[MC,MR] x[MR,* ]
-//     z[MR,* ] := alpha (trils(A)[MC,MR])^H x[MC,* ]
-template<typename T>
-void LocalHemvColAccumulateL
-( T alpha, 
-  const DistMatrix<T>& A,
-  const DistMatrix<T,MC,STAR>& x_MC_STAR,
-  const DistMatrix<T,MR,STAR>& x_MR_STAR,
-        DistMatrix<T,MC,STAR>& z_MC_STAR,
-        DistMatrix<T,MR,STAR>& z_MR_STAR
-);
-
-// This is for the case where x is a column vector and A is upper.
-//
-// Returns the unreduced components z[MC,* ] and z[MR,* ]:
-//     z[MC,* ] := alpha triu(A)[MC,MR] x[MR,* ]
-//     z[MR,* ] := alpha (trius(A)[MC,MR])^H x[MC,* ]
-template<typename T>
-void LocalHemvColAccumulateU
-( T alpha, 
-  const DistMatrix<T>& A,
-  const DistMatrix<T,MC,STAR>& x_MC_STAR,
-  const DistMatrix<T,MR,STAR>& x_MR_STAR,
-        DistMatrix<T,MC,STAR>& z_MC_STAR,
-        DistMatrix<T,MR,STAR>& z_MR_STAR
-);
-
-// This is for the case where x is a row vector and A is lower.
-//
-// Returns the unreduced components z[MC,* ] and z[MR,* ]:
-//     z[MC,* ] := alpha tril(A)[MC,MR] (x[* ,MR])^H
-//     z[MR,* ] := alpha (trils(A)[MC,MR])^H (x[* ,MC])^H
-template<typename T>
-void LocalHemvRowAccumulateL
-( T alpha, 
-  const DistMatrix<T>& A,
-  const DistMatrix<T,STAR,MC>& x_STAR_MC,
-  const DistMatrix<T,STAR,MR>& x_STAR_MR,
-        DistMatrix<T,STAR,MC>& z_STAR_MC,
-        DistMatrix<T,STAR,MR>& z_STAR_MR
-);
-
-// This is for the case where x is a row vector and A is upper.
-//
-// Returns the unreduced components z[MC,* ] and z[MR,* ]:
-//     z[MC,* ] := alpha triu(A)[MC,MR] (x[* ,MR])^H
-//     z[MR,* ] := alpha (trius(A)[MC,MR])^H (x[* ,MC])^H
-template<typename T>
-void LocalHemvRowAccumulateU
-( T alpha, 
-  const DistMatrix<T>& A,
-  const DistMatrix<T,STAR,MC>& x_STAR_MC,
-  const DistMatrix<T,STAR,MR>& x_STAR_MR,
-        DistMatrix<T,STAR,MC>& z_STAR_MC,
-        DistMatrix<T,STAR,MR>& z_STAR_MR
-);
-
-// This is for the case where x is a column vector and A is lower.
-//
-// Returns the unreduced components z[MC,* ] and z[MR,* ]:
-//     z[MC,* ] := alpha tril(A)[MC,MR] x[MR,* ]
 //     z[MR,* ] := alpha (trils(A)[MC,MR])^T x[MC,* ]
 template<typename T>
 void LocalSymvColAccumulateL
@@ -154,8 +97,8 @@ void LocalSymvColAccumulateL
   const DistMatrix<T,MC,STAR>& x_MC_STAR,
   const DistMatrix<T,MR,STAR>& x_MR_STAR,
         DistMatrix<T,MC,STAR>& z_MC_STAR,
-        DistMatrix<T,MR,STAR>& z_MR_STAR
-);
+        DistMatrix<T,MR,STAR>& z_MR_STAR,
+  bool conjugate=false );
 
 // This is for the case where x is a column vector and A is upper.
 //
@@ -169,8 +112,8 @@ void LocalSymvColAccumulateU
   const DistMatrix<T,MC,STAR>& x_MC_STAR,
   const DistMatrix<T,MR,STAR>& x_MR_STAR,
         DistMatrix<T,MC,STAR>& z_MC_STAR,
-        DistMatrix<T,MR,STAR>& z_MR_STAR
-);
+        DistMatrix<T,MR,STAR>& z_MR_STAR,
+  bool conjugate=false );
 
 // This is for the case where x is a row vector and A is lower.
 //
@@ -184,8 +127,8 @@ void LocalSymvRowAccumulateL
   const DistMatrix<T,STAR,MC>& x_STAR_MC,
   const DistMatrix<T,STAR,MR>& x_STAR_MR,
         DistMatrix<T,STAR,MC>& z_STAR_MC,
-        DistMatrix<T,STAR,MR>& z_STAR_MR
-);
+        DistMatrix<T,STAR,MR>& z_STAR_MR,
+  bool conjugate=false );
 
 // This is for the case where x is a row vector and A is upper.
 //
@@ -199,8 +142,8 @@ void LocalSymvRowAccumulateU
   const DistMatrix<T,STAR,MC>& x_STAR_MC,
   const DistMatrix<T,STAR,MR>& x_STAR_MR,
         DistMatrix<T,STAR,MC>& z_STAR_MC,
-        DistMatrix<T,STAR,MR>& z_STAR_MR
-);
+        DistMatrix<T,STAR,MR>& z_STAR_MR,
+  bool conjugate=false );
 
 //----------------------------------------------------------------------------//
 // Distributed BLAS-like helpers: Level 3                                     //
@@ -649,272 +592,4 @@ void TrsmLUTSmall
 } // internal
 } // elem
 
-//----------------------------------------------------------------------------//
-// Implementations begin here                                                 //
-//----------------------------------------------------------------------------//
-
-namespace elem {
-namespace internal {
-
-//
-// Level 2 Local BLAS-like routines
-//
-
-template<typename T,Distribution AColDist,Distribution ARowDist,
-                    Distribution xColDist,Distribution xRowDist,
-                    Distribution yColDist,Distribution yRowDist>
-inline void LocalGemv
-( Orientation orientation, 
-  T alpha, const DistMatrix<T,AColDist,ARowDist>& A, 
-           const DistMatrix<T,xColDist,xRowDist>& x,
-  T beta,        DistMatrix<T,yColDist,yRowDist>& y )
-{
-#ifndef RELEASE
-    PushCallStack("internal::LocalGemv");
-    // TODO: Add error checking here
-#endif
-    Gemv
-    ( orientation , 
-      alpha, A.LockedLocalMatrix(), x.LockedLocalMatrix(),
-      beta,                         y.LocalMatrix() );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
-template<typename T,Distribution xColDist,Distribution xRowDist,
-                    Distribution yColDist,Distribution yRowDist,
-                    Distribution AColDist,Distribution ARowDist>
-inline void LocalGer
-( T alpha, const DistMatrix<T,xColDist,xRowDist>& x, 
-           const DistMatrix<T,yColDist,yRowDist>& y,
-                 DistMatrix<T,AColDist,ARowDist>& A )
-{
-#ifndef RELEASE
-    PushCallStack("internal::LocalGer");
-    // TODO: Add error checking here
-#endif
-    Ger( alpha, x.LockedLocalMatrix(), y.LockedLocalMatrix(), A.LocalMatrix() );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
-//
-// Level 3 Local BLAS-like routines
-//
-
-template<typename T,Distribution AColDist,Distribution ARowDist,
-                    Distribution BColDist,Distribution BRowDist,
-                    Distribution CColDist,Distribution CRowDist>
-inline void LocalGemm
-( Orientation orientationOfA, Orientation orientationOfB,
-  T alpha, const DistMatrix<T,AColDist,ARowDist>& A, 
-           const DistMatrix<T,BColDist,BRowDist>& B,
-  T beta,        DistMatrix<T,CColDist,CRowDist>& C )
-{
-#ifndef RELEASE
-    PushCallStack("internal::LocalGemm");
-    if( orientationOfA == NORMAL && orientationOfB == NORMAL )
-    {
-        if( AColDist != CColDist || 
-            ARowDist != BColDist || 
-            BRowDist != CRowDist )
-            throw std::logic_error("C[X,Y] = A[X,Z] B[Z,Y]");
-        if( A.ColAlignment() != C.ColAlignment() )
-            throw std::logic_error("A's cols must align with C's rows");
-        if( A.RowAlignment() != B.ColAlignment() )
-            throw std::logic_error("A's rows must align with B's cols");
-        if( B.RowAlignment() != C.RowAlignment() )
-            throw std::logic_error("B's rows must align with C's rows");
-        if( A.Height() != C.Height() || 
-            A.Width() != B.Height() || 
-            B.Width() != C.Width() )
-        {
-            std::ostringstream msg;
-            msg << "Nonconformal LocalGemmNN:\n"
-                << "  A ~ " << A.Height() << " x " << A.Width() << "\n"
-                << "  B ~ " << B.Height() << " x " << B.Width() << "\n"
-                << "  C ~ " << C.Height() << " x " << C.Width();
-            throw std::logic_error( msg.str().c_str() );
-        }
-    }
-    else if( orientationOfA == NORMAL )
-    {
-        if( AColDist != CColDist ||
-            ARowDist != BRowDist ||
-            BColDist != CRowDist )
-            throw std::logic_error("C[X,Y] = A[X,Z] (B[Y,Z])^(T/H)");
-        if( A.ColAlignment() != C.ColAlignment() )
-            throw std::logic_error("A's cols must align with C's rows");
-        if( A.RowAlignment() != B.RowAlignment() )
-            throw std::logic_error("A's rows must align with B's rows");
-        if( B.ColAlignment() != C.RowAlignment() )
-            throw std::logic_error("B's cols must align with C's rows");
-        if( A.Height() != C.Height() || 
-            A.Width() != B.Width() || 
-            B.Height() != C.Width() )
-        {
-            std::ostringstream msg;
-            msg << "Nonconformal LocalGemmNT:\n"
-                << "  A ~ " << A.Height() << " x " << A.Width() << "\n"
-                << "  B ~ " << B.Height() << " x " << B.Width() << "\n"
-                << "  C ~ " << C.Height() << " x " << C.Width();
-            throw std::logic_error( msg.str().c_str() );
-        }
-    }
-    else if( orientationOfB == NORMAL )
-    {
-        if( ARowDist != CColDist ||
-            AColDist != BColDist ||
-            BRowDist != CRowDist )
-            throw std::logic_error("C[X,Y] = (A[Z,X])^(T/H) B[Z,Y]");
-        if( A.RowAlignment() != C.ColAlignment() )
-            throw std::logic_error("A's rows must align with C's cols");
-        if( A.ColAlignment() != B.ColAlignment() )
-            throw std::logic_error("A's cols must align with B's cols");
-        if( B.RowAlignment() != C.RowAlignment() )
-            throw std::logic_error("B's rows must align with C's rows");
-        if( A.Width() != C.Height() || 
-            A.Height() != B.Height() || 
-            B.Width() != C.Width() )
-        {
-            std::ostringstream msg;
-            msg << "Nonconformal LocalGemmTN:\n"
-                << "  A ~ " << A.Height() << " x " << A.Width() << "\n"
-                << "  B ~ " << B.Height() << " x " << B.Width() << "\n"
-                << "  C ~ " << C.Height() << " x " << C.Width();
-            throw std::logic_error( msg.str().c_str() );
-        }
-    }
-    else
-    {
-        if( ARowDist != CColDist ||
-            AColDist != BRowDist ||
-            BColDist != CRowDist )
-            throw std::logic_error("C[X,Y] = (A[Z,X])^(T/H) (B[Y,Z])^(T/H)");
-        if( A.RowAlignment() != C.ColAlignment() )
-            throw std::logic_error("A's rows must align with C's cols");
-        if( A.ColAlignment() != B.RowAlignment() )
-            throw std::logic_error("A's cols must align with B's rows");
-        if( B.ColAlignment() != C.RowAlignment() )
-            throw std::logic_error("B's cols must align with C's rows");
-        if( A.Width() != C.Height() || 
-            A.Height() != B.Width() || 
-            B.Height() != C.Width() )
-        {
-            std::ostringstream msg;
-            msg << "Nonconformal LocalGemmTT:\n"
-                << "  A ~ " << A.Height() << " x " << A.Width() << "\n"
-                << "  B ~ " << B.Height() << " x " << B.Width() << "\n"
-                << "  C ~ " << C.Height() << " x " << C.Width();
-            throw std::logic_error( msg.str().c_str() );
-        }
-    }
-#endif
-    Gemm
-    ( orientationOfA , orientationOfB, 
-      alpha, A.LockedLocalMatrix(), B.LockedLocalMatrix(),
-      beta, C.LocalMatrix() );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
-template<typename T>
-inline void 
-LocalTrtrmm
-( Orientation orientation, UpperOrLower uplo, DistMatrix<T,STAR,STAR>& A )
-{
-#ifndef RELEASE
-    PushCallStack("internal::LocalTrtrmm");
-#endif
-    Trtrmm( orientation, uplo, A.LocalMatrix() );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
-template<typename T>
-inline void 
-LocalTrdtrmm
-( Orientation orientation, UpperOrLower uplo, DistMatrix<T,STAR,STAR>& A )
-{
-#ifndef RELEASE
-    PushCallStack("internal::LocalTrdtrmm");
-#endif
-    Trdtrmm( orientation, uplo, A.LocalMatrix() );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
-template<typename T,Distribution BColDist,Distribution BRowDist>
-inline void
-LocalTrmm
-( LeftOrRight side, UpperOrLower uplo, 
-  Orientation orientation, UnitOrNonUnit diag,
-  T alpha, const DistMatrix<T,STAR,STAR>& A,
-                 DistMatrix<T,BColDist,BRowDist>& B )
-{
-#ifndef RELEASE
-    PushCallStack("internal::LocalTrmm");
-    if( (side == LEFT && BColDist != STAR) || 
-        (side == RIGHT && BRowDist != STAR) )
-        throw std::logic_error
-        ("Distribution of RHS must conform with that of triangle");
-#endif
-    Trmm
-    ( side, uplo, orientation, diag, 
-      alpha, A.LockedLocalMatrix(), B.LocalMatrix() );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
-template<typename F,Distribution XColDist,Distribution XRowDist>
-inline void
-LocalTrsm
-( LeftOrRight side, UpperOrLower uplo, 
-  Orientation orientation, UnitOrNonUnit diag,
-  F alpha, const DistMatrix<F,STAR,STAR>& A, 
-                 DistMatrix<F,XColDist,XRowDist>& X,
-  bool checkIfSingular )
-{
-#ifndef RELEASE
-    PushCallStack("internal::LocalTrsm");
-    if( (side == LEFT && XColDist != STAR) || 
-        (side == RIGHT && XRowDist != STAR) )
-        throw std::logic_error
-        ("Distribution of RHS must conform with that of triangle");
-#endif
-    Trsm
-    ( side, uplo, orientation, diag,
-      alpha, A.LockedLocalMatrix(), X.LocalMatrix(), checkIfSingular );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
-template<typename F>
-inline void
-LocalTrtrsm
-( LeftOrRight side, UpperOrLower uplo, 
-  Orientation orientation, UnitOrNonUnit diag,
-  F alpha, const DistMatrix<F,STAR,STAR>& A, 
-                 DistMatrix<F,STAR,STAR>& X,
-  bool checkIfSingular )
-{
-#ifndef RELEASE
-    PushCallStack("internal::LocalTrtrsm");
-#endif
-    Trtrsm
-    ( side, uplo, orientation, diag,
-      alpha, A.LockedLocalMatrix(), X.LocalMatrix(), checkIfSingular );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-}
-
-} // internal
-} // elem
+#endif // ifndef BLAS_INTERNAL_HPP

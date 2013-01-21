@@ -6,11 +6,11 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef BLAS_HERK_HPP
+#define BLAS_HERK_HPP
 
-#include "./Herk/LC.hpp"
-#include "./Herk/LN.hpp"
-#include "./Herk/UC.hpp"
-#include "./Herk/UN.hpp"
+#include "elemental/blas-like/level3/Syrk.hpp"
 
 namespace elem {
 
@@ -22,26 +22,8 @@ Herk
 {
 #ifndef RELEASE
     PushCallStack("Herk");
-    if( orientation == NORMAL )
-    {
-        if( A.Height() != C.Height() || A.Height() != C.Width() )
-            throw std::logic_error("Nonconformal Herk");
-    }
-    else if( orientation == ADJOINT )
-    {
-        if( A.Width() != C.Height() || A.Width() != C.Width() )
-            throw std::logic_error("Nonconformal Herk");
-    }
-    else
-        throw std::logic_error("Herk only accepts NORMAL and ADJOINT options.");
 #endif
-    const char uploChar = UpperOrLowerToChar( uplo );
-    const char transChar = OrientationToChar( orientation );
-    const int k = ( orientation == NORMAL ? A.Width() : A.Height() );
-    blas::Herk
-    ( uploChar, transChar, C.Height(), k,
-      alpha, A.LockedBuffer(), A.LDim(),
-      beta,  C.Buffer(),       C.LDim() );
+    Syrk( uplo, orientation, alpha, A, beta, C, true );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -55,24 +37,13 @@ Herk
 {
 #ifndef RELEASE
     PushCallStack("Herk");
-    if( A.Grid() != C.Grid() )
-        throw std::logic_error
-        ("A and C must be distributed over the same grid");
-    if( orientation == TRANSPOSE )
-        throw std::logic_error
-        ("Herk accepts NORMAL and ADJOINT options");
 #endif
-    if( uplo == LOWER && orientation == NORMAL )
-        internal::HerkLN( alpha, A, beta, C );
-    else if( uplo == LOWER )
-        internal::HerkLC( alpha, A, beta, C );
-    else if( orientation == NORMAL )
-        internal::HerkUN( alpha, A, beta, C );
-    else
-        internal::HerkUC( alpha, A, beta, C );
+    Syrk( uplo, orientation, alpha, A, beta, C, true );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
 } // namespace elem
+
+#endif // ifndef BLAS_HERK_HPP

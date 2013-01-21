@@ -6,6 +6,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef BLAS_TWOSIDEDTRMM_HPP
+#define BLAS_TWOSIDEDTRMM_HPP
 
 namespace elem {
 namespace internal {
@@ -150,14 +153,8 @@ LocalTwoSidedTrmm
 } // namespace internal
 } // namespace elem
 
-#include "./TwoSidedTrmm/LVar1.hpp"
-#include "./TwoSidedTrmm/LVar2.hpp"
 #include "./TwoSidedTrmm/LVar4.hpp"
-#include "./TwoSidedTrmm/LVar5.hpp"
-#include "./TwoSidedTrmm/UVar1.hpp"
-#include "./TwoSidedTrmm/UVar2.hpp"
 #include "./TwoSidedTrmm/UVar4.hpp"
-#include "./TwoSidedTrmm/UVar5.hpp"
 
 namespace elem {
 
@@ -197,3 +194,5 @@ TwoSidedTrmm
 }
 
 } // namespace elem
+
+#endif // ifndef BLAS_TWOSIDEDTRMM_HPP

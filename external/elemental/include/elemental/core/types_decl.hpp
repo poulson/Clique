@@ -6,6 +6,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef CORE_TYPES_DECL_HPP
+#define CORE_TYPES_DECL_HPP
 
 namespace elem {
 
@@ -137,3 +140,5 @@ enum VerticalOrHorizontal
 using namespace vertical_or_horizontal_wrapper;
 
 } // namespace elem
+
+#endif // ifndef CORE_TYPES_DECL_HPP

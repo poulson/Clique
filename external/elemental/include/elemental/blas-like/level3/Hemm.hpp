@@ -6,11 +6,11 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef BLAS_HEMM_HPP
+#define BLAS_HEMM_HPP
 
-#include "./Hemm/LL.hpp"
-#include "./Hemm/LU.hpp"
-#include "./Hemm/RL.hpp"
-#include "./Hemm/RU.hpp"
+#include "elemental/blas-like/level3/Symm.hpp"
 
 namespace elem {
 
@@ -23,13 +23,7 @@ Hemm
 #ifndef RELEASE
     PushCallStack("Hemm");
 #endif
-    const char sideChar = LeftOrRightToChar( side );
-    const char uploChar = UpperOrLowerToChar( uplo );
-    blas::Hemm
-    ( sideChar, uploChar, C.Height(), C.Width(),
-      alpha, A.LockedBuffer(), A.LDim(),
-             B.LockedBuffer(), B.LDim(),
-      beta,  C.Buffer(),       C.LDim() );
+    Symm( side, uplo, alpha, A, B, beta, C, true );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -46,25 +40,12 @@ Hemm
 #ifndef RELEASE
     PushCallStack("Hemm");
 #endif
-    if( side == LEFT && uplo == LOWER )
-    {
-        internal::HemmLL( alpha, A, B, beta, C );
-    }
-    else if( side == LEFT )
-    {
-        internal::HemmLU( alpha, A, B, beta, C );
-    }
-    else if( uplo == LOWER )
-    {
-        internal::HemmRL( alpha, A, B, beta, C );
-    }
-    else
-    {
-        internal::HemmRU( alpha, A, B, beta, C );
-    }
+    Symm( side, uplo, alpha, A, B, beta, C, true );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
 } // namespace elem
+
+#endif // ifndef BLAS_HEMM_HPP

@@ -6,6 +6,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef CORE_PARTITION_IMPL_HPP
+#define CORE_PARTITION_IMPL_HPP
 
 namespace elem {
 
@@ -893,3 +896,5 @@ LockedPartitionDownRightDiagonal
 #undef M
 
 } // namespace elem
+
+#endif // ifndef CORE_PARTITION_IMPL_HPP

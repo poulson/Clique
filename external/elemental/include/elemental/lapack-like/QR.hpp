@@ -6,6 +6,11 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef LAPACK_QR_HPP
+#define LAPACK_QR_HPP
+
+#include "elemental/lapack-like/ApplyPackedReflectors.hpp"
 
 #include "./QR/Panel.hpp"
 
@@ -289,3 +294,5 @@ QR( DistMatrix<Complex<Real> >& A,
 }
 
 } // namespace elem
+
+#endif // ifndef LAPACK_QR_HPP

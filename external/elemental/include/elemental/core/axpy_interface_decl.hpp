@@ -11,6 +11,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef CORE_AXPYINTERFACE_DECL_HPP
+#define CORE_AXPYINTERFACE_DECL_HPP
 
 namespace elem {
 
@@ -82,3 +85,5 @@ private:
 };
 
 } // namespace elem
+
+#endif // ifndef CORE_AXPYINTERFACE_DECL_HPP

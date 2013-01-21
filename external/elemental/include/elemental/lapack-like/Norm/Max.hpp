@@ -6,6 +6,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef LAPACK_NORM_MAX_HPP
+#define LAPACK_NORM_MAX_HPP
 
 namespace elem {
 namespace internal {
@@ -58,7 +61,8 @@ MaxNorm( const DistMatrix<F,U,V>& A )
     }
 
     R maxAbs;
-    mpi::AllReduce( &localMaxAbs, &maxAbs, 1, mpi::MAX, NormComm( A ) );
+    mpi::Comm reduceComm = ReduceComm<U,V>( A.Grid() );
+    mpi::AllReduce( &localMaxAbs, &maxAbs, 1, mpi::MAX, reduceComm );
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -67,3 +71,5 @@ MaxNorm( const DistMatrix<F,U,V>& A )
 
 } // namespace internal
 } // namespace elem
+
+#endif // ifndef LAPACK_NORM_MAX_HPP

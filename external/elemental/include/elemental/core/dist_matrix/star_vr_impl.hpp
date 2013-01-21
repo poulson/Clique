@@ -6,6 +6,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef CORE_DISTMATRIX_STAR_VR_IMPL_HPP
+#define CORE_DISTMATRIX_STAR_VR_IMPL_HPP
 
 namespace elem {
 
@@ -1868,3 +1871,5 @@ DistMatrix<T,STAR,VR,Int>::UpdateImagPart
 }
 
 } // namespace elem
+
+#endif // ifndef CORE_DISTMATRIX_STAR_VR_IMPL_HPP

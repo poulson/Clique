@@ -6,8 +6,13 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef LAPACK_SKEWHERMITIANEIG_HPP
+#define LAPACK_SKEWHERMITIANEIG_HPP
 
 #ifndef WITHOUT_PMRRR
+
+#include "elemental/lapack-like/HermitianEig.hpp"
 
 namespace elem {
 
@@ -450,3 +455,5 @@ SkewHermitianEig
 } // namespace elem
 
 #endif // WITHOUT_PMRRR
+
+#endif // ifndef LAPACK_SKEWHERMITIANEIG_HPP

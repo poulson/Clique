@@ -6,8 +6,11 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef LAPACK_NORM_HPP
+#define LAPACK_NORM_HPP
 
-#include "./Norm/Util.hpp"
+#include "elemental/lapack-like/SVD.hpp"
 
 #include "./Norm/One.hpp"
 #include "./Norm/Infinity.hpp"
@@ -90,3 +93,5 @@ Norm( const DistMatrix<F,U,V>& A, NormType type )
 }
 
 } // namespace elem
+
+#endif // ifndef LAPACK_NORM_HPP

@@ -6,12 +6,33 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef BLAS_TRDTRMM_HPP
+#define BLAS_TRDTRMM_HPP
 
 #include "./Trdtrmm/Unblocked.hpp"
 #include "./Trdtrmm/LVar1.hpp"
 #include "./Trdtrmm/UVar1.hpp"
 
 namespace elem {
+
+namespace internal {
+
+template<typename T>
+inline void
+LocalTrdtrmm
+( Orientation orientation, UpperOrLower uplo, DistMatrix<T,STAR,STAR>& A )
+{
+#ifndef RELEASE
+    PushCallStack("internal::LocalTrdtrmm");
+#endif
+    Trdtrmm( orientation, uplo, A.LocalMatrix() );
+#ifndef RELEASE
+    PopCallStack();
+#endif
+}
+
+} // namespace internal
 
 template<typename F>
 inline void
@@ -50,3 +71,5 @@ Trdtrmm( Orientation orientation, UpperOrLower uplo, DistMatrix<F>& A )
 }
 
 } // namespace elem
+
+#endif // ifndef BLAS_TRDTRMM_HPP

@@ -8,8 +8,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
-#ifndef MPI_CHOICE_H
-#define MPI_CHOICE_H 1
+#pragma once
+#ifndef CORE_MPI_CHOICE_HPP
+#define CORE_MPI_CHOICE_HPP
 
 namespace elem {
 
@@ -242,4 +243,4 @@ MpiArgs::PrintReport( std::ostream& output ) const
 
 } // namespace elem
 
-#endif // ifndef MPI_CHOICE_H
+#endif // ifndef CORE_MPI_CHOICE_HPP

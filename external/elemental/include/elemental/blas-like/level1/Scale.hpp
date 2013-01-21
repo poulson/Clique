@@ -6,6 +6,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef BLAS_SCALE_HPP
+#define BLAS_SCALE_HPP
 
 namespace elem {
 
@@ -67,3 +70,5 @@ Scal( typename Base<T>::type alpha, DistMatrix<T,U,V>& A )
 { Scale( T(alpha), A ); }
 
 } // namespace elem
+
+#endif // ifndef BLAS_SCALE_HPP

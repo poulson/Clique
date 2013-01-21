@@ -6,6 +6,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef BLAS_SYR2K_UT_HPP
+#define BLAS_SYR2K_UT_HPP
 
 namespace elem {
 namespace internal {
@@ -14,7 +17,8 @@ template<typename T>
 inline void
 Syr2kUT
 ( T alpha, const DistMatrix<T>& A, const DistMatrix<T>& B,
-  T beta,        DistMatrix<T>& C )
+  T beta,        DistMatrix<T>& C,
+  bool conjugate )
 {
 #ifndef RELEASE
     PushCallStack("internal::Syr2kUT");
@@ -36,6 +40,7 @@ Syr2kUT
     }
 #endif
     const Grid& g = A.Grid();
+    const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
 
     // Matrix views
     DistMatrix<T> AT(g),  A0(g),
@@ -90,7 +95,7 @@ Syr2kUT
         B1_STAR_MC = B1_STAR_VR;
 
         LocalTrr2k
-        ( UPPER, TRANSPOSE, TRANSPOSE, TRANSPOSE, TRANSPOSE, 
+        ( UPPER, orientation, TRANSPOSE, orientation, TRANSPOSE, 
           alpha, A1_STAR_MC, B1Trans_MR_STAR,
                  B1_STAR_MC, A1Trans_MR_STAR,
           T(1),  C );
@@ -115,3 +120,5 @@ Syr2kUT
 
 } // namespace internal
 } // namespace elem
+
+#endif // ifndef BLAS_SYR2K_UT_HPP

@@ -6,6 +6,12 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef LAPACK_HERMITIANNORM_HPP
+#define LAPACK_HERMITIANNORM_HPP
+
+#include "elemental/lapack-like/HermitianSVD.hpp"
+#include "elemental/lapack-like/Norm.hpp"
 
 #include "./HermitianNorm/One.hpp"
 #include "./HermitianNorm/Infinity.hpp"
@@ -88,3 +94,5 @@ HermitianNorm( UpperOrLower uplo, const DistMatrix<F>& A, NormType type )
 }
 
 } // namespace elem
+
+#endif // ifndef LAPACK_HERMITIANNORM_HPP

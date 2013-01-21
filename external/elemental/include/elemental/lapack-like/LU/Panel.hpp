@@ -6,6 +6,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef LAPACK_LU_PANEL_HPP
+#define LAPACK_LU_PANEL_HPP
 
 namespace elem {
 namespace internal {
@@ -33,7 +36,7 @@ PanelLU( Matrix<F>& A, Matrix<int>& p, int pivotOffset )
     PartitionDownDiagonal
     ( A, ATL, ATR,
          ABL, ABR, 0 );
-    while( ATL.Height() < A.Height() )
+    while( ATL.Width() < A.Width() )
     {
         RepartitionDownDiagonal
         ( ATL, /**/ ATR,  A00, /**/ a01,     A02,
@@ -272,3 +275,5 @@ PanelLU
 
 } // namespace internal
 } // namespace elem
+
+#endif // ifndef LAPACK_LU_PANEL_HPP

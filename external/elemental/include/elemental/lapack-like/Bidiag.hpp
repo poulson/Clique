@@ -6,6 +6,11 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef LAPACK_BIDIAG_HPP
+#define LAPACK_BIDIAG_HPP
+
+#include "elemental/lapack-like/Reflector.hpp"
 
 #include "./Bidiag/Local.hpp"
 #include "./Bidiag/PanelL.hpp"
@@ -53,3 +58,5 @@ inline void Bidiag
 }
 
 } // namespace elem
+
+#endif // ifndef LAPACK_BIDIAG_HPP

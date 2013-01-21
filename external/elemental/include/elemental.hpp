@@ -6,8 +6,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
-#ifndef ELEMENTAL_H
-#define ELEMENTAL_H 1
+#pragma once
+#ifndef ELEMENTAL_HPP
+#define ELEMENTAL_HPP
 
 #include "elemental/config.h"
 #ifdef HAVE_F90_INTERFACE
@@ -15,14 +16,8 @@
 #endif
 
 #include "elemental/core.hpp"
+#include "elemental/blas-like.hpp"
+#include "elemental/lapack-like.hpp"
+#include "elemental/matrices.hpp"
 
-#include "elemental/special_matrices_decl.hpp"
-#include "elemental/special_matrices_incl.hpp"
-
-#include "elemental/blas-like_decl.hpp"
-#include "elemental/blas-like_impl.hpp"
-
-#include "elemental/lapack-like_decl.hpp"
-#include "elemental/lapack-like_impl.hpp"
-
-#endif // ELEMENTAL_H
+#endif // ifndef ELEMENTAL_HPP
