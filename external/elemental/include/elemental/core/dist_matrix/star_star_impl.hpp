@@ -76,11 +76,17 @@ DistMatrix<T,STAR,STAR,Int>::~DistMatrix()
 { }
 
 template<typename T,typename Int>
-inline void
-DistMatrix<T,STAR,STAR,Int>::SetGrid( const elem::Grid& grid )
+inline elem::DistData<Int>
+DistMatrix<T,STAR,STAR,Int>::DistData() const
 {
-    this->Empty();
-    this->grid_ = &grid;
+    elem::DistData<Int> data;
+    data.colDist = STAR;
+    data.rowDist = STAR;
+    data.colAlignment = 0;
+    data.rowAlignment = 0;
+    data.diagPath = 0;
+    data.grid = this->grid_;
+    return data;
 }
 
 template<typename T,typename Int>
