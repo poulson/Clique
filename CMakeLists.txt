@@ -1,12 +1,12 @@
 #
-#  Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
-#  The University of Texas at Austin
+#  Copyright (C) 2011-2013 Jack Poulson, Lexing Ying, 
+#  The University of Texas at Austin, and Stanford University
 # 
 #  This file is part of Clique and is under the GNU General Public License,
 #  which can be found in the LICENSE file in the root directory, or at 
 #  <http://www.gnu.org/licenses/>.
 #
-cmake_minimum_required(VERSION 2.8.5)
+cmake_minimum_required(VERSION 2.8.10) # needed for Mercurial downloads
 project(Clique)
 
 set(Clique_VERSION_MAJOR 0)
@@ -17,13 +17,28 @@ option(CLIQ_EXAMPLES "Build a few example drivers" OFF)
 option(USE_CUSTOM_ALLTOALLV "Avoid MPI_Alltoallv for performance reasons" ON)
 option(BARRIER_IN_ALLTOALLV "Barrier before posting non-blocking recvs" OFF)
 
+set(ELEM_REV 774) # If you manually specify Elemental with a different revision,
+                  # you are on your own 
 if(MANUAL_ELEMENTAL)
   include_directories(${ELEMENTAL_INCLUDE_DIR})
   include_directories(${MPI_CXX_INCLUDE_PATH})
-else()
-  add_subdirectory(external/elemental)
-  include_directories(${PROJECT_BINARY_DIR}/external/elemental/include)
+elseif(EXISTS ${PROJECT_SOURCE_DIR}/external/elemental-r${ELEM_REV})
+  add_subdirectory(external/elemental-r${ELEM_REV})
+  include_directories(${PROJECT_BINARY_DIR}/external/elemental-r${ELEM_REV}/include)
   include_directories(${MPI_CXX_INCLUDE_PATH})
+else()
+  find_package(Hg)
+  if(HG_FOUND)
+    execute_process(COMMAND 
+      ${HG_EXECUTABLE} clone http://code.google.com/p/elemental 
+      ${PROJECT_SOURCE_DIR}/external/elemental-r${ELEM_REV})
+    add_subdirectory(external/elemental-r${ELEM_REV})
+    include_directories(${PROJECT_BINARY_DIR}/external/elemental-r${ELEM_REV}/include)
+    include_directories(${MPI_CXX_INCLUDE_PATH})
+  else()
+    message(FATAL_ERROR 
+      "Could not find Mercurial, which is needed for checking out Elemental")
+  endif()
 endif()
 
 option(BUILD_PARMETIS "Build the parallel metis library" ON)
