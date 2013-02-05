@@ -17,7 +17,7 @@ option(CLIQ_EXAMPLES "Build a few example drivers" OFF)
 option(USE_CUSTOM_ALLTOALLV "Avoid MPI_Alltoallv for performance reasons" ON)
 option(BARRIER_IN_ALLTOALLV "Barrier before posting non-blocking recvs" OFF)
 
-set(ELEM_REV 775) # If you manually specify Elemental with a different revision,
+set(ELEM_REV 776) # If you manually specify Elemental with a different revision,
                   # you are on your own 
 if(MANUAL_ELEMENTAL)
   include_directories(${ELEMENTAL_INCLUDE_DIR})
