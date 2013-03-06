@@ -40,7 +40,7 @@ inline void LocalLowerForwardSolve
     const int width = X.Width();
     for( int s=0; s<numLocalNodes; ++s )
     {
-        const LocalSymmNodeInfo& node = info.localNodes[s];
+        const SymmNodeInfo& node = info.localNodes[s];
         const Matrix<F>& frontL = L.localFronts[s].frontL;
         Matrix<F>& W = L.localFronts[s].work;
 
@@ -99,9 +99,9 @@ inline void LocalLowerForwardSolve
 
         // Solve against this front
         if( !blockLDL )
-            LocalFrontLowerForwardSolve( diag, frontL, W );
+            FrontLowerForwardSolve( diag, frontL, W );
         else
-            LocalFrontBlockLowerForwardSolve( frontL, W );
+            FrontBlockLowerForwardSolve( frontL, W );
 
         // Store this node's portion of the result
         XT = WT;
@@ -128,7 +128,7 @@ inline void LocalLowerBackwardSolve
     const int width = X.Width();
     for( int s=numLocalNodes-2; s>=0; --s )
     {
-        const LocalSymmNodeInfo& node = info.localNodes[s];
+        const SymmNodeInfo& node = info.localNodes[s];
         const Matrix<F>& frontL = L.localFronts[s].frontL;
         Matrix<F>& W = L.localFronts[s].work;
 
@@ -162,7 +162,7 @@ inline void LocalLowerBackwardSolve
         }
 #endif
         Matrix<F>& parentWork = L.localFronts[parent].work;
-        const LocalSymmNodeInfo& parentNode = info.localNodes[parent];
+        const SymmNodeInfo& parentNode = info.localNodes[parent];
         const int currentUpdateSize = WB.Height();
         const std::vector<int>& parentRelIndices = 
           ( node.isLeftChild ? 
@@ -186,9 +186,9 @@ inline void LocalLowerBackwardSolve
 
         // Solve against this front
         if( !blockLDL )
-            LocalFrontLowerBackwardSolve( orientation, diag, frontL, W );
+            FrontLowerBackwardSolve( orientation, diag, frontL, W );
         else
-            LocalFrontBlockLowerBackwardSolve( orientation, frontL, W );
+            FrontBlockLowerBackwardSolve( orientation, frontL, W );
 
         // Store this node's portion of the result
         XT = WT;

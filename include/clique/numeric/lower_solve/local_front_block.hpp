@@ -10,10 +10,10 @@
 namespace cliq {
 
 template<typename F>
-void LocalFrontBlockLowerForwardSolve( const Matrix<F>& L, Matrix<F>& X );
+void FrontBlockLowerForwardSolve( const Matrix<F>& L, Matrix<F>& X );
 
 template<typename F>
-void LocalFrontBlockLowerBackwardSolve
+void FrontBlockLowerBackwardSolve
 ( Orientation orientation, const Matrix<F>& L, Matrix<F>& X );
 
 //----------------------------------------------------------------------------//
@@ -21,10 +21,10 @@ void LocalFrontBlockLowerBackwardSolve
 //----------------------------------------------------------------------------//
 
 template<typename F>
-inline void LocalFrontBlockLowerForwardSolve( const Matrix<F>& L, Matrix<F>& X )
+inline void FrontBlockLowerForwardSolve( const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    PushCallStack("LocalFrontBlockLowerForwardSolve");
+    PushCallStack("FrontBlockLowerForwardSolve");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
@@ -58,11 +58,11 @@ inline void LocalFrontBlockLowerForwardSolve( const Matrix<F>& L, Matrix<F>& X )
 }
 
 template<typename F>
-inline void LocalFrontBlockLowerBackwardSolve
+inline void FrontBlockLowerBackwardSolve
 ( Orientation orientation, const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    PushCallStack("LocalFrontBlockLowerBackwardSolve");
+    PushCallStack("FrontBlockLowerBackwardSolve");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;

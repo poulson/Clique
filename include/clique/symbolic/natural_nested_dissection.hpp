@@ -72,15 +72,15 @@ NaturalNestedDissectionRecursion
     {
         // Fill in this node of the local separator tree
         const int numSources = graph.NumSources();
-        sepTree.localSepsAndLeaves.push_back( new LocalSepOrLeaf );
-        LocalSepOrLeaf& leaf = *sepTree.localSepsAndLeaves.back();
+        sepTree.localSepsAndLeaves.push_back( new SepOrLeaf );
+        SepOrLeaf& leaf = *sepTree.localSepsAndLeaves.back();
         leaf.parent = parent;
         leaf.offset = offset;
         leaf.indices = perm;
 
         // Fill in this node of the local elimination tree
-        eTree.localNodes.push_back( new LocalSymmNode );
-        LocalSymmNode& node = *eTree.localNodes.back();
+        eTree.localNodes.push_back( new SymmNode );
+        SymmNode& node = *eTree.localNodes.back();
         node.size = numSources;
         node.offset = offset;
         node.parent = parent;
@@ -120,8 +120,8 @@ NaturalNestedDissectionRecursion
 
         // Mostly compute this node of the local separator tree
         // (we will finish computing the separator indices soon)
-        sepTree.localSepsAndLeaves.push_back( new LocalSepOrLeaf );
-        LocalSepOrLeaf& sep = *sepTree.localSepsAndLeaves.back();
+        sepTree.localSepsAndLeaves.push_back( new SepOrLeaf );
+        SepOrLeaf& sep = *sepTree.localSepsAndLeaves.back();
         sep.parent = parent;
         sep.offset = offset + (numSources-sepSize);
         sep.indices.resize( sepSize );
@@ -132,8 +132,8 @@ NaturalNestedDissectionRecursion
         }
     
         // Fill in this node in the local elimination tree
-        eTree.localNodes.push_back( new LocalSymmNode );
-        LocalSymmNode& node = *eTree.localNodes.back();
+        eTree.localNodes.push_back( new SymmNode );
+        SymmNode& node = *eTree.localNodes.back();
         node.size = sepSize;
         node.offset = sep.offset;
         node.parent = parent;
@@ -319,16 +319,16 @@ NaturalNestedDissectionRecursion
         Graph seqGraph( graph );
 
         // Fill in this node of the local separator tree
-        sepTree.localSepsAndLeaves.push_back( new LocalSepOrLeaf );
-        LocalSepOrLeaf& leaf = *sepTree.localSepsAndLeaves.back();
+        sepTree.localSepsAndLeaves.push_back( new SepOrLeaf );
+        SepOrLeaf& leaf = *sepTree.localSepsAndLeaves.back();
         leaf.parent = -1;
         leaf.offset = offset;
-        leaf.indices = perm.LocalMap();
+        leaf.indices = perm.Map();
 
         // Fill in this node of the local and distributed parts of the 
         // elimination tree
-        eTree.localNodes.push_back( new LocalSymmNode );
-        LocalSymmNode& localNode = *eTree.localNodes.back();
+        eTree.localNodes.push_back( new SymmNode );
+        SymmNode& localNode = *eTree.localNodes.back();
         DistSymmNode& distNode = eTree.distNodes[0];
         mpi::CommDup( comm, distNode.comm );
         distNode.onLeft = onLeft;
@@ -375,8 +375,8 @@ NaturalNestedDissectionRecursion
 
         // Mostly compute this node of the local separator tree
         // (we will finish computing the separator indices soon)
-        sepTree.localSepsAndLeaves.push_back( new LocalSepOrLeaf );
-        LocalSepOrLeaf& sep = *sepTree.localSepsAndLeaves.back();
+        sepTree.localSepsAndLeaves.push_back( new SepOrLeaf );
+        SepOrLeaf& sep = *sepTree.localSepsAndLeaves.back();
         sep.parent = -1;
         sep.offset = offset + (numSources-sepSize);
         sep.indices.resize( sepSize );
@@ -388,8 +388,8 @@ NaturalNestedDissectionRecursion
         
         // Fill in this node in both the local and distributed parts of 
         // the elimination tree
-        eTree.localNodes.push_back( new LocalSymmNode );
-        LocalSymmNode& localNode = *eTree.localNodes.back();
+        eTree.localNodes.push_back( new SymmNode );
+        SymmNode& localNode = *eTree.localNodes.back();
         DistSymmNode& distNode = eTree.distNodes[0];
         mpi::CommDup( comm, distNode.comm );
         distNode.onLeft = onLeft;

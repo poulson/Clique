@@ -153,7 +153,7 @@ DistVector<T>::DistVector( int height, T* buffer, mpi::Comm comm )
         ( commRank<commSize-1 ?
           blocksize_ :
           height_ - (commSize-1)*blocksize_ );
-    localVec_.Attach( localHeight, 1, buffer, localHeight );
+    vec_.Attach( localHeight, 1, buffer, localHeight );
 }
 
 template<typename T>
@@ -174,7 +174,7 @@ DistVector<T>::DistVector( int height, const T* buffer, mpi::Comm comm )
         ( commRank<commSize-1 ?
           blocksize_ :
           height_ - (commSize-1)*blocksize_ );
-    localVec_.LockedAttach( localHeight, 1, buffer, localHeight );
+    vec_.LockedAttach( localHeight, 1, buffer, localHeight );
 }
 
 template<typename T>
@@ -210,7 +210,7 @@ DistVector<T>::SetComm( mpi::Comm comm )
         ( commRank<commSize-1 ?
           blocksize_ :
           height_ - (commSize-1)*blocksize_ );
-    localVec_.ResizeTo( localHeight, 1 );
+    vec_.ResizeTo( localHeight, 1 );
 }
 
 template<typename T>
@@ -231,7 +231,7 @@ DistVector<T>::FirstLocalRow() const
 template<typename T>
 inline int
 DistVector<T>::LocalHeight() const
-{ return localVec_.Height(); }
+{ return vec_.Height(); }
 
 template<typename T>
 inline T
@@ -240,7 +240,7 @@ DistVector<T>::GetLocal( int localRow ) const
 #ifndef RELEASE 
     PushCallStack("DistVector::GetLocal");
 #endif
-    const T value = localVec_.Get(localRow,0);
+    const T value = vec_.Get(localRow,0);
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -254,7 +254,7 @@ DistVector<T>::SetLocal( int localRow, T value )
 #ifndef RELEASE
     PushCallStack("DistVector::SetLocal");
 #endif
-    localVec_.Set(localRow,0,value);
+    vec_.Set(localRow,0,value);
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -267,7 +267,7 @@ DistVector<T>::UpdateLocal( int localRow, T value )
 #ifndef RELEASE
     PushCallStack("DistVector::UpdateLocal");
 #endif
-    localVec_.Update(localRow,0,value);
+    vec_.Update(localRow,0,value);
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -275,13 +275,13 @@ DistVector<T>::UpdateLocal( int localRow, T value )
 
 template<typename T>
 inline Matrix<T>&
-DistVector<T>::LocalVector()
-{ return localVec_; }
+DistVector<T>::Vector()
+{ return vec_; }
 
 template<typename T>
 inline const Matrix<T>&
-DistVector<T>::LocalVector() const
-{ return localVec_; }
+DistVector<T>::Vector() const
+{ return vec_; }
 
 template<typename T>
 inline void
@@ -290,7 +290,7 @@ DistVector<T>::Empty()
     height_ = 0;
     blocksize_ = 0;
     firstLocalRow_ = 0;
-    localVec_.Empty();
+    vec_.Empty();
 }
 
 template<typename T>
@@ -306,7 +306,7 @@ DistVector<T>::ResizeTo( int height )
         ( commRank<commSize-1 ?
           blocksize_ :
           height_ - (commSize-1)*blocksize_ );
-    localVec_.ResizeTo( localHeight, 1 );
+    vec_.ResizeTo( localHeight, 1 );
 }
 
 template<typename T>
@@ -318,7 +318,7 @@ DistVector<T>::operator=( const DistVector<T>& x )
 #endif
     height_ = x.height_;
     SetComm( x.comm_ );
-    localVec_ = x.localVec_;
+    vec_ = x.vec_;
 #ifndef RELEASE
     PopCallStack();
 #endif

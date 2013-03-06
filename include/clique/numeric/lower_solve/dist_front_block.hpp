@@ -10,19 +10,19 @@
 namespace cliq {
 
 template<typename F>
-void DistFrontBlockLowerForwardSolve
+void FrontBlockLowerForwardSolve
 ( DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
-void DistFrontBlockLowerForwardSolve
+void FrontBlockLowerForwardSolve
 ( DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
-void DistFrontBlockLowerBackwardSolve
+void FrontBlockLowerBackwardSolve
 ( Orientation orientation, DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
-void DistFrontBlockLowerBackwardSolve
+void FrontBlockLowerBackwardSolve
 ( Orientation orientation, DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X );
 
 //----------------------------------------------------------------------------//
@@ -30,11 +30,11 @@ void DistFrontBlockLowerBackwardSolve
 //----------------------------------------------------------------------------//
 
 template<typename F>
-inline void DistFrontBlockLowerForwardSolve
+inline void FrontBlockLowerForwardSolve
 ( DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("DistFrontBlockLowerForwardSolve");
+    PushCallStack("FrontBlockLowerForwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -54,8 +54,7 @@ inline void DistFrontBlockLowerForwardSolve
     const int commSize = g.Size();
     if( commSize == 1 )
     {
-        LocalFrontBlockLowerForwardSolve
-        ( L.LockedLocalMatrix(), X.LocalMatrix() );
+        FrontBlockLowerForwardSolve( L.LockedMatrix(), X.Matrix() );
 #ifndef RELEASE
         PopCallStack();
 #endif
@@ -97,11 +96,11 @@ inline void DistFrontBlockLowerForwardSolve
 }
 
 template<typename F>
-inline void DistFrontBlockLowerForwardSolve
+inline void FrontBlockLowerForwardSolve
 ( DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("DistFrontBlockLowerForwardSolve");
+    PushCallStack("FrontBlockLowerForwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -118,8 +117,7 @@ inline void DistFrontBlockLowerForwardSolve
     const int commSize = g.Size();
     if( commSize == 1 )
     {
-        LocalFrontBlockLowerForwardSolve
-        ( L.LockedLocalMatrix(), X.LocalMatrix() );
+        FrontBlockLowerForwardSolve( L.LockedMatrix(), X.Matrix() );
 #ifndef RELEASE
         PopCallStack();
 #endif
@@ -179,11 +177,11 @@ inline void DistFrontBlockLowerForwardSolve
 }
 
 template<typename F>
-inline void DistFrontBlockLowerBackwardSolve
+inline void FrontBlockLowerBackwardSolve
 ( Orientation orientation, DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("DistFrontBlockLowerBackwardSolve");
+    PushCallStack("FrontBlockLowerBackwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -205,8 +203,8 @@ inline void DistFrontBlockLowerBackwardSolve
     const int commRank = g.VCRank();
     if( commSize == 1 )
     {
-        LocalFrontBlockLowerBackwardSolve
-        ( orientation, L.LockedLocalMatrix(), X.LocalMatrix() );
+        FrontBlockLowerBackwardSolve
+        ( orientation, L.LockedMatrix(), X.Matrix() );
 #ifndef RELEASE
         PopCallStack();
 #endif
@@ -251,11 +249,11 @@ inline void DistFrontBlockLowerBackwardSolve
 }
 
 template<typename F>
-inline void DistFrontBlockLowerBackwardSolve
+inline void FrontBlockLowerBackwardSolve
 ( Orientation orientation, DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("DistFrontBlockLowerBackwardSolve");
+    PushCallStack("FrontBlockLowerBackwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -274,8 +272,8 @@ inline void DistFrontBlockLowerBackwardSolve
     const int commSize = g.Size();
     if( commSize == 1 )
     {
-        LocalFrontBlockLowerBackwardSolve
-        ( orientation, L.LockedLocalMatrix(), X.LocalMatrix() );
+        FrontBlockLowerBackwardSolve
+        ( orientation, L.LockedMatrix(), X.Matrix() );
 #ifndef RELEASE
         PopCallStack();
 #endif

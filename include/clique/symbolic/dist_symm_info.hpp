@@ -9,7 +9,7 @@
 
 namespace cliq {
 
-struct LocalSymmNodeInfo
+struct SymmNodeInfo
 {
     //
     // This is known before analysis
@@ -71,7 +71,7 @@ struct DistSymmNodeInfo
 
 struct DistSymmInfo
 {
-    std::vector<LocalSymmNodeInfo> localNodes;
+    std::vector<SymmNodeInfo> localNodes;
     std::vector<DistSymmNodeInfo> distNodes;
     ~DistSymmInfo();
 

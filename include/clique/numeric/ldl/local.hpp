@@ -27,7 +27,7 @@ inline void LocalLDL
     const int numLocalNodes = info.localNodes.size();
     for( int s=0; s<numLocalNodes; ++s )
     {
-        LocalSymmNodeInfo& node = info.localNodes[s];
+        SymmNodeInfo& node = info.localNodes[s];
         const int updateSize = node.lowerStruct.size();
         Matrix<F>& frontL = L.localFronts[s].frontL;
         Matrix<F>& frontBR = L.localFronts[s].work;
@@ -89,16 +89,16 @@ inline void LocalLDL
         if( !blockLDL )
         {
             if( L.isHermitian )
-                LocalFrontLDL( ADJOINT, frontL, frontBR );
+                FrontLDL( ADJOINT, frontL, frontBR );
             else
-                LocalFrontLDL( TRANSPOSE, frontL, frontBR );
+                FrontLDL( TRANSPOSE, frontL, frontBR );
         }
         else
         {
             if( L.isHermitian )
-                LocalFrontBlockLDL( ADJOINT, frontL, frontBR );
+                FrontBlockLDL( ADJOINT, frontL, frontBR );
             else
-                LocalFrontBlockLDL( TRANSPOSE, frontL, frontBR );
+                FrontBlockLDL( TRANSPOSE, frontL, frontBR );
         }
     }
 #ifndef RELEASE

@@ -57,7 +57,7 @@ private:
     int blocksize_;
     int firstLocalRow_;
 
-    Matrix<T> localMultiVec_;
+    Matrix<T> multiVec_;
 };
 
 // Set all of the entries of X to zero

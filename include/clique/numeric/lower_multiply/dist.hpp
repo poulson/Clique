@@ -37,7 +37,7 @@ inline void DistLowerMultiplyNormal
         throw std::logic_error("This multiply mode is not yet implemented");
 
     // Copy the information from the local portion into the distributed leaf
-    const LocalSymmFront<T>& localRootFront = L.localFronts.back();
+    const SymmFront<T>& localRootFront = L.localFronts.back();
     const DistSymmFront<T>& distLeafFront = L.distFronts[0];
     LockedView
     ( distLeafFront.work1d,
@@ -71,11 +71,11 @@ inline void DistLowerMultiplyNormal
         // Pull in the relevant information from the RHS
         Matrix<T> localXT;
         View( localXT, localX, node.localOffset1d, 0, node.localSize1d, width );
-        WT.LocalMatrix() = localXT;
+        WT.Matrix() = localXT;
         elem::MakeZeros( WB );
 
         // Now that the right-hand side is set up, perform the multiply
-        DistFrontLowerMultiply( NORMAL, diag, diagOffset, front.front1dL, W );
+        FrontLowerMultiply( NORMAL, diag, diagOffset, front.front1dL, W );
 
         // Pack our child's update
         DistMatrix<T,VC,STAR>& childW = childFront.work1d;
@@ -148,8 +148,8 @@ inline void DistLowerMultiplyNormal
             {
                 const int iFrontLocal = recvIndices[k];
                 const T* recvRow = &recvValues[k*width];
-                T* WRow = W.LocalBuffer( iFrontLocal, 0 );
-                const int WLDim = W.LocalLDim();
+                T* WRow = W.Buffer( iFrontLocal, 0 );
+                const int WLDim = W.LDim();
                 for( int jFront=0; jFront<width; ++jFront )
                     WRow[jFront*WLDim] += recvRow[jFront];
             }
@@ -159,7 +159,7 @@ inline void DistLowerMultiplyNormal
         recvDispls.clear();
 
         // Store this node's portion of the result
-        localXT = WT.LocalMatrix();
+        localXT = WT.Matrix();
     }
     L.localFronts.back().work.Empty();
     L.distFronts.back().work1d.Empty();
@@ -183,7 +183,7 @@ inline void DistLowerMultiplyTranspose
 
     // Directly operate on the root separator's portion of the right-hand sides
     const DistSymmNodeInfo& rootNode = info.distNodes.back();
-    const LocalSymmFront<T>& localRootFront = L.localFronts.back();
+    const SymmFront<T>& localRootFront = L.localFronts.back();
     if( numDistNodes == 1 )
     {
         Matrix<T> XRoot;
@@ -191,7 +191,7 @@ inline void DistLowerMultiplyTranspose
         ( XRoot, rootNode.size, width, 
           localX.Buffer(rootNode.localOffset1d,0), localX.LDim() );
         localRootFront.work = XRoot;
-        LocalFrontLowerMultiply
+        FrontLowerMultiply
         ( orientation, diag, diagOffset, localRootFront.frontL, XRoot );
     }
     else
@@ -203,7 +203,7 @@ inline void DistLowerMultiplyTranspose
         ( XRoot, rootNode.size, width, 0,
           localX.Buffer(rootNode.localOffset1d,0), localX.LDim(), rootGrid );
         rootFront.work1d = XRoot; // store the RHS for use by the children
-        DistFrontLowerMultiply
+        FrontLowerMultiply
         ( orientation, diag, diagOffset, rootFront.front1dL, XRoot );
     }
 
@@ -232,7 +232,7 @@ inline void DistLowerMultiplyTranspose
         // Pull in the relevant information from the RHS
         Matrix<T> localXT;
         View( localXT, localX, node.localOffset1d, 0, node.localSize1d, width );
-        WT.LocalMatrix() = localXT;
+        WT.Matrix() = localXT;
 
         //
         // Set the bottom from the parent's workspace
@@ -263,9 +263,8 @@ inline void DistLowerMultiplyTranspose
             {
                 const int iFrontLocal = recvIndices[k];
                 T* packedRow = &sendValues[k*width];
-                const T* workRow = 
-                    parentWork.LockedLocalBuffer( iFrontLocal, 0 );
-                const int workLDim = parentWork.LocalLDim();
+                const T* workRow = parentWork.LockedBuffer( iFrontLocal, 0 );
+                const int workLDim = parentWork.LDim();
                 for( int jFront=0; jFront<width; ++jFront )
                     packedRow[jFront] = workRow[jFront*workLDim];
             }
@@ -322,14 +321,14 @@ inline void DistLowerMultiplyTranspose
 
         // Perform the multiply for this front
         if( s > 0 )
-            DistFrontLowerMultiply
+            FrontLowerMultiply
             ( orientation, diag, diagOffset, front.front1dL, XNode );
         else
         {
-            localRootFront.work = W.LocalMatrix();
-            LocalFrontLowerMultiply
+            localRootFront.work = W.Matrix();
+            FrontLowerMultiply
             ( orientation, diag, diagOffset, 
-              localRootFront.frontL, XNode.LocalMatrix() );
+              localRootFront.frontL, XNode.Matrix() );
         }
 
         // Store the supernode portion of the result
@@ -337,7 +336,7 @@ inline void DistLowerMultiplyTranspose
         elem::PartitionDown
         ( XNode, XNodeT,
                  XNodeB, node.size );
-        localXT = XNodeT.LocalMatrix();
+        localXT = XNodeT.Matrix();
         XNode.Empty();
     }
 #ifndef RELEASE

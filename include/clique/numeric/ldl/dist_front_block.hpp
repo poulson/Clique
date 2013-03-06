@@ -10,7 +10,7 @@
 namespace cliq {
 
 template<typename F> 
-void DistFrontBlockLDL
+void FrontBlockLDL
 ( Orientation orientation, DistMatrix<F>& AL, DistMatrix<F>& ABR );
 
 //----------------------------------------------------------------------------//
@@ -18,11 +18,11 @@ void DistFrontBlockLDL
 //----------------------------------------------------------------------------//
 
 template<typename F> 
-inline void DistFrontBlockLDL
+inline void FrontBlockLDL
 ( Orientation orientation, DistMatrix<F>& AL, DistMatrix<F>& ABR )
 {
 #ifndef RELEASE
-    PushCallStack("internal::DistFrontBlockLDL");
+    PushCallStack("internal::FrontBlockLDL");
 #endif
     const Grid& g = AL.Grid();
     DistMatrix<F> ATL(g),
@@ -35,7 +35,7 @@ inline void DistFrontBlockLDL
     DistMatrix<F> BBL( ABL );
 
     // Call the standard routine
-    DistFrontLDL( orientation, AL, ABR );
+    FrontLDL( orientation, AL, ABR );
 
     // Copy the original contents of ABL back
     ABL = BBL;

@@ -10,12 +10,12 @@
 namespace cliq {
 
 template<typename F>
-void DistFrontLowerForwardSolve
+void FrontLowerForwardSolve
 ( UnitOrNonUnit diag, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
   bool singleL11AllGather=true );
 
 template<typename F>
-inline void DistFrontLowerBackwardSolve
+inline void FrontLowerBackwardSolve
 ( Orientation orientation, UnitOrNonUnit diag, 
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
   bool singleL11AllGather=true );
@@ -34,8 +34,7 @@ inline void ForwardMany
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
     {
-        LocalFrontLowerForwardSolve
-        ( diag, L.LockedLocalMatrix(), X.LocalMatrix() );
+        FrontLowerForwardSolve( diag, L.LockedMatrix(), X.Matrix() );
         return;
     }
 
@@ -113,14 +112,14 @@ void FormDiagonalBlocks
     const int commRank = g.VCRank();
     const int commSize = g.Size();
 
-    const int localHeight = LocalLength<int>(height,commRank,commSize);
-    const int maxLocalHeight = MaxLocalLength<int>(height,commSize);
+    const int localHeight = Length<int>(height,commRank,commSize);
+    const int maxLocalHeight = MaxLength<int>(height,commSize);
     const int portionSize = maxLocalHeight*blocksize;
 
     std::vector<F> sendBuffer( portionSize );
     const int colShift = L.ColShift();
-    const int LLDim = L.LocalLDim();
-    const F* LBuffer = L.LockedLocalBuffer();
+    const int LLDim = L.LDim();
+    const F* LBuffer = L.LockedBuffer();
     if( conjugate )
     {
         for( int iLocal=0; iLocal<localHeight; ++iLocal )
@@ -154,18 +153,17 @@ void FormDiagonalBlocks
     sendBuffer.clear();
     
     D.ResizeTo( blocksize, height );
-    F* DBuffer = D.LocalBuffer();
-    const int DLDim = D.LocalLDim();
+    F* DBuffer = D.Buffer();
+    const int DLDim = D.LDim();
     for( int proc=0; proc<commSize; ++proc )
     {
         const F* procRecv = &recvBuffer[proc*portionSize];
-        const int procLocalHeight = LocalLength<int>(height,proc,commSize);
+        const int procLocalHeight = Length<int>(height,proc,commSize);
         for( int iLocal=0; iLocal<procLocalHeight; ++iLocal )
         {
             const int i = proc + iLocal*commSize;
             for( int jOffset=0; jOffset<blocksize; ++jOffset )
-                DBuffer[jOffset+i*DLDim] = 
-                    procRecv[jOffset+iLocal*blocksize];
+                DBuffer[jOffset+i*DLDim] = procRecv[jOffset+iLocal*blocksize];
         }
     }
 }
@@ -182,10 +180,10 @@ void AccumulateRHS
     const int localHeight = X.LocalHeight();
     const int colShift = X.ColShift();
     const int commSize = X.Grid().Size();
-    const F* XBuffer = X.LockedLocalBuffer();
-    F* ZBuffer = Z.LocalBuffer();
-    const int XLDim = X.LocalLDim();
-    const int ZLDim = Z.LocalLDim();
+    const F* XBuffer = X.LockedBuffer();
+    F* ZBuffer = Z.Buffer();
+    const int XLDim = X.LDim();
+    const int ZLDim = Z.LDim();
     for( int iLocal=0; iLocal<localHeight; ++iLocal )
     {
         const int i = colShift + iLocal*commSize;
@@ -202,8 +200,7 @@ void ForwardSingle
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
     {
-        LocalFrontLowerForwardSolve
-        ( diag, L.LockedLocalMatrix(), X.LocalMatrix() );
+        FrontLowerForwardSolve( diag, L.LockedMatrix(), X.Matrix() );
         return;
     }
 
@@ -375,12 +372,12 @@ void BackwardSingle
 } // namespace internal
 
 template<typename F>
-inline void DistFrontLowerForwardSolve
+inline void FrontLowerForwardSolve
 ( UnitOrNonUnit diag, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
   bool singleL11AllGather )
 {
 #ifndef RELEASE
-    PushCallStack("DistFrontLowerForwardSolve");
+    PushCallStack("FrontLowerForwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -405,13 +402,13 @@ inline void DistFrontLowerForwardSolve
 }
 
 template<typename F>
-inline void DistFrontLowerBackwardSolve
+inline void FrontLowerBackwardSolve
 ( Orientation orientation, UnitOrNonUnit diag, 
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
   bool singleL11AllGather )
 {
 #ifndef RELEASE
-    PushCallStack("DistFrontLowerBackwardSolve");
+    PushCallStack("FrontLowerBackwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -431,8 +428,8 @@ inline void DistFrontLowerBackwardSolve
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
     {
-        LocalFrontLowerBackwardSolve
-        ( orientation, diag, L.LockedLocalMatrix(), X.LocalMatrix() );
+        FrontLowerBackwardSolve
+        ( orientation, diag, L.LockedMatrix(), X.Matrix() );
 #ifndef RELEASE
         PopCallStack();
 #endif

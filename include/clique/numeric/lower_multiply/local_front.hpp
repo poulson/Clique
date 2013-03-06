@@ -10,16 +10,16 @@
 namespace cliq {
 
 template<typename T>
-void LocalFrontLowerMultiply
+void FrontLowerMultiply
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
   const Matrix<T>& L, Matrix<T>& X );
 
 template<typename T>
-void LocalFrontLowerMultiplyNormal
+void FrontLowerMultiplyNormal
 ( UnitOrNonUnit diag, int diagOffset, const Matrix<T>& L, Matrix<T>& X );
 
 template<typename T>
-void LocalFrontLowerMultiplyTranspose
+void FrontLowerMultiplyTranspose
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
   const Matrix<T>& L, Matrix<T>& X );
 
@@ -97,28 +97,28 @@ void ReplaceAfterTrmm
 } // namespace internal
 
 template<typename T>
-inline void LocalFrontLowerMultiply
+inline void FrontLowerMultiply
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
   const Matrix<T>& L, Matrix<T>& X )
 {
 #ifndef RELEASE
-    PushCallStack("LocalFrontLowerMultiply");
+    PushCallStack("FrontLowerMultiply");
 #endif
     if( orientation == NORMAL )
-        LocalFrontLowerMultiplyNormal( diag, diagOffset, L, X );
+        FrontLowerMultiplyNormal( diag, diagOffset, L, X );
     else
-        LocalFrontLowerMultiplyTranspose( orientation, diag, diagOffset, L, X );
+        FrontLowerMultiplyTranspose( orientation, diag, diagOffset, L, X );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
 template<typename T>
-inline void LocalFrontLowerMultiplyNormal
+inline void FrontLowerMultiplyNormal
 ( UnitOrNonUnit diag, int diagOffset, const Matrix<T>& L, Matrix<T>& X )
 {
 #ifndef RELEASE
-    PushCallStack("LocalFrontLowerMultiplyNormal");
+    PushCallStack("FrontLowerMultiplyNormal");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
@@ -162,12 +162,12 @@ inline void LocalFrontLowerMultiplyNormal
 }
 
 template<typename T>
-inline void LocalFrontLowerMultiplyTranspose
+inline void FrontLowerMultiplyTranspose
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
   const Matrix<T>& L, Matrix<T>& X )
 {
 #ifndef RELEASE
-    PushCallStack("LocalFrontLowerMultiplyTranspose");
+    PushCallStack("FrontLowerMultiplyTranspose");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;

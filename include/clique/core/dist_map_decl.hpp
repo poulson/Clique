@@ -53,10 +53,10 @@ public:
     // Local data
     int GetLocal( int localSource ) const;
     void SetLocal( int localSource, int target );
-    int* LocalBuffer();
-    const int* LocalBuffer() const;
-    std::vector<int>& LocalMap();
-    const std::vector<int>& LocalMap() const;
+    int* Buffer();
+    const int* Buffer() const;
+    std::vector<int>& Map();
+    const std::vector<int>& Map() const;
 
     // For modifying the size of the map
     void Empty();
@@ -73,7 +73,7 @@ private:
     int blocksize_;
     int firstLocalSource_;
 
-    std::vector<int> localMap_;
+    std::vector<int> map_;
 };
 
 } // namespace cliq

@@ -19,7 +19,7 @@ as a means of producing such a separator tree from an arbitrary graph.
    In addition to generating the separator tree, which simply stores the indices
    of each separator, each process computes its portion of the mapping from the
    original to the reordered indices (implied by nested dissection) within the
-   `localMap` vector, and the symbolic factorization, as well as a variety of
+   `map` vector, and the symbolic factorization, as well as a variety of
    other useful information, is returned in an instance of the 
    :cpp:type:`DistSymmInfo` structure, `info`. 
    The `cutoff` parameter determines the maximum
@@ -52,7 +52,7 @@ briefly documented here for the sake of posterity.
 DistSeparatorTree
 ^^^^^^^^^^^^^^^^^
 
-.. cpp:type:: struct LocalSepOrLeaf
+.. cpp:type:: struct SepOrLeaf
 
    .. cpp:member:: int parent 
 
@@ -82,7 +82,7 @@ DistSeparatorTree
 
 .. cpp:type:: struct DistSeparatorTree
 
-   .. cpp:member:: std::vector<LocalSepOrLeaf*> localSepsAndLeaves
+   .. cpp:member:: std::vector<SepOrLeaf*> localSepsAndLeaves
 
       An array of *pointers* to local separators and leaves.
 
@@ -97,7 +97,7 @@ DistSeparatorTree
 DistSymmInfo
 ^^^^^^^^^^^^
 
-.. cpp:type:: struct LocalSymmNodeInfo
+.. cpp:type:: struct SymmNodeInfo
 
    .. rubric:: Known before analysis
 
@@ -240,7 +240,7 @@ DistSymmInfo
 
 .. cpp:type:: struct DistSymmInfo
 
-   .. cpp:member:: std::vector<LocalSymmNodeInfo> localNodes
+   .. cpp:member:: std::vector<SymmNodeInfo> localNodes
 
    .. cpp:member:: std::vector<DistSymmNodeInfo> distNodes
 

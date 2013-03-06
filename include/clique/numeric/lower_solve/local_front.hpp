@@ -10,11 +10,11 @@
 namespace cliq {
 
 template<typename F>
-void LocalFrontLowerForwardSolve
+void FrontLowerForwardSolve
 ( UnitOrNonUnit diag, const Matrix<F>& L, Matrix<F>& X );
 
 template<typename F>
-void LocalFrontLowerBackwardSolve
+void FrontLowerBackwardSolve
 ( Orientation orientation, UnitOrNonUnit diag, 
   const Matrix<F>& L, Matrix<F>& X );
 
@@ -23,11 +23,11 @@ void LocalFrontLowerBackwardSolve
 //----------------------------------------------------------------------------//
 
 template<typename F>
-inline void LocalFrontLowerForwardSolve
+inline void FrontLowerForwardSolve
 ( UnitOrNonUnit diag, const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    PushCallStack("LocalFrontLowerForwardSolve");
+    PushCallStack("FrontLowerForwardSolve");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
@@ -57,12 +57,12 @@ inline void LocalFrontLowerForwardSolve
 }
 
 template<typename F>
-inline void LocalFrontLowerBackwardSolve
+inline void FrontLowerBackwardSolve
 ( Orientation orientation, UnitOrNonUnit diag, 
   const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    PushCallStack("LocalFrontLowerBackwardSolve");
+    PushCallStack("FrontLowerBackwardSolve");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;

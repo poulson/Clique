@@ -47,7 +47,7 @@ inline void DistLowerForwardSolve
 #endif
 
     // Copy the information from the local portion into the distributed leaf
-    const LocalSymmFront<F>& localRootFront = L.localFronts.back();
+    const SymmFront<F>& localRootFront = L.localFronts.back();
     const DistSymmFront<F>& distLeafFront = L.distFronts[0];
     const Grid& leafGrid = ( frontsAre1d ? distLeafFront.front1dL.Grid() 
                                          : distLeafFront.front2dL.Grid() );
@@ -86,7 +86,7 @@ inline void DistLowerForwardSolve
         // Pull in the relevant information from the RHS
         Matrix<F> localXT;
         View( localXT, localX, node.localOffset1d, 0, node.localSize1d, width );
-        WT.LocalMatrix() = localXT;
+        WT.Matrix() = localXT;
         elem::MakeZeros( WB );
 
         // Pack our child's update
@@ -159,8 +159,8 @@ inline void DistLowerForwardSolve
             {
                 const int iFrontLocal = recvIndices[k];
                 const F* recvRow = &recvValues[k*width];
-                F* WRow = W.LocalBuffer( iFrontLocal, 0 );
-                const int WLDim = W.LocalLDim();
+                F* WRow = W.Buffer( iFrontLocal, 0 );
+                const int WLDim = W.LDim();
                 for( int j=0; j<width; ++j )
                     WRow[j*WLDim] += recvRow[j];
             }
@@ -171,16 +171,16 @@ inline void DistLowerForwardSolve
 
         // Now that the RHS is set up, perform this node's solve
         if( frontType == LDL_1D )
-            DistFrontLowerForwardSolve( diag, front.front1dL, W );
+            FrontLowerForwardSolve( diag, front.front1dL, W );
         else if( frontType == LDL_SELINV_1D )
-            DistFrontFastLowerForwardSolve( diag, front.front1dL, W );
+            FrontFastLowerForwardSolve( diag, front.front1dL, W );
         else if( frontType == LDL_SELINV_2D )
-            DistFrontFastLowerForwardSolve( diag, front.front2dL, W );
+            FrontFastLowerForwardSolve( diag, front.front2dL, W );
         else // frontType == BLOCK_LDL_2D
-            DistFrontBlockLowerForwardSolve( front.front2dL, W );
+            FrontBlockLowerForwardSolve( front.front2dL, W );
 
         // Store this node's portion of the result
-        localXT = WT.LocalMatrix();
+        localXT = WT.Matrix();
     }
     L.localFronts.back().work.Empty();
     L.distFronts.back().work1d.Empty();
@@ -214,17 +214,17 @@ inline void DistLowerBackwardSolve
 
     // Directly operate on the root separator's portion of the right-hand sides
     const DistSymmNodeInfo& rootNode = info.distNodes.back();
-    const LocalSymmFront<F>& localRootFront = L.localFronts.back();
+    const SymmFront<F>& localRootFront = L.localFronts.back();
     if( numDistNodes == 1 )
     {
         localRootFront.work.Attach
         ( rootNode.size, width, 
           localX.Buffer(rootNode.localOffset1d,0), localX.LDim() );
         if( !blockLDL )
-            LocalFrontLowerBackwardSolve
+            FrontLowerBackwardSolve
             ( orientation, diag, localRootFront.frontL, localRootFront.work );
         else
-            LocalFrontBlockLowerBackwardSolve
+            FrontBlockLowerBackwardSolve
             ( orientation, localRootFront.frontL, localRootFront.work );
     }
     else
@@ -236,16 +236,16 @@ inline void DistLowerBackwardSolve
         ( rootNode.size, width, 0,
           localX.Buffer(rootNode.localOffset1d,0), localX.LDim(), rootGrid );
         if( frontType == LDL_1D )
-            DistFrontLowerBackwardSolve
+            FrontLowerBackwardSolve
             ( orientation, diag, rootFront.front1dL, rootFront.work1d );
         else if( frontType == LDL_SELINV_1D )
-            DistFrontFastLowerBackwardSolve
+            FrontFastLowerBackwardSolve
             ( orientation, diag, rootFront.front1dL, rootFront.work1d );
         else if( frontType == LDL_SELINV_2D )
-            DistFrontFastLowerBackwardSolve
+            FrontFastLowerBackwardSolve
             ( orientation, diag, rootFront.front2dL, rootFront.work1d );
         else
-            DistFrontBlockLowerBackwardSolve
+            FrontBlockLowerBackwardSolve
             ( orientation, rootFront.front2dL, rootFront.work1d );
     }
 
@@ -278,7 +278,7 @@ inline void DistLowerBackwardSolve
         // Pull in the relevant information from the RHS
         Matrix<F> localXT;
         View( localXT, localX, node.localOffset1d, 0, node.localSize1d, width );
-        WT.LocalMatrix() = localXT;
+        WT.Matrix() = localXT;
 
         //
         // Set the bottom from the parent
@@ -307,9 +307,8 @@ inline void DistLowerBackwardSolve
             {
                 const int iFrontLocal = recvIndices[k];
                 F* sendRow = &sendValues[k*width];
-                const F* workRow = 
-                    parentWork.LockedLocalBuffer( iFrontLocal, 0 );
-                const int workLDim = parentWork.LocalLDim();
+                const F* workRow = parentWork.LockedBuffer( iFrontLocal, 0 );
+                const int workLDim = parentWork.LDim();
                 for( int j=0; j<width; ++j )
                     sendRow[j] = workRow[j*workLDim];
             }
@@ -365,32 +364,32 @@ inline void DistLowerBackwardSolve
         if( s > 0 )
         {
             if( frontType == LDL_1D )
-                DistFrontLowerBackwardSolve
+                FrontLowerBackwardSolve
                 ( orientation, diag, front.front1dL, W );
             else if( frontType == LDL_SELINV_1D )
-                DistFrontFastLowerBackwardSolve
+                FrontFastLowerBackwardSolve
                 ( orientation, diag, front.front1dL, W );
             else if( frontType == LDL_SELINV_2D )
-                DistFrontFastLowerBackwardSolve
+                FrontFastLowerBackwardSolve
                 ( orientation, diag, front.front2dL, W );
             else // frontType == BLOCK_LDL_2D
-                DistFrontBlockLowerBackwardSolve
+                FrontBlockLowerBackwardSolve
                 ( orientation, front.front2dL, front.work1d );
         }
         else
         {
-            View( localRootFront.work, W.LocalMatrix() );
+            View( localRootFront.work, W.Matrix() );
             if( !blockLDL )
-                LocalFrontLowerBackwardSolve
+                FrontLowerBackwardSolve
                 ( orientation, diag, localRootFront.frontL, 
                   localRootFront.work );
             else
-                LocalFrontBlockLowerBackwardSolve
+                FrontBlockLowerBackwardSolve
                 ( orientation, localRootFront.frontL, localRootFront.work );
         }
 
         // Store this node's portion of the result
-        localXT = WT.LocalMatrix();
+        localXT = WT.Matrix();
     }
 #ifndef RELEASE
     PopCallStack();

@@ -48,7 +48,7 @@ using elem::LockedView;
 
 // Pull in a few indexing routines
 using elem::Shift;
-using elem::LocalLength;
+using elem::Length;
 
 // Pull in command-line processing
 using elem::Input;

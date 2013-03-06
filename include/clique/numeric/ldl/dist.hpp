@@ -25,7 +25,7 @@ inline void DistLDL
     PushCallStack("DistLDL");
 #endif
     // The bottom front is already computed, so just view it
-    LocalSymmFront<F>& topLocalFront = L.localFronts.back();
+    SymmFront<F>& topLocalFront = L.localFronts.back();
     DistSymmFront<F>& bottomDistFront = L.distFronts[0];
     const Grid& bottomGrid = *info.distNodes[0].grid;
     bottomDistFront.front2dL.Empty();
@@ -159,7 +159,7 @@ inline void DistLDL
         elem::Zeros( updateSize, updateSize, front.work2d );
         const int leftLocalWidth = front.front2dL.LocalWidth();
         const int topLocalHeight = 
-            LocalLength<int>( node.size, grid.MCRank(), gridHeight );
+            Length<int>( node.size, grid.MCRank(), gridHeight );
         for( unsigned proc=0; proc<commSize; ++proc )
         {
             const F* recvValues = &recvBuffer[recvDispls[proc]];
@@ -190,9 +190,9 @@ inline void DistLDL
         if( !blockLDL )
         {
             if( L.isHermitian )
-                DistFrontLDL( ADJOINT, front.front2dL, front.work2d );
+                FrontLDL( ADJOINT, front.front2dL, front.work2d );
             else
-                DistFrontLDL( TRANSPOSE, front.front2dL, front.work2d );
+                FrontLDL( TRANSPOSE, front.front2dL, front.work2d );
 
             // Store the diagonal in a [VC,* ] distribution
             DistMatrix<F,MD,STAR> diag( grid );
@@ -203,9 +203,9 @@ inline void DistLDL
         else
         {
             if( L.isHermitian )
-                DistFrontBlockLDL( ADJOINT, front.front2dL, front.work2d );
+                FrontBlockLDL( ADJOINT, front.front2dL, front.work2d );
             else
-                DistFrontBlockLDL( TRANSPOSE, front.front2dL, front.work2d );
+                FrontBlockLDL( TRANSPOSE, front.front2dL, front.work2d );
         }
     }
     L.localFronts.back().work.Empty();

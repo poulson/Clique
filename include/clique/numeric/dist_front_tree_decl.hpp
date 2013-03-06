@@ -35,7 +35,7 @@ FrontsAre1d( FrontType frontType )
 }
 
 template<typename F>
-struct LocalFront
+struct Front
 {
     Matrix<F> frontTL, frontBL, frontTR;
     mutable Matrix<F> work;
@@ -61,7 +61,7 @@ template<typename F>
 struct DistFrontTree
 {
     FrontType frontType;
-    std::vector<LocalFront<F> > localFronts;
+    std::vector<Front<F> > fronts;
     std::vector<DistFront<F> > distFronts;
 
     DistFrontTree();

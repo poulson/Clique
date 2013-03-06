@@ -41,8 +41,8 @@ public:
     T GetLocal( int localRow ) const;
     void SetLocal( int localRow, T value );
     void UpdateLocal( int localRow, T value );
-    Matrix<T>& LocalVector();
-    const Matrix<T>& LocalVector() const;
+    Matrix<T>& Vector();
+    const Matrix<T>& Vector() const;
 
     // For modifying the size of the vector
     void Empty();
@@ -59,7 +59,7 @@ private:
     int blocksize_;
     int firstLocalRow_;
 
-    Matrix<T> localVec_;
+    Matrix<T> vec_;
 };
 
 // Set all of the entries of x to zero

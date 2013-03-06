@@ -170,7 +170,7 @@ DistMap::Translate( std::vector<int>& localIndices ) const
         const int i = fulfills[s];
         const int iLocal = i - firstLocalSource_;
 #ifndef RELEASE
-        if( iLocal < 0 || iLocal >= (int)localMap_.size() )
+        if( iLocal < 0 || iLocal >= (int)map_.size() )
         {
             const int commRank = mpi::CommRank( comm_ );
             std::ostringstream msg;
@@ -179,7 +179,7 @@ DistMap::Translate( std::vector<int>& localIndices ) const
             throw std::logic_error( msg.str().c_str() );
         }
 #endif
-        fulfills[s] = localMap_[iLocal];
+        fulfills[s] = map_[iLocal];
     }
 
     // Send everything back
@@ -210,13 +210,13 @@ DistMap::FormInverse( DistMap& inverseMap ) const
     PushCallStack("DistMap::FormInverse");
 #endif
     const int commSize = mpi::CommSize( comm_ );
-    const int numLocalSources = localMap_.size();
+    const int numLocalSources = map_.size();
 
     // How many pairs of original and mapped indices to send to each process
     std::vector<int> sendSizes( commSize, 0 );
     for( int s=0; s<numLocalSources; ++s )
     {
-        const int i = localMap_[s];
+        const int i = map_[s];
         const int q = RowToProcess( i, blocksize_, commSize );
         sendSizes[q] += 2;
     }
@@ -254,7 +254,7 @@ DistMap::FormInverse( DistMap& inverseMap ) const
     std::vector<int> offsets = sendOffsets;
     for( int s=0; s<numLocalSources; ++s )
     {
-        const int i = localMap_[s];
+        const int i = map_[s];
         const int q = RowToProcess( i, blocksize_, commSize );
         sends[offsets[q]++] = s+firstLocalSource_;
         sends[offsets[q]++] = i;
@@ -288,7 +288,7 @@ DistMap::Extend( DistMap& firstMap ) const
     // TODO: Ensure that the communicators are congruent and that the maps
     //       are compatible sizes.
 #endif
-    Translate( firstMap.localMap_ ); 
+    Translate( firstMap.map_ ); 
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -331,7 +331,7 @@ DistMap::SetComm( mpi::Comm comm )
         ( commRank<commSize-1 ?
           blocksize_ :
           numSources_ - (commSize-1)*blocksize_ );
-    localMap_.resize( numLocalSources );
+    map_.resize( numLocalSources );
 }
 
 inline mpi::Comm
@@ -348,17 +348,17 @@ DistMap::FirstLocalSource() const
 
 inline int
 DistMap::NumLocalSources() const
-{ return localMap_.size(); }
+{ return map_.size(); }
 
 inline int
 DistMap::GetLocal( int localSource ) const
 { 
 #ifndef RELEASE
     PushCallStack("DistMap::GetLocal");
-    if( localSource < 0 || localSource >= (int)localMap_.size() )
+    if( localSource < 0 || localSource >= (int)map_.size() )
         throw std::logic_error("local source is out of bounds");
 #endif
-    const int target = localMap_[localSource];
+    const int target = map_[localSource];
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -370,30 +370,30 @@ DistMap::SetLocal( int localSource, int target )
 { 
 #ifndef RELEASE
     PushCallStack("DistMap::SetLocal");
-    if( localSource < 0 || localSource >= (int)localMap_.size() )
+    if( localSource < 0 || localSource >= (int)map_.size() )
         throw std::logic_error("local source is out of bounds");
 #endif
-    localMap_[localSource] = target; 
+    map_[localSource] = target; 
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
 inline std::vector<int>&
-DistMap::LocalMap()
-{ return localMap_; }
+DistMap::Map()
+{ return map_; }
 
 inline const std::vector<int>&
-DistMap::LocalMap() const
-{ return localMap_; }
+DistMap::Map() const
+{ return map_; }
 
 inline int* 
-DistMap::LocalBuffer() 
-{ return &localMap_[0]; }
+DistMap::Buffer() 
+{ return &map_[0]; }
 
 inline const int*
-DistMap::LocalBuffer() const
-{ return &localMap_[0]; }
+DistMap::Buffer() const
+{ return &map_[0]; }
 
 inline void
 DistMap::Empty()
@@ -401,7 +401,7 @@ DistMap::Empty()
     numSources_ = 0;
     blocksize_ = 0;
     firstLocalSource_ = 0;
-    localMap_.clear();
+    map_.clear();
 }
 
 inline void
@@ -415,7 +415,7 @@ DistMap::ResizeTo( int numSources )
     const int numLocalSources = 
         ( commRank<commSize-1 ? blocksize_
                               : numSources-blocksize_*(commSize-1) );
-    localMap_.resize( numLocalSources );
+    map_.resize( numLocalSources );
 }
 
 inline const DistMap&
@@ -423,7 +423,7 @@ DistMap::operator=( const DistMap& map )
 {
     numSources_ = map.numSources_;
     SetComm( map.comm_ );
-    localMap_ = map.localMap_;
+    map_ = map.map_;
     return *this;
 }
 

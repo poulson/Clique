@@ -49,7 +49,7 @@ DistNodalVector<F>::Pull
     int numRecvIndices=0;
     for( int s=0; s<numLocal; ++s )
     {
-        const LocalSymmNodeInfo& node = info.localNodes[s];
+        const SymmNodeInfo& node = info.localNodes[s];
 #ifndef RELEASE
         if( numRecvIndices != node.myOffset )
             throw std::logic_error("numRecvIndices did not match local offset");
@@ -71,7 +71,7 @@ DistNodalVector<F>::Pull
     std::vector<int> mappedIndices( numRecvIndices );
     for( int s=0; s<numLocal; ++s )
     {
-        const LocalSymmNodeInfo& node = info.localNodes[s];
+        const SymmNodeInfo& node = info.localNodes[s];
         for( int t=0; t<node.size; ++t )
             mappedIndices[offset++] = node.offset+t;
     }
@@ -155,7 +155,7 @@ DistNodalVector<F>::Pull
     localVec.ResizeTo( numRecvIndices, 1 );
     for( int s=0; s<numLocal; ++s )
     {
-        const LocalSymmNodeInfo& node = info.localNodes[s];
+        const SymmNodeInfo& node = info.localNodes[s];
         for( int t=0; t<node.size; ++t )
         {
             const int i = mappedIndices[offset];
@@ -224,7 +224,7 @@ DistNodalVector<F>::Push
     std::vector<int> mappedIndices( numSendIndices );
     for( int s=0; s<numLocal; ++s )
     {
-        const LocalSymmNodeInfo& node = info.localNodes[s];
+        const SymmNodeInfo& node = info.localNodes[s];
         for( int t=0; t<node.size; ++t )
             mappedIndices[offset++] = node.offset+t;
     }

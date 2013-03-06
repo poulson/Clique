@@ -337,7 +337,7 @@ void DistSymmetricAnalysis
     info.distNodes.resize( numNodes );
 
     // The bottom node was analyzed locally, so just copy its results over
-    const LocalSymmNodeInfo& topLocal = info.localNodes.back();
+    const SymmNodeInfo& topLocal = info.localNodes.back();
     DistSymmNodeInfo& bottomDist = info.distNodes[0];
     bottomDist.onLeft = eTree.distNodes[0].onLeft;
     mpi::CommDup( eTree.distNodes[0].comm, bottomDist.comm );
@@ -436,9 +436,9 @@ void DistSymmetricAnalysis
             const int updateRowShift = 
                 Shift<int>( childGridCol, updateRowAlignment, childGridWidth );
             const int updateLocalHeight = 
-                LocalLength<int>( updateSize, updateColShift, childGridHeight );
+                Length<int>( updateSize, updateColShift, childGridHeight );
             const int updateLocalWidth = 
-                LocalLength<int>( updateSize, updateRowShift, childGridWidth );
+                Length<int>( updateSize, updateRowShift, childGridWidth );
             for( int jChildLocal=0; 
                      jChildLocal<updateLocalWidth; ++jChildLocal )
             {
@@ -474,7 +474,7 @@ void DistSymmetricAnalysis
             const int updateShift = 
                 Shift<int>( childTeamRank, updateAlignment, childTeamSize );
             const int updateLocalHeight = 
-                LocalLength<int>( updateSize, updateShift, childTeamSize );
+                Length<int>( updateSize, updateShift, childTeamSize );
             for( int iChildLocal=0; 
                      iChildLocal<updateLocalHeight; ++iChildLocal )
             {
@@ -529,7 +529,7 @@ void DistSymmetricAnalysis
         else
             nodeInfo.childFactRecvIndices.clear();
 
-        nodeInfo.localSize1d = LocalLength<int>(node.size,teamRank,teamSize);
+        nodeInfo.localSize1d = Length<int>(node.size,teamRank,teamSize);
         nodeInfo.localOffset1d = localOffset1d;
 
         myOffset += nodeInfo.size;

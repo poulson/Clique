@@ -12,7 +12,7 @@ namespace cliq {
 // 'Supernode' should perhaps be preferred to 'node', but since we will always
 // use supernodes, the extra verbage is unnecessarily cumbersome.
 
-struct LocalSymmNode
+struct SymmNode
 {
     int size, offset; 
     int parent; // -1 if root separator
@@ -32,7 +32,7 @@ struct DistSymmElimTree
 {
     // NOTE: This is an array of pointers, as we will not know how many 
     //       are needed during construction
-    std::vector<LocalSymmNode*> localNodes;
+    std::vector<SymmNode*> localNodes;
     std::vector<DistSymmNode> distNodes;
 
     ~DistSymmElimTree()

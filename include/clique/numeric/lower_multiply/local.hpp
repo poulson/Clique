@@ -35,7 +35,7 @@ inline void LocalLowerMultiplyNormal
     const int width = X.Width();
     for( int s=0; s<numLocalNodes; ++s )
     {
-        const LocalSymmNodeInfo& node = info.localNodes[s];
+        const SymmNodeInfo& node = info.localNodes[s];
         const Matrix<T>& frontL = L.localFronts[s].frontL;
         Matrix<T>& W = L.localFronts[s].work;
 
@@ -54,7 +54,7 @@ inline void LocalLowerMultiplyNormal
 
         // Multiply this block column of L against this node's portion of the
         // right-hand side and set W equal to the result
-        LocalFrontLowerMultiply( NORMAL, diag, diagOffset, frontL, W );
+        FrontLowerMultiply( NORMAL, diag, diagOffset, frontL, W );
 
         // Update using the children (if they exist)
         const int numChildren = node.children.size();
@@ -117,7 +117,7 @@ inline void LocalLowerMultiplyTranspose
 
     for( int s=numLocalNodes-2; s>=0; --s )
     {
-        const LocalSymmNodeInfo& node = info.localNodes[s];
+        const SymmNodeInfo& node = info.localNodes[s];
         const Matrix<T>& frontL = L.localFronts[s].frontL;
         Matrix<T>& W = L.localFronts[s].work;
 
@@ -135,7 +135,7 @@ inline void LocalLowerMultiplyTranspose
 
         // Update using the parent's portion of the RHS
         const int parent = node.parent;
-        const LocalSymmNodeInfo& parentNode = info.localNodes[parent];
+        const SymmNodeInfo& parentNode = info.localNodes[parent];
         Matrix<T>& parentWork = L.localFronts[parent].work;
         const int currentUpdateSize = WB.Height();
         const std::vector<int>& parentRelIndices = 
@@ -163,7 +163,7 @@ inline void LocalLowerMultiplyTranspose
 
         // Multiply the (conjugate-)transpose of this block column of L against
         // this node's portion of the right-hand side.
-        LocalFrontLowerMultiply( orientation, diag, diagOffset, frontL, XNode );
+        FrontLowerMultiply( orientation, diag, diagOffset, frontL, XNode );
 
         // Store this node's portion of the result
         Matrix<T> XNodeT, XNodeB;

@@ -45,8 +45,8 @@ inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
         leafFront.front1dL.LockedAttach
         ( leafFront.front2dL.Height(), 
           leafFront.front2dL.Width(), 0,
-          leafFront.front2dL.LockedLocalBuffer(), 
-          leafFront.front2dL.LocalLDim(),
+          leafFront.front2dL.LockedBuffer(), 
+          leafFront.front2dL.LDim(),
           leafFront.front2dL.Grid() );
         for( int s=1; s<numDistNodes; ++s )
         {
@@ -69,8 +69,8 @@ inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
         leafFront.front2dL.LockedAttach
         ( leafFront.front1dL.Height(), 
           leafFront.front1dL.Width(), 0, 0,
-          leafFront.front1dL.LockedLocalBuffer(), 
-          leafFront.front1dL.LocalLDim(),
+          leafFront.front1dL.LockedBuffer(), 
+          leafFront.front1dL.LDim(),
           leafFront.front1dL.Grid() );
         for( int s=1; s<numDistNodes; ++s )
         {
@@ -104,8 +104,8 @@ inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
         leafFront.front1dL.LockedAttach
         ( leafFront.front2dL.Height(), 
           leafFront.front2dL.Width(), 0,
-          leafFront.front2dL.LockedLocalBuffer(), 
-          leafFront.front2dL.LocalLDim(),
+          leafFront.front2dL.LockedBuffer(), 
+          leafFront.front2dL.LDim(),
           leafFront.front2dL.Grid() );
         for( int s=1; s<numDistNodes; ++s )
         {

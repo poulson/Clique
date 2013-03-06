@@ -53,7 +53,7 @@ DistSymmFrontTree<F>::Initialize
     std::vector<int> recvRowSizes( commSize, 0 );
     for( int s=0; s<numLocal; ++s )
     {
-        const LocalSepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
+        const SepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
         const int numIndices = sepOrLeaf.indices.size();
         for( int t=0; t<numIndices; ++t )
         {
@@ -96,7 +96,7 @@ DistSymmFrontTree<F>::Initialize
     std::vector<int> offsets = recvRowOffsets;
     for( int s=0; s<numLocal; ++s )
     {
-        const LocalSepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
+        const SepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
         const int numIndices = sepOrLeaf.indices.size();
         for( int t=0; t<numIndices; ++t )
         {
@@ -240,9 +240,9 @@ DistSymmFrontTree<F>::Initialize
     localFronts.resize( numLocal );
     for( int s=0; s<numLocal; ++s )
     {
-        LocalSymmFront<F>& front = localFronts[s];
-        const LocalSepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
-        const LocalSymmNodeInfo& node = info.localNodes[s];
+        SymmFront<F>& front = localFronts[s];
+        const SepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
+        const SymmNodeInfo& node = info.localNodes[s];
         const std::vector<int>& origLowerStruct = node.origLowerStruct;
 
         const int size = node.size;
@@ -414,7 +414,7 @@ DistSymmFrontTree<F>::MemoryInfo
 
     for( int s=0; s<numLocalFronts; ++s )
     {
-        const LocalSymmFront<F>& front = localFronts[s];
+        const SymmFront<F>& front = localFronts[s];
         numLocalEntries += front.frontL.MemorySize();
         numLocalEntries += front.work.MemorySize();
     }
@@ -461,7 +461,7 @@ DistSymmFrontTree<F>::TopLeftMemoryInfo
 
     for( int s=0; s<numLocalFronts; ++s )
     {
-        const LocalSymmFront<F>& front = localFronts[s];
+        const SymmFront<F>& front = localFronts[s];
         Matrix<F> FTL,
                   FBL;
         elem::LockedPartitionDown
@@ -520,7 +520,7 @@ DistSymmFrontTree<F>::BottomLeftMemoryInfo
 
     for( int s=0; s<numLocalFronts; ++s )
     {
-        const LocalSymmFront<F>& front = localFronts[s];
+        const SymmFront<F>& front = localFronts[s];
         Matrix<F> FTL,
                   FBL;
         elem::LockedPartitionDown

@@ -10,20 +10,20 @@
 namespace cliq {
 
 template<typename F>
-void DistFrontFastLowerForwardSolve
+void FrontFastLowerForwardSolve
 ( UnitOrNonUnit diag, DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
-void DistFrontFastLowerForwardSolve
+void FrontFastLowerForwardSolve
 ( UnitOrNonUnit diag, DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
-void DistFrontFastLowerBackwardSolve
+void FrontFastLowerBackwardSolve
 ( Orientation orientation, UnitOrNonUnit diag, 
   DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
-void DistFrontFastLowerBackwardSolve
+void FrontFastLowerBackwardSolve
 ( Orientation orientation, UnitOrNonUnit diag, 
   DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X );
 
@@ -32,11 +32,11 @@ void DistFrontFastLowerBackwardSolve
 //----------------------------------------------------------------------------//
 
 template<typename F>
-inline void DistFrontFastLowerForwardSolve
+inline void FrontFastLowerForwardSolve
 ( UnitOrNonUnit diag, DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("DistFrontFastLowerForwardSolve");
+    PushCallStack("FrontFastLowerForwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -56,8 +56,7 @@ inline void DistFrontFastLowerForwardSolve
     const int commSize = g.Size();
     if( commSize == 1 )
     {
-        LocalFrontLowerForwardSolve
-        ( diag, L.LockedLocalMatrix(), X.LocalMatrix() );
+        FrontLowerForwardSolve( diag, L.LockedMatrix(), X.Matrix() );
 #ifndef RELEASE
         PopCallStack();
 #endif
@@ -83,8 +82,8 @@ inline void DistFrontFastLowerForwardSolve
     {
         // Extract the diagonal of the top triangle and replace it with ones
         localDiag.resize( localTopHeight );
-        F* LTBuffer = LT.LocalBuffer();
-        const int LTLDim = LT.LocalLDim();
+        F* LTBuffer = LT.Buffer();
+        const int LTLDim = LT.LDim();
         for( int iLocal=0; iLocal<localTopHeight; ++iLocal )
         {
             const int i = commRank + iLocal*commSize;
@@ -103,8 +102,8 @@ inline void DistFrontFastLowerForwardSolve
     if( diag == UNIT )
     {
         // Put the diagonal back
-        F* LTBuffer = LT.LocalBuffer();
-        const int LTLDim = LT.LocalLDim();
+        F* LTBuffer = LT.Buffer();
+        const int LTLDim = LT.LDim();
         for( int iLocal=0; iLocal<localTopHeight; ++iLocal )
         {
             const int i = commRank + iLocal*commSize;
@@ -127,11 +126,11 @@ inline void DistFrontFastLowerForwardSolve
 }
 
 template<typename F>
-inline void DistFrontFastLowerForwardSolve
+inline void FrontFastLowerForwardSolve
 ( UnitOrNonUnit diag, DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("DistFrontFastLowerForwardSolve");
+    PushCallStack("FrontFastLowerForwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -148,8 +147,7 @@ inline void DistFrontFastLowerForwardSolve
     const int commSize = g.Size();
     if( commSize == 1 )
     {
-        LocalFrontLowerForwardSolve
-        ( diag, L.LockedLocalMatrix(), X.LocalMatrix() );
+        FrontLowerForwardSolve( diag, L.LockedMatrix(), X.Matrix() );
 #ifndef RELEASE
         PopCallStack();
 #endif
@@ -223,12 +221,12 @@ inline void DistFrontFastLowerForwardSolve
 }
 
 template<typename F>
-inline void DistFrontFastLowerBackwardSolve
+inline void FrontFastLowerBackwardSolve
 ( Orientation orientation, UnitOrNonUnit diag, 
   DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("DistFrontFastLowerBackwardSolve");
+    PushCallStack("FrontFastLowerBackwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -250,8 +248,8 @@ inline void DistFrontFastLowerBackwardSolve
     const int commRank = g.VCRank();
     if( commSize == 1 )
     {
-        LocalFrontLowerBackwardSolve
-        ( orientation, diag, L.LockedLocalMatrix(), X.LocalMatrix() );
+        FrontLowerBackwardSolve
+        ( orientation, diag, L.LockedMatrix(), X.Matrix() );
 #ifndef RELEASE
         PopCallStack();
 #endif
@@ -285,8 +283,8 @@ inline void DistFrontFastLowerBackwardSolve
     {
         // Extract the diagonal of the top triangle and replace it with ones
         localDiag.resize( localTopHeight );
-        F* LTBuffer = LT.LocalBuffer();
-        const int LTLDim = LT.LocalLDim();
+        F* LTBuffer = LT.Buffer();
+        const int LTLDim = LT.LDim();
         for( int iLocal=0; iLocal<localTopHeight; ++iLocal )
         {
             const int i = commRank + iLocal*commSize;
@@ -302,8 +300,8 @@ inline void DistFrontFastLowerBackwardSolve
     if( diag == UNIT )
     {
         // Put the diagonal back
-        F* LTBuffer = LT.LocalBuffer();
-        const int LTLDim = LT.LocalLDim();
+        F* LTBuffer = LT.Buffer();
+        const int LTLDim = LT.LDim();
         for( int iLocal=0; iLocal<localTopHeight; ++iLocal )
         {
             const int i = commRank + iLocal*commSize;
@@ -316,12 +314,12 @@ inline void DistFrontFastLowerBackwardSolve
 }
 
 template<typename F>
-inline void DistFrontFastLowerBackwardSolve
+inline void FrontFastLowerBackwardSolve
 ( Orientation orientation, UnitOrNonUnit diag, 
   DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("DistFrontFastLowerBackwardSolve");
+    PushCallStack("FrontFastLowerBackwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -340,8 +338,8 @@ inline void DistFrontFastLowerBackwardSolve
     const int commSize = g.Size();
     if( commSize == 1 )
     {
-        LocalFrontLowerBackwardSolve
-        ( orientation, diag, L.LockedLocalMatrix(), X.LocalMatrix() );
+        FrontLowerBackwardSolve
+        ( orientation, diag, L.LockedMatrix(), X.Matrix() );
 #ifndef RELEASE
         PopCallStack();
 #endif

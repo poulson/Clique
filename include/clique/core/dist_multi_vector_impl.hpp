@@ -176,7 +176,7 @@ DistMultiVector<T>::Height() const
 template<typename T>
 inline int
 DistMultiVector<T>::Width() const
-{ return localMultiVec_.Width(); }
+{ return multiVec_.Width(); }
 
 template<typename T>
 inline void
@@ -198,7 +198,7 @@ DistMultiVector<T>::SetComm( mpi::Comm comm )
         ( commRank<commSize-1 ?
           blocksize_ :
           height_ - (commSize-1)*blocksize_ );
-    localMultiVec_.ResizeTo( localHeight, width_ );
+    multiVec_.ResizeTo( localHeight, width_ );
 }
 
 template<typename T>
@@ -219,7 +219,7 @@ DistMultiVector<T>::FirstLocalRow() const
 template<typename T>
 inline int
 DistMultiVector<T>::LocalHeight() const
-{ return localMultiVec_.Height(); }
+{ return multiVec_.Height(); }
 
 template<typename T>
 inline T
@@ -228,7 +228,7 @@ DistMultiVector<T>::GetLocal( int localRow, int col ) const
 #ifndef RELEASE 
     PushCallStack("DistMultiVector::GetLocal");
 #endif
-    const T value = localMultiVec_.Get(localRow,col);
+    const T value = multiVec_.Get(localRow,col);
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -242,7 +242,7 @@ DistMultiVector<T>::SetLocal( int localRow, int col, T value )
 #ifndef RELEASE
     PushCallStack("DistMultiVector::SetLocal");
 #endif
-    localMultiVec_.Set(localRow,col,value);
+    multiVec_.Set(localRow,col,value);
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -255,7 +255,7 @@ DistMultiVector<T>::UpdateLocal( int localRow, int col, T value )
 #ifndef RELEASE
     PushCallStack("DistMultiVector::UpdateLocal");
 #endif
-    localMultiVec_.Update(localRow,col,value);
+    multiVec_.Update(localRow,col,value);
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -269,7 +269,7 @@ DistMultiVector<T>::Empty()
     width_ = 0;
     blocksize_ = 0;
     firstLocalRow_ = 0;
-    localMultiVec_.Empty();
+    multiVec_.Empty();
 }
 
 template<typename T>
@@ -286,7 +286,7 @@ DistMultiVector<T>::ResizeTo( int height, int width )
         ( commRank<commSize-1 ?
           blocksize_ :
           height_ - (commSize-1)*blocksize_ );
-    localMultiVec_.ResizeTo( localHeight, width );
+    multiVec_.ResizeTo( localHeight, width );
 }
 
 template<typename T>
@@ -299,7 +299,7 @@ DistMultiVector<T>::operator=( const DistVector<T>& x )
     height_ = x.height_;
     width_ = 1;
     SetComm( x.comm_ );
-    localMultiVec_ = x.localVec_;
+    multiVec_ = x.localVec_;
 #ifndef RELEASE
     PopCallStack();
 #endif
@@ -316,7 +316,7 @@ DistMultiVector<T>::operator=( const DistMultiVector<T>& X )
     height_ = X.height_;
     width_ = X.width_;
     SetComm( X.comm_ );
-    localMultiVec_ = X.localMultiVec_;
+    multiVec_ = X.multiVec_;
 #ifndef RELEASE
     PopCallStack();
 #endif

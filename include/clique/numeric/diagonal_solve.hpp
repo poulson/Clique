@@ -37,7 +37,7 @@ inline void LocalDiagonalSolve
     Matrix<F> XSub;
     for( int s=0; s<numLocalNodes; ++s )
     {
-        const LocalSymmNodeInfo& node = info.localNodes[s];
+        const SymmNodeInfo& node = info.localNodes[s];
         const Matrix<F>& frontL = L.localFronts[s].frontL;
         View( XSub, X, node.myOffset, 0, node.size, width );
 
@@ -71,7 +71,7 @@ void DistDiagonalSolve
         View( localXT, localX, node.localOffset1d, 0, node.localSize1d, width );
 
         elem::DiagonalSolve
-        ( LEFT, NORMAL, front.diag.LockedLocalMatrix(), localXT, true );
+        ( LEFT, NORMAL, front.diag.LockedMatrix(), localXT, true );
     }
 #ifndef RELEASE
     PopCallStack();

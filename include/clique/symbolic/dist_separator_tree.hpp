@@ -9,7 +9,7 @@
 
 namespace cliq {
 
-struct LocalSepOrLeaf
+struct SepOrLeaf
 {
     int parent; // -1 if local root
     int offset;
@@ -29,7 +29,7 @@ struct DistSeparatorTree
     //
     // NOTE: This is an array of pointers, as we will not know during 
     //       construction how many will need to be created
-    std::vector<LocalSepOrLeaf*> localSepsAndLeaves;
+    std::vector<SepOrLeaf*> localSepsAndLeaves;
 
     // One path through top of binary tree 
     //

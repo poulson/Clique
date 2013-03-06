@@ -150,7 +150,7 @@ inline void SymmetricSolve
 
     DistNodalMultiVector<F> XNodal;
     XNodal.Pull( inverseMap, info, X );
-    Solve( info, frontTree, XNodal.localMultiVec );
+    Solve( info, frontTree, XNodal.multiVec );
     XNodal.Push( inverseMap, info, X );
 #ifndef RELEASE
     PopCallStack();
@@ -178,7 +178,7 @@ inline void HermitianSolve
 
     DistNodalMultiVector<F> XNodal;
     XNodal.Pull( inverseMap, info, X );
-    Solve( info, frontTree, XNodal.localMultiVec );
+    Solve( info, frontTree, XNodal.multiVec );
     XNodal.Push( inverseMap, info, X );
 #ifndef RELEASE
     PopCallStack();

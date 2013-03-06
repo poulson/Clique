@@ -10,7 +10,7 @@
 namespace cliq {
 
 template<typename F> 
-void DistFrontLDL
+void FrontLDL
 ( Orientation orientation, DistMatrix<F>& AL, DistMatrix<F>& ABR );
 
 //----------------------------------------------------------------------------//
@@ -20,11 +20,11 @@ void DistFrontLDL
 namespace internal {
 
 template<typename F> 
-inline void DistFrontLDLGeneral
+inline void FrontLDLGeneral
 ( Orientation orientation, DistMatrix<F>& AL, DistMatrix<F>& ABR )
 {
 #ifndef RELEASE
-    PushCallStack("internal::DistFrontLDLGeneral");
+    PushCallStack("internal::FrontLDLGeneral");
     if( ABR.Height() != ABR.Width() )
         throw std::logic_error("ABR must be square");
     if( AL.Height() != AL.Width()+ABR.Height() )
@@ -40,7 +40,7 @@ inline void DistFrontLDLGeneral
         throw std::logic_error
         ("AL and ABR must have compatible row alignments");
     if( orientation == NORMAL )
-        throw std::logic_error("DistFrontLDL must be (conjugate-)transposed.");
+        throw std::logic_error("FrontLDL must be (conjugate-)transposed.");
 #endif
     const Grid& g = AL.Grid();
 
@@ -81,8 +81,7 @@ inline void DistFrontLDLGeneral
         AL21AdjOrTrans_STAR_MR.AlignWith( AL22 );
         //--------------------------------------------------------------------//
         AL11_STAR_STAR = AL11; 
-        elem::internal::LocalLDL
-        ( orientation, AL11_STAR_STAR, d1_STAR_STAR );
+        elem::internal::LocalLDL( orientation, AL11_STAR_STAR, d1_STAR_STAR );
         AL11 = AL11_STAR_STAR;
 
         AL21_VC_STAR = AL21;
@@ -137,11 +136,11 @@ inline void DistFrontLDLGeneral
 }
 
 template<typename F>
-inline void DistFrontLDLSquare
+inline void FrontLDLSquare
 ( Orientation orientation, DistMatrix<F>& AL, DistMatrix<F>& ABR )
 {
 #ifndef RELEASE
-    PushCallStack("internal::DistFrontLDLSquare");
+    PushCallStack("internal::FrontLDLSquare");
     if( ABR.Height() != ABR.Width() )
         throw std::logic_error("ABR must be square");
     if( AL.Height() != AL.Width()+ABR.Height() )
@@ -155,7 +154,7 @@ inline void DistFrontLDLSquare
         (AL.RowAlignment()+AL.Width()) % AL.Grid().Width() )
         throw std::logic_error("AL & ABR must have compatible row alignments");
     if( orientation == NORMAL )
-        throw std::logic_error("DistFrontLDL must be (conjugate-)transposed.");
+        throw std::logic_error("FrontLDL must be (conjugate-)transposed.");
 #endif
     const Grid& g = AL.Grid();
 #ifndef RELEASE
@@ -215,8 +214,7 @@ inline void DistFrontLDLSquare
         AL21AdjOrTrans_STAR_MR.AlignWith( AL22 );
         //--------------------------------------------------------------------//
         AL11_STAR_STAR = AL11; 
-        elem::internal::LocalLDL
-        ( orientation, AL11_STAR_STAR, d1_STAR_STAR );
+        elem::internal::LocalLDL( orientation, AL11_STAR_STAR, d1_STAR_STAR );
         AL11 = AL11_STAR_STAR;
 
         AL21_VC_STAR = AL21;
@@ -233,8 +231,8 @@ inline void DistFrontLDLSquare
             {
                 const int size = AL21.LocalHeight()*AL11.Width();    
                 elem::MemCopy
-                ( AL21AdjOrTrans_STAR_MR.LocalBuffer(), 
-                  S21Trans_STAR_MC.LocalBuffer(), size );
+                ( AL21AdjOrTrans_STAR_MR.Buffer(), 
+                  S21Trans_STAR_MC.Buffer(), size );
             }
             else
             {
@@ -244,8 +242,8 @@ inline void DistFrontLDLSquare
                 // We know that the ldim is the height since we have manually
                 // created both temporary matrices.
                 mpi::SendRecv
-                ( S21Trans_STAR_MC.LocalBuffer(), sendSize, transposeRank, 0,
-                  AL21AdjOrTrans_STAR_MR.LocalBuffer(), 
+                ( S21Trans_STAR_MC.Buffer(), sendSize, transposeRank, 0,
+                  AL21AdjOrTrans_STAR_MR.Buffer(), 
                   recvSize, transposeRank, 0, g.VCComm() );
             }
             elem::DiagonalSolve
@@ -293,17 +291,17 @@ inline void DistFrontLDLSquare
 } // namespace internal
 
 template<typename F> 
-inline void DistFrontLDL
+inline void FrontLDL
 ( Orientation orientation, DistMatrix<F>& AL, DistMatrix<F>& ABR )
 {
 #ifndef RELEASE
-    PushCallStack("DistFrontLDL");
+    PushCallStack("FrontLDL");
 #endif
     const Grid& grid = AL.Grid();
     if( grid.Height() == grid.Width() )
-        internal::DistFrontLDLSquare( orientation, AL, ABR );
+        internal::FrontLDLSquare( orientation, AL, ABR );
     else
-        internal::DistFrontLDLGeneral( orientation, AL, ABR );
+        internal::FrontLDLGeneral( orientation, AL, ABR );
 #ifndef RELEASE
     PopCallStack();
 #endif

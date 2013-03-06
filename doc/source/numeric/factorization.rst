@@ -30,7 +30,7 @@ DistSymmFrontTree
 This data structure represents a distributed symmetric :math:`LDL^T` or 
 :math:`LDL^H` factorization.
 
-.. cpp:type:: struct LocalSymmFront<T>
+.. cpp:type:: struct SymmFront<T>
 
    .. cpp:member:: Matrix<T> frontL
 
@@ -98,7 +98,7 @@ This data structure represents a distributed symmetric :math:`LDL^T` or
 
       Specifies the form of the frontal matrices.
 
-   .. cpp:member:: std::vector<LocalSymmFront<T> > localFronts
+   .. cpp:member:: std::vector<SymmFront<T> > localFronts
 
       The vector of local frontal matrices.
 

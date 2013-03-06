@@ -73,7 +73,7 @@ DistNodalVector
 
 .. cpp:type:: struct DistNodalVector<T>
 
-   .. cpp:member:: Matrix<T> localVec
+   .. cpp:member:: Matrix<T> vec
 
    .. cpp:function:: void Pull( const DistMap& inverseMap, const DistSymmInfo& info, const DistVector<T>& x )
 
@@ -90,7 +90,7 @@ DistNodalMultiVector
 
 .. cpp:type:: struct DistNodalMultiVector<T>
 
-   .. cpp:member:: Matrix<T> localMultiVec
+   .. cpp:member:: Matrix<T> multiVec
 
    .. cpp:function:: void Pull( const DistMap& inverseMap, const DistSymmInfo& info, const DistMultiVector<T>& X )
 

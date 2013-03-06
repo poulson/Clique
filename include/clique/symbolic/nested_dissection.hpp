@@ -125,15 +125,15 @@ NestedDissectionRecursion
     {
         // Fill in this node of the local separator tree
         const int numSources = graph.NumSources();
-        sepTree.localSepsAndLeaves.push_back( new LocalSepOrLeaf );
-        LocalSepOrLeaf& leaf = *sepTree.localSepsAndLeaves.back();
+        sepTree.localSepsAndLeaves.push_back( new SepOrLeaf );
+        SepOrLeaf& leaf = *sepTree.localSepsAndLeaves.back();
         leaf.parent = parent;
         leaf.offset = offset;
         leaf.indices = perm;
 
         // Fill in this node of the local elimination tree
-        eTree.localNodes.push_back( new LocalSymmNode );
-        LocalSymmNode& node = *eTree.localNodes.back();
+        eTree.localNodes.push_back( new SymmNode );
+        SymmNode& node = *eTree.localNodes.back();
         node.size = numSources;
         node.offset = offset;
         node.parent = parent;
@@ -169,8 +169,8 @@ NestedDissectionRecursion
 
         // Mostly compute this node of the local separator tree
         // (we will finish computing the separator indices soon)
-        sepTree.localSepsAndLeaves.push_back( new LocalSepOrLeaf );
-        LocalSepOrLeaf& sep = *sepTree.localSepsAndLeaves.back();
+        sepTree.localSepsAndLeaves.push_back( new SepOrLeaf );
+        SepOrLeaf& sep = *sepTree.localSepsAndLeaves.back();
         sep.parent = parent;
         sep.offset = offset + (numSources-sepSize);
         sep.indices.resize( sepSize );
@@ -181,8 +181,8 @@ NestedDissectionRecursion
         }
     
         // Fill in this node in the local elimination tree
-        eTree.localNodes.push_back( new LocalSymmNode );
-        LocalSymmNode& node = *eTree.localNodes.back();
+        eTree.localNodes.push_back( new SymmNode );
+        SymmNode& node = *eTree.localNodes.back();
         node.size = sepSize;
         node.offset = sep.offset;
         node.parent = parent;
@@ -367,16 +367,16 @@ NestedDissectionRecursion
         Graph seqGraph( graph );
 
         // Fill in this node of the local separator tree
-        sepTree.localSepsAndLeaves.push_back( new LocalSepOrLeaf );
-        LocalSepOrLeaf& leaf = *sepTree.localSepsAndLeaves.back();
+        sepTree.localSepsAndLeaves.push_back( new SepOrLeaf );
+        SepOrLeaf& leaf = *sepTree.localSepsAndLeaves.back();
         leaf.parent = -1;
         leaf.offset = offset;
-        leaf.indices = perm.LocalMap();
+        leaf.indices = perm.Map();
 
         // Fill in this node of the local and distributed parts of the 
         // elimination tree
-        eTree.localNodes.push_back( new LocalSymmNode );
-        LocalSymmNode& localNode = *eTree.localNodes.back();
+        eTree.localNodes.push_back( new SymmNode );
+        SymmNode& localNode = *eTree.localNodes.back();
         DistSymmNode& distNode = eTree.distNodes[0];
         mpi::CommDup( comm, distNode.comm );
         distNode.onLeft = onLeft;
@@ -419,8 +419,8 @@ NestedDissectionRecursion
 
         // Mostly compute this node of the local separator tree
         // (we will finish computing the separator indices soon)
-        sepTree.localSepsAndLeaves.push_back( new LocalSepOrLeaf );
-        LocalSepOrLeaf& sep = *sepTree.localSepsAndLeaves.back();
+        sepTree.localSepsAndLeaves.push_back( new SepOrLeaf );
+        SepOrLeaf& sep = *sepTree.localSepsAndLeaves.back();
         sep.parent = -1;
         sep.offset = offset + (numSources-sepSize);
         sep.indices.resize( sepSize );
@@ -432,8 +432,8 @@ NestedDissectionRecursion
         
         // Fill in this node in both the local and distributed parts of 
         // the elimination tree
-        eTree.localNodes.push_back( new LocalSymmNode );
-        LocalSymmNode& localNode = *eTree.localNodes.back();
+        eTree.localNodes.push_back( new SymmNode );
+        SymmNode& localNode = *eTree.localNodes.back();
         DistSymmNode& distNode = eTree.distNodes[0];
         mpi::CommDup( comm, distNode.comm );
         distNode.onLeft = onLeft;
@@ -765,7 +765,7 @@ Bisect
 
         // Distribute the first commSize*blocksize values of the permutation
         mpi::Scatter
-        ( &seqPerm[0], blocksize, perm.LocalBuffer(), blocksize, 0, comm );
+        ( &seqPerm[0], blocksize, perm.Buffer(), blocksize, 0, comm );
 
         // Make sure the last process gets the straggling entries
         if( commRank == 0 )
@@ -773,8 +773,7 @@ Bisect
             ( &seqPerm[commSize*blocksize], numRemaining, commSize-1, 0, comm );
         if( commRank == commSize-1 )
             mpi::Recv
-            ( perm.LocalBuffer()+blocksize, numLocalSources-blocksize, 0, 
-              0, comm );
+            ( perm.Buffer()+blocksize, numLocalSources-blocksize, 0, 0, comm );
 
         // Broadcast the sizes information from the root
         mpi::Broadcast( (byte*)&sizes[0], 3*sizeof(idx_t), 0, comm );
@@ -794,7 +793,7 @@ Bisect
         // Use the custom ParMETIS interface
         CliqParallelBisect
         ( &vtxDist[0], &xAdj[0], &adjacency[0], &nparseps, &nseqseps, 
-          &imbalance, NULL, perm.LocalBuffer(), &sizes[0], &comm );
+          &imbalance, NULL, perm.Buffer(), &sizes[0], &comm );
     }
 #ifndef RELEASE
     EnsurePermutation( perm );
@@ -874,12 +873,12 @@ ReverseOrder( DistSeparatorTree& sepTree, DistSymmElimTree& eTree )
     if( numLocalNodes != 1 )
     {
         // Switch the pointers for the root and last nodes
-        LocalSymmNode* rootNode = eTree.localNodes[0];
-        LocalSymmNode* lastNode = eTree.localNodes.back();
+        SymmNode* rootNode = eTree.localNodes[0];
+        SymmNode* lastNode = eTree.localNodes.back();
         eTree.localNodes[0] = lastNode;
         eTree.localNodes.back() = rootNode;
-        LocalSepOrLeaf* rootSep = sepTree.localSepsAndLeaves[0];
-        LocalSepOrLeaf* lastLeaf = sepTree.localSepsAndLeaves.back();
+        SepOrLeaf* rootSep = sepTree.localSepsAndLeaves[0];
+        SepOrLeaf* lastLeaf = sepTree.localSepsAndLeaves.back();
         sepTree.localSepsAndLeaves[0] = lastLeaf;
         sepTree.localSepsAndLeaves.back() = rootSep;
 
@@ -898,10 +897,10 @@ ReverseOrder( DistSeparatorTree& sepTree, DistSymmElimTree& eTree )
     {
         const int t = lastIndex - s;
         // Switch the pointers for the last and right nodes
-        LocalSymmNode* leftNode = eTree.localNodes[s];
-        LocalSymmNode* rightNode = eTree.localNodes[t];
-        LocalSepOrLeaf* leftSepOrLeaf = sepTree.localSepsAndLeaves[s];
-        LocalSepOrLeaf* rightSepOrLeaf = sepTree.localSepsAndLeaves[t];
+        SymmNode* leftNode = eTree.localNodes[s];
+        SymmNode* rightNode = eTree.localNodes[t];
+        SepOrLeaf* leftSepOrLeaf = sepTree.localSepsAndLeaves[s];
+        SepOrLeaf* rightSepOrLeaf = sepTree.localSepsAndLeaves[t];
         eTree.localNodes[s] = rightNode;
         eTree.localNodes[t] = leftNode;
         sepTree.localSepsAndLeaves[s] = rightSepOrLeaf;
@@ -924,8 +923,8 @@ ReverseOrder( DistSeparatorTree& sepTree, DistSymmElimTree& eTree )
     {
         const int midIndex = numLocalNodes/2;
         // Update the parent indices to the final values
-        LocalSymmNode* middleNode = eTree.localNodes[midIndex];
-        LocalSepOrLeaf* middleSepOrLeaf = sepTree.localSepsAndLeaves[midIndex];
+        SymmNode* middleNode = eTree.localNodes[midIndex];
+        SepOrLeaf* middleSepOrLeaf = sepTree.localSepsAndLeaves[midIndex];
         middleNode->parent = lastIndex - middleNode->parent;
         middleSepOrLeaf->parent = lastIndex - middleSepOrLeaf->parent;
         // Update the children's indices
@@ -1290,7 +1289,7 @@ BuildMap
     std::vector<int> sendSizes( commSize, 0 );
     for( int s=0; s<numLocal; ++s )
     {
-        const LocalSepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
+        const SepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
         const int numIndices = sepOrLeaf.indices.size();
         for( int t=0; t<numIndices; ++t )
         {
@@ -1314,8 +1313,7 @@ BuildMap
         const int numIndices = sep.indices.size();
         const int teamSize = mpi::CommSize( sep.comm );
         const int teamRank = mpi::CommRank( sep.comm );
-        const int numLocalIndices = 
-            LocalLength( numIndices, teamRank, teamSize );
+        const int numLocalIndices = Length( numIndices, teamRank, teamSize );
         for( int tLocal=0; tLocal<numLocalIndices; ++tLocal )
         {
             const int t = teamRank + tLocal*teamSize;
@@ -1352,7 +1350,7 @@ BuildMap
     std::vector<int> offsets = sendOffsets;
     for( int s=0; s<numLocal; ++s )
     {
-        const LocalSepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
+        const SepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
         const int numIndices = sepOrLeaf.indices.size();
         for( int t=0; t<numIndices; ++t )
         {
@@ -1370,8 +1368,7 @@ BuildMap
         const int numIndices = sep.indices.size();
         const int teamSize = mpi::CommSize( sep.comm );
         const int teamRank = mpi::CommRank( sep.comm );
-        const int numLocalIndices = 
-            LocalLength( numIndices, teamRank, teamSize );
+        const int numLocalIndices = Length( numIndices, teamRank, teamSize );
         for( int tLocal=0; tLocal<numLocalIndices; ++tLocal )
         {
             const int t = teamRank + tLocal*teamSize;

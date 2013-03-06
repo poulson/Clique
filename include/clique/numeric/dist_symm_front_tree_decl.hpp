@@ -36,7 +36,7 @@ FrontsAre1d( SymmFrontType frontType )
 // needs to be kept after the factorization is complete.
 
 template<typename F>
-struct LocalSymmFront
+struct SymmFront
 {
     Matrix<F> frontL;
     mutable Matrix<F> work;
@@ -67,7 +67,7 @@ struct DistSymmFrontTree
 {
     bool isHermitian;
     SymmFrontType frontType;
-    std::vector<LocalSymmFront<F> > localFronts;
+    std::vector<SymmFront<F> > localFronts;
     std::vector<DistSymmFront<F> > distFronts;
 
     DistSymmFrontTree();

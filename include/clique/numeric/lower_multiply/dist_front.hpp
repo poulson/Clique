@@ -10,17 +10,17 @@
 namespace cliq {
 
 template<typename T>
-void DistFrontLowerMultiply
+void FrontLowerMultiply
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
   const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X );
 
 template<typename T>
-void DistFrontLowerMultiplyNormal
+void FrontLowerMultiplyNormal
 ( UnitOrNonUnit diag, int diagOffset,
   const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X );
 
 template<typename T>
-void DistFrontLowerMultiplyTranspose
+void FrontLowerMultiplyTranspose
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
   const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X );
 
@@ -42,7 +42,7 @@ void ModifyForTrmm
     for( int j=0; j<height; ++j )
     {
         const int length = std::min(-diagOffset,height-j);
-        MemZero( D.LocalBuffer(j,j), length );
+        MemZero( D.Buffer(j,j), length );
         if( diag == UNIT && j-diagOffset < height )
             D.SetLocal( j-diagOffset, j, T(1) );
     }
@@ -54,29 +54,29 @@ void ModifyForTrmm
 } // namespace internal
 
 template<typename T>
-inline void DistFrontLowerMultiply
+inline void FrontLowerMultiply
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
   const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("DistFrontLowerMultiply");
+    PushCallStack("FrontLowerMultiply");
 #endif
     if( orientation == NORMAL )
-        DistFrontLowerMultiplyNormal( diag, diagOffset, L, X );
+        FrontLowerMultiplyNormal( diag, diagOffset, L, X );
     else
-        DistFrontLowerMultiplyTranspose( orientation, diag, diagOffset, L, X );
+        FrontLowerMultiplyTranspose( orientation, diag, diagOffset, L, X );
 #ifndef RELEASE
     PopCallStack();
 #endif
 }
 
 template<typename T>
-inline void DistFrontLowerMultiplyNormal
+inline void FrontLowerMultiplyNormal
 ( UnitOrNonUnit diag, int diagOffset,
   const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("DistFrontLowerMultiplyNormal");
+    PushCallStack("FrontLowerMultiplyNormal");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -170,12 +170,12 @@ inline void DistFrontLowerMultiplyNormal
 }
 
 template<typename T>
-inline void DistFrontLowerMultiplyTranspose
+inline void FrontLowerMultiplyTranspose
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
   const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("DistFrontLowerMultiplyTranspose");
+    PushCallStack("FrontLowerMultiplyTranspose");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");

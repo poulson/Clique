@@ -10,24 +10,23 @@
 namespace cliq {
 
 template<typename F> 
-void LocalFrontLDL( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR );
+void FrontLDL( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
 template<typename F> 
-inline void LocalFrontLDL
-( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR )
+inline void FrontLDL( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR )
 {
 #ifndef RELEASE
-    PushCallStack("LocalFrontLDL");
+    PushCallStack("FrontLDL");
     if( ABR.Height() != ABR.Width() )
         throw std::logic_error("ABR must be square");
     if( AL.Height() != AL.Width() + ABR.Width() )
         throw std::logic_error("AL and ABR don't have conformal dimensions");
     if( orientation == NORMAL )
-        throw std::logic_error("LocalFrontLDL must be (conjugate-)transposed.");
+        throw std::logic_error("FrontLDL must be (conjugate-)transposed.");
 #endif
     Matrix<F>
         ALTL, ALTR,  AL00, AL01, AL02,

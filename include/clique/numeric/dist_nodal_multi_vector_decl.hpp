@@ -18,7 +18,7 @@ template<typename F>
 class DistNodalMultiVector
 {
 public:
-    Matrix<F> localMultiVec;
+    Matrix<F> multiVec;
 
     void Pull
     ( const DistMap& inverseMap, const DistSymmInfo& info,

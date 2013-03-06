@@ -10,19 +10,18 @@
 namespace cliq {
 
 template<typename F> 
-void LocalFrontBlockLDL
-( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR );
+void FrontBlockLDL( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
 template<typename F> 
-inline void LocalFrontBlockLDL
+inline void FrontBlockLDL
 ( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR )
 {
 #ifndef RELEASE
-    PushCallStack("LocalFrontBlockLDL");
+    PushCallStack("FrontBlockLDL");
 #endif
     Matrix<F> ATL,
               ABL;
@@ -34,7 +33,7 @@ inline void LocalFrontBlockLDL
     Matrix<F> BBL( ABL );
 
     // Call the standard routine
-    LocalFrontLDL( orientation, AL, ABR );
+    FrontLDL( orientation, AL, ABR );
 
     // Copy the original contents of ABL back
     ABL = BBL;

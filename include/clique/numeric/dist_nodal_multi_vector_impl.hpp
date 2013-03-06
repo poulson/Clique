@@ -51,7 +51,7 @@ DistNodalMultiVector<F>::Pull
     int numRecvIndices=0;
     for( int s=0; s<numLocal; ++s )
     {
-        const LocalSymmNodeInfo& node = info.localNodes[s];
+        const SymmNodeInfo& node = info.localNodes[s];
 #ifndef RELEASE
         if( numRecvIndices != node.myOffset )
             throw std::logic_error("numRecvIndices did not match local offset");
@@ -73,7 +73,7 @@ DistNodalMultiVector<F>::Pull
     std::vector<int> mappedIndices( numRecvIndices );
     for( int s=0; s<numLocal; ++s )
     {
-        const LocalSymmNodeInfo& node = info.localNodes[s];
+        const SymmNodeInfo& node = info.localNodes[s];
         for( int t=0; t<node.size; ++t )
             mappedIndices[offset++] = node.offset+t;
     }
@@ -163,16 +163,16 @@ DistNodalMultiVector<F>::Pull
     // Unpack the values
     offset=0;
     offsets = recvOffsets;
-    localMultiVec.ResizeTo( numRecvIndices, width );
+    multiVec.ResizeTo( numRecvIndices, width );
     for( int s=0; s<numLocal; ++s )
     {
-        const LocalSymmNodeInfo& node = info.localNodes[s];
+        const SymmNodeInfo& node = info.localNodes[s];
         for( int t=0; t<node.size; ++t )
         {
             const int i = mappedIndices[offset];
             const int q = RowToProcess( i, blocksize, commSize );
             for( int j=0; j<width; ++j )
-                localMultiVec.Set( offset, j, recvValues[offsets[q]++] );
+                multiVec.Set( offset, j, recvValues[offsets[q]++] );
             ++offset;
         }
     }
@@ -189,7 +189,7 @@ DistNodalMultiVector<F>::Pull
             const int i = mappedIndices[offset];
             const int q = RowToProcess( i, blocksize, commSize );
             for( int j=0; j<width; ++j )
-                localMultiVec.Set( offset, j, recvValues[offsets[q]++] );
+                multiVec.Set( offset, j, recvValues[offsets[q]++] );
             ++offset;
         }
     }
@@ -215,7 +215,7 @@ DistNodalMultiVector<F>::Push
     const DistSymmNodeInfo& rootNode = info.distNodes.back();
     mpi::Comm comm = rootNode.comm;
     const int height = rootNode.size + rootNode.offset;
-    const int width = localMultiVec.Width();
+    const int width = multiVec.Width();
     X.SetComm( comm );
     X.ResizeTo( height, width );
 
@@ -227,12 +227,12 @@ DistNodalMultiVector<F>::Push
     const int numLocal = info.localNodes.size();
 
     // Fill the set of indices that we need to map to the original ordering
-    const int numSendIndices = localMultiVec.Height();
+    const int numSendIndices = multiVec.Height();
     int offset=0;
     std::vector<int> mappedIndices( numSendIndices );
     for( int s=0; s<numLocal; ++s )
     {
-        const LocalSymmNodeInfo& node = info.localNodes[s];
+        const SymmNodeInfo& node = info.localNodes[s];
         for( int t=0; t<node.size; ++t )
             mappedIndices[offset++] = node.offset+t;
     }
@@ -278,7 +278,7 @@ DistNodalMultiVector<F>::Push
         const int q = RowToProcess( i, blocksize, commSize );
         sendIndices[offsets[q]] = i;
         for( int j=0; j<width; ++j )
-            sendValues[offsets[q]*width+j] = localMultiVec.Get(offset,j);
+            sendValues[offsets[q]*width+j] = multiVec.Get(offset,j);
         ++offset;
         ++offsets[q];
     }

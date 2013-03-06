@@ -197,7 +197,7 @@ main( int argc, char* argv[] )
         const double solveStart = mpi::Time();
         DistNodalMultiVector<double> YNodal;
         YNodal.Pull( inverseMap, info, Y );
-        Solve( info, frontTree, YNodal.localMultiVec );
+        Solve( info, frontTree, YNodal.multiVec );
         YNodal.Push( inverseMap, info, Y );
         mpi::Barrier( comm );
         const double solveStop = mpi::Time();
