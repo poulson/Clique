@@ -17,8 +17,7 @@ option(CLIQ_EXAMPLES "Build a few example drivers" OFF)
 option(USE_CUSTOM_ALLTOALLV "Avoid MPI_Alltoallv for performance reasons" ON)
 option(BARRIER_IN_ALLTOALLV "Barrier before posting non-blocking recvs" OFF)
 
-set(ELEM_REV 797) # If you manually specify Elemental with a different revision,
-                  # you are on your own 
+set(ELEM_REV f3e63a272655) 
 if(MANUAL_ELEMENTAL)
   include_directories(${ELEMENTAL_INCLUDE_DIR})
   include_directories(${MPI_CXX_INCLUDE_PATH})
@@ -30,7 +29,7 @@ else()
   find_package(Hg)
   if(HG_FOUND)
     execute_process(COMMAND 
-      ${HG_EXECUTABLE} clone http://code.google.com/p/elemental 
+      ${HG_EXECUTABLE} clone http://code.google.com/p/elemental -r ${ELEM_REV}
       ${PROJECT_SOURCE_DIR}/external/elemental-r${ELEM_REV})
     add_subdirectory(external/elemental-r${ELEM_REV})
     include_directories(${PROJECT_BINARY_DIR}/external/elemental-r${ELEM_REV}/include)
