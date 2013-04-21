@@ -45,12 +45,12 @@ MakeUniform( MultiVector<T>& X )
 
 template<typename F>
 inline void
-Norms( const MultiVector<F>& X, std::vector<typename Base<F>::type>& norms )
+Norms( const MultiVector<F>& X, std::vector<BASE(F)>& norms )
 {
 #ifndef RELEASE
     PushCallStack("Norms");
 #endif
-    typedef typename Base<F>::type R;
+    typedef BASE(F) R;
     const int height = X.Height();
     const int width = X.Width();
 

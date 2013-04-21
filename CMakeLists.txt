@@ -17,7 +17,7 @@ option(CLIQ_EXAMPLES "Build a few example drivers" OFF)
 option(USE_CUSTOM_ALLTOALLV "Avoid MPI_Alltoallv for performance reasons" ON)
 option(BARRIER_IN_ALLTOALLV "Barrier before posting non-blocking recvs" OFF)
 
-set(ELEM_REV 4e32e44f0591)
+set(ELEM_REV af61dd69f632)
 if(MANUAL_ELEMENTAL)
   include_directories(${ELEMENTAL_INCLUDE_DIR})
   include_directories(${MPI_CXX_INCLUDE_PATH})

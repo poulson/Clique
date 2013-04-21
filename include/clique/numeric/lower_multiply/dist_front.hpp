@@ -132,20 +132,19 @@ inline void FrontLowerMultiplyNormal
 
         //--------------------------------------------------------------------//
         X1_STAR_STAR = X1;
-        elem::internal::LocalGemm
-        ( NORMAL, NORMAL, T(1), L21, X1_STAR_STAR, T(1), X2 );
+        elem::LocalGemm( NORMAL, NORMAL, T(1), L21, X1_STAR_STAR, T(1), X2 );
 
         if( diagOffset == 0 )
         {
             L11_STAR_STAR = L11;
-            elem::internal::LocalTrmm
+            elem::LocalTrmm
             ( LEFT, LOWER, NORMAL, diag, T(1), L11_STAR_STAR, X1_STAR_STAR );
         }
         else
         {
             L11_STAR_STAR = L11;
             internal::ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
-            elem::internal::LocalTrmm
+            elem::LocalTrmm
             ( LEFT, LOWER, NORMAL, NON_UNIT, 
               T(1), L11_STAR_STAR, X1_STAR_STAR );
         }
@@ -236,21 +235,21 @@ inline void FrontLowerMultiplyTranspose
         L11_STAR_STAR = L11;
         if( diagOffset == 0 )
         {
-            elem::internal::LocalTrmm
+            elem::LocalTrmm
             ( LEFT, LOWER, orientation, diag, 
               T(1), L11_STAR_STAR, X1_STAR_STAR );
         }
         else
         {
             internal::ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
-            elem::internal::LocalTrmm
+            elem::LocalTrmm
             ( LEFT, LOWER, orientation, NON_UNIT, 
               T(1), L11_STAR_STAR, X1_STAR_STAR );
         }
         X1 = X1_STAR_STAR;
 
         Z1_STAR_STAR.ResizeTo( X1.Height(), X1.Width() );
-        elem::internal::LocalGemm
+        elem::LocalGemm
         ( orientation, NORMAL, T(1), L21, X2, T(0), Z1_STAR_STAR );
         X1.SumScatterUpdate( T(1), Z1_STAR_STAR );
         //--------------------------------------------------------------------//

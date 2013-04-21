@@ -72,7 +72,7 @@ void MakeUniform( DistVector<T>& x );
 
 // Just an l2 norm for now
 template<typename F>
-typename Base<F>::type Norm( const DistVector<F>& x );
+BASE(F) Norm( const DistVector<F>& x );
 
 // y := alpha x + y
 template<typename T>

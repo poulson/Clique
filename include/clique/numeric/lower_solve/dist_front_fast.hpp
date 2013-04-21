@@ -96,8 +96,7 @@ inline void FrontFastLowerForwardSolve
     DistMatrix<F,STAR,STAR> XT_STAR_STAR( XT );
 
     // XT := LT XT
-    elem::internal::LocalGemm
-    ( NORMAL, NORMAL, F(1), LT, XT_STAR_STAR, F(0), XT );
+    elem::LocalGemm( NORMAL, NORMAL, F(1), LT, XT_STAR_STAR, F(0), XT );
 
     if( diag == UNIT )
     {
@@ -117,8 +116,7 @@ inline void FrontFastLowerForwardSolve
         XT_STAR_STAR = XT;
 
         // XB := XB - LB XT
-        elem::internal::LocalGemm
-        ( NORMAL, NORMAL, F(-1), LB, XT_STAR_STAR, F(1), XB );
+        elem::LocalGemm( NORMAL, NORMAL, F(-1), LB, XT_STAR_STAR, F(1), XB );
     }
 #ifndef RELEASE
     PopCallStack();
@@ -188,9 +186,9 @@ inline void FrontFastLowerForwardSolve
         // ZT[MC,* ] := LT[MC,MR] XT[MR,* ], 
         DistMatrix<F,MC,STAR> ZT_MC_STAR(g);
         ZT_MC_STAR.AlignWith( LT );
-        Zeros( LT.Height(), XT.Width(), ZT_MC_STAR );
+        Zeros( ZT_MC_STAR, LT.Height(), XT.Width() );
         XT_MR_STAR = XT;
-        elem::internal::LocalGemm
+        elem::LocalGemm
         ( NORMAL, NORMAL, F(1), LT, XT_MR_STAR, F(0), ZT_MC_STAR );
 
         // XT[VC,* ].SumScatterFrom( ZT[MC,* ] )
@@ -209,7 +207,7 @@ inline void FrontFastLowerForwardSolve
         DistMatrix<F,MC,STAR> ZB_MC_STAR(g);
         ZB_MC_STAR.AlignWith( LB );
         ZB_MC_STAR.ResizeTo( LB.Height(), XT.Width() );
-        elem::internal::LocalGemm
+        elem::LocalGemm
         ( NORMAL, NORMAL, F(-1), LB, XT_MR_STAR, F(0), ZB_MC_STAR );
 
         // XB[VC,* ] += ZB[MC,* ]
@@ -272,8 +270,7 @@ inline void FrontFastLowerBackwardSolve
     DistMatrix<F,STAR,STAR> Z( snSize, XT.Width(), g );
     if( XB.Height() != 0 )
     {
-        elem::internal::LocalGemm
-        ( orientation, NORMAL, F(-1), LB, XB, F(0), Z );
+        elem::LocalGemm( orientation, NORMAL, F(-1), LB, XB, F(0), Z );
         XT.SumScatterUpdate( F(1), Z );
     }
 
@@ -294,7 +291,7 @@ inline void FrontFastLowerBackwardSolve
     }
 
     // XT := LT^{T/H} XT
-    elem::internal::LocalGemm( orientation, NORMAL, F(1), LT, XT, F(0), Z );
+    elem::LocalGemm( orientation, NORMAL, F(1), LT, XT, F(0), Z );
     XT.SumScatterFrom( Z );
 
     if( diag == UNIT )
@@ -361,14 +358,14 @@ inline void FrontFastLowerBackwardSolve
     DistMatrix<F,MR,STAR> ZT_MR_STAR( g );
     DistMatrix<F,VR,STAR> ZT_VR_STAR( g );
     ZT_MR_STAR.AlignWith( LB );
-    Zeros( snSize, XT.Width(), ZT_MR_STAR );
+    Zeros( ZT_MR_STAR, snSize, XT.Width() );
     if( XB.Height() != 0 )
     {
         // ZT[MR,* ] := -(LB[MC,MR])^{T/H} XB[MC,* ]
         DistMatrix<F,MC,STAR> XB_MC_STAR( g );
         XB_MC_STAR.AlignWith( LB );
         XB_MC_STAR = XB;
-        elem::internal::LocalGemm
+        elem::LocalGemm
         ( orientation, NORMAL, F(-1), LB, XB_MC_STAR, F(0), ZT_MR_STAR );
 
         // ZT[VR,* ].SumScatterFrom( ZT[MR,* ] )
@@ -401,7 +398,7 @@ inline void FrontFastLowerBackwardSolve
         DistMatrix<F,MC,STAR> XT_MC_STAR( g );
         XT_MC_STAR.AlignWith( LT );
         XT_MC_STAR = XT;
-        elem::internal::LocalGemm
+        elem::LocalGemm
         ( orientation, NORMAL, F(1), LT, XT_MC_STAR, F(0), ZT_MR_STAR );
 
         // ZT[VR,* ].SumScatterFrom( ZT[MR,* ] )

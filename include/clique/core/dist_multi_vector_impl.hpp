@@ -44,13 +44,12 @@ MakeUniform( DistMultiVector<T>& X )
 }
 
 template<typename F>
-void Norms
-( const DistMultiVector<F>& X, std::vector<typename Base<F>::type>& norms )
+void Norms( const DistMultiVector<F>& X, std::vector<BASE(F)>& norms )
 {
 #ifndef RELEASE
     PushCallStack("Norms");
 #endif
-    typedef typename Base<F>::type R;
+    typedef BASE(F) R;
     const int localHeight = X.LocalHeight();
     const int width = X.Width();
     mpi::Comm comm = X.Comm();

@@ -40,13 +40,13 @@ MakeUniform( DistVector<T>& x )
 }
 
 template<typename F>
-inline typename Base<F>::type 
+inline BASE(F)
 Norm( const DistVector<F>& x )
 {
 #ifndef RELEASE
     PushCallStack("Norm");
 #endif
-    typedef typename Base<F>::type R;
+    typedef BASE(F) R;
     const int localHeight = x.LocalHeight();
     mpi::Comm comm = x.Comm();
 

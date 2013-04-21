@@ -88,7 +88,7 @@ inline void FrontBlockLowerBackwardSolve
 
     // YT := LB^[T/H] XB
     Matrix<F> YT;
-    Zeros( XT.Height(), XT.Width(), YT );
+    Zeros( YT, XT.Height(), XT.Width() );
     elem::Gemm( orientation, NORMAL, F(1), LB, XB, F(0), YT );
 
     // XT := XT - inv(ATL) YT

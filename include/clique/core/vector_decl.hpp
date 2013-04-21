@@ -48,7 +48,7 @@ void MakeUniform( Vector<T>& x );
 
 // Just an l2 norm for now
 template<typename F>
-typename Base<F>::type Norm( const Vector<F>& x );
+BASE(F) Norm( const Vector<F>& x );
 
 // y := alpha x + y
 template<typename T>

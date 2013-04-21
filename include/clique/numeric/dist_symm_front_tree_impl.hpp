@@ -248,7 +248,7 @@ DistSymmFrontTree<F>::Initialize
         const int size = node.size;
         const int offset = node.offset;
         const int lowerSize = node.lowerStruct.size();
-        Zeros( size+lowerSize, size, front.frontL );
+        Zeros( front.frontL, size+lowerSize, size );
 
 #ifndef RELEASE
         if( size != (int)sepOrLeaf.indices.size() )
@@ -307,7 +307,7 @@ DistSymmFrontTree<F>::Initialize
         const int offset = node.offset;
         const int lowerSize = node.lowerStruct.size();
         front.front2dL.SetGrid( grid );
-        Zeros( size+lowerSize, size, front.front2dL );
+        Zeros( front.front2dL, size+lowerSize, size );
 
 #ifndef RELEASE
         if( size != (int)sep.indices.size() )

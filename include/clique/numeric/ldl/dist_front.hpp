@@ -81,11 +81,11 @@ inline void FrontLDLGeneral
         AL21AdjOrTrans_STAR_MR.AlignWith( AL22 );
         //--------------------------------------------------------------------//
         AL11_STAR_STAR = AL11; 
-        elem::internal::LocalLDL( orientation, AL11_STAR_STAR, d1_STAR_STAR );
+        elem::LocalLDL( orientation, AL11_STAR_STAR, d1_STAR_STAR );
         AL11 = AL11_STAR_STAR;
 
         AL21_VC_STAR = AL21;
-        elem::internal::LocalTrsm
+        elem::LocalTrsm
         ( RIGHT, LOWER, orientation, UNIT, 
           F(1), AL11_STAR_STAR, AL21_VC_STAR );
 
@@ -108,12 +108,11 @@ inline void FrontLDLGeneral
         PartitionDown
         ( AL22, AL22T,
                 AL22B, AL22.Width() );
-        elem::internal::LocalTrrk
+        elem::LocalTrrk
         ( LOWER, orientation, F(-1), leftL, rightL, F(1), AL22T );
-        elem::internal::LocalGemm
+        elem::LocalGemm
         ( orientation, NORMAL, F(-1), leftR, rightL, F(1), AL22B );
-        elem::internal::LocalTrrk
-        ( LOWER, orientation, F(-1), leftR, rightR, F(1), ABR );
+        elem::LocalTrrk( LOWER, orientation, F(-1), leftR, rightR, F(1), ABR );
 
         elem::DiagonalSolve
         ( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
@@ -214,11 +213,11 @@ inline void FrontLDLSquare
         AL21AdjOrTrans_STAR_MR.AlignWith( AL22 );
         //--------------------------------------------------------------------//
         AL11_STAR_STAR = AL11; 
-        elem::internal::LocalLDL( orientation, AL11_STAR_STAR, d1_STAR_STAR );
+        elem::LocalLDL( orientation, AL11_STAR_STAR, d1_STAR_STAR );
         AL11 = AL11_STAR_STAR;
 
         AL21_VC_STAR = AL21;
-        elem::internal::LocalTrsm
+        elem::LocalTrsm
         ( RIGHT, LOWER, orientation, UNIT, 
           F(1), AL11_STAR_STAR, AL21_VC_STAR );
 
@@ -262,12 +261,11 @@ inline void FrontLDLSquare
         PartitionDown
         ( AL22, AL22T,
                 AL22B, AL22.Width() );
-        elem::internal::LocalTrrk
+        elem::LocalTrrk
         ( LOWER, orientation, F(-1), leftL, rightL, F(1), AL22T );
-        elem::internal::LocalGemm
+        elem::LocalGemm
         ( orientation, NORMAL, F(-1), leftR, rightL, F(1), AL22B );
-        elem::internal::LocalTrrk
-        ( LOWER, orientation, F(-1), leftR, rightR, F(1), ABR );
+        elem::LocalTrrk( LOWER, orientation, F(-1), leftR, rightR, F(1), ABR );
 
         elem::DiagonalSolve
         ( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );

@@ -39,7 +39,7 @@ inline void LocalLDL
 #endif
 
         // Add updates from children (if they exist)
-        elem::Zeros( updateSize, updateSize, frontBR );
+        elem::Zeros( frontBR, updateSize, updateSize );
         const int numChildren = node.children.size();
         if( numChildren == 2 )
         {

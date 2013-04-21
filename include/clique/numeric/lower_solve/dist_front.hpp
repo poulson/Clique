@@ -77,13 +77,12 @@ inline void ForwardMany
         X1_STAR_STAR = X1;   // X1[* ,* ] <- X1[VC,* ]
 
         // X1[* ,* ] := (L11[* ,* ])^-1 X1[* ,* ]
-        elem::internal::LocalTrsm
+        elem::LocalTrsm
         ( LEFT, LOWER, NORMAL, diag, F(1), L11_STAR_STAR, X1_STAR_STAR, true );
         X1 = X1_STAR_STAR;
 
         // X2[VC,* ] -= L21[VC,* ] X1[* ,* ]
-        elem::internal::LocalGemm
-        ( NORMAL, NORMAL, F(-1), L21, X1_STAR_STAR, F(1), X2 );
+        elem::LocalGemm( NORMAL, NORMAL, F(-1), L21, X1_STAR_STAR, F(1), X2 );
         //--------------------------------------------------------------------//
 
         SlideLockedPartitionDownDiagonal
@@ -175,7 +174,7 @@ void AccumulateRHS
     const int height = X.Height();
     const int width = X.Width();
     Z.Empty();
-    elem::Zeros( height, width, Z );
+    elem::Zeros( Z, height, width );
 
     const int localHeight = X.LocalHeight();
     const int colShift = X.ColShift();
@@ -248,14 +247,13 @@ void ForwardSingle
         AccumulateRHS( X1, X1_STAR_STAR ); // X1[* ,* ] <- X1[VC,* ]
 
         // X1[* ,* ] := (L11[* ,* ])^-1 X1[* ,* ]
-        elem::internal::LocalTrsm
+        elem::LocalTrsm
         ( LEFT, UPPER, TRANSPOSE, diag, F(1), L11Trans_STAR_STAR, X1_STAR_STAR,
           true );
         X1 = X1_STAR_STAR;
 
         // X2[VC,* ] -= L21[VC,* ] X1[* ,* ]
-        elem::internal::LocalGemm
-        ( NORMAL, NORMAL, F(-1), L21, X1_STAR_STAR, F(1), X2 );
+        elem::LocalGemm( NORMAL, NORMAL, F(-1), L21, X1_STAR_STAR, F(1), X2 );
         //--------------------------------------------------------------------//
 
         SlideLockedPartitionDownDiagonal
@@ -341,13 +339,13 @@ void BackwardSingle
         //--------------------------------------------------------------------//
         // X1 -= L21' X2
         Z1_STAR_STAR.ResizeTo( X1.Height(), X1.Width() );
-        elem::internal::LocalGemm
+        elem::LocalGemm
         ( orientation, NORMAL, F(-1), L21, X2, F(0), Z1_STAR_STAR );
         elem::internal::AddInLocalData( X1, Z1_STAR_STAR );
         Z1_STAR_STAR.SumOverGrid();
 
         // X1 := L11^-1 X1
-        elem::internal::LocalTrsm
+        elem::LocalTrsm
         ( LEFT, UPPER, NORMAL, UNIT, 
           F(1), L11AdjOrTrans_STAR_STAR, Z1_STAR_STAR );
         X1 = Z1_STAR_STAR;
@@ -453,8 +451,7 @@ inline void FrontLowerBackwardSolve
         // Subtract off the parent updates
         DistMatrix<F,STAR,STAR> Z(XT.Height(),XT.Width(),g);
         Z.ResizeTo( XT.Height(), XT.Width() );
-        elem::internal::LocalGemm
-        ( orientation, NORMAL, F(-1), LB, XB, F(0), Z );
+        elem::LocalGemm( orientation, NORMAL, F(-1), LB, XB, F(0), Z );
         XT.SumScatterUpdate( F(1), Z );
     }
 

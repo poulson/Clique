@@ -156,7 +156,7 @@ inline void DistLDL
         // Unpack the child udpates (with an Axpy)
         front.work2d.SetGrid( front.front2dL.Grid() );
         front.work2d.Align( node.size % gridHeight, node.size % gridWidth );
-        elem::Zeros( updateSize, updateSize, front.work2d );
+        elem::Zeros( front.work2d, updateSize, updateSize );
         const int leftLocalWidth = front.front2dL.LocalWidth();
         const int topLocalHeight = 
             Length<int>( node.size, grid.MCRank(), gridHeight );

@@ -232,9 +232,8 @@ main( int argc, char* argv[] )
             LockedView( B, frontL, width, 0, height-width, width );
             DistMatrix<C> BCopy( B );
             DistMatrix<R,VR,STAR> singVals_VR_STAR( grid );
-            elem::SingularValues( BCopy, singVals_VR_STAR );
-            const R twoNorm = 
-                elem::Norm( singVals_VR_STAR, elem::MAX_NORM );
+            elem::SVD( BCopy, singVals_VR_STAR );
+            const R twoNorm = elem::MaxNorm( singVals_VR_STAR );
             DistMatrix<R,STAR,STAR> singVals( singVals_VR_STAR );
             mpi::Barrier( grid.Comm() );
             const double svdStop = mpi::Time();
@@ -278,8 +277,8 @@ main( int argc, char* argv[] )
             ( offDiagBlock, front, lowerHalf, 0, upperHalf, lowerHalf );
             DistMatrix<C> offDiagBlockCopy( offDiagBlock );
             DistMatrix<R,VR,STAR> singVals_VR_STAR( grid );
-            elem::SingularValues( offDiagBlockCopy, singVals_VR_STAR );
-            const R twoNorm = elem::Norm( singVals_VR_STAR, elem::MAX_NORM );
+            elem::SVD( offDiagBlockCopy, singVals_VR_STAR );
+            const R twoNorm = elem::MaxNorm( singVals_VR_STAR );
             const R tolerance = 1e-4;
             DistMatrix<R,STAR,STAR> singVals( singVals_VR_STAR );
             mpi::Barrier( comm );

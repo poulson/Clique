@@ -50,8 +50,7 @@ void MakeUniform( MultiVector<T>& X );
 
 // Just an l2 norm for now
 template<typename F>
-void Norms
-( const MultiVector<F>& X, std::vector<typename Base<F>::type>& norms );
+void Norms( const MultiVector<F>& X, std::vector<BASE(F)>& norms );
 
 // Y := alpha X + Y 
 template<typename T>

@@ -40,13 +40,13 @@ MakeUniform( Vector<T>& x )
 }
 
 template<typename F>
-inline typename Base<F>::type 
+inline BASE(F)
 Norm( const Vector<F>& x )
 {
 #ifndef RELEASE
     PushCallStack("Norm");
 #endif
-    typedef typename Base<F>::type R;
+    typedef BASE(F) R;
     const int height = x.Height();
 
     R scale = 0;

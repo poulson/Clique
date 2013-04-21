@@ -55,7 +55,7 @@ inline void FrontLDL( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR )
         //--------------------------------------------------------------------//
         // This routine is unblocked, hence the need for us to generalize to 
         // an (ideally) faster blocked algorithm.
-        elem::internal::LDLVar3( orientation, AL11, d1 );
+        elem::ldl::Var3( orientation, AL11, d1 );
 
         elem::Trsm( RIGHT, LOWER, orientation, UNIT, F(1), AL11, AL21 );
 

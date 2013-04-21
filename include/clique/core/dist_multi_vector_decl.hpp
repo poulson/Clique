@@ -70,8 +70,7 @@ void MakeUniform( DistMultiVector<T>& X );
 
 // Just an l2 norm for now
 template<typename F>
-void Norms
-( const DistMultiVector<F>& X, std::vector<typename Base<F>::type>& norms );
+void Norms( const DistMultiVector<F>& X, std::vector<BASE(F)>& norms );
 
 // Y := alpha X + Y
 template<typename T>
