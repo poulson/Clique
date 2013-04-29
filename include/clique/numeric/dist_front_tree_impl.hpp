@@ -24,7 +24,7 @@ DistFrontTree<F>::DistFrontTree
 : frontType(STRUCT_SYMM_2D)
 {
 #ifndef RELEASE
-    PushCallStack("DistFrontTree::DistFrontTree");
+    CallStackEntry entry("DistFrontTree::DistFrontTree");
     if( A.LocalHeight() != map.NumLocalSources() )
         throw std::logic_error("Local mapping was not the right size");
 #endif
@@ -38,10 +38,6 @@ DistFrontTree<F>::DistFrontTree
 
     // TODO: Extend the DistSymmFrontTree version to handle the columns as well
     throw std::logic_error("This routine is not yet written");
-
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

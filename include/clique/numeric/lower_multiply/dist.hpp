@@ -29,7 +29,7 @@ inline void DistLowerMultiplyNormal
   const DistSymmInfo& info, const DistSymmFrontTree<T>& L, Matrix<T>& localX )
 {
 #ifndef RELEASE
-    PushCallStack("DistLowerMultiplyNormal");
+    CallStackEntry entry("DistLowerMultiplyNormal");
 #endif
     const int numDistNodes = info.distNodes.size();
     const int width = localX.Width();
@@ -163,9 +163,6 @@ inline void DistLowerMultiplyNormal
     }
     L.localFronts.back().work.Empty();
     L.distFronts.back().work1d.Empty();
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T> 
@@ -174,7 +171,7 @@ inline void DistLowerMultiplyTranspose
   const DistSymmInfo& info, const DistSymmFrontTree<T>& L, Matrix<T>& localX )
 {
 #ifndef RELEASE
-    PushCallStack("DistLowerMultiplyTranspose");
+    CallStackEntry entry("DistLowerMultiplyTranspose");
 #endif
     const int numDistNodes = info.distNodes.size();
     const int width = localX.Width();
@@ -339,9 +336,6 @@ inline void DistLowerMultiplyTranspose
         localXT = XNodeT.Matrix();
         XNode.Empty();
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

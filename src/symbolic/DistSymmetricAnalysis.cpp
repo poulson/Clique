@@ -331,7 +331,7 @@ void DistSymmetricAnalysis
 ( const DistSymmElimTree& eTree, DistSymmInfo& info, bool storeFactRecvIndices )
 {
 #ifndef RELEASE
-    PushCallStack("DistSymmetricAnalysis");
+    CallStackEntry entry("DistSymmetricAnalysis");
 #endif
     const unsigned numNodes = eTree.distNodes.size();
     info.distNodes.resize( numNodes );
@@ -535,9 +535,6 @@ void DistSymmetricAnalysis
         myOffset += nodeInfo.size;
         localOffset1d += nodeInfo.localSize1d;
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 void ComputeFactRecvIndices
@@ -545,7 +542,7 @@ void ComputeFactRecvIndices
   const DistSymmNodeInfo& childNode )
 {
 #ifndef RELEASE
-    PushCallStack("ComputeFactRecvIndices");
+    CallStackEntry entry("ComputeFactRecvIndices");
 #endif
     const int teamSize = mpi::CommSize( node.comm );
     const int teamRank = mpi::CommRank( node.comm );
@@ -672,9 +669,6 @@ void ComputeFactRecvIndices
             node.childFactRecvIndices[frontRank].push_back(jFrontLocal);
         }
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

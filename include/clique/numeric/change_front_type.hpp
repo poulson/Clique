@@ -22,16 +22,11 @@ template<typename F>
 inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
 {
 #ifndef RELEASE
-    PushCallStack("ChangeFrontType");
+    CallStackEntry entry("ChangeFrontType");
 #endif
     // Check if this call can be a no-op
     if( frontType == L.frontType ) 
-    {
-#ifndef RELEASE
-        PopCallStack();
-#endif
         return;
-    }
     const int numDistNodes = L.distFronts.size();    
     DistSymmFront<F>& leafFront = L.distFronts[0];
     const SymmFrontType oldFrontType = L.frontType;
@@ -129,9 +124,6 @@ inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
     else
         throw std::logic_error("Unavailable front type change");
     L.frontType = frontType;
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

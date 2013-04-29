@@ -24,7 +24,7 @@ inline void FrontLDLGeneral
 ( Orientation orientation, DistMatrix<F>& AL, DistMatrix<F>& ABR )
 {
 #ifndef RELEASE
-    PushCallStack("internal::FrontLDLGeneral");
+    CallStackEntry entry("internal::FrontLDLGeneral");
     if( ABR.Height() != ABR.Width() )
         throw std::logic_error("ABR must be square");
     if( AL.Height() != AL.Width()+ABR.Height() )
@@ -129,9 +129,6 @@ inline void FrontLDLGeneral
          /***************/ /*********************/
           ALBL, /**/ ALBR,  AL20, AL21, /**/ AL22 );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F>
@@ -139,7 +136,7 @@ inline void FrontLDLSquare
 ( Orientation orientation, DistMatrix<F>& AL, DistMatrix<F>& ABR )
 {
 #ifndef RELEASE
-    PushCallStack("internal::FrontLDLSquare");
+    CallStackEntry entry("internal::FrontLDLSquare");
     if( ABR.Height() != ABR.Width() )
         throw std::logic_error("ABR must be square");
     if( AL.Height() != AL.Width()+ABR.Height() )
@@ -281,9 +278,6 @@ inline void FrontLDLSquare
          /***************/ /*********************/
           ALBL, /**/ ALBR,  AL20, AL21, /**/ AL22 );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace internal
@@ -293,16 +287,13 @@ inline void FrontLDL
 ( Orientation orientation, DistMatrix<F>& AL, DistMatrix<F>& ABR )
 {
 #ifndef RELEASE
-    PushCallStack("FrontLDL");
+    CallStackEntry entry("FrontLDL");
 #endif
     const Grid& grid = AL.Grid();
     if( grid.Height() == grid.Width() )
         internal::FrontLDLSquare( orientation, AL, ABR );
     else
         internal::FrontLDLGeneral( orientation, AL, ABR );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

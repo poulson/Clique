@@ -36,7 +36,7 @@ void ModifyForTrmm
   std::vector<Matrix<T> >& diagonals )
 {
 #ifndef RELEASE
-    PushCallStack("ModifyForTrmm");
+    CallStackEntry entry("ModifyForTrmm");
 #endif
     if( diag == UNIT )
     {
@@ -67,9 +67,6 @@ void ModifyForTrmm
             D.Set( j-diagOffset, j, T(1) );
         }
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T> 
@@ -78,7 +75,7 @@ void ReplaceAfterTrmm
   const std::vector<Matrix<T> >& diagonals )
 {
 #ifndef RELEASE
-    PushCallStack("ReplaceAfterTrmm");
+    CallStackEntry entry("ReplaceAfterTrmm");
 #endif
     const int height = D.Height();
     for( int j=0; j<height; ++j )
@@ -89,9 +86,6 @@ void ReplaceAfterTrmm
         if( diag == UNIT && j-diagOffset < height )
             D.Set( j-diagOffset, j, diagonals[-diagOffset].Get(j,0) );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace internal
@@ -102,15 +96,12 @@ inline void FrontLowerMultiply
   const Matrix<T>& L, Matrix<T>& X )
 {
 #ifndef RELEASE
-    PushCallStack("FrontLowerMultiply");
+    CallStackEntry entry("FrontLowerMultiply");
 #endif
     if( orientation == NORMAL )
         FrontLowerMultiplyNormal( diag, diagOffset, L, X );
     else
         FrontLowerMultiplyTranspose( orientation, diag, diagOffset, L, X );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -118,7 +109,7 @@ inline void FrontLowerMultiplyNormal
 ( UnitOrNonUnit diag, int diagOffset, const Matrix<T>& L, Matrix<T>& X )
 {
 #ifndef RELEASE
-    PushCallStack("FrontLowerMultiplyNormal");
+    CallStackEntry entry("FrontLowerMultiplyNormal");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
@@ -156,9 +147,6 @@ inline void FrontLowerMultiplyNormal
         elem::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, T(1), LT, XT );
         internal::ReplaceAfterTrmm( LT, diag, diagOffset, diagonals );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -167,7 +155,7 @@ inline void FrontLowerMultiplyTranspose
   const Matrix<T>& L, Matrix<T>& X )
 {
 #ifndef RELEASE
-    PushCallStack("FrontLowerMultiplyTranspose");
+    CallStackEntry entry("FrontLowerMultiplyTranspose");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
@@ -207,9 +195,6 @@ inline void FrontLowerMultiplyTranspose
     }
 
     elem::Gemm( orientation, NORMAL, T(1), LB, XB, T(1), XT );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

@@ -36,7 +36,7 @@ void ModifyForTrmm
 ( DistMatrix<T,STAR,STAR>& D, UnitOrNonUnit diag, int diagOffset )
 {
 #ifndef RELEASE
-    cliq::PushCallStack("ModifyForTrmm");
+    cliq::CallStackEntry entry("ModifyForTrmm");
 #endif
     const int height = D.Height();
     for( int j=0; j<height; ++j )
@@ -46,9 +46,6 @@ void ModifyForTrmm
         if( diag == UNIT && j-diagOffset < height )
             D.SetLocal( j-diagOffset, j, T(1) );
     }
-#ifndef RELEASE
-    cliq::PopCallStack();
-#endif
 }
 
 } // namespace internal
@@ -59,15 +56,12 @@ inline void FrontLowerMultiply
   const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("FrontLowerMultiply");
+    CallStackEntry entry("FrontLowerMultiply");
 #endif
     if( orientation == NORMAL )
         FrontLowerMultiplyNormal( diag, diagOffset, L, X );
     else
         FrontLowerMultiplyTranspose( orientation, diag, diagOffset, L, X );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -76,7 +70,7 @@ inline void FrontLowerMultiplyNormal
   const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("FrontLowerMultiplyNormal");
+    CallStackEntry entry("FrontLowerMultiplyNormal");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -163,9 +157,6 @@ inline void FrontLowerMultiplyNormal
                X1,
           XB,  X2 );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -174,7 +165,7 @@ inline void FrontLowerMultiplyTranspose
   const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("FrontLowerMultiplyTranspose");
+    CallStackEntry entry("FrontLowerMultiplyTranspose");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -266,9 +257,6 @@ inline void FrontLowerMultiplyTranspose
          /**/ /**/
           XB,  X2 );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

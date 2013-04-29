@@ -14,16 +14,13 @@ inline void
 MakeZeros( DistMultiVector<T>& X )
 {
 #ifndef RELEASE
-    PushCallStack("MakeZeros");
+    CallStackEntry entry("MakeZeros");
 #endif
     const int localHeight = X.LocalHeight();
     const int width = X.Width();
     for( int j=0; j<width; ++j )
         for( int iLocal=0; iLocal<localHeight; ++iLocal )
             X.SetLocal( iLocal, j, T(0) );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -31,23 +28,20 @@ inline void
 MakeUniform( DistMultiVector<T>& X )
 {
 #ifndef RELEASE
-    PushCallStack("MakeUniform");
+    CallStackEntry entry("MakeUniform");
 #endif
     const int localHeight = X.LocalHeight();
     const int width = X.Width();
     for( int j=0; j<width; ++j )
         for( int iLocal=0; iLocal<localHeight; ++iLocal )
             X.SetLocal( iLocal, j, elem::SampleUnitBall<T>() );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F>
 void Norms( const DistMultiVector<F>& X, std::vector<BASE(F)>& norms )
 {
 #ifndef RELEASE
-    PushCallStack("Norms");
+    CallStackEntry entry("Norms");
 #endif
     typedef BASE(F) R;
     const int localHeight = X.LocalHeight();
@@ -108,9 +102,6 @@ void Norms( const DistMultiVector<F>& X, std::vector<BASE(F)>& norms )
     ( &localScaledSquares[0], &scaledSquares[0], width, mpi::SUM, comm );
     for( int j=0; j<width; ++j )
         norms[j] = scales[j]*Sqrt(scaledSquares[j]);
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -118,7 +109,7 @@ inline void
 Axpy( T alpha, const DistMultiVector<T>& X, DistMultiVector<T>& Y )
 {
 #ifndef RELEASE
-    PushCallStack("Axpy");
+    CallStackEntry entry("Axpy");
     if( !mpi::CongruentComms( X.Comm(), Y.Comm() ) )
         throw std::logic_error("X and Y must have congruent communicators");
     if( X.Height() != Y.Height() )
@@ -131,9 +122,6 @@ Axpy( T alpha, const DistMultiVector<T>& X, DistMultiVector<T>& Y )
     for( int j=0; j<width; ++j )
         for( int iLocal=0; iLocal<localHeight; ++iLocal )
             Y.UpdateLocal( iLocal, j, alpha*X.GetLocal(iLocal,j) );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -225,13 +213,9 @@ inline T
 DistMultiVector<T>::GetLocal( int localRow, int col ) const
 { 
 #ifndef RELEASE 
-    PushCallStack("DistMultiVector::GetLocal");
+    CallStackEntry entry("DistMultiVector::GetLocal");
 #endif
-    const T value = multiVec_.Get(localRow,col);
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return value;
+    return multiVec_.Get(localRow,col);
 }
 
 template<typename T>
@@ -239,12 +223,9 @@ inline void
 DistMultiVector<T>::SetLocal( int localRow, int col, T value )
 {
 #ifndef RELEASE
-    PushCallStack("DistMultiVector::SetLocal");
+    CallStackEntry entry("DistMultiVector::SetLocal");
 #endif
     multiVec_.Set(localRow,col,value);
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -252,12 +233,9 @@ inline void
 DistMultiVector<T>::UpdateLocal( int localRow, int col, T value )
 {
 #ifndef RELEASE
-    PushCallStack("DistMultiVector::UpdateLocal");
+    CallStackEntry entry("DistMultiVector::UpdateLocal");
 #endif
     multiVec_.Update(localRow,col,value);
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -293,15 +271,12 @@ const DistMultiVector<T>&
 DistMultiVector<T>::operator=( const DistVector<T>& x )
 {
 #ifndef RELEASE
-    PushCallStack("DistMultiVector::operator=");
+    CallStackEntry entry("DistMultiVector::operator=");
 #endif
     height_ = x.height_;
     width_ = 1;
     SetComm( x.comm_ );
     multiVec_ = x.localVec_;
-#ifndef RELEASE
-    PopCallStack();
-#endif
     return *this;
 }
 
@@ -310,15 +285,12 @@ const DistMultiVector<T>&
 DistMultiVector<T>::operator=( const DistMultiVector<T>& X )
 {
 #ifndef RELEASE
-    PushCallStack("DistMultiVector::operator=");
+    CallStackEntry entry("DistMultiVector::operator=");
 #endif
     height_ = X.height_;
     width_ = X.width_;
     SetComm( X.comm_ );
     multiVec_ = X.multiVec_;
-#ifndef RELEASE
-    PopCallStack();
-#endif
     return *this;
 }
 

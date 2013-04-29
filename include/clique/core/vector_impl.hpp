@@ -14,14 +14,11 @@ inline void
 MakeZeros( Vector<T>& x )
 {
 #ifndef RELEASE
-    PushCallStack("MakeZeros");
+    CallStackEntry entry("MakeZeros");
 #endif
     const int height = x.Height();
     for( int i=0; i<height; ++i )
         x.Set( i, T(0) );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -29,14 +26,11 @@ inline void
 MakeUniform( Vector<T>& x )
 {
 #ifndef RELEASE
-    PushCallStack("MakeUniform");
+    CallStackEntry entry("MakeUniform");
 #endif
     const int height = x.Height();
     for( int i=0; i<height; ++i )
         x.Set( i, elem::SampleUnitBall<T>() );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F>
@@ -44,7 +38,7 @@ inline BASE(F)
 Norm( const Vector<F>& x )
 {
 #ifndef RELEASE
-    PushCallStack("Norm");
+    CallStackEntry entry("Norm");
 #endif
     typedef BASE(F) R;
     const int height = x.Height();
@@ -69,11 +63,7 @@ Norm( const Vector<F>& x )
             }
         }
     }
-    const R norm = scale*Sqrt(scaledSquare);
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return norm;
+    return scale*Sqrt(scaledSquare);
 }
 
 template<typename T>
@@ -81,16 +71,13 @@ inline void
 Axpy( T alpha, const Vector<T>& x, Vector<T>& y )
 {
 #ifndef RELEASE
-    PushCallStack("Axpy");
+    CallStackEntry entry("Axpy");
     if( x.Height() != y.Height() )
         throw std::logic_error("x and y must be the same height");
 #endif
     const int height = x.Height(); 
     for( int i=0; i<height; ++i )
         y.Update( i, alpha*x.Get(i) );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -119,13 +106,9 @@ inline T
 Vector<T>::Get( int row ) const
 { 
 #ifndef RELEASE 
-    PushCallStack("Vector::Get");
+    CallStackEntry entry("Vector::Get");
 #endif
-    const T value = vec_.Get(row,0);
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return value;
+    return vec_.Get(row,0);
 }
 
 template<typename T>
@@ -133,12 +116,9 @@ inline void
 Vector<T>::Set( int row, T value )
 {
 #ifndef RELEASE
-    PushCallStack("Vector::Set");
+    CallStackEntry entry("Vector::Set");
 #endif
     vec_.Set(row,0,value);
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -146,12 +126,9 @@ inline void
 Vector<T>::Update( int row, T value )
 {
 #ifndef RELEASE
-    PushCallStack("Vector::Update");
+    CallStackEntry entry("Vector::Update");
 #endif
     vec_.Update(row,0,value);
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -173,12 +150,9 @@ const Vector<T>&
 Vector<T>::operator=( const Vector<T>& x )
 {
 #ifndef RELEASE
-    PushCallStack("Vector::operator=");
+    CallStackEntry entry("Vector::operator=");
 #endif
     vec_ = x.vec_;
-#ifndef RELEASE
-    PopCallStack();
-#endif
     return *this;
 }
 

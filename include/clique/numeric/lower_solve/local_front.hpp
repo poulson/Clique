@@ -27,7 +27,7 @@ inline void FrontLowerForwardSolve
 ( UnitOrNonUnit diag, const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    PushCallStack("FrontLowerForwardSolve");
+    CallStackEntry entry("FrontLowerForwardSolve");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
@@ -51,9 +51,6 @@ inline void FrontLowerForwardSolve
 
     elem::Trsm( LEFT, LOWER, NORMAL, diag, F(1), LT, XT, true );
     elem::Gemm( NORMAL, NORMAL, F(-1), LB, XT, F(1), XB );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F>
@@ -62,7 +59,7 @@ inline void FrontLowerBackwardSolve
   const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    PushCallStack("FrontLowerBackwardSolve");
+    CallStackEntry entry("FrontLowerBackwardSolve");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
@@ -88,9 +85,6 @@ inline void FrontLowerBackwardSolve
 
     elem::Gemm( orientation, NORMAL, F(-1), LB, XB, F(1), XT );
     elem::Trsm( LEFT, LOWER, orientation, diag, F(1), LT, XT, true );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

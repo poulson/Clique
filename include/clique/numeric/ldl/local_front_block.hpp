@@ -21,7 +21,7 @@ inline void FrontBlockLDL
 ( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR )
 {
 #ifndef RELEASE
-    PushCallStack("FrontBlockLDL");
+    CallStackEntry entry("FrontBlockLDL");
 #endif
     Matrix<F> ATL,
               ABL;
@@ -56,9 +56,6 @@ inline void FrontBlockLDL
         elem::MakeTrapezoidal( LEFT, UPPER, 1, ATLAdj );
         elem::Axpy( F(1), ATLAdj, ATL );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

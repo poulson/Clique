@@ -31,13 +31,10 @@ inline void SymmetricAnalysis
 ( const DistSymmElimTree& eTree, DistSymmInfo& info, bool storeFactRecvIndices )
 {
 #ifndef RELEASE
-    PushCallStack("SymmetricAnalysis");
+    CallStackEntry entry("SymmetricAnalysis");
 #endif
     LocalSymmetricAnalysis( eTree, info );
     DistSymmetricAnalysis( eTree, info, storeFactRecvIndices );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

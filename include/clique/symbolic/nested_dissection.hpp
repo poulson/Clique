@@ -119,7 +119,7 @@ NestedDissectionRecursion
         int cutoff=128 )
 {
 #ifndef RELEASE
-    PushCallStack("NestedDissectionRecursion");
+    CallStackEntry entry("NestedDissectionRecursion");
 #endif
     if( graph.NumSources() <= cutoff )
     {
@@ -232,9 +232,6 @@ NestedDissectionRecursion
         ( leftChild, leftPerm, sepTree, eTree, parent, offset, 
           numSeps, cutoff );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline void
@@ -252,7 +249,7 @@ NestedDissectionRecursion
         int cutoff=128 )
 {
 #ifndef RELEASE
-    PushCallStack("NestedDissectionRecursion");
+    CallStackEntry entry("NestedDissectionRecursion");
 #endif
     const int distDepth = sepTree.distSeps.size();
     mpi::Comm comm = graph.Comm();
@@ -488,9 +485,6 @@ NestedDissectionRecursion
         ( leftChild, leftPerm, sepTree, eTree, parent, offset, 
           numSeqSeps, cutoff );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline void 
@@ -506,7 +500,7 @@ NestedDissection
         bool storeFactRecvIndices )
 {
 #ifndef RELEASE
-    PushCallStack("NestedDissection");
+    CallStackEntry entry("NestedDissection");
 #endif
     // NOTE: There is a potential memory leak here if these data structures 
     //       are reused. Their destructors should call a member function which
@@ -539,9 +533,6 @@ NestedDissection
 
     // Run the symbolic analysis
     SymmetricAnalysis( eTree, info, storeFactRecvIndices );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline int 
@@ -550,7 +541,7 @@ Bisect
   std::vector<int>& perm, int numSeps )
 {
 #ifndef RELEASE
-    PushCallStack("Bisect");
+    CallStackEntry entry("Bisect");
 #endif
     // METIS assumes that there are no self-connections or connections 
     // outside the sources, so we must manually remove them from our graph
@@ -608,9 +599,6 @@ Bisect
 #endif
     BuildChildrenFromPerm
     ( graph, perm, sizes[0], leftChild, sizes[1], rightChild );
-#ifndef RELEASE
-    PopCallStack();
-#endif
     return sizes[2];
 }
 
@@ -625,7 +613,7 @@ Bisect
         int numSeqSeps )
 {
 #ifndef RELEASE
-    PushCallStack("Bisect");
+    CallStackEntry entry("Bisect");
 #endif
     mpi::Comm comm = graph.Comm();
     const int commSize = mpi::CommSize( comm );
@@ -799,9 +787,6 @@ Bisect
     EnsurePermutation( perm );
 #endif
     BuildChildFromPerm( graph, perm, sizes[0], sizes[1], onLeft, child );
-#ifndef RELEASE
-    PopCallStack();
-#endif
     return sizes[2];
 }
 #endif // HAVE_PARMETIS
@@ -810,7 +795,7 @@ inline void
 EnsurePermutation( const std::vector<int>& map )
 {
 #ifndef RELEASE
-    PushCallStack("EnsurePermutation");
+    CallStackEntry entry("EnsurePermutation");
 #endif
     const int numSources = map.size();
     std::vector<int> timesMapped( numSources, 0 );
@@ -826,16 +811,13 @@ EnsurePermutation( const std::vector<int>& map )
             throw std::logic_error( msg.str().c_str() );
         }
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline void
 EnsurePermutation( const DistMap& map )
 {
 #ifndef RELEASE
-    PushCallStack("EnsurePermutation");
+    CallStackEntry entry("EnsurePermutation");
 #endif
     mpi::Comm comm = map.Comm();
     const int commRank = mpi::CommRank( comm );
@@ -858,9 +840,6 @@ EnsurePermutation( const DistMap& map )
             }
         }
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline void
@@ -941,7 +920,7 @@ BuildChildrenFromPerm
   int rightChildSize, Graph& rightChild )
 {
 #ifndef RELEASE
-    PushCallStack("BuildChildrenFromPerm");
+    CallStackEntry entry("BuildChildrenFromPerm");
 #endif
     const int numSources = graph.NumSources();
     const int sepSize = numSources - leftChildSize - rightChildSize;
@@ -1011,9 +990,6 @@ BuildChildrenFromPerm
         }
     }
     rightChild.StopAssembly();
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline void 
@@ -1023,7 +999,7 @@ BuildChildFromPerm
   bool& onLeft, DistGraph& child )
 {
 #ifndef RELEASE
-    PushCallStack("BuildChildFromPerm");
+    CallStackEntry entry("BuildChildFromPerm");
 #endif
     const int numSources = graph.NumSources();
     const int numLocalSources = graph.NumLocalSources();
@@ -1256,9 +1232,6 @@ BuildChildFromPerm
         }
     }
     child.StopAssembly();
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline void
@@ -1268,7 +1241,7 @@ BuildMap
         DistMap& map )
 {
 #ifndef RELEASE
-    PushCallStack("BuildMap");
+    CallStackEntry entry("BuildMap");
 #endif
     mpi::Comm comm = graph.Comm();
     const int commSize = mpi::CommSize( comm );
@@ -1432,9 +1405,6 @@ BuildMap
 #endif
         map.SetLocal( iLocal, iMapped );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

@@ -36,7 +36,7 @@ inline void FrontFastLowerForwardSolve
 ( UnitOrNonUnit diag, DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("FrontFastLowerForwardSolve");
+    CallStackEntry entry("FrontFastLowerForwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -57,9 +57,6 @@ inline void FrontFastLowerForwardSolve
     if( commSize == 1 )
     {
         FrontLowerForwardSolve( diag, L.LockedMatrix(), X.Matrix() );
-#ifndef RELEASE
-        PopCallStack();
-#endif
         return;
     }
 
@@ -118,9 +115,6 @@ inline void FrontFastLowerForwardSolve
         // XB := XB - LB XT
         elem::LocalGemm( NORMAL, NORMAL, F(-1), LB, XT_STAR_STAR, F(1), XB );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F>
@@ -128,7 +122,7 @@ inline void FrontFastLowerForwardSolve
 ( UnitOrNonUnit diag, DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("FrontFastLowerForwardSolve");
+    CallStackEntry entry("FrontFastLowerForwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -146,9 +140,6 @@ inline void FrontFastLowerForwardSolve
     if( commSize == 1 )
     {
         FrontLowerForwardSolve( diag, L.LockedMatrix(), X.Matrix() );
-#ifndef RELEASE
-        PopCallStack();
-#endif
         return;
     }
 
@@ -213,9 +204,6 @@ inline void FrontFastLowerForwardSolve
         // XB[VC,* ] += ZB[MC,* ]
         XB.SumScatterUpdate( F(1), ZB_MC_STAR );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F>
@@ -224,7 +212,7 @@ inline void FrontFastLowerBackwardSolve
   DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("FrontFastLowerBackwardSolve");
+    CallStackEntry entry("FrontFastLowerBackwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -248,9 +236,6 @@ inline void FrontFastLowerBackwardSolve
     {
         FrontLowerBackwardSolve
         ( orientation, diag, L.LockedMatrix(), X.Matrix() );
-#ifndef RELEASE
-        PopCallStack();
-#endif
         return;
     }
 
@@ -305,9 +290,6 @@ inline void FrontFastLowerBackwardSolve
             LTBuffer[iLocal+i*LTLDim] = localDiag[iLocal];
         }
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F>
@@ -316,7 +298,7 @@ inline void FrontFastLowerBackwardSolve
   DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    PushCallStack("FrontFastLowerBackwardSolve");
+    CallStackEntry entry("FrontFastLowerBackwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -337,9 +319,6 @@ inline void FrontFastLowerBackwardSolve
     {
         FrontLowerBackwardSolve
         ( orientation, diag, L.LockedMatrix(), X.Matrix() );
-#ifndef RELEASE
-        PopCallStack();
-#endif
         return;
     }
 
@@ -410,9 +389,6 @@ inline void FrontFastLowerBackwardSolve
 
     if( diag == UNIT )
         LT.SetDiagonal( dTOrig );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

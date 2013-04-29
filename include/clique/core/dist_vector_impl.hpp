@@ -14,14 +14,11 @@ inline void
 MakeZeros( DistVector<T>& x )
 {
 #ifndef RELEASE
-    PushCallStack("MakeZeros");
+    CallStackEntry entry("MakeZeros");
 #endif
     const int localHeight = x.LocalHeight();
     for( int iLocal=0; iLocal<localHeight; ++iLocal )
         x.SetLocal( iLocal, T(0) );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -29,14 +26,11 @@ inline void
 MakeUniform( DistVector<T>& x )
 {
 #ifndef RELEASE
-    PushCallStack("MakeUniform");
+    CallStackEntry entry("MakeUniform");
 #endif
     const int localHeight = x.LocalHeight();
     for( int iLocal=0; iLocal<localHeight; ++iLocal )
         x.SetLocal( iLocal, elem::SampleUnitBall<T>() );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F>
@@ -44,7 +38,7 @@ inline BASE(F)
 Norm( const DistVector<F>& x )
 {
 #ifndef RELEASE
-    PushCallStack("Norm");
+    CallStackEntry entry("Norm");
 #endif
     typedef BASE(F) R;
     const int localHeight = x.LocalHeight();
@@ -88,9 +82,6 @@ Norm( const DistVector<F>& x )
 
         norm = scale*Sqrt(scaledSquare);
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
     return norm;
 }
 
@@ -99,7 +90,7 @@ inline void
 Axpy( T alpha, const DistVector<T>& x, DistVector<T>& y )
 {
 #ifndef RELEASE
-    PushCallStack("Axpy");
+    CallStackEntry entry("Axpy");
     if( !mpi::CongruentComms( x.Comm(), y.Comm() ) )
         throw std::logic_error("x and y must have congruent communicators");
     if( x.Height() != y.Height() )
@@ -108,9 +99,6 @@ Axpy( T alpha, const DistVector<T>& x, DistVector<T>& y )
     const int localHeight = x.LocalHeight(); 
     for( int iLocal=0; iLocal<localHeight; ++iLocal )
         y.UpdateLocal( iLocal, alpha*x.GetLocal(iLocal) );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -238,13 +226,9 @@ inline T
 DistVector<T>::GetLocal( int localRow ) const
 { 
 #ifndef RELEASE 
-    PushCallStack("DistVector::GetLocal");
+    CallStackEntry entry("DistVector::GetLocal");
 #endif
-    const T value = vec_.Get(localRow,0);
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return value;
+    return vec_.Get(localRow,0);
 }
 
 template<typename T>
@@ -252,12 +236,9 @@ inline void
 DistVector<T>::SetLocal( int localRow, T value )
 {
 #ifndef RELEASE
-    PushCallStack("DistVector::SetLocal");
+    CallStackEntry entry("DistVector::SetLocal");
 #endif
     vec_.Set(localRow,0,value);
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -265,12 +246,9 @@ inline void
 DistVector<T>::UpdateLocal( int localRow, T value )
 {
 #ifndef RELEASE
-    PushCallStack("DistVector::UpdateLocal");
+    CallStackEntry entry("DistVector::UpdateLocal");
 #endif
     vec_.Update(localRow,0,value);
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -314,14 +292,11 @@ const DistVector<T>&
 DistVector<T>::operator=( const DistVector<T>& x )
 {
 #ifndef RELEASE
-    PushCallStack("DistVector::operator=");
+    CallStackEntry entry("DistVector::operator=");
 #endif
     height_ = x.height_;
     SetComm( x.comm_ );
     vec_ = x.vec_;
-#ifndef RELEASE
-    PopCallStack();
-#endif
     return *this;
 }
 

@@ -66,7 +66,7 @@ NaturalNestedDissectionRecursion
         int cutoff=128 )
 {
 #ifndef RELEASE
-    PushCallStack("NaturalNestedDissectionRecursion");
+    CallStackEntry entry("NaturalNestedDissectionRecursion");
 #endif
     if( graph.NumSources() <= cutoff )
     {
@@ -183,9 +183,6 @@ NaturalNestedDissectionRecursion
         ( nxLeft, nyLeft, nzLeft, leftChild, leftPerm, sepTree, eTree, 
           parent, offset, cutoff );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline void
@@ -203,7 +200,7 @@ NaturalNestedDissectionRecursion
         int cutoff=128 )
 {
 #ifndef RELEASE
-    PushCallStack("NaturalNestedDissectionRecursion");
+    CallStackEntry entry("NaturalNestedDissectionRecursion");
 #endif
     const int distDepth = sepTree.distSeps.size();
     mpi::Comm comm = graph.Comm();
@@ -444,9 +441,6 @@ NaturalNestedDissectionRecursion
         ( nxLeft, nyLeft, nzLeft, leftChild, leftPerm, sepTree, eTree, 
           parent, offset, cutoff );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline void 
@@ -462,7 +456,7 @@ NaturalNestedDissection
         bool storeFactRecvIndices )
 {
 #ifndef RELEASE
-    PushCallStack("NaturalNestedDissection");
+    CallStackEntry entry("NaturalNestedDissection");
 #endif
     // NOTE: There is a potential memory leak here if these data structures 
     //       are reused. Their destructors should call a member function which
@@ -494,9 +488,6 @@ NaturalNestedDissection
 
     // Run the symbolic analysis
     SymmetricAnalysis( eTree, info, storeFactRecvIndices );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline int 
@@ -516,7 +507,7 @@ NaturalBisect
         std::vector<int>& perm )
 {
 #ifndef RELEASE
-    PushCallStack("NaturalBisect");
+    CallStackEntry entry("NaturalBisect");
 #endif
     const int numSources = graph.NumSources();
     if( numSources == 0 )
@@ -630,12 +621,8 @@ NaturalBisect
 #ifndef RELEASE
     EnsurePermutation( perm );
 #endif
-
     BuildChildrenFromPerm
     ( graph, perm, leftChildSize, leftChild, rightChildSize, rightChild );
-#ifndef RELEASE
-    PopCallStack();
-#endif
     return sepSize;
 }
 
@@ -653,7 +640,7 @@ NaturalBisect
         bool& onLeft )
 {
 #ifndef RELEASE
-    PushCallStack("NaturalBisect");
+    CallStackEntry entry("NaturalBisect");
 #endif
     const int numSources = graph.NumSources();
     const int firstLocalSource = graph.FirstLocalSource();
@@ -824,9 +811,6 @@ NaturalBisect
         nyChild = nyRight;
         nzChild = nzRight;
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
     return sepSize;
 }
 

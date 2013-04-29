@@ -37,7 +37,7 @@ inline void LowerSolve
   const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
 {
 #ifndef RELEASE
-    PushCallStack("LowerSolve");
+    CallStackEntry entry("LowerSolve");
 #endif
     if( orientation == NORMAL )
     {
@@ -49,9 +49,6 @@ inline void LowerSolve
         DistLowerBackwardSolve( orientation, diag, info, L, localX );
         LocalLowerBackwardSolve( orientation, diag, info, L, localX );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

@@ -375,7 +375,7 @@ inline void FrontLowerForwardSolve
   bool singleL11AllGather )
 {
 #ifndef RELEASE
-    PushCallStack("FrontLowerForwardSolve");
+    CallStackEntry entry("FrontLowerForwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -394,9 +394,6 @@ inline void FrontLowerForwardSolve
         internal::ForwardSingle( diag, L, X );
     else
         internal::ForwardMany( diag, L, X );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F>
@@ -406,7 +403,7 @@ inline void FrontLowerBackwardSolve
   bool singleL11AllGather )
 {
 #ifndef RELEASE
-    PushCallStack("FrontLowerBackwardSolve");
+    CallStackEntry entry("FrontLowerBackwardSolve");
     if( L.Grid() != X.Grid() )
         throw std::logic_error
         ("L and X must be distributed over the same grid");
@@ -428,9 +425,6 @@ inline void FrontLowerBackwardSolve
     {
         FrontLowerBackwardSolve
         ( orientation, diag, L.LockedMatrix(), X.Matrix() );
-#ifndef RELEASE
-        PopCallStack();
-#endif
         return;
     }
 
@@ -459,9 +453,6 @@ inline void FrontLowerBackwardSolve
         internal::BackwardSingle( orientation, diag, LT, XT );
     else
         internal::BackwardMany( orientation, diag, LT, XT );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

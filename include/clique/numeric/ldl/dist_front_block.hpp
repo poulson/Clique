@@ -22,7 +22,7 @@ inline void FrontBlockLDL
 ( Orientation orientation, DistMatrix<F>& AL, DistMatrix<F>& ABR )
 {
 #ifndef RELEASE
-    PushCallStack("internal::FrontBlockLDL");
+    CallStackEntry entry("internal::FrontBlockLDL");
 #endif
     const Grid& g = AL.Grid();
     DistMatrix<F> ATL(g),
@@ -58,9 +58,6 @@ inline void FrontBlockLDL
         elem::MakeTrapezoidal( LEFT, UPPER, 1, ATLAdj );
         elem::Axpy( F(1), ATLAdj, ATL );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

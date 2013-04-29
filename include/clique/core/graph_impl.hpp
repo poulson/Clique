@@ -30,27 +30,21 @@ inline
 Graph::Graph( const Graph& graph )
 {
 #ifndef RELEASE
-    PushCallStack("Graph::Graph");
+    CallStackEntry entry("Graph::Graph");
 #endif
     if( &graph != this )
         *this = graph;
     else
         throw std::logic_error("Tried to construct a graph with itself");
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
     
 inline
 Graph::Graph( const DistGraph& graph )
 {
 #ifndef RELEASE
-    PushCallStack("Graph::Graph");
+    CallStackEntry entry("Graph::Graph");
 #endif
     *this = graph;
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline 
@@ -69,9 +63,8 @@ inline int
 Graph::NumEdges() const
 {
 #ifndef RELEASE
-    PushCallStack("Graph::NumEdges");
+    CallStackEntry entry("Graph::NumEdges");
     EnsureConsistentSizes();
-    PopCallStack();
 #endif
     return sources_.size();
 }
@@ -80,10 +73,9 @@ inline int
 Graph::Capacity() const
 {
 #ifndef RELEASE
-    PushCallStack("Graph::Capacity");
+    CallStackEntry entry("Graph::Capacity");
     EnsureConsistentSizes();
     EnsureConsistentCapacities();
-    PopCallStack();
 #endif
     return sources_.capacity();
 }
@@ -92,14 +84,11 @@ inline int
 Graph::Source( int edge ) const
 {
 #ifndef RELEASE
-    PushCallStack("Graph::Source");
+    CallStackEntry entry("Graph::Source");
     if( edge < 0 || edge >= (int)sources_.size() )
         throw std::logic_error("Edge number out of bounds");
 #endif
     EnsureNotAssembling();
-#ifndef RELEASE
-    PopCallStack();
-#endif
     return sources_[edge];
 }
 
@@ -107,14 +96,11 @@ inline int
 Graph::Target( int edge ) const
 {
 #ifndef RELEASE
-    PushCallStack("Graph::Target");
+    CallStackEntry entry("Graph::Target");
     if( edge < 0 || edge >= (int)targets_.size() )
         throw std::logic_error("Edge number out of bounds");
 #endif
     EnsureNotAssembling();
-#ifndef RELEASE
-    PopCallStack();
-#endif
     return targets_[edge];
 }
 
@@ -122,7 +108,7 @@ inline int
 Graph::EdgeOffset( int source ) const
 {
 #ifndef RELEASE
-    PushCallStack("Graph::EdgeOffset");
+    CallStackEntry entry("Graph::EdgeOffset");
     if( source < 0 )
         throw std::logic_error("Negative source index");
     if( source > numSources_ )
@@ -134,31 +120,23 @@ Graph::EdgeOffset( int source ) const
     }
 #endif
     EnsureNotAssembling();
-    const int edgeOffset = edgeOffsets_[source];
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return edgeOffset;
+    return edgeOffsets_[source];
 }
 
 inline int
 Graph::NumConnections( int source ) const
 {
 #ifndef RELEASE
-    PushCallStack("Graph::NumConnections");
+    CallStackEntry entry("Graph::NumConnections");
 #endif
-    const int numConnections = EdgeOffset(source+1) - EdgeOffset(source);
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return numConnections;
+    return EdgeOffset(source+1) - EdgeOffset(source);
 }
 
 inline const Graph&
 Graph::operator=( const Graph& graph )
 {
 #ifndef RELEASE
-    PushCallStack("Graph::operator=");
+    CallStackEntry entry("Graph::operator=");
 #endif
     numSources_ = graph.numSources_;
     numTargets_ = graph.numTargets_;
@@ -168,9 +146,6 @@ Graph::operator=( const Graph& graph )
     sorted_ = graph.sorted_;
     assembling_ = graph.assembling_;
     edgeOffsets_ = graph.edgeOffsets_;
-#ifndef RELEASE
-    PopCallStack();
-#endif
     return *this;
 }
 
@@ -178,7 +153,7 @@ inline const Graph&
 Graph::operator=( const DistGraph& graph )
 {
 #ifndef RELEASE
-    PushCallStack("Graph::operator=");
+    CallStackEntry entry("Graph::operator=");
 #endif
     mpi::Comm comm = graph.Comm();
     const int commSize = mpi::CommSize( comm );
@@ -194,9 +169,6 @@ Graph::operator=( const DistGraph& graph )
     sorted_ = graph.sorted_;
     assembling_ = graph.assembling_;
     edgeOffsets_ = graph.localEdgeOffsets_;
-#ifndef RELEASE
-    PopCallStack();
-#endif
     return *this;
 }
 
@@ -204,7 +176,7 @@ inline void
 Graph::Print( std::string msg ) const
 {
 #ifndef RELEASE
-    PushCallStack("Graph::Print");
+    CallStackEntry entry("Graph::Print");
 #endif
     if( msg != "" )
         std::cout << msg << std::endl;
@@ -212,9 +184,6 @@ Graph::Print( std::string msg ) const
     for( int e=0; e<numEdges; ++e )
         std::cout << sources_[e] << " " << targets_[e] << "\n";
     std::cout << std::endl;
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline bool
@@ -228,20 +197,17 @@ inline void
 Graph::StartAssembly()
 {
 #ifndef RELEASE
-    PushCallStack("Graph::StartAssembly");
+    CallStackEntry entry("Graph::StartAssembly");
 #endif
     EnsureNotAssembling();
     assembling_ = true;
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline void
 Graph::StopAssembly()
 {
 #ifndef RELEASE
-    PushCallStack("Graph::StopAssembly");
+    CallStackEntry entry("Graph::StopAssembly");
 #endif
     if( !assembling_ )
         throw std::logic_error("Cannot stop assembly without starting");
@@ -276,16 +242,13 @@ Graph::StopAssembly()
     }
 
     ComputeEdgeOffsets();
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline void
 Graph::ComputeEdgeOffsets()
 {
 #ifndef RELEASE
-    PushCallStack("Graph::ComputeEdgeOffsets");
+    CallStackEntry entry("Graph::ComputeEdgeOffsets");
 #endif
     // Compute the edge offsets
     int sourceOffset = 0;
@@ -306,9 +269,6 @@ Graph::ComputeEdgeOffsets()
         }
     }
     edgeOffsets_[numSources_] = numEdges;
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline void
@@ -322,7 +282,7 @@ inline void
 Graph::Insert( int source, int target )
 {
 #ifndef RELEASE
-    PushCallStack("Graph::Insert");
+    CallStackEntry entry("Graph::Insert");
     EnsureConsistentSizes();
     const int capacity = Capacity();
     const int numEdges = NumEdges();
@@ -348,9 +308,6 @@ Graph::Insert( int source, int target )
     }
     sources_.push_back( source );
     targets_.push_back( target );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline void

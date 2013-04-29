@@ -46,9 +46,9 @@ public:
     int Capacity() const;
 
     // Local data
-    int Row( int localEntry ) const;
-    int Col( int localEntry ) const;
-    T Value( int localEntry ) const;
+    int Row( int localIndex ) const;
+    int Col( int localIndex ) const;
+    T Value( int localIndex ) const;
     int NumLocalEntries() const;
     int LocalEntryOffset( int localRow ) const;
     int NumConnections( int localRow ) const;

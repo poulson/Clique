@@ -41,7 +41,7 @@ inline void InitializeDistLeaf
 ( const DistSymmInfo& info, DistSymmFrontTree<F>& L )
 {
 #ifndef RELEASE
-    PushCallStack("InitializeDistLeaf");
+    CallStackEntry entry("InitializeDistLeaf");
 #endif
     const DistSymmNodeInfo& node = info.distNodes[0];
     Matrix<F>& topLocalFrontL = L.localFronts.back().frontL;
@@ -51,9 +51,6 @@ inline void InitializeDistLeaf
     ( topLocalFrontL.Height(), topLocalFrontL.Width(), 0, 0,
       topLocalFrontL.LockedBuffer(), topLocalFrontL.LDim(), 
       *node.grid );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F>
@@ -61,7 +58,7 @@ inline void
 LDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, SymmFrontType newFrontType )
 {
 #ifndef RELEASE
-    PushCallStack("LDL");
+    CallStackEntry entry("LDL");
 #endif
     if( L.frontType != SYMM_2D )
         throw std::logic_error
@@ -87,9 +84,6 @@ LDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, SymmFrontType newFrontType )
     DistLDL( info, L, blockLDL );
 
     ChangeFrontType( L, newFrontType );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

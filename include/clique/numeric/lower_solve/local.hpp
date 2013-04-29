@@ -29,7 +29,7 @@ inline void LocalLowerForwardSolve
   const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    PushCallStack("LocalLowerForwardSolve");
+    CallStackEntry entry("LocalLowerForwardSolve");
 #endif
     const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
 #ifndef RELEASE
@@ -106,9 +106,6 @@ inline void LocalLowerForwardSolve
         // Store this node's portion of the result
         XT = WT;
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F> 
@@ -117,7 +114,7 @@ inline void LocalLowerBackwardSolve
   const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    PushCallStack("LocalLowerBackwardSolve");
+    CallStackEntry entry("LocalLowerBackwardSolve");
 #endif
     const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
 #ifndef RELEASE
@@ -198,9 +195,6 @@ inline void LocalLowerBackwardSolve
     L.distFronts[0].work1d.Empty();
     for( int s=0; s<numLocalNodes; ++s )
         L.localFronts[s].work.Empty();
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

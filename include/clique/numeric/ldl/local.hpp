@@ -22,7 +22,7 @@ inline void LocalLDL
 ( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
 {
 #ifndef RELEASE
-    PushCallStack("LocalLDL");
+    CallStackEntry entry("LocalLDL");
 #endif
     const int numLocalNodes = info.localNodes.size();
     for( int s=0; s<numLocalNodes; ++s )
@@ -101,9 +101,6 @@ inline void LocalLDL
                 FrontBlockLDL( TRANSPOSE, frontL, frontBR );
         }
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

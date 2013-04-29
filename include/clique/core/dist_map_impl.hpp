@@ -36,7 +36,7 @@ DistMap::StoreOwners
 ( int numSources, std::vector<int>& localIndices, mpi::Comm comm )
 {
 #ifndef RELEASE
-    PushCallStack("DistMap::StoreOwners");
+    CallStackEntry entry("DistMap::StoreOwners");
 #endif
     SetComm( comm );
     ResizeTo( numSources );
@@ -95,16 +95,13 @@ DistMap::StoreOwners
             SetLocal( iLocal, q );
         }
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline void
 DistMap::Translate( std::vector<int>& localIndices ) const
 {
 #ifndef RELEASE
-    PushCallStack("DistMap::Translate");
+    CallStackEntry entry("DistMap::Translate");
 #endif
     const int commSize = mpi::CommSize( comm_ );
     const int numLocalIndices = localIndices.size();
@@ -198,16 +195,13 @@ DistMap::Translate( std::vector<int>& localIndices ) const
             localIndices[s] = requests[offsets[q]++];
         }
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline void
 DistMap::FormInverse( DistMap& inverseMap ) const
 {
 #ifndef RELEASE
-    PushCallStack("DistMap::FormInverse");
+    CallStackEntry entry("DistMap::FormInverse");
 #endif
     const int commSize = mpi::CommSize( comm_ );
     const int numLocalSources = map_.size();
@@ -275,37 +269,27 @@ DistMap::FormInverse( DistMap& inverseMap ) const
         const int mappedIndex = recvs[s+1];
         inverseMap.SetLocal( mappedIndex-firstLocalSource_, origIndex );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline void
 DistMap::Extend( DistMap& firstMap ) const
 {
 #ifndef RELEASE
-    PushCallStack("DistMap::Extend");
+    CallStackEntry entry("DistMap::Extend");
     // TODO: Ensure that the communicators are congruent and that the maps
     //       are compatible sizes.
 #endif
     Translate( firstMap.map_ ); 
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline void
 DistMap::Extend( const DistMap& firstMap, DistMap& compositeMap ) const
 {
 #ifndef RELEASE
-    PushCallStack("DistMap::Extend");
-
+    CallStackEntry entry("DistMap::Extend");
 #endif
     compositeMap = firstMap;
     Extend( compositeMap );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline int
@@ -354,29 +338,22 @@ inline int
 DistMap::GetLocal( int localSource ) const
 { 
 #ifndef RELEASE
-    PushCallStack("DistMap::GetLocal");
+    CallStackEntry entry("DistMap::GetLocal");
     if( localSource < 0 || localSource >= (int)map_.size() )
         throw std::logic_error("local source is out of bounds");
 #endif
-    const int target = map_[localSource];
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return target;
+    return map_[localSource];
 }
 
 inline void
 DistMap::SetLocal( int localSource, int target )
 { 
 #ifndef RELEASE
-    PushCallStack("DistMap::SetLocal");
+    CallStackEntry entry("DistMap::SetLocal");
     if( localSource < 0 || localSource >= (int)map_.size() )
         throw std::logic_error("local source is out of bounds");
 #endif
     map_[localSource] = target; 
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline std::vector<int>&

@@ -35,9 +35,9 @@ public:
     int Capacity() const;
 
     // Data
-    int Row( int entry ) const;
-    int Col( int entry ) const;
-    T Value( int entry ) const;
+    int Row( int index ) const;
+    int Col( int index ) const;
+    T Value( int index ) const;
     int NumEntries() const;
     int EntryOffset( int row ) const;
     int NumConnections( int row ) const;

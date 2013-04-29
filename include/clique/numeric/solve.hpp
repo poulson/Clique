@@ -40,7 +40,7 @@ inline void Solve
 ( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
 {
 #ifndef RELEASE
-    PushCallStack("Solve");
+    CallStackEntry entry("Solve");
 #endif
     const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
     if( !blockLDL )
@@ -68,9 +68,6 @@ inline void Solve
         else
             LowerSolve( TRANSPOSE, NON_UNIT, info, L, localX );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F>
@@ -79,7 +76,7 @@ inline void SymmetricSolve
   bool sequential, int numDistSeps, int numSeqSeps, int cutoff )
 {
 #ifndef RELEASE
-    PushCallStack("SymmetricSolve");
+    CallStackEntry entry("SymmetricSolve");
 #endif
     DistSymmInfo info;
     DistSeparatorTree sepTree;
@@ -96,9 +93,6 @@ inline void SymmetricSolve
     xNodal.Pull( inverseMap, info, x );
     Solve( info, frontTree, xNodal.localVec );
     xNodal.Push( inverseMap, info, x );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F>
@@ -107,7 +101,7 @@ inline void HermitianSolve
   bool sequential, int numDistSeps, int numSeqSeps, int cutoff )
 {
 #ifndef RELEASE
-    PushCallStack("HermitianSolve");
+    CallStackEntry entry("HermitianSolve");
 #endif
     DistSymmInfo info;
     DistSeparatorTree sepTree;
@@ -124,9 +118,6 @@ inline void HermitianSolve
     xNodal.Pull( inverseMap, info, x );
     Solve( info, frontTree, xNodal.localVec );
     xNodal.Push( inverseMap, info, x );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F>
@@ -135,7 +126,7 @@ inline void SymmetricSolve
   bool sequential, int numDistSeps, int numSeqSeps, int cutoff )
 {
 #ifndef RELEASE
-    PushCallStack("SymmetricSolve");
+    CallStackEntry entry("SymmetricSolve");
 #endif
     DistSymmInfo info;
     DistSeparatorTree sepTree;
@@ -152,9 +143,6 @@ inline void SymmetricSolve
     XNodal.Pull( inverseMap, info, X );
     Solve( info, frontTree, XNodal.multiVec );
     XNodal.Push( inverseMap, info, X );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F>
@@ -163,7 +151,7 @@ inline void HermitianSolve
   bool sequential, int numDistSeps, int numSeqSeps, int cutoff )
 {
 #ifndef RELEASE
-    PushCallStack("HermitianSolve");
+    CallStackEntry entry("HermitianSolve");
 #endif
     DistSymmInfo info;
     DistSeparatorTree sepTree;
@@ -180,9 +168,6 @@ inline void HermitianSolve
     XNodal.Pull( inverseMap, info, X );
     Solve( info, frontTree, XNodal.multiVec );
     XNodal.Push( inverseMap, info, X );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

@@ -22,7 +22,7 @@ inline void DistLDL
 ( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
 {
 #ifndef RELEASE
-    PushCallStack("DistLDL");
+    CallStackEntry entry("DistLDL");
 #endif
     // The bottom front is already computed, so just view it
     SymmFront<F>& topLocalFront = L.localFronts.back();
@@ -210,9 +210,6 @@ inline void DistLDL
     }
     L.localFronts.back().work.Empty();
     L.distFronts.back().work2d.Empty();
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

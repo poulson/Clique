@@ -13,7 +13,7 @@ namespace cliq {
 void LocalSymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info )
 {
 #ifndef RELEASE
-    PushCallStack("LocalSymmetricAnalysis");
+    CallStackEntry entry("LocalSymmetricAnalysis");
 #endif
     const int numNodes = eTree.localNodes.size();
     info.localNodes.resize( numNodes );
@@ -178,9 +178,6 @@ void LocalSymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info )
 
         myOffset += nodeInfo.size;
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

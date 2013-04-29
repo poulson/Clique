@@ -31,7 +31,7 @@ void Multiply
   T beta,                                      DistVector<T>& y )
 {
 #ifndef RELEASE
-    PushCallStack("Multiply");
+    CallStackEntry entry("Multiply");
     if( A.Height() != y.Height() || A.Width() != x.Height() )
         throw std::logic_error("A, x, and y did not conform");
     if( !mpi::CongruentComms( A.Comm(), x.Comm() ) || 
@@ -134,9 +134,6 @@ void Multiply
             y.UpdateLocal( iLocal, update );
         }
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -145,7 +142,7 @@ void Multiply
   T beta,                                      DistMultiVector<T>& Y )
 {
 #ifndef RELEASE
-    PushCallStack("Multiply");
+    CallStackEntry entry("Multiply");
     if( A.Height() != Y.Height() || A.Width() != X.Height() || 
         X.Width() != Y.Width() )
         throw std::logic_error("A, X, and Y did not conform");
@@ -262,9 +259,6 @@ void Multiply
             }
         }
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

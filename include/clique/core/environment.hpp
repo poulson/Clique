@@ -19,6 +19,13 @@ void Finalize();
 void PushCallStack( std::string s );
 void PopCallStack();
 void DumpCallStack();
+
+class CallStackEntry
+{
+public:
+    CallStackEntry( std::string s ) { PushCallStack(s); }
+    ~CallStackEntry() { PopCallStack(); }
+};
 #endif
 
 // Pull in some of Elemental's imported libraries
@@ -68,7 +75,7 @@ inline int
 Find( const std::vector<int>& sortedIndices, int index )
 {
 #ifndef RELEASE
-    PushCallStack("Find");
+    CallStackEntry entry("Find");
 #endif
     std::vector<int>::const_iterator vecIt;
     vecIt = std::lower_bound
@@ -77,18 +84,14 @@ Find( const std::vector<int>& sortedIndices, int index )
     if( vecIt == sortedIndices.end() )
         throw std::logic_error("Could not find index");
 #endif
-    const int indexOffset = vecIt - sortedIndices.begin();
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return indexOffset;
+    return vecIt - sortedIndices.begin();
 }
     
 inline int
 Find( const std::vector<int>& sortedIndices, int index, std::string msg )
 {
 #ifndef RELEASE
-    PushCallStack("Find");
+    CallStackEntry entry("Find");
 #endif
     std::vector<int>::const_iterator vecIt;
     vecIt = std::lower_bound
@@ -97,11 +100,7 @@ Find( const std::vector<int>& sortedIndices, int index, std::string msg )
     if( vecIt == sortedIndices.end() )
         throw std::logic_error( msg.c_str() );
 #endif
-    const int indexOffset = vecIt - sortedIndices.begin();
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return indexOffset;
+    return vecIt - sortedIndices.begin();
 }
 
 inline void

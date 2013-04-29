@@ -85,9 +85,8 @@ inline int
 DistSparseMatrix<T>::NumLocalEntries() const
 {
 #ifndef RELEASE
-    PushCallStack("DistSparseMatrix::NumLocalEntries");
+    CallStackEntry entry("DistSparseMatrix::NumLocalEntries");
     EnsureConsistentSizes();
-    PopCallStack();
 #endif
     return graph_.NumLocalEdges();
 }
@@ -97,40 +96,31 @@ inline int
 DistSparseMatrix<T>::Capacity() const
 {
 #ifndef RELEASE
-    PushCallStack("DistSparseMatrix::Capacity");
+    CallStackEntry entry("DistSparseMatrix::Capacity");
     EnsureConsistentSizes();
     EnsureConsistentCapacities();
-    PopCallStack();
 #endif
     return graph_.Capacity();
 }
 
 template<typename T>
 inline int
-DistSparseMatrix<T>::Row( int localEntry ) const
+DistSparseMatrix<T>::Row( int localIndex ) const
 { 
 #ifndef RELEASE 
-    PushCallStack("DistSparseMatrix::Row");
+    CallStackEntry entry("DistSparseMatrix::Row");
 #endif
-    const int row = graph_.Source( localEntry );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return row;
+    return graph_.Source( localIndex );
 }
 
 template<typename T>
 inline int
-DistSparseMatrix<T>::Col( int localEntry ) const
+DistSparseMatrix<T>::Col( int localIndex ) const
 { 
 #ifndef RELEASE 
-    PushCallStack("DistSparseMatrix::Col");
+    CallStackEntry entry("DistSparseMatrix::Col");
 #endif
-    const int col = graph_.Target( localEntry );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return col;
+    return graph_.Target( localIndex );
 }
 
 template<typename T>
@@ -138,13 +128,9 @@ inline int
 DistSparseMatrix<T>::LocalEntryOffset( int localRow ) const
 {
 #ifndef RELEASE
-    PushCallStack("DistSparseMatrix::LocalEntryOffset");
+    CallStackEntry entry("DistSparseMatrix::LocalEntryOffset");
 #endif
-    const int localEntryOffset = graph_.LocalEdgeOffset( localRow );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return localEntryOffset;
+    return graph_.LocalEdgeOffset( localRow );
 }
 
 template<typename T>
@@ -152,26 +138,21 @@ inline int
 DistSparseMatrix<T>::NumConnections( int localRow ) const
 {
 #ifndef RELEASE
-    PushCallStack("DistSparseMatrix::NumConnections");
+    CallStackEntry entry("DistSparseMatrix::NumConnections");
 #endif
-    const int numConnections = graph_.NumConnections( localRow );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return numConnections;
+    return graph_.NumConnections( localRow );
 }
 
 template<typename T>
 inline T
-DistSparseMatrix<T>::Value( int localEntry ) const
+DistSparseMatrix<T>::Value( int localIndex ) const
 { 
 #ifndef RELEASE 
-    PushCallStack("DistSparseMatrix::Value");
-    if( localEntry < 0 || localEntry >= (int)values_.size() )
+    CallStackEntry entry("DistSparseMatrix::Value");
+    if( localIndex < 0 || localEntry >= (int)values_.size() )
         throw std::logic_error("Entry number out of bounds");
-    PopCallStack();
 #endif
-    return values_[localEntry];
+    return values_[localIndex];
 }
 
 template<typename T>
@@ -186,13 +167,10 @@ inline void
 DistSparseMatrix<T>::StartAssembly()
 {
 #ifndef RELEASE
-    PushCallStack("DistSparseMatrix::StartAssembly");
+    CallStackEntry entry("DistSparseMatrix::StartAssembly");
 #endif
     graph_.EnsureNotAssembling();
     graph_.assembling_ = true;
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -200,7 +178,7 @@ inline void
 DistSparseMatrix<T>::StopAssembly()
 {
 #ifndef RELEASE
-    PushCallStack("DistSparseMatrix::StopAssembly");
+    CallStackEntry entry("DistSparseMatrix::StopAssembly");
 #endif
     if( !graph_.assembling_ )
         throw std::logic_error("Cannot stop assembly without starting");
@@ -246,11 +224,7 @@ DistSparseMatrix<T>::StopAssembly()
             values_[s] = entries[s].value;
         }
     }
-
     graph_.ComputeLocalEdgeOffsets();
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -266,14 +240,11 @@ inline void
 DistSparseMatrix<T>::Update( int row, int col, T value )
 {
 #ifndef RELEASE
-    PushCallStack("DistSparseMatrix::Update");
+    CallStackEntry entry("DistSparseMatrix::Update");
     EnsureConsistentSizes();
 #endif
     graph_.Insert( row, col );
     values_.push_back( value );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -297,7 +268,7 @@ inline void
 DistSparseMatrix<T>::Print( std::string msg ) const
 {
 #ifndef RELEASE
-    PushCallStack("DistSparseMatrix::Print");
+    CallStackEntry entry("DistSparseMatrix::Print");
 #endif
     const int commSize = mpi::CommSize( graph_.comm_ );
     const int commRank = mpi::CommRank( graph_.comm_ );
@@ -340,9 +311,6 @@ DistSparseMatrix<T>::Print( std::string msg ) const
                       << values[s] << "\n";
         std::cout << std::endl;
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>

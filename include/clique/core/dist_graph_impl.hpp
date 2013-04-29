@@ -41,27 +41,21 @@ inline
 DistGraph::DistGraph( const Graph& graph )
 {
 #ifndef RELEASE
-    PushCallStack("DistGraph::DistGraph");
+    CallStackEntry entry("DistGraph::DistGraph");
 #endif
     *this = graph;
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline
 DistGraph::DistGraph( const DistGraph& graph )
 {
 #ifndef RELEASE
-    PushCallStack("DistGraph::DistGraph");
+    CallStackEntry entry("DistGraph::DistGraph");
 #endif
     if( &graph != this )
         *this = graph;
     else
         throw std::logic_error("Tried to construct DistGraph with itself");
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline
@@ -126,9 +120,8 @@ inline int
 DistGraph::NumLocalEdges() const
 {
 #ifndef RELEASE
-    PushCallStack("DistGraph::NumLocalEdges");
+    CallStackEntry entry("DistGraph::NumLocalEdges");
     EnsureConsistentSizes();
-    PopCallStack();
 #endif
     return sources_.size();
 }
@@ -137,10 +130,9 @@ inline int
 DistGraph::Capacity() const
 {
 #ifndef RELEASE
-    PushCallStack("DistGraph::Capacity");
+    CallStackEntry entry("DistGraph::Capacity");
     EnsureConsistentSizes();
     EnsureConsistentCapacities();
-    PopCallStack();
 #endif
     return sources_.capacity();
 }
@@ -149,14 +141,11 @@ inline int
 DistGraph::Source( int localEdge ) const
 {
 #ifndef RELEASE
-    PushCallStack("DistGraph::Source");
+    CallStackEntry entry("DistGraph::Source");
     if( localEdge < 0 || localEdge >= (int)sources_.size() )
         throw std::logic_error("Edge number out of bounds");
 #endif
     EnsureNotAssembling();
-#ifndef RELEASE
-    PopCallStack();
-#endif
     return sources_[localEdge];
 }
 
@@ -164,14 +153,11 @@ inline int
 DistGraph::Target( int localEdge ) const
 {
 #ifndef RELEASE
-    PushCallStack("DistGraph::Target");
+    CallStackEntry entry("DistGraph::Target");
     if( localEdge < 0 || localEdge >= (int)targets_.size() )
         throw std::logic_error("Edge number out of bounds");
 #endif
     EnsureNotAssembling();
-#ifndef RELEASE
-    PopCallStack();
-#endif
     return targets_[localEdge];
 }
 
@@ -179,7 +165,7 @@ inline int
 DistGraph::LocalEdgeOffset( int localSource ) const
 {
 #ifndef RELEASE
-    PushCallStack("DistGraph::LocalEdgeOffset");
+    CallStackEntry entry("DistGraph::LocalEdgeOffset");
     if( localSource < 0 || localSource > numLocalSources_ )
     {
         std::ostringstream msg;
@@ -189,32 +175,23 @@ DistGraph::LocalEdgeOffset( int localSource ) const
     }
 #endif
     EnsureNotAssembling();
-    const int localEdgeOffset = localEdgeOffsets_[localSource];
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return localEdgeOffset;
+    return localEdgeOffsets_[localSource];
 }
 
 inline int
 DistGraph::NumConnections( int localSource ) const
 {
 #ifndef RELEASE
-    PushCallStack("DistGraph::NumConnections");
+    CallStackEntry entry("DistGraph::NumConnections");
 #endif
-    const int numConnections = LocalEdgeOffset(localSource+1) - 
-                               LocalEdgeOffset(localSource);
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return numConnections;
+    return LocalEdgeOffset(localSource+1) - LocalEdgeOffset(localSource);
 }
 
 inline const DistGraph&
 DistGraph::operator=( const Graph& graph )
 {
 #ifndef RELEASE
-    PushCallStack("DistGraph::operator=");
+    CallStackEntry entry("DistGraph::operator=");
 #endif
     numSources_ = graph.numSources_; 
     numTargets_ = graph.numTargets_;
@@ -227,9 +204,6 @@ DistGraph::operator=( const Graph& graph )
     sorted_ = graph.sorted_;
     assembling_ = graph.assembling_;
     localEdgeOffsets_ = graph.edgeOffsets_;
-#ifndef RELEASE
-    PopCallStack();
-#endif
     return *this;
 }
 
@@ -237,7 +211,7 @@ inline const DistGraph&
 DistGraph::operator=( const DistGraph& graph )
 {
 #ifndef RELEASE
-    PushCallStack("DistGraph::operator=");
+    CallStackEntry entry("DistGraph::operator=");
 #endif
     numSources_ = graph.numSources_;
     numTargets_ = graph.numTargets_;
@@ -250,9 +224,6 @@ DistGraph::operator=( const DistGraph& graph )
     sorted_ = graph.sorted_;
     assembling_ = graph.assembling_;
     localEdgeOffsets_ = graph.localEdgeOffsets_;
-#ifndef RELEASE
-    PopCallStack();
-#endif
     return *this;
 }
 
@@ -260,7 +231,7 @@ inline void
 DistGraph::Print( std::string msg ) const
 {
 #ifndef RELEASE
-    PushCallStack("DistGraph::Print");
+    CallStackEntry entry("DistGraph::Print");
 #endif
     const int commSize = mpi::CommSize( comm_ );
     const int commRank = mpi::CommRank( comm_ );
@@ -296,9 +267,6 @@ DistGraph::Print( std::string msg ) const
             std::cout << sources[e] << " " << targets[e] << "\n";
         std::cout << std::endl;
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline bool
@@ -312,20 +280,17 @@ inline void
 DistGraph::StartAssembly()
 {
 #ifndef RELEASE
-    PushCallStack("DistGraph::StartAssembly");
+    CallStackEntry entry("DistGraph::StartAssembly");
 #endif
     EnsureNotAssembling();
     assembling_ = true;
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline void
 DistGraph::StopAssembly()
 {
 #ifndef RELEASE
-    PushCallStack("DistGraph::StopAssembly");
+    CallStackEntry entry("DistGraph::StopAssembly");
 #endif
     if( !assembling_ )
         throw std::logic_error("Cannot stop assembly without starting");
@@ -360,16 +325,13 @@ DistGraph::StopAssembly()
     }
 
     ComputeLocalEdgeOffsets();
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline void
 DistGraph::ComputeLocalEdgeOffsets()
 {
 #ifndef RELEASE
-    PushCallStack("DistGraph::ComputeLocalEdgeOffsets");
+    CallStackEntry entry("DistGraph::ComputeLocalEdgeOffsets");
 #endif
     // Compute the local edge offsets
     int sourceOffset = 0;
@@ -390,9 +352,6 @@ DistGraph::ComputeLocalEdgeOffsets()
         }
     }
     localEdgeOffsets_[numLocalSources_] = numLocalEdges;
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline void
@@ -406,7 +365,7 @@ inline void
 DistGraph::Insert( int source, int target )
 {
 #ifndef RELEASE
-    PushCallStack("DistGraph::Insert");
+    CallStackEntry entry("DistGraph::Insert");
     EnsureConsistentSizes();
     const int capacity = Capacity();
     const int numLocalEdges = NumLocalEdges();
@@ -434,9 +393,6 @@ DistGraph::Insert( int source, int target )
     }
     sources_.push_back( source );
     targets_.push_back( target );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 inline void

@@ -24,7 +24,7 @@ DistSymmFrontTree<F>::Initialize
   const DistSymmInfo& info )
 {
 #ifndef RELEASE
-    PushCallStack("DistSymmFrontTree::Initialize");
+    CallStackEntry entry("DistSymmFrontTree::Initialize");
     if( orientation == NORMAL )
         throw std::logic_error("Matrix must be symmetric or Hermitian");
     if( A.LocalHeight() != reordering.NumLocalSources() )
@@ -372,9 +372,6 @@ DistSymmFrontTree<F>::Initialize
         ( topLocal.Height(), topLocal.Width(), 0, 0,
           topLocal.LockedBuffer(), topLocal.LDim(), *node.grid );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F>
@@ -387,12 +384,9 @@ DistSymmFrontTree<F>::DistSymmFrontTree
   const DistSymmInfo& info )
 {
 #ifndef RELEASE
-    PushCallStack("DistSymmFrontTree::DistSymmFrontTree");
+    CallStackEntry entry("DistSymmFrontTree::DistSymmFrontTree");
 #endif
     Initialize( orientation, A, reordering, sepTree, info );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F>
@@ -402,7 +396,7 @@ DistSymmFrontTree<F>::MemoryInfo
   double& numGlobalEntries ) const
 {
 #ifndef RELEASE
-    PushCallStack("DistSymmFrontTree::MemInfo");
+    CallStackEntry entry("DistSymmFrontTree::MemInfo");
 #endif
     numLocalEntries = numGlobalEntries = 0;
     const int numLocalFronts = localFronts.size();
@@ -437,9 +431,6 @@ DistSymmFrontTree<F>::MemoryInfo
     mpi::AllReduce( &numLocalEntries, &minLocalEntries, 1, mpi::MIN, comm );
     mpi::AllReduce( &numLocalEntries, &maxLocalEntries, 1, mpi::MAX, comm );
     mpi::AllReduce( &numLocalEntries, &numGlobalEntries, 1, mpi::SUM, comm );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F>
@@ -449,7 +440,7 @@ DistSymmFrontTree<F>::TopLeftMemoryInfo
   double& numGlobalEntries ) const
 {
 #ifndef RELEASE
-    PushCallStack("DistSymmFrontTree::TopLeftMemInfo");
+    CallStackEntry entry("DistSymmFrontTree::TopLeftMemInfo");
 #endif
     numLocalEntries = numGlobalEntries = 0;
     const int numLocalFronts = localFronts.size();
@@ -496,9 +487,6 @@ DistSymmFrontTree<F>::TopLeftMemoryInfo
     mpi::AllReduce( &numLocalEntries, &minLocalEntries, 1, mpi::MIN, comm );
     mpi::AllReduce( &numLocalEntries, &maxLocalEntries, 1, mpi::MAX, comm );
     mpi::AllReduce( &numLocalEntries, &numGlobalEntries, 1, mpi::SUM, comm );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F>
@@ -508,7 +496,7 @@ DistSymmFrontTree<F>::BottomLeftMemoryInfo
   double& numGlobalEntries ) const
 {
 #ifndef RELEASE
-    PushCallStack("DistSymmFrontTree::BottomLeftMemInfo");
+    CallStackEntry entry("DistSymmFrontTree::BottomLeftMemInfo");
 #endif
     numLocalEntries = numGlobalEntries = 0;
     const int numLocalFronts = localFronts.size();
@@ -555,9 +543,6 @@ DistSymmFrontTree<F>::BottomLeftMemoryInfo
     mpi::AllReduce( &numLocalEntries, &minLocalEntries, 1, mpi::MIN, comm );
     mpi::AllReduce( &numLocalEntries, &maxLocalEntries, 1, mpi::MAX, comm );
     mpi::AllReduce( &numLocalEntries, &numGlobalEntries, 1, mpi::SUM, comm );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

@@ -20,7 +20,7 @@ template<typename F>
 inline void FrontLDL( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR )
 {
 #ifndef RELEASE
-    PushCallStack("FrontLDL");
+    CallStackEntry entry("FrontLDL");
     if( ABR.Height() != ABR.Width() )
         throw std::logic_error("ABR must be square");
     if( AL.Height() != AL.Width() + ABR.Width() )
@@ -79,9 +79,6 @@ inline void FrontLDL( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR )
          /***************/ /*********************/
           ALBL, /**/ ALBR,  AL20, AL21, /**/ AL22 );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

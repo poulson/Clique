@@ -31,15 +31,12 @@ inline
 SparseMatrix<T>::SparseMatrix( const SparseMatrix<T>& A )
 { 
 #ifndef RELEASE
-    PushCallStack("SparseMatrix::SparseMatrix");
+    CallStackEntry entry("SparseMatrix::SparseMatrix");
 #endif
     if( &A != this )
         *this = A;
     else
         throw std::logic_error("Tried to construct sparse matrix with itself");
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -47,12 +44,9 @@ inline
 SparseMatrix<T>::SparseMatrix( const DistSparseMatrix<T>& A )
 { 
 #ifndef RELEASE
-    PushCallStack("SparseMatrix::SparseMatrix");
+    CallStackEntry entry("SparseMatrix::SparseMatrix");
 #endif
     *this = A;
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -80,9 +74,8 @@ inline int
 SparseMatrix<T>::NumEntries() const
 {
 #ifndef RELEASE
-    PushCallStack("SparseMatrix::NumEntries");
+    CallStackEntry entry("SparseMatrix::NumEntries");
     EnsureConsistentSizes();
-    PopCallStack();
 #endif
     return graph_.NumEdges();
 }
@@ -92,40 +85,31 @@ inline int
 SparseMatrix<T>::Capacity() const
 {
 #ifndef RELEASE
-    PushCallStack("SparseMatrix::Capacity");
+    CallStackEntry entry("SparseMatrix::Capacity");
     EnsureConsistentSizes();
     EnsureConsistentCapacities();
-    PopCallStack();
 #endif
     return graph_.Capacity();
 }
 
 template<typename T>
 inline int
-SparseMatrix<T>::Row( int entry ) const
+SparseMatrix<T>::Row( int index ) const
 { 
 #ifndef RELEASE 
-    PushCallStack("SparseMatrix::Row");
+    CallStackEntry entry("SparseMatrix::Row");
 #endif
-    const int row = graph_.Source( entry );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return row;
+    return graph_.Source( index );
 }
 
 template<typename T>
 inline int
-SparseMatrix<T>::Col( int entry ) const
+SparseMatrix<T>::Col( int index ) const
 { 
 #ifndef RELEASE 
-    PushCallStack("SparseMatrix::Col");
+    CallStackEntry entry("SparseMatrix::Col");
 #endif
-    const int col = graph_.Target( entry );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return col;
+    return graph_.Target( index );
 }
 
 template<typename T>
@@ -133,13 +117,9 @@ inline int
 SparseMatrix<T>::EntryOffset( int row ) const
 {
 #ifndef RELEASE
-    PushCallStack("SparseMatrix::EntryOffset");
+    CallStackEntry entry("SparseMatrix::EntryOffset");
 #endif
-    const int entryOffset = graph_.EdgeOffset( row );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return entryOffset;
+    return graph_.EdgeOffset( row );
 }
 
 template<typename T>
@@ -147,26 +127,21 @@ inline int
 SparseMatrix<T>::NumConnections( int row ) const
 {
 #ifndef RELEASE
-    PushCallStack("SparseMatrix::NumConnections");
+    CallStackEntry entry("SparseMatrix::NumConnections");
 #endif
-    const int numConnections = graph_.NumConnections( row );
-#ifndef RELEASE
-    PopCallStack();
-#endif
-    return numConnections;
+    return graph_.NumConnections( row );
 }
 
 template<typename T>
 inline T
-SparseMatrix<T>::Value( int entry ) const
+SparseMatrix<T>::Value( int index ) const
 { 
 #ifndef RELEASE 
-    PushCallStack("SparseMatrix::Value");
-    if( entry < 0 || entry >= values_.size() )
+    CallStackEntry entry("SparseMatrix::Value");
+    if( index < 0 || index >= values_.size() )
         throw std::logic_error("Entry number out of bounds");
-    PopCallStack();
 #endif
-    return values_[entry];
+    return values_[index];
 }
 
 template<typename T>
@@ -181,13 +156,10 @@ inline void
 SparseMatrix<T>::StartAssembly()
 {
 #ifndef RELEASE
-    PushCallStack("SparseMatrix::StartAssembly");
+    CallStackEntry entry("SparseMatrix::StartAssembly");
 #endif
     graph_.EnsureNotAssembling();
     graph_.assembling_ = true;
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -195,7 +167,7 @@ inline void
 SparseMatrix<T>::StopAssembly()
 {
 #ifndef RELEASE
-    PushCallStack("SparseMatrix::StopAssembly");
+    CallStackEntry entry("SparseMatrix::StopAssembly");
 #endif
     if( !graph_.assembling_ )
         throw std::logic_error("Cannot stop assembly without starting");
@@ -241,11 +213,7 @@ SparseMatrix<T>::StopAssembly()
             values_[s] = entries[s].value;
         }
     }
-
     graph_.ComputeEdgeOffsets();
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -261,14 +229,11 @@ inline void
 SparseMatrix<T>::Update( int row, int col, T value )
 {
 #ifndef RELEASE
-    PushCallStack("SparseMatrix::Update");
+    CallStackEntry entry("SparseMatrix::Update");
     EnsureConsistentSizes();
 #endif
     graph_.Insert( row, col );
     values_.push_back( value );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>
@@ -292,13 +257,10 @@ inline const SparseMatrix<T>&
 SparseMatrix<T>::operator=( const SparseMatrix<T>& A )
 {
 #ifndef RELEASE
-    PushCallStack("SparseMatrix::operator=");
+    CallStackEntry entry("SparseMatrix::operator=");
 #endif
     graph_ = A.graph_;
     values_ = A.values_;
-#ifndef RELEASE
-    PopCallStack();
-#endif
     return *this;
 }
 
@@ -307,7 +269,7 @@ inline const SparseMatrix<T>&
 SparseMatrix<T>::operator=( const DistSparseMatrix<T>& A )
 {
 #ifndef RELEASE
-    PushCallStack("SparseMatrix::operator=");
+    CallStackEntry entry("SparseMatrix::operator=");
 #endif
     mpi::Comm comm = A.Comm();
     const int commSize = mpi::CommSize( comm );
@@ -317,9 +279,6 @@ SparseMatrix<T>::operator=( const DistSparseMatrix<T>& A )
 
     graph_ = A.graph_;
     values_ = A.values_;
-#ifndef RELEASE
-    PopCallStack();
-#endif
     return *this;
 }
 
@@ -328,7 +287,7 @@ inline void
 SparseMatrix<T>::Print( std::string msg ) const
 {
 #ifndef RELEASE
-    PushCallStack("SparseMatrix::Print");
+    CallStackEntry entry("SparseMatrix::Print");
 #endif
     if( msg != "" )
         std::cout << msg << std::endl;
@@ -338,9 +297,6 @@ SparseMatrix<T>::Print( std::string msg ) const
                   << graph_.targets_[s] << " "
                   << values_[s] << "\n";
     std::cout << std::endl;
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename T>

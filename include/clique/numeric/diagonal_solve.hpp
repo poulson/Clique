@@ -30,7 +30,7 @@ inline void LocalDiagonalSolve
 ( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    PushCallStack("LocalDiagonalSolve");
+    CallStackEntry entry("LocalDiagonalSolve");
 #endif
     const int numLocalNodes = info.localNodes.size();
     const int width = X.Width();
@@ -47,9 +47,6 @@ inline void LocalDiagonalSolve
         frontTL.GetDiagonal( d );
         elem::DiagonalSolve( LEFT, NORMAL, d, XSub, true );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F> 
@@ -57,7 +54,7 @@ void DistDiagonalSolve
 ( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
 {
 #ifndef RELEASE
-    PushCallStack("DistDiagonalSolve");
+    CallStackEntry entry("DistDiagonalSolve");
 #endif
     const int numDistNodes = info.distNodes.size();
     const int width = localX.Width();
@@ -73,9 +70,6 @@ void DistDiagonalSolve
         elem::DiagonalSolve
         ( LEFT, NORMAL, front.diag.LockedMatrix(), localXT, true );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F>
@@ -83,13 +77,10 @@ inline void DiagonalSolve
 ( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
 {
 #ifndef RELEASE
-    PushCallStack("DiagonalSolve");
+    CallStackEntry entry("DiagonalSolve");
 #endif
     LocalDiagonalSolve( info, L, localX );
     DistDiagonalSolve( info, L, localX );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

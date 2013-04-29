@@ -21,12 +21,9 @@ DistNodalMultiVector<F>::DistNodalMultiVector
   const DistMultiVector<F>& X )
 {
 #ifndef RELEASE
-    PushCallStack("DistNodalMultiVector::DistNodalMultiVector");
+    CallStackEntry entry("DistNodalMultiVector::DistNodalMultiVector");
 #endif
     Pull( inverseMap, info, X );
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F>
@@ -36,7 +33,7 @@ DistNodalMultiVector<F>::Pull
   const DistMultiVector<F>& X )
 {
 #ifndef RELEASE
-    PushCallStack("DistNodalMultiVector::Pull");
+    CallStackEntry entry("DistNodalMultiVector::Pull");
 #endif
     mpi::Comm comm = X.Comm();
     const int commSize = mpi::CommSize( comm );
@@ -197,10 +194,6 @@ DistNodalMultiVector<F>::Pull
     if( offset != numRecvIndices )
         throw std::logic_error("Unpacked wrong number of indices");
 #endif
-
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F>
@@ -210,7 +203,7 @@ DistNodalMultiVector<F>::Push
         DistMultiVector<F>& X ) const
 {
 #ifndef RELEASE
-    PushCallStack("DistNodalVector::Push");
+    CallStackEntry entry("DistNodalVector::Push");
 #endif
     const DistSymmNodeInfo& rootNode = info.distNodes.back();
     mpi::Comm comm = rootNode.comm;
@@ -332,9 +325,6 @@ DistNodalMultiVector<F>::Push
         for( int j=0; j<width; ++j )
             X.SetLocal( iLocal, j, recvValues[s*width+j] );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

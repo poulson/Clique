@@ -97,7 +97,7 @@ inline void
 DistSymmInfo::StoreReordered( std::vector<int>& reordered ) const
 {
 #ifndef RELEASE
-    PushCallStack("DistSymmInfo::StoreReordered");
+    CallStackEntry entry("DistSymmInfo::StoreReordered");
 #endif
     const int localSize = distNodes.back().localOffset1d +
                           distNodes.back().localSize1d;
@@ -124,9 +124,6 @@ DistSymmInfo::StoreReordered( std::vector<int>& reordered ) const
         for( int j=gridRank; j<size; j+=gridSize )
             reordered[localOffset++] = j+offset;
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

@@ -29,7 +29,7 @@ inline void DistLowerForwardSolve
   const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
 {
 #ifndef RELEASE
-    PushCallStack("DistLowerForwardSolve");
+    CallStackEntry entry("DistLowerForwardSolve");
 #endif
     const int numDistNodes = info.distNodes.size();
     const int width = localX.Width();
@@ -184,9 +184,6 @@ inline void DistLowerForwardSolve
     }
     L.localFronts.back().work.Empty();
     L.distFronts.back().work1d.Empty();
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 template<typename F>
@@ -195,7 +192,7 @@ inline void DistLowerBackwardSolve
   const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
 {
 #ifndef RELEASE
-    PushCallStack("DistLowerBackwardSolve");
+    CallStackEntry entry("DistLowerBackwardSolve");
 #endif
     const int numDistNodes = info.distNodes.size();
     const int width = localX.Width();
@@ -391,9 +388,6 @@ inline void DistLowerBackwardSolve
         // Store this node's portion of the result
         localXT = WT.Matrix();
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq

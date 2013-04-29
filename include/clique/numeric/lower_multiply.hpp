@@ -34,7 +34,7 @@ inline void LowerMultiply
   const DistSymmInfo& info, const DistSymmFrontTree<T>& L, Matrix<T>& localX )
 {
 #ifndef RELEASE
-    PushCallStack("LowerMultiply");
+    CallStackEntry entry("LowerMultiply");
 #endif
     if( orientation == NORMAL )
     {
@@ -48,9 +48,6 @@ inline void LowerMultiply
         LocalLowerMultiplyTranspose
         ( orientation, diag, diagOffset, info, L, localX );
     }
-#ifndef RELEASE
-    PopCallStack();
-#endif
 }
 
 } // namespace cliq
