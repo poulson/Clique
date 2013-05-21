@@ -35,13 +35,13 @@ inline void DistLowerForwardSolve
     const int width = localX.Width();
     const SymmFrontType frontType = L.frontType;
     const bool frontsAre1d = FrontsAre1d( frontType );
-    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
     if( frontType != LDL_1D && 
         frontType != LDL_SELINV_1D && 
         frontType != LDL_SELINV_2D && 
         frontType != BLOCK_LDL_2D )
         throw std::logic_error("This solve mode is not yet implemented");
 #ifndef RELEASE
+    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
     if( blockLDL && diag == UNIT )
         throw std::logic_error("Unit diagonal is nonsensical for block LDL");
 #endif

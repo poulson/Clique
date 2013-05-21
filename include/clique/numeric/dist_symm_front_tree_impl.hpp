@@ -37,9 +37,11 @@ DistSymmFrontTree<F>::Initialize
     const DistGraph& graph = A.Graph();
     const int blocksize = A.Blocksize();
     const int commSize = mpi::CommSize( comm );
-    const int numSources = graph.NumSources();
     const int numLocal = sepTree.localSepsAndLeaves.size();
     const int numDist = sepTree.distSeps.size();
+#ifndef RELEASE
+    const int numSources = graph.NumSources();
+#endif
 
     // Get the reordered indices of the targets of our portion of the 
     // distributed sparse matrix

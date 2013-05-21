@@ -42,7 +42,6 @@ DistMap::StoreOwners
     ResizeTo( numSources );
     const int commSize = mpi::CommSize( comm );
     const int blocksize = Blocksize();
-    const int numLocalSources = NumLocalSources();
     const int firstLocalSource = FirstLocalSource();
 
     // Exchange via AllToAlls
@@ -67,7 +66,7 @@ DistMap::StoreOwners
         numRecvs += recvSizes[q];
     }
 #ifndef RELEASE
-    if( numRecvs != numLocalSources )
+    if( numRecvs != NumLocalSources() )
         throw std::logic_error("Incorrect number of recv indices");
 #endif
     std::vector<int> offsets = sendOffsets;

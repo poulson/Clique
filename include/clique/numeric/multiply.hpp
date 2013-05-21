@@ -40,11 +40,13 @@ void Multiply
 #endif
     mpi::Comm comm = A.Comm();
     const int commSize = mpi::CommSize( comm );
-    const int xLocalHeight = x.LocalHeight();
     const int yLocalHeight = y.LocalHeight();
     const int blocksize = A.Blocksize();
     const int firstLocalRow = A.FirstLocalRow();
     const int numLocalEntries = A.NumLocalEntries();
+#ifndef RELEASE
+    const int xLocalHeight = x.LocalHeight();
+#endif
 
     // y := beta y
     for( int iLocal=0; iLocal<yLocalHeight; ++iLocal )

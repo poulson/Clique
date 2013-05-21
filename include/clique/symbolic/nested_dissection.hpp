@@ -921,9 +921,9 @@ BuildChildrenFromPerm
 {
 #ifndef RELEASE
     CallStackEntry entry("BuildChildrenFromPerm");
+    const int sepSize = numSources - leftChildSize - rightChildSize;
 #endif
     const int numSources = graph.NumSources();
-    const int sepSize = numSources - leftChildSize - rightChildSize;
 
     // Build the inverse permutation
     std::vector<int> inversePerm( numSources );
@@ -1000,10 +1000,10 @@ BuildChildFromPerm
 {
 #ifndef RELEASE
     CallStackEntry entry("BuildChildFromPerm");
-#endif
     const int numSources = graph.NumSources();
-    const int numLocalSources = graph.NumLocalSources();
     const int sepSize = numSources - leftChildSize - rightChildSize;
+#endif
+    const int numLocalSources = graph.NumLocalSources();
 
     mpi::Comm comm = graph.Comm();
     const int commSize = mpi::CommSize( comm );
