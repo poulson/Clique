@@ -921,7 +921,7 @@ BuildChildrenFromPerm
 {
 #ifndef RELEASE
     CallStackEntry entry("BuildChildrenFromPerm");
-    const int sepSize = numSources - leftChildSize - rightChildSize;
+    const int sepSize = graph.NumSources() - leftChildSize - rightChildSize;
 #endif
     const int numSources = graph.NumSources();
 

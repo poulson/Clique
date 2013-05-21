@@ -149,7 +149,7 @@ DistSparseMatrix<T>::Value( int localIndex ) const
 { 
 #ifndef RELEASE 
     CallStackEntry entry("DistSparseMatrix::Value");
-    if( localIndex < 0 || localEntry >= (int)values_.size() )
+    if( localIndex < 0 || localIndex >= (int)values_.size() )
         throw std::logic_error("Entry number out of bounds");
 #endif
     return values_[localIndex];
