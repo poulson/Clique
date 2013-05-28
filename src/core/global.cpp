@@ -71,4 +71,15 @@ void DumpCallStack()
 }
 #endif // ifndef RELEASE
 
+void ReportException( std::exception& e )
+{
+    elem::ReportException( e );
+#ifndef RELEASE
+    DumpCallStack();
+#endif
+}
+
+void ReportException( ArgException& e )
+{ }
+
 } // namespace cliq

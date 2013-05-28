@@ -112,18 +112,7 @@ main( int argc, char* argv[] )
                       << sepSize << std::endl;
         }
     }
-    catch( ArgException& e ) { }
-    catch( std::exception& e )
-    {
-        std::ostringstream msg;
-        msg << "Process " << commRank << " caught message:\n"
-            << e.what() << std::endl;
-        std::cerr << msg.str();
-#ifndef RELEASE
-        elem::DumpCallStack();
-        cliq::DumpCallStack();
-#endif
-    }
+    catch( std::exception& e ) { ReportException(e); }
 
     cliq::Finalize();
     return 0;

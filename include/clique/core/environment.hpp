@@ -36,6 +36,9 @@ public:
 };
 #endif
 
+void ReportException( std::exception& e );
+void ReportException( elem::ArgException& e );
+
 // Pull in some of Elemental's imported libraries
 namespace blas = elem::blas;
 namespace lapack = elem::lapack;

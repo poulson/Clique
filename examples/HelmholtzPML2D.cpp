@@ -35,7 +35,7 @@ sInv( int j, int n, int b, double h, double p, double sigma, double k )
 int
 main( int argc, char* argv[] )
 {
-    cliq::Initialize( argc, argv );
+    Initialize( argc, argv );
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
     typedef double R;
@@ -331,19 +331,8 @@ main( int argc, char* argv[] )
                       << std::endl;
         }
     }
-    catch( ArgException& e ) { }
-    catch( std::exception& e )
-    {
-        std::ostringstream msg;
-        msg << "Process " << commRank << " caught message:\n"
-            << e.what() << std::endl;
-        std::cerr << msg.str();
-#ifndef RELEASE
-        elem::DumpCallStack();
-        cliq::DumpCallStack();
-#endif
-    }
+    catch( std::exception& e ) { ReportException(e); }
 
-    cliq::Finalize();
+    Finalize();
     return 0;
 }

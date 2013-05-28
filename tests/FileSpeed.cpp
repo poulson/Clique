@@ -12,7 +12,7 @@ using namespace cliq;
 int
 main( int argc, char* argv[] )
 {
-    cliq::Initialize( argc, argv );
+    Initialize( argc, argv );
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::CommRank( comm );
 
@@ -31,13 +31,13 @@ main( int argc, char* argv[] )
         if( numPieces == 0 && commRank == 0 )
         {
             std::cout << "Number of pieces must be positive." << std::endl;
-            cliq::Finalize();
+            Finalize();
             return 0;
         }
         if( numFiles == 0 && commRank == 0 )
         {
             std::cout << "Number of files must be positive." << std::endl;
-            cliq::Finalize();
+            Finalize();
             return 0;
         }
         if( commRank == 0 )
@@ -98,19 +98,8 @@ main( int argc, char* argv[] )
                           << " secs." << std::endl;
         }
     }
-    catch( ArgException& e ) { }
-    catch( std::exception& e )
-    {
-        std::ostringstream msg;
-        msg << "Process " << commRank << " caught message:\n"
-            << e.what() << std::endl;
-        std::cerr << msg.str();
-#ifndef RELEASE
-        elem::DumpCallStack();
-        cliq::DumpCallStack();
-#endif
-    }
+    catch( std::exception& e ) { ReportException(e); }
 
-    cliq::Finalize();
+    Finalize();
     return 0;
 }
