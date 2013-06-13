@@ -90,7 +90,7 @@ inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
             DistMatrix<F> LT( grid );
             View( LT, front.front2dL, 0, 0, snSize, snSize );
             elem::TriangularInverse( LOWER, UNIT, LT );
-            elem::MakeTrapezoidal( LEFT, LOWER, 0, LT );
+            elem::MakeTrapezoidal( LOWER, LT );
         }
     }
     else if( frontType == LDL_SELINV_1D && oldFrontType == LDL_2D )
@@ -118,7 +118,7 @@ inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
             front.front1dL.SetGrid( grid );
             front.front1dL = front.front2dL;
             front.front2dL.Empty();
-            elem::MakeTrapezoidal( LEFT, LOWER, 0, front.front1dL );
+            elem::MakeTrapezoidal( LOWER, front.front1dL );
         }
     }
     else

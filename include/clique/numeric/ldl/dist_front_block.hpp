@@ -43,19 +43,19 @@ inline void FrontBlockLDL
     // Overwrite ATL with inv(L D L^[T/H]) = L^[-T/H] D^{-1} L^{-1}
     elem::TriangularInverse( LOWER, UNIT, ATL );
     elem::Trdtrmm( orientation, LOWER, ATL );
-    elem::MakeTrapezoidal( LEFT, LOWER, 0, ATL );
+    elem::MakeTrapezoidal( LOWER, ATL );
     if( orientation == TRANSPOSE )
     {
         DistMatrix<F> ATLTrans( g );
         elem::Transpose( ATL, ATLTrans );
-        elem::MakeTrapezoidal( LEFT, UPPER, 1, ATLTrans );
+        elem::MakeTrapezoidal( UPPER, ATLTrans, 1 );
         elem::Axpy( F(1), ATLTrans, ATL );
     }
     else
     {
         DistMatrix<F> ATLAdj( g );
         elem::Adjoint( ATL, ATLAdj );
-        elem::MakeTrapezoidal( LEFT, UPPER, 1, ATLAdj );
+        elem::MakeTrapezoidal( UPPER, ATLAdj, 1 );
         elem::Axpy( F(1), ATLAdj, ATL );
     }
 }
