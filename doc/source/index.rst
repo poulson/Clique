@@ -14,4 +14,5 @@ Welcome to Clique's documentation!
    core
    symbolic
    numeric
+   io
    indices

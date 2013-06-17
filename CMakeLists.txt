@@ -1,10 +1,11 @@
 #
-#  Copyright (C) 2011-2013 Jack Poulson, Lexing Ying, 
+#  Copyright (c) 2009-2013, Jack Poulson, Lexing Ying,
 #  The University of Texas at Austin, and Stanford University
-# 
-#  This file is part of Clique and is under the GNU General Public License,
+#  All rights reserved.
+#
+#  This file is part of Clique and is under the BSD 2-Clause License, 
 #  which can be found in the LICENSE file in the root directory, or at 
-#  <http://www.gnu.org/licenses/>.
+#  http://opensource.org/licenses/BSD-2-Clause
 #
 cmake_minimum_required(VERSION 2.8.10) # needed for Mercurial downloads
 project(Clique)
@@ -19,12 +20,15 @@ option(BARRIER_IN_ALLTOALLV "Barrier before posting non-blocking recvs" OFF)
 
 set(ELEM_REV 05648afa7651)
 if(MANUAL_ELEMENTAL)
-  include_directories(${ELEMENTAL_INCLUDE_DIR})
+  include_directories(${ELEM_INCLUDE_DIR})
   include_directories(${MPI_CXX_INCLUDE_PATH})
+  # ELEM_CMAKE_DIR?
 elseif(EXISTS ${PROJECT_SOURCE_DIR}/external/elemental-r${ELEM_REV})
   add_subdirectory(external/elemental-r${ELEM_REV})
   include_directories(${PROJECT_BINARY_DIR}/external/elemental-r${ELEM_REV}/include)
   include_directories(${MPI_CXX_INCLUDE_PATH})
+  set(ELEM_CMAKE_DIR 
+      ${PROJECT_SOURCE_DIR}/external/elemental-r${ELEM_REV}/cmake)
 else()
   find_package(Hg)
   if(HG_FOUND)
@@ -34,6 +38,8 @@ else()
     add_subdirectory(external/elemental-r${ELEM_REV})
     include_directories(${PROJECT_BINARY_DIR}/external/elemental-r${ELEM_REV}/include)
     include_directories(${MPI_CXX_INCLUDE_PATH})
+    set(ELEM_CMAKE_DIR 
+        ${PROJECT_SOURCE_DIR}/external/elemental-r${ELEM_REV}/cmake)
   else()
     message(FATAL_ERROR 
       "Could not find Mercurial, which is needed for checking out Elemental")
@@ -172,5 +178,6 @@ endif()
 
 # If Clique is a subproject, then pass some variables to the parent
 if(NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  include(${ELEM_CMAKE_DIR}/elem_sub.cmake)
   include(./cmake/clique_sub.cmake)
 endif()

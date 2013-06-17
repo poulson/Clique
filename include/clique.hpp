@@ -1,13 +1,14 @@
 /*
-   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
-   The University of Texas at Austin
+   Copyright (c) 2009-2013, Jack Poulson, Lexing Ying,
+   The University of Texas at Austin, and Stanford University
+   All rights reserved.
  
-   This file is part of Clique and is under the GNU General Public License,
+   This file is part of Clique and is under the BSD 2-Clause License, 
    which can be found in the LICENSE file in the root directory, or at 
-   <http://www.gnu.org/licenses/>.
+   http://opensource.org/licenses/BSD-2-Clause
 */
 #ifndef CLIQUE_HPP
-#define CLIQUE_HPP 1
+#define CLIQUE_HPP
 
 #include "elemental.hpp"
 #include <algorithm>
@@ -89,4 +90,10 @@ namespace cliq {
 #include "clique/numeric/solve.hpp"
 #include "clique/numeric/lower_multiply.hpp"
 
-#endif // CLIQUE_HPP
+//
+// Input/Output
+//
+
+#include "clique/io/Print.hpp"
+
+#endif // ifndef CLIQUE_HPP

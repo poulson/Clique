@@ -1,10 +1,11 @@
 /*
-   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
-   The University of Texas at Austin
+   Copyright (c) 2009-2013, Jack Poulson, Lexing Ying,
+   The University of Texas at Austin, and Stanford University
+   All rights reserved.
  
-   This file is part of Clique and is under the GNU General Public License,
+   This file is part of Clique and is under the BSD 2-Clause License, 
    which can be found in the LICENSE file in the root directory, or at 
-   <http://www.gnu.org/licenses/>.
+   http://opensource.org/licenses/BSD-2-Clause
 */
 
 namespace cliq {
@@ -51,6 +52,10 @@ public:
     int Target( int localEdge ) const;
     int LocalEdgeOffset( int localSource ) const;
     int NumConnections( int localSource ) const;
+    int* SourceBuffer();
+    int* TargetBuffer();
+    const int* LockedSourceBuffer() const;
+    const int* LockedTargetBuffer() const;
 
     // For resizing the graph
     void Empty();
@@ -60,8 +65,6 @@ public:
     // For copying one graph into another
     const DistGraph& operator=( const Graph& graph );
     const DistGraph& operator=( const DistGraph& graph );
-
-    void Print( std::string msg ) const;
 
 private:
     int numSources_, numTargets_;

@@ -1,10 +1,11 @@
 /*
-   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
-   The University of Texas at Austin
+   Copyright (c) 2009-2013, Jack Poulson, Lexing Ying,
+   The University of Texas at Austin, and Stanford University
+   All rights reserved.
  
-   This file is part of Clique and is under the GNU General Public License,
+   This file is part of Clique and is under the BSD 2-Clause License, 
    which can be found in the LICENSE file in the root directory, or at 
-   <http://www.gnu.org/licenses/>.
+   http://opensource.org/licenses/BSD-2-Clause
 */
 
 namespace cliq {
@@ -53,13 +54,18 @@ public:
     int LocalEntryOffset( int localRow ) const;
     int NumConnections( int localRow ) const;
 
+    int* SourceBuffer();
+    int* TargetBuffer();
+    T* ValueBuffer();
+    const int* LockedSourceBuffer() const;
+    const int* LockedTargetBuffer() const;
+    const T* LockedValueBuffer() const;
+
     // For modifying the size of the matrix
     void Empty();
     void ResizeTo( int height, int width );
 
     // TODO: operator=
-
-    void Print( std::string msg ) const;
 
 private:
     DistGraph graph_;
@@ -80,6 +86,5 @@ private:
     template<typename U> friend class SparseMatrix;
     template<typename U> friend class DistSymmFrontTree;
 };
-
 
 } // namespace cliq

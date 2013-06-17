@@ -1,10 +1,11 @@
 /*
-   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
-   The University of Texas at Austin
+   Copyright (c) 2009-2013, Jack Poulson, Lexing Ying,
+   The University of Texas at Austin, and Stanford University
+   All rights reserved.
  
-   This file is part of Clique and is under the GNU General Public License,
+   This file is part of Clique and is under the BSD 2-Clause License, 
    which can be found in the LICENSE file in the root directory, or at 
-   <http://www.gnu.org/licenses/>.
+   http://opensource.org/licenses/BSD-2-Clause
 */
 #include "clique.hpp"
 using namespace cliq;
@@ -84,7 +85,7 @@ main( int argc, char* argv[] )
                       << std::endl;
 
         if( print )
-            A.Print("A");
+            Print( A, "A" );
 
         if( commRank == 0 )
         {

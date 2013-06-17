@@ -1,10 +1,11 @@
 /*
-   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
-   The University of Texas at Austin
+   Copyright (c) 2009-2013, Jack Poulson, Lexing Ying,
+   The University of Texas at Austin, and Stanford University
+   All rights reserved.
  
-   This file is part of Clique and is under the GNU General Public License,
+   This file is part of Clique and is under the BSD 2-Clause License, 
    which can be found in the LICENSE file in the root directory, or at 
-   <http://www.gnu.org/licenses/>.
+   http://opensource.org/licenses/BSD-2-Clause
 */
 
 namespace cliq {
@@ -156,6 +157,36 @@ DistSparseMatrix<T>::Value( int localIndex ) const
 }
 
 template<typename T>
+inline int*
+DistSparseMatrix<T>::SourceBuffer()
+{ return graph_.SourceBuffer(); }
+
+template<typename T>
+inline int*
+DistSparseMatrix<T>::TargetBuffer()
+{ return graph_.TargetBuffer(); }
+
+template<typename T>
+inline T*
+DistSparseMatrix<T>::ValueBuffer()
+{ return &values_[0]; }
+
+template<typename T>
+inline const int*
+DistSparseMatrix<T>::LockedSourceBuffer() const
+{ return graph_.LockedSourceBuffer(); }
+
+template<typename T>
+inline const int*
+DistSparseMatrix<T>::LockedTargetBuffer() const
+{ return graph_.LockedTargetBuffer(); }
+
+template<typename T>
+inline const T*
+DistSparseMatrix<T>::LockedValueBuffer() const
+{ return &values_[0]; }
+
+template<typename T>
 inline bool
 DistSparseMatrix<T>::CompareEntries( const Entry<T>& a, const Entry<T>& b )
 {
@@ -261,56 +292,6 @@ DistSparseMatrix<T>::ResizeTo( int height, int width )
 {
     graph_.ResizeTo( height, width );
     values_.clear();
-}
-
-template<typename T>
-inline void
-DistSparseMatrix<T>::Print( std::string msg ) const
-{
-#ifndef RELEASE
-    CallStackEntry entry("DistSparseMatrix::Print");
-#endif
-    const int commSize = mpi::CommSize( graph_.comm_ );
-    const int commRank = mpi::CommRank( graph_.comm_ );
-
-    const int numLocalNonzeros = values_.size();
-    std::vector<int> nonzeroSizes(commSize), nonzeroOffsets(commSize);
-    mpi::AllGather( &numLocalNonzeros, 1, &nonzeroSizes[0], 1, graph_.comm_ );
-    int numNonzeros=0;
-    for( int q=0; q<commSize; ++q )
-    {
-        nonzeroOffsets[q] = numNonzeros;
-        numNonzeros += nonzeroSizes[q];
-    }
-
-    std::vector<int> sources, targets;
-    std::vector<T> values;
-    if( commRank == 0 )
-    {
-        sources.resize( numNonzeros );
-        targets.resize( numNonzeros );
-        values.resize( numNonzeros );
-    }
-    mpi::Gather
-    ( &graph_.sources_[0], numLocalNonzeros,
-      &sources[0], &nonzeroSizes[0], &nonzeroOffsets[0], 0, graph_.comm_ );
-    mpi::Gather
-    ( &graph_.targets_[0], numLocalNonzeros,
-      &targets[0], &nonzeroSizes[0], &nonzeroOffsets[0], 0, graph_.comm_ );
-    mpi::Gather
-    ( &values_[0], numLocalNonzeros,
-      &values[0], &nonzeroSizes[0], &nonzeroOffsets[0], 0, graph_.comm_ );
-
-    if( commRank == 0 )
-    {
-        if( msg != "" )
-            std::cout << msg << std::endl;
-        for( int s=0; s<numNonzeros; ++s )
-            std::cout << sources[s] << " " 
-                      << targets[s] << " " 
-                      << values[s] << "\n";
-        std::cout << std::endl;
-    }
 }
 
 template<typename T>

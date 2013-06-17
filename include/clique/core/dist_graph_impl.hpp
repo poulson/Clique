@@ -1,10 +1,11 @@
 /*
-   Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
-   The University of Texas at Austin
+   Copyright (c) 2009-2013, Jack Poulson, Lexing Ying,
+   The University of Texas at Austin, and Stanford University
+   All rights reserved.
  
-   This file is part of Clique and is under the GNU General Public License,
+   This file is part of Clique and is under the BSD 2-Clause License, 
    which can be found in the LICENSE file in the root directory, or at 
-   <http://www.gnu.org/licenses/>.
+   http://opensource.org/licenses/BSD-2-Clause
 */
 
 namespace cliq {
@@ -12,30 +13,22 @@ namespace cliq {
 inline 
 DistGraph::DistGraph()
 : numSources_(0), numTargets_(0), comm_(mpi::COMM_WORLD)
-{
-    SetComm( mpi::COMM_WORLD );
-}
+{ SetComm( mpi::COMM_WORLD ); }
 
 inline
 DistGraph::DistGraph( mpi::Comm comm )
 : numSources_(0), numTargets_(0), comm_(mpi::COMM_WORLD)
-{
-    SetComm( comm );
-}
+{ SetComm( comm ); }
 
 inline 
 DistGraph::DistGraph( int numVertices, mpi::Comm comm )
 : numSources_(numVertices), numTargets_(numVertices), comm_(mpi::COMM_WORLD)
-{
-    SetComm( comm );
-}
+{ SetComm( comm ); }
 
 inline 
 DistGraph::DistGraph( int numSources, int numTargets, mpi::Comm comm )
 : numSources_(numSources), numTargets_(numTargets), comm_(mpi::COMM_WORLD)
-{
-    SetComm( comm );
-}
+{ SetComm( comm ); }
 
 inline
 DistGraph::DistGraph( const Graph& graph )
@@ -187,6 +180,22 @@ DistGraph::NumConnections( int localSource ) const
     return LocalEdgeOffset(localSource+1) - LocalEdgeOffset(localSource);
 }
 
+inline int*
+DistGraph::SourceBuffer()
+{ return &sources_[0]; }
+
+inline int*
+DistGraph::TargetBuffer()
+{ return &targets_[0]; }
+
+inline const int*
+DistGraph::LockedSourceBuffer() const
+{ return &sources_[0]; }
+
+inline const int*
+DistGraph::LockedTargetBuffer() const
+{ return &targets_[0]; }
+
 inline const DistGraph&
 DistGraph::operator=( const Graph& graph )
 {
@@ -227,54 +236,10 @@ DistGraph::operator=( const DistGraph& graph )
     return *this;
 }
 
-inline void
-DistGraph::Print( std::string msg ) const
-{
-#ifndef RELEASE
-    CallStackEntry entry("DistGraph::Print");
-#endif
-    const int commSize = mpi::CommSize( comm_ );
-    const int commRank = mpi::CommRank( comm_ );
-
-    const int numLocalEdges = sources_.size();
-    std::vector<int> edgeSizes(commSize), edgeOffsets(commSize);
-    mpi::AllGather( &numLocalEdges, 1, &edgeSizes[0], 1, comm_ );
-    int numEdges=0;
-    for( int q=0; q<commSize; ++q )
-    {
-        edgeOffsets[q] = numEdges;
-        numEdges += edgeSizes[q];
-    }
-
-    std::vector<int> sources, targets;
-    if( commRank == 0 )
-    {
-        sources.resize( numEdges );
-        targets.resize( numEdges );
-    }
-    mpi::Gather
-    ( &sources_[0], numLocalEdges,
-      &sources[0], &edgeSizes[0], &edgeOffsets[0], 0, comm_ );
-    mpi::Gather
-    ( &targets_[0], numLocalEdges,
-      &targets[0], &edgeSizes[0], &edgeOffsets[0], 0, comm_ );
-
-    if( commRank == 0 )
-    {
-        if( msg != "" )
-            std::cout << msg << std::endl;
-        for( int e=0; e<numEdges; ++e )
-            std::cout << sources[e] << " " << targets[e] << "\n";
-        std::cout << std::endl;
-    }
-}
-
 inline bool
 DistGraph::ComparePairs
 ( const std::pair<int,int>& a, const std::pair<int,int>& b )
-{
-    return a.first < b.first || (a.first == b.first && a.second < b.second);
-}
+{ return a.first < b.first || (a.first == b.first && a.second < b.second); }
 
 inline void
 DistGraph::StartAssembly()
