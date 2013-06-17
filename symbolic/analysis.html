@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -86,35 +84,35 @@ briefly documented here for the sake of posterity.</p>
 <div class="section" id="distsymmelimtree">
 <h3>DistSymmElimTree<a class="headerlink" href="#distsymmelimtree" title="Permalink to this headline">¶</a></h3>
 <dl class="type">
-<dt id="LocalSymmNode__struct">
-<em class="property">type </em>struct <tt class="descname">LocalSymmNode</tt><a class="headerlink" href="#LocalSymmNode__struct" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmNode__struct">
+<em class="property">type </em>struct <tt class="descname">SymmNode</tt><a class="headerlink" href="#SymmNode__struct" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="member">
-<dt id="LocalSymmNode::size__i">
-int <tt class="descname">size</tt><a class="headerlink" href="#LocalSymmNode::size__i" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmNode::size__i">
+int <tt class="descname">size</tt><a class="headerlink" href="#SymmNode::size__i" title="Permalink to this definition">¶</a></dt>
 <dd><p>The size of this node in the elimination tree.</p>
 </dd></dl>
 
 <dl class="member">
-<dt id="LocalSymmNode::offset__i">
-int <tt class="descname">offset</tt><a class="headerlink" href="#LocalSymmNode::offset__i" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmNode::offset__i">
+int <tt class="descname">offset</tt><a class="headerlink" href="#SymmNode::offset__i" title="Permalink to this definition">¶</a></dt>
 <dd><p>The first reordered index of the vertices in this node.</p>
 </dd></dl>
 
 <dl class="member">
-<dt id="LocalSymmNode::parent__i">
-int <tt class="descname">parent</tt><a class="headerlink" href="#LocalSymmNode::parent__i" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmNode::parent__i">
+int <tt class="descname">parent</tt><a class="headerlink" href="#SymmNode::parent__i" title="Permalink to this definition">¶</a></dt>
 <dd><p>The index of the local parent (<span class="math">\(-1\)</span> if it does not exist).</p>
 </dd></dl>
 
 <dl class="member">
-<dt id="LocalSymmNode::children__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">children</tt><a class="headerlink" href="#LocalSymmNode::children__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmNode::children__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">children</tt><a class="headerlink" href="#SymmNode::children__std::vector:i:" title="Permalink to this definition">¶</a></dt>
 <dd><p>The indices of the child nodes.</p>
 </dd></dl>
 
 <dl class="member">
-<dt id="LocalSymmNode::lowerStruct__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">lowerStruct</tt><a class="headerlink" href="#LocalSymmNode::lowerStruct__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmNode::lowerStruct__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">lowerStruct</tt><a class="headerlink" href="#SymmNode::lowerStruct__std::vector:i:" title="Permalink to this definition">¶</a></dt>
 <dd><p>The sorted reordered indices of the connections to ancestor nodes.</p>
 </dd></dl>
 
@@ -160,8 +158,8 @@ std::vector&lt;int&gt; <tt class="descname">lowerStruct</tt><a class="headerlink
 <dt id="DistSymmElimTree__struct">
 <em class="property">type </em>struct <tt class="descname">DistSymmElimTree</tt><a class="headerlink" href="#DistSymmElimTree__struct" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="member">
-<dt id="DistSymmElimTree::localNodes__std::vector:LocalSymmNodeP:">
-std::vector&lt;LocalSymmNode*&gt; <tt class="descname">localNodes</tt><a class="headerlink" href="#DistSymmElimTree::localNodes__std::vector:LocalSymmNodeP:" title="Permalink to this definition">¶</a></dt>
+<dt id="DistSymmElimTree::localNodes__std::vector:SymmNodeP:">
+std::vector&lt;SymmNode*&gt; <tt class="descname">localNodes</tt><a class="headerlink" href="#DistSymmElimTree::localNodes__std::vector:SymmNodeP:" title="Permalink to this definition">¶</a></dt>
 <dd><p>An array of <em>pointers</em> to the local nodes.</p>
 </dd></dl>
 
@@ -194,7 +192,7 @@ separator or leaf.</p>
 
     <div class="footer">
         &copy; Copyright 2012, Jack Poulson.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
   </body>
 </html>

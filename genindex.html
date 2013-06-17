@@ -1,7 +1,4 @@
 
-
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -18,7 +15,7 @@
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '',
+        URL_ROOT:    './',
         VERSION:     '0.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
@@ -219,6 +216,10 @@
   </dt>
 
       
+  <dt><a href="core/dist_map.html#DistMap::Buffer">DistMap::Buffer (C++ function)</a>, <a href="core/dist_map.html#DistMap::BufferC">[1]</a>
+  </dt>
+
+      
   <dt><a href="core/dist_map.html#DistMap::CommC">DistMap::Comm (C++ function)</a>
   </dt>
 
@@ -247,11 +248,7 @@
   </dt>
 
       
-  <dt><a href="core/dist_map.html#DistMap::LocalBuffer">DistMap::LocalBuffer (C++ function)</a>, <a href="core/dist_map.html#DistMap::LocalBufferC">[1]</a>
-  </dt>
-
-      
-  <dt><a href="core/dist_map.html#DistMap::LocalMap">DistMap::LocalMap (C++ function)</a>, <a href="core/dist_map.html#DistMap::LocalMapC">[1]</a>
+  <dt><a href="core/dist_map.html#DistMap::Map">DistMap::Map (C++ function)</a>, <a href="core/dist_map.html#DistMap::MapC">[1]</a>
   </dt>
 
       
@@ -391,7 +388,7 @@
   </dt>
 
       
-  <dt><a href="numeric/solve.html#DistNodalMultiVector:T:::localMultiVec__Matrix:T:">DistNodalMultiVector&lt;T&gt;::localMultiVec (C++ member)</a>
+  <dt><a href="numeric/solve.html#DistNodalMultiVector:T:::multiVec__Matrix:T:">DistNodalMultiVector&lt;T&gt;::multiVec (C++ member)</a>
   </dt>
 
       
@@ -415,15 +412,15 @@
   </dt>
 
       
-  <dt><a href="numeric/solve.html#DistNodalVector:T:::localVec__Matrix:T:">DistNodalVector&lt;T&gt;::localVec (C++ member)</a>
-  </dt>
-
-      
   <dt><a href="numeric/solve.html#DistNodalVector:T:::Pull__DistMapCR.DistSymmInfoCR.DistVector:T:CR">DistNodalVector&lt;T&gt;::Pull (C++ function)</a>
   </dt>
 
       
   <dt><a href="numeric/solve.html#DistNodalVector:T:::Push__DistMapCR.DistSymmInfoCR.DistVector:T:R">DistNodalVector&lt;T&gt;::Push (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="numeric/solve.html#DistNodalVector:T:::vec__Matrix:T:">DistNodalVector&lt;T&gt;::vec (C++ member)</a>
   </dt>
 
       
@@ -455,7 +452,7 @@
   </dt>
 
       
-  <dt><a href="symbolic/nested_dissection.html#DistSeparatorTree::localSepsAndLeaves__std::vector:LocalSepOrLeafP:">DistSeparatorTree::localSepsAndLeaves (C++ member)</a>
+  <dt><a href="symbolic/nested_dissection.html#DistSeparatorTree::localSepsAndLeaves__std::vector:SepOrLeafP:">DistSeparatorTree::localSepsAndLeaves (C++ member)</a>
   </dt>
 
       
@@ -565,7 +562,7 @@
   </dt>
 
       
-  <dt><a href="symbolic/analysis.html#DistSymmElimTree::localNodes__std::vector:LocalSymmNodeP:">DistSymmElimTree::localNodes (C++ member)</a>
+  <dt><a href="symbolic/analysis.html#DistSymmElimTree::localNodes__std::vector:SymmNodeP:">DistSymmElimTree::localNodes (C++ member)</a>
   </dt>
 
       
@@ -621,7 +618,7 @@
   </dt>
 
       
-  <dt><a href="numeric/factorization.html#DistSymmFrontTree:T:::localFronts__std::vector:LocalSymmFront:T::">DistSymmFrontTree&lt;T&gt;::localFronts (C++ member)</a>
+  <dt><a href="numeric/factorization.html#DistSymmFrontTree:T:::localFronts__std::vector:SymmFront:T::">DistSymmFrontTree&lt;T&gt;::localFronts (C++ member)</a>
   </dt>
 
       
@@ -633,7 +630,7 @@
   </dt>
 
       
-  <dt><a href="symbolic/nested_dissection.html#DistSymmInfo::localNodes__std::vector:LocalSymmNodeInfo:">DistSymmInfo::localNodes (C++ member)</a>
+  <dt><a href="symbolic/nested_dissection.html#DistSymmInfo::localNodes__std::vector:SymmNodeInfo:">DistSymmInfo::localNodes (C++ member)</a>
   </dt>
 
       
@@ -959,107 +956,11 @@
   </dt>
 
       
-  <dt><a href="core/environment.html#LocalLength__Int.Int.Int">LocalLength (C++ function)</a>, <a href="core/environment.html#LocalLength__Int.Int.Int.Int">[1]</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#LocalSepOrLeaf__struct">LocalSepOrLeaf (C++ type)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#LocalSepOrLeaf::indices__std::vector:i:">LocalSepOrLeaf::indices (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#LocalSepOrLeaf::offset__i">LocalSepOrLeaf::offset (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#LocalSepOrLeaf::parent__i">LocalSepOrLeaf::parent (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="numeric/factorization.html#LocalSymmFront:T:__struct">LocalSymmFront&lt;T&gt; (C++ type)</a>
-  </dt>
-
-      
-  <dt><a href="numeric/factorization.html#LocalSymmFront:T:::frontL__Matrix:T:">LocalSymmFront&lt;T&gt;::frontL (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="numeric/factorization.html#LocalSymmFront:T:::work__mutable-Matrix:T:">LocalSymmFront&lt;T&gt;::work (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/analysis.html#LocalSymmNode__struct">LocalSymmNode (C++ type)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/analysis.html#LocalSymmNode::children__std::vector:i:">LocalSymmNode::children (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/analysis.html#LocalSymmNode::lowerStruct__std::vector:i:">LocalSymmNode::lowerStruct (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/analysis.html#LocalSymmNode::offset__i">LocalSymmNode::offset (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/analysis.html#LocalSymmNode::parent__i">LocalSymmNode::parent (C++ member)</a>
+  <dt><a href="core/environment.html#Length__Int.Int.Int">Length (C++ function)</a>, <a href="core/environment.html#Length__Int.Int.Int.Int">[1]</a>
   </dt>
 
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
-      
-  <dt><a href="symbolic/analysis.html#LocalSymmNode::size__i">LocalSymmNode::size (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#LocalSymmNodeInfo__struct">LocalSymmNodeInfo (C++ type)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#LocalSymmNodeInfo::children__std::vector:i:">LocalSymmNodeInfo::children (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#LocalSymmNodeInfo::isLeftChild__b">LocalSymmNodeInfo::isLeftChild (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#LocalSymmNodeInfo::leftChildRelIndices__std::vector:i:">LocalSymmNodeInfo::leftChildRelIndices (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#LocalSymmNodeInfo::lowerStruct__std::vector:i:">LocalSymmNodeInfo::lowerStruct (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#LocalSymmNodeInfo::myOffset__i">LocalSymmNodeInfo::myOffset (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#LocalSymmNodeInfo::offset__i">LocalSymmNodeInfo::offset (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#LocalSymmNodeInfo::origLowerRelIndices__std::vector:i:">LocalSymmNodeInfo::origLowerRelIndices (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#LocalSymmNodeInfo::origLowerStruct__std::vector:i:">LocalSymmNodeInfo::origLowerStruct (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#LocalSymmNodeInfo::rightChildRelIndices__std::vector:i:">LocalSymmNodeInfo::rightChildRelIndices (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#LocalSymmNodeInfo::size__i">LocalSymmNodeInfo::size (C++ member)</a>
-  </dt>
-
       
   <dt><a href="numeric/multiplication.html#LowerMultiply__Orientation.UnitOrNonUnit.i.DistSymmInfoCR.DistSymmFrontTree:T:CR.Matrix:T:R">LowerMultiply (C++ function)</a>
   </dt>
@@ -1184,6 +1085,10 @@
   <dt><a href="core/environment.html#PopCallStack">PopCallStack (C++ function)</a>
   </dt>
 
+      
+  <dt><a href="io.html#Print__DistGraphCR.ss">Print (C++ function)</a>, <a href="io.html#Print__DistSparseMatrix:T:CR.ss">[1]</a>
+  </dt>
+
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
@@ -1196,6 +1101,22 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="symbolic/nested_dissection.html#SepOrLeaf__struct">SepOrLeaf (C++ type)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SepOrLeaf::indices__std::vector:i:">SepOrLeaf::indices (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SepOrLeaf::offset__i">SepOrLeaf::offset (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SepOrLeaf::parent__i">SepOrLeaf::parent (C++ member)</a>
+  </dt>
+
       
   <dt><a href="core/environment.html#Shift__Int.Int.Int">Shift (C++ function)</a>
   </dt>
@@ -1248,8 +1169,6 @@
   <dt><a href="core/sparse_matrix.html#SparseMatrix:T:::Reserve__i">SparseMatrix&lt;T&gt;::Reserve (C++ function)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="core/sparse_matrix.html#SparseMatrix:T:::ResizeTo__i.i">SparseMatrix&lt;T&gt;::ResizeTo (C++ function)</a>
   </dt>
@@ -1282,6 +1201,8 @@
   <dt><a href="core/sparse_matrix.html#SparseMatrix:T:::WidthC">SparseMatrix&lt;T&gt;::Width (C++ function)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="core/environment.html#Sqrt__FCR">Sqrt (C++ function)</a>
   </dt>
@@ -1295,7 +1216,87 @@
   </dt>
 
       
+  <dt><a href="numeric/factorization.html#SymmFront:T:__struct">SymmFront&lt;T&gt; (C++ type)</a>
+  </dt>
+
+      
+  <dt><a href="numeric/factorization.html#SymmFront:T:::frontL__Matrix:T:">SymmFront&lt;T&gt;::frontL (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="numeric/factorization.html#SymmFront:T:::work__mutable-Matrix:T:">SymmFront&lt;T&gt;::work (C++ member)</a>
+  </dt>
+
+      
   <dt><a href="numeric/factorization.html#SymmFrontType__enum">SymmFrontType (C++ type)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/analysis.html#SymmNode__struct">SymmNode (C++ type)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/analysis.html#SymmNode::children__std::vector:i:">SymmNode::children (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/analysis.html#SymmNode::lowerStruct__std::vector:i:">SymmNode::lowerStruct (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/analysis.html#SymmNode::offset__i">SymmNode::offset (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/analysis.html#SymmNode::parent__i">SymmNode::parent (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/analysis.html#SymmNode::size__i">SymmNode::size (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SymmNodeInfo__struct">SymmNodeInfo (C++ type)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SymmNodeInfo::children__std::vector:i:">SymmNodeInfo::children (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SymmNodeInfo::isLeftChild__b">SymmNodeInfo::isLeftChild (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SymmNodeInfo::leftChildRelIndices__std::vector:i:">SymmNodeInfo::leftChildRelIndices (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SymmNodeInfo::lowerStruct__std::vector:i:">SymmNodeInfo::lowerStruct (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SymmNodeInfo::myOffset__i">SymmNodeInfo::myOffset (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SymmNodeInfo::offset__i">SymmNodeInfo::offset (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SymmNodeInfo::origLowerRelIndices__std::vector:i:">SymmNodeInfo::origLowerRelIndices (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SymmNodeInfo::origLowerStruct__std::vector:i:">SymmNodeInfo::origLowerStruct (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SymmNodeInfo::rightChildRelIndices__std::vector:i:">SymmNodeInfo::rightChildRelIndices (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SymmNodeInfo::size__i">SymmNodeInfo::size (C++ member)</a>
   </dt>
 
   </dl></td>
@@ -1378,7 +1379,7 @@
 
     <div class="footer">
         &copy; Copyright 2012, Jack Poulson.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
   </body>
 </html>

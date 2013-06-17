@@ -79,19 +79,19 @@ permutations and can serve as a black box for the vast majority of users.
      
       Modifies the mapped value of the specified local source.
 
-   .. cpp:function:: int* LocalBuffer()
+   .. cpp:function:: int* Buffer()
 
       Returns a direct pointer to the mapped values.
 
-   .. cpp:function:: const int* LocalBuffer() const
+   .. cpp:function:: const int* Buffer() const
 
       Returns a const pointer to the mapped values.
 
-   .. cpp:function:: std::vector<int>& LocalMap()
+   .. cpp:function:: std::vector<int>& Map()
 
       Returns the underlying vector of mapped values.
 
-   .. cpp:function:: const std::vector<int>& LocalMap() const
+   .. cpp:function:: const std::vector<int>& Map() const
 
       Returns a const reference to the underlying vector of mapped values.
 

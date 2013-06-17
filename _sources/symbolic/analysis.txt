@@ -31,7 +31,7 @@ briefly documented here for the sake of posterity.
 DistSymmElimTree
 ^^^^^^^^^^^^^^^^
 
-.. cpp:type:: struct LocalSymmNode
+.. cpp:type:: struct SymmNode
 
    .. cpp:member:: int size
 
@@ -78,7 +78,7 @@ DistSymmElimTree
 
 .. cpp:type:: struct DistSymmElimTree
 
-   .. cpp:member:: std::vector<LocalSymmNode*> localNodes
+   .. cpp:member:: std::vector<SymmNode*> localNodes
 
       An array of *pointers* to the local nodes.
 

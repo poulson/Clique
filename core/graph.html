@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -61,7 +59,7 @@ Nevertheless, it is possible to work directly with graphs in Clique. The usage
 is extremely similar to the <a class="reference internal" href="sparse_matrix.html#SparseMatrix:T:__class" title="SparseMatrix&lt;T&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">SparseMatrix&lt;T&gt;</span></tt></a> class, and so the
 construction of the graph corresponding to the 7-point stencil over a
 <span class="math">\(n_1 \times n_2 \times n_3\)</span> grid is briefly demonstrated below:</p>
-<div class="highlight-cpp"><div class="highlight"><pre><span class="n">Graph</span> <span class="n">graph</span><span class="p">(</span> <span class="n">N</span> <span class="p">);</span>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="n">Graph</span> <span class="nf">graph</span><span class="p">(</span> <span class="n">N</span> <span class="p">);</span>
 <span class="n">graph</span><span class="p">.</span><span class="n">StartAssembly</span><span class="p">();</span>
 <span class="n">graph</span><span class="p">.</span><span class="n">Reserve</span><span class="p">(</span> <span class="mi">7</span><span class="o">*</span><span class="n">N</span> <span class="p">);</span>
 <span class="k">for</span><span class="p">(</span> <span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span> <span class="p">)</span>
@@ -277,7 +275,7 @@ source vertices and <cite>numTargets</cite> target vertices.</p>
 
     <div class="footer">
         &copy; Copyright 2012, Jack Poulson.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
   </body>
 </html>

@@ -20,31 +20,21 @@ dependencies except for `PMRRR <http://code.google.com/p/pmrrr>`_.
 
 License and copyright
 =====================
-All files in Clique (other than Elemental and ParMETIS) are made available 
-under `GPLv3 <http://www.opensource.org/licenses/gpl-3.0>`_. The vast 
-majority of files contain the following copyright notice::
+All files in Clique and Elemental (other than METIS and ParMETIS) are made 
+available under the 
+`New BSD License <http://www.opensource.org/licenses/bsd-license.php>`_.
+The vast majority of files contain the following copyright notice::
 
-    Clique: a scalable implementation of the multifrontal algorithm
-
-    Copyright (C) 2011-2012 Jack Poulson, Lexing Ying, and 
-    The University of Texas at Austin
+    Copyright (c) 2009-2013, Jack Poulson, Lexing Ying,
+    The University of Texas at Austin, and Stanford University
+    All rights reserved.
      
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-     
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-     
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    This file is part of Clique and is under the BSD 2-Clause License, 
+    which can be found in the LICENSE file in the root directory, or at 
+    http://opensource.org/licenses/BSD-2-Clause
  
-Again, Elemental and ParMETIS are not distributed under the GPL; Elemental is distributed under the more permissive 
-`New BSD License <http://www.opensource.org/licenses/bsd-license.php>`_,
-and ParMETIS is distributed under the following license::
+Again, METIS and ParMETIS are not distributed under the New BSD License. They
+use the following license::
 
     The ParMETIS/METIS package is copyrighted by the Regents of the
     University of Minnesota. It can be freely used for educational and

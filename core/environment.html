@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -69,7 +67,7 @@ does not have to be passed in as pointers:</p>
 <div class="highlight-cpp"><div class="highlight"><pre><span class="cp">#include &quot;clique.hpp&quot;</span>
 
 <span class="kt">int</span>
-<span class="n">main</span><span class="p">(</span> <span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">argv</span><span class="p">[]</span> <span class="p">)</span>
+<span class="nf">main</span><span class="p">(</span> <span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">argv</span><span class="p">[]</span> <span class="p">)</span>
 <span class="p">{</span>
     <span class="n">cliq</span><span class="o">::</span><span class="n">Initialize</span><span class="p">(</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span> <span class="p">);</span>
     <span class="c1">// ...</span>
@@ -283,16 +281,16 @@ this routine returns the first entry owned by the process with rank
 </dd></dl>
 
 <dl class="function">
-<dt id="LocalLength__Int.Int.Int">
-Int <tt class="descname">LocalLength</tt><big>(</big>Int <em>n</em>, Int <em>shift</em>, Int <em>numProcs</em><big>)</big><a class="headerlink" href="#LocalLength__Int.Int.Int" title="Permalink to this definition">¶</a></dt>
+<dt id="Length__Int.Int.Int">
+Int <tt class="descname">Length</tt><big>(</big>Int <em>n</em>, Int <em>shift</em>, Int <em>numProcs</em><big>)</big><a class="headerlink" href="#Length__Int.Int.Int" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given a vector with <span class="math">\(n\)</span> entries distributed over <tt class="docutils literal"><span class="pre">numProcs</span></tt>
 processes with shift as defined above, this routine returns the number of
 entries of the vector which are owned by this process.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="LocalLength__Int.Int.Int.Int">
-Int <tt class="descname">LocalLength</tt><big>(</big>Int <em>n</em>, Int <em>rank</em>, Int <em>firstRank</em>, Int <em>numProcs</em><big>)</big><a class="headerlink" href="#LocalLength__Int.Int.Int.Int" title="Permalink to this definition">¶</a></dt>
+<dt id="Length__Int.Int.Int.Int">
+Int <tt class="descname">Length</tt><big>(</big>Int <em>n</em>, Int <em>rank</em>, Int <em>firstRank</em>, Int <em>numProcs</em><big>)</big><a class="headerlink" href="#Length__Int.Int.Int.Int" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given a vector with <span class="math">\(n\)</span> entries distributed over <tt class="docutils literal"><span class="pre">numProcs</span></tt>
 processes, with the first entry owned by process <tt class="docutils literal"><span class="pre">firstRank</span></tt>, this routine
 returns the number of entries locally owned by the process with rank
@@ -318,7 +316,7 @@ returns the number of entries locally owned by the process with rank
 
     <div class="footer">
         &copy; Copyright 2012, Jack Poulson.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
   </body>
 </html>

@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -73,7 +71,7 @@ for each node of the frontal tree.</p>
 <p>In addition to generating the separator tree, which simply stores the indices
 of each separator, each process computes its portion of the mapping from the
 original to the reordered indices (implied by nested dissection) within the
-<cite>localMap</cite> vector, and the symbolic factorization, as well as a variety of
+<cite>map</cite> vector, and the symbolic factorization, as well as a variety of
 other useful information, is returned in an instance of the
 <a class="reference internal" href="#DistSymmInfo__struct" title="DistSymmInfo"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistSymmInfo</span></tt></a> structure, <cite>info</cite>.
 The <cite>cutoff</cite> parameter determines the maximum
@@ -106,23 +104,23 @@ briefly documented here for the sake of posterity.</p>
 <div class="section" id="distseparatortree">
 <h3>DistSeparatorTree<a class="headerlink" href="#distseparatortree" title="Permalink to this headline">¶</a></h3>
 <dl class="type">
-<dt id="LocalSepOrLeaf__struct">
-<em class="property">type </em>struct <tt class="descname">LocalSepOrLeaf</tt><a class="headerlink" href="#LocalSepOrLeaf__struct" title="Permalink to this definition">¶</a></dt>
+<dt id="SepOrLeaf__struct">
+<em class="property">type </em>struct <tt class="descname">SepOrLeaf</tt><a class="headerlink" href="#SepOrLeaf__struct" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="member">
-<dt id="LocalSepOrLeaf::parent__i">
-int <tt class="descname">parent</tt><a class="headerlink" href="#LocalSepOrLeaf::parent__i" title="Permalink to this definition">¶</a></dt>
+<dt id="SepOrLeaf::parent__i">
+int <tt class="descname">parent</tt><a class="headerlink" href="#SepOrLeaf::parent__i" title="Permalink to this definition">¶</a></dt>
 <dd><p>The index of the local parent separator (<span class="math">\(-1\)</span> if it does not exist).</p>
 </dd></dl>
 
 <dl class="member">
-<dt id="LocalSepOrLeaf::offset__i">
-int <tt class="descname">offset</tt><a class="headerlink" href="#LocalSepOrLeaf::offset__i" title="Permalink to this definition">¶</a></dt>
+<dt id="SepOrLeaf::offset__i">
+int <tt class="descname">offset</tt><a class="headerlink" href="#SepOrLeaf::offset__i" title="Permalink to this definition">¶</a></dt>
 <dd><p>The first reordered index of this node.</p>
 </dd></dl>
 
 <dl class="member">
-<dt id="LocalSepOrLeaf::indices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">indices</tt><a class="headerlink" href="#LocalSepOrLeaf::indices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="SepOrLeaf::indices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">indices</tt><a class="headerlink" href="#SepOrLeaf::indices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
 <dd><p>The original indices of this node.</p>
 </dd></dl>
 
@@ -155,8 +153,8 @@ std::vector&lt;int&gt; <tt class="descname">indices</tt><a class="headerlink" hr
 <dt id="DistSeparatorTree__struct">
 <em class="property">type </em>struct <tt class="descname">DistSeparatorTree</tt><a class="headerlink" href="#DistSeparatorTree__struct" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="member">
-<dt id="DistSeparatorTree::localSepsAndLeaves__std::vector:LocalSepOrLeafP:">
-std::vector&lt;LocalSepOrLeaf*&gt; <tt class="descname">localSepsAndLeaves</tt><a class="headerlink" href="#DistSeparatorTree::localSepsAndLeaves__std::vector:LocalSepOrLeafP:" title="Permalink to this definition">¶</a></dt>
+<dt id="DistSeparatorTree::localSepsAndLeaves__std::vector:SepOrLeafP:">
+std::vector&lt;SepOrLeaf*&gt; <tt class="descname">localSepsAndLeaves</tt><a class="headerlink" href="#DistSeparatorTree::localSepsAndLeaves__std::vector:SepOrLeafP:" title="Permalink to this definition">¶</a></dt>
 <dd><p>An array of <em>pointers</em> to local separators and leaves.</p>
 </dd></dl>
 
@@ -176,71 +174,71 @@ std::vector&lt;DistSeparator&gt; <tt class="descname">distSeps</tt><a class="hea
 <div class="section" id="distsymminfo">
 <h3>DistSymmInfo<a class="headerlink" href="#distsymminfo" title="Permalink to this headline">¶</a></h3>
 <dl class="type">
-<dt id="LocalSymmNodeInfo__struct">
-<em class="property">type </em>struct <tt class="descname">LocalSymmNodeInfo</tt><a class="headerlink" href="#LocalSymmNodeInfo__struct" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmNodeInfo__struct">
+<em class="property">type </em>struct <tt class="descname">SymmNodeInfo</tt><a class="headerlink" href="#SymmNodeInfo__struct" title="Permalink to this definition">¶</a></dt>
 <dd><p class="rubric">Known before analysis</p>
 <dl class="member">
-<dt id="LocalSymmNodeInfo::size__i">
-int <tt class="descname">size</tt><a class="headerlink" href="#LocalSymmNodeInfo::size__i" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmNodeInfo::size__i">
+int <tt class="descname">size</tt><a class="headerlink" href="#SymmNodeInfo::size__i" title="Permalink to this definition">¶</a></dt>
 <dd><p>The number of vertices in this node.</p>
 </dd></dl>
 
 <dl class="member">
-<dt id="LocalSymmNodeInfo::offset__i">
-int <tt class="descname">offset</tt><a class="headerlink" href="#LocalSymmNodeInfo::offset__i" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmNodeInfo::offset__i">
+int <tt class="descname">offset</tt><a class="headerlink" href="#SymmNodeInfo::offset__i" title="Permalink to this definition">¶</a></dt>
 <dd><p>The first reordered index of the vertices in this node.</p>
 </dd></dl>
 
 <dl class="member">
-<dt id="LocalSymmNodeInfo::children__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">children</tt><a class="headerlink" href="#LocalSymmNodeInfo::children__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmNodeInfo::children__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">children</tt><a class="headerlink" href="#SymmNodeInfo::children__std::vector:i:" title="Permalink to this definition">¶</a></dt>
 <dd><p>The indices of the child nodes.</p>
 </dd></dl>
 
 <dl class="member">
-<dt id="LocalSymmNodeInfo::origLowerStruct__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">origLowerStruct</tt><a class="headerlink" href="#LocalSymmNodeInfo::origLowerStruct__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmNodeInfo::origLowerStruct__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">origLowerStruct</tt><a class="headerlink" href="#SymmNodeInfo::origLowerStruct__std::vector:i:" title="Permalink to this definition">¶</a></dt>
 <dd><p>The original sorted reordered indices of this node&#8217;s connections to its
 ancestors.</p>
 </dd></dl>
 
 <p class="rubric">Computed during analysis</p>
 <dl class="member">
-<dt id="LocalSymmNodeInfo::isLeftChild__b">
-bool <tt class="descname">isLeftChild</tt><a class="headerlink" href="#LocalSymmNodeInfo::isLeftChild__b" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmNodeInfo::isLeftChild__b">
+bool <tt class="descname">isLeftChild</tt><a class="headerlink" href="#SymmNodeInfo::isLeftChild__b" title="Permalink to this definition">¶</a></dt>
 <dd><p>Whether or not this node is a left child (assuming it has a parent).</p>
 </dd></dl>
 
 <dl class="member">
-<dt id="LocalSymmNodeInfo::myOffset__i">
-int <tt class="descname">myOffset</tt><a class="headerlink" href="#LocalSymmNodeInfo::myOffset__i" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmNodeInfo::myOffset__i">
+int <tt class="descname">myOffset</tt><a class="headerlink" href="#SymmNodeInfo::myOffset__i" title="Permalink to this definition">¶</a></dt>
 <dd><p>The sum of the node sizes for all previously ordered nodes.</p>
 </dd></dl>
 
 <dl class="member">
-<dt id="LocalSymmNodeInfo::lowerStruct__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">lowerStruct</tt><a class="headerlink" href="#LocalSymmNodeInfo::lowerStruct__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmNodeInfo::lowerStruct__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">lowerStruct</tt><a class="headerlink" href="#SymmNodeInfo::lowerStruct__std::vector:i:" title="Permalink to this definition">¶</a></dt>
 <dd><p>The sorted reordered indices of this node&#8217;s connections to its ancestors
 <strong>after factorization</strong>.</p>
 </dd></dl>
 
 <dl class="member">
-<dt id="LocalSymmNodeInfo::origLowerRelIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">origLowerRelIndices</tt><a class="headerlink" href="#LocalSymmNodeInfo::origLowerRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmNodeInfo::origLowerRelIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">origLowerRelIndices</tt><a class="headerlink" href="#SymmNodeInfo::origLowerRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
 <dd><p>Maps from the original lower structure to their placement in the
 structure after factorization.</p>
 </dd></dl>
 
 <dl class="member">
-<dt id="LocalSymmNodeInfo::leftChildRelIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">leftChildRelIndices</tt><a class="headerlink" href="#LocalSymmNodeInfo::leftChildRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmNodeInfo::leftChildRelIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">leftChildRelIndices</tt><a class="headerlink" href="#SymmNodeInfo::leftChildRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
 <dd><p>The relative indices of the left child&#8217;s lower structure into this
 structure.</p>
 </dd></dl>
 
 <dl class="member">
-<dt id="LocalSymmNodeInfo::rightChildRelIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">rightChildRelIndices</tt><a class="headerlink" href="#LocalSymmNodeInfo::rightChildRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmNodeInfo::rightChildRelIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">rightChildRelIndices</tt><a class="headerlink" href="#SymmNodeInfo::rightChildRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
 <dd><p>The relative indices of the right child&#8217;s lower structure into this
 structure.</p>
 </dd></dl>
@@ -403,8 +401,8 @@ std::vector&lt;std::deque&lt;int&gt;&gt; <tt class="descname">childSolveRecvIndi
 <dt id="DistSymmInfo__struct">
 <em class="property">type </em>struct <tt class="descname">DistSymmInfo</tt><a class="headerlink" href="#DistSymmInfo__struct" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="member">
-<dt id="DistSymmInfo::localNodes__std::vector:LocalSymmNodeInfo:">
-std::vector&lt;LocalSymmNodeInfo&gt; <tt class="descname">localNodes</tt><a class="headerlink" href="#DistSymmInfo::localNodes__std::vector:LocalSymmNodeInfo:" title="Permalink to this definition">¶</a></dt>
+<dt id="DistSymmInfo::localNodes__std::vector:SymmNodeInfo:">
+std::vector&lt;SymmNodeInfo&gt; <tt class="descname">localNodes</tt><a class="headerlink" href="#DistSymmInfo::localNodes__std::vector:SymmNodeInfo:" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="member">
@@ -434,7 +432,7 @@ std::vector&lt;DistSymmNodeInfo&gt; <tt class="descname">distNodes</tt><a class=
 
     <div class="footer">
         &copy; Copyright 2012, Jack Poulson.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
   </body>
 </html>
