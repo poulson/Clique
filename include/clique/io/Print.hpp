@@ -10,7 +10,11 @@
 
 namespace cliq {
 
+void Print( const Graph& graph, std::string msg="Graph" );
 void Print( const DistGraph& graph, std::string msg="DistGraph" );
+
+template<typename T>
+void Print( const SparseMatrix<T>& A, std::string msg="SparseMatrix" );
 template<typename T>
 void Print( const DistSparseMatrix<T>& A, std::string msg="DistSparseMatrix" );
 
@@ -19,10 +23,26 @@ void Print( const DistSparseMatrix<T>& A, std::string msg="DistSparseMatrix" );
 //
 
 inline void
+Print( const Graph& graph, std::string msg )
+{
+#ifndef RELEASE
+    CallStackEntry cse("Print [Graph]");
+#endif
+    if( msg != "" )
+        std::cout << msg << std::endl;
+    const int numEdges = graph.NumEdges();
+    const int* srcBuf = graph.LockedSourceBuffer();
+    const int* tgtBuf = graph.LockedTargetBuffer();
+    for( int e=0; e<numEdges; ++e )
+        std::cout << srcBuf[e] << " " << tgtBuf[e] << "\n";
+    std::cout << std::endl;
+}
+
+inline void
 Print( const DistGraph& graph, std::string msg ) 
 {
 #ifndef RELEASE
-    CallStackEntry entry("Print [DistGraph]");
+    CallStackEntry cse("Print [DistGraph]");
 #endif
     const mpi::Comm comm = graph.Comm();
     const int commSize = mpi::CommSize( comm );
@@ -59,6 +79,24 @@ Print( const DistGraph& graph, std::string msg )
             std::cout << sources[e] << " " << targets[e] << "\n";
         std::cout << std::endl;
     }
+}
+
+template<typename T>
+inline void
+Print( const SparseMatrix<T>& A, std::string msg )
+{
+#ifndef RELEASE
+    CallStackEntry cse("Print [SparseMatrix]");
+#endif
+    if( msg != "" )
+        std::cout << msg << std::endl;
+    const int numEntries = A.NumEntries();
+    const int* srcBuf = A.LockedSourceBuffer();
+    const int* tgtBuf = A.LockedTargetBuffer();
+    const T* valBuf = A.LockedValueBuffer();
+    for( int s=0; s<numEntries; ++s )
+        std::cout << srcBuf[s] << " " << tgtBuf[s] << " " << valBuf[s] << "\n";
+    std::cout << std::endl;
 }
 
 template<typename T>

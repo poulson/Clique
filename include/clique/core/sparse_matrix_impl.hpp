@@ -146,11 +146,39 @@ SparseMatrix<T>::Value( int index ) const
 }
 
 template<typename T>
+inline int*
+SparseMatrix<T>::SourceBuffer()
+{ return graph_.SourceBuffer(); }
+
+template<typename T>
+inline int*
+SparseMatrix<T>::TargetBuffer()
+{ return graph_.TargetBuffer(); }
+
+template<typename T>
+inline T*
+SparseMatrix<T>::ValueBuffer()
+{ return &values_[0]; }
+
+template<typename T>
+inline const int*
+SparseMatrix<T>::LockedSourceBuffer() const
+{ return graph_.LockedSourceBuffer(); }
+
+template<typename T>
+inline const int*
+SparseMatrix<T>::LockedTargetBuffer() const
+{ return graph_.LockedTargetBuffer(); }
+
+template<typename T>
+inline const T*
+SparseMatrix<T>::LockedValueBuffer() const
+{ return &values_[0]; }
+
+template<typename T>
 inline bool
 SparseMatrix<T>::CompareEntries( const Entry<T>& a, const Entry<T>& b )
-{
-    return a.i < b.i || (a.i == b.i && a.j < b.j);
-}
+{ return a.i < b.i || (a.i == b.i && a.j < b.j); }
 
 template<typename T>
 inline void
@@ -281,23 +309,6 @@ SparseMatrix<T>::operator=( const DistSparseMatrix<T>& A )
     graph_ = A.graph_;
     values_ = A.values_;
     return *this;
-}
-
-template<typename T>
-inline void
-SparseMatrix<T>::Print( std::string msg ) const
-{
-#ifndef RELEASE
-    CallStackEntry entry("SparseMatrix::Print");
-#endif
-    if( msg != "" )
-        std::cout << msg << std::endl;
-    const int numNonzeros = values_.size();
-    for( int s=0; s<numNonzeros; ++s )
-        std::cout << graph_.sources_[s] << " "
-                  << graph_.targets_[s] << " "
-                  << values_[s] << "\n";
-    std::cout << std::endl;
 }
 
 template<typename T>

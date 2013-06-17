@@ -133,6 +133,22 @@ Graph::NumConnections( int source ) const
     return EdgeOffset(source+1) - EdgeOffset(source);
 }
 
+inline int*
+Graph::SourceBuffer()
+{ return &sources_[0]; }
+
+inline int*
+Graph::TargetBuffer()
+{ return &targets_[0]; }
+
+inline const int*
+Graph::LockedSourceBuffer() const
+{ return &sources_[0]; }
+
+inline const int*
+Graph::LockedTargetBuffer() const
+{ return &targets_[0]; }
+
 inline const Graph&
 Graph::operator=( const Graph& graph )
 {
@@ -173,26 +189,10 @@ Graph::operator=( const DistGraph& graph )
     return *this;
 }
 
-inline void
-Graph::Print( std::string msg ) const
-{
-#ifndef RELEASE
-    CallStackEntry entry("Graph::Print");
-#endif
-    if( msg != "" )
-        std::cout << msg << std::endl;
-    const int numEdges = sources_.size();
-    for( int e=0; e<numEdges; ++e )
-        std::cout << sources_[e] << " " << targets_[e] << "\n";
-    std::cout << std::endl;
-}
-
 inline bool
 Graph::ComparePairs
 ( const std::pair<int,int>& a, const std::pair<int,int>& b )
-{ 
-    return a.first < b.first || (a.first  == b.first && a.second < b.second);
-}
+{ return a.first < b.first || (a.first  == b.first && a.second < b.second); }
 
 inline void
 Graph::StartAssembly()

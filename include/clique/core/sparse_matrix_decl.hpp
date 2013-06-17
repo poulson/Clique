@@ -42,6 +42,12 @@ public:
     int NumEntries() const;
     int EntryOffset( int row ) const;
     int NumConnections( int row ) const;
+    int* SourceBuffer();
+    int* TargetBuffer();
+    T* ValueBuffer();
+    const int* LockedSourceBuffer() const;
+    const int* LockedTargetBuffer() const;
+    const T* LockedValueBuffer() const;
 
     // For modifying the size of the matrix
     void Empty();
@@ -51,8 +57,6 @@ public:
     const SparseMatrix<T>& operator=( const SparseMatrix<T>& A );
     // NOTE: This requires A to be distributed over a single process
     const SparseMatrix<T>& operator=( const DistSparseMatrix<T>& A );
-
-    void Print( std::string msg ) const;
 
 private:
     cliq::Graph graph_;

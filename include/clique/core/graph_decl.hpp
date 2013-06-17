@@ -39,6 +39,10 @@ public:
     int Target( int edge ) const;
     int EdgeOffset( int source ) const;
     int NumConnections( int source ) const;
+    int* SourceBuffer();
+    int* TargetBuffer();
+    const int* LockedSourceBuffer() const;
+    const int* LockedTargetBuffer() const;
 
     // For resizing the graph
     void Empty();
@@ -49,8 +53,6 @@ public:
     const Graph& operator=( const Graph& graph );
     // NOTE: This requires the DistGraph to be over a single process
     const Graph& operator=( const DistGraph& graph );
-
-    void Print( std::string msg ) const;
 
 private:
     int numSources_, numTargets_;
