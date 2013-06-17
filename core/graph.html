@@ -217,6 +217,28 @@ int <tt class="descname">NumConnections</tt><big>(</big>int <em>source</em><big>
 <dd><p>The number of edges which start from the specified source vertex.</p>
 </dd></dl>
 
+<dl class="function">
+<dt id="Graph::SourceBuffer">
+int* <tt class="descname">SourceBuffer</tt><big>(</big><big>)</big><a class="headerlink" href="#Graph::SourceBuffer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="Graph::LockedSourceBufferC">
+const int* <tt class="descname">LockedSourceBuffer</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#Graph::LockedSourceBufferC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a (const) pointer to the contiguous array of source indices.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="Graph::TargetBuffer">
+int* <tt class="descname">TargetBuffer</tt><big>(</big><big>)</big><a class="headerlink" href="#Graph::TargetBuffer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="Graph::LockedTargetBufferC">
+const int* <tt class="descname">LockedTargetBuffer</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#Graph::LockedTargetBufferC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a (const) pointer to the contiguous array of target indices.</p>
+</dd></dl>
+
 <p class="rubric">For modifying the size of the graph</p>
 <dl class="function">
 <dt id="Graph::Empty">

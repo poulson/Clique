@@ -269,6 +269,39 @@ int <tt class="descname">NumConnections</tt><big>(</big>int <em>localRow</em><bi
 <dd><p>The number of nonzeros within the specified local row.</p>
 </dd></dl>
 
+<dl class="function">
+<dt id="DistSparseMatrix:T:::SourceBuffer">
+int* <tt class="descname">SourceBuffer</tt><big>(</big><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::SourceBuffer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::LockedSourceBufferC">
+const int* <tt class="descname">LockedSourceBuffer</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::LockedSourceBufferC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a (const) pointer to the contiguous array of local source indices.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::TargetBuffer">
+int* <tt class="descname">TargetBuffer</tt><big>(</big><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::TargetBuffer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::LockedTargetBufferC">
+const int* <tt class="descname">LockedTargetBuffer</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::LockedTargetBufferC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a (const) pointer to the contiguous array of local target indices.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::ValueBuffer">
+T* <tt class="descname">ValueBuffer</tt><big>(</big><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::ValueBuffer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::LockedValueBufferC">
+const T* <tt class="descname">LockedValueBuffer</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::LockedValueBufferC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a (const) pointer to the contiguous array of local nonzero values.</p>
+</dd></dl>
+
 <p class="rubric">For modifying the size of the matrix</p>
 <dl class="function">
 <dt id="DistSparseMatrix:T:::Empty">

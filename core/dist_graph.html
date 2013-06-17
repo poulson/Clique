@@ -261,6 +261,28 @@ int <tt class="descname">NumConnections</tt><big>(</big>int <em>localSource</em>
 <dd><p>The number of edges which begin from the specified local source.</p>
 </dd></dl>
 
+<dl class="function">
+<dt id="DistGraph::SourceBuffer">
+int* <tt class="descname">SourceBuffer</tt><big>(</big><big>)</big><a class="headerlink" href="#DistGraph::SourceBuffer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="DistGraph::LockedSourceBufferC">
+const int* <tt class="descname">LockedSourceBuffer</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::LockedSourceBufferC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a (const) pointer to the contiguous array of local source indices.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistGraph::TargetBuffer">
+int* <tt class="descname">TargetBuffer</tt><big>(</big><big>)</big><a class="headerlink" href="#DistGraph::TargetBuffer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="DistGraph::LockedTargetBufferC">
+const int* <tt class="descname">LockedTargetBuffer</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistGraph::LockedTargetBufferC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a (const) pointer to the contiguous array of local target indices.</p>
+</dd></dl>
+
 <p class="rubric">For modifying the size of the graph</p>
 <dl class="function">
 <dt id="DistGraph::Empty">

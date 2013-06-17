@@ -136,6 +136,21 @@ sorted in lexicographical order based upon the row and column indices
 
       The number of nonzero entries in the specified row.
 
+   .. cpp:function:: int* SourceBuffer()
+   .. cpp:function:: const int* LockedSourceBuffer() const
+
+      Returns a (const) pointer to the contiguous array of source indices.
+
+   .. cpp:function:: int* TargetBuffer()
+   .. cpp:function:: const int* LockedTargetBuffer() const
+
+      Returns a (const) pointer to the contiguous array of target indices.
+
+   .. cpp:function:: T* ValueBuffer()
+   .. cpp:function:: const T* LockedValueBuffer() const
+
+      Returns a (const) pointer to the contiguous array of nonzero values.
+
    .. rubric:: For modifying the size of the matrix
 
    .. cpp:function:: void Empty()

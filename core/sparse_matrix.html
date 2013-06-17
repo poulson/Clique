@@ -213,6 +213,39 @@ int <tt class="descname">NumConnections</tt><big>(</big>int <em>row</em><big>)</
 <dd><p>The number of nonzero entries in the specified row.</p>
 </dd></dl>
 
+<dl class="function">
+<dt id="SparseMatrix:T:::SourceBuffer">
+int* <tt class="descname">SourceBuffer</tt><big>(</big><big>)</big><a class="headerlink" href="#SparseMatrix:T:::SourceBuffer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="SparseMatrix:T:::LockedSourceBufferC">
+const int* <tt class="descname">LockedSourceBuffer</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#SparseMatrix:T:::LockedSourceBufferC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a (const) pointer to the contiguous array of source indices.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="SparseMatrix:T:::TargetBuffer">
+int* <tt class="descname">TargetBuffer</tt><big>(</big><big>)</big><a class="headerlink" href="#SparseMatrix:T:::TargetBuffer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="SparseMatrix:T:::LockedTargetBufferC">
+const int* <tt class="descname">LockedTargetBuffer</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#SparseMatrix:T:::LockedTargetBufferC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a (const) pointer to the contiguous array of target indices.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="SparseMatrix:T:::ValueBuffer">
+T* <tt class="descname">ValueBuffer</tt><big>(</big><big>)</big><a class="headerlink" href="#SparseMatrix:T:::ValueBuffer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="SparseMatrix:T:::LockedValueBufferC">
+const T* <tt class="descname">LockedValueBuffer</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#SparseMatrix:T:::LockedValueBufferC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a (const) pointer to the contiguous array of nonzero values.</p>
+</dd></dl>
+
 <p class="rubric">For modifying the size of the matrix</p>
 <dl class="function">
 <dt id="SparseMatrix:T:::Empty">

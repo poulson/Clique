@@ -172,6 +172,16 @@ sorted lexicographically based upon their source and target indices
 
       The number of edges which begin from the specified local source.
 
+   .. cpp:function:: int* SourceBuffer()
+   .. cpp:function:: const int* LockedSourceBuffer() const
+
+      Returns a (const) pointer to the contiguous array of local source indices.
+
+   .. cpp:function:: int* TargetBuffer()
+   .. cpp:function:: const int* LockedTargetBuffer() const
+
+      Returns a (const) pointer to the contiguous array of local target indices.
+
    .. rubric:: For modifying the size of the graph
 
    .. cpp:function:: void Empty()

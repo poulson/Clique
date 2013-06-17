@@ -138,6 +138,16 @@ is the column index.
 
       The number of edges which start from the specified source vertex.
 
+   .. cpp:function:: int* SourceBuffer()
+   .. cpp:function:: const int* LockedSourceBuffer() const
+
+      Returns a (const) pointer to the contiguous array of source indices.
+
+   .. cpp:function:: int* TargetBuffer()
+   .. cpp:function:: const int* LockedTargetBuffer() const
+
+      Returns a (const) pointer to the contiguous array of target indices.
+
    .. rubric:: For modifying the size of the graph
 
    .. cpp:function:: void Empty()
