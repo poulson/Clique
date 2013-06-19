@@ -225,7 +225,6 @@ main( int argc, char* argv[] )
             const DistMatrix<C>& frontL = 
                 frontTree.distFronts[numDistFronts-2].front2dL;
             const Grid& grid = frontL.Grid();
-            const int gridRank = grid.Rank();
             const int height = frontL.Height();
             const int width = frontL.Width();
             const int minDim = std::min(height,width);
@@ -234,27 +233,27 @@ main( int argc, char* argv[] )
             DistMatrix<C> BCopy( B );
             DistMatrix<R,VR,STAR> singVals_VR_STAR( grid );
             elem::SVD( BCopy, singVals_VR_STAR );
-            const R twoNorm = elem::MaxNorm( singVals_VR_STAR );
-            DistMatrix<R,STAR,STAR> singVals( singVals_VR_STAR );
+            DistMatrix<R,CIRC,CIRC> singVals( singVals_VR_STAR );
             mpi::Barrier( grid.Comm() );
-            const double svdStop = mpi::Time();
-            if( gridRank == 0 )
-                std::cout << "done, " << svdStop-svdStart << " seconds\n"
-                          << "  two norm=" << twoNorm << "\n";
-            for( double tol=1e-1; tol>=1e-10; tol/=10 )
+            const R twoNorm = elem::MaxNorm( singVals_VR_STAR );
+            if( grid.Rank() == singVals.Root() )
             {
-                int numRank = minDim;
-                for( int j=0; j<minDim; ++j )
+                std::cout << "done, " << mpi::Time()-svdStart << " seconds\n"
+                          << "  two norm=" << twoNorm << "\n";
+                for( double tol=1e-1; tol>=1e-10; tol/=10 )
                 {
-                    if( singVals.GetLocal(j,0) <= twoNorm*tol )
+                    int numRank = minDim;
+                    for( int j=0; j<minDim; ++j )
                     {
-                        numRank = j;
-                        break;
+                        if( singVals.GetLocal(j,0) <= twoNorm*tol )
+                        {
+                            numRank = j;
+                            break;
+                        }
                     }
-                }
-                if( gridRank == 0 )
                     std::cout << "  rank (" << tol << ")=" << numRank 
                               << "/" << minDim << std::endl;
+                }
             }
         }
 
@@ -279,27 +278,26 @@ main( int argc, char* argv[] )
             DistMatrix<C> offDiagBlockCopy( offDiagBlock );
             DistMatrix<R,VR,STAR> singVals_VR_STAR( grid );
             elem::SVD( offDiagBlockCopy, singVals_VR_STAR );
+            DistMatrix<R,CIRC,CIRC> singVals( singVals_VR_STAR );
+            mpi::Barrier( grid.Comm() );
             const R twoNorm = elem::MaxNorm( singVals_VR_STAR );
-            const R tolerance = 1e-4;
-            DistMatrix<R,STAR,STAR> singVals( singVals_VR_STAR );
-            mpi::Barrier( comm );
-            const double svdStop = mpi::Time();
-            if( commRank == 0 )
-                std::cout << "done, " << svdStop-svdStart << " seconds\n";
-            for( double tol=1e-1; tol>=1e-10; tol/=10 )
+            if( grid.Rank() == singVals.Root() )
             {
-                int numRank = lowerHalf;
-                for( int j=0; j<lowerHalf; ++j )
+                std::cout << "done, " << mpi::Time()-svdStart << " seconds\n";
+                for( double tol=1e-1; tol>=1e-10; tol/=10 )
                 {
-                    if( singVals.GetLocal(j,0) <= twoNorm*tol )
+                    int numRank = lowerHalf;
+                    for( int j=0; j<lowerHalf; ++j )
                     {
-                        numRank = j;
-                        break;
+                        if( singVals.GetLocal(j,0) <= twoNorm*tol )
+                        {
+                            numRank = j;
+                            break;
+                        }
                     }
-                }
-                if( commRank == 0 )
                     std::cout << "  rank (" << tol << ")=" << numRank
                               << "/" << lowerHalf << std::endl;
+                }
             }
         }
 

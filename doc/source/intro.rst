@@ -16,7 +16,7 @@ Dependencies
 Clique is built on top of `Elemental <http://code.google.com/p/elemental>`_
 and `ParMETIS <http://glaros.dtc.umn.edu/gkhome/metis/parmetis/overview/>`_, 
 and both are distributed with Clique. Clique keeps all of Elemental's 
-dependencies except for `PMRRR <http://code.google.com/p/pmrrr>`_.
+dependencies.
 
 License and copyright
 =====================
