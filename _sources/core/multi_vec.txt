@@ -73,6 +73,14 @@ version of :cpp:type:`DistMultiVec\<T>`.
 
    Returns the Euclidean norms of each vector in the multi-vector.
 
+.. cpp:function:: typename Base<F>::type Norm( const MultiVec<F>& x )
+
+   .. note::
+
+      This only applies when there is only a single column.
+
+   Returns the Euclidean norm of the column-vector ``x``. 
+
 .. cpp:function:: void Axpy( T alpha, const MultiVec<T>& X, MultiVec<T>& Y )
 
    Updates :math:`Y := \alpha X + Y`.

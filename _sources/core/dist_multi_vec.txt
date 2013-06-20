@@ -102,9 +102,17 @@ to be simple to use.
    Sets each entry in the multi-vector to a sample from the unit ball 
    appropriate for type ``T``.
 
-.. cpp:function:: void Norm( const DistMultiVec<F>& X, std::vector<typename Base<F>::type>& norms )
+.. cpp:function:: void Norms( const DistMultiVec<F>& X, std::vector<typename Base<F>::type>& norms )
 
-   Returns the Euclidean norms of each of the vectors.
+   Returns the Euclidean norms of each of the column vectors.
+
+.. cpp:function:: typename Base<F>::type Norm( const DistMultiVec<F>& x )
+
+   .. note::
+
+      This only applies when there is only a single column.
+   
+   Returns the Euclidean norm of the column-vector ``x``. 
 
 .. cpp:function:: void Axpy( T alpha, const DistMultiVec<T>& X, DistMultiVec<T>& Y )
 

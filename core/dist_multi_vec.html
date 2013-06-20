@@ -189,9 +189,19 @@ appropriate for type <tt class="docutils literal"><span class="pre">T</span></tt
 </dd></dl>
 
 <dl class="function">
-<dt id="Norm__DistMultiVec:F:CR.std::vector:typename-Base:F:::type:R">
-void <tt class="descname">Norm</tt><big>(</big><a class="reference internal" href="#DistMultiVec:F:__class" title="DistMultiVec&lt;F&gt;">const DistMultiVec&lt;F&gt;&amp;</a> <em>X</em>, std::vector&lt;typename Base&lt;F&gt;::type&gt;&amp; <em>norms</em><big>)</big><a class="headerlink" href="#Norm__DistMultiVec:F:CR.std::vector:typename-Base:F:::type:R" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the Euclidean norms of each of the vectors.</p>
+<dt id="Norms__DistMultiVec:F:CR.std::vector:typename-Base:F:::type:R">
+void <tt class="descname">Norms</tt><big>(</big><a class="reference internal" href="#DistMultiVec:F:__class" title="DistMultiVec&lt;F&gt;">const DistMultiVec&lt;F&gt;&amp;</a> <em>X</em>, std::vector&lt;typename Base&lt;F&gt;::type&gt;&amp; <em>norms</em><big>)</big><a class="headerlink" href="#Norms__DistMultiVec:F:CR.std::vector:typename-Base:F:::type:R" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the Euclidean norms of each of the column vectors.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="Norm__DistMultiVec:F:CR">
+<a class="reference internal" href="environment.html#Base:F:::type" title="Base&lt;F&gt;::type">typename Base&lt;F&gt;::type</a> <tt class="descname">Norm</tt><big>(</big><a class="reference internal" href="#DistMultiVec:F:__class" title="DistMultiVec&lt;F&gt;">const DistMultiVec&lt;F&gt;&amp;</a> <em>x</em><big>)</big><a class="headerlink" href="#Norm__DistMultiVec:F:CR" title="Permalink to this definition">¶</a></dt>
+<dd><div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This only applies when there is only a single column.</p>
+</div>
+<p>Returns the Euclidean norm of the column-vector <tt class="docutils literal"><span class="pre">x</span></tt>.</p>
 </dd></dl>
 
 <dl class="function">

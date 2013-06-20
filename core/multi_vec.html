@@ -145,6 +145,16 @@ void <tt class="descname">Norms</tt><big>(</big><a class="reference internal" hr
 </dd></dl>
 
 <dl class="function">
+<dt id="Norm__MultiVec:F:CR">
+<a class="reference internal" href="environment.html#Base:F:::type" title="Base&lt;F&gt;::type">typename Base&lt;F&gt;::type</a> <tt class="descname">Norm</tt><big>(</big><a class="reference internal" href="#MultiVec:F:__class" title="MultiVec&lt;F&gt;">const MultiVec&lt;F&gt;&amp;</a> <em>x</em><big>)</big><a class="headerlink" href="#Norm__MultiVec:F:CR" title="Permalink to this definition">¶</a></dt>
+<dd><div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This only applies when there is only a single column.</p>
+</div>
+<p>Returns the Euclidean norm of the column-vector <tt class="docutils literal"><span class="pre">x</span></tt>.</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="Axpy__T.MultiVec:T:CR.MultiVec:T:R">
 void <tt class="descname">Axpy</tt><big>(</big>T <em>alpha</em>, <a class="reference internal" href="#MultiVec:T:__class" title="MultiVec&lt;T&gt;">const MultiVec&lt;T&gt;&amp;</a> <em>X</em>, <a class="reference internal" href="#MultiVec:T:__class" title="MultiVec&lt;T&gt;">MultiVec&lt;T&gt;&amp;</a> <em>Y</em><big>)</big><a class="headerlink" href="#Axpy__T.MultiVec:T:CR.MultiVec:T:R" title="Permalink to this definition">¶</a></dt>
 <dd><p>Updates <span class="math">\(Y := \alpha X + Y\)</span>.</p>
