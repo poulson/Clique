@@ -11,14 +11,14 @@
 namespace cliq {
 
 template<typename T>
-class MultiVector
+class MultiVec
 {
 public:
     // Constructors and destructors
-    MultiVector();
-    MultiVector( int height, int width );
-    // TODO: Constructor for building from a MultiVector
-    ~MultiVector();
+    MultiVec();
+    MultiVec( int height, int width );
+    // TODO: Constructor for building from a MultiVec
+    ~MultiVec();
 
     // High-level information
     int Height() const;
@@ -34,8 +34,7 @@ public:
     void ResizeTo( int height, int width );
 
     // Assignment
-    const MultiVector<T>& operator=( const Vector<T>& x );
-    const MultiVector<T>& operator=( const MultiVector<T>& X );
+    const MultiVec<T>& operator=( const MultiVec<T>& X );
 
 private:
     Matrix<T> multiVec_;
@@ -43,18 +42,22 @@ private:
 
 // Set all of the entries of X to zero
 template<typename T>
-void MakeZeros( MultiVector<T>& X );
+void MakeZeros( MultiVec<T>& X );
 
 // Draw the entries of X uniformly from the unitball in T
 template<typename T>
-void MakeUniform( MultiVector<T>& X );
+void MakeUniform( MultiVec<T>& X );
 
-// Just an l2 norm for now
+// Just column-wise l2 norms for now
 template<typename F>
-void Norms( const MultiVector<F>& X, std::vector<BASE(F)>& norms );
+void Norms( const MultiVec<F>& X, std::vector<BASE(F)>& norms );
+
+// Just column-wise l2 norms for now
+template<typename F>
+BASE(F) Norm( const MultiVec<F>& x );
 
 // Y := alpha X + Y 
 template<typename T>
-void Axpy( T alpha, const MultiVector<T>& X, MultiVector<T>& Y );
+void Axpy( T alpha, const MultiVec<T>& X, MultiVec<T>& Y );
 
 } // namespace cliq

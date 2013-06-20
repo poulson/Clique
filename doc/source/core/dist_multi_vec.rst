@@ -1,23 +1,23 @@
-The DistMultiVector class
-=========================
-The :cpp:type:`DistMultiVector\<T>` class is the standard interface in Clique 
+The DistMultiVec class
+======================
+The :cpp:type:`DistMultiVec\<T>` class is the standard interface in Clique 
 for setting up several right-hand sides for solves: it uses the same simple 
 one-dimensional distribution as :cpp:type:`DistSparseMatrix\<T>` and is meant 
 to be simple to use.
 
-.. cpp:type:: class DistMultiVector<T>
+.. cpp:type:: class DistMultiVec<T>
 
    .. rubric:: Constructors
 
-   .. cpp:function:: DistMultiVector()
+   .. cpp:function:: DistMultiVec()
 
       Constructs a single vector of length zero over ``mpi::COMM_WORLD``.
 
-   .. cpp:function:: DistMultiVector( mpi::Comm comm )
+   .. cpp:function:: DistMultiVec( mpi::Comm comm )
 
       Constructs a single vector of length zero over the specified communicator.
 
-   .. cpp:function:: DistMultiVector( int height, int width, mpi::Comm comm )
+   .. cpp:function:: DistMultiVec( int height, int width, mpi::Comm comm )
 
       Constructs `width` vectors, each of the given height, over a particular 
       communicator.
@@ -84,32 +84,36 @@ to be simple to use.
       Resizes the multi-vector to have `width` vectors, each of the specified
       height.
 
-   .. cpp:function:: const DistMultiVector<T>& operator=( const DistVector<T>& x )
-
-      Makes this multi-vector a copy of the given vector.
-
-   .. cpp:function:: const DistMultiVector<T>& operator=( const DistMultiVector<T>& X )
+   .. cpp:function:: const DistMultiVec<T>& operator=( const DistMultiVec<T>& X )
 
       Makes this multi-vector a copy of the given multi-vector.
 
-.. cpp:type:: class DistMultiVector<F>
+.. cpp:type:: class DistMultiVec<F>
 
-   The same as :cpp:type:`DistMultiVector\<T>`, but the implication is that the
+   The same as :cpp:type:`DistMultiVec\<T>`, but the implication is that the
    underlying datatype `F` is a field rather than just a ring.
 
-.. cpp:function:: void MakeZeros( DistMultiVector<T>& X )
+.. cpp:function:: void MakeZeros( DistMultiVec<T>& X )
 
    Sets every entry in the multi-vector to zero.
 
-.. cpp:function:: void MakeUniform( DistMultiVector<T>& X )
+.. cpp:function:: void MakeUniform( DistMultiVec<T>& X )
 
    Sets each entry in the multi-vector to a sample from the unit ball 
    appropriate for type ``T``.
 
-.. cpp:function:: void Norm( const DistMultiVector<F>& X, std::vector<typename Base<F>::type>& norms )
+.. cpp:function:: void Norms( const DistMultiVec<F>& X, std::vector<typename Base<F>::type>& norms )
 
-   Returns the Euclidean norms of each of the vectors.
+   Returns the Euclidean norms of each of the column vectors.
 
-.. cpp:function:: void Axpy( T alpha, const DistMultiVector<T>& X, DistMultiVector<T>& Y )
+.. cpp:function:: typename Base<F>::type Norm( const DistMultiVec<F>& x )
+
+   .. note::
+
+      This only applies when there is only a single column.
+   
+   Returns the Euclidean norm of the column-vector ``x``. 
+
+.. cpp:function:: void Axpy( T alpha, const DistMultiVec<T>& X, DistMultiVec<T>& Y )
 
    Updates :math:`Y := \alpha X + Y`.

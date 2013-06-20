@@ -12,7 +12,7 @@ namespace cliq {
 
 template<typename T>
 inline void 
-MakeZeros( DistMultiVector<T>& X )
+MakeZeros( DistMultiVec<T>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("MakeZeros");
@@ -26,7 +26,7 @@ MakeZeros( DistMultiVector<T>& X )
 
 template<typename T>
 inline void 
-MakeUniform( DistMultiVector<T>& X )
+MakeUniform( DistMultiVec<T>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("MakeUniform");
@@ -39,7 +39,7 @@ MakeUniform( DistMultiVector<T>& X )
 }
 
 template<typename F>
-void Norms( const DistMultiVector<F>& X, std::vector<BASE(F)>& norms )
+void Norms( const DistMultiVec<F>& X, std::vector<BASE(F)>& norms )
 {
 #ifndef RELEASE
     CallStackEntry entry("Norms");
@@ -105,9 +105,23 @@ void Norms( const DistMultiVector<F>& X, std::vector<BASE(F)>& norms )
         norms[j] = scales[j]*Sqrt(scaledSquares[j]);
 }
 
+template<typename F>
+BASE(F) Norm( const DistMultiVec<F>& x )
+{
+#ifndef RELEASE
+    CallStackEntry entry("Norm");
+#endif
+    if( x.Width() != 1 )
+        throw std::logic_error("Norm only applies when there is one column");
+    typedef BASE(F) R;
+    std::vector<R> norms;
+    Norms( x, norms );
+    return norms[0];
+}
+
 template<typename T>
 inline void
-Axpy( T alpha, const DistMultiVector<T>& X, DistMultiVector<T>& Y )
+Axpy( T alpha, const DistMultiVec<T>& X, DistMultiVec<T>& Y )
 {
 #ifndef RELEASE
     CallStackEntry entry("Axpy");
@@ -127,13 +141,13 @@ Axpy( T alpha, const DistMultiVector<T>& X, DistMultiVector<T>& Y )
 
 template<typename T>
 inline 
-DistMultiVector<T>::DistMultiVector()
+DistMultiVec<T>::DistMultiVec()
 : height_(0), comm_(mpi::COMM_WORLD), blocksize_(0), firstLocalRow_(0)
 { }
 
 template<typename T>
 inline 
-DistMultiVector<T>::DistMultiVector( mpi::Comm comm )
+DistMultiVec<T>::DistMultiVec( mpi::Comm comm )
 : height_(0), width_(0), comm_(mpi::COMM_WORLD), 
   blocksize_(0), firstLocalRow_(0)
 { 
@@ -142,7 +156,7 @@ DistMultiVector<T>::DistMultiVector( mpi::Comm comm )
 
 template<typename T>
 inline 
-DistMultiVector<T>::DistMultiVector( int height, int width, mpi::Comm comm )
+DistMultiVec<T>::DistMultiVec( int height, int width, mpi::Comm comm )
 : height_(height), width_(width), comm_(mpi::COMM_WORLD)
 { 
     SetComm( comm );
@@ -150,7 +164,7 @@ DistMultiVector<T>::DistMultiVector( int height, int width, mpi::Comm comm )
 
 template<typename T>
 inline 
-DistMultiVector<T>::~DistMultiVector()
+DistMultiVec<T>::~DistMultiVec()
 { 
     if( comm_ != mpi::COMM_WORLD )
         mpi::CommFree( comm_ );
@@ -158,17 +172,17 @@ DistMultiVector<T>::~DistMultiVector()
 
 template<typename T>
 inline int 
-DistMultiVector<T>::Height() const
+DistMultiVec<T>::Height() const
 { return height_; }
 
 template<typename T>
 inline int
-DistMultiVector<T>::Width() const
+DistMultiVec<T>::Width() const
 { return multiVec_.Width(); }
 
 template<typename T>
 inline void
-DistMultiVector<T>::SetComm( mpi::Comm comm )
+DistMultiVec<T>::SetComm( mpi::Comm comm )
 { 
     if( comm_ != mpi::COMM_WORLD )
         mpi::CommFree( comm_ );
@@ -191,57 +205,57 @@ DistMultiVector<T>::SetComm( mpi::Comm comm )
 
 template<typename T>
 inline mpi::Comm 
-DistMultiVector<T>::Comm() const
+DistMultiVec<T>::Comm() const
 { return comm_; }
 
 template<typename T>
 inline int
-DistMultiVector<T>::Blocksize() const
+DistMultiVec<T>::Blocksize() const
 { return blocksize_; }
 
 template<typename T>
 inline int
-DistMultiVector<T>::FirstLocalRow() const
+DistMultiVec<T>::FirstLocalRow() const
 { return firstLocalRow_; }
 
 template<typename T>
 inline int
-DistMultiVector<T>::LocalHeight() const
+DistMultiVec<T>::LocalHeight() const
 { return multiVec_.Height(); }
 
 template<typename T>
 inline T
-DistMultiVector<T>::GetLocal( int localRow, int col ) const
+DistMultiVec<T>::GetLocal( int localRow, int col ) const
 { 
 #ifndef RELEASE 
-    CallStackEntry entry("DistMultiVector::GetLocal");
+    CallStackEntry entry("DistMultiVec::GetLocal");
 #endif
     return multiVec_.Get(localRow,col);
 }
 
 template<typename T>
 inline void
-DistMultiVector<T>::SetLocal( int localRow, int col, T value )
+DistMultiVec<T>::SetLocal( int localRow, int col, T value )
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistMultiVector::SetLocal");
+    CallStackEntry entry("DistMultiVec::SetLocal");
 #endif
     multiVec_.Set(localRow,col,value);
 }
 
 template<typename T>
 inline void
-DistMultiVector<T>::UpdateLocal( int localRow, int col, T value )
+DistMultiVec<T>::UpdateLocal( int localRow, int col, T value )
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistMultiVector::UpdateLocal");
+    CallStackEntry entry("DistMultiVec::UpdateLocal");
 #endif
     multiVec_.Update(localRow,col,value);
 }
 
 template<typename T>
 inline void
-DistMultiVector<T>::Empty()
+DistMultiVec<T>::Empty()
 {
     height_ = 0;
     width_ = 0;
@@ -252,7 +266,7 @@ DistMultiVector<T>::Empty()
 
 template<typename T>
 inline void
-DistMultiVector<T>::ResizeTo( int height, int width )
+DistMultiVec<T>::ResizeTo( int height, int width )
 {
     const int commRank = mpi::CommRank( comm_ );
     const int commSize = mpi::CommSize( comm_ );
@@ -268,25 +282,11 @@ DistMultiVector<T>::ResizeTo( int height, int width )
 }
 
 template<typename T>
-const DistMultiVector<T>& 
-DistMultiVector<T>::operator=( const DistVector<T>& x )
+const DistMultiVec<T>& 
+DistMultiVec<T>::operator=( const DistMultiVec<T>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistMultiVector::operator=");
-#endif
-    height_ = x.height_;
-    width_ = 1;
-    SetComm( x.comm_ );
-    multiVec_ = x.localVec_;
-    return *this;
-}
-
-template<typename T>
-const DistMultiVector<T>& 
-DistMultiVector<T>::operator=( const DistMultiVector<T>& X )
-{
-#ifndef RELEASE
-    CallStackEntry entry("DistMultiVector::operator=");
+    CallStackEntry entry("DistMultiVec::operator=");
 #endif
     height_ = X.height_;
     width_ = X.width_;

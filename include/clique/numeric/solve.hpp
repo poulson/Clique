@@ -16,20 +16,11 @@ void Solve
 
 template<typename F>
 void SymmetricSolve
-( const DistSparseMatrix<F>& A, DistVector<F>& x,
+( const DistSparseMatrix<F>& A, DistMultiVec<F>& X,
   bool sequential=true, int numDistSeps=1, int numSeqSeps=1, int cutoff=128 );
 template<typename F>
 void HermitianSolve
-( const DistSparseMatrix<F>& A, DistVector<F>& x,
-  bool sequential=true, int numDistSeps=1, int numSeqSeps=1, int cutoff=128 );
-
-template<typename F>
-void SymmetricSolve
-( const DistSparseMatrix<F>& A, DistMultiVector<F>& X,
-  bool sequential=true, int numDistSeps=1, int numSeqSeps=1, int cutoff=128 );
-template<typename F>
-void HermitianSolve
-( const DistSparseMatrix<F>& A, DistMultiVector<F>& X,
+( const DistSparseMatrix<F>& A, DistMultiVec<F>& X,
   bool sequential=true, int numDistSeps=1, int numSeqSeps=1, int cutoff=128 );
 
 //----------------------------------------------------------------------------//
@@ -73,7 +64,7 @@ inline void Solve
 
 template<typename F>
 inline void SymmetricSolve
-( const DistSparseMatrix<F>& A, DistVector<F>& x, 
+( const DistSparseMatrix<F>& A, DistMultiVec<F>& X, 
   bool sequential, int numDistSeps, int numSeqSeps, int cutoff )
 {
 #ifndef RELEASE
@@ -90,57 +81,7 @@ inline void SymmetricSolve
     DistSymmFrontTree<F> frontTree( TRANSPOSE, A, map, sepTree, info );
     LDL( info, frontTree, LDL_1D );
 
-    DistNodalVector<F> xNodal;
-    xNodal.Pull( inverseMap, info, x );
-    Solve( info, frontTree, xNodal.localVec );
-    xNodal.Push( inverseMap, info, x );
-}
-
-template<typename F>
-inline void HermitianSolve
-( const DistSparseMatrix<F>& A, DistVector<F>& x, 
-  bool sequential, int numDistSeps, int numSeqSeps, int cutoff )
-{
-#ifndef RELEASE
-    CallStackEntry entry("HermitianSolve");
-#endif
-    DistSymmInfo info;
-    DistSeparatorTree sepTree;
-    DistMap map, inverseMap;
-    NestedDissection
-    ( A.Graph(), map, sepTree, info, 
-      sequential, numDistSeps, numSeqSeps, cutoff );
-    map.FormInverse( inverseMap );
-
-    DistSymmFrontTree<F> frontTree( ADJOINT, A, map, sepTree, info );
-    LDL( info, frontTree, LDL_1D );
-
-    DistNodalVector<F> xNodal;
-    xNodal.Pull( inverseMap, info, x );
-    Solve( info, frontTree, xNodal.localVec );
-    xNodal.Push( inverseMap, info, x );
-}
-
-template<typename F>
-inline void SymmetricSolve
-( const DistSparseMatrix<F>& A, DistMultiVector<F>& X, 
-  bool sequential, int numDistSeps, int numSeqSeps, int cutoff )
-{
-#ifndef RELEASE
-    CallStackEntry entry("SymmetricSolve");
-#endif
-    DistSymmInfo info;
-    DistSeparatorTree sepTree;
-    DistMap map, inverseMap;
-    NestedDissection
-    ( A.Graph(), map, sepTree, info, 
-      sequential, numDistSeps, numSeqSeps, cutoff );
-    map.FormInverse( inverseMap );
-
-    DistSymmFrontTree<F> frontTree( TRANSPOSE, A, map, sepTree, info );
-    LDL( info, frontTree, LDL_1D );
-
-    DistNodalMultiVector<F> XNodal;
+    DistNodalMultiVec<F> XNodal;
     XNodal.Pull( inverseMap, info, X );
     Solve( info, frontTree, XNodal.multiVec );
     XNodal.Push( inverseMap, info, X );
@@ -148,7 +89,7 @@ inline void SymmetricSolve
 
 template<typename F>
 inline void HermitianSolve
-( const DistSparseMatrix<F>& A, DistMultiVector<F>& X, 
+( const DistSparseMatrix<F>& A, DistMultiVec<F>& X, 
   bool sequential, int numDistSeps, int numSeqSeps, int cutoff )
 {
 #ifndef RELEASE
@@ -165,7 +106,7 @@ inline void HermitianSolve
     DistSymmFrontTree<F> frontTree( ADJOINT, A, map, sepTree, info );
     LDL( info, frontTree, LDL_1D );
 
-    DistNodalMultiVector<F> XNodal;
+    DistNodalMultiVec<F> XNodal;
     XNodal.Pull( inverseMap, info, X );
     Solve( info, frontTree, XNodal.multiVec );
     XNodal.Push( inverseMap, info, X );

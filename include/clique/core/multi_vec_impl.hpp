@@ -12,7 +12,7 @@ namespace cliq {
 
 template<typename T>
 inline void 
-MakeZeros( MultiVector<T>& X )
+MakeZeros( MultiVec<T>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("MakeZeros");
@@ -26,7 +26,7 @@ MakeZeros( MultiVector<T>& X )
 
 template<typename T>
 inline void 
-MakeUniform( MultiVector<T>& X )
+MakeUniform( MultiVec<T>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("MakeUniform");
@@ -40,7 +40,7 @@ MakeUniform( MultiVector<T>& X )
 
 template<typename F>
 inline void
-Norms( const MultiVector<F>& X, std::vector<BASE(F)>& norms )
+Norms( const MultiVec<F>& X, std::vector<BASE(F)>& norms )
 {
 #ifndef RELEASE
     CallStackEntry entry("Norms");
@@ -76,9 +76,24 @@ Norms( const MultiVector<F>& X, std::vector<BASE(F)>& norms )
     }
 }
 
+template<typename F>
+inline BASE(F)
+Norm( const MultiVec<F>& x )
+{
+#ifndef RELEASE
+    CallStackEntry entry("Norm");
+#endif
+    if( x.Width() != 1 )
+        throw std::logic_error("Norms only applies with one column");
+    typedef BASE(F) R;
+    std::vector<R> norms;
+    Norms( x, norms );
+    return norms[0];
+}
+
 template<typename T>
 inline void
-Axpy( T alpha, const MultiVector<T>& X, MultiVector<T>& Y )
+Axpy( T alpha, const MultiVec<T>& X, MultiVec<T>& Y )
 {
 #ifndef RELEASE
     CallStackEntry entry("Axpy");
@@ -96,91 +111,76 @@ Axpy( T alpha, const MultiVector<T>& X, MultiVector<T>& Y )
 
 template<typename T>
 inline 
-MultiVector<T>::MultiVector()
+MultiVec<T>::MultiVec()
 { }
 
 template<typename T>
 inline
-MultiVector<T>::MultiVector( int height, int width )
+MultiVec<T>::MultiVec( int height, int width )
 : multiVec_(height,width)
 { }
 
 template<typename T>
 inline 
-MultiVector<T>::~MultiVector()
+MultiVec<T>::~MultiVec()
 { }
 
 template<typename T>
 inline int 
-MultiVector<T>::Height() const
+MultiVec<T>::Height() const
 { return multiVec_.Height(); }
 
 template<typename T>
 inline int
-MultiVector<T>::Width() const
+MultiVec<T>::Width() const
 { return multiVec_.Width(); }
 
 template<typename T>
 inline T
-MultiVector<T>::Get( int row, int col ) const
+MultiVec<T>::Get( int row, int col ) const
 { 
 #ifndef RELEASE 
-    CallStackEntry entry("MultiVector::Get");
+    CallStackEntry entry("MultiVec::Get");
 #endif
     return multiVec_.Get(row,col);
 }
 
 template<typename T>
 inline void
-MultiVector<T>::Set( int row, int col, T value )
+MultiVec<T>::Set( int row, int col, T value )
 {
 #ifndef RELEASE
-    CallStackEntry entry("MultiVector::Set");
+    CallStackEntry entry("MultiVec::Set");
 #endif
     multiVec_.Set(row,col,value);
 }
 
 template<typename T>
 inline void
-MultiVector<T>::Update( int row, int col, T value )
+MultiVec<T>::Update( int row, int col, T value )
 {
 #ifndef RELEASE
-    CallStackEntry entry("MultiVector::Update");
+    CallStackEntry entry("MultiVec::Update");
 #endif
     multiVec_.Update(row,col,value);
 }
 
 template<typename T>
 inline void
-MultiVector<T>::Empty()
-{
-    multiVec_.Empty();
-}
+MultiVec<T>::Empty()
+{ multiVec_.Empty(); }
 
 template<typename T>
 inline void
-MultiVector<T>::ResizeTo( int height, int width )
-{
-    multiVec_.ResizeTo( height, width );
-}
+MultiVec<T>::ResizeTo( int height, int width )
+{ multiVec_.ResizeTo( height, width ); }
 
 template<typename T>
-const MultiVector<T>& 
-MultiVector<T>::operator=( const Vector<T>& x )
+const MultiVec<T>& 
+MultiVec<T>::operator=( const MultiVec<T>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("MultiVector::operator=");
-#endif
-    multiVec_ = x.vec_;
-    return *this;
-}
-
-template<typename T>
-const MultiVector<T>& 
-MultiVector<T>::operator=( const MultiVector<T>& X )
-{
-#ifndef RELEASE
-    CallStackEntry entry("MultiVector::operator=");
+    CallStackEntry entry("MultiVec::operator=");
 #endif
     multiVec_ = X.multiVec_;
     return *this;

@@ -1,0 +1,4 @@
+- Modify Solve routines to accept (Dist)NodalMultiVec instead of Matrix so that
+  it can be overloaded to support both 1D and 2D distributions for the 
+  supernodal portions.
+- Think of proper naming needed for adding in a 2D version of DistNodalMultiVec

@@ -10,17 +10,11 @@
 
 namespace cliq {
 
-// y := alpha A x + beta y
-template<typename T>
-void Multiply
-( T alpha, const DistSparseMatrix<T>& A, const DistVector<T>& x,
-  T beta,                                      DistVector<T>& y );
-
 // Y := alpha A X + beta Y
 template<typename T>
 void Multiply
-( T alpha, const DistSparseMatrix<T>& A, const DistMultiVector<T>& X,
-  T beta,                                      DistMultiVector<T>& Y );
+( T alpha, const DistSparseMatrix<T>& A, const DistMultiVec<T>& X,
+  T beta,                                      DistMultiVec<T>& Y );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -28,121 +22,8 @@ void Multiply
 
 template<typename T>
 void Multiply
-( T alpha, const DistSparseMatrix<T>& A, const DistVector<T>& x,
-  T beta,                                      DistVector<T>& y )
-{
-#ifndef RELEASE
-    CallStackEntry entry("Multiply");
-    if( A.Height() != y.Height() || A.Width() != x.Height() )
-        throw std::logic_error("A, x, and y did not conform");
-    if( !mpi::CongruentComms( A.Comm(), x.Comm() ) || 
-        !mpi::CongruentComms( x.Comm(), y.Comm() ) )
-        throw std::logic_error("Communicators did not match");
-#endif
-    mpi::Comm comm = A.Comm();
-    const int commSize = mpi::CommSize( comm );
-    const int yLocalHeight = y.LocalHeight();
-    const int blocksize = A.Blocksize();
-    const int firstLocalRow = A.FirstLocalRow();
-    const int numLocalEntries = A.NumLocalEntries();
-#ifndef RELEASE
-    const int xLocalHeight = x.LocalHeight();
-#endif
-
-    // y := beta y
-    for( int iLocal=0; iLocal<yLocalHeight; ++iLocal )
-        y.SetLocal( iLocal, beta*y.GetLocal(iLocal) );
-
-    // Compute the set of row indices that we need from x
-    std::set<int> indexSet;
-    for( int e=0; e<numLocalEntries; ++e )
-        indexSet.insert( A.Col(e) );
-    const int numRecvIndices = indexSet.size();
-    std::vector<int> recvIndices( numRecvIndices );
-    std::vector<int> recvSizes( commSize, 0 );
-    std::vector<int> recvOffsets( commSize );
-    {
-        int offset=0, lastOffset=0, qPrev=0;
-        std::set<int>::const_iterator setIt;
-        for( setIt=indexSet.begin(); setIt!=indexSet.end(); ++setIt )
-        {
-            const int j = *setIt;
-            const int q = RowToProcess( j, blocksize, commSize );
-            while( qPrev != q )
-            {
-                recvSizes[qPrev] = offset - lastOffset;
-                recvOffsets[qPrev+1] = offset;
-
-                lastOffset = offset;
-                ++qPrev;
-            }
-            recvIndices[offset++] = j;
-        }
-        while( qPrev != commSize-1 )
-        {
-            recvSizes[qPrev] = offset - lastOffset;
-            recvOffsets[qPrev+1] = offset;
-            lastOffset = offset;
-            ++qPrev;
-        }
-        recvSizes[commSize-1] = offset - lastOffset;
-    }
-
-    // Coordinate
-    std::vector<int> sendSizes( commSize );
-    mpi::AllToAll( &recvSizes[0], 1, &sendSizes[0], 1, comm );
-    int numSendIndices=0;
-    std::vector<int> sendOffsets( commSize );
-    for( int q=0; q<commSize; ++q )
-    {
-        sendOffsets[q] = numSendIndices;
-        numSendIndices += sendSizes[q];
-    }
-    std::vector<int> sendIndices( numSendIndices );
-    mpi::AllToAll
-    ( &recvIndices[0], &recvSizes[0], &recvOffsets[0],
-      &sendIndices[0], &sendSizes[0], &sendOffsets[0], comm );
-
-    // Pack the send values
-    std::vector<T> sendValues( numSendIndices );
-    for( int s=0; s<numSendIndices; ++s )
-    {
-        const int i = sendIndices[s];
-        const int iLocal = i - firstLocalRow;
-#ifndef RELEASE
-        if( iLocal < 0 || iLocal >= xLocalHeight )
-            throw std::logic_error("iLocal was out of bounds");
-#endif
-        sendValues[s] = x.GetLocal( iLocal );
-    }
-
-    // Send them back
-    std::vector<T> recvValues( numRecvIndices );
-    mpi::AllToAll
-    ( &sendValues[0], &sendSizes[0], &sendOffsets[0],
-      &recvValues[0], &recvSizes[0], &recvOffsets[0], comm );
-     
-    // Perform the local multiply-accumulate, y := alpha A x + y
-    for( int iLocal=0; iLocal<yLocalHeight; ++iLocal )
-    {
-        const int offset = A.LocalEntryOffset( iLocal );
-        const int rowSize = A.NumConnections( iLocal );
-        for( int k=0; k<rowSize; ++k )
-        {
-            const int col = A.Col( offset+k );
-            const int colOffset = Find( recvIndices, col );
-            const T AValue = A.Value(k+offset);
-            const T xValue = recvValues[colOffset];
-            const T update = alpha*AValue*xValue;
-            y.UpdateLocal( iLocal, update );
-        }
-    }
-}
-
-template<typename T>
-void Multiply
-( T alpha, const DistSparseMatrix<T>& A, const DistMultiVector<T>& X,
-  T beta,                                      DistMultiVector<T>& Y )
+( T alpha, const DistSparseMatrix<T>& A, const DistMultiVec<T>& X,
+  T beta,                                      DistMultiVec<T>& Y )
 {
 #ifndef RELEASE
     CallStackEntry entry("Multiply");

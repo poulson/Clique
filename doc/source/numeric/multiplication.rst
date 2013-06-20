@@ -4,11 +4,7 @@ Multiplication
 With sparse matrices
 --------------------
 
-.. cpp:function:: void Multiply( T alpha, const DistSparseMatrix<T>& A, const DistVector<T>& x, T beta, DistVector<T>& y )
-
-   Forms :math:`y := \alpha A x + \beta y`.
-
-.. cpp:function:: void Multiply( T alpha, const DistSparseMatrix<T>& A, const DistMultiVector<T>& X, T beta, DistMultiVector<T>& Y )
+.. cpp:function:: void Multiply( T alpha, const DistSparseMatrix<T>& A, const DistMultiVec<T>& X, T beta, DistMultiVec<T>& Y )
 
    Forms :math:`Y := \alpha A X + \beta Y`.
 

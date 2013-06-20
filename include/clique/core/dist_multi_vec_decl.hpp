@@ -14,15 +14,14 @@ namespace cliq {
 //     if last process,  height - (commSize-1)*floor(height/commSize)
 //     otherwise,        floor(height/commSize)
 template<typename T>
-class DistMultiVector
+class DistMultiVec
 {
 public:
     // Constructors and destructors
-    DistMultiVector();
-    DistMultiVector( mpi::Comm comm );
-    DistMultiVector( int height, int width, mpi::Comm comm );
-    // TODO: Constructor for building from a DistVector
-    ~DistMultiVector();
+    DistMultiVec();
+    DistMultiVec( mpi::Comm comm );
+    DistMultiVec( int height, int width, mpi::Comm comm );
+    ~DistMultiVec();
 
     // High-level information
     int Height() const;
@@ -47,8 +46,7 @@ public:
     void ResizeTo( int height, int width );
 
     // Assignment
-    const DistMultiVector<T>& operator=( const DistVector<T>& x );
-    const DistMultiVector<T>& operator=( const DistMultiVector<T>& X );
+    const DistMultiVec<T>& operator=( const DistMultiVec<T>& X );
 
 private:
     int height_, width_;
@@ -63,18 +61,22 @@ private:
 
 // Set all of the entries of X to zero
 template<typename T>
-void MakeZeros( DistMultiVector<T>& X );
+void MakeZeros( DistMultiVec<T>& X );
 
 // Draw the entries of X uniformly from the unitball in T
 template<typename T>
-void MakeUniform( DistMultiVector<T>& X );
+void MakeUniform( DistMultiVec<T>& X );
 
-// Just an l2 norm for now
+// Just column-wise l2 norms for now
 template<typename F>
-void Norms( const DistMultiVector<F>& X, std::vector<BASE(F)>& norms );
+void Norms( const DistMultiVec<F>& X, std::vector<BASE(F)>& norms );
+
+// Simplification for case where there is only one column
+template<typename F>
+BASE(F) Norm( const DistMultiVec<F>& x );
 
 // Y := alpha X + Y
 template<typename T>
-void Axpy( T alpha, const DistMultiVector<T>& X, DistMultiVector<T>& Y );
+void Axpy( T alpha, const DistMultiVec<T>& X, DistMultiVec<T>& Y );
 
 } // namespace cliq

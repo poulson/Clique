@@ -79,11 +79,11 @@ main( int argc, char* argv[] )
 
         if( commRank == 0 )
         {
-            std::cout << "Generating random X and forming Y := A X...";
+            std::cout << "Generating random vector X and forming Y := A X...";
             std::cout.flush();
         }
         const double multiplyStart = mpi::Time();
-        DistMultiVector<double> X( N, numRhs, comm ), Y( N, numRhs, comm );
+        DistMultiVec<double> X( N, numRhs, comm ), Y( N, numRhs, comm );
         MakeUniform( X );
         MakeZeros( Y );
         Multiply( 1., A, X, 0., Y );
@@ -97,110 +97,11 @@ main( int argc, char* argv[] )
 
         if( commRank == 0 )
         {
-            std::cout << "Running nested dissection...";
-            std::cout.flush();
-        }
-        const double nestedStart = mpi::Time();
-        const DistGraph& graph = A.Graph();
-        DistSymmInfo info;
-        DistSeparatorTree sepTree;
-        DistMap map, inverseMap;
-        NestedDissection
-        ( graph, map, sepTree, info, 
-          sequential, numDistSeps, numSeqSeps, cutoff );
-        map.FormInverse( inverseMap );
-        mpi::Barrier( comm );
-        const double nestedStop = mpi::Time();
-        if( commRank == 0 )
-            std::cout << "done, " << nestedStop-nestedStart << " seconds"
-                      << std::endl;
-
-        if( commRank == 0 )
-        {
-            const int numDistNodes = info.distNodes.size();
-            const int numLocalNodes = info.localNodes.size();
-            const int rootSepSize = info.distNodes.back().size;
-            std::cout << "\n"
-                      << "On the root process:\n"
-                      << "-----------------------------------------\n"
-                      << numLocalNodes << " local nodes\n"
-                      << numDistNodes  << " distributed nodes\n"
-                      << rootSepSize << " vertices in root separator\n"
-                      << std::endl;
-        }
-
-        if( commRank == 0 )
-        {
-            std::cout << "Building DistSymmFrontTree...";
-            std::cout.flush();
-        }
-        mpi::Barrier( comm );
-        const double buildStart = mpi::Time();
-        DistSymmFrontTree<double> frontTree( TRANSPOSE, A, map, sepTree, info );
-        mpi::Barrier( comm );
-        const double buildStop = mpi::Time();
-        if( commRank == 0 )
-            std::cout << "done, " << buildStop-buildStart << " seconds"
-                      << std::endl;
-
-        if( commRank == 0 )
-            std::cout << "Original memory usage for fronts..." << std::endl;
-        double numLocalEntries, minLocalEntries, maxLocalEntries, 
-               numGlobalEntries;
-        frontTree.MemoryInfo
-        ( numLocalEntries, minLocalEntries, maxLocalEntries, numGlobalEntries );
-        if( commRank == 0 )
-        {
-            std::cout << "  min local: " << minLocalEntries*sizeof(double)/1e6 
-                      << " MB\n"
-                      << "  max local: " << maxLocalEntries*sizeof(double)/1e6 
-                      << " MB\n"
-                      << "  global:    " << numGlobalEntries*sizeof(double)/1e6
-                      << " MB\n"
-                      << std::endl;
-        }
-
-        if( commRank == 0 )
-        {
-            std::cout << "Running LDL^T and redistribution...";
-            std::cout.flush();
-        }
-        mpi::Barrier( comm );
-        const double ldlStart = mpi::Time();
-        LDL( info, frontTree, LDL_1D );
-        mpi::Barrier( comm );
-        const double ldlStop = mpi::Time();
-        if( commRank == 0 )
-            std::cout << "done, " << ldlStop-ldlStart << " seconds" 
-                      << std::endl;
-
-        if( commRank == 0 )
-            std::cout << "Memory usage for fronts after factorization..."
-                      << std::endl;
-        frontTree.MemoryInfo
-        ( numLocalEntries, minLocalEntries, maxLocalEntries, numGlobalEntries );
-        if( commRank == 0 )
-        {
-            std::cout << "  min local: " << minLocalEntries*sizeof(double)/1e6 
-                      << " MB\n"
-                      << "  max local: " << maxLocalEntries*sizeof(double)/1e6 
-                      << " MB\n"
-                      << "  global:    " << numGlobalEntries*sizeof(double)/1e6
-                      << " MB\n"
-                      << std::endl;
-        }
-
-        if( commRank == 0 )
-        {
-            std::cout << "Solving against Y...";
+            std::cout << "Solving...";
             std::cout.flush();
         }
         const double solveStart = mpi::Time();
-        DistNodalMultiVector<double> YNodal;
-        YNodal.Pull( inverseMap, info, Y );
-        Solve( info, frontTree, YNodal.multiVec );
-        YNodal.Push( inverseMap, info, Y );
-        mpi::Barrier( comm );
+        SymmetricSolve( A, Y, sequential, numDistSeps, numSeqSeps, cutoff );
         const double solveStop = mpi::Time();
         if( commRank == 0 )
             std::cout << "done, " << solveStop-solveStart << " seconds"
@@ -218,7 +119,8 @@ main( int argc, char* argv[] )
         {
             for( int j=0; j<numRhs; ++j )
             {
-                std::cout << "Right-hand side " << j << ":\n"
+                std::cout << "Right-hand side " << j << "\n"
+                          << "------------------------------------------\n"
                           << "|| x     ||_2 = " << XNorms[j] << "\n"
                           << "|| xComp ||_2 = " << YNorms[j] << "\n"
                           << "|| A x   ||_2 = " << YOrigNorms[j] << "\n"

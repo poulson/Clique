@@ -156,14 +156,14 @@ main( int argc, char* argv[] )
 
         if( commRank == 0 )
             std::cout << "Generating point-source for y..." << std::endl;
-        DistVector<C> y( N, comm ), z( N, comm );
+        DistMultiVec<C> y( N, 1, comm ), z( N, 1, comm );
         MakeZeros( z );
         const int xSource = n1/2;
         const int ySource = n2/2;
         const int zSource = n3/2;
         const int iSource = xSource + ySource*n1 + zSource*n1*n2;
         if( iSource >= firstLocalRow && iSource < firstLocalRow+localHeight )
-            z.SetLocal( iSource-firstLocalRow, Complex<double>(1.0,0.0) );
+            z.SetLocal( iSource-firstLocalRow, 0, Complex<double>(1.0,0.0) );
         y = z;
 
         if( commRank == 0 )
@@ -327,9 +327,9 @@ main( int argc, char* argv[] )
             std::cout.flush();
         }
         const double solveStart = mpi::Time();
-        DistNodalVector<C> yNodal;
+        DistNodalMultiVec<C> yNodal;
         yNodal.Pull( inverseMap, info, y );
-        Solve( info, frontTree, yNodal.localVec );
+        Solve( info, frontTree, yNodal.multiVec );
         yNodal.Push( inverseMap, info, y );
         mpi::Barrier( comm );
         const double solveStop = mpi::Time();

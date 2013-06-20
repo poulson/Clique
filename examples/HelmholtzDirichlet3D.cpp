@@ -102,7 +102,7 @@ main( int argc, char* argv[] )
             std::cout.flush();
         }
         const double multiplyStart = mpi::Time();
-        DistVector<C> x( N, comm ), y( N, comm );
+        DistMultiVec<C> x( N, 1, comm ), y( N, 1, comm );
         MakeUniform( x );
         MakeZeros( y );
         Multiply( C(1), A, x, C(0), y );
@@ -274,9 +274,9 @@ main( int argc, char* argv[] )
             std::cout.flush();
         }
         const double solveStart = mpi::Time();
-        DistNodalVector<C> yNodal;
+        DistNodalMultiVec<C> yNodal;
         yNodal.Pull( inverseMap, info, y );
-        Solve( info, frontTree, yNodal.localVec );
+        Solve( info, frontTree, yNodal.multiVec );
         yNodal.Push( inverseMap, info, y );
         mpi::Barrier( comm );
         const double solveStop = mpi::Time();

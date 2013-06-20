@@ -22,14 +22,6 @@ main( int argc, char* argv[] )
         const int n1 = Input("--n1","first grid dimension",30);
         const int n2 = Input("--n2","second grid dimension",30);
         const int n3 = Input("--n3","third grid dimension",30);
-        const bool sequential = Input
-            ("--sequential","sequential partitions?",true);
-        const int numDistSeps = Input
-            ("--numDistSeps",
-             "number of separators to try per distributed partition",1);
-        const int numSeqSeps = Input
-            ("--numSeqSeps",
-             "number of separators to try per sequential partition",1);
         const int cutoff = Input("--cutoff","cutoff for nested dissection",128);
         ProcessInput();
 
@@ -82,7 +74,7 @@ main( int argc, char* argv[] )
             std::cout.flush();
         }
         const double multiplyStart = mpi::Time();
-        DistVector<double> x( N, comm ), y( N, comm );
+        DistMultiVec<double> x( N, 1, comm ), y( N, 1, comm );
         MakeUniform( x );
         MakeZeros( y );
         Multiply( 1., A, x, 0., y );
@@ -95,11 +87,76 @@ main( int argc, char* argv[] )
 
         if( commRank == 0 )
         {
-            std::cout << "Solving...";
+            std::cout << "Running natural nested dissection...";
+            std::cout.flush();
+        }
+        const double nestedStart = mpi::Time();
+        const DistGraph& graph = A.Graph();
+        DistSymmInfo info;
+        DistSeparatorTree sepTree;
+        DistMap map, inverseMap;
+        NaturalNestedDissection
+        ( n1, n2, n3, graph, map, sepTree, info, cutoff );
+        map.FormInverse( inverseMap );
+        mpi::Barrier( comm );
+        const double nestedStop = mpi::Time();
+        if( commRank == 0 )
+            std::cout << "done, " << nestedStop-nestedStart << " seconds"
+                      << std::endl;
+
+        if( commRank == 0 )
+        {
+            const int numDistNodes = info.distNodes.size();
+            const int numLocalNodes = info.localNodes.size();
+            const int rootSepSize = info.distNodes.back().size;
+            std::cout << "\n"
+                      << "On the root process:\n"
+                      << "-----------------------------------------\n"
+                      << numLocalNodes << " local nodes\n"
+                      << numDistNodes  << " distributed nodes\n"
+                      << rootSepSize << " vertices in root separator\n"
+                      << std::endl;
+        }
+
+        if( commRank == 0 )
+        {
+            std::cout << "Building DistSymmFrontTree...";
+            std::cout.flush();
+        }
+        mpi::Barrier( comm );
+        const double buildStart = mpi::Time();
+        DistSymmFrontTree<double> frontTree( TRANSPOSE, A, map, sepTree, info );
+        mpi::Barrier( comm );
+        const double buildStop = mpi::Time();
+        if( commRank == 0 )
+            std::cout << "done, " << buildStop-buildStart << " seconds"
+                      << std::endl;
+
+        if( commRank == 0 )
+        {
+            std::cout << "Running LDL^T and redistribution...";
+            std::cout.flush();
+        }
+        mpi::Barrier( comm );
+        const double ldlStart = mpi::Time();
+        LDL( info, frontTree, LDL_1D );
+        mpi::Barrier( comm );
+        const double ldlStop = mpi::Time();
+        if( commRank == 0 )
+            std::cout << "done, " << ldlStop-ldlStart << " seconds" 
+                      << std::endl;
+
+        if( commRank == 0 )
+        {
+            std::cout << "Solving against y...";
             std::cout.flush();
         }
         const double solveStart = mpi::Time();
-        SymmetricSolve( A, y, sequential, numDistSeps, numSeqSeps, cutoff );
+        DistNodalMultiVec<double> yNodal;
+        yNodal.Pull( inverseMap, info, y );
+        Solve( info, frontTree, yNodal.localVec );
+        yNodal.Push( inverseMap, info, y );
+        mpi::Barrier( comm );
         const double solveStop = mpi::Time();
         if( commRank == 0 )
             std::cout << "done, " << solveStop-solveStart << " seconds"

@@ -10,5 +10,4 @@ Core functionality
    core/dist_map
    core/sparse_matrix
    core/dist_sparse_matrix
-   core/dist_vector
-   core/dist_multi_vector
+   core/dist_multi_vec

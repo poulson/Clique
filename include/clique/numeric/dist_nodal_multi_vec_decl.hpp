@@ -16,22 +16,22 @@ namespace cliq {
 // TODO: Generalize to a set of vectors
 //
 template<typename F>
-class DistNodalVector
+class DistNodalMultiVec
 {
 public:
-    Matrix<F> localVec;
+    Matrix<F> multiVec;
 
     void Pull
     ( const DistMap& inverseMap, const DistSymmInfo& info,
-      const DistVector<F>& x );
+      const DistMultiVec<F>& X );
     void Push
     ( const DistMap& inverseMap, const DistSymmInfo& info,
-            DistVector<F>& x ) const;
+            DistMultiVec<F>& X ) const;
 
-    DistNodalVector();
-    DistNodalVector
-    ( const DistMap& inverseMap, const DistSymmInfo& info, 
-      const DistVector<F>& x );
+    DistNodalMultiVec();
+    DistNodalMultiVec
+    ( const DistMap& inverseMap, const DistSymmInfo& info,
+      const DistMultiVec<F>& X );
 };
 
 } // namespace cliq

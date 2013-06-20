@@ -22,6 +22,7 @@ main( int argc, char* argv[] )
         const int n1 = Input("--n1","first grid dimension",30);
         const int n2 = Input("--n2","second grid dimension",30);
         const int n3 = Input("--n3","third grid dimension",30);
+        const int numRhs = Input("--numRhs","number of right-hand sides",5);
         const bool sequential = Input
             ("--sequential","sequential partitions?",true);
         const int numDistSeps = Input
@@ -78,15 +79,16 @@ main( int argc, char* argv[] )
 
         if( commRank == 0 )
         {
-            std::cout << "Generating random vector x and forming y := A x...";
+            std::cout << "Generating random X and forming Y := A X...";
             std::cout.flush();
         }
         const double multiplyStart = mpi::Time();
-        DistVector<double> x( N, comm ), y( N, comm );
-        MakeUniform( x );
-        MakeZeros( y );
-        Multiply( 1., A, x, 0., y );
-        const double yOrigNorm = Norm( y );
+        DistMultiVec<double> X( N, numRhs, comm ), Y( N, numRhs, comm );
+        MakeUniform( X );
+        MakeZeros( Y );
+        Multiply( 1., A, X, 0., Y );
+        std::vector<double> YOrigNorms;
+        Norms( Y, YOrigNorms );
         mpi::Barrier( comm );
         const double multiplyStop = mpi::Time();
         if( commRank == 0 )
@@ -142,6 +144,23 @@ main( int argc, char* argv[] )
                       << std::endl;
 
         if( commRank == 0 )
+            std::cout << "Original memory usage for fronts..." << std::endl;
+        double numLocalEntries, minLocalEntries, maxLocalEntries, 
+               numGlobalEntries;
+        frontTree.MemoryInfo
+        ( numLocalEntries, minLocalEntries, maxLocalEntries, numGlobalEntries );
+        if( commRank == 0 )
+        {
+            std::cout << "  min local: " << minLocalEntries*sizeof(double)/1e6 
+                      << " MB\n"
+                      << "  max local: " << maxLocalEntries*sizeof(double)/1e6 
+                      << " MB\n"
+                      << "  global:    " << numGlobalEntries*sizeof(double)/1e6
+                      << " MB\n"
+                      << std::endl;
+        }
+
+        if( commRank == 0 )
         {
             std::cout << "Running LDL^T and redistribution...";
             std::cout.flush();
@@ -156,15 +175,31 @@ main( int argc, char* argv[] )
                       << std::endl;
 
         if( commRank == 0 )
+            std::cout << "Memory usage for fronts after factorization..."
+                      << std::endl;
+        frontTree.MemoryInfo
+        ( numLocalEntries, minLocalEntries, maxLocalEntries, numGlobalEntries );
+        if( commRank == 0 )
         {
-            std::cout << "Solving against y...";
+            std::cout << "  min local: " << minLocalEntries*sizeof(double)/1e6 
+                      << " MB\n"
+                      << "  max local: " << maxLocalEntries*sizeof(double)/1e6 
+                      << " MB\n"
+                      << "  global:    " << numGlobalEntries*sizeof(double)/1e6
+                      << " MB\n"
+                      << std::endl;
+        }
+
+        if( commRank == 0 )
+        {
+            std::cout << "Solving against Y...";
             std::cout.flush();
         }
         const double solveStart = mpi::Time();
-        DistNodalVector<double> yNodal;
-        yNodal.Pull( inverseMap, info, y );
-        Solve( info, frontTree, yNodal.localVec );
-        yNodal.Push( inverseMap, info, y );
+        DistNodalMultiVec<double> YNodal;
+        YNodal.Pull( inverseMap, info, Y );
+        Solve( info, frontTree, YNodal.multiVec );
+        YNodal.Push( inverseMap, info, Y );
         mpi::Barrier( comm );
         const double solveStop = mpi::Time();
         if( commRank == 0 )
@@ -173,16 +208,23 @@ main( int argc, char* argv[] )
 
         if( commRank == 0 )
             std::cout << "Checking error in computed solution..." << std::endl;
-        const double xNorm = Norm( x );
-        const double yNorm = Norm( y );
-        Axpy( -1., x, y );
-        const double errorNorm = Norm( y );
+        std::vector<double> XNorms, YNorms;
+        Norms( X, XNorms );
+        Norms( Y, YNorms );
+        Axpy( -1., X, Y );
+        std::vector<double> errorNorms;
+        Norms( Y, errorNorms );
         if( commRank == 0 )
         {
-            std::cout << "|| x     ||_2 = " << xNorm << "\n"
-                      << "|| xComp ||_2 = " << yNorm << "\n"
-                      << "|| A x   ||_2 = " << yOrigNorm << "\n"
-                      << "|| error ||_2 = " << errorNorm << std::endl;
+            for( int j=0; j<numRhs; ++j )
+            {
+                std::cout << "Right-hand side " << j << ":\n"
+                          << "|| x     ||_2 = " << XNorms[j] << "\n"
+                          << "|| xComp ||_2 = " << YNorms[j] << "\n"
+                          << "|| A x   ||_2 = " << YOrigNorms[j] << "\n"
+                          << "|| error ||_2 = " << errorNorms[j] << "\n"
+                          << std::endl;
+            }
         }
     }
     catch( std::exception& e ) { ReportException(e); }

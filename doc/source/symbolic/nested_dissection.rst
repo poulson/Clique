@@ -31,7 +31,7 @@ as a means of producing such a separator tree from an arbitrary graph.
    factorization
 
    See `tests/NestedDissection <https://github.com/poulson/Clique/blob/master/tests/NestedDissection.cpp>`__ for an example of its usage directly on a
-   distributed graph, and `tests/VectorSolve.cpp <https://github.com/poulson/Clique/blob/master/tests/VectorSolve.cpp>`__ for its application to the
+   distributed graph, and `tests/Solve.cpp <https://github.com/poulson/Clique/blob/master/tests/Solve.cpp>`__ for its application to the
    underlying graph of a sparse matrix.
 
 .. cpp:function:: void NaturalNestedDissection( int nx, int ny, int nz, const DistGraph& graph, DistMap& map, DistSeparatorTree& sepTree, DistSymmInfo& info, int cutoff=128, bool storeFactRecvIndices=true )
@@ -41,7 +41,7 @@ as a means of producing such a separator tree from an arbitrary graph.
    neighbors. In this case, the graph can analytically be recursively bisected,
    and so the difficulties in parallelizing the KL-FM refinement can be avoided.
 
-   See `tests/NaturalVectorSolve <https://github.com/poulson/Clique/blob/master/tests/NaturalVectorSolve.cpp>`__ for an example.
+   See `tests/NaturalSolve <https://github.com/poulson/Clique/blob/master/tests/NaturalSolve.cpp>`__ for an example.
 
 Data structures
 ---------------

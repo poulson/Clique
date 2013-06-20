@@ -1,18 +1,18 @@
-The MultiVector class
-=====================
-The :cpp:type:`MultiVector\<T>` class is the standard interface in Clique for
+The MultiVec class
+==================
+The :cpp:type:`MultiVec\<T>` class is the standard interface in Clique for
 setting up multiple right-hand sides for sequential solves: it is a simplified 
-version of :cpp:type:`DistMultiVector\<T>`.
+version of :cpp:type:`DistMultiVec\<T>`.
 
-.. cpp:type:: class MultiVector<T>
+.. cpp:type:: class MultiVec<T>
 
    .. rubric:: Constructors
 
-   .. cpp:function:: MultiVector()
+   .. cpp:function:: MultiVec()
 
       Constructs a single vector of length zero.
 
-   .. cpp:function:: MultiVector( int height, int width )
+   .. cpp:function:: MultiVec( int height, int width )
 
       Constructs `width` vectors, each of the specified height.
 
@@ -51,32 +51,36 @@ version of :cpp:type:`DistMultiVector\<T>`.
 
       Reconfigures the class to have `width` vectors, each of the given height.
 
-   .. cpp:function:: const MultiVector<T>& operator=( const Vector<T>& x )
-
-      Makes this multi-vector a copy of the given vector.
-
-   .. cpp:function:: const MultiVector<T>& operator=( const MultiVector<T>& X )
+   .. cpp:function:: const MultiVec<T>& operator=( const MultiVec<T>& X )
 
       Makes this multi-vector a copy of the given multi-vector.
 
-.. cpp:type:: class MultiVector<F>
+.. cpp:type:: class MultiVec<F>
 
-   The same as :cpp:type:`MultiVector\<T>`, but the implication is that the 
+   The same as :cpp:type:`MultiVec\<T>`, but the implication is that the 
    underlying datatype `F` is a field rather than just a ring.
 
-.. cpp:function:: void MakeZeros( MultiVector<T>& X )
+.. cpp:function:: void MakeZeros( MultiVec<T>& X )
 
    Sets every entry in the multi-vector to zero.
 
-.. cpp:function:: void MakeUniform( MultiVector<T>& X )
+.. cpp:function:: void MakeUniform( MultiVec<T>& X )
 
    Sets each entry in the multi-vector to a sample from the unit ball 
    appropriate for type ``T``.
 
-.. cpp:function:: void Norms( const MultiVector<F>& X, std::vector<typename Base<F>::type>& norms )
+.. cpp:function:: void Norms( const MultiVec<F>& X, std::vector<typename Base<F>::type>& norms )
 
    Returns the Euclidean norms of each vector in the multi-vector.
 
-.. cpp:function:: void Axpy( T alpha, const MultiVector<T>& X, MultiVector<T>& Y )
+.. cpp:function:: typename Base<F>::type Norm( const MultiVec<F>& x )
+
+   .. note::
+
+      This only applies when there is only a single column.
+
+   Returns the Euclidean norm of the column-vector ``x``. 
+
+.. cpp:function:: void Axpy( T alpha, const MultiVec<T>& X, MultiVec<T>& Y )
 
    Updates :math:`Y := \alpha X + Y`.

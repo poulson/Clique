@@ -18,7 +18,7 @@ option(CLIQ_EXAMPLES "Build a few example drivers" OFF)
 option(USE_CUSTOM_ALLTOALLV "Avoid MPI_Alltoallv for performance reasons" ON)
 option(BARRIER_IN_ALLTOALLV "Barrier before posting non-blocking recvs" OFF)
 
-set(ELEM_REV 05648afa7651)
+set(ELEM_REV 344f1e24bf0c)
 if(MANUAL_ELEMENTAL)
   include_directories(${ELEM_INCLUDE_DIR})
   include_directories(${MPI_CXX_INCLUDE_PATH})
@@ -134,10 +134,9 @@ include_directories("${PROJECT_BINARY_DIR}/include")
 # Build the test drivers if necessary
 if(CLIQ_TESTS)
   set(TEST_DIR ${PROJECT_SOURCE_DIR}/tests)
-  set(TESTS FileSpeed NaturalVectorSolve)
+  set(TESTS FileSpeed NaturalSolve)
   if(HAVE_PARMETIS)
-    list(APPEND TESTS Bisection MultiVectorSolve NestedDissection Refactor
-      SimpleVectorSolve SimpleMultiVectorSolve VectorSolve)
+    list(APPEND TESTS Bisection NestedDissection Refactor SimpleSolve Solve)
   endif()
 
   # Build the tests

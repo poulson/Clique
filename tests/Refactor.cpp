@@ -166,9 +166,9 @@ main( int argc, char* argv[] )
                 std::cout.flush();
             }
             const double solveStart = mpi::Time();
-            DistVector<double> y( N, comm );
+            DistMultiVec<double> y( N, 1, comm );
             MakeUniform( y );
-            DistNodalVector<double> yNodal;
+            DistNodalMultiVec<double> yNodal;
             yNodal.Pull( inverseMap, info, y );
             Solve( info, frontTree, yNodal.localVec );
             yNodal.Push( inverseMap, info, y );

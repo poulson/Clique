@@ -265,10 +265,10 @@ NaturalNestedDissectionRecursion
         std::vector<int> localConnectedSizes( commSize );
         mpi::AllGather
         ( &numLocalConnected, 1, &localConnectedSizes[0], 1, comm );
-        std::vector<int> localConnectedVector( numLocalConnected );
+        std::vector<int> localConnectedVec( numLocalConnected );
         std::copy
         ( localConnectedAncestors.begin(), localConnectedAncestors.end(), 
-          localConnectedVector.begin() );
+          localConnectedVec.begin() );
         int sumOfLocalConnectedSizes=0;
         std::vector<int> localConnectedOffsets( commSize );
         for( int q=0; q<commSize; ++q )
@@ -278,7 +278,7 @@ NaturalNestedDissectionRecursion
         }
         std::vector<int> localConnections( sumOfLocalConnectedSizes );
         mpi::AllGather
-        ( &localConnectedVector[0], numLocalConnected,
+        ( &localConnectedVec[0], numLocalConnected,
           &localConnections[0], 
           &localConnectedSizes[0], &localConnectedOffsets[0], comm );
         std::set<int> connectedAncestors
