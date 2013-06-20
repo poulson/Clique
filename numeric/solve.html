@@ -55,13 +55,8 @@
 <div class="section" id="black-box-solvers">
 <h2>Black-box solvers<a class="headerlink" href="#black-box-solvers" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
-<dt id="SymmetricSolve__DistSparseMatrix:F:CR.DistVector:F:R.b.i.i.i">
-void <tt class="descname">SymmetricSolve</tt><big>(</big><a class="reference internal" href="../core/dist_sparse_matrix.html#DistSparseMatrix:F:__class" title="DistSparseMatrix&lt;F&gt;">const DistSparseMatrix&lt;F&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/dist_vector.html#DistVector:F:__class" title="DistVector&lt;F&gt;">DistVector&lt;F&gt;&amp;</a> <em>x</em>, bool <em>sequential</em><em>=true</em>, int <em>numDistSeps</em><em>=1</em>, int <em>numSeqSeps</em><em>=1</em>, int <em>cutoff</em><em>=128 </em><big>)</big><a class="headerlink" href="#SymmetricSolve__DistSparseMatrix:F:CR.DistVector:F:R.b.i.i.i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="SymmetricSolve__DistSparseMatrix:F:CR.DistMultiVector:F:R.b.i.i.i">
-void <tt class="descname">SymmetricSolve</tt><big>(</big><a class="reference internal" href="../core/dist_sparse_matrix.html#DistSparseMatrix:F:__class" title="DistSparseMatrix&lt;F&gt;">const DistSparseMatrix&lt;F&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/dist_multi_vector.html#DistMultiVector:F:__class" title="DistMultiVector&lt;F&gt;">DistMultiVector&lt;F&gt;&amp;</a> <em>X</em>, bool <em>sequential</em><em>=true</em>, int <em>numDistSeps</em><em>=1</em>, int <em>numSeqSeps</em><em>=1</em>, int <em>cutoff</em><em>=128 </em><big>)</big><a class="headerlink" href="#SymmetricSolve__DistSparseMatrix:F:CR.DistMultiVector:F:R.b.i.i.i" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmetricSolve__DistSparseMatrix:F:CR.DistMultiVec:F:R.b.i.i.i">
+void <tt class="descname">SymmetricSolve</tt><big>(</big><a class="reference internal" href="../core/dist_sparse_matrix.html#DistSparseMatrix:F:__class" title="DistSparseMatrix&lt;F&gt;">const DistSparseMatrix&lt;F&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/dist_multi_vec.html#DistMultiVec:F:__class" title="DistMultiVec&lt;F&gt;">DistMultiVec&lt;F&gt;&amp;</a> <em>X</em>, bool <em>sequential</em><em>=true</em>, int <em>numDistSeps</em><em>=1</em>, int <em>numSeqSeps</em><em>=1</em>, int <em>cutoff</em><em>=128 </em><big>)</big><a class="headerlink" href="#SymmetricSolve__DistSparseMatrix:F:CR.DistMultiVec:F:R.b.i.i.i" title="Permalink to this definition">¶</a></dt>
 <dd><p>Overwrites <span class="math">\(x\)</span> with <span class="math">\(A^{-1} x\)</span>, where <span class="math">\(A\)</span> is assumed to be
 symmetric. The main optional argument is
 whether or not graph partitioning should be performed sequentially or in
@@ -71,21 +66,15 @@ be stored on a single process. The remaining optional arguments determine
 how many distributed and sequential separators should be tested for each
 separator (<cite>numDistSeps</cite> and <cite>numSeqSeps</cite>) and what the maximum allowed
 subdomain size is (<cite>cutoff</cite>). See
-<a class="reference external" href="https://github.com/poulson/Clique/blob/master/tests/SimpleVectorSolve.cpp">tests/SimpleVectorSolve</a> and
-<a class="reference external" href="https://github.com/poulson/Clique/blob/master/tests/SimpleMultiVectorSolve.cpp">tests/SimpleMultiVectorSolve</a> for an example usages.</p>
+<a class="reference external" href="https://github.com/poulson/Clique/blob/master/tests/SimpleSolve.cpp">tests/SimpleSolve</a> for an example usage.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="HermitianSolve__DistSparseMatrix:F:CR.DistVector:F:R.b.i.i.i">
-void <tt class="descname">HermitianSolve</tt><big>(</big><a class="reference internal" href="../core/dist_sparse_matrix.html#DistSparseMatrix:F:__class" title="DistSparseMatrix&lt;F&gt;">const DistSparseMatrix&lt;F&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/dist_vector.html#DistVector:F:__class" title="DistVector&lt;F&gt;">DistVector&lt;F&gt;&amp;</a> <em>x</em>, bool <em>sequential</em><em>=true</em>, int <em>numDistSeps</em><em>=1</em>, int <em>numSeqSeps</em><em>=1</em>, int <em>cutoff</em><em>=128 </em><big>)</big><a class="headerlink" href="#HermitianSolve__DistSparseMatrix:F:CR.DistVector:F:R.b.i.i.i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="HermitianSolve__DistSparseMatrix:F:CR.DistMultiVector:F:R.b.i.i.i">
-void <tt class="descname">HermitianSolve</tt><big>(</big><a class="reference internal" href="../core/dist_sparse_matrix.html#DistSparseMatrix:F:__class" title="DistSparseMatrix&lt;F&gt;">const DistSparseMatrix&lt;F&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/dist_multi_vector.html#DistMultiVector:F:__class" title="DistMultiVector&lt;F&gt;">DistMultiVector&lt;F&gt;&amp;</a> <em>X</em>, bool <em>sequential</em><em>=true</em>, int <em>numDistSeps</em><em>=1</em>, int <em>numSeqSeps</em><em>=1</em>, int <em>cutoff</em><em>=128 </em><big>)</big><a class="headerlink" href="#HermitianSolve__DistSparseMatrix:F:CR.DistMultiVector:F:R.b.i.i.i" title="Permalink to this definition">¶</a></dt>
+<dt id="HermitianSolve__DistSparseMatrix:F:CR.DistMultiVec:F:R.b.i.i.i">
+void <tt class="descname">HermitianSolve</tt><big>(</big><a class="reference internal" href="../core/dist_sparse_matrix.html#DistSparseMatrix:F:__class" title="DistSparseMatrix&lt;F&gt;">const DistSparseMatrix&lt;F&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/dist_multi_vec.html#DistMultiVec:F:__class" title="DistMultiVec&lt;F&gt;">DistMultiVec&lt;F&gt;&amp;</a> <em>X</em>, bool <em>sequential</em><em>=true</em>, int <em>numDistSeps</em><em>=1</em>, int <em>numSeqSeps</em><em>=1</em>, int <em>cutoff</em><em>=128 </em><big>)</big><a class="headerlink" href="#HermitianSolve__DistSparseMatrix:F:CR.DistMultiVec:F:R.b.i.i.i" title="Permalink to this definition">¶</a></dt>
 <dd><p>Overwrites <span class="math">\(x\)</span> with <span class="math">\(A^{-1} x\)</span>, where <span class="math">\(A\)</span> is assumed to be
 Hermitian. The optional arguments are identical to those of
-<a class="reference internal" href="#SymmetricSolve__DistSparseMatrix:F:CR.DistVector:F:R.b.i.i.i" title="SymmetricSolve"><tt class="xref cpp cpp-func docutils literal"><span class="pre">SymmetricSolve()</span></tt></a>.</p>
+<a class="reference internal" href="#SymmetricSolve__DistSparseMatrix:F:CR.DistMultiVec:F:R.b.i.i.i" title="SymmetricSolve"><tt class="xref cpp cpp-func docutils literal"><span class="pre">SymmetricSolve()</span></tt></a>.</p>
 </dd></dl>
 
 </div>
@@ -97,8 +86,8 @@ void <tt class="descname">Solve</tt><big>(</big><a class="reference internal" hr
 <dd><p>After having performed an <span class="math">\(LDL^T\)</span> or <span class="math">\(LDL^H\)</span> factorization
 (via <a class="reference internal" href="factorization.html#LDL__DistSymmInfoR.DistSymmFrontTree:F:R.SymmFrontType" title="LDL"><tt class="xref cpp cpp-func docutils literal"><span class="pre">LDL()</span></tt></a>), this routine can be used to solve a set of
 right-hand sides. Note that <cite>localX</cite> can be easily generated using the
-<a class="reference internal" href="#DistNodalMultiVector:F:__struct" title="DistNodalMultiVector&lt;F&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistNodalMultiVector&lt;F&gt;</span></tt></a> class. See
-<a class="reference external" href="https://github.com/poulson/Clique/blob/master/tests/MultiVectorSolve.cpp">tests/MultiVectorSolve</a> for an example usage.</p>
+<a class="reference internal" href="#DistNodalMultiVec:F:__struct" title="DistNodalMultiVec&lt;F&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistNodalMultiVec&lt;F&gt;</span></tt></a> class. See
+<a class="reference external" href="https://github.com/poulson/Clique/blob/master/tests/Solve.cpp">tests/Solve</a> for an example usage.</p>
 </dd></dl>
 
 <div class="section" id="finer-grain-access">
@@ -137,70 +126,36 @@ void <tt class="descname">BlockLowerSolve</tt><big>(</big><a class="reference in
 <p>The following data structures are used to help simplify the redistribution of
 right-hand side data into a form which is compatible with the distributed
 frontal tree.</p>
-<div class="section" id="distnodalvector">
-<h3>DistNodalVector<a class="headerlink" href="#distnodalvector" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="distnodalmultivec">
+<h3>DistNodalMultiVec<a class="headerlink" href="#distnodalmultivec" title="Permalink to this headline">¶</a></h3>
 <dl class="type">
-<dt id="DistNodalVector:T:__struct">
-<em class="property">type </em>struct <tt class="descname">DistNodalVector&lt;T&gt;</tt><a class="headerlink" href="#DistNodalVector:T:__struct" title="Permalink to this definition">¶</a></dt>
+<dt id="DistNodalMultiVec:T:__struct">
+<em class="property">type </em>struct <tt class="descname">DistNodalMultiVec&lt;T&gt;</tt><a class="headerlink" href="#DistNodalMultiVec:T:__struct" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="member">
-<dt id="DistNodalVector:T:::vec__Matrix:T:">
-<a class="reference internal" href="../core/environment.html#Matrix:T:__class" title="Matrix&lt;T&gt;">Matrix&lt;T&gt;</a> <tt class="descname">vec</tt><a class="headerlink" href="#DistNodalVector:T:::vec__Matrix:T:" title="Permalink to this definition">¶</a></dt>
+<dt id="DistNodalMultiVec:T:::multiVec__Matrix:T:">
+<a class="reference internal" href="../core/environment.html#Matrix:T:__class" title="Matrix&lt;T&gt;">Matrix&lt;T&gt;</a> <tt class="descname">multiVec</tt><a class="headerlink" href="#DistNodalMultiVec:T:::multiVec__Matrix:T:" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
-<dt id="DistNodalVector:T:::Pull__DistMapCR.DistSymmInfoCR.DistVector:T:CR">
-void <tt class="descname">Pull</tt><big>(</big><a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>inverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="../core/dist_vector.html#DistVector:T:__class" title="DistVector&lt;T&gt;">const DistVector&lt;T&gt;&amp;</a> <em>x</em><big>)</big><a class="headerlink" href="#DistNodalVector:T:::Pull__DistMapCR.DistSymmInfoCR.DistVector:T:CR" title="Permalink to this definition">¶</a></dt>
+<dt id="DistNodalMultiVec:T:::Pull__DistMapCR.DistSymmInfoCR.DistMultiVec:T:CR">
+void <tt class="descname">Pull</tt><big>(</big><a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>inverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="../core/dist_multi_vec.html#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;">const DistMultiVec&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#DistNodalMultiVec:T:::Pull__DistMapCR.DistSymmInfoCR.DistMultiVec:T:CR" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
-<dt id="DistNodalVector:T:::Push__DistMapCR.DistSymmInfoCR.DistVector:T:R">
-void <tt class="descname">Push</tt><big>(</big><a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>inverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="../core/dist_vector.html#DistVector:T:__class" title="DistVector&lt;T&gt;">DistVector&lt;T&gt;&amp;</a> <em>x</em><big>)</big><a class="headerlink" href="#DistNodalVector:T:::Push__DistMapCR.DistSymmInfoCR.DistVector:T:R" title="Permalink to this definition">¶</a></dt>
+<dt id="DistNodalMultiVec:T:::Push__DistMapCR.DistSymmInfoCR.DistMultiVec:T:R">
+void <tt class="descname">Push</tt><big>(</big><a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>inverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="../core/dist_multi_vec.html#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;">DistMultiVec&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#DistNodalMultiVec:T:::Push__DistMapCR.DistSymmInfoCR.DistMultiVec:T:R" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
-<dt id="DistNodalVector:T:::DistNodalVector__DistMapCR.DistSymmInfoCR.DistVector:T:CR">
- <tt class="descname">DistNodalVector</tt><big>(</big><a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>inverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="../core/dist_vector.html#DistVector:T:__class" title="DistVector&lt;T&gt;">const DistVector&lt;T&gt;&amp;</a> <em>x</em><big>)</big><a class="headerlink" href="#DistNodalVector:T:::DistNodalVector__DistMapCR.DistSymmInfoCR.DistVector:T:CR" title="Permalink to this definition">¶</a></dt>
+<dt id="DistNodalMultiVec:T:::DistNodalMultiVec__DistMapCR.DistSymmInfoCR.DistMultiVec:T:CR">
+ <tt class="descname">DistNodalMultiVec</tt><big>(</big><a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>inverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="../core/dist_multi_vec.html#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;">const DistMultiVec&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#DistNodalMultiVec:T:::DistNodalMultiVec__DistMapCR.DistSymmInfoCR.DistMultiVec:T:CR" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="type">
-<dt id="DistNodalVector:F:__struct">
-<em class="property">type </em>struct <tt class="descname">DistNodalVector&lt;F&gt;</tt><a class="headerlink" href="#DistNodalVector:F:__struct" title="Permalink to this definition">¶</a></dt>
-<dd><p>Same as above, but this implies that the underlying datatype <cite>F</cite> is a field.</p>
-</dd></dl>
-
-</div>
-<div class="section" id="distnodalmultivector">
-<h3>DistNodalMultiVector<a class="headerlink" href="#distnodalmultivector" title="Permalink to this headline">¶</a></h3>
-<dl class="type">
-<dt id="DistNodalMultiVector:T:__struct">
-<em class="property">type </em>struct <tt class="descname">DistNodalMultiVector&lt;T&gt;</tt><a class="headerlink" href="#DistNodalMultiVector:T:__struct" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="member">
-<dt id="DistNodalMultiVector:T:::multiVec__Matrix:T:">
-<a class="reference internal" href="../core/environment.html#Matrix:T:__class" title="Matrix&lt;T&gt;">Matrix&lt;T&gt;</a> <tt class="descname">multiVec</tt><a class="headerlink" href="#DistNodalMultiVector:T:::multiVec__Matrix:T:" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistNodalMultiVector:T:::Pull__DistMapCR.DistSymmInfoCR.DistMultiVector:T:CR">
-void <tt class="descname">Pull</tt><big>(</big><a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>inverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="../core/dist_multi_vector.html#DistMultiVector:T:__class" title="DistMultiVector&lt;T&gt;">const DistMultiVector&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#DistNodalMultiVector:T:::Pull__DistMapCR.DistSymmInfoCR.DistMultiVector:T:CR" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistNodalMultiVector:T:::Push__DistMapCR.DistSymmInfoCR.DistMultiVector:T:R">
-void <tt class="descname">Push</tt><big>(</big><a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>inverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="../core/dist_multi_vector.html#DistMultiVector:T:__class" title="DistMultiVector&lt;T&gt;">DistMultiVector&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#DistNodalMultiVector:T:::Push__DistMapCR.DistSymmInfoCR.DistMultiVector:T:R" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistNodalMultiVector:T:::DistNodalMultiVector__DistMapCR.DistSymmInfoCR.DistMultiVector:T:CR">
- <tt class="descname">DistNodalMultiVector</tt><big>(</big><a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>inverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="../core/dist_multi_vector.html#DistMultiVector:T:__class" title="DistMultiVector&lt;T&gt;">const DistMultiVector&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#DistNodalMultiVector:T:::DistNodalMultiVector__DistMapCR.DistSymmInfoCR.DistMultiVector:T:CR" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="type">
-<dt id="DistNodalMultiVector:F:__struct">
-<em class="property">type </em>struct <tt class="descname">DistNodalMultiVector&lt;F&gt;</tt><a class="headerlink" href="#DistNodalMultiVector:F:__struct" title="Permalink to this definition">¶</a></dt>
+<dt id="DistNodalMultiVec:F:__struct">
+<em class="property">type </em>struct <tt class="descname">DistNodalMultiVec&lt;F&gt;</tt><a class="headerlink" href="#DistNodalMultiVec:F:__struct" title="Permalink to this definition">¶</a></dt>
 <dd><p>Same as above, but this implies that the underlying datatype <cite>F</cite> is a field.</p>
 </dd></dl>
 

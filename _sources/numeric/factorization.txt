@@ -8,7 +8,7 @@ LDL factorization
 
    Performs either an :math:`LDL^T` or :math:`LDL^H` factorization, depending 
    on whether `L` is marked as Hermitian. See 
-   `tests/VectorSolve <https://github.com/poulson/Clique/blob/master/tests/VectorSolve.cpp>`__ for an example usage.
+   `tests/Solve <https://github.com/poulson/Clique/blob/master/tests/Solve.cpp>`__ for an example usage.
 
    .. note::
 

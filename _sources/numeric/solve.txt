@@ -4,8 +4,7 @@ Solves
 Black-box solvers
 -----------------
 
-.. cpp:function:: void SymmetricSolve( const DistSparseMatrix<F>& A, DistVector<F>& x, bool sequential=true, int numDistSeps=1, int numSeqSeps=1, int cutoff=128 )
-.. cpp:function:: void SymmetricSolve( const DistSparseMatrix<F>& A, DistMultiVector<F>& X, bool sequential=true, int numDistSeps=1, int numSeqSeps=1, int cutoff=128 )
+.. cpp:function:: void SymmetricSolve( const DistSparseMatrix<F>& A, DistMultiVec<F>& X, bool sequential=true, int numDistSeps=1, int numSeqSeps=1, int cutoff=128 )
 
    Overwrites :math:`x` with :math:`A^{-1} x`, where :math:`A` is assumed to be 
    symmetric. The main optional argument is 
@@ -16,11 +15,9 @@ Black-box solvers
    how many distributed and sequential separators should be tested for each 
    separator (`numDistSeps` and `numSeqSeps`) and what the maximum allowed 
    subdomain size is (`cutoff`). See
-   `tests/SimpleVectorSolve <https://github.com/poulson/Clique/blob/master/tests/SimpleVectorSolve.cpp>`__ and 
-   `tests/SimpleMultiVectorSolve <https://github.com/poulson/Clique/blob/master/tests/SimpleMultiVectorSolve.cpp>`__ for an example usages.
+   `tests/SimpleSolve <https://github.com/poulson/Clique/blob/master/tests/SimpleSolve.cpp>`__ for an example usage.
 
-.. cpp:function:: void HermitianSolve( const DistSparseMatrix<F>& A, DistVector<F>& x, bool sequential=true, int numDistSeps=1, int numSeqSeps=1, int cutoff=128 )
-.. cpp:function:: void HermitianSolve( const DistSparseMatrix<F>& A, DistMultiVector<F>& X, bool sequential=true, int numDistSeps=1, int numSeqSeps=1, int cutoff=128 )
+.. cpp:function:: void HermitianSolve( const DistSparseMatrix<F>& A, DistMultiVec<F>& X, bool sequential=true, int numDistSeps=1, int numSeqSeps=1, int cutoff=128 )
 
    Overwrites :math:`x` with :math:`A^{-1} x`, where :math:`A` is assumed to be
    Hermitian. The optional arguments are identical to those of 
@@ -34,8 +31,8 @@ Solving after factorization
    After having performed an :math:`LDL^T` or :math:`LDL^H` factorization 
    (via :cpp:func:`LDL`), this routine can be used to solve a set of 
    right-hand sides. Note that `localX` can be easily generated using the 
-   :cpp:type:`DistNodalMultiVector\<F>` class. See
-   `tests/MultiVectorSolve <https://github.com/poulson/Clique/blob/master/tests/MultiVectorSolve.cpp>`__ for an example usage.
+   :cpp:type:`DistNodalMultiVec\<F>` class. See
+   `tests/Solve <https://github.com/poulson/Clique/blob/master/tests/Solve.cpp>`__ for an example usage.
 
 Finer-grain access
 ^^^^^^^^^^^^^^^^^^
@@ -68,36 +65,19 @@ The following data structures are used to help simplify the redistribution of
 right-hand side data into a form which is compatible with the distributed 
 frontal tree.
 
-DistNodalVector
-^^^^^^^^^^^^^^^
+DistNodalMultiVec
+^^^^^^^^^^^^^^^^^
 
-.. cpp:type:: struct DistNodalVector<T>
-
-   .. cpp:member:: Matrix<T> vec
-
-   .. cpp:function:: void Pull( const DistMap& inverseMap, const DistSymmInfo& info, const DistVector<T>& x )
-
-   .. cpp:function:: void Push( const DistMap& inverseMap, const DistSymmInfo& info, DistVector<T>& x )
-
-   .. cpp:function:: DistNodalVector( const DistMap& inverseMap, const DistSymmInfo& info, const DistVector<T>& x )
-
-.. cpp:type:: struct DistNodalVector<F>
-
-   Same as above, but this implies that the underlying datatype `F` is a field.
-
-DistNodalMultiVector
-^^^^^^^^^^^^^^^^^^^^
-
-.. cpp:type:: struct DistNodalMultiVector<T>
+.. cpp:type:: struct DistNodalMultiVec<T>
 
    .. cpp:member:: Matrix<T> multiVec
 
-   .. cpp:function:: void Pull( const DistMap& inverseMap, const DistSymmInfo& info, const DistMultiVector<T>& X )
+   .. cpp:function:: void Pull( const DistMap& inverseMap, const DistSymmInfo& info, const DistMultiVec<T>& X )
 
-   .. cpp:function:: void Push( const DistMap& inverseMap, const DistSymmInfo& info, DistMultiVector<T>& X )
+   .. cpp:function:: void Push( const DistMap& inverseMap, const DistSymmInfo& info, DistMultiVec<T>& X )
 
-   .. cpp:function:: DistNodalMultiVector( const DistMap& inverseMap, const DistSymmInfo& info, const DistMultiVector<T>& X )
+   .. cpp:function:: DistNodalMultiVec( const DistMap& inverseMap, const DistSymmInfo& info, const DistMultiVec<T>& X )
 
-.. cpp:type:: struct DistNodalMultiVector<F>
+.. cpp:type:: struct DistNodalMultiVec<F>
 
    Same as above, but this implies that the underlying datatype `F` is a field.
