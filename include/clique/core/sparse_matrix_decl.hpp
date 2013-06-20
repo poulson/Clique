@@ -26,7 +26,8 @@ public:
     // High-level information
     int Height() const;
     int Width() const;
-    const cliq::Graph& Graph() const;
+    cliq::Graph& Graph();
+    const cliq::Graph& LockedGraph() const;
 
     // Assembly-related routines
     void StartAssembly();

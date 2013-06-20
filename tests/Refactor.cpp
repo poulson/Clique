@@ -84,7 +84,7 @@ main( int argc, char* argv[] )
             std::cout.flush();
         }
         const double nestedStart = mpi::Time();
-        const DistGraph& graph = A.Graph();
+        const DistGraph& graph = A.DistGraph();
         DistSymmInfo info;
         DistSeparatorTree sepTree;
         DistMap map, inverseMap;

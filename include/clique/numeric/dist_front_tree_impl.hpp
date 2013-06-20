@@ -30,7 +30,7 @@ DistFrontTree<F>::DistFrontTree
         throw std::logic_error("Local mapping was not the right size");
 #endif
     mpi::Comm comm = A.Comm();
-    const DistGraph& graph = A.Graph();
+    const DistGraph& graph = A.DistGraph();
     const int blocksize = A.Blocksize();
     const int commSize = mpi::CommSize( comm );
     const int numSources = graph.NumSources();

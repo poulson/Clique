@@ -76,7 +76,7 @@ inline void SymmetricSolve
     DistSeparatorTree sepTree;
     DistMap map, inverseMap;
     NestedDissection
-    ( A.Graph(), map, sepTree, info, 
+    ( A.LockedDistGraph(), map, sepTree, info, 
       sequential, numDistSeps, numSeqSeps, cutoff );
     map.FormInverse( inverseMap );
 
@@ -101,7 +101,7 @@ inline void HermitianSolve
     DistSeparatorTree sepTree;
     DistMap map, inverseMap;
     NestedDissection
-    ( A.Graph(), map, sepTree, info, 
+    ( A.LockedDistGraph(), map, sepTree, info, 
       sequential, numDistSeps, numSeqSeps, cutoff );
     map.FormInverse( inverseMap );
 

@@ -35,7 +35,7 @@ DistSymmFrontTree<F>::Initialize
     frontType = SYMM_2D;
     
     mpi::Comm comm = A.Comm();
-    const DistGraph& graph = A.Graph();
+    const DistGraph& graph = A.LockedDistGraph();
     const int blocksize = A.Blocksize();
     const int commSize = mpi::CommSize( comm );
     const int numLocal = sepTree.localSepsAndLeaves.size();

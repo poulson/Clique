@@ -28,7 +28,8 @@ public:
     // High-level information
     int Height() const;
     int Width() const;
-    const DistGraph& Graph() const;
+    cliq::DistGraph& DistGraph();
+    const cliq::DistGraph& LockedDistGraph() const;
 
     // Communicator-management
     void SetComm( mpi::Comm comm );
@@ -68,7 +69,7 @@ public:
     // TODO: operator=
 
 private:
-    DistGraph graph_;
+    cliq::DistGraph distGraph_;
     std::vector<T> values_;
 
     template<typename U>

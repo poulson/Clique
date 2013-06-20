@@ -66,8 +66,13 @@ SparseMatrix<T>::Width() const
 { return graph_.NumTargets(); }
 
 template<typename T>
+inline cliq::Graph& 
+SparseMatrix<T>::Graph()
+{ return graph_; }
+
+template<typename T>
 inline const cliq::Graph& 
-SparseMatrix<T>::Graph() const
+SparseMatrix<T>::LockedGraph() const
 { return graph_; }
 
 template<typename T>

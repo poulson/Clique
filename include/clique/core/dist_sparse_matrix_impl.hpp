@@ -18,19 +18,19 @@ DistSparseMatrix<T>::DistSparseMatrix()
 template<typename T>
 inline 
 DistSparseMatrix<T>::DistSparseMatrix( mpi::Comm comm )
-: graph_(comm)
+: distGraph_(comm)
 { }
 
 template<typename T>
 inline
 DistSparseMatrix<T>::DistSparseMatrix( int height, mpi::Comm comm )
-: graph_(height,comm)
+: distGraph_(height,comm)
 { }
 
 template<typename T>
 inline 
 DistSparseMatrix<T>::DistSparseMatrix( int height, int width, mpi::Comm comm )
-: graph_(height,width,comm)
+: distGraph_(height,width,comm)
 { }
 
 template<typename T>
@@ -41,45 +41,50 @@ DistSparseMatrix<T>::~DistSparseMatrix()
 template<typename T>
 inline int 
 DistSparseMatrix<T>::Height() const
-{ return graph_.NumSources(); }
+{ return distGraph_.NumSources(); }
 
 template<typename T>
 inline int 
 DistSparseMatrix<T>::Width() const
-{ return graph_.NumTargets(); }
+{ return distGraph_.NumTargets(); }
 
 template<typename T>
-inline const DistGraph& 
-DistSparseMatrix<T>::Graph() const
-{ return graph_; }
+inline cliq::DistGraph& 
+DistSparseMatrix<T>::DistGraph()
+{ return distGraph_; }
+
+template<typename T>
+inline const cliq::DistGraph& 
+DistSparseMatrix<T>::LockedDistGraph() const
+{ return distGraph_; }
 
 template<typename T>
 inline void
 DistSparseMatrix<T>::SetComm( mpi::Comm comm )
 { 
-    graph_.SetComm( comm ); 
+    distGraph_.SetComm( comm ); 
     values_.clear();
 }
 
 template<typename T>
 inline mpi::Comm 
 DistSparseMatrix<T>::Comm() const
-{ return graph_.Comm(); }
+{ return distGraph_.Comm(); }
 
 template<typename T>
 inline int
 DistSparseMatrix<T>::Blocksize() const
-{ return graph_.Blocksize(); }
+{ return distGraph_.Blocksize(); }
 
 template<typename T>
 inline int
 DistSparseMatrix<T>::FirstLocalRow() const
-{ return graph_.FirstLocalSource(); }
+{ return distGraph_.FirstLocalSource(); }
 
 template<typename T>
 inline int
 DistSparseMatrix<T>::LocalHeight() const
-{ return graph_.NumLocalSources(); }
+{ return distGraph_.NumLocalSources(); }
 
 template<typename T>
 inline int
@@ -89,7 +94,7 @@ DistSparseMatrix<T>::NumLocalEntries() const
     CallStackEntry entry("DistSparseMatrix::NumLocalEntries");
     EnsureConsistentSizes();
 #endif
-    return graph_.NumLocalEdges();
+    return distGraph_.NumLocalEdges();
 }
 
 template<typename T>
@@ -101,7 +106,7 @@ DistSparseMatrix<T>::Capacity() const
     EnsureConsistentSizes();
     EnsureConsistentCapacities();
 #endif
-    return graph_.Capacity();
+    return distGraph_.Capacity();
 }
 
 template<typename T>
@@ -111,7 +116,7 @@ DistSparseMatrix<T>::Row( int localIndex ) const
 #ifndef RELEASE 
     CallStackEntry entry("DistSparseMatrix::Row");
 #endif
-    return graph_.Source( localIndex );
+    return distGraph_.Source( localIndex );
 }
 
 template<typename T>
@@ -121,7 +126,7 @@ DistSparseMatrix<T>::Col( int localIndex ) const
 #ifndef RELEASE 
     CallStackEntry entry("DistSparseMatrix::Col");
 #endif
-    return graph_.Target( localIndex );
+    return distGraph_.Target( localIndex );
 }
 
 template<typename T>
@@ -131,7 +136,7 @@ DistSparseMatrix<T>::LocalEntryOffset( int localRow ) const
 #ifndef RELEASE
     CallStackEntry entry("DistSparseMatrix::LocalEntryOffset");
 #endif
-    return graph_.LocalEdgeOffset( localRow );
+    return distGraph_.LocalEdgeOffset( localRow );
 }
 
 template<typename T>
@@ -141,7 +146,7 @@ DistSparseMatrix<T>::NumConnections( int localRow ) const
 #ifndef RELEASE
     CallStackEntry entry("DistSparseMatrix::NumConnections");
 #endif
-    return graph_.NumConnections( localRow );
+    return distGraph_.NumConnections( localRow );
 }
 
 template<typename T>
@@ -159,12 +164,12 @@ DistSparseMatrix<T>::Value( int localIndex ) const
 template<typename T>
 inline int*
 DistSparseMatrix<T>::SourceBuffer()
-{ return graph_.SourceBuffer(); }
+{ return distGraph_.SourceBuffer(); }
 
 template<typename T>
 inline int*
 DistSparseMatrix<T>::TargetBuffer()
-{ return graph_.TargetBuffer(); }
+{ return distGraph_.TargetBuffer(); }
 
 template<typename T>
 inline T*
@@ -174,12 +179,12 @@ DistSparseMatrix<T>::ValueBuffer()
 template<typename T>
 inline const int*
 DistSparseMatrix<T>::LockedSourceBuffer() const
-{ return graph_.LockedSourceBuffer(); }
+{ return distGraph_.LockedSourceBuffer(); }
 
 template<typename T>
 inline const int*
 DistSparseMatrix<T>::LockedTargetBuffer() const
-{ return graph_.LockedTargetBuffer(); }
+{ return distGraph_.LockedTargetBuffer(); }
 
 template<typename T>
 inline const T*
@@ -200,8 +205,8 @@ DistSparseMatrix<T>::StartAssembly()
 #ifndef RELEASE
     CallStackEntry entry("DistSparseMatrix::StartAssembly");
 #endif
-    graph_.EnsureNotAssembling();
-    graph_.assembling_ = true;
+    distGraph_.EnsureNotAssembling();
+    distGraph_.assembling_ = true;
 }
 
 template<typename T>
@@ -211,19 +216,19 @@ DistSparseMatrix<T>::StopAssembly()
 #ifndef RELEASE
     CallStackEntry entry("DistSparseMatrix::StopAssembly");
 #endif
-    if( !graph_.assembling_ )
+    if( !distGraph_.assembling_ )
         throw std::logic_error("Cannot stop assembly without starting");
-    graph_.assembling_ = false;
+    distGraph_.assembling_ = false;
 
     // Ensure that the connection pairs are sorted
-    if( !graph_.sorted_ )
+    if( !distGraph_.sorted_ )
     {
         const int numLocalEntries = values_.size();
         std::vector<Entry<T> > entries( numLocalEntries );
         for( int s=0; s<numLocalEntries; ++s )
         {
-            entries[s].i = graph_.sources_[s];
-            entries[s].j = graph_.targets_[s];
+            entries[s].i = distGraph_.sources_[s];
+            entries[s].j = distGraph_.targets_[s];
             entries[s].value = values_[s];
         }
         std::sort( entries.begin(), entries.end(), CompareEntries );
@@ -245,24 +250,24 @@ DistSparseMatrix<T>::StopAssembly()
         }
         const int numUnique = lastUnique+1;
 
-        graph_.sources_.resize( numUnique );
-        graph_.targets_.resize( numUnique );
+        distGraph_.sources_.resize( numUnique );
+        distGraph_.targets_.resize( numUnique );
         values_.resize( numUnique );
         for( int s=0; s<numUnique; ++s )
         {
-            graph_.sources_[s] = entries[s].i;
-            graph_.targets_[s] = entries[s].j;
+            distGraph_.sources_[s] = entries[s].i;
+            distGraph_.targets_[s] = entries[s].j;
             values_[s] = entries[s].value;
         }
     }
-    graph_.ComputeLocalEdgeOffsets();
+    distGraph_.ComputeLocalEdgeOffsets();
 }
 
 template<typename T>
 inline void
 DistSparseMatrix<T>::Reserve( int numLocalEntries )
 { 
-    graph_.Reserve( numLocalEntries );
+    distGraph_.Reserve( numLocalEntries );
     values_.reserve( numLocalEntries );
 }
 
@@ -274,7 +279,7 @@ DistSparseMatrix<T>::Update( int row, int col, T value )
     CallStackEntry entry("DistSparseMatrix::Update");
     EnsureConsistentSizes();
 #endif
-    graph_.Insert( row, col );
+    distGraph_.Insert( row, col );
     values_.push_back( value );
 }
 
@@ -282,7 +287,7 @@ template<typename T>
 inline void
 DistSparseMatrix<T>::Empty()
 {
-    graph_.Empty();
+    distGraph_.Empty();
     values_.clear();
 }
 
@@ -290,7 +295,7 @@ template<typename T>
 inline void
 DistSparseMatrix<T>::ResizeTo( int height, int width )
 {
-    graph_.ResizeTo( height, width );
+    distGraph_.ResizeTo( height, width );
     values_.clear();
 }
 
@@ -298,8 +303,8 @@ template<typename T>
 inline void
 DistSparseMatrix<T>::EnsureConsistentSizes() const
 { 
-    graph_.EnsureConsistentSizes();
-    if( graph_.NumLocalEdges() != (int)values_.size() )
+    distGraph_.EnsureConsistentSizes();
+    if( distGraph_.NumLocalEdges() != (int)values_.size() )
         throw std::logic_error("Inconsistent sparsity sizes");
 }
 
@@ -307,8 +312,8 @@ template<typename T>
 inline void
 DistSparseMatrix<T>::EnsureConsistentCapacities() const
 { 
-    graph_.EnsureConsistentCapacities();
-    if( graph_.Capacity() != values_.capacity() )
+    distGraph_.EnsureConsistentCapacities();
+    if( distGraph_.Capacity() != values_.capacity() )
         throw std::logic_error("Inconsistent sparsity capacities");
 }
 
