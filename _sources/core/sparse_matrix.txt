@@ -77,9 +77,10 @@ sorted in lexicographical order based upon the row and column indices
 
       The width of the sparse matrix.
 
-   .. cpp:function:: const Graph& Graph() const
+   .. cpp:function:: Graph& Graph()
+   .. cpp:function:: const Graph& LockedGraph() const
 
-      The underlying graph of the sparse matrix.
+      The underlying (immutable) graph of the sparse matrix.
 
    .. rubric:: Assembly-related routines
 

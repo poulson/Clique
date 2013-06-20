@@ -11,7 +11,7 @@ With sparse matrices
 With frontal trees
 ------------------
 
-.. cpp:function:: void LowerMultiply( Orientation orientation, UnitOrNonUnit diag, int diagOffset, const DistSymmInfo& info, const DistSymmFrontTree<T>& L, Matrix<T>& localX )
+.. cpp:function:: void LowerMultiply( Orientation orientation, UnitOrNonUnit diag, int diagOffset, const DistSymmInfo& info, const DistSymmFrontTree<T>& L, DistNodalMultiVec& X )
 
    Overwrites :math:`X` with the lower triangle of the frontal tree multiplied
    by the original contents of :math:`X`. **TODO: More detailed description of 

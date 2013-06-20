@@ -98,9 +98,10 @@ sorted in lexicographical order based upon the row and column indices
 
       The width of the sparse matrix.
 
-   .. cpp:function:: const DistGraph& Graph() const
+   .. cpp:function:: DistGraph& DistGraph()
+   .. cpp:function:: const DistGraph& LockedDistGraph() const
 
-      The underlying graph of the sparse matrix.
+      The underlying (immutable) distributed graph of the sparse matrix.
 
    .. rubric:: Communicator-management
 
