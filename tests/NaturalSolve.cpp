@@ -154,7 +154,7 @@ main( int argc, char* argv[] )
         const double solveStart = mpi::Time();
         DistNodalMultiVec<double> yNodal;
         yNodal.Pull( inverseMap, info, y );
-        Solve( info, frontTree, yNodal.localVec );
+        Solve( info, frontTree, yNodal.multiVec );
         yNodal.Push( inverseMap, info, y );
         mpi::Barrier( comm );
         const double solveStop = mpi::Time();
