@@ -12,13 +12,13 @@ namespace cliq {
 
 template<typename F> 
 void DistLowerForwardSolve
-( UnitOrNonUnit diag,
-  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX );
+( UnitOrNonUnit diag, const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X );
 
 template<typename F>
 void DistLowerBackwardSolve
-( Orientation orientation, UnitOrNonUnit diag,
-  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX );
+( Orientation orientation, UnitOrNonUnit diag, const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -26,14 +26,14 @@ void DistLowerBackwardSolve
 
 template<typename F> 
 inline void DistLowerForwardSolve
-( UnitOrNonUnit diag,
-  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
+( UnitOrNonUnit diag, const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("DistLowerForwardSolve");
 #endif
     const int numDistNodes = info.distNodes.size();
-    const int width = localX.Width();
+    const int width = X.Width();
     const SymmFrontType frontType = L.frontType;
     const bool frontsAre1d = FrontsAre1d( frontType );
     if( frontType != LDL_1D && 
@@ -86,7 +86,8 @@ inline void DistLowerForwardSolve
 
         // Pull in the relevant information from the RHS
         Matrix<F> localXT;
-        View( localXT, localX, node.localOffset1d, 0, node.localSize1d, width );
+        View
+        ( localXT, X.multiVec, node.localOffset1d, 0, node.localSize1d, width );
         WT.Matrix() = localXT;
         elem::MakeZeros( WB );
 
@@ -189,14 +190,14 @@ inline void DistLowerForwardSolve
 
 template<typename F>
 inline void DistLowerBackwardSolve
-( Orientation orientation, UnitOrNonUnit diag,
-  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
+( Orientation orientation, UnitOrNonUnit diag, const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("DistLowerBackwardSolve");
 #endif
     const int numDistNodes = info.distNodes.size();
-    const int width = localX.Width();
+    const int width = X.Width();
     const SymmFrontType frontType = L.frontType;
     const bool frontsAre1d = FrontsAre1d( frontType );
     const bool blockLDL = ( frontType == BLOCK_LDL_2D );
@@ -211,6 +212,7 @@ inline void DistLowerBackwardSolve
 #endif
 
     // Directly operate on the root separator's portion of the right-hand sides
+    Matrix<F>& localX = X.multiVec;
     const DistSymmNodeInfo& rootNode = info.distNodes.back();
     const SymmFront<F>& localRootFront = L.localFronts.back();
     if( numDistNodes == 1 )

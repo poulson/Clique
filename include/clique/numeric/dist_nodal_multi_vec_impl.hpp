@@ -328,4 +328,9 @@ DistNodalMultiVec<F>::Push
     }
 }
 
+template<typename F>
+inline int
+DistNodalMultiVec<F>::Width() const
+{ return multiVec.Width(); }
+
 } // namespace cliq

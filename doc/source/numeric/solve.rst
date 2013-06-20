@@ -26,12 +26,11 @@ Black-box solvers
 Solving after factorization
 ---------------------------
 
-.. cpp:function:: void Solve( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
+.. cpp:function:: void Solve( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 
    After having performed an :math:`LDL^T` or :math:`LDL^H` factorization 
    (via :cpp:func:`LDL`), this routine can be used to solve a set of 
-   right-hand sides. Note that `localX` can be easily generated using the 
-   :cpp:type:`DistNodalMultiVec\<F>` class. See
+   right-hand sides. See
    `tests/Solve <https://github.com/poulson/Clique/blob/master/tests/Solve.cpp>`__ for an example usage.
 
 Finer-grain access
@@ -42,22 +41,13 @@ an :math:`LDL^T` or :math:`LDL^H` factorization, the following routines can
 be used to perform various solves against the lower-triangular and diagonal 
 data of a frontal tree.
 
-.. cpp:function:: void LowerSolve( Orientation orientation, UnitOrNonUnit diag, const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
+.. cpp:function:: void LowerSolve( Orientation orientation, UnitOrNonUnit diag, const DistSymmInfo& info, const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 
    **TODO: More detailed description.**
 
-.. cpp:function:: void DiagonalSolve( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
+.. cpp:function:: void DiagonalSolve( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 
    **TODO: More detailed description.**
-
-Finer-grain access
-^^^^^^^^^^^^^^^^^^
-
-The following routine is an analogue to :cpp:func:`LowerSolve` for the case 
-where a block :math:`LDL^T` or :math:`LDL^H` factorization was formed instead 
-of a standard one.
-
-.. cpp:function:: void BlockLowerSolve( Orientation orientation, UnitOrNonUnit diag, const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
 
 Data structures
 ---------------
@@ -72,11 +62,15 @@ DistNodalMultiVec
 
    .. cpp:member:: Matrix<T> multiVec
 
+   .. cpp:function:: DistNodalMultiVec( const DistMap& inverseMap, const DistSymmInfo& info, const DistMultiVec<T>& X )
+
    .. cpp:function:: void Pull( const DistMap& inverseMap, const DistSymmInfo& info, const DistMultiVec<T>& X )
 
    .. cpp:function:: void Push( const DistMap& inverseMap, const DistSymmInfo& info, DistMultiVec<T>& X )
 
-   .. cpp:function:: DistNodalMultiVec( const DistMap& inverseMap, const DistSymmInfo& info, const DistMultiVec<T>& X )
+   .. cpp:function:: int Width() const
+
+      Returns the number of vectors.
 
 .. cpp:type:: struct DistNodalMultiVec<F>
 

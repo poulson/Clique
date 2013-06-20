@@ -12,7 +12,8 @@ namespace cliq {
 
 template<typename F>
 void DiagonalSolve
-( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX );
+( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, 
+  DistNodalMultiVec<F>& X );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -20,15 +21,18 @@ void DiagonalSolve
 
 template<typename F>
 void LocalDiagonalSolve
-( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX );
+( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, 
+  DistNodalMultiVec<F>& X );
 
 template<typename F>
 void DistDiagonalSolve
-( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX );
+( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, 
+  DistNodalMultiVec<F>& X );
 
 template<typename F>
 inline void LocalDiagonalSolve
-( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& X )
+( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, 
+  DistNodalMultiVec<F>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("LocalDiagonalSolve");
@@ -40,7 +44,7 @@ inline void LocalDiagonalSolve
     {
         const SymmNodeInfo& node = info.localNodes[s];
         const Matrix<F>& frontL = L.localFronts[s].frontL;
-        View( XSub, X, node.myOffset, 0, node.size, width );
+        View( XSub, X.multiVec, node.myOffset, 0, node.size, width );
 
         Matrix<F> frontTL;
         LockedView( frontTL, frontL, 0, 0, node.size, node.size );
@@ -52,13 +56,14 @@ inline void LocalDiagonalSolve
 
 template<typename F> 
 void DistDiagonalSolve
-( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
+( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, 
+  DistNodalMultiVec<F>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("DistDiagonalSolve");
 #endif
     const int numDistNodes = info.distNodes.size();
-    const int width = localX.Width();
+    const int width = X.Width();
 
     for( int s=1; s<numDistNodes; ++s )
     {
@@ -66,7 +71,8 @@ void DistDiagonalSolve
         const DistSymmFront<F>& front = L.distFronts[s];
 
         Matrix<F> localXT;
-        View( localXT, localX, node.localOffset1d, 0, node.localSize1d, width );
+        View
+        ( localXT, X.multiVec, node.localOffset1d, 0, node.localSize1d, width );
 
         elem::DiagonalSolve
         ( LEFT, NORMAL, front.diag.LockedMatrix(), localXT, true );
@@ -75,13 +81,14 @@ void DistDiagonalSolve
 
 template<typename F>
 inline void DiagonalSolve
-( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
+( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, 
+  DistNodalMultiVec<F>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("DiagonalSolve");
 #endif
-    LocalDiagonalSolve( info, L, localX );
-    DistDiagonalSolve( info, L, localX );
+    LocalDiagonalSolve( info, L, X );
+    DistDiagonalSolve( info, L, X );
 }
 
 } // namespace cliq

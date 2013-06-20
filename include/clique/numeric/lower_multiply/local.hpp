@@ -12,13 +12,14 @@ namespace cliq {
 
 template<typename T>
 void LocalLowerMultiplyNormal
-( UnitOrNonUnit diag, int diagOffset,
-  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, Matrix<T>& X );
+( UnitOrNonUnit diag, int diagOffset, const DistSymmInfo& info, 
+  const DistSymmFrontTree<T>& L, DistNodalMultiVec<T>& X );
 
 template<typename T>
 void LocalLowerMultiplyTranspose
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, Matrix<T>& X );
+  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, 
+  DistNodalMultiVec<T>& X );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -26,8 +27,8 @@ void LocalLowerMultiplyTranspose
 
 template<typename T> 
 inline void LocalLowerMultiplyNormal
-( UnitOrNonUnit diag, int diagOffset,
-  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, Matrix<T>& X )
+( UnitOrNonUnit diag, int diagOffset, const DistSymmInfo& info, 
+  const DistSymmFrontTree<T>& L, DistNodalMultiVec<T>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("LocalLowerMultiplyNormal");
@@ -49,7 +50,7 @@ inline void LocalLowerMultiplyNormal
 
         // Pull in the relevant information from the RHS
         Matrix<T> XT;
-        View( XT, X, node.myOffset, 0, node.size, width );
+        View( XT, X.multiVec, node.myOffset, 0, node.size, width );
         WT = XT;
         elem::MakeZeros( WB );
 
@@ -105,7 +106,8 @@ inline void LocalLowerMultiplyNormal
 template<typename T> 
 inline void LocalLowerMultiplyTranspose
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, Matrix<T>& X )
+  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, 
+  DistNodalMultiVec<T>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("LocalLowerMultiplyTranspose");
@@ -128,7 +130,7 @@ inline void LocalLowerMultiplyTranspose
 
         // Pull in the relevant information from the RHS
         Matrix<T> XT;
-        View( XT, X, node.myOffset, 0, node.size, width );
+        View( XT, X.multiVec, node.myOffset, 0, node.size, width );
         WT = XT;
 
         // Update using the parent's portion of the RHS

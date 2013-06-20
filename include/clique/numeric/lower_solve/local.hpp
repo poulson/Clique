@@ -12,13 +12,13 @@ namespace cliq {
 
 template<typename F> 
 void LocalLowerForwardSolve
-( UnitOrNonUnit diag, 
-  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& X );
+( UnitOrNonUnit diag, const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X );
 
 template<typename F> 
 void LocalLowerBackwardSolve
-( Orientation orientation, UnitOrNonUnit diag,
-  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& X );
+( Orientation orientation, UnitOrNonUnit diag, const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -26,8 +26,8 @@ void LocalLowerBackwardSolve
 
 template<typename F> 
 inline void LocalLowerForwardSolve
-( UnitOrNonUnit diag, 
-  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& X )
+( UnitOrNonUnit diag, const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("LocalLowerForwardSolve");
@@ -54,7 +54,7 @@ inline void LocalLowerForwardSolve
 
         // Pull in the relevant information from the RHS
         Matrix<F> XT;
-        View( XT, X, node.myOffset, 0, node.size, width );
+        View( XT, X.multiVec, node.myOffset, 0, node.size, width );
         WT = XT;
         elem::MakeZeros( WB );
 
@@ -111,8 +111,8 @@ inline void LocalLowerForwardSolve
 
 template<typename F> 
 inline void LocalLowerBackwardSolve
-( Orientation orientation, UnitOrNonUnit diag,
-  const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& X )
+( Orientation orientation, UnitOrNonUnit diag, const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("LocalLowerBackwardSolve");
@@ -139,7 +139,7 @@ inline void LocalLowerBackwardSolve
 
         // Pull in the relevant information from the RHS
         Matrix<F> XT;
-        View( XT, X, node.myOffset, 0, node.size, width );
+        View( XT, X.multiVec, node.myOffset, 0, node.size, width );
         WT = XT;
 
         // Update using the parent

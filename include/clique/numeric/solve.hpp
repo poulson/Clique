@@ -12,7 +12,8 @@ namespace cliq {
 
 template<typename F>
 void Solve
-( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX );
+( const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X );
 
 template<typename F>
 void SymmetricSolve
@@ -29,7 +30,8 @@ void HermitianSolve
 
 template<typename F>
 inline void Solve
-( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, Matrix<F>& localX )
+( const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("Solve");
@@ -38,27 +40,27 @@ inline void Solve
     if( !blockLDL )
     {
         // Solve against unit diagonal L
-        LowerSolve( NORMAL, UNIT, info, L, localX );
+        LowerSolve( NORMAL, UNIT, info, L, X );
 
         // Solve against diagonal
-        DiagonalSolve( info, L, localX );
+        DiagonalSolve( info, L, X );
 
         // Solve against the (conjugate-)transpose of the unit diagonal L
         if( L.isHermitian )
-            LowerSolve( ADJOINT, UNIT, info, L, localX );
+            LowerSolve( ADJOINT, UNIT, info, L, X );
         else
-            LowerSolve( TRANSPOSE, UNIT, info, L, localX );
+            LowerSolve( TRANSPOSE, UNIT, info, L, X );
     }
     else
     {
         // Solve against block diagonal factor, L D
-        LowerSolve( NORMAL, NON_UNIT, info, L, localX );
+        LowerSolve( NORMAL, NON_UNIT, info, L, X );
 
         // Solve against the (conjugate-)transpose of the block unit diagonal L
         if( L.isHermitian )
-            LowerSolve( ADJOINT, NON_UNIT, info, L, localX );
+            LowerSolve( ADJOINT, NON_UNIT, info, L, X );
         else
-            LowerSolve( TRANSPOSE, NON_UNIT, info, L, localX );
+            LowerSolve( TRANSPOSE, NON_UNIT, info, L, X );
     }
 }
 
@@ -83,7 +85,7 @@ inline void SymmetricSolve
 
     DistNodalMultiVec<F> XNodal;
     XNodal.Pull( inverseMap, info, X );
-    Solve( info, frontTree, XNodal.multiVec );
+    Solve( info, frontTree, XNodal );
     XNodal.Push( inverseMap, info, X );
 }
 
@@ -108,7 +110,7 @@ inline void HermitianSolve
 
     DistNodalMultiVec<F> XNodal;
     XNodal.Pull( inverseMap, info, X );
-    Solve( info, frontTree, XNodal.multiVec );
+    Solve( info, frontTree, XNodal );
     XNodal.Push( inverseMap, info, X );
 }
 

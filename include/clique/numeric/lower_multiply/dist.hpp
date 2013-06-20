@@ -12,13 +12,14 @@ namespace cliq {
 
 template<typename T> 
 void DistLowerMultiplyNormal
-( UnitOrNonUnit diag, int diagOffset,
-  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, Matrix<T>& localX );
+( UnitOrNonUnit diag, int diagOffset, const DistSymmInfo& info, 
+  const DistSymmFrontTree<T>& L, DistNodalMultiVec<T>& X );
 
 template<typename T> 
 void DistLowerMultiplyTranspose
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, Matrix<T>& localX );
+  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, 
+  DistNodalMultiVec<T>& X );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -26,14 +27,14 @@ void DistLowerMultiplyTranspose
 
 template<typename T> 
 inline void DistLowerMultiplyNormal
-( UnitOrNonUnit diag, int diagOffset,
-  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, Matrix<T>& localX )
+( UnitOrNonUnit diag, int diagOffset, const DistSymmInfo& info, 
+  const DistSymmFrontTree<T>& L, DistNodalMultiVec<T>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("DistLowerMultiplyNormal");
 #endif
     const int numDistNodes = info.distNodes.size();
-    const int width = localX.Width();
+    const int width = X.Width();
     if( L.frontType != SYMM_1D && L.frontType != LDL_1D )
         throw std::logic_error("This multiply mode is not yet implemented");
 
@@ -71,7 +72,8 @@ inline void DistLowerMultiplyNormal
 
         // Pull in the relevant information from the RHS
         Matrix<T> localXT;
-        View( localXT, localX, node.localOffset1d, 0, node.localSize1d, width );
+        View
+        ( localXT, X.multiVec, node.localOffset1d, 0, node.localSize1d, width );
         WT.Matrix() = localXT;
         elem::MakeZeros( WB );
 
@@ -169,17 +171,19 @@ inline void DistLowerMultiplyNormal
 template<typename T> 
 inline void DistLowerMultiplyTranspose
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, Matrix<T>& localX )
+  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, 
+  DistNodalMultiVec<T>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("DistLowerMultiplyTranspose");
 #endif
     const int numDistNodes = info.distNodes.size();
-    const int width = localX.Width();
+    const int width = X.Width();
     if( L.frontType != SYMM_1D && L.frontType != LDL_1D )
         throw std::logic_error("This multiply mode is not yet implemented");
 
     // Directly operate on the root separator's portion of the right-hand sides
+    Matrix<T>& localX = X.multiVec;
     const DistSymmNodeInfo& rootNode = info.distNodes.back();
     const SymmFront<T>& localRootFront = L.localFronts.back();
     if( numDistNodes == 1 )

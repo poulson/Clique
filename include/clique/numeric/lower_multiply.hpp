@@ -13,7 +13,8 @@ namespace cliq {
 template<typename T>
 void LowerMultiply
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, Matrix<T>& localX );
+  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, 
+  DistNodalMultiVec<T>& X );
 
 } // namespace cliq
 
@@ -32,22 +33,23 @@ namespace cliq {
 template<typename T>
 inline void LowerMultiply
 ( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
-  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, Matrix<T>& localX )
+  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, 
+  DistNodalMultiVec<T>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("LowerMultiply");
 #endif
     if( orientation == NORMAL )
     {
-        LocalLowerMultiplyNormal( diag, diagOffset, info, L, localX );
-        DistLowerMultiplyNormal( diag, diagOffset, info, L, localX );
+        LocalLowerMultiplyNormal( diag, diagOffset, info, L, X );
+        DistLowerMultiplyNormal( diag, diagOffset, info, L, X );
     }
     else
     {
         DistLowerMultiplyTranspose
-        ( orientation, diag, diagOffset, info, L, localX );
+        ( orientation, diag, diagOffset, info, L, X );
         LocalLowerMultiplyTranspose
-        ( orientation, diag, diagOffset, info, L, localX );
+        ( orientation, diag, diagOffset, info, L, X );
     }
 }
 

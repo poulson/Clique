@@ -10,16 +10,21 @@
 
 namespace cliq {
 
-// For handling a vector distributed in a [VC,* ] manner over each node
+// For handling a set of vectors distributed in a [VC,* ] manner over each node
 // of the elimination tree
 //
-// TODO: Generalize to a set of vectors
-//
+// TODO: Generalize to all Elemental matrix distributions for each node.
+//       This will require a fundamental rewrite of this class.
 template<typename F>
 class DistNodalMultiVec
 {
 public:
     Matrix<F> multiVec;
+
+    DistNodalMultiVec();
+    DistNodalMultiVec
+    ( const DistMap& inverseMap, const DistSymmInfo& info,
+      const DistMultiVec<F>& X );
 
     void Pull
     ( const DistMap& inverseMap, const DistSymmInfo& info,
@@ -28,10 +33,7 @@ public:
     ( const DistMap& inverseMap, const DistSymmInfo& info,
             DistMultiVec<F>& X ) const;
 
-    DistNodalMultiVec();
-    DistNodalMultiVec
-    ( const DistMap& inverseMap, const DistSymmInfo& info,
-      const DistMultiVec<F>& X );
+    int Width() const;
 };
 
 } // namespace cliq
