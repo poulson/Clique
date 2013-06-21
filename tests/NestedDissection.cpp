@@ -29,6 +29,8 @@ main( int argc, char* argv[] )
             ("--numSeqSeps",
              "number of separators to try per sequential partition",1);
         const int cutoff = Input("--cutoff","cutoff for nested dissection",128);
+        const bool print = Input("--print","print graph?",false);
+        const bool display = Input("--display","display graph?",false);
         ProcessInput();
 
         const int numVertices = n*n*n;
@@ -71,6 +73,10 @@ main( int argc, char* argv[] )
         mpi::Barrier( comm );
         if( commRank == 0 )
             std::cout << "done" << std::endl;
+        if( display )
+            Display( graph );
+        if( print )
+            Print( graph );
 
         if( commRank == 0 )
         {

@@ -86,5 +86,6 @@ namespace cliq {
 //
 
 #include "clique/io/Print.hpp"
+#include "clique/io/Display.hpp"
 
 #endif // ifndef CLIQUE_HPP

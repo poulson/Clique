@@ -29,6 +29,8 @@ main( int argc, char* argv[] )
         const int numSeqSeps = Input
             ("--numSeqSeps",
              "number of separators to try per sequential partition",1);
+        const bool print = Input("--print","print graph?",false);
+        const bool display = Input("--display","display graph?",false);
         ProcessInput();
 
         const int numVertices = n*n*n;
@@ -62,6 +64,10 @@ main( int argc, char* argv[] )
                 graph.Insert( i, i+n*n );
         }
         graph.StopAssembly();
+        if( display )
+            Display( graph );
+        if( print )
+            Print( graph );
 
         if( commSize > 1 )
         {

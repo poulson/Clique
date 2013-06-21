@@ -10,36 +10,43 @@
 
 namespace cliq {
 
-void Print( const Graph& graph, std::string msg="Graph" );
-void Print( const DistGraph& graph, std::string msg="DistGraph" );
+void Print
+( const Graph& graph, std::string msg="Graph", std::ostream& os=std::cout );
+void Print
+( const DistGraph& graph, std::string msg="DistGraph", 
+  std::ostream& os=std::cout );
 
 template<typename T>
-void Print( const SparseMatrix<T>& A, std::string msg="SparseMatrix" );
+void Print
+( const SparseMatrix<T>& A, std::string msg="SparseMatrix", 
+  std::ostream& os=std::cout );
 template<typename T>
-void Print( const DistSparseMatrix<T>& A, std::string msg="DistSparseMatrix" );
+void Print
+( const DistSparseMatrix<T>& A, std::string msg="DistSparseMatrix", 
+  std::ostream& os=std::cout );
 
 //
 // Implementation begins here
 //
 
 inline void
-Print( const Graph& graph, std::string msg )
+Print( const Graph& graph, std::string msg, std::ostream& os )
 {
 #ifndef RELEASE
     CallStackEntry cse("Print [Graph]");
 #endif
     if( msg != "" )
-        std::cout << msg << std::endl;
+        os << msg << std::endl;
     const int numEdges = graph.NumEdges();
     const int* srcBuf = graph.LockedSourceBuffer();
     const int* tgtBuf = graph.LockedTargetBuffer();
     for( int e=0; e<numEdges; ++e )
-        std::cout << srcBuf[e] << " " << tgtBuf[e] << "\n";
-    std::cout << std::endl;
+        os << srcBuf[e] << " " << tgtBuf[e] << "\n";
+    os << std::endl;
 }
 
 inline void
-Print( const DistGraph& graph, std::string msg ) 
+Print( const DistGraph& graph, std::string msg, std::ostream& os ) 
 {
 #ifndef RELEASE
     CallStackEntry cse("Print [DistGraph]");
@@ -74,34 +81,34 @@ Print( const DistGraph& graph, std::string msg )
     if( commRank == 0 )
     {
         if( msg != "" )
-            std::cout << msg << std::endl;
+            os << msg << std::endl;
         for( int e=0; e<numEdges; ++e )
-            std::cout << sources[e] << " " << targets[e] << "\n";
-        std::cout << std::endl;
+            os << sources[e] << " " << targets[e] << "\n";
+        os << std::endl;
     }
 }
 
 template<typename T>
 inline void
-Print( const SparseMatrix<T>& A, std::string msg )
+Print( const SparseMatrix<T>& A, std::string msg, std::ostream& os )
 {
 #ifndef RELEASE
     CallStackEntry cse("Print [SparseMatrix]");
 #endif
     if( msg != "" )
-        std::cout << msg << std::endl;
+        os << msg << std::endl;
     const int numEntries = A.NumEntries();
     const int* srcBuf = A.LockedSourceBuffer();
     const int* tgtBuf = A.LockedTargetBuffer();
     const T* valBuf = A.LockedValueBuffer();
     for( int s=0; s<numEntries; ++s )
-        std::cout << srcBuf[s] << " " << tgtBuf[s] << " " << valBuf[s] << "\n";
-    std::cout << std::endl;
+        os << srcBuf[s] << " " << tgtBuf[s] << " " << valBuf[s] << "\n";
+    os << std::endl;
 }
 
 template<typename T>
 inline void
-Print( const DistSparseMatrix<T>& A, std::string msg )
+Print( const DistSparseMatrix<T>& A, std::string msg, std::ostream& os )
 {
 #ifndef RELEASE
     CallStackEntry cse("Print [DistSparseMatrix]");
@@ -141,12 +148,10 @@ Print( const DistSparseMatrix<T>& A, std::string msg )
     if( commRank == 0 )
     {
         if( msg != "" )
-            std::cout << msg << std::endl;
+            os << msg << std::endl;
         for( int s=0; s<numNonzeros; ++s )
-            std::cout << sources[s] << " "
-                      << targets[s] << " "
-                      << values[s] << "\n";
-        std::cout << std::endl;
+            os << sources[s] << " " << targets[s] << " " << values[s] << "\n";
+        os << std::endl;
     }
 }
 
