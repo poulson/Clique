@@ -140,6 +140,12 @@ main( int argc, char* argv[] )
                       << rootSepSize << " vertices in root separator\n"
                       << std::endl;
         }
+        if( display )
+        {
+            std::ostringstream os;
+            os << "Supernodes shared by process " << commRank;
+            DisplayLocal( info, os.str() );
+        }
 
         if( commRank == 0 )
         {

@@ -25,6 +25,8 @@ void Print
 ( const DistSparseMatrix<T>& A, std::string msg="DistSparseMatrix", 
   std::ostream& os=std::cout );
 
+void PrintLocal( const DistSymmInfo& info, std::ostream& os=std::cout );
+
 //
 // Implementation begins here
 //
@@ -152,6 +154,29 @@ Print( const DistSparseMatrix<T>& A, std::string msg, std::ostream& os )
         for( int s=0; s<numNonzeros; ++s )
             os << sources[s] << " " << targets[s] << " " << values[s] << "\n";
         os << std::endl;
+    }
+}
+
+inline void 
+PrintLocal( const DistSymmInfo& info, std::ostream& os )
+{
+#ifndef RELEASE
+    CallStackEntry cse("PrintLocal [DistSymmInfo]");
+#endif
+    os << "Local nodes:" << std::endl;
+    const int numLocal = info.localNodes.size();
+    for( int s=0; s<numLocal; ++s )
+    {
+        const SymmNodeInfo& node = info.localNodes[s];
+        os << " size=" << node.size << ", offset=" << node.offset << "\n"; 
+    }
+
+    os << "Distributed nodes:" << std::endl;
+    const int numDist = info.distNodes.size();
+    for( int s=0; s<numDist; ++s )
+    {
+        const DistSymmNodeInfo& node = info.distNodes[s];
+        os << " size=" << node.size << ", offset=" << node.offset << "\n";
     }
 }
 

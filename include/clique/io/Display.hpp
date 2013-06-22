@@ -28,6 +28,9 @@ void Display
 ( const DistSparseMatrix<Complex<T> >& A, 
   std::string title="DistSparseMatrix" );
 
+void DisplayLocal
+( const DistSymmInfo& info, std::string title="Local DistSymmInfo" );
+
 //
 // Implementation begins here
 //
@@ -314,6 +317,47 @@ Display( const DistSparseMatrix<Complex<T> >& A, std::string title )
     }
 #else
     Print( A, title );
+#endif
+}
+
+inline void 
+DisplayLocal( const DistSymmInfo& info, std::string title )
+{
+#ifndef RELEASE
+    CallStackEntry cse("DisplayLocal [DistSymmInfo]");
+#endif
+#ifdef HAVE_QT5
+    const int n = info.distNodes.back().size + info.distNodes.back().offset;
+    Matrix<int>* graphMat = new Matrix<int>;
+    elem::Zeros( *graphMat, n, n );
+
+    const int numLocal = info.localNodes.size();
+    for( int s=0; s<numLocal; ++s )
+    {
+        const SymmNodeInfo& node = info.localNodes[s];
+        for( int j=0; j<node.size; ++j )
+            for( int i=0; i<node.size; ++i )
+                graphMat->Set( i+node.offset, j+node.offset, 1 );
+    }
+
+    const int numDist = info.distNodes.size();
+    for( int s=0; s<numDist; ++s )
+    {
+        const DistSymmNodeInfo& node = info.distNodes[s];
+        for( int j=0; j<node.size; ++j )
+            for( int i=0; i<node.size; ++i )
+                graphMat->Set( i+node.offset, j+node.offset, 1 );
+    }
+
+    QString qTitle = QString::fromStdString( title );
+    elem::SpyWindow* spyWindow = new elem::SpyWindow;
+    spyWindow->Spy( graphMat, qTitle );
+    spyWindow->show();
+
+    // Spend at most 200 milliseconds rendering
+    elem::ProcessEvents( 200 );
+#else
+    PrintLocal( info );
 #endif
 }
 
