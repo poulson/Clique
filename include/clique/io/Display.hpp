@@ -29,7 +29,8 @@ void Display
   std::string title="DistSparseMatrix" );
 
 void DisplayLocal
-( const DistSymmInfo& info, std::string title="Local DistSymmInfo" );
+( const DistSymmInfo& info, 
+  bool beforeFact=true, std::string title="Local DistSymmInfo" );
 
 //
 // Implementation begins here
@@ -321,7 +322,7 @@ Display( const DistSparseMatrix<Complex<T> >& A, std::string title )
 }
 
 inline void 
-DisplayLocal( const DistSymmInfo& info, std::string title )
+DisplayLocal( const DistSymmInfo& info, bool beforeFact, std::string title )
 {
 #ifndef RELEASE
     CallStackEntry cse("DisplayLocal [DistSymmInfo]");
@@ -338,6 +339,20 @@ DisplayLocal( const DistSymmInfo& info, std::string title )
         for( int j=0; j<node.size; ++j )
             for( int i=0; i<node.size; ++i )
                 graphMat->Set( i+node.offset, j+node.offset, 1 );
+        if( beforeFact )
+        {
+            const int origStructSize = node.origLowerStruct.size();
+            for( int i=0; i<origStructSize; ++i )
+                for( int j=0; j<node.size; ++j )
+                    graphMat->Set( node.origLowerStruct[i], j+node.offset, 1 );
+        }
+        else
+        {
+            const int structSize = node.lowerStruct.size();
+            for( int i=0; i<structSize; ++i )
+                for( int j=0; j<node.size; ++j )
+                    graphMat->Set( node.lowerStruct[i], j+node.offset, 1 );
+        }
     }
 
     const int numDist = info.distNodes.size();
@@ -347,6 +362,20 @@ DisplayLocal( const DistSymmInfo& info, std::string title )
         for( int j=0; j<node.size; ++j )
             for( int i=0; i<node.size; ++i )
                 graphMat->Set( i+node.offset, j+node.offset, 1 );
+        if( beforeFact )
+        {
+            const int origStructSize = node.origLowerStruct.size();
+            for( int i=0; i<origStructSize; ++i )
+                for( int j=0; j<node.size; ++j )
+                    graphMat->Set( node.origLowerStruct[i], j+node.offset, 1 );
+        }
+        else
+        {
+            const int structSize = node.lowerStruct.size();
+            for( int i=0; i<structSize; ++i )
+                for( int j=0; j<node.size; ++j )
+                    graphMat->Set( node.lowerStruct[i], j+node.offset, 1 );
+        }
     }
 
     QString qTitle = QString::fromStdString( title );

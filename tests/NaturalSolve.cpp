@@ -129,6 +129,14 @@ main( int argc, char* argv[] )
                       << rootSepSize << " vertices in root separator\n"
                       << std::endl;
         }
+        if( display )
+        {
+            std::ostringstream osBefore, osAfter;
+            osBefore << "Structure before fact. on process " << commRank;
+            osAfter << "Structure after fact. on process " << commRank;
+            DisplayLocal( info, false, osBefore.str() );
+            DisplayLocal( info, true, osAfter.str() );
+        }
 
         if( commRank == 0 )
         {

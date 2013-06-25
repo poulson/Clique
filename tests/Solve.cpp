@@ -142,9 +142,11 @@ main( int argc, char* argv[] )
         }
         if( display )
         {
-            std::ostringstream os;
-            os << "Supernodes shared by process " << commRank;
-            DisplayLocal( info, os.str() );
+            std::ostringstream osBefore, osAfter;
+            osBefore << "Structure before fact. on process " << commRank;
+            osAfter << "Structure after fact. on process " << commRank;
+            DisplayLocal( info, false, osBefore.str() );
+            DisplayLocal( info, true, osAfter.str() );
         }
 
         if( commRank == 0 )
