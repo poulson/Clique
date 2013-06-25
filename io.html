@@ -51,28 +51,74 @@
         
   <div class="section" id="input-output">
 <h1>Input/output<a class="headerlink" href="#input-output" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="print">
-<h2>Print<a class="headerlink" href="#print" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="display">
+<h2>Display<a class="headerlink" href="#display" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
-<dt id="Print__GraphCR.ss">
-void <tt class="descname">Print</tt><big>(</big><a class="reference internal" href="core/graph.html#Graph__class" title="Graph">const Graph&amp;</a> <em>graph</em>, std::string <em>msg</em><em>=&quot;Graph&quot;</em><big>)</big><a class="headerlink" href="#Print__GraphCR.ss" title="Permalink to this definition">¶</a></dt>
+<dt id="Display__GraphCR.ss">
+void <tt class="descname">Display</tt><big>(</big><a class="reference internal" href="core/graph.html#Graph__class" title="Graph">const Graph&amp;</a> <em>graph</em>, std::string <em>title</em><em>=&quot;Graph&quot;</em><big>)</big><a class="headerlink" href="#Display__GraphCR.ss" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
-<dt id="Print__DistGraphCR.ss">
-void <tt class="descname">Print</tt><big>(</big><a class="reference internal" href="core/dist_graph.html#DistGraph__class" title="DistGraph">const DistGraph&amp;</a> <em>graph</em>, std::string <em>msg</em><em>=&quot;DistGraph&quot;</em><big>)</big><a class="headerlink" href="#Print__DistGraphCR.ss" title="Permalink to this definition">¶</a></dt>
+<dt id="Display__DistGraphCR.ss">
+void <tt class="descname">Display</tt><big>(</big><a class="reference internal" href="core/dist_graph.html#DistGraph__class" title="DistGraph">const DistGraph&amp;</a> <em>graph</em>, std::string <em>title</em><em>=&quot;DistGraph&quot;</em><big>)</big><a class="headerlink" href="#Display__DistGraphCR.ss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Visualizes the edges in the graph
+(if Qt5 is not available, <tt class="docutils literal"><span class="pre">Print</span></tt> instead).</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="Display__SparseMatrix:T:CR.ss">
+void <tt class="descname">Display</tt><big>(</big><a class="reference internal" href="core/sparse_matrix.html#SparseMatrix:T:__class" title="SparseMatrix&lt;T&gt;">const SparseMatrix&lt;T&gt;&amp;</a> <em>A</em>, std::string <em>title</em><em>=&quot;SparseMatrix&quot;</em><big>)</big><a class="headerlink" href="#Display__SparseMatrix:T:CR.ss" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="Display__DistSparseMatrix:T:CR.ss">
+void <tt class="descname">Display</tt><big>(</big><a class="reference internal" href="core/dist_sparse_matrix.html#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;">const DistSparseMatrix&lt;T&gt;&amp;</a> <em>A</em>, std::string <em>title</em><em>=&quot;DistSparseMatrix&quot;</em><big>)</big><a class="headerlink" href="#Display__DistSparseMatrix:T:CR.ss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Visualize the entries in the sparse matrix
+(if Qt5 is not available, <tt class="docutils literal"><span class="pre">Print</span></tt> instead).</p>
+</dd></dl>
+
+</div>
+<div class="section" id="displaylocal">
+<h2>DisplayLocal<a class="headerlink" href="#displaylocal" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="DisplayLocal__DistSymmInfoCR.b.ss">
+void <tt class="descname">DisplayLocal</tt><big>(</big><a class="reference internal" href="symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, bool <em>beforeFact</em><em>=true</em>, std::string <em>title</em><em>=&quot;Local DistSymmInfo&quot;</em><big>)</big><a class="headerlink" href="#DisplayLocal__DistSymmInfoCR.b.ss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Visualize the local reordered nonzero structure before or after symbolic
+factorization (if Qt5 is not available, just the supernodes are printed).</p>
+</dd></dl>
+
+</div>
+<div class="section" id="print">
+<h2>Print<a class="headerlink" href="#print" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="Print__GraphCR.ss.osR">
+void <tt class="descname">Print</tt><big>(</big><a class="reference internal" href="core/graph.html#Graph__class" title="Graph">const Graph&amp;</a> <em>graph</em>, std::string <em>msg</em><em>=&quot;Graph&quot;</em>, std::ostream&amp; <em>os</em><em>=std::cout </em><big>)</big><a class="headerlink" href="#Print__GraphCR.ss.osR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="Print__DistGraphCR.ss.osR">
+void <tt class="descname">Print</tt><big>(</big><a class="reference internal" href="core/dist_graph.html#DistGraph__class" title="DistGraph">const DistGraph&amp;</a> <em>graph</em>, std::string <em>msg</em><em>=&quot;DistGraph&quot;</em>, std::ostream&amp; <em>os</em><em>=std::cout </em><big>)</big><a class="headerlink" href="#Print__DistGraphCR.ss.osR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Prints the edges in the graph.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="Print__SparseMatrix:T:CR.ss">
-void <tt class="descname">Print</tt><big>(</big><a class="reference internal" href="core/sparse_matrix.html#SparseMatrix:T:__class" title="SparseMatrix&lt;T&gt;">const SparseMatrix&lt;T&gt;&amp;</a> <em>A</em>, std::string <em>msg</em><em>=&quot;SparseMatrix&quot;</em><big>)</big><a class="headerlink" href="#Print__SparseMatrix:T:CR.ss" title="Permalink to this definition">¶</a></dt>
+<dt id="Print__SparseMatrix:T:CR.ss.osR">
+void <tt class="descname">Print</tt><big>(</big><a class="reference internal" href="core/sparse_matrix.html#SparseMatrix:T:__class" title="SparseMatrix&lt;T&gt;">const SparseMatrix&lt;T&gt;&amp;</a> <em>A</em>, std::string <em>msg</em><em>=&quot;SparseMatrix&quot;</em>, std::ostream&amp; <em>os</em><em>=std::cout </em><big>)</big><a class="headerlink" href="#Print__SparseMatrix:T:CR.ss.osR" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
-<dt id="Print__DistSparseMatrix:T:CR.ss">
-void <tt class="descname">Print</tt><big>(</big><a class="reference internal" href="core/dist_sparse_matrix.html#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;">const DistSparseMatrix&lt;T&gt;&amp;</a> <em>A</em>, std::string <em>msg</em><em>=&quot;DistSparseMatrix&quot;</em><big>)</big><a class="headerlink" href="#Print__DistSparseMatrix:T:CR.ss" title="Permalink to this definition">¶</a></dt>
+<dt id="Print__DistSparseMatrix:T:CR.ss.osR">
+void <tt class="descname">Print</tt><big>(</big><a class="reference internal" href="core/dist_sparse_matrix.html#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;">const DistSparseMatrix&lt;T&gt;&amp;</a> <em>A</em>, std::string <em>msg</em><em>=&quot;DistSparseMatrix&quot;</em>, std::ostream&amp; <em>os</em><em>=std::cout </em><big>)</big><a class="headerlink" href="#Print__DistSparseMatrix:T:CR.ss.osR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Prints the nonzero triplets in the sparse matrix.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="printlocal">
+<h2>PrintLocal<a class="headerlink" href="#printlocal" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="PrintLocal__DistSymmInfoCR.osR">
+void <tt class="descname">PrintLocal</tt><big>(</big><a class="reference internal" href="symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, std::ostream&amp; <em>os</em><em>=std::cout </em><big>)</big><a class="headerlink" href="#PrintLocal__DistSymmInfoCR.osR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print the local supernodal structure.</p>
 </dd></dl>
 
 </div>
