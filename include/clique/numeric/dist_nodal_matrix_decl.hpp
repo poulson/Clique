@@ -10,16 +10,16 @@
 
 namespace cliq {
 
-// For handling a set of vectors distributed in a [VC,* ] manner over each node
+// For handling a matrix distributed in a [MC,MR] manner over each node
 // of the elimination tree
 template<typename F>
-class DistNodalMultiVec
+class DistNodalMatrix
 {
 public:
-    Matrix<F> multiVec;
+    Matrix<F> matrix;
 
-    DistNodalMultiVec();
-    DistNodalMultiVec
+    DistNodalMatrix();
+    DistNodalMatrix
     ( const DistMap& inverseMap, const DistSymmInfo& info,
       const DistMultiVec<F>& X );
 
@@ -34,7 +34,7 @@ public:
     int Width() const;
 
 private:
-    int height_;
+    int height_, width_;
 };
 
 } // namespace cliq

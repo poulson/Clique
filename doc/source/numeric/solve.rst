@@ -58,6 +58,9 @@ frontal tree.
 DistNodalMultiVec
 ^^^^^^^^^^^^^^^^^
 
+The following structure should be used when there is only a modest number of 
+right-hand sides.
+
 .. cpp:type:: struct DistNodalMultiVec<T>
 
    .. cpp:member:: Matrix<T> multiVec
@@ -68,10 +71,42 @@ DistNodalMultiVec
 
    .. cpp:function:: void Push( const DistMap& inverseMap, const DistSymmInfo& info, DistMultiVec<T>& X )
 
+   .. cpp:function:: int Height() const
+
+      Returns the length of each vector.
+
    .. cpp:function:: int Width() const
 
       Returns the number of vectors.
 
 .. cpp:type:: struct DistNodalMultiVec<F>
+
+   Same as above, but this implies that the underlying datatype `F` is a field.
+
+DistNodalMatrix
+^^^^^^^^^^^^^^^
+
+The following structure is a work in progress and should be used in cases where
+there are many right-hand sides (in a sense to be made more specific later).
+
+.. cpp:type:: struct DistNodalMatrix<T>
+
+   .. cpp:member:: Matrix<T> matrix
+
+   .. cpp:function:: DistNodalMatrix( const DistMap& inverseMap, const DistSymmInfo& info, const DistMultiVec<T>& X )
+
+   .. cpp:function:: void Pull( const DistMap& inverseMap, const DistSymmInfo& info, const DistMultiVec<T>& X )
+
+   .. cpp:function:: void Push( const DistMap& inverseMap, const DistSymmInfo& info, DistMultiVec<T>& X )
+
+   .. cpp:function:: int Height() const
+
+      Returns the length of each vector.
+
+   .. cpp:function:: int Width() const
+
+      Returns the number of vectors.
+
+.. cpp:type:: struct DistNodalMatrix<F>
 
    Same as above, but this implies that the underlying datatype `F` is a field.

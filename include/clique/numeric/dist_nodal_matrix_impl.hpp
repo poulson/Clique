@@ -12,30 +12,33 @@ namespace cliq {
 
 template<typename F>
 inline
-DistNodalMultiVec<F>::DistNodalMultiVec()
+DistNodalMatrix<F>::DistNodalMatrix()
+: height_(0), width_(0)
 { }
 
 template<typename F>
 inline
-DistNodalMultiVec<F>::DistNodalMultiVec
+DistNodalMatrix<F>::DistNodalMatrix
 ( const DistMap& inverseMap, const DistSymmInfo& info,
   const DistMultiVec<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry cse("DistNodalMultiVec::DistNodalMultiVec");
+    CallStackEntry cse("DistNodalMatrix::DistNodalMatrix");
 #endif
     Pull( inverseMap, info, X );
 }
 
 template<typename F>
 inline void
-DistNodalMultiVec<F>::Pull
+DistNodalMatrix<F>::Pull
 ( const DistMap& inverseMap, const DistSymmInfo& info,
   const DistMultiVec<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry cse("DistNodalMultiVec::Pull");
+    CallStackEntry cse("DistNodalMatrix::Pull");
 #endif
+    throw std::logic_error("This must be rewritten");
+
     mpi::Comm comm = X.Comm();
     const int commSize = mpi::CommSize( comm );
     const int height = X.Height();
@@ -44,6 +47,9 @@ DistNodalMultiVec<F>::Pull
     const int firstLocalRow = X.FirstLocalRow();
     const int numDist = info.distNodes.size();
     const int numLocal = info.localNodes.size();
+
+    height_ = height;
+    width_ = width;
 
     // Traverse our part of the elimination tree to see how many indices we need
     int numRecvIndices=0;
@@ -161,7 +167,7 @@ DistNodalMultiVec<F>::Pull
     // Unpack the values
     offset=0;
     offsets = recvOffsets;
-    multiVec.ResizeTo( numRecvIndices, width );
+    matrix.ResizeTo( numRecvIndices, width );
     for( int s=0; s<numLocal; ++s )
     {
         const SymmNodeInfo& node = info.localNodes[s];
@@ -170,7 +176,7 @@ DistNodalMultiVec<F>::Pull
             const int i = mappedIndices[offset];
             const int q = RowToProcess( i, blocksize, commSize );
             for( int j=0; j<width; ++j )
-                multiVec.Set( offset, j, recvValues[offsets[q]++] );
+                matrix.Set( offset, j, recvValues[offsets[q]++] );
             ++offset;
         }
     }
@@ -187,7 +193,7 @@ DistNodalMultiVec<F>::Pull
             const int i = mappedIndices[offset];
             const int q = RowToProcess( i, blocksize, commSize );
             for( int j=0; j<width; ++j )
-                multiVec.Set( offset, j, recvValues[offsets[q]++] );
+                matrix.Set( offset, j, recvValues[offsets[q]++] );
             ++offset;
         }
     }
@@ -199,17 +205,19 @@ DistNodalMultiVec<F>::Pull
 
 template<typename F>
 inline void
-DistNodalMultiVec<F>::Push
+DistNodalMatrix<F>::Push
 ( const DistMap& inverseMap, const DistSymmInfo& info,
         DistMultiVec<F>& X ) const
 {
 #ifndef RELEASE
-    CallStackEntry cse("DistNodalMultiVec::Push");
+    CallStackEntry cse("DistNodalMatrix::Push");
 #endif
+    throw std::logic_error("This must be rewritten");
+
     const DistSymmNodeInfo& rootNode = info.distNodes.back();
     mpi::Comm comm = rootNode.comm;
     const int height = rootNode.size + rootNode.offset;
-    const int width = multiVec.Width();
+    const int width = matrix.Width();
     X.SetComm( comm );
     X.ResizeTo( height, width );
 
@@ -221,7 +229,7 @@ DistNodalMultiVec<F>::Push
     const int numLocal = info.localNodes.size();
 
     // Fill the set of indices that we need to map to the original ordering
-    const int numSendIndices = multiVec.Height();
+    const int numSendIndices = matrix.Height();
     int offset=0;
     std::vector<int> mappedIndices( numSendIndices );
     for( int s=0; s<numLocal; ++s )
@@ -272,7 +280,7 @@ DistNodalMultiVec<F>::Push
         const int q = RowToProcess( i, blocksize, commSize );
         sendIndices[offsets[q]] = i;
         for( int j=0; j<width; ++j )
-            sendValues[offsets[q]*width+j] = multiVec.Get(offset,j);
+            sendValues[offsets[q]*width+j] = matrix.Get(offset,j);
         ++offset;
         ++offsets[q];
     }
@@ -330,12 +338,12 @@ DistNodalMultiVec<F>::Push
 
 template<typename F>
 inline int
-DistNodalMultiVec<F>::Height() const
+DistNodalMatrix<F>::Height() const
 { return height_; }
 
 template<typename F>
 inline int
-DistNodalMultiVec<F>::Width() const
-{ return multiVec.Width(); }
+DistNodalMatrix<F>::Width() const
+{ return width_; }
 
 } // namespace cliq
