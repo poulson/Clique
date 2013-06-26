@@ -46,8 +46,8 @@ void LocalSymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info )
             const int right = node.children[1];
             SymmNodeInfo& leftChild = info.localNodes[left];
             SymmNodeInfo& rightChild = info.localNodes[right];
-            leftChild.isLeftChild = true;
-            rightChild.isLeftChild = false;
+            leftChild.onLeft = true;
+            rightChild.onLeft = false;
 
             // Union the child lower structs
             const int numLeftIndices = leftChild.lowerStruct.size();
@@ -143,21 +143,21 @@ void LocalSymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info )
             }
 
             // Construct the relative indices of the children
-            nodeInfo.leftChildRelIndices.resize( numLeftIndices );
+            nodeInfo.leftRelIndices.resize( numLeftIndices );
             it = fullStruct.begin();
             for( int i=0; i<numLeftIndices; ++i )
             {
                 const int index = leftChild.lowerStruct[i];
                 it = std::lower_bound( it, fullStruct.end(), index );
-                nodeInfo.leftChildRelIndices[i] = int(it-fullStruct.begin());
+                nodeInfo.leftRelIndices[i] = int(it-fullStruct.begin());
             }
-            nodeInfo.rightChildRelIndices.resize( numRightIndices );
+            nodeInfo.rightRelIndices.resize( numRightIndices );
             it = fullStruct.begin();
             for( int i=0; i<numRightIndices; ++i )
             {
                 const int index = rightChild.lowerStruct[i];
                 it = std::lower_bound( it, fullStruct.end(), index );
-                nodeInfo.rightChildRelIndices[i] = int(it-fullStruct.begin());
+                nodeInfo.rightRelIndices[i] = int(it-fullStruct.begin());
             }
 
             // Form lower struct of this node by removing node indices

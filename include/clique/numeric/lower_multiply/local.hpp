@@ -77,7 +77,7 @@ inline void LocalLowerMultiplyNormal
             ( leftUpdate, leftWork, leftNodeSize, 0, leftUpdateSize, width );
             for( int iChild=0; iChild<leftUpdateSize; ++iChild )
             {
-                const int iFront = node.leftChildRelIndices[iChild];
+                const int iFront = node.leftRelIndices[iChild];
                 for( int j=0; j<width; ++j )
                     W.Update( iFront, j, leftUpdate.Get(iChild,j) );
             }
@@ -90,7 +90,7 @@ inline void LocalLowerMultiplyNormal
               rightWork, rightNodeSize, 0, rightUpdateSize, width );
             for( int iChild=0; iChild<rightUpdateSize; ++iChild )
             {
-                const int iFront = node.rightChildRelIndices[iChild];
+                const int iFront = node.rightRelIndices[iChild];
                 for( int j=0; j<width; ++j )
                     W.Update( iFront, j, rightUpdate.Get(iChild,j) );
             }
@@ -139,9 +139,8 @@ inline void LocalLowerMultiplyTranspose
         Matrix<T>& parentWork = L.localFronts[parent].work;
         const int currentUpdateSize = WB.Height();
         const std::vector<int>& parentRelIndices = 
-            ( node.isLeftChild ? 
-              parentNode.leftChildRelIndices :
-              parentNode.rightChildRelIndices );
+            ( node.onLeft ? parentNode.leftRelIndices
+                          : parentNode.rightRelIndices );
         for( int iCurrent=0; iCurrent<currentUpdateSize; ++iCurrent )
         {
             const int iParent = parentRelIndices[iCurrent]; 
@@ -151,7 +150,7 @@ inline void LocalLowerMultiplyTranspose
 
         // The left child is numbered lower than the right child, so we can 
         // safely free the parent's work if this node is the left child
-        if( node.isLeftChild )
+        if( node.onLeft )
         {
             parentWork.Empty();
             if( parent == numLocalNodes-1 )

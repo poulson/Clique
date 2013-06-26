@@ -107,23 +107,22 @@ inline void DistLowerForwardSolve
         }
         std::vector<F> sendBuffer( sendBufferSize );
 
-        const bool isLeftChild = childNode.onLeft;
+        const bool onLeft = childNode.onLeft;
         const std::vector<int>& myChildRelIndices = 
-            ( isLeftChild ? node.leftChildRelIndices
-                          : node.rightChildRelIndices );
+            ( onLeft ? node.leftRelIndices : node.rightRelIndices );
         const int updateColShift = childUpdate.ColShift();
         const int updateLocalHeight = childUpdate.LocalHeight();
         std::vector<int> packOffsets = sendDispls;
-        for( int iChildLocal=0; iChildLocal<updateLocalHeight; ++iChildLocal )
+        for( int iChildLoc=0; iChildLoc<updateLocalHeight; ++iChildLoc )
         {
-            const int iChild = updateColShift + iChildLocal*childCommSize;
+            const int iChild = updateColShift + iChildLoc*childCommSize;
             const int destRank = myChildRelIndices[iChild] % commSize;
             F* packBuf = &sendBuffer[packOffsets[destRank]];
             for( int jChild=0; jChild<width; ++jChild )
-                packBuf[jChild] = childUpdate.GetLocal(iChildLocal,jChild);
+                packBuf[jChild] = childUpdate.GetLocal(iChildLoc,jChild);
             packOffsets[destRank] += width;
         }
-        packOffsets.clear();
+        std::vector<int>().swap( packOffsets );
         childW.Empty();
         if( s == 1 )
             L.localFronts.back().work.Empty();
@@ -147,9 +146,9 @@ inline void DistLowerForwardSolve
         SparseAllToAll
         ( sendBuffer, sendCounts, sendDispls,
           recvBuffer, recvCounts, recvDispls, comm );
-        sendBuffer.clear();
-        sendCounts.clear();
-        sendDispls.clear();
+        std::vector<F>().swap( sendBuffer );
+        std::vector<int>().swap( sendCounts );
+        std::vector<int>().swap( sendDispls );
 
         // Unpack the child updates (with an Axpy)
         for( int proc=0; proc<commSize; ++proc )
@@ -159,17 +158,17 @@ inline void DistLowerForwardSolve
                 node.childSolveRecvIndices[proc];
             for( unsigned k=0; k<recvIndices.size(); ++k )
             {
-                const int iFrontLocal = recvIndices[k];
+                const int iFrontLoc = recvIndices[k];
                 const F* recvRow = &recvValues[k*width];
-                F* WRow = W.Buffer( iFrontLocal, 0 );
+                F* WRow = W.Buffer( iFrontLoc, 0 );
                 const int WLDim = W.LDim();
                 for( int j=0; j<width; ++j )
                     WRow[j*WLDim] += recvRow[j];
             }
         }
-        recvBuffer.clear();
-        recvCounts.clear();
-        recvDispls.clear();
+        std::vector<F>().swap( recvBuffer );
+        std::vector<int>().swap( recvCounts );
+        std::vector<int>().swap( recvDispls );
 
         // Now that the RHS is set up, perform this node's solve
         if( frontType == LDL_1D )
@@ -305,9 +304,9 @@ inline void DistLowerBackwardSolve
                 parentNode.childSolveRecvIndices[proc];
             for( unsigned k=0; k<recvIndices.size(); ++k )
             {
-                const int iFrontLocal = recvIndices[k];
+                const int iFrontLoc = recvIndices[k];
                 F* sendRow = &sendValues[k*width];
-                const F* workRow = parentWork.LockedBuffer( iFrontLocal, 0 );
+                const F* workRow = parentWork.LockedBuffer( iFrontLoc, 0 );
                 const int workLDim = parentWork.LDim();
                 for( int j=0; j<width; ++j )
                     sendRow[j] = workRow[j*workLDim];
@@ -335,30 +334,28 @@ inline void DistLowerBackwardSolve
         SparseAllToAll
         ( sendBuffer, sendCounts, sendDispls,
           recvBuffer, recvCounts, recvDispls, parentComm );
-        sendBuffer.clear();
-        sendCounts.clear();
-        sendDispls.clear();
+        std::vector<F>().swap( sendBuffer );
+        std::vector<int>().swap( sendCounts );
+        std::vector<int>().swap( sendDispls );
 
         // Unpack the updates using the send approach from the forward solve
-        const bool isLeftChild = node.onLeft;
+        const bool onLeft = node.onLeft;
         const std::vector<int>& myRelIndices = 
-            ( isLeftChild ? parentNode.leftChildRelIndices
-                          : parentNode.rightChildRelIndices );
+            ( onLeft ? parentNode.leftRelIndices : parentNode.rightRelIndices );
         const int updateColShift = WB.ColShift();
         const int updateLocalHeight = WB.LocalHeight();
-        for( int iUpdateLocal=0; 
-                 iUpdateLocal<updateLocalHeight; ++iUpdateLocal )
+        for( int iUpdateLoc=0; iUpdateLoc<updateLocalHeight; ++iUpdateLoc )
         {
-            const int iUpdate = updateColShift + iUpdateLocal*commSize;
+            const int iUpdate = updateColShift + iUpdateLoc*commSize;
             const int startRank = myRelIndices[iUpdate] % parentCommSize;
             const F* recvBuf = &recvBuffer[recvDispls[startRank]];
             for( int j=0; j<width; ++j )
-                WB.SetLocal(iUpdateLocal,j,recvBuf[j]);
+                WB.SetLocal(iUpdateLoc,j,recvBuf[j]);
             recvDispls[startRank] += width;
         }
-        recvBuffer.clear();
-        recvCounts.clear();
-        recvDispls.clear();
+        std::vector<F>().swap( recvBuffer );
+        std::vector<int>().swap( recvCounts );
+        std::vector<int>().swap( recvDispls );
 
         // Call the custom node backward solve
         if( s > 0 )

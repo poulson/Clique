@@ -316,11 +316,11 @@ Graph::Empty()
 {
     numSources_ = 0;
     numTargets_ = 0;
-    sources_.clear();
-    targets_.clear();
+    std::vector<int>().swap( sources_ );
+    std::vector<int>().swap( targets_ );
     sorted_ = true;
     assembling_ = false;
-    edgeOffsets_.clear();
+    std::vector<int>().swap( edgeOffsets_ );
 }
 
 inline void
@@ -332,11 +332,11 @@ Graph::ResizeTo( int numSources, int numTargets )
 {
     numSources_ = numSources;
     numTargets_ = numTargets;
-    sources_.clear();
-    targets_.clear();
+    std::vector<int>().swap( sources_ );
+    std::vector<int>().swap( targets_ );
     sorted_ = true;
     assembling_ = false;
-    edgeOffsets_.clear();
+    std::vector<int>().swap( edgeOffsets_ );
 }
 
 inline void

@@ -1,4 +1,5 @@
-- Generalize DistNodalMultiVec to support any Elemental matrix distribution for
-  each node.
-- Implement versions of Solve routines which support [MC,MR] nodal distributions
+- Finish implementing DistNodalMatrix
+- Implement versions of Solve routines which supports DistNodalMatrix
+- Switch from current flat layout for supernodal trees into an actual (custom) 
+  tree data structure
 - Convert to header-file structure which is similar to Elemental

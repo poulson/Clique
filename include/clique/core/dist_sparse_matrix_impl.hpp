@@ -63,7 +63,7 @@ inline void
 DistSparseMatrix<T>::SetComm( mpi::Comm comm )
 { 
     distGraph_.SetComm( comm ); 
-    values_.clear();
+    std::vector<T>().swap( values_ );
 }
 
 template<typename T>
@@ -288,7 +288,7 @@ inline void
 DistSparseMatrix<T>::Empty()
 {
     distGraph_.Empty();
-    values_.clear();
+    std::vector<T>().swap( values_ );
 }
 
 template<typename T>
@@ -296,7 +296,7 @@ inline void
 DistSparseMatrix<T>::ResizeTo( int height, int width )
 {
     distGraph_.ResizeTo( height, width );
-    values_.clear();
+    std::vector<T>().swap( values_ );
 }
 
 template<typename T>

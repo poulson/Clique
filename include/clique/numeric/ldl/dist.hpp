@@ -11,16 +11,16 @@
 namespace cliq {
 
 template<typename F> 
-void DistLDL
-( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL=false );
+void 
+DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL=false );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
 template<typename F> 
-inline void DistLDL
-( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
+inline void 
+DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
 {
 #ifndef RELEASE
     CallStackEntry entry("DistLDL");
@@ -73,7 +73,7 @@ inline void DistLDL
 
         // Pack our child's update
         const DistMatrix<F>& childUpdate = childFront.work2d;
-        const bool isLeftChild = childNode.onLeft;
+        const bool onLeft = childNode.onLeft;
         std::vector<int> sendCounts(commSize), sendDispls(commSize);
         int sendBufferSize = 0;
         for( unsigned proc=0; proc<commSize; ++proc )
@@ -86,16 +86,15 @@ inline void DistLDL
         std::vector<F> sendBuffer( sendBufferSize );
 
         const std::vector<int>& myChildRelIndices = 
-            ( isLeftChild ? node.leftChildRelIndices
-                          : node.rightChildRelIndices );
+            ( onLeft ? node.leftRelIndices : node.rightRelIndices );
         const int updateColShift = childUpdate.ColShift();
         const int updateRowShift = childUpdate.RowShift();
         const int updateLocalHeight = childUpdate.LocalHeight();
         const int updateLocalWidth = childUpdate.LocalWidth();
         std::vector<int> packOffsets = sendDispls;
-        for( int jChildLocal=0; jChildLocal<updateLocalWidth; ++jChildLocal )
+        for( int jChildLoc=0; jChildLoc<updateLocalWidth; ++jChildLoc )
         {
-            const int jChild = updateRowShift + jChildLocal*childGridWidth;
+            const int jChild = updateRowShift + jChildLoc*childGridWidth;
             const int destGridCol = myChildRelIndices[jChild] % gridWidth;
 
             int localColShift;
@@ -105,15 +104,15 @@ inline void DistLDL
                 localColShift = (jChild-updateColShift)/childGridHeight;
             else
                 localColShift = (jChild-updateColShift)/childGridHeight + 1;
-            for( int iChildLocal=localColShift; 
-                     iChildLocal<updateLocalHeight; ++iChildLocal )
+            for( int iChildLoc=localColShift; 
+                     iChildLoc<updateLocalHeight; ++iChildLoc )
             {
-                const int iChild = updateColShift + iChildLocal*childGridHeight;
+                const int iChild = updateColShift + iChildLoc*childGridHeight;
                 const int destGridRow = myChildRelIndices[iChild] % gridHeight;
 
                 const int destRank = destGridRow + destGridCol*gridHeight;
                 sendBuffer[packOffsets[destRank]++] = 
-                    childUpdate.GetLocal(iChildLocal,jChildLocal);
+                    childUpdate.GetLocal(iChildLoc,jChildLoc);
             }
         }
 #ifndef RELEASE
@@ -124,7 +123,7 @@ inline void DistLDL
                 throw std::logic_error("Error in packing stage");
         }
 #endif
-        packOffsets.clear();
+        std::vector<int>().swap( packOffsets );
         childFront.work2d.Empty();
         if( s == 1 )
             topLocalFront.work.Empty();
@@ -150,9 +149,9 @@ inline void DistLDL
         SparseAllToAll
         ( sendBuffer, sendCounts, sendDispls,
           recvBuffer, recvCounts, recvDispls, comm );
-        sendBuffer.clear();
-        sendCounts.clear();
-        sendDispls.clear();
+        std::vector<F>().swap( sendBuffer );
+        std::vector<int>().swap( sendCounts );
+        std::vector<int>().swap( sendDispls );
 
         // Unpack the child udpates (with an Axpy)
         front.work2d.SetGrid( front.front2dL.Grid() );
@@ -160,7 +159,7 @@ inline void DistLDL
         elem::Zeros( front.work2d, updateSize, updateSize );
         const int leftLocalWidth = front.front2dL.LocalWidth();
         const int topLocalHeight = 
-            Length<int>( node.size, grid.MCRank(), gridHeight );
+            Length<int>( node.size, grid.Row(), gridHeight );
         for( unsigned proc=0; proc<commSize; ++proc )
         {
             const F* recvValues = &recvBuffer[recvDispls[proc]];
@@ -169,23 +168,22 @@ inline void DistLDL
             const int numRecvIndexPairs = recvIndices.size()/2;
             for( int k=0; k<numRecvIndexPairs; ++k )
             {
-                const int iFrontLocal = recvIndices[2*k+0];
-                const int jFrontLocal = recvIndices[2*k+1];
+                const int iFrontLoc = recvIndices[2*k+0];
+                const int jFrontLoc = recvIndices[2*k+1];
                 const F value = recvValues[k];
-                if( jFrontLocal < leftLocalWidth )
-                    front.front2dL.UpdateLocal
-                    ( iFrontLocal, jFrontLocal, value );
+                if( jFrontLoc < leftLocalWidth )
+                    front.front2dL.UpdateLocal( iFrontLoc, jFrontLoc, value );
                 else
                     front.work2d.UpdateLocal
-                    ( iFrontLocal-topLocalHeight, 
-                      jFrontLocal-leftLocalWidth, value );
+                    ( iFrontLoc-topLocalHeight, jFrontLoc-leftLocalWidth, 
+                      value );
             }
         }
-        recvBuffer.clear();
-        recvCounts.clear();
-        recvDispls.clear();
+        std::vector<F>().swap( recvBuffer );
+        std::vector<int>().swap( recvCounts );
+        std::vector<int>().swap( recvDispls );
         if( computeFactRecvIndices )
-            node.childFactRecvIndices.clear();
+            std::vector<std::deque<int> >().swap( node.childFactRecvIndices );
 
         // Now that the frontal matrix is set up, perform the factorization
         if( !blockLDL )

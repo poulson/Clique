@@ -136,7 +136,6 @@ VerifySendsAndRecvs
             throw std::logic_error( msg.str().c_str() );
         }
     }
-    actualRecvCounts.clear();
 }
 
 template<typename T>
@@ -184,8 +183,6 @@ SparseAllToAll
               requests[rCount++] );
     }
     mpi::WaitAll( numSends+numRecvs, &requests[0], &statuses[0] );
-    statuses.clear();
-    requests.clear();
 #else
     mpi::AllToAll
     ( &sendBuffer[0], &sendCounts[0], &sendDispls[0],

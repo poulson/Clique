@@ -138,7 +138,7 @@ NestedDissectionRecursion
         node.size = numSources;
         node.offset = offset;
         node.parent = parent;
-        node.children.clear();
+        std::vector<int>().swap( node.children );
         std::set<int> connectedAncestors;
         for( int s=0; s<node.size; ++s )
         {
@@ -381,7 +381,7 @@ NestedDissectionRecursion
         distNode.size = localNode.size = numSources;
         distNode.offset = localNode.offset = offset;
         localNode.parent = -1;
-        localNode.children.clear();
+        std::vector<int>().swap( localNode.children );
         std::set<int> connectedAncestors;
         for( int s=0; s<numSources; ++s )
         {
@@ -507,8 +507,8 @@ NestedDissection
     //       are reused. Their destructors should call a member function which
     //       we can simply call here to clear the data
     DistSymmElimTree eTree;
-    eTree.localNodes.clear();
-    sepTree.localSepsAndLeaves.clear();
+    std::vector<SymmNode*>().swap( eTree.localNodes );
+    std::vector<SepOrLeaf*>().swap( sepTree.localSepsAndLeaves );
 
     mpi::Comm comm = graph.Comm();
     const int distDepth = DistributedDepth( comm );
@@ -1102,7 +1102,7 @@ BuildChildFromPerm
     mpi::AllToAll
     ( &rowSendIndices[0], &rowSendSizes[0], &rowSendOffsets[0],
       &rowRecvIndices[0], &rowRecvSizes[0], &rowRecvOffsets[0], comm );
-    rowSendIndices.clear();
+    std::vector<int>().swap( rowSendIndices );
 
     // Set up for sending the column indices
     int numSendIndices=0;
@@ -1118,7 +1118,7 @@ BuildChildFromPerm
         indexSendOffsets[q] = numSendIndices;
         numSendIndices += indexSendSizes[q];
     }
-    rowSendLengths.clear();
+    std::vector<int>().swap( rowSendLengths );
     int numRecvIndices=0;
     std::vector<int> indexRecvSizes( commSize, 0 );
     std::vector<int> indexRecvOffsets( commSize );
@@ -1132,8 +1132,8 @@ BuildChildFromPerm
         indexRecvOffsets[q] = numRecvIndices;
         numRecvIndices += indexRecvSizes[q];
     }
-    rowSendSizes.clear();
-    rowSendOffsets.clear();
+    std::vector<int>().swap( rowSendSizes );
+    std::vector<int>().swap( rowSendOffsets );
 
     // Pack the indices
     std::vector<int> sendIndices( numSendIndices );
@@ -1171,9 +1171,9 @@ BuildChildFromPerm
     mpi::AllToAll
     ( &sendIndices[0], &indexSendSizes[0], &indexSendOffsets[0],
       &recvIndices[0], &indexRecvSizes[0], &indexRecvOffsets[0], comm );
-    sendIndices.clear();
-    indexSendSizes.clear();
-    indexSendOffsets.clear();
+    std::vector<int>().swap( sendIndices );
+    std::vector<int>().swap( indexSendSizes );
+    std::vector<int>().swap( indexSendOffsets );
 
     // Get the indices after reordering
     perm.Translate( recvIndices );

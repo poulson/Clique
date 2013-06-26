@@ -23,12 +23,12 @@ struct SymmNodeInfo
     //
     // The following is computed during analysis
     //
-    bool isLeftChild;
+    bool onLeft;
     int myOffset;
     std::vector<int> lowerStruct;
     std::vector<int> origLowerRelIndices;
     // (maps from the child update indices to our frontal indices).
-    std::vector<int> leftChildRelIndices, rightChildRelIndices;
+    std::vector<int> leftRelIndices, rightRelIndices;
 };
 
 struct DistSymmNodeInfo
@@ -45,7 +45,7 @@ struct DistSymmNodeInfo
     // The following is computed during analysis
     //
     Grid* grid;
-    int myOffset, leftChildSize, rightChildSize;
+    int myOffset, leftSize, rightSize;
     std::vector<int> lowerStruct;
     std::vector<int> origLowerRelIndices;
 
@@ -53,21 +53,25 @@ struct DistSymmNodeInfo
     // (maps from the child update indices to our frontal indices).
     // These could be replaced with just the relative indices of our local 
     // submatrices of the child updates.
-    std::vector<int> leftChildRelIndices, rightChildRelIndices;
+    std::vector<int> leftRelIndices, rightRelIndices;
 
     // Helpers for the factorization
     std::vector<int> numChildFactSendIndices;
-    std::deque<int> leftChildFactColIndices, leftChildFactRowIndices,
-                    rightChildFactColIndices, rightChildFactRowIndices;
+    std::deque<int> leftFactColIndices, leftFactRowIndices,
+                    rightFactColIndices, rightFactRowIndices;
     // This information does not necessarily have to be kept and can be
     // computed from the above information (albeit somewhat expensively).
     mutable std::vector<std::deque<int> > childFactRecvIndices;
 
     // Helpers for solving with 1d right-hand sides
-    std::deque<int> leftChildSolveIndices, rightChildSolveIndices;
     int localSize1d, localOffset1d;
+    std::deque<int> leftSolveIndices, rightSolveIndices;
     std::vector<int> numChildSolveSendIndices;
     std::vector<std::deque<int> > childSolveRecvIndices;
+
+    // Helpers for solving with 2d right-hand sides
+    int localHeight2d, localWidth2d, localHeightOffset2d, localWidthOffset2d;
+    // TODO
 };
 
 struct DistSymmInfo

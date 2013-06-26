@@ -96,23 +96,21 @@ inline void DistLowerMultiplyNormal
         }
         std::vector<T> sendBuffer( sendBufferSize );
 
-        const bool isLeftChild = childNode.onLeft;
         const std::vector<int>& myChildRelIndices = 
-            ( isLeftChild ? node.leftChildRelIndices
-                          : node.rightChildRelIndices );
+            ( childNode.onLeft ? node.leftRelIndices : node.rightRelIndices );
         const int updateColShift = childUpdate.ColShift();
         const int updateLocalHeight = childUpdate.LocalHeight();
         std::vector<int> packOffsets = sendDispls;
-        for( int iChildLocal=0; iChildLocal<updateLocalHeight; ++iChildLocal )
+        for( int iChildLoc=0; iChildLoc<updateLocalHeight; ++iChildLoc )
         {
-            const int iChild = updateColShift + iChildLocal*childCommSize;
+            const int iChild = updateColShift + iChildLoc*childCommSize;
             const int destRank = myChildRelIndices[iChild] % commSize;
             T* packBuf = &sendBuffer[packOffsets[destRank]];
             for( int jChild=0; jChild<width; ++jChild )
-                packBuf[jChild] = childUpdate.GetLocal(iChildLocal,jChild);
+                packBuf[jChild] = childUpdate.GetLocal(iChildLoc,jChild);
             packOffsets[destRank] += width;
         }
-        packOffsets.clear();
+        std::vector<int>().swap( packOffsets );
         childW.Empty();
         if( s == 1 )
             L.localFronts.back().work.Empty();
@@ -136,9 +134,9 @@ inline void DistLowerMultiplyNormal
         SparseAllToAll
         ( sendBuffer, sendCounts, sendDispls,
           recvBuffer, recvCounts, recvDispls, comm );
-        sendBuffer.clear();
-        sendCounts.clear();
-        sendDispls.clear();
+        std::vector<T>().swap( sendBuffer );
+        std::vector<int>().swap( sendCounts );
+        std::vector<int>().swap( sendDispls );
 
         // Unpack the child updates (with an Axpy)
         for( int proc=0; proc<commSize; ++proc )
@@ -149,17 +147,17 @@ inline void DistLowerMultiplyNormal
             const int numRecvIndices = recvIndices.size();
             for( int k=0; k<numRecvIndices; ++k )
             {
-                const int iFrontLocal = recvIndices[k];
+                const int iFrontLoc = recvIndices[k];
                 const T* recvRow = &recvValues[k*width];
-                T* WRow = W.Buffer( iFrontLocal, 0 );
+                T* WRow = W.Buffer( iFrontLoc, 0 );
                 const int WLDim = W.LDim();
                 for( int jFront=0; jFront<width; ++jFront )
                     WRow[jFront*WLDim] += recvRow[jFront];
             }
         }
-        recvBuffer.clear();
-        recvCounts.clear();
-        recvDispls.clear();
+        std::vector<T>().swap( recvBuffer );
+        std::vector<int>().swap( recvCounts );
+        std::vector<int>().swap( recvDispls );
 
         // Store this node's portion of the result
         localXT = WT.Matrix();
@@ -263,9 +261,9 @@ inline void DistLowerMultiplyTranspose
             const int numRecvIndices = recvIndices.size();
             for( int k=0; k<numRecvIndices; ++k )
             {
-                const int iFrontLocal = recvIndices[k];
+                const int iFrontLoc = recvIndices[k];
                 T* packedRow = &sendValues[k*width];
-                const T* workRow = parentWork.LockedBuffer( iFrontLocal, 0 );
+                const T* workRow = parentWork.LockedBuffer( iFrontLoc, 0 );
                 const int workLDim = parentWork.LDim();
                 for( int jFront=0; jFront<width; ++jFront )
                     packedRow[jFront] = workRow[jFront*workLDim];
@@ -293,30 +291,28 @@ inline void DistLowerMultiplyTranspose
         SparseAllToAll
         ( sendBuffer, sendCounts, sendDispls,
           recvBuffer, recvCounts, recvDispls, parentComm );
-        sendBuffer.clear();
-        sendCounts.clear();
-        sendDispls.clear();
+        std::vector<T>().swap( sendBuffer );
+        std::vector<int>().swap( sendCounts );
+        std::vector<int>().swap( sendDispls );
 
         // Unpack the updates using the send approach from the forward solve
-        const bool isLeftChild = node.onLeft;
         const std::vector<int>& myRelIndices = 
-            ( isLeftChild ? parentNode.leftChildRelIndices
-                          : parentNode.rightChildRelIndices );
+            ( node.onLeft ? parentNode.leftRelIndices
+                          : parentNode.rightRelIndices );
         const int updateColShift = WB.ColShift();
         const int updateLocalHeight = WB.LocalHeight();
-        for( int iUpdateLocal=0; 
-                 iUpdateLocal<updateLocalHeight; ++iUpdateLocal )
+        for( int iUpdateLoc=0; iUpdateLoc<updateLocalHeight; ++iUpdateLoc )
         {
-            const int iUpdate = updateColShift + iUpdateLocal*commSize;
+            const int iUpdate = updateColShift + iUpdateLoc*commSize;
             const int startRank = myRelIndices[iUpdate] % parentCommSize;
             const T* recvBuf = &recvBuffer[recvDispls[startRank]];
             for( int jUpdate=0; jUpdate<width; ++jUpdate )
-                WB.SetLocal(iUpdateLocal,jUpdate,recvBuf[jUpdate]);
+                WB.SetLocal(iUpdateLoc,jUpdate,recvBuf[jUpdate]);
             recvDispls[startRank] += width;
         }
-        recvBuffer.clear();
-        recvCounts.clear();
-        recvDispls.clear();
+        std::vector<T>().swap( recvBuffer );
+        std::vector<int>().swap( recvCounts );
+        std::vector<int>().swap( recvDispls );
 
         // Make a copy of the unmodified RHS
         DistMatrix<T,VC,STAR> XNode( W );

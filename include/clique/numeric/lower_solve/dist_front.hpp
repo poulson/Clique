@@ -150,7 +150,7 @@ void FormDiagonalBlocks
     std::vector<F> recvBuffer( portionSize*commSize );
     mpi::AllGather
     ( &sendBuffer[0], portionSize, &recvBuffer[0], portionSize, g.VCComm() );
-    sendBuffer.clear();
+    std::vector<F>().swap( sendBuffer );
     
     D.ResizeTo( blocksize, height );
     F* DBuffer = D.Buffer();
