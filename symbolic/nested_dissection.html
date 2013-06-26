@@ -204,8 +204,8 @@ ancestors.</p>
 
 <p class="rubric">Computed during analysis</p>
 <dl class="member">
-<dt id="SymmNodeInfo::isLeftChild__b">
-bool <tt class="descname">isLeftChild</tt><a class="headerlink" href="#SymmNodeInfo::isLeftChild__b" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmNodeInfo::onLeft__b">
+bool <tt class="descname">onLeft</tt><a class="headerlink" href="#SymmNodeInfo::onLeft__b" title="Permalink to this definition">¶</a></dt>
 <dd><p>Whether or not this node is a left child (assuming it has a parent).</p>
 </dd></dl>
 
@@ -230,15 +230,15 @@ structure after factorization.</p>
 </dd></dl>
 
 <dl class="member">
-<dt id="SymmNodeInfo::leftChildRelIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">leftChildRelIndices</tt><a class="headerlink" href="#SymmNodeInfo::leftChildRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmNodeInfo::leftRelIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">leftRelIndices</tt><a class="headerlink" href="#SymmNodeInfo::leftRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
 <dd><p>The relative indices of the left child&#8217;s lower structure into this
 structure.</p>
 </dd></dl>
 
 <dl class="member">
-<dt id="SymmNodeInfo::rightChildRelIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">rightChildRelIndices</tt><a class="headerlink" href="#SymmNodeInfo::rightChildRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmNodeInfo::rightRelIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">rightRelIndices</tt><a class="headerlink" href="#SymmNodeInfo::rightRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
 <dd><p>The relative indices of the right child&#8217;s lower structure into this
 structure.</p>
 </dd></dl>
@@ -295,15 +295,14 @@ int <tt class="descname">myOffset</tt><a class="headerlink" href="#DistSymmNodeI
 </dd></dl>
 
 <dl class="member">
-<dt id="DistSymmNodeInfo::leftChildSize__i">
-int <tt class="descname">leftChildSize</tt><a class="headerlink" href="#DistSymmNodeInfo::leftChildSize__i" title="Permalink to this definition">¶</a></dt>
-<dd><p>The number of vertices in the left child (assuming it exists).</p>
-</dd></dl>
+<dt id="DistSymmNodeInfo::leftSize__i">
+int <tt class="descname">leftSize</tt><a class="headerlink" href="#DistSymmNodeInfo::leftSize__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="member">
-<dt id="DistSymmNodeInfo::rightChildSize__i">
-int <tt class="descname">rightChildSize</tt><a class="headerlink" href="#DistSymmNodeInfo::rightChildSize__i" title="Permalink to this definition">¶</a></dt>
-<dd><p>The number of vertices in the right child (assuming it exists).</p>
+<dt id="DistSymmNodeInfo::rightSize__i">
+int <tt class="descname">rightSize</tt><a class="headerlink" href="#DistSymmNodeInfo::rightSize__i" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of vertices in the left/right child (assuming it exists).</p>
 </dd></dl>
 
 <dl class="member">
@@ -321,16 +320,14 @@ structure after factorization.</p>
 </dd></dl>
 
 <dl class="member">
-<dt id="DistSymmNodeInfo::leftChildRelIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">leftChildRelIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::leftChildRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
-<dd><p>The relative indices of the left child&#8217;s lower structure into this
-structure.</p>
-</dd></dl>
+<dt id="DistSymmNodeInfo::leftRelIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">leftRelIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::leftRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="member">
-<dt id="DistSymmNodeInfo::rightChildRelIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">rightChildRelIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::rightChildRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
-<dd><p>The relative indices of the right child&#8217;s lower structure into this
+<dt id="DistSymmNodeInfo::rightRelIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">rightRelIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::rightRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd><p>The relative indices of the left/right child&#8217;s lower structure into this
 structure.</p>
 </dd></dl>
 
@@ -341,24 +338,25 @@ std::vector&lt;int&gt; <tt class="descname">numChildFactSendIndices</tt><a class
 </dd></dl>
 
 <dl class="member">
-<dt id="DistSymmNodeInfo::leftChildFactColIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">leftChildFactColIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::leftChildFactColIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="DistSymmNodeInfo::leftFactColIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">leftFactColIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::leftFactColIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="member">
-<dt id="DistSymmNodeInfo::leftChildFactRowIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">leftChildFactRowIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::leftChildFactRowIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="DistSymmNodeInfo::leftFactRowIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">leftFactRowIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::leftFactRowIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="member">
-<dt id="DistSymmNodeInfo::rightChildFactColIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">rightChildFactColIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::rightChildFactColIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="DistSymmNodeInfo::rightFactColIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">rightFactColIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::rightFactColIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="member">
-<dt id="DistSymmNodeInfo::rightChildFactRowIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">rightChildFactRowIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::rightChildFactRowIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt id="DistSymmNodeInfo::rightFactRowIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">rightFactRowIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::rightFactRowIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd><p><strong>TODO</strong></p>
+</dd></dl>
 
 <dl class="member">
 <dt id="DistSymmNodeInfo::childFactRecvIndices__mutable-std::vector:std::deque:i::">
@@ -366,13 +364,13 @@ mutable std::vector&lt;std::deque&lt;int&gt;&gt; <tt class="descname">childFactR
 <dd></dd></dl>
 
 <dl class="member">
-<dt id="DistSymmNodeInfo::leftChildSolveIndices__std::deque:i:">
-std::deque&lt;int&gt; <tt class="descname">leftChildSolveIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::leftChildSolveIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="DistSymmNodeInfo::leftSolveIndices__std::deque:i:">
+std::deque&lt;int&gt; <tt class="descname">leftSolveIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::leftSolveIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="member">
-<dt id="DistSymmNodeInfo::rightChildSolveIndices__std::deque:i:">
-std::deque&lt;int&gt; <tt class="descname">rightChildSolveIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::rightChildSolveIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="DistSymmNodeInfo::rightSolveIndices__std::deque:i:">
+std::deque&lt;int&gt; <tt class="descname">rightSolveIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::rightSolveIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="member">

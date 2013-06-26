@@ -120,7 +120,7 @@ DistSymmInfo
 
    .. rubric:: Computed during analysis
 
-   .. cpp:member:: bool isLeftChild
+   .. cpp:member:: bool onLeft
 
       Whether or not this node is a left child (assuming it has a parent).
 
@@ -138,12 +138,12 @@ DistSymmInfo
       Maps from the original lower structure to their placement in the 
       structure after factorization.
 
-   .. cpp:member:: std::vector<int> leftChildRelIndices
+   .. cpp:member:: std::vector<int> leftRelIndices
 
       The relative indices of the left child's lower structure into this 
       structure.
 
-   .. cpp:member:: std::vector<int> rightChildRelIndices
+   .. cpp:member:: std::vector<int> rightRelIndices
 
       The relative indices of the right child's lower structure into this 
       structure.
@@ -184,13 +184,10 @@ DistSymmInfo
 
       The sum of the node sizes for all previously ordered nodes.
 
-   .. cpp:member:: int leftChildSize
+   .. cpp:member:: int leftSize
+   .. cpp:member:: int rightSize
 
-      The number of vertices in the left child (assuming it exists).
-
-   .. cpp:member:: int rightChildSize
-
-      The number of vertices in the right child (assuming it exists).
+      The number of vertices in the left/right child (assuming it exists).
 
    .. cpp:member:: std::vector<int> lowerStruct
 
@@ -202,33 +199,27 @@ DistSymmInfo
       Maps from the original lower structure to their placement in the 
       structure after factorization.
 
-   .. cpp:member:: std::vector<int> leftChildRelIndices
+   .. cpp:member:: std::vector<int> leftRelIndices
+   .. cpp:member:: std::vector<int> rightRelIndices
 
-      The relative indices of the left child's lower structure into this 
-      structure.
-
-   .. cpp:member:: std::vector<int> rightChildRelIndices
-
-      The relative indices of the right child's lower structure into this 
+      The relative indices of the left/right child's lower structure into this 
       structure.
 
    .. cpp:member:: std::vector<int> numChildFactSendIndices
 
       **Left off here**
 
-   .. cpp:member:: std::vector<int> leftChildFactColIndices
-
-   .. cpp:member:: std::vector<int> leftChildFactRowIndices
-
-   .. cpp:member:: std::vector<int> rightChildFactColIndices
-
-   .. cpp:member:: std::vector<int> rightChildFactRowIndices
+   .. cpp:member:: std::vector<int> leftFactColIndices
+   .. cpp:member:: std::vector<int> leftFactRowIndices
+   .. cpp:member:: std::vector<int> rightFactColIndices
+   .. cpp:member:: std::vector<int> rightFactRowIndices
+   
+      **TODO**
 
    .. cpp:member:: mutable std::vector<std::deque<int> > childFactRecvIndices
 
-   .. cpp:member:: std::deque<int> leftChildSolveIndices
-
-   .. cpp:member:: std::deque<int> rightChildSolveIndices
+   .. cpp:member:: std::deque<int> leftSolveIndices
+   .. cpp:member:: std::deque<int> rightSolveIndices
 
    .. cpp:member:: int localSize1d
 
