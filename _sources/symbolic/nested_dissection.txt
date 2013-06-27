@@ -184,8 +184,8 @@ DistSymmInfo
 
    .. cpp:member:: int localHeight
    .. cpp:member:: int localWidth
-   .. cpp:member:: int localHeightOffset
-   .. cpp:member:: int localWidthOffset
+   .. cpp:member:: int localColOffset
+   .. cpp:member:: int localRowOffset
 
    .. cpp:member:: std::deque<int> leftIndices
    .. cpp:member:: std::deque<int> rightIndices

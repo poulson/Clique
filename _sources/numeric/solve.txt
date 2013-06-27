@@ -63,7 +63,8 @@ right-hand sides.
 
 .. cpp:type:: struct DistNodalMultiVec<T>
 
-   .. cpp:member:: Matrix<T> multiVec
+   .. cpp:member:: std::vector<Matrix<T> > localNodes
+   .. cpp:member:: std::vector<Matrix<T> > distNodes
 
    .. cpp:function:: DistNodalMultiVec( const DistMap& inverseMap, const DistSymmInfo& info, const DistMultiVec<T>& X )
 
@@ -79,6 +80,10 @@ right-hand sides.
 
       Returns the number of vectors.
 
+   .. cpp:function:: int LocalHeight() const
+
+      Returns the total number of local rows.
+
 .. cpp:type:: struct DistNodalMultiVec<F>
 
    Same as above, but this implies that the underlying datatype `F` is a field.
@@ -91,7 +96,8 @@ there are many right-hand sides (in a sense to be made more specific later).
 
 .. cpp:type:: struct DistNodalMatrix<T>
 
-   .. cpp:member:: Matrix<T> matrix
+   .. cpp:member:: std::vector<Matrix<T> > localNodes
+   .. cpp:member:: std::vector<Matrix<T> > distNodes
 
    .. cpp:function:: DistNodalMatrix( const DistMap& inverseMap, const DistSymmInfo& info, const DistMultiVec<T>& X )
 
