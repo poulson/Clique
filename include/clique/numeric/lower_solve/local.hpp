@@ -51,11 +51,7 @@ inline void LocalLowerForwardSolve
         elem::PartitionDown
         ( W, WT,
              WB, node.size );
-
-        // Pull in the relevant information from the RHS
-        Matrix<F> XT;
-        View( XT, X.multiVec, node.myOffset, 0, node.size, width );
-        WT = XT;
+        WT = X.localNodes[s];
         elem::MakeZeros( WB );
 
         // Update using the children (if they exist)
@@ -105,7 +101,7 @@ inline void LocalLowerForwardSolve
             FrontBlockLowerForwardSolve( frontL, W );
 
         // Store this node's portion of the result
-        XT = WT;
+        X.localNodes[s] = WT;
     }
 }
 
@@ -136,11 +132,7 @@ inline void LocalLowerBackwardSolve
         elem::PartitionDown
         ( W, WT,
              WB, node.size );
-
-        // Pull in the relevant information from the RHS
-        Matrix<F> XT;
-        View( XT, X.multiVec, node.myOffset, 0, node.size, width );
-        WT = XT;
+        WT = X.localNodes[s];
 
         // Update using the parent
         const int parent = node.parent;
@@ -188,7 +180,7 @@ inline void LocalLowerBackwardSolve
             FrontBlockLowerBackwardSolve( orientation, frontL, W );
 
         // Store this node's portion of the result
-        XT = WT;
+        X.localNodes[s] = WT;
     }
 
     // Ensure that all of the temporary buffers are freed (this is overkill)

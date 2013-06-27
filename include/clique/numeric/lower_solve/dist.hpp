@@ -83,17 +83,11 @@ inline void DistLowerForwardSolve
         elem::PartitionDown
         ( W, WT,
              WB, node.size );
-
-        // Pull in the relevant information from the RHS
-        const SolveMetadata1d& solveMeta = node.solveMeta1d;
-        Matrix<F> localXT;
-        View
-        ( localXT, X.multiVec, 
-          solveMeta.localOffset, 0, solveMeta.localSize, width );
-        WT.Matrix() = localXT;
+        WT.Matrix() = X.distNodes[s-1];
         elem::MakeZeros( WB );
 
         // Pack our child's update
+        const SolveMetadata1d& solveMeta = node.solveMeta1d;
         DistMatrix<F,VC,STAR>& childW = childFront.work1d;
         const int updateSize = childW.Height()-childNode.size;
         DistMatrix<F,VC,STAR> childUpdate;
@@ -183,7 +177,7 @@ inline void DistLowerForwardSolve
             FrontBlockLowerForwardSolve( front.front2dL, W );
 
         // Store this node's portion of the result
-        localXT = WT.Matrix();
+        X.distNodes[s-1] = WT.Matrix();
     }
     L.localFronts.back().work.Empty();
     L.distFronts.back().work1d.Empty();
@@ -213,14 +207,11 @@ inline void DistLowerBackwardSolve
 #endif
 
     // Directly operate on the root separator's portion of the right-hand sides
-    Matrix<F>& localX = X.multiVec;
     const DistSymmNodeInfo& rootNode = info.distNodes.back();
     const SymmFront<F>& localRootFront = L.localFronts.back();
     if( numDistNodes == 1 )
     {
-        localRootFront.work.Attach
-        ( rootNode.size, width, 
-          localX.Buffer(rootNode.solveMeta1d.localOffset,0), localX.LDim() );
+        View( localRootFront.work, X.localNodes.back() );
         if( !blockLDL )
             FrontLowerBackwardSolve
             ( orientation, diag, localRootFront.frontL, localRootFront.work );
@@ -233,10 +224,10 @@ inline void DistLowerBackwardSolve
         const DistSymmFront<F>& rootFront = L.distFronts.back();
         const Grid& rootGrid = ( frontsAre1d ? rootFront.front1dL.Grid() 
                                              : rootFront.front2dL.Grid() );
+        Matrix<F>& XRootLoc = X.distNodes.back();
         rootFront.work1d.Attach
         ( rootNode.size, width, 0,
-          localX.Buffer(rootNode.solveMeta1d.localOffset,0), localX.LDim(), 
-          rootGrid );
+          XRootLoc.Buffer(), XRootLoc.LDim(), rootGrid );
         if( frontType == LDL_1D )
             FrontLowerBackwardSolve
             ( orientation, diag, rootFront.front1dL, rootFront.work1d );
@@ -276,13 +267,8 @@ inline void DistLowerBackwardSolve
         elem::PartitionDown
         ( W, WT,
              WB, node.size );
-
-        // Pull in the relevant information from the RHS
-        Matrix<F> localXT;
-        View
-        ( localXT, localX, 
-          node.solveMeta1d.localOffset, 0, node.solveMeta1d.localSize, width );
-        WT.Matrix() = localXT;
+        Matrix<F>& XT = ( s>0 ? X.distNodes[s-1] : X.localNodes.back() );
+        WT.Matrix() = XT;
 
         //
         // Set the bottom from the parent
@@ -390,7 +376,7 @@ inline void DistLowerBackwardSolve
         }
 
         // Store this node's portion of the result
-        localXT = WT.Matrix();
+        XT = WT.Matrix();
     }
 }
 

@@ -13,6 +13,7 @@ namespace cliq {
 template<typename F>
 inline
 DistNodalMultiVec<F>::DistNodalMultiVec()
+: height_(0), width_(0), localHeight_(0)
 { }
 
 template<typename F>
@@ -45,6 +46,9 @@ DistNodalMultiVec<F>::Pull
     const int numDist = info.distNodes.size();
     const int numLocal = info.localNodes.size();
 
+    height_ = height;
+    width_ = width;
+
     // Traverse our part of the elimination tree to see how many indices we need
     int numRecvIndices=0;
     for( int s=0; s<numLocal; ++s )
@@ -65,6 +69,7 @@ DistNodalMultiVec<F>::Pull
 #endif
         numRecvIndices += node.solveMeta1d.localSize;
     }
+    localHeight_ = numRecvIndices;
     
     // Fill the set of indices that we need to map to the original ordering
     int offset=0;
@@ -159,21 +164,22 @@ DistNodalMultiVec<F>::Pull
     std::vector<int>().swap( sendOffsets );
 
     // Unpack the values
-    offset=0;
+    offset = 0;
     offsets = recvOffsets;
-    multiVec.ResizeTo( numRecvIndices, width );
+    localNodes.resize( numLocal );
     for( int s=0; s<numLocal; ++s )
     {
         const SymmNodeInfo& node = info.localNodes[s];
+        localNodes[s].ResizeTo( node.size, width );
         for( int t=0; t<node.size; ++t )
         {
-            const int i = mappedIndices[offset];
+            const int i = mappedIndices[offset++];
             const int q = RowToProcess( i, blocksize, commSize );
             for( int j=0; j<width; ++j )
-                multiVec.Set( offset, j, recvValues[offsets[q]++] );
-            ++offset;
+                localNodes[s].Set( t, j, recvValues[offsets[q]++] );
         }
     }
+    distNodes.resize( numDist-1 );
     for( int s=1; s<numDist; ++s )
     {
         const DistSymmNodeInfo& node = info.distNodes[s];
@@ -182,13 +188,14 @@ DistNodalMultiVec<F>::Pull
         const int gridRank = grid.VCRank();
         const int alignment = 0;
         const int shift = Shift( gridRank, alignment, gridSize );
-        for( int t=shift; t<node.size; t+=gridSize )
+        const int localHeight = Length( node.size, shift, gridSize );
+        distNodes[s-1].ResizeTo( localHeight, width );
+        for( int tLoc=0; tLoc<localHeight; ++tLoc )
         {
-            const int i = mappedIndices[offset];
+            const int i = mappedIndices[offset++];
             const int q = RowToProcess( i, blocksize, commSize );
             for( int j=0; j<width; ++j )
-                multiVec.Set( offset, j, recvValues[offsets[q]++] );
-            ++offset;
+                distNodes[s-1].Set( tLoc, j, recvValues[offsets[q]++] );
         }
     }
 #ifndef RELEASE
@@ -209,7 +216,7 @@ DistNodalMultiVec<F>::Push
     const DistSymmNodeInfo& rootNode = info.distNodes.back();
     mpi::Comm comm = rootNode.comm;
     const int height = rootNode.size + rootNode.offset;
-    const int width = multiVec.Width();
+    const int width = Width();
     X.SetComm( comm );
     X.ResizeTo( height, width );
 
@@ -221,7 +228,7 @@ DistNodalMultiVec<F>::Push
     const int numLocal = info.localNodes.size();
 
     // Fill the set of indices that we need to map to the original ordering
-    const int numSendIndices = multiVec.Height();
+    const int numSendIndices = LocalHeight();
     int offset=0;
     std::vector<int> mappedIndices( numSendIndices );
     for( int s=0; s<numLocal; ++s )
@@ -266,15 +273,36 @@ DistNodalMultiVec<F>::Push
     std::vector<F> sendValues( numSendIndices*width );
     std::vector<int> sendIndices( numSendIndices );
     std::vector<int> offsets = sendOffsets;
-    for( int s=0; s<numSendIndices; ++s )
+    for( int s=0; s<numLocal; ++s )
     {
-        const int i = mappedIndices[s];
-        const int q = RowToProcess( i, blocksize, commSize );
-        sendIndices[offsets[q]] = i;
-        for( int j=0; j<width; ++j )
-            sendValues[offsets[q]*width+j] = multiVec.Get(offset,j);
-        ++offset;
-        ++offsets[q];
+        const SymmNodeInfo& node = info.localNodes[s];
+        for( int t=0; t<node.size; ++t )
+        {
+            const int i = mappedIndices[offset++];
+            const int q = RowToProcess( i, blocksize, commSize );
+            for( int j=0; j<width; ++j )
+                sendValues[offsets[q]*width+j] = localNodes[s].Get(t,j);    
+            sendIndices[offsets[q]++] = i;
+        }
+    }
+    for( int s=1; s<numDist; ++s )
+    {
+        const DistSymmNodeInfo& node = info.distNodes[s];
+        const Grid& grid = *node.grid;
+        const int gridSize = grid.Size();
+        const int gridRank = grid.VCRank();
+        const int alignment = 0;
+        const int shift = Shift( gridRank, alignment, gridSize );
+        const int localHeight = Length( node.size, shift, gridSize );
+
+        for( int tLoc=0; tLoc<localHeight; ++tLoc )
+        {
+            const int i = mappedIndices[offset++];
+            const int q = RowToProcess( i, blocksize, commSize );
+            for( int j=0; j<width; ++j )
+                sendValues[offsets[q]*width+j] = distNodes[s-1].Get(tLoc,j);
+            sendIndices[offsets[q]++] = i;
+        }
     }
 
     // Coordinate for the coming AllToAll to exchange the indices of x
@@ -336,6 +364,11 @@ DistNodalMultiVec<F>::Height() const
 template<typename F>
 inline int
 DistNodalMultiVec<F>::Width() const
-{ return multiVec.Width(); }
+{ return width_; }
+
+template<typename F>
+inline int
+DistNodalMultiVec<F>::LocalHeight() const
+{ return localHeight_; }
 
 } // namespace cliq

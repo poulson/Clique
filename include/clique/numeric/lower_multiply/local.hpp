@@ -47,11 +47,7 @@ inline void LocalLowerMultiplyNormal
         elem::PartitionDown
         ( W, WT,
              WB, node.size );
-
-        // Pull in the relevant information from the RHS
-        Matrix<T> XT;
-        View( XT, X.multiVec, node.myOffset, 0, node.size, width );
-        WT = XT;
+        WT = X.localNodes[s];
         elem::MakeZeros( WB );
 
         // Multiply this block column of L against this node's portion of the
@@ -99,7 +95,7 @@ inline void LocalLowerMultiplyNormal
         // else numChildren == 0 
 
         // Store this node's portion of the result
-        XT = WT;
+        X.localNodes[s] = WT;
     }
 }
 
@@ -127,11 +123,7 @@ inline void LocalLowerMultiplyTranspose
         elem::PartitionDown
         ( W, WT,
              WB, node.size );
-
-        // Pull in the relevant information from the RHS
-        Matrix<T> XT;
-        View( XT, X.multiVec, node.myOffset, 0, node.size, width );
-        WT = XT;
+        WT = X.localNodes[s];
 
         // Update using the parent's portion of the RHS
         const int parent = node.parent;
@@ -169,7 +161,7 @@ inline void LocalLowerMultiplyTranspose
         elem::PartitionDown
         ( XNode, XNodeT,
                  XNodeB, node.size );
-        XT = XNodeT;
+        X.localNodes[s] = XNodeT;
         XNode.Empty();
     }
     L.distFronts[0].work1d.Empty();

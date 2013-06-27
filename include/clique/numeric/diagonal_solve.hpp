@@ -38,19 +38,16 @@ inline void LocalDiagonalSolve
     CallStackEntry entry("LocalDiagonalSolve");
 #endif
     const int numLocalNodes = info.localNodes.size();
-    const int width = X.Width();
-    Matrix<F> XSub;
     for( int s=0; s<numLocalNodes; ++s )
     {
         const SymmNodeInfo& node = info.localNodes[s];
         const Matrix<F>& frontL = L.localFronts[s].frontL;
-        View( XSub, X.multiVec, node.myOffset, 0, node.size, width );
 
         Matrix<F> frontTL;
         LockedView( frontTL, frontL, 0, 0, node.size, node.size );
         Matrix<F> d;
         frontTL.GetDiagonal( d );
-        elem::DiagonalSolve( LEFT, NORMAL, d, XSub, true );
+        elem::DiagonalSolve( LEFT, NORMAL, d, X.localNodes[s], true );
     }
 }
 
@@ -63,20 +60,11 @@ void DistDiagonalSolve
     CallStackEntry entry("DistDiagonalSolve");
 #endif
     const int numDistNodes = info.distNodes.size();
-    const int width = X.Width();
-
     for( int s=1; s<numDistNodes; ++s )
     {
-        const DistSymmNodeInfo& node = info.distNodes[s];
         const DistSymmFront<F>& front = L.distFronts[s];
-
-        Matrix<F> localXT;
-        View
-        ( localXT, X.multiVec, 
-          node.solveMeta1d.localOffset, 0, node.solveMeta1d.localSize, width );
-
         elem::DiagonalSolve
-        ( LEFT, NORMAL, front.diag.LockedMatrix(), localXT, true );
+        ( LEFT, NORMAL, front.diag.LockedMatrix(), X.distNodes[s-1], true );
     }
 }
 

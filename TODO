@@ -1,5 +1,11 @@
+Functionality
+=============
 - Finish implementing DistNodalMatrix
 - Implement versions of Solve routines which supports DistNodalMatrix
+- Implement faster sparse mat-vec
+
+Maintenance
+===========
 - Switch from current flat layout for supernodal trees into an actual (custom) 
   tree data structure
 - Convert to header-file structure which is similar to Elemental

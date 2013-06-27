@@ -16,7 +16,7 @@ template<typename F>
 class DistNodalMultiVec
 {
 public:
-    Matrix<F> multiVec;
+    std::vector<Matrix<F> > localNodes, distNodes;
 
     DistNodalMultiVec();
     DistNodalMultiVec
@@ -33,8 +33,10 @@ public:
     int Height() const;
     int Width() const;
 
+    int LocalHeight() const;
+
 private:
-    int height_;
+    int height_, width_, localHeight_;
 };
 
 } // namespace cliq

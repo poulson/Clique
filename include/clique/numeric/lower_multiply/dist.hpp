@@ -69,20 +69,14 @@ inline void DistLowerMultiplyNormal
         elem::PartitionDown
         ( W, WT,
              WB, node.size );
-
-        // Pull in the relevant information from the RHS
-        const SolveMetadata1d& solveMeta = node.solveMeta1d;
-        Matrix<T> localXT;
-        View
-        ( localXT, X.multiVec, 
-          solveMeta.localOffset, 0, solveMeta.localSize, width );
-        WT.Matrix() = localXT;
+        WT.Matrix() = X.distNodes[s-1];
         elem::MakeZeros( WB );
 
         // Now that the right-hand side is set up, perform the multiply
         FrontLowerMultiply( NORMAL, diag, diagOffset, front.front1dL, W );
 
         // Pack our child's update
+        const SolveMetadata1d& solveMeta = node.solveMeta1d;
         DistMatrix<T,VC,STAR>& childW = childFront.work1d;
         const int updateSize = childW.Height()-childNode.size;
         DistMatrix<T,VC,STAR> childUpdate;
@@ -162,7 +156,7 @@ inline void DistLowerMultiplyNormal
         std::vector<int>().swap( recvDispls );
 
         // Store this node's portion of the result
-        localXT = WT.Matrix();
+        X.distNodes[s-1] = WT.Matrix();
     }
     L.localFronts.back().work.Empty();
     L.distFronts.back().work1d.Empty();
@@ -183,15 +177,11 @@ inline void DistLowerMultiplyTranspose
         throw std::logic_error("This multiply mode is not yet implemented");
 
     // Directly operate on the root separator's portion of the right-hand sides
-    Matrix<T>& localX = X.multiVec;
     const DistSymmNodeInfo& rootNode = info.distNodes.back();
     const SymmFront<T>& localRootFront = L.localFronts.back();
     if( numDistNodes == 1 )
     {
-        Matrix<T> XRoot;
-        View
-        ( XRoot, rootNode.size, width, 
-          localX.Buffer(rootNode.solveMeta1d.localOffset,0), localX.LDim() );
+        Matrix<T>& XRoot = X.localNodes.back();
         localRootFront.work = XRoot;
         FrontLowerMultiply
         ( orientation, diag, diagOffset, localRootFront.frontL, XRoot );
@@ -200,11 +190,11 @@ inline void DistLowerMultiplyTranspose
     {
         const DistSymmFront<T>& rootFront = L.distFronts.back();
         const Grid& rootGrid = rootFront.front1dL.Grid();
+        Matrix<T>& XRootLoc = X.distNodes.back();
         DistMatrix<T,VC,STAR> XRoot(rootGrid);
         View
         ( XRoot, rootNode.size, width, 0,
-          localX.Buffer(rootNode.solveMeta1d.localOffset,0), localX.LDim(), 
-          rootGrid );
+          XRootLoc.Buffer(), XRootLoc.LDim(), rootGrid );
         rootFront.work1d = XRoot; // store the RHS for use by the children
         FrontLowerMultiply
         ( orientation, diag, diagOffset, rootFront.front1dL, XRoot );
@@ -231,12 +221,7 @@ inline void DistLowerMultiplyTranspose
         elem::PartitionDown
         ( W, WT,
              WB, node.size );
-
-        // Pull in the relevant information from the RHS
-        Matrix<T> localXT;
-        View
-        ( localXT, localX, 
-          node.solveMeta1d.localOffset, 0, node.solveMeta1d.localSize, width );
+        Matrix<T>& localXT = ( s>0 ? X.distNodes[s-1] : X.localNodes.back() );
         WT.Matrix() = localXT;
 
         //

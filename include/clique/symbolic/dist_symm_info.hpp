@@ -74,7 +74,7 @@ struct SolveMetadata1d
 
 struct SolveMetadata2d
 {
-    int localHeight, localWidth, localHeightOffset, localWidthOffset;
+    int localHeight, localWidth, localColOffset, localRowOffset;
     std::deque<int> leftIndices, rightIndices;
     std::vector<int> numChildSendIndices;
     std::vector<std::deque<int> > childRecvIndices;
