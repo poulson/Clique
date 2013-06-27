@@ -60,10 +60,10 @@ DistNodalMultiVec<F>::Pull
     {
         const DistSymmNodeInfo& node = info.distNodes[s];
 #ifndef RELEASE
-        if( numRecvIndices != node.localOffset1d )
+        if( numRecvIndices != node.solveMeta1d.localOffset )
             throw std::logic_error("numRecvIndices did not match dist offset");
 #endif
-        numRecvIndices += node.localSize1d;
+        numRecvIndices += node.solveMeta1d.localSize;
     }
     
     // Fill the set of indices that we need to map to the original ordering

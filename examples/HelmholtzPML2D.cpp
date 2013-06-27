@@ -274,7 +274,7 @@ main( int argc, char* argv[] )
             if( commRank == 0 )
                 std::cout << "lowerHalf=" << lowerHalf
                           << ", upperHalf=" << upperHalf << std::endl;
-            DistMatrix<C> offDiagBlock;
+            DistMatrix<C> offDiagBlock( grid );
             LockedView
             ( offDiagBlock, front, lowerHalf, 0, upperHalf, lowerHalf );
             DistMatrix<C> offDiagBlockCopy( offDiagBlock );

@@ -85,9 +85,11 @@ inline void DistLowerForwardSolve
              WB, node.size );
 
         // Pull in the relevant information from the RHS
+        const SolveMetadata1d& solveMeta = node.solveMeta1d;
         Matrix<F> localXT;
         View
-        ( localXT, X.multiVec, node.localOffset1d, 0, node.localSize1d, width );
+        ( localXT, X.multiVec, 
+          solveMeta.localOffset, 0, solveMeta.localSize, width );
         WT.Matrix() = localXT;
         elem::MakeZeros( WB );
 
@@ -100,7 +102,7 @@ inline void DistLowerForwardSolve
         std::vector<int> sendCounts(commSize), sendDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int sendSize = node.numChildSolveSendIndices[proc]*width;
+            const int sendSize = solveMeta.numChildSendIndices[proc]*width;
             sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += sendSize;
@@ -132,7 +134,7 @@ inline void DistLowerForwardSolve
         std::vector<int> recvCounts(commSize), recvDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int recvSize = node.childSolveRecvIndices[proc].size()*width;
+            const int recvSize = solveMeta.childRecvIndices[proc].size()*width;
             recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += recvSize;
@@ -155,7 +157,7 @@ inline void DistLowerForwardSolve
         {
             const F* recvValues = &recvBuffer[recvDispls[proc]];
             const std::deque<int>& recvIndices = 
-                node.childSolveRecvIndices[proc];
+                solveMeta.childRecvIndices[proc];
             for( unsigned k=0; k<recvIndices.size(); ++k )
             {
                 const int iFrontLoc = recvIndices[k];
@@ -218,7 +220,7 @@ inline void DistLowerBackwardSolve
     {
         localRootFront.work.Attach
         ( rootNode.size, width, 
-          localX.Buffer(rootNode.localOffset1d,0), localX.LDim() );
+          localX.Buffer(rootNode.solveMeta1d.localOffset,0), localX.LDim() );
         if( !blockLDL )
             FrontLowerBackwardSolve
             ( orientation, diag, localRootFront.frontL, localRootFront.work );
@@ -233,7 +235,8 @@ inline void DistLowerBackwardSolve
                                              : rootFront.front2dL.Grid() );
         rootFront.work1d.Attach
         ( rootNode.size, width, 0,
-          localX.Buffer(rootNode.localOffset1d,0), localX.LDim(), rootGrid );
+          localX.Buffer(rootNode.solveMeta1d.localOffset,0), localX.LDim(), 
+          rootGrid );
         if( frontType == LDL_1D )
             FrontLowerBackwardSolve
             ( orientation, diag, rootFront.front1dL, rootFront.work1d );
@@ -276,7 +279,9 @@ inline void DistLowerBackwardSolve
 
         // Pull in the relevant information from the RHS
         Matrix<F> localXT;
-        View( localXT, localX, node.localOffset1d, 0, node.localSize1d, width );
+        View
+        ( localXT, localX, 
+          node.solveMeta1d.localOffset, 0, node.solveMeta1d.localSize, width );
         WT.Matrix() = localXT;
 
         //
@@ -284,12 +289,12 @@ inline void DistLowerBackwardSolve
         //
 
         // Pack the updates using the recv approach from the forward solve
+        const SolveMetadata1d& solveMeta = parentNode.solveMeta1d;
         int sendBufferSize = 0;
         std::vector<int> sendCounts(parentCommSize), sendDispls(parentCommSize);
         for( int proc=0; proc<parentCommSize; ++proc )
         {
-            const int sendSize = 
-                parentNode.childSolveRecvIndices[proc].size()*width;
+            const int sendSize = solveMeta.childRecvIndices[proc].size()*width;
             sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += sendSize;
@@ -301,7 +306,7 @@ inline void DistLowerBackwardSolve
         {
             F* sendValues = &sendBuffer[sendDispls[proc]];
             const std::deque<int>& recvIndices = 
-                parentNode.childSolveRecvIndices[proc];
+                solveMeta.childRecvIndices[proc];
             for( unsigned k=0; k<recvIndices.size(); ++k )
             {
                 const int iFrontLoc = recvIndices[k];
@@ -319,8 +324,7 @@ inline void DistLowerBackwardSolve
         std::vector<int> recvCounts(parentCommSize), recvDispls(parentCommSize);
         for( int proc=0; proc<parentCommSize; ++proc )
         {
-            const int recvSize = 
-                parentNode.numChildSolveSendIndices[proc]*width;
+            const int recvSize = solveMeta.numChildSendIndices[proc]*width;
             recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += recvSize;

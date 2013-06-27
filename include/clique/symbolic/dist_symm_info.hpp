@@ -31,6 +31,63 @@ struct SymmNodeInfo
     std::vector<int> leftRelIndices, rightRelIndices;
 };
 
+struct FactorMetadata
+{
+    std::vector<int> numChildSendIndices;
+    std::deque<int> leftColIndices, leftRowIndices,
+                    rightColIndices, rightRowIndices;
+    // This information does not necessarily have to be kept and can be
+    // computed from the above information (albeit somewhat expensively).
+    mutable std::vector<std::deque<int> > childRecvIndices;
+
+    void EmptyChildRecvIndices() const
+    {
+        std::vector<std::deque<int> >().swap( childRecvIndices );
+    }
+
+    void Empty()
+    {
+        std::deque<int>().swap( leftColIndices );
+        std::deque<int>().swap( leftRowIndices );
+        std::deque<int>().swap( rightColIndices );
+        std::deque<int>().swap( rightRowIndices );
+        std::vector<int>().swap( numChildSendIndices );
+        EmptyChildRecvIndices();
+    }
+};
+
+struct SolveMetadata1d
+{
+    int localSize, localOffset;
+    std::deque<int> leftIndices, rightIndices;
+    std::vector<int> numChildSendIndices;
+    std::vector<std::deque<int> > childRecvIndices;
+
+    void Empty()
+    {
+        std::deque<int>().swap( leftIndices );
+        std::deque<int>().swap( rightIndices );
+        std::vector<int>().swap( numChildSendIndices );
+        std::vector<std::deque<int> >().swap( childRecvIndices );
+    }
+};
+
+struct SolveMetadata2d
+{
+    int localHeight, localWidth, localHeightOffset, localWidthOffset;
+    std::deque<int> leftIndices, rightIndices;
+    std::vector<int> numChildSendIndices;
+    std::vector<std::deque<int> > childRecvIndices;
+
+    void Empty()
+    {
+        std::deque<int>().swap( leftIndices );
+        std::deque<int>().swap( rightIndices );
+        std::vector<int>().swap( numChildSendIndices );
+        std::vector<std::deque<int> >().swap( childRecvIndices );
+    }
+};
+
 struct DistSymmNodeInfo
 {
     //
@@ -55,23 +112,9 @@ struct DistSymmNodeInfo
     // submatrices of the child updates.
     std::vector<int> leftRelIndices, rightRelIndices;
 
-    // Helpers for the factorization
-    std::vector<int> numChildFactSendIndices;
-    std::deque<int> leftFactColIndices, leftFactRowIndices,
-                    rightFactColIndices, rightFactRowIndices;
-    // This information does not necessarily have to be kept and can be
-    // computed from the above information (albeit somewhat expensively).
-    mutable std::vector<std::deque<int> > childFactRecvIndices;
-
-    // Helpers for solving with 1d right-hand sides
-    int localSize1d, localOffset1d;
-    std::deque<int> leftSolveIndices, rightSolveIndices;
-    std::vector<int> numChildSolveSendIndices;
-    std::vector<std::deque<int> > childSolveRecvIndices;
-
-    // Helpers for solving with 2d right-hand sides
-    int localHeight2d, localWidth2d, localHeightOffset2d, localWidthOffset2d;
-    // TODO
+    FactorMetadata factorMeta;
+    SolveMetadata1d solveMeta1d;
+    SolveMetadata2d solveMeta2d;
 };
 
 struct DistSymmInfo
@@ -104,8 +147,8 @@ DistSymmInfo::StoreReordered( std::vector<int>& reordered ) const
 #ifndef RELEASE
     CallStackEntry entry("DistSymmInfo::StoreReordered");
 #endif
-    const int localSize = distNodes.back().localOffset1d +
-                          distNodes.back().localSize1d;
+    const int localSize = distNodes.back().solveMeta1d.localOffset +
+                          distNodes.back().solveMeta1d.localSize;
     reordered.resize( localSize );
 
     int localOffset=0;

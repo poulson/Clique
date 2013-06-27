@@ -71,9 +71,11 @@ inline void DistLowerMultiplyNormal
              WB, node.size );
 
         // Pull in the relevant information from the RHS
+        const SolveMetadata1d& solveMeta = node.solveMeta1d;
         Matrix<T> localXT;
         View
-        ( localXT, X.multiVec, node.localOffset1d, 0, node.localSize1d, width );
+        ( localXT, X.multiVec, 
+          solveMeta.localOffset, 0, solveMeta.localSize, width );
         WT.Matrix() = localXT;
         elem::MakeZeros( WB );
 
@@ -89,7 +91,7 @@ inline void DistLowerMultiplyNormal
         std::vector<int> sendCounts(commSize), sendDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int sendSize = node.numChildSolveSendIndices[proc]*width;
+            const int sendSize = solveMeta.numChildSendIndices[proc]*width;
             sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += sendSize;
@@ -120,7 +122,7 @@ inline void DistLowerMultiplyNormal
         std::vector<int> recvCounts(commSize), recvDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int recvSize = node.childSolveRecvIndices[proc].size()*width;
+            const int recvSize = solveMeta.childRecvIndices[proc].size()*width;
             recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += recvSize;
@@ -143,7 +145,7 @@ inline void DistLowerMultiplyNormal
         {
             const T* recvValues = &recvBuffer[recvDispls[proc]];
             const std::deque<int>& recvIndices = 
-                node.childSolveRecvIndices[proc];
+                solveMeta.childRecvIndices[proc];
             const int numRecvIndices = recvIndices.size();
             for( int k=0; k<numRecvIndices; ++k )
             {
@@ -189,7 +191,7 @@ inline void DistLowerMultiplyTranspose
         Matrix<T> XRoot;
         View
         ( XRoot, rootNode.size, width, 
-          localX.Buffer(rootNode.localOffset1d,0), localX.LDim() );
+          localX.Buffer(rootNode.solveMeta1d.localOffset,0), localX.LDim() );
         localRootFront.work = XRoot;
         FrontLowerMultiply
         ( orientation, diag, diagOffset, localRootFront.frontL, XRoot );
@@ -201,7 +203,8 @@ inline void DistLowerMultiplyTranspose
         DistMatrix<T,VC,STAR> XRoot(rootGrid);
         View
         ( XRoot, rootNode.size, width, 0,
-          localX.Buffer(rootNode.localOffset1d,0), localX.LDim(), rootGrid );
+          localX.Buffer(rootNode.solveMeta1d.localOffset,0), localX.LDim(), 
+          rootGrid );
         rootFront.work1d = XRoot; // store the RHS for use by the children
         FrontLowerMultiply
         ( orientation, diag, diagOffset, rootFront.front1dL, XRoot );
@@ -231,7 +234,9 @@ inline void DistLowerMultiplyTranspose
 
         // Pull in the relevant information from the RHS
         Matrix<T> localXT;
-        View( localXT, localX, node.localOffset1d, 0, node.localSize1d, width );
+        View
+        ( localXT, localX, 
+          node.solveMeta1d.localOffset, 0, node.solveMeta1d.localSize, width );
         WT.Matrix() = localXT;
 
         //
@@ -240,12 +245,13 @@ inline void DistLowerMultiplyTranspose
 
         // Pack the relevant portions of the parent's RHS's
         // (which are stored in 'work1d')
+        const SolveMetadata1d& solveMeta = parentNode.solveMeta1d;
         int sendBufferSize = 0;
         std::vector<int> sendCounts(parentCommSize), sendDispls(parentCommSize);
         for( int proc=0; proc<parentCommSize; ++proc )
         {
             const int sendSize = 
-                parentNode.childSolveRecvIndices[proc].size()*width;
+                solveMeta.childRecvIndices[proc].size()*width;
             sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += sendSize;
@@ -257,7 +263,7 @@ inline void DistLowerMultiplyTranspose
         {
             T* sendValues = &sendBuffer[sendDispls[proc]];
             const std::deque<int>& recvIndices = 
-                parentNode.childSolveRecvIndices[proc];
+                solveMeta.childRecvIndices[proc];
             const int numRecvIndices = recvIndices.size();
             for( int k=0; k<numRecvIndices; ++k )
             {
@@ -276,8 +282,7 @@ inline void DistLowerMultiplyTranspose
         std::vector<int> recvCounts(parentCommSize), recvDispls(parentCommSize);
         for( int proc=0; proc<parentCommSize; ++proc )
         {
-            const int recvSize = 
-                parentNode.numChildSolveSendIndices[proc]*width;
+            const int recvSize = solveMeta.numChildSendIndices[proc]*width;
             recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += recvSize;

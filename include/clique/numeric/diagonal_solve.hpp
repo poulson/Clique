@@ -72,7 +72,8 @@ void DistDiagonalSolve
 
         Matrix<F> localXT;
         View
-        ( localXT, X.multiVec, node.localOffset1d, 0, node.localSize1d, width );
+        ( localXT, X.multiVec, 
+          node.solveMeta1d.localOffset, 0, node.solveMeta1d.localSize, width );
 
         elem::DiagonalSolve
         ( LEFT, NORMAL, front.diag.LockedMatrix(), localXT, true );
