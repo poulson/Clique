@@ -232,15 +232,152 @@ structure after factorization.</p>
 <dl class="member">
 <dt id="SymmNodeInfo::leftRelIndices__std::vector:i:">
 std::vector&lt;int&gt; <tt class="descname">leftRelIndices</tt><a class="headerlink" href="#SymmNodeInfo::leftRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
-<dd><p>The relative indices of the left child&#8217;s lower structure into this
-structure.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="member">
 <dt id="SymmNodeInfo::rightRelIndices__std::vector:i:">
 std::vector&lt;int&gt; <tt class="descname">rightRelIndices</tt><a class="headerlink" href="#SymmNodeInfo::rightRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
-<dd><p>The relative indices of the right child&#8217;s lower structure into this
+<dd><p>The relative indices of the left/right child&#8217;s lower structure into this
 structure.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="type">
+<dt id="FactorMetadata__struct">
+<em class="property">type </em>struct <tt class="descname">FactorMetadata</tt><a class="headerlink" href="#FactorMetadata__struct" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="member">
+<dt id="FactorMetadata::numChildSendIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">numChildSendIndices</tt><a class="headerlink" href="#FactorMetadata::numChildSendIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="FactorMetadata::leftColIndices__std::deque:i:">
+std::deque&lt;int&gt; <tt class="descname">leftColIndices</tt><a class="headerlink" href="#FactorMetadata::leftColIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="FactorMetadata::leftRowIndices__std::deque:i:">
+std::deque&lt;int&gt; <tt class="descname">leftRowIndices</tt><a class="headerlink" href="#FactorMetadata::leftRowIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="FactorMetadata::rightColIndices__std::deque:i:">
+std::deque&lt;int&gt; <tt class="descname">rightColIndices</tt><a class="headerlink" href="#FactorMetadata::rightColIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="FactorMetadata::rightRowIndices__std::deque:i:">
+std::deque&lt;int&gt; <tt class="descname">rightRowIndices</tt><a class="headerlink" href="#FactorMetadata::rightRowIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="FactorMetadata::childRecvIndices__mutable-std::vector:std::deque:i::">
+mutable std::vector&lt;std::deque&lt;int&gt;&gt; <tt class="descname">childRecvIndices</tt><a class="headerlink" href="#FactorMetadata::childRecvIndices__mutable-std::vector:std::deque:i::" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="FactorMetadata::EmptyChildRecvIndicesC">
+void <tt class="descname">EmptyChildRecvIndices</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#FactorMetadata::EmptyChildRecvIndicesC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clears <tt class="docutils literal"><span class="pre">childRecvIndices</span></tt></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="FactorMetadata::Empty">
+void <tt class="descname">Empty</tt><big>(</big><big>)</big><a class="headerlink" href="#FactorMetadata::Empty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clears all members of structure</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="type">
+<dt id="SolveMetadata1d__struct">
+<em class="property">type </em>struct <tt class="descname">SolveMetadata1d</tt><a class="headerlink" href="#SolveMetadata1d__struct" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="member">
+<dt id="SolveMetadata1d::localSize__i">
+int <tt class="descname">localSize</tt><a class="headerlink" href="#SolveMetadata1d::localSize__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="SolveMetadata1d::localOffset__i">
+int <tt class="descname">localOffset</tt><a class="headerlink" href="#SolveMetadata1d::localOffset__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="SolveMetadata1d::leftIndices__std::deque:i:">
+std::deque&lt;int&gt; <tt class="descname">leftIndices</tt><a class="headerlink" href="#SolveMetadata1d::leftIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="SolveMetadata1d::rightIndices__std::deque:i:">
+std::deque&lt;int&gt; <tt class="descname">rightIndices</tt><a class="headerlink" href="#SolveMetadata1d::rightIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="SolveMetadata1d::numChildSendIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">numChildSendIndices</tt><a class="headerlink" href="#SolveMetadata1d::numChildSendIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="SolveMetadata1d::childRecvIndices__std::vector:std::deque:i::">
+std::vector&lt;std::deque&lt;int&gt;&gt; <tt class="descname">childRecvIndices</tt><a class="headerlink" href="#SolveMetadata1d::childRecvIndices__std::vector:std::deque:i::" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="SolveMetadata1d::Empty">
+void <tt class="descname">Empty</tt><big>(</big><big>)</big><a class="headerlink" href="#SolveMetadata1d::Empty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clears all members of structure</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="type">
+<dt id="SolveMetadata2d__struct">
+<em class="property">type </em>struct <tt class="descname">SolveMetadata2d</tt><a class="headerlink" href="#SolveMetadata2d__struct" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="member">
+<dt id="SolveMetadata2d::localHeight__i">
+int <tt class="descname">localHeight</tt><a class="headerlink" href="#SolveMetadata2d::localHeight__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="SolveMetadata2d::localWidth__i">
+int <tt class="descname">localWidth</tt><a class="headerlink" href="#SolveMetadata2d::localWidth__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="SolveMetadata2d::localHeightOffset__i">
+int <tt class="descname">localHeightOffset</tt><a class="headerlink" href="#SolveMetadata2d::localHeightOffset__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="SolveMetadata2d::localWidthOffset__i">
+int <tt class="descname">localWidthOffset</tt><a class="headerlink" href="#SolveMetadata2d::localWidthOffset__i" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="SolveMetadata2d::leftIndices__std::deque:i:">
+std::deque&lt;int&gt; <tt class="descname">leftIndices</tt><a class="headerlink" href="#SolveMetadata2d::leftIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="SolveMetadata2d::rightIndices__std::deque:i:">
+std::deque&lt;int&gt; <tt class="descname">rightIndices</tt><a class="headerlink" href="#SolveMetadata2d::rightIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="SolveMetadata2d::numChildSendIndices__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">numChildSendIndices</tt><a class="headerlink" href="#SolveMetadata2d::numChildSendIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="SolveMetadata2d::childRecvIndices__std::vector:std::deque:i::">
+std::vector&lt;std::deque&lt;int&gt;&gt; <tt class="descname">childRecvIndices</tt><a class="headerlink" href="#SolveMetadata2d::childRecvIndices__std::vector:std::deque:i::" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="SolveMetadata2d::Empty">
+void <tt class="descname">Empty</tt><big>(</big><big>)</big><a class="headerlink" href="#SolveMetadata2d::Empty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clears all members of structure</p>
 </dd></dl>
 
 </dd></dl>
@@ -332,65 +469,18 @@ structure.</p>
 </dd></dl>
 
 <dl class="member">
-<dt id="DistSymmNodeInfo::numChildFactSendIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">numChildFactSendIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::numChildFactSendIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
-<dd><p><strong>Left off here</strong></p>
-</dd></dl>
-
-<dl class="member">
-<dt id="DistSymmNodeInfo::leftFactColIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">leftFactColIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::leftFactColIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="DistSymmNodeInfo::factorMeta__FactorMetadata">
+<a class="reference internal" href="#FactorMetadata__struct" title="FactorMetadata">FactorMetadata</a> <tt class="descname">factorMeta</tt><a class="headerlink" href="#DistSymmNodeInfo::factorMeta__FactorMetadata" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="member">
-<dt id="DistSymmNodeInfo::leftFactRowIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">leftFactRowIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::leftFactRowIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="DistSymmNodeInfo::solveMeta1d__SolveMetadata1d">
+<a class="reference internal" href="#SolveMetadata1d__struct" title="SolveMetadata1d">SolveMetadata1d</a> <tt class="descname">solveMeta1d</tt><a class="headerlink" href="#DistSymmNodeInfo::solveMeta1d__SolveMetadata1d" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="member">
-<dt id="DistSymmNodeInfo::rightFactColIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">rightFactColIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::rightFactColIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="member">
-<dt id="DistSymmNodeInfo::rightFactRowIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">rightFactRowIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::rightFactRowIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
-<dd><p><strong>TODO</strong></p>
-</dd></dl>
-
-<dl class="member">
-<dt id="DistSymmNodeInfo::childFactRecvIndices__mutable-std::vector:std::deque:i::">
-mutable std::vector&lt;std::deque&lt;int&gt;&gt; <tt class="descname">childFactRecvIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::childFactRecvIndices__mutable-std::vector:std::deque:i::" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="member">
-<dt id="DistSymmNodeInfo::leftSolveIndices__std::deque:i:">
-std::deque&lt;int&gt; <tt class="descname">leftSolveIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::leftSolveIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="member">
-<dt id="DistSymmNodeInfo::rightSolveIndices__std::deque:i:">
-std::deque&lt;int&gt; <tt class="descname">rightSolveIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::rightSolveIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="member">
-<dt id="DistSymmNodeInfo::localSize1d__i">
-int <tt class="descname">localSize1d</tt><a class="headerlink" href="#DistSymmNodeInfo::localSize1d__i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="member">
-<dt id="DistSymmNodeInfo::localOffset1d__i">
-int <tt class="descname">localOffset1d</tt><a class="headerlink" href="#DistSymmNodeInfo::localOffset1d__i" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="member">
-<dt id="DistSymmNodeInfo::numChildSolveSendIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">numChildSolveSendIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::numChildSolveSendIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="member">
-<dt id="DistSymmNodeInfo::childSolveRecvIndices__std::vector:std::deque:i::">
-std::vector&lt;std::deque&lt;int&gt;&gt; <tt class="descname">childSolveRecvIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::childSolveRecvIndices__std::vector:std::deque:i::" title="Permalink to this definition">¶</a></dt>
+<dt id="DistSymmNodeInfo::solveMeta2d__SolveMetadata2d">
+<a class="reference internal" href="#SolveMetadata2d__struct" title="SolveMetadata2d">SolveMetadata2d</a> <tt class="descname">solveMeta2d</tt><a class="headerlink" href="#DistSymmNodeInfo::solveMeta2d__SolveMetadata2d" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>

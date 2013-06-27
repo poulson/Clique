@@ -75,7 +75,7 @@
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="core/dist_multi_vec.html#Axpy__T.DistMultiVec:T:CR.DistMultiVec:T:R">Axpy (C++ function)</a>, <a href="core/multi_vec.html#Axpy__T.MultiVec:T:CR.MultiVec:T:R">[1]</a>
+  <dt><a href="core/multi_vec.html#Axpy__T.MultiVec:T:CR.MultiVec:T:R">Axpy (C++ function)</a>, <a href="core/dist_multi_vec.html#Axpy__T.DistMultiVec:T:CR.DistMultiVec:T:R">[1]</a>
   </dt>
 
   </dl></td>
@@ -450,6 +450,8 @@
   <dt><a href="numeric/solve.html#DistNodalMultiVec:T:::Pull__DistMapCR.DistSymmInfoCR.DistMultiVec:T:CR">DistNodalMultiVec&lt;T&gt;::Pull (C++ function)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="numeric/solve.html#DistNodalMultiVec:T:::Push__DistMapCR.DistSymmInfoCR.DistMultiVec:T:R">DistNodalMultiVec&lt;T&gt;::Push (C++ function)</a>
   </dt>
@@ -470,8 +472,6 @@
   <dt><a href="symbolic/nested_dissection.html#DistSeparator::comm__mpi::Comm">DistSeparator::comm (C++ member)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="symbolic/nested_dissection.html#DistSeparator::indices__std::vector:i:">DistSeparator::indices (C++ member)</a>
   </dt>
@@ -725,27 +725,15 @@
   </dt>
 
       
-  <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::childFactRecvIndices__mutable-std::vector:std::deque:i::">DistSymmNodeInfo::childFactRecvIndices (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::childSolveRecvIndices__std::vector:std::deque:i::">DistSymmNodeInfo::childSolveRecvIndices (C++ member)</a>
-  </dt>
-
-      
   <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::comm__mpi::Comm">DistSymmNodeInfo::comm (C++ member)</a>
   </dt>
 
       
+  <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::factorMeta__FactorMetadata">DistSymmNodeInfo::factorMeta (C++ member)</a>
+  </dt>
+
+      
   <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::grid__GridP">DistSymmNodeInfo::grid (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::leftFactColIndices__std::vector:i:">DistSymmNodeInfo::leftFactColIndices (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::leftFactRowIndices__std::vector:i:">DistSymmNodeInfo::leftFactRowIndices (C++ member)</a>
   </dt>
 
       
@@ -757,31 +745,11 @@
   </dt>
 
       
-  <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::leftSolveIndices__std::deque:i:">DistSymmNodeInfo::leftSolveIndices (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::localOffset1d__i">DistSymmNodeInfo::localOffset1d (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::localSize1d__i">DistSymmNodeInfo::localSize1d (C++ member)</a>
-  </dt>
-
-      
   <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::lowerStruct__std::vector:i:">DistSymmNodeInfo::lowerStruct (C++ member)</a>
   </dt>
 
       
   <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::myOffset__i">DistSymmNodeInfo::myOffset (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::numChildFactSendIndices__std::vector:i:">DistSymmNodeInfo::numChildFactSendIndices (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::numChildSolveSendIndices__std::vector:i:">DistSymmNodeInfo::numChildSolveSendIndices (C++ member)</a>
   </dt>
 
       
@@ -801,14 +769,6 @@
   </dt>
 
       
-  <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::rightFactColIndices__std::vector:i:">DistSymmNodeInfo::rightFactColIndices (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::rightFactRowIndices__std::vector:i:">DistSymmNodeInfo::rightFactRowIndices (C++ member)</a>
-  </dt>
-
-      
   <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::rightRelIndices__std::vector:i:">DistSymmNodeInfo::rightRelIndices (C++ member)</a>
   </dt>
 
@@ -817,11 +777,15 @@
   </dt>
 
       
-  <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::rightSolveIndices__std::deque:i:">DistSymmNodeInfo::rightSolveIndices (C++ member)</a>
+  <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::size__i">DistSymmNodeInfo::size (C++ member)</a>
   </dt>
 
       
-  <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::size__i">DistSymmNodeInfo::size (C++ member)</a>
+  <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::solveMeta1d__SolveMetadata1d">DistSymmNodeInfo::solveMeta1d (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::solveMeta2d__SolveMetadata2d">DistSymmNodeInfo::solveMeta2d (C++ member)</a>
   </dt>
 
       
@@ -834,6 +798,44 @@
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="symbolic/nested_dissection.html#FactorMetadata__struct">FactorMetadata (C++ type)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#FactorMetadata::childRecvIndices__mutable-std::vector:std::deque:i::">FactorMetadata::childRecvIndices (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#FactorMetadata::Empty">FactorMetadata::Empty (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#FactorMetadata::EmptyChildRecvIndicesC">FactorMetadata::EmptyChildRecvIndices (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#FactorMetadata::leftColIndices__std::deque:i:">FactorMetadata::leftColIndices (C++ member)</a>
+  </dt>
+
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="symbolic/nested_dissection.html#FactorMetadata::leftRowIndices__std::deque:i:">FactorMetadata::leftRowIndices (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#FactorMetadata::numChildSendIndices__std::vector:i:">FactorMetadata::numChildSendIndices (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#FactorMetadata::rightColIndices__std::deque:i:">FactorMetadata::rightColIndices (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#FactorMetadata::rightRowIndices__std::deque:i:">FactorMetadata::rightRowIndices (C++ member)</a>
+  </dt>
+
       
   <dt><a href="core/environment.html#Finalize">Finalize (C++ function)</a>
   </dt>
@@ -995,11 +997,11 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="core/dist_multi_vec.html#MakeUniform__DistMultiVec:T:R">MakeUniform (C++ function)</a>, <a href="core/multi_vec.html#MakeUniform__MultiVec:T:R">[1]</a>
+  <dt><a href="core/multi_vec.html#MakeUniform__MultiVec:T:R">MakeUniform (C++ function)</a>, <a href="core/dist_multi_vec.html#MakeUniform__DistMultiVec:T:R">[1]</a>
   </dt>
 
       
-  <dt><a href="core/dist_multi_vec.html#MakeZeros__DistMultiVec:T:R">MakeZeros (C++ function)</a>, <a href="core/multi_vec.html#MakeZeros__MultiVec:T:R">[1]</a>
+  <dt><a href="core/multi_vec.html#MakeZeros__MultiVec:T:R">MakeZeros (C++ function)</a>, <a href="core/dist_multi_vec.html#MakeZeros__DistMultiVec:T:R">[1]</a>
   </dt>
 
       
@@ -1077,11 +1079,11 @@
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="core/dist_multi_vec.html#Norm__DistMultiVec:F:CR">Norm (C++ function)</a>, <a href="core/multi_vec.html#Norm__MultiVec:F:CR">[1]</a>
+  <dt><a href="core/multi_vec.html#Norm__MultiVec:F:CR">Norm (C++ function)</a>, <a href="core/dist_multi_vec.html#Norm__DistMultiVec:F:CR">[1]</a>
   </dt>
 
       
-  <dt><a href="core/dist_multi_vec.html#Norms__DistMultiVec:F:CR.std::vector:typename-Base:F:::type:R">Norms (C++ function)</a>, <a href="core/multi_vec.html#Norms__MultiVec:F:CR.std::vector:typename-Base:F:::type:R">[1]</a>
+  <dt><a href="core/multi_vec.html#Norms__MultiVec:F:CR.std::vector:typename-Base:F:::type:R">Norms (C++ function)</a>, <a href="core/dist_multi_vec.html#Norms__DistMultiVec:F:CR.std::vector:typename-Base:F:::type:R">[1]</a>
   </dt>
 
   </dl></td>
@@ -1149,6 +1151,78 @@
   </dt>
 
       
+  <dt><a href="symbolic/nested_dissection.html#SolveMetadata1d__struct">SolveMetadata1d (C++ type)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SolveMetadata1d::childRecvIndices__std::vector:std::deque:i::">SolveMetadata1d::childRecvIndices (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SolveMetadata1d::Empty">SolveMetadata1d::Empty (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SolveMetadata1d::leftIndices__std::deque:i:">SolveMetadata1d::leftIndices (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SolveMetadata1d::localOffset__i">SolveMetadata1d::localOffset (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SolveMetadata1d::localSize__i">SolveMetadata1d::localSize (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SolveMetadata1d::numChildSendIndices__std::vector:i:">SolveMetadata1d::numChildSendIndices (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SolveMetadata1d::rightIndices__std::deque:i:">SolveMetadata1d::rightIndices (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SolveMetadata2d__struct">SolveMetadata2d (C++ type)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SolveMetadata2d::childRecvIndices__std::vector:std::deque:i::">SolveMetadata2d::childRecvIndices (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SolveMetadata2d::Empty">SolveMetadata2d::Empty (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SolveMetadata2d::leftIndices__std::deque:i:">SolveMetadata2d::leftIndices (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SolveMetadata2d::localHeight__i">SolveMetadata2d::localHeight (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SolveMetadata2d::localHeightOffset__i">SolveMetadata2d::localHeightOffset (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SolveMetadata2d::localWidth__i">SolveMetadata2d::localWidth (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SolveMetadata2d::localWidthOffset__i">SolveMetadata2d::localWidthOffset (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SolveMetadata2d::numChildSendIndices__std::vector:i:">SolveMetadata2d::numChildSendIndices (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#SolveMetadata2d::rightIndices__std::deque:i:">SolveMetadata2d::rightIndices (C++ member)</a>
+  </dt>
+
+      
   <dt><a href="core/sparse_matrix.html#SparseMatrix:F:__class">SparseMatrix&lt;F&gt; (C++ type)</a>
   </dt>
 
@@ -1200,6 +1274,8 @@
   <dt><a href="core/sparse_matrix.html#SparseMatrix:T:::NumConnections__iC">SparseMatrix&lt;T&gt;::NumConnections (C++ function)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="core/sparse_matrix.html#SparseMatrix:T:::NumEntriesC">SparseMatrix&lt;T&gt;::NumEntries (C++ function)</a>
   </dt>
@@ -1236,8 +1312,6 @@
   <dt><a href="core/sparse_matrix.html#SparseMatrix:T:::TargetBuffer">SparseMatrix&lt;T&gt;::TargetBuffer (C++ function)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="core/sparse_matrix.html#SparseMatrix:T:::Update__i.i.T">SparseMatrix&lt;T&gt;::Update (C++ function)</a>
   </dt>

@@ -139,14 +139,64 @@ DistSymmInfo
       structure after factorization.
 
    .. cpp:member:: std::vector<int> leftRelIndices
-
-      The relative indices of the left child's lower structure into this 
-      structure.
-
    .. cpp:member:: std::vector<int> rightRelIndices
 
-      The relative indices of the right child's lower structure into this 
+      The relative indices of the left/right child's lower structure into this 
       structure.
+
+.. cpp:type:: struct FactorMetadata
+
+   .. cpp:member:: std::vector<int> numChildSendIndices
+
+   .. cpp:member:: std::deque<int> leftColIndices
+   .. cpp:member:: std::deque<int> leftRowIndices
+   .. cpp:member:: std::deque<int> rightColIndices
+   .. cpp:member:: std::deque<int> rightRowIndices
+
+   .. cpp:member:: mutable std::vector<std::deque<int> > childRecvIndices
+
+   .. cpp:function:: void EmptyChildRecvIndices() const
+
+      Clears ``childRecvIndices``
+
+   .. cpp:function:: void Empty()
+
+      Clears all members of structure
+
+.. cpp:type:: struct SolveMetadata1d
+
+   .. cpp:member:: int localSize
+
+   .. cpp:member:: int localOffset
+
+   .. cpp:member:: std::deque<int> leftIndices
+   .. cpp:member:: std::deque<int> rightIndices
+
+   .. cpp:member:: std::vector<int> numChildSendIndices
+
+   .. cpp:member:: std::vector<std::deque<int> > childRecvIndices
+
+   .. cpp:function:: void Empty()
+
+      Clears all members of structure
+
+.. cpp:type:: struct SolveMetadata2d
+
+   .. cpp:member:: int localHeight
+   .. cpp:member:: int localWidth
+   .. cpp:member:: int localHeightOffset
+   .. cpp:member:: int localWidthOffset
+
+   .. cpp:member:: std::deque<int> leftIndices
+   .. cpp:member:: std::deque<int> rightIndices
+
+   .. cpp:member:: std::vector<int> numChildSendIndices
+
+   .. cpp:member:: std::vector<std::deque<int> > childRecvIndices
+
+   .. cpp:function:: void Empty()
+
+      Clears all members of structure
 
 .. cpp:type:: struct DistSymmNodeInfo
 
@@ -205,29 +255,9 @@ DistSymmInfo
       The relative indices of the left/right child's lower structure into this 
       structure.
 
-   .. cpp:member:: std::vector<int> numChildFactSendIndices
-
-      **Left off here**
-
-   .. cpp:member:: std::vector<int> leftFactColIndices
-   .. cpp:member:: std::vector<int> leftFactRowIndices
-   .. cpp:member:: std::vector<int> rightFactColIndices
-   .. cpp:member:: std::vector<int> rightFactRowIndices
-   
-      **TODO**
-
-   .. cpp:member:: mutable std::vector<std::deque<int> > childFactRecvIndices
-
-   .. cpp:member:: std::deque<int> leftSolveIndices
-   .. cpp:member:: std::deque<int> rightSolveIndices
-
-   .. cpp:member:: int localSize1d
-
-   .. cpp:member:: int localOffset1d
-
-   .. cpp:member:: std::vector<int> numChildSolveSendIndices
-
-   .. cpp:member:: std::vector<std::deque<int> > childSolveRecvIndices
+   .. cpp:member:: FactorMetadata factorMeta
+   .. cpp:member:: SolveMetadata1d solveMeta1d
+   .. cpp:member:: SolveMetadata2d solveMeta2d
 
 .. cpp:type:: struct DistSymmInfo
 
