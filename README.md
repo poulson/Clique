@@ -13,14 +13,17 @@ The [documentation for the development version of Clique](http://poulson.github.
 ### Related open-source packages
 
 Implementations:
+
 1. [DSCPACK](http://www.cse.psu.edu/~raghavan/Dscpack/)
 2. [MUMPS](http://graal.ens-lyon.fr/MUMPS/)
 3. [PSPASES](http://www-users.cs.umn.edu/~mjoshi/pspases/)
 4. [SuperLU_Dist](http://crd-legacy.lbl.gov/~xiaoye/SuperLU/)
 
 Wrappers:
+
 1. [PETSc](https://www.mcs.anl.gov/petsc/)
 2. [Trilinos (Amesos)](http://trilinos.sandia.gov/packages/amesos/)
+
 Note that [PETSc](https://www.mcs.anl.gov/petsc/) contains interfaces for both 
 [Clique](http://github.com/poulson/Clique.git) and 
 [Elemental](http://github.com/poulson/Elemental.git).
