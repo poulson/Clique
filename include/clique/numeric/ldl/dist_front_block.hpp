@@ -28,7 +28,7 @@ inline void FrontBlockLDL
     const Grid& g = AL.Grid();
     DistMatrix<F> ATL(g),
                   ABL(g);
-    elem::PartitionDown
+    PartitionDown
     ( AL, ATL,
           ABL, AL.Width() );
 

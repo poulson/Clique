@@ -11,21 +11,18 @@
 namespace cliq {
 
 template<typename F>
-void FrontLowerForwardSolve
-( UnitOrNonUnit diag, const Matrix<F>& L, Matrix<F>& X );
+void FrontLowerForwardSolve( const Matrix<F>& L, Matrix<F>& X );
 
 template<typename F>
 void FrontLowerBackwardSolve
-( Orientation orientation, UnitOrNonUnit diag, 
-  const Matrix<F>& L, Matrix<F>& X );
+( Orientation orientation, const Matrix<F>& L, Matrix<F>& X );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
 template<typename F>
-inline void FrontLowerForwardSolve
-( UnitOrNonUnit diag, const Matrix<F>& L, Matrix<F>& X )
+inline void FrontLowerForwardSolve( const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("FrontLowerForwardSolve");
@@ -40,24 +37,23 @@ inline void FrontLowerForwardSolve
 #endif
     Matrix<F> LT,
               LB;
-    elem::LockedPartitionDown
+    LockedPartitionDown
     ( L, LT,
          LB, L.Width() );
 
     Matrix<F> XT, 
               XB;
-    elem::PartitionDown
+    PartitionDown
     ( X, XT,
          XB, L.Width() );
 
-    elem::Trsm( LEFT, LOWER, NORMAL, diag, F(1), LT, XT, true );
+    elem::Trsm( LEFT, LOWER, NORMAL, NON_UNIT, F(1), LT, XT, true );
     elem::Gemm( NORMAL, NORMAL, F(-1), LB, XT, F(1), XB );
 }
 
 template<typename F>
 inline void FrontLowerBackwardSolve
-( Orientation orientation, UnitOrNonUnit diag, 
-  const Matrix<F>& L, Matrix<F>& X )
+( Orientation orientation, const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("FrontLowerBackwardSolve");
@@ -74,18 +70,18 @@ inline void FrontLowerBackwardSolve
 #endif
     Matrix<F> LT,
               LB;
-    elem::LockedPartitionDown
+    LockedPartitionDown
     ( L, LT,
          LB, L.Width() );
 
     Matrix<F> XT,
               XB;
-    elem::PartitionDown
+    PartitionDown
     ( X, XT,
          XB, L.Width() );
 
     elem::Gemm( orientation, NORMAL, F(-1), LB, XB, F(1), XT );
-    elem::Trsm( LEFT, LOWER, orientation, diag, F(1), LT, XT, true );
+    elem::Trsm( LEFT, LOWER, orientation, NON_UNIT, F(1), LT, XT, true );
 }
 
 } // namespace cliq

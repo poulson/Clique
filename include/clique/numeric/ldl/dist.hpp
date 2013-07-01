@@ -39,6 +39,15 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
     ( topLocalFront.work.Height(), topLocalFront.work.Width(), 0, 0,
       topLocalFront.work.LockedBuffer(), topLocalFront.work.LDim(),
       bottomGrid );
+    if( !blockLDL )
+    {
+        // Store the diagonal in a [VC,* ] distribution
+        DistMatrix<F,MD,STAR> diag( bottomGrid );
+        bottomDistFront.front2dL.GetDiagonal( diag );
+        bottomDistFront.diag1d.SetGrid( bottomGrid );
+        bottomDistFront.diag1d = diag;
+        elem::SetDiagonal( bottomDistFront.front2dL, F(1) );
+    }
 
     // Perform the distributed portion of the factorization
     const unsigned numDistNodes = info.distNodes.size();
@@ -156,7 +165,7 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
         // Unpack the child udpates (with an Axpy)
         front.work2d.SetGrid( front.front2dL.Grid() );
         front.work2d.Align( node.size % gridHeight, node.size % gridWidth );
-        elem::Zeros( front.work2d, updateSize, updateSize );
+        Zeros( front.work2d, updateSize, updateSize );
         const int leftLocalWidth = front.front2dL.LocalWidth();
         const int topLocalHeight = 
             Length<int>( node.size, grid.Row(), gridHeight );
@@ -196,8 +205,9 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
             // Store the diagonal in a [VC,* ] distribution
             DistMatrix<F,MD,STAR> diag( grid );
             front.front2dL.GetDiagonal( diag );
-            front.diag.SetGrid( grid );
-            front.diag = diag;
+            front.diag1d.SetGrid( grid );
+            front.diag1d = diag;
+            elem::SetDiagonal( front.front2dL, F(1) );
         }
         else
         {

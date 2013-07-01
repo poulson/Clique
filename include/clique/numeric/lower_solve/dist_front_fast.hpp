@@ -12,21 +12,20 @@ namespace cliq {
 
 template<typename F>
 void FrontFastLowerForwardSolve
-( UnitOrNonUnit diag, DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
+( const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
 void FrontFastLowerForwardSolve
-( UnitOrNonUnit diag, DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X );
+( const DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
 void FrontFastLowerBackwardSolve
-( Orientation orientation, UnitOrNonUnit diag, 
-  DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
+( Orientation orientation,
+  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
 void FrontFastLowerBackwardSolve
-( Orientation orientation, UnitOrNonUnit diag, 
-  DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X );
+( Orientation orientation, const DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -34,7 +33,7 @@ void FrontFastLowerBackwardSolve
 
 template<typename F>
 inline void FrontFastLowerForwardSolve
-( UnitOrNonUnit diag, DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
+( const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("FrontFastLowerForwardSolve");
@@ -53,11 +52,9 @@ inline void FrontFastLowerForwardSolve
         throw std::logic_error("L and X are assumed to be aligned");
 #endif
     const Grid& g = L.Grid();
-    const int commRank = g.VCRank();
-    const int commSize = g.Size();
-    if( commSize == 1 )
+    if( g.Size() == 1 )
     {
-        FrontLowerForwardSolve( diag, L.LockedMatrix(), X.Matrix() );
+        FrontLowerForwardSolve( L.LockedMatrix(), X.Matrix() );
         return;
     }
 
@@ -65,7 +62,7 @@ inline void FrontFastLowerForwardSolve
     const int snSize = L.Width();
     DistMatrix<F,VC,STAR> LT(g),
                           LB(g);
-    PartitionDown
+    LockedPartitionDown
     ( L, LT, 
          LB, snSize );
     DistMatrix<F,VC,STAR> XT(g),
@@ -74,53 +71,21 @@ inline void FrontFastLowerForwardSolve
     ( X, XT,
          XB, snSize );
 
-    const int localTopHeight = LT.LocalHeight();
-    std::vector<F> localDiag;
-    if( diag == UNIT )
-    {
-        // Extract the diagonal of the top triangle and replace it with ones
-        localDiag.resize( localTopHeight );
-        F* LTBuffer = LT.Buffer();
-        const int LTLDim = LT.LDim();
-        for( int iLocal=0; iLocal<localTopHeight; ++iLocal )
-        {
-            const int i = commRank + iLocal*commSize;
-            localDiag[iLocal] = LTBuffer[iLocal+i*LTLDim];
-            LTBuffer[iLocal+i*LTLDim] = 1;
-        }
-    }
-
-    // Get a copy of all of XT
-    DistMatrix<F,STAR,STAR> XT_STAR_STAR( XT );
-
     // XT := LT XT
+    DistMatrix<F,STAR,STAR> XT_STAR_STAR( XT );
     elem::LocalGemm( NORMAL, NORMAL, F(1), LT, XT_STAR_STAR, F(0), XT );
 
-    if( diag == UNIT )
-    {
-        // Put the diagonal back
-        F* LTBuffer = LT.Buffer();
-        const int LTLDim = LT.LDim();
-        for( int iLocal=0; iLocal<localTopHeight; ++iLocal )
-        {
-            const int i = commRank + iLocal*commSize;
-            LTBuffer[iLocal+i*LTLDim] = localDiag[iLocal];
-        }
-    }
-
+    // XB := XB - LB XT
     if( LB.Height() != 0 )
     {
-        // Gather all of XT again
         XT_STAR_STAR = XT;
-
-        // XB := XB - LB XT
         elem::LocalGemm( NORMAL, NORMAL, F(-1), LB, XT_STAR_STAR, F(1), XB );
     }
 }
 
 template<typename F>
 inline void FrontFastLowerForwardSolve
-( UnitOrNonUnit diag, DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X )
+( const DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("FrontFastLowerForwardSolve");
@@ -137,10 +102,9 @@ inline void FrontFastLowerForwardSolve
     }
 #endif
     const Grid& g = L.Grid();
-    const int commSize = g.Size();
-    if( commSize == 1 )
+    if( g.Size() == 1 )
     {
-        FrontLowerForwardSolve( diag, L.LockedMatrix(), X.Matrix() );
+        FrontLowerForwardSolve( L.LockedMatrix(), X.Matrix() );
         return;
     }
 
@@ -148,7 +112,7 @@ inline void FrontFastLowerForwardSolve
     const int snSize = L.Width();
     DistMatrix<F> LT(g),
                   LB(g);
-    PartitionDown
+    LockedPartitionDown
     ( L, LT, 
          LB, snSize );
     DistMatrix<F,VC,STAR> XT(g),
@@ -156,19 +120,6 @@ inline void FrontFastLowerForwardSolve
     PartitionDown
     ( X, XT,
          XB, snSize );
-
-    DistMatrix<F,MD,STAR> dTOrig(g), dTReplacement(g);
-    if( diag == UNIT )
-    {
-        // Extract the diagonal of the top triangle and replace it with ones
-        LT.GetDiagonal( dTOrig );
-        const int localHeight = dTOrig.LocalHeight();
-        dTReplacement.AlignWith( dTOrig );
-        dTReplacement.ResizeTo( dTOrig.Height(), 1 );
-        for( int iLocal=0; iLocal<localHeight; ++iLocal )
-            dTReplacement.SetLocal( iLocal, 0, F(1) );
-        LT.SetDiagonal( dTReplacement );
-    }
 
     // Get ready for the local multiply
     DistMatrix<F,MR,STAR> XT_MR_STAR(g);
@@ -178,17 +129,12 @@ inline void FrontFastLowerForwardSolve
         // ZT[MC,* ] := LT[MC,MR] XT[MR,* ], 
         DistMatrix<F,MC,STAR> ZT_MC_STAR(g);
         ZT_MC_STAR.AlignWith( LT );
-        Zeros( ZT_MC_STAR, LT.Height(), XT.Width() );
         XT_MR_STAR = XT;
-        elem::LocalGemm
-        ( NORMAL, NORMAL, F(1), LT, XT_MR_STAR, F(0), ZT_MC_STAR );
+        elem::LocalGemm( NORMAL, NORMAL, F(1), LT, XT_MR_STAR, ZT_MC_STAR );
 
         // XT[VC,* ].SumScatterFrom( ZT[MC,* ] )
         XT.SumScatterFrom( ZT_MC_STAR );
     }
-
-    if( diag == UNIT )
-        LT.SetDiagonal( dTOrig );
 
     if( LB.Height() != 0 )
     {
@@ -198,9 +144,7 @@ inline void FrontFastLowerForwardSolve
         // ZB[MC,* ] := LB[MC,MR] XT[MR,* ]
         DistMatrix<F,MC,STAR> ZB_MC_STAR(g);
         ZB_MC_STAR.AlignWith( LB );
-        ZB_MC_STAR.ResizeTo( LB.Height(), XT.Width() );
-        elem::LocalGemm
-        ( NORMAL, NORMAL, F(-1), LB, XT_MR_STAR, F(0), ZB_MC_STAR );
+        elem::LocalGemm( NORMAL, NORMAL, F(-1), LB, XT_MR_STAR, ZB_MC_STAR );
 
         // XB[VC,* ] += ZB[MC,* ]
         XB.SumScatterUpdate( F(1), ZB_MC_STAR );
@@ -209,8 +153,8 @@ inline void FrontFastLowerForwardSolve
 
 template<typename F>
 inline void FrontFastLowerBackwardSolve
-( Orientation orientation, UnitOrNonUnit diag, 
-  DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
+( Orientation orientation, 
+  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("FrontFastLowerBackwardSolve");
@@ -231,72 +175,40 @@ inline void FrontFastLowerBackwardSolve
         throw std::logic_error("This solve must be (conjugate-)transposed");
 #endif
     const Grid& g = L.Grid();
-    const int commSize = g.Size();
-    const int commRank = g.VCRank();
-    if( commSize == 1 )
+    if( g.Size() == 1 )
     {
-        FrontLowerBackwardSolve
-        ( orientation, diag, L.LockedMatrix(), X.Matrix() );
+        FrontLowerBackwardSolve( orientation, L.LockedMatrix(), X.Matrix() );
         return;
     }
 
     const int snSize = L.Width();
     DistMatrix<F,VC,STAR> LT(g),
                           LB(g);
-    elem::PartitionDown
+    LockedPartitionDown
     ( L, LT,
          LB, snSize );
     DistMatrix<F,VC,STAR> XT(g),
                           XB(g);
-    elem::PartitionDown
+    PartitionDown
     ( X, XT,
          XB, snSize );
 
     // XT := XT - LB^{T/H} XB
-    DistMatrix<F,STAR,STAR> Z( snSize, XT.Width(), g );
+    DistMatrix<F,STAR,STAR> Z(g);
     if( XB.Height() != 0 )
     {
-        elem::LocalGemm( orientation, NORMAL, F(-1), LB, XB, F(0), Z );
+        elem::LocalGemm( orientation, NORMAL, F(-1), LB, XB, Z );
         XT.SumScatterUpdate( F(1), Z );
     }
 
-    const int localTopHeight = LT.LocalHeight();
-    std::vector<F> localDiag;
-    if( diag == UNIT )
-    {
-        // Extract the diagonal of the top triangle and replace it with ones
-        localDiag.resize( localTopHeight );
-        F* LTBuffer = LT.Buffer();
-        const int LTLDim = LT.LDim();
-        for( int iLocal=0; iLocal<localTopHeight; ++iLocal )
-        {
-            const int i = commRank + iLocal*commSize;
-            localDiag[iLocal] = LTBuffer[iLocal+i*LTLDim];
-            LTBuffer[iLocal+i*LTLDim] = 1;
-        }
-    }
-
     // XT := LT^{T/H} XT
-    elem::LocalGemm( orientation, NORMAL, F(1), LT, XT, F(0), Z );
+    elem::LocalGemm( orientation, NORMAL, F(1), LT, XT, Z );
     XT.SumScatterFrom( Z );
-
-    if( diag == UNIT )
-    {
-        // Put the diagonal back
-        F* LTBuffer = LT.Buffer();
-        const int LTLDim = LT.LDim();
-        for( int iLocal=0; iLocal<localTopHeight; ++iLocal )
-        {
-            const int i = commRank + iLocal*commSize;
-            LTBuffer[iLocal+i*LTLDim] = localDiag[iLocal];
-        }
-    }
 }
 
 template<typename F>
 inline void FrontFastLowerBackwardSolve
-( Orientation orientation, UnitOrNonUnit diag, 
-  DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X )
+( Orientation orientation, const DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("FrontFastLowerBackwardSolve");
@@ -315,30 +227,27 @@ inline void FrontFastLowerBackwardSolve
         throw std::logic_error("This solve must be (conjugate-)transposed");
 #endif
     const Grid& g = L.Grid();
-    const int commSize = g.Size();
-    if( commSize == 1 )
+    if( g.Size() == 1 )
     {
-        FrontLowerBackwardSolve
-        ( orientation, diag, L.LockedMatrix(), X.Matrix() );
+        FrontLowerBackwardSolve( orientation, L.LockedMatrix(), X.Matrix() );
         return;
     }
 
     const int snSize = L.Width();
     DistMatrix<F> LT(g),
                   LB(g);
-    elem::PartitionDown
+    LockedPartitionDown
     ( L, LT,
          LB, snSize );
     DistMatrix<F,VC,STAR> XT(g),
                           XB(g);
-    elem::PartitionDown
+    PartitionDown
     ( X, XT,
          XB, snSize );
 
     DistMatrix<F,MR,STAR> ZT_MR_STAR( g );
     DistMatrix<F,VR,STAR> ZT_VR_STAR( g );
     ZT_MR_STAR.AlignWith( LB );
-    Zeros( ZT_MR_STAR, snSize, XT.Width() );
     if( XB.Height() != 0 )
     {
         // ZT[MR,* ] := -(LB[MC,MR])^{T/H} XB[MC,* ]
@@ -346,7 +255,7 @@ inline void FrontFastLowerBackwardSolve
         XB_MC_STAR.AlignWith( LB );
         XB_MC_STAR = XB;
         elem::LocalGemm
-        ( orientation, NORMAL, F(-1), LB, XB_MC_STAR, F(0), ZT_MR_STAR );
+        ( orientation, NORMAL, F(-1), LB, XB_MC_STAR, ZT_MR_STAR );
 
         // ZT[VR,* ].SumScatterFrom( ZT[MR,* ] )
         ZT_VR_STAR.SumScatterFrom( ZT_MR_STAR );
@@ -360,26 +269,13 @@ inline void FrontFastLowerBackwardSolve
         elem::Axpy( F(1), ZT_VC_STAR, XT );
     }
 
-    DistMatrix<F,MD,STAR> dTOrig(g), dTReplacement(g);
-    if( diag == UNIT )
-    {
-        // Extract the diagonal of the top triangle and replace it with ones
-        LT.GetDiagonal( dTOrig );
-        dTReplacement.AlignWith( dTOrig );
-        dTReplacement.ResizeTo( dTOrig.Height(), 1 );
-        const int localHeight = dTOrig.LocalHeight();
-        for( int iLocal=0; iLocal<localHeight; ++iLocal )
-            dTReplacement.SetLocal( iLocal, 0, F(1) );
-        LT.SetDiagonal( dTReplacement );
-    }
-
     {
         // ZT[MR,* ] := (LT[MC,MR])^{T/H} XT[MC,* ]
         DistMatrix<F,MC,STAR> XT_MC_STAR( g );
         XT_MC_STAR.AlignWith( LT );
         XT_MC_STAR = XT;
         elem::LocalGemm
-        ( orientation, NORMAL, F(1), LT, XT_MC_STAR, F(0), ZT_MR_STAR );
+        ( orientation, NORMAL, F(1), LT, XT_MC_STAR, ZT_MR_STAR );
 
         // ZT[VR,* ].SumScatterFrom( ZT[MR,* ] )
         ZT_VR_STAR.SumScatterFrom( ZT_MR_STAR );
@@ -387,9 +283,6 @@ inline void FrontFastLowerBackwardSolve
         // XT[VC,* ] := ZT[VR,* ]
         XT = ZT_VR_STAR;
     }
-
-    if( diag == UNIT )
-        LT.SetDiagonal( dTOrig );
 }
 
 } // namespace cliq

@@ -26,7 +26,7 @@ inline void FrontBlockLDL
 #endif
     Matrix<F> ATL,
               ABL;
-    elem::PartitionDown
+    PartitionDown
     ( AL, ATL,
           ABL, AL.Width() );
     

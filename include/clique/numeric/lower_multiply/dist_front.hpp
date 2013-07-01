@@ -12,17 +12,17 @@ namespace cliq {
 
 template<typename T>
 void FrontLowerMultiply
-( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
+( Orientation orientation, int diagOffset,
   const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X );
 
 template<typename T>
 void FrontLowerMultiplyNormal
-( UnitOrNonUnit diag, int diagOffset,
+( int diagOffset,
   const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X );
 
 template<typename T>
 void FrontLowerMultiplyTranspose
-( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
+( Orientation orientation, int diagOffset,
   const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X );
 
 //----------------------------------------------------------------------------//
@@ -33,8 +33,7 @@ namespace internal {
 using namespace elem;
 
 template<typename T>
-void ModifyForTrmm
-( DistMatrix<T,STAR,STAR>& D, UnitOrNonUnit diag, int diagOffset )
+void ModifyForTrmm( DistMatrix<T,STAR,STAR>& D, int diagOffset )
 {
 #ifndef RELEASE
     cliq::CallStackEntry entry("ModifyForTrmm");
@@ -44,8 +43,6 @@ void ModifyForTrmm
     {
         const int length = std::min(-diagOffset,height-j);
         MemZero( D.Buffer(j,j), length );
-        if( diag == UNIT && j-diagOffset < height )
-            D.SetLocal( j-diagOffset, j, T(1) );
     }
 }
 
@@ -53,22 +50,21 @@ void ModifyForTrmm
 
 template<typename T>
 inline void FrontLowerMultiply
-( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
+( Orientation orientation, int diagOffset,
   const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("FrontLowerMultiply");
 #endif
     if( orientation == NORMAL )
-        FrontLowerMultiplyNormal( diag, diagOffset, L, X );
+        FrontLowerMultiplyNormal( diagOffset, L, X );
     else
-        FrontLowerMultiplyTranspose( orientation, diag, diagOffset, L, X );
+        FrontLowerMultiplyTranspose( orientation, diagOffset, L, X );
 }
 
 template<typename T>
 inline void FrontLowerMultiplyNormal
-( UnitOrNonUnit diag, int diagOffset,
-  const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X )
+( int diagOffset, const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("FrontLowerMultiplyNormal");
@@ -105,10 +101,10 @@ inline void FrontLowerMultiplyNormal
     DistMatrix<T,STAR,STAR> X1_STAR_STAR(g);
 
     // Start the algorithm
-    elem::LockedPartitionDownDiagonal
+    LockedPartitionDownDiagonal
     ( L, LTL, LTR,
          LBL, LBR, L.Width() );
-    elem::PartitionDown
+    PartitionDown
     ( X, XT,
          XB, L.Width() );
     while( XT.Height() > 0 )
@@ -133,12 +129,13 @@ inline void FrontLowerMultiplyNormal
         {
             L11_STAR_STAR = L11;
             elem::LocalTrmm
-            ( LEFT, LOWER, NORMAL, diag, T(1), L11_STAR_STAR, X1_STAR_STAR );
+            ( LEFT, LOWER, NORMAL, NON_UNIT, 
+              T(1), L11_STAR_STAR, X1_STAR_STAR );
         }
         else
         {
             L11_STAR_STAR = L11;
-            internal::ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
+            internal::ModifyForTrmm( L11_STAR_STAR, diagOffset );
             elem::LocalTrmm
             ( LEFT, LOWER, NORMAL, NON_UNIT, 
               T(1), L11_STAR_STAR, X1_STAR_STAR );
@@ -162,7 +159,7 @@ inline void FrontLowerMultiplyNormal
 
 template<typename T>
 inline void FrontLowerMultiplyTranspose
-( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
+( Orientation orientation, int diagOffset,
   const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X )
 {
 #ifndef RELEASE
@@ -228,12 +225,12 @@ inline void FrontLowerMultiplyTranspose
         if( diagOffset == 0 )
         {
             elem::LocalTrmm
-            ( LEFT, LOWER, orientation, diag, 
+            ( LEFT, LOWER, orientation, NON_UNIT, 
               T(1), L11_STAR_STAR, X1_STAR_STAR );
         }
         else
         {
-            internal::ModifyForTrmm( L11_STAR_STAR, diag, diagOffset );
+            internal::ModifyForTrmm( L11_STAR_STAR, diagOffset );
             elem::LocalTrmm
             ( LEFT, LOWER, orientation, NON_UNIT, 
               T(1), L11_STAR_STAR, X1_STAR_STAR );

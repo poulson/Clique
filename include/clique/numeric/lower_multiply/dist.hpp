@@ -12,12 +12,12 @@ namespace cliq {
 
 template<typename T> 
 void DistLowerMultiplyNormal
-( UnitOrNonUnit diag, int diagOffset, const DistSymmInfo& info, 
+( int diagOffset, const DistSymmInfo& info, 
   const DistSymmFrontTree<T>& L, DistNodalMultiVec<T>& X );
 
 template<typename T> 
 void DistLowerMultiplyTranspose
-( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
+( Orientation orientation, int diagOffset,
   const DistSymmInfo& info, const DistSymmFrontTree<T>& L, 
   DistNodalMultiVec<T>& X );
 
@@ -27,7 +27,7 @@ void DistLowerMultiplyTranspose
 
 template<typename T> 
 inline void DistLowerMultiplyNormal
-( UnitOrNonUnit diag, int diagOffset, const DistSymmInfo& info, 
+( int diagOffset, const DistSymmInfo& info, 
   const DistSymmFrontTree<T>& L, DistNodalMultiVec<T>& X )
 {
 #ifndef RELEASE
@@ -66,14 +66,14 @@ inline void DistLowerMultiplyNormal
         W.SetGrid( grid );
         W.ResizeTo( front.front1dL.Height(), width );
         DistMatrix<T,VC,STAR> WT(grid), WB(grid);
-        elem::PartitionDown
+        PartitionDown
         ( W, WT,
              WB, node.size );
         WT.Matrix() = X.distNodes[s-1];
         elem::MakeZeros( WB );
 
         // Now that the right-hand side is set up, perform the multiply
-        FrontLowerMultiply( NORMAL, diag, diagOffset, front.front1dL, W );
+        FrontLowerMultiply( NORMAL, diagOffset, front.front1dL, W );
 
         // Pack our child's update
         const SolveMetadata1d& solveMeta = node.solveMeta1d;
@@ -164,7 +164,7 @@ inline void DistLowerMultiplyNormal
 
 template<typename T> 
 inline void DistLowerMultiplyTranspose
-( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
+( Orientation orientation, int diagOffset,
   const DistSymmInfo& info, const DistSymmFrontTree<T>& L, 
   DistNodalMultiVec<T>& X )
 {
@@ -184,7 +184,7 @@ inline void DistLowerMultiplyTranspose
         Matrix<T>& XRoot = X.localNodes.back();
         localRootFront.work = XRoot;
         FrontLowerMultiply
-        ( orientation, diag, diagOffset, localRootFront.frontL, XRoot );
+        ( orientation, diagOffset, localRootFront.frontL, XRoot );
     }
     else
     {
@@ -197,7 +197,7 @@ inline void DistLowerMultiplyTranspose
           XRootLoc.Buffer(), XRootLoc.LDim(), rootGrid );
         rootFront.work1d = XRoot; // store the RHS for use by the children
         FrontLowerMultiply
-        ( orientation, diag, diagOffset, rootFront.front1dL, XRoot );
+        ( orientation, diagOffset, rootFront.front1dL, XRoot );
     }
 
     for( int s=numDistNodes-2; s>=0; --s )
@@ -218,7 +218,7 @@ inline void DistLowerMultiplyTranspose
         W.SetGrid( grid );
         W.ResizeTo( front.front1dL.Height(), width );
         DistMatrix<T,VC,STAR> WT(grid), WB(grid);
-        elem::PartitionDown
+        PartitionDown
         ( W, WT,
              WB, node.size );
         Matrix<T>& localXT = ( s>0 ? X.distNodes[s-1] : X.localNodes.back() );
@@ -310,18 +310,18 @@ inline void DistLowerMultiplyTranspose
         // Perform the multiply for this front
         if( s > 0 )
             FrontLowerMultiply
-            ( orientation, diag, diagOffset, front.front1dL, XNode );
+            ( orientation, diagOffset, front.front1dL, XNode );
         else
         {
             localRootFront.work = W.Matrix();
             FrontLowerMultiply
-            ( orientation, diag, diagOffset, 
+            ( orientation, diagOffset, 
               localRootFront.frontL, XNode.Matrix() );
         }
 
         // Store the supernode portion of the result
         DistMatrix<T,VC,STAR> XNodeT(grid), XNodeB(grid);
-        elem::PartitionDown
+        PartitionDown
         ( XNode, XNodeT,
                  XNodeB, node.size );
         localXT = XNodeT.Matrix();

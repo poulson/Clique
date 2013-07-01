@@ -12,12 +12,12 @@ namespace cliq {
 
 template<typename F> 
 void LocalLowerForwardSolve
-( UnitOrNonUnit diag, const DistSymmInfo& info, 
+( const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X );
 
 template<typename F> 
 void LocalLowerBackwardSolve
-( Orientation orientation, UnitOrNonUnit diag, const DistSymmInfo& info, 
+( Orientation orientation, const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X );
 
 //----------------------------------------------------------------------------//
@@ -26,17 +26,13 @@ void LocalLowerBackwardSolve
 
 template<typename F> 
 inline void LocalLowerForwardSolve
-( UnitOrNonUnit diag, const DistSymmInfo& info, 
+( const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("LocalLowerForwardSolve");
 #endif
     const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
-#ifndef RELEASE
-    if( blockLDL && diag == UNIT )
-        throw std::logic_error("Unit diagonal is nonsensical for block LDL");
-#endif
     const int numLocalNodes = info.localNodes.size();
     const int width = X.Width();
     for( int s=0; s<numLocalNodes; ++s )
@@ -48,7 +44,7 @@ inline void LocalLowerForwardSolve
         // Set up a workspace
         W.ResizeTo( frontL.Height(), width );
         Matrix<F> WT, WB;
-        elem::PartitionDown
+        PartitionDown
         ( W, WT,
              WB, node.size );
         WT = X.localNodes[s];
@@ -96,7 +92,7 @@ inline void LocalLowerForwardSolve
 
         // Solve against this front
         if( !blockLDL )
-            FrontLowerForwardSolve( diag, frontL, W );
+            FrontLowerForwardSolve( frontL, W );
         else
             FrontBlockLowerForwardSolve( frontL, W );
 
@@ -107,17 +103,13 @@ inline void LocalLowerForwardSolve
 
 template<typename F> 
 inline void LocalLowerBackwardSolve
-( Orientation orientation, UnitOrNonUnit diag, const DistSymmInfo& info, 
+( Orientation orientation, const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("LocalLowerBackwardSolve");
 #endif
     const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
-#ifndef RELEASE
-    if( blockLDL && diag == UNIT )
-        throw std::logic_error("Unit diagonal is nonsensical for block LDL");
-#endif
     const int numLocalNodes = info.localNodes.size();
     const int width = X.Width();
     for( int s=numLocalNodes-2; s>=0; --s )
@@ -129,7 +121,7 @@ inline void LocalLowerBackwardSolve
         // Set up a workspace
         W.ResizeTo( frontL.Height(), width );
         Matrix<F> WT, WB;
-        elem::PartitionDown
+        PartitionDown
         ( W, WT,
              WB, node.size );
         WT = X.localNodes[s];
@@ -175,7 +167,7 @@ inline void LocalLowerBackwardSolve
 
         // Solve against this front
         if( !blockLDL )
-            FrontLowerBackwardSolve( orientation, diag, frontL, W );
+            FrontLowerBackwardSolve( orientation, frontL, W );
         else
             FrontBlockLowerBackwardSolve( orientation, frontL, W );
 

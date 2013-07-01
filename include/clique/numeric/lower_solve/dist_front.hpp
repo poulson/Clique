@@ -12,12 +12,12 @@ namespace cliq {
 
 template<typename F>
 void FrontLowerForwardSolve
-( UnitOrNonUnit diag, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
+( const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
   bool singleL11AllGather=true );
 
 template<typename F>
 inline void FrontLowerBackwardSolve
-( Orientation orientation, UnitOrNonUnit diag, 
+( Orientation orientation, 
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
   bool singleL11AllGather=true );
 
@@ -30,12 +30,12 @@ using namespace elem;
 
 template<typename F>
 inline void ForwardMany
-( UnitOrNonUnit diag, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
+( const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
     {
-        FrontLowerForwardSolve( diag, L.LockedMatrix(), X.Matrix() );
+        FrontLowerForwardSolve( L.LockedMatrix(), X.Matrix() );
         return;
     }
 
@@ -79,7 +79,8 @@ inline void ForwardMany
 
         // X1[* ,* ] := (L11[* ,* ])^-1 X1[* ,* ]
         elem::LocalTrsm
-        ( LEFT, LOWER, NORMAL, diag, F(1), L11_STAR_STAR, X1_STAR_STAR, true );
+        ( LEFT, LOWER, NORMAL, NON_UNIT, 
+          F(1), L11_STAR_STAR, X1_STAR_STAR, true );
         X1 = X1_STAR_STAR;
 
         // X2[VC,* ] -= L21[VC,* ] X1[* ,* ]
@@ -169,8 +170,7 @@ void FormDiagonalBlocks
 }
 
 template<typename F>
-void AccumulateRHS
-( const DistMatrix<F,VC,STAR>& X, DistMatrix<F,STAR,STAR>& Z )
+void AccumulateRHS( const DistMatrix<F,VC,STAR>& X, DistMatrix<F,STAR,STAR>& Z )
 {
     const int height = X.Height();
     const int width = X.Width();
@@ -194,13 +194,12 @@ void AccumulateRHS
 }
 
 template<typename F>
-void ForwardSingle
-( UnitOrNonUnit diag, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
+void ForwardSingle( const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
     {
-        FrontLowerForwardSolve( diag, L.LockedMatrix(), X.Matrix() );
+        FrontLowerForwardSolve( L.LockedMatrix(), X.Matrix() );
         return;
     }
 
@@ -249,8 +248,8 @@ void ForwardSingle
 
         // X1[* ,* ] := (L11[* ,* ])^-1 X1[* ,* ]
         elem::LocalTrsm
-        ( LEFT, UPPER, TRANSPOSE, diag, F(1), L11Trans_STAR_STAR, X1_STAR_STAR,
-          true );
+        ( LEFT, UPPER, TRANSPOSE, NON_UNIT, 
+          F(1), L11Trans_STAR_STAR, X1_STAR_STAR, true );
         X1 = X1_STAR_STAR;
 
         // X2[VC,* ] -= L21[VC,* ] X1[* ,* ]
@@ -273,16 +272,16 @@ void ForwardSingle
 
 template<typename F>
 void BackwardMany
-( Orientation orientation, UnitOrNonUnit diag, 
+( Orientation orientation, 
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
     // TODO: Replace this with modified inline code?
-    elem::internal::TrsmLLTSmall( orientation, diag, F(1), L, X, true );
+    elem::internal::TrsmLLTSmall( orientation, NON_UNIT, F(1), L, X, true );
 }
 
 template<typename F>
 void BackwardSingle
-( Orientation orientation, UnitOrNonUnit diag, 
+( Orientation orientation,
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
     const Grid& g = L.Grid();
@@ -339,9 +338,7 @@ void BackwardSingle
 
         //--------------------------------------------------------------------//
         // X1 -= L21' X2
-        Z1_STAR_STAR.ResizeTo( X1.Height(), X1.Width() );
-        elem::LocalGemm
-        ( orientation, NORMAL, F(-1), L21, X2, F(0), Z1_STAR_STAR );
+        elem::LocalGemm( orientation, NORMAL, F(-1), L21, X2, Z1_STAR_STAR );
         elem::internal::AddInLocalData( X1, Z1_STAR_STAR );
         Z1_STAR_STAR.SumOverGrid();
 
@@ -372,7 +369,7 @@ void BackwardSingle
 
 template<typename F>
 inline void FrontLowerForwardSolve
-( UnitOrNonUnit diag, const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
+( const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
   bool singleL11AllGather )
 {
 #ifndef RELEASE
@@ -392,14 +389,14 @@ inline void FrontLowerForwardSolve
         throw std::logic_error("L and X are assumed to be aligned");
 #endif
     if( singleL11AllGather )
-        internal::ForwardSingle( diag, L, X );
+        internal::ForwardSingle( L, X );
     else
-        internal::ForwardMany( diag, L, X );
+        internal::ForwardMany( L, X );
 }
 
 template<typename F>
 inline void FrontLowerBackwardSolve
-( Orientation orientation, UnitOrNonUnit diag, 
+( Orientation orientation, 
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
   bool singleL11AllGather )
 {
@@ -424,36 +421,34 @@ inline void FrontLowerBackwardSolve
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
     {
-        FrontLowerBackwardSolve
-        ( orientation, diag, L.LockedMatrix(), X.Matrix() );
+        FrontLowerBackwardSolve( orientation, L.LockedMatrix(), X.Matrix() );
         return;
     }
 
     DistMatrix<F,VC,STAR> LT(g),
                           LB(g);
-    elem::LockedPartitionDown
+    LockedPartitionDown
     ( L, LT,
          LB, L.Width() );
 
     DistMatrix<F,VC,STAR> XT(g),
                           XB(g);
-    elem::PartitionDown
+    PartitionDown
     ( X, XT,
          XB, L.Width() );
 
     if( XB.Height() != 0 )
     {
         // Subtract off the parent updates
-        DistMatrix<F,STAR,STAR> Z(XT.Height(),XT.Width(),g);
-        Z.ResizeTo( XT.Height(), XT.Width() );
-        elem::LocalGemm( orientation, NORMAL, F(-1), LB, XB, F(0), Z );
+        DistMatrix<F,STAR,STAR> Z(g);
+        elem::LocalGemm( orientation, NORMAL, F(-1), LB, XB, Z );
         XT.SumScatterUpdate( F(1), Z );
     }
 
     if( singleL11AllGather )
-        internal::BackwardSingle( orientation, diag, LT, XT );
+        internal::BackwardSingle( orientation, LT, XT );
     else
-        internal::BackwardMany( orientation, diag, LT, XT );
+        internal::BackwardMany( orientation, LT, XT );
 }
 
 } // namespace cliq

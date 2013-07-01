@@ -39,16 +39,8 @@ inline void LocalDiagonalSolve
 #endif
     const int numLocalNodes = info.localNodes.size();
     for( int s=0; s<numLocalNodes; ++s )
-    {
-        const SymmNodeInfo& node = info.localNodes[s];
-        const Matrix<F>& frontL = L.localFronts[s].frontL;
-
-        Matrix<F> frontTL;
-        LockedView( frontTL, frontL, 0, 0, node.size, node.size );
-        Matrix<F> d;
-        frontTL.GetDiagonal( d );
-        elem::DiagonalSolve( LEFT, NORMAL, d, X.localNodes[s], true );
-    }
+        elem::DiagonalSolve
+        ( LEFT, NORMAL, L.localFronts[s].diag, X.localNodes[s], true );
 }
 
 template<typename F> 
@@ -64,7 +56,7 @@ void DistDiagonalSolve
     {
         const DistSymmFront<F>& front = L.distFronts[s];
         elem::DiagonalSolve
-        ( LEFT, NORMAL, front.diag.LockedMatrix(), X.distNodes[s-1], true );
+        ( LEFT, NORMAL, front.diag1d.LockedMatrix(), X.distNodes[s-1], true );
     }
 }
 

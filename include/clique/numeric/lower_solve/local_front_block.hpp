@@ -37,13 +37,13 @@ inline void FrontBlockLowerForwardSolve( const Matrix<F>& L, Matrix<F>& X )
 #endif
     Matrix<F> LT,
               LB;
-    elem::LockedPartitionDown
+    LockedPartitionDown
     ( L, LT,
          LB, L.Width() );
 
     Matrix<F> XT, 
               XB;
-    elem::PartitionDown
+    PartitionDown
     ( X, XT,
          XB, L.Width() );
 
@@ -74,20 +74,19 @@ inline void FrontBlockLowerBackwardSolve
 #endif
     Matrix<F> LT,
               LB;
-    elem::LockedPartitionDown
+    LockedPartitionDown
     ( L, LT,
          LB, L.Width() );
 
     Matrix<F> XT,
               XB;
-    elem::PartitionDown
+    PartitionDown
     ( X, XT,
          XB, L.Width() );
 
     // YT := LB^[T/H] XB
     Matrix<F> YT;
-    Zeros( YT, XT.Height(), XT.Width() );
-    elem::Gemm( orientation, NORMAL, F(1), LB, XB, F(0), YT );
+    elem::Gemm( orientation, NORMAL, F(1), LB, XB, YT );
 
     // XT := XT - inv(ATL) YT
     elem::Gemm( NORMAL, NORMAL, F(-1), LT, YT, F(1), XT );

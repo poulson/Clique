@@ -24,12 +24,9 @@ enum SymmFrontType
 inline bool
 FrontsAre1d( SymmFrontType frontType )
 {
-    if( frontType == SYMM_1D ||
-        frontType == LDL_1D || 
-        frontType == LDL_SELINV_1D )
-        return true;
-    else
-        return false;
+    return frontType == SYMM_1D ||
+           frontType == LDL_1D  ||
+           frontType == LDL_SELINV_1D;
 }
 
 // Only keep track of the left and bottom-right piece of the fronts
@@ -40,6 +37,7 @@ template<typename F>
 struct SymmFront
 {
     Matrix<F> frontL;
+    Matrix<F> diag;
     mutable Matrix<F> work;
 };
 
@@ -52,15 +50,12 @@ struct DistSymmFront
     // Split each front into a left and right piece such that the right piece
     // is not needed after the factorization (and can be freed).
 
-    // TODO: Think about the fact that almost everything is now mutable...
-
-    mutable DistMatrix<F,VC,STAR> front1dL;
+    DistMatrix<F,VC,STAR> front1dL;
+    DistMatrix<F,VC,STAR> diag1d;
     mutable DistMatrix<F,VC,STAR> work1d;
 
-    mutable DistMatrix<F> front2dL;
+    DistMatrix<F> front2dL;
     mutable DistMatrix<F> work2d;
-
-    DistMatrix<F,VC,STAR> diag;
 };
 
 template<typename F>

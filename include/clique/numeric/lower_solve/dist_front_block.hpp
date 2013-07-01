@@ -12,19 +12,20 @@ namespace cliq {
 
 template<typename F>
 void FrontBlockLowerForwardSolve
-( DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
+( const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
 void FrontBlockLowerForwardSolve
-( DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X );
+( const DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
 void FrontBlockLowerBackwardSolve
-( Orientation orientation, DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
+( Orientation orientation, 
+  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
 
 template<typename F>
 void FrontBlockLowerBackwardSolve
-( Orientation orientation, DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X );
+( Orientation orientation, const DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -32,7 +33,7 @@ void FrontBlockLowerBackwardSolve
 
 template<typename F>
 inline void FrontBlockLowerForwardSolve
-( DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
+( const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("FrontBlockLowerForwardSolve");
@@ -61,7 +62,7 @@ inline void FrontBlockLowerForwardSolve
     const int snSize = L.Width();
     DistMatrix<F,VC,STAR> LT(g),
                           LB(g);
-    PartitionDown
+    LockedPartitionDown
     ( L, LT, 
          LB, snSize );
     DistMatrix<F,VC,STAR> XT(g),
@@ -70,25 +71,21 @@ inline void FrontBlockLowerForwardSolve
     ( X, XT,
          XB, snSize );
 
-    // Get a copy of all of XT
-    DistMatrix<F,STAR,STAR> XT_STAR_STAR( XT );
-
     // XT := inv(ATL) XT
+    DistMatrix<F,STAR,STAR> XT_STAR_STAR( XT );
     elem::LocalGemm( NORMAL, NORMAL, F(1), LT, XT_STAR_STAR, F(0), XT );
 
+    // XB := XB - LB XT
     if( LB.Height() != 0 )
     {
-        // Gather all of XT again
         XT_STAR_STAR = XT;
-
-        // XB := XB - LB XT
         elem::LocalGemm( NORMAL, NORMAL, F(-1), LB, XT_STAR_STAR, F(1), XB );
     }
 }
 
 template<typename F>
 inline void FrontBlockLowerForwardSolve
-( DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X )
+( const DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("FrontBlockLowerForwardSolve");
@@ -115,7 +112,7 @@ inline void FrontBlockLowerForwardSolve
     const int snSize = L.Width();
     DistMatrix<F> LT(g),
                   LB(g);
-    PartitionDown
+    LockedPartitionDown
     ( L, LT, 
          LB, snSize );
     DistMatrix<F,VC,STAR> XT(g),
@@ -129,15 +126,11 @@ inline void FrontBlockLowerForwardSolve
     XT_MR_STAR.AlignWith( LT );
 
     {
-        // ZT[MC,* ] := 0
-        DistMatrix<F,MC,STAR> ZT_MC_STAR(g);
-        ZT_MC_STAR.AlignWith( LT );
-        Zeros( ZT_MC_STAR, LT.Height(), XT.Width() );
-
         // ZT[MC,* ] := inv(ATL)[MC,MR] XT[MR,* ], 
         XT_MR_STAR = XT;
-        elem::LocalGemm
-        ( NORMAL, NORMAL, F(1), LT, XT_MR_STAR, F(0), ZT_MC_STAR );
+        DistMatrix<F,MC,STAR> ZT_MC_STAR(g);
+        ZT_MC_STAR.AlignWith( LT );
+        elem::LocalGemm( NORMAL, NORMAL, F(1), LT, XT_MR_STAR, ZT_MC_STAR );
 
         // XT[VC,* ] := SumScatterFrom( ZT[MC,* ] )
         XT.SumScatterFrom( ZT_MC_STAR );
@@ -145,15 +138,11 @@ inline void FrontBlockLowerForwardSolve
 
     if( LB.Height() != 0 )
     {
-        // ZB[MC,* ] := 0
-        DistMatrix<F,MC,STAR> ZB_MC_STAR(g);
-        ZB_MC_STAR.AlignWith( LB );
-        Zeros( ZB_MC_STAR, LB.Height(), XT.Width() );
-
         // ZB[MC,* ] := LB[MC,MR] XT[MR,* ]
         XT_MR_STAR = XT;
-        elem::LocalGemm
-        ( NORMAL, NORMAL, F(1), LB, XT_MR_STAR, F(0), ZB_MC_STAR );
+        DistMatrix<F,MC,STAR> ZB_MC_STAR(g);
+        ZB_MC_STAR.AlignWith( LB );
+        elem::LocalGemm( NORMAL, NORMAL, F(1), LB, XT_MR_STAR, ZB_MC_STAR );
 
         // XB[VC,* ] -= ZB[MC,* ] = LB[MC,MR] XT[MR,* ]
         XB.SumScatterUpdate( F(-1), ZB_MC_STAR );
@@ -162,7 +151,8 @@ inline void FrontBlockLowerForwardSolve
 
 template<typename F>
 inline void FrontBlockLowerBackwardSolve
-( Orientation orientation, DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
+( Orientation orientation, 
+  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("FrontBlockLowerBackwardSolve");
@@ -183,8 +173,7 @@ inline void FrontBlockLowerBackwardSolve
         throw std::logic_error("This solve must be (conjugate-)transposed");
 #endif
     const Grid& g = L.Grid();
-    const int commSize = g.Size();
-    if( commSize == 1 )
+    if( g.Size() == 1 )
     {
         FrontBlockLowerBackwardSolve
         ( orientation, L.LockedMatrix(), X.Matrix() );
@@ -194,12 +183,12 @@ inline void FrontBlockLowerBackwardSolve
     const int snSize = L.Width();
     DistMatrix<F,VC,STAR> LT(g),
                           LB(g);
-    elem::PartitionDown
+    LockedPartitionDown
     ( L, LT,
          LB, snSize );
     DistMatrix<F,VC,STAR> XT(g),
                           XB(g);
-    elem::PartitionDown
+    PartitionDown
     ( X, XT,
          XB, snSize );
 
@@ -207,22 +196,20 @@ inline void FrontBlockLowerBackwardSolve
         return;
 
     // YT := LB^{T/H} XB
+    DistMatrix<F,STAR,STAR> Z( g );
+    elem::LocalGemm( orientation, NORMAL, F(1), LB, XB, Z );
     DistMatrix<F,VC,STAR> YT(g);
     YT.AlignWith( XT );
-    Zeros( YT, XT.Height(), XT.Width() );
-    DistMatrix<F,STAR,STAR> Z( g );
-    Zeros( Z, snSize, XT.Width() );
-    elem::LocalGemm( orientation, NORMAL, F(1), LB, XB, F(0), Z );
     YT.SumScatterFrom( Z );
 
     // XT := XT - inv(ATL) YT
-    elem::LocalGemm( NORMAL, NORMAL, F(1), LT, YT, F(0), Z );
+    elem::LocalGemm( NORMAL, NORMAL, F(1), LT, YT, Z );
     XT.SumScatterUpdate( F(-1), Z );
 }
 
 template<typename F>
 inline void FrontBlockLowerBackwardSolve
-( Orientation orientation, DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X )
+( Orientation orientation, const DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("FrontBlockLowerBackwardSolve");
@@ -241,8 +228,7 @@ inline void FrontBlockLowerBackwardSolve
         throw std::logic_error("This solve must be (conjugate-)transposed");
 #endif
     const Grid& g = L.Grid();
-    const int commSize = g.Size();
-    if( commSize == 1 )
+    if( g.Size() == 1 )
     {
         FrontBlockLowerBackwardSolve
         ( orientation, L.LockedMatrix(), X.Matrix() );
@@ -252,36 +238,31 @@ inline void FrontBlockLowerBackwardSolve
     const int snSize = L.Width();
     DistMatrix<F> LT(g),
                   LB(g);
-    elem::PartitionDown
+    LockedPartitionDown
     ( L, LT,
          LB, snSize );
     DistMatrix<F,VC,STAR> XT(g),
                           XB(g);
-    elem::PartitionDown
+    PartitionDown
     ( X, XT,
          XB, snSize );
 
     if( XB.Height() == 0 )
         return;
 
-    // Create space for YT[VC,* ]
-    DistMatrix<F,VC,STAR> YT(g);
-    YT.AlignWith( XT );
-    YT.ResizeTo( XT.Height(), XT.Width() );
 
-    // ZT[MR,* ] := 0
     DistMatrix<F,MR,STAR> ZT_MR_STAR( g );
     DistMatrix<F,VR,STAR> ZT_VR_STAR( g );
     ZT_MR_STAR.AlignWith( LB );
-    Zeros( ZT_MR_STAR, snSize, XT.Width() );
-
+    DistMatrix<F,VC,STAR> YT(g);
+    YT.AlignWith( XT );
     {
         // ZT[MR,* ] := (LB[MC,MR])^{T/H} XB[MC,* ]
         DistMatrix<F,MC,STAR> XB_MC_STAR( g );
         XB_MC_STAR.AlignWith( LB );
         XB_MC_STAR = XB;
         elem::LocalGemm
-        ( orientation, NORMAL, F(1), LB, XB_MC_STAR, F(0), ZT_MR_STAR );
+        ( orientation, NORMAL, F(1), LB, XB_MC_STAR, ZT_MR_STAR );
 
         // ZT[VR,* ].SumScatterFrom( ZT[MR,* ] )
         ZT_VR_STAR.SumScatterFrom( ZT_MR_STAR );
@@ -296,7 +277,7 @@ inline void FrontBlockLowerBackwardSolve
         YT_MC_STAR.AlignWith( LT );
         YT_MC_STAR = YT;
         elem::LocalGemm
-        ( orientation, NORMAL, F(1), LT, YT_MC_STAR, F(0), ZT_MR_STAR );
+        ( orientation, NORMAL, F(1), LT, YT_MC_STAR, ZT_MR_STAR );
 
         // ZT[VR,* ].SumScatterFrom( ZT[MR,* ] )
         ZT_VR_STAR.SumScatterFrom( ZT_MR_STAR );

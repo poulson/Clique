@@ -12,12 +12,12 @@ namespace cliq {
 
 template<typename F> 
 void DistLowerForwardSolve
-( UnitOrNonUnit diag, const DistSymmInfo& info, 
+( const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X );
 
 template<typename F>
 void DistLowerBackwardSolve
-( Orientation orientation, UnitOrNonUnit diag, const DistSymmInfo& info, 
+( Orientation orientation, const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X );
 
 //----------------------------------------------------------------------------//
@@ -26,7 +26,7 @@ void DistLowerBackwardSolve
 
 template<typename F> 
 inline void DistLowerForwardSolve
-( UnitOrNonUnit diag, const DistSymmInfo& info, 
+( const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 {
 #ifndef RELEASE
@@ -41,11 +41,6 @@ inline void DistLowerForwardSolve
         frontType != LDL_SELINV_2D && 
         frontType != BLOCK_LDL_2D )
         throw std::logic_error("This solve mode is not yet implemented");
-#ifndef RELEASE
-    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
-    if( blockLDL && diag == UNIT )
-        throw std::logic_error("Unit diagonal is nonsensical for block LDL");
-#endif
 
     // Copy the information from the local portion into the distributed leaf
     const SymmFront<F>& localRootFront = L.localFronts.back();
@@ -80,7 +75,7 @@ inline void DistLowerForwardSolve
         W.SetGrid( grid );
         W.ResizeTo( frontHeight, width );
         DistMatrix<F,VC,STAR> WT(grid), WB(grid);
-        elem::PartitionDown
+        PartitionDown
         ( W, WT,
              WB, node.size );
         WT.Matrix() = X.distNodes[s-1];
@@ -168,11 +163,11 @@ inline void DistLowerForwardSolve
 
         // Now that the RHS is set up, perform this node's solve
         if( frontType == LDL_1D )
-            FrontLowerForwardSolve( diag, front.front1dL, W );
+            FrontLowerForwardSolve( front.front1dL, W );
         else if( frontType == LDL_SELINV_1D )
-            FrontFastLowerForwardSolve( diag, front.front1dL, W );
+            FrontFastLowerForwardSolve( front.front1dL, W );
         else if( frontType == LDL_SELINV_2D )
-            FrontFastLowerForwardSolve( diag, front.front2dL, W );
+            FrontFastLowerForwardSolve( front.front2dL, W );
         else // frontType == BLOCK_LDL_2D
             FrontBlockLowerForwardSolve( front.front2dL, W );
 
@@ -185,7 +180,7 @@ inline void DistLowerForwardSolve
 
 template<typename F>
 inline void DistLowerBackwardSolve
-( Orientation orientation, UnitOrNonUnit diag, const DistSymmInfo& info, 
+( Orientation orientation, const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 {
 #ifndef RELEASE
@@ -201,10 +196,6 @@ inline void DistLowerBackwardSolve
         frontType != LDL_SELINV_2D && 
         frontType != BLOCK_LDL_2D )
         throw std::logic_error("This solve mode is not yet implemented");
-#ifndef RELEASE
-    if( blockLDL && diag == UNIT )
-        throw std::logic_error("Unit diagonal is nonsensical for block LDL");
-#endif
 
     // Directly operate on the root separator's portion of the right-hand sides
     const DistSymmNodeInfo& rootNode = info.distNodes.back();
@@ -214,7 +205,7 @@ inline void DistLowerBackwardSolve
         View( localRootFront.work, X.localNodes.back() );
         if( !blockLDL )
             FrontLowerBackwardSolve
-            ( orientation, diag, localRootFront.frontL, localRootFront.work );
+            ( orientation, localRootFront.frontL, localRootFront.work );
         else
             FrontBlockLowerBackwardSolve
             ( orientation, localRootFront.frontL, localRootFront.work );
@@ -230,13 +221,13 @@ inline void DistLowerBackwardSolve
           XRootLoc.Buffer(), XRootLoc.LDim(), rootGrid );
         if( frontType == LDL_1D )
             FrontLowerBackwardSolve
-            ( orientation, diag, rootFront.front1dL, rootFront.work1d );
+            ( orientation, rootFront.front1dL, rootFront.work1d );
         else if( frontType == LDL_SELINV_1D )
             FrontFastLowerBackwardSolve
-            ( orientation, diag, rootFront.front1dL, rootFront.work1d );
+            ( orientation, rootFront.front1dL, rootFront.work1d );
         else if( frontType == LDL_SELINV_2D )
             FrontFastLowerBackwardSolve
-            ( orientation, diag, rootFront.front2dL, rootFront.work1d );
+            ( orientation, rootFront.front2dL, rootFront.work1d );
         else
             FrontBlockLowerBackwardSolve
             ( orientation, rootFront.front2dL, rootFront.work1d );
@@ -264,7 +255,7 @@ inline void DistLowerBackwardSolve
         W.SetGrid( grid );
         W.ResizeTo( frontHeight, width );
         DistMatrix<F,VC,STAR> WT(grid), WB(grid);
-        elem::PartitionDown
+        PartitionDown
         ( W, WT,
              WB, node.size );
         Matrix<F>& XT = ( s>0 ? X.distNodes[s-1] : X.localNodes.back() );
@@ -352,13 +343,13 @@ inline void DistLowerBackwardSolve
         {
             if( frontType == LDL_1D )
                 FrontLowerBackwardSolve
-                ( orientation, diag, front.front1dL, W );
+                ( orientation, front.front1dL, W );
             else if( frontType == LDL_SELINV_1D )
                 FrontFastLowerBackwardSolve
-                ( orientation, diag, front.front1dL, W );
+                ( orientation, front.front1dL, W );
             else if( frontType == LDL_SELINV_2D )
                 FrontFastLowerBackwardSolve
-                ( orientation, diag, front.front2dL, W );
+                ( orientation, front.front2dL, W );
             else // frontType == BLOCK_LDL_2D
                 FrontBlockLowerBackwardSolve
                 ( orientation, front.front2dL, front.work1d );
@@ -368,8 +359,7 @@ inline void DistLowerBackwardSolve
             View( localRootFront.work, W.Matrix() );
             if( !blockLDL )
                 FrontLowerBackwardSolve
-                ( orientation, diag, localRootFront.frontL, 
-                  localRootFront.work );
+                ( orientation, localRootFront.frontL, localRootFront.work );
             else
                 FrontBlockLowerBackwardSolve
                 ( orientation, localRootFront.frontL, localRootFront.work );

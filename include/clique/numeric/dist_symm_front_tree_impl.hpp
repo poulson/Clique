@@ -413,22 +413,17 @@ DistSymmFrontTree<F>::MemoryInfo
     {
         const SymmFront<F>& front = localFronts[s];
         numLocalEntries += front.frontL.MemorySize();
+        numLocalEntries += front.diag.MemorySize();
         numLocalEntries += front.work.MemorySize();
     }
     for( int s=1; s<numDistFronts; ++s )
     {
         const DistSymmFront<F>& front = distFronts[s];
-        if( frontsAre1d )
-        {
-            numLocalEntries += front.front1dL.AllocatedMemory();
-            numLocalEntries += front.work1d.AllocatedMemory();
-        }
-        else
-        {
-            numLocalEntries += front.front2dL.AllocatedMemory();
-            numLocalEntries += front.work2d.AllocatedMemory();
-        }
-        numLocalEntries += front.diag.AllocatedMemory();
+        numLocalEntries += front.front1dL.AllocatedMemory();
+        numLocalEntries += front.front2dL.AllocatedMemory();
+        numLocalEntries += front.diag1d.AllocatedMemory();
+        numLocalEntries += front.work1d.AllocatedMemory();
+        numLocalEntries += front.work2d.AllocatedMemory();
     }
 
     mpi::AllReduce( &numLocalEntries, &minLocalEntries, 1, mpi::MIN, comm );

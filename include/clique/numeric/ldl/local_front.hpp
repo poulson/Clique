@@ -42,7 +42,7 @@ inline void FrontLDL( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR )
               AL21B;
 
     // Start the algorithm
-    elem::PartitionDownDiagonal
+    PartitionDownDiagonal
     ( AL, ALTL, ALTR,
           ALBL, ALBR, 0 );
     while( ALTL.Width() < AL.Width() )
@@ -63,10 +63,10 @@ inline void FrontLDL( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR )
         S21 = AL21;
         elem::DiagonalSolve( RIGHT, NORMAL, d1, AL21 );
 
-        elem::PartitionDown
+        PartitionDown
         ( S21, S21T,
                S21B, AL22.Width() );
-        elem::PartitionDown
+        PartitionDown
         ( AL21, AL21T,
                 AL21B, AL22.Width() );
         elem::Gemm( NORMAL, orientation, F(-1), S21, AL21T, F(1), AL22 );

@@ -12,12 +12,12 @@ namespace cliq {
 
 template<typename T>
 void LocalLowerMultiplyNormal
-( UnitOrNonUnit diag, int diagOffset, const DistSymmInfo& info, 
+( int diagOffset, const DistSymmInfo& info, 
   const DistSymmFrontTree<T>& L, DistNodalMultiVec<T>& X );
 
 template<typename T>
 void LocalLowerMultiplyTranspose
-( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
+( Orientation orientation, int diagOffset,
   const DistSymmInfo& info, const DistSymmFrontTree<T>& L, 
   DistNodalMultiVec<T>& X );
 
@@ -27,7 +27,7 @@ void LocalLowerMultiplyTranspose
 
 template<typename T> 
 inline void LocalLowerMultiplyNormal
-( UnitOrNonUnit diag, int diagOffset, const DistSymmInfo& info, 
+( int diagOffset, const DistSymmInfo& info, 
   const DistSymmFrontTree<T>& L, DistNodalMultiVec<T>& X )
 {
 #ifndef RELEASE
@@ -44,7 +44,7 @@ inline void LocalLowerMultiplyNormal
         // Set up a workspace
         W.ResizeTo( frontL.Height(), width );
         Matrix<T> WT, WB;
-        elem::PartitionDown
+        PartitionDown
         ( W, WT,
              WB, node.size );
         WT = X.localNodes[s];
@@ -52,7 +52,7 @@ inline void LocalLowerMultiplyNormal
 
         // Multiply this block column of L against this node's portion of the
         // right-hand side and set W equal to the result
-        FrontLowerMultiply( NORMAL, diag, diagOffset, frontL, W );
+        FrontLowerMultiply( NORMAL, diagOffset, frontL, W );
 
         // Update using the children (if they exist)
         const int numChildren = node.children.size();
@@ -101,7 +101,7 @@ inline void LocalLowerMultiplyNormal
 
 template<typename T> 
 inline void LocalLowerMultiplyTranspose
-( Orientation orientation, UnitOrNonUnit diag, int diagOffset,
+( Orientation orientation, int diagOffset,
   const DistSymmInfo& info, const DistSymmFrontTree<T>& L, 
   DistNodalMultiVec<T>& X )
 {
@@ -120,7 +120,7 @@ inline void LocalLowerMultiplyTranspose
         // Set up a workspace
         W.ResizeTo( frontL.Height(), width );
         Matrix<T> WT, WB;
-        elem::PartitionDown
+        PartitionDown
         ( W, WT,
              WB, node.size );
         WT = X.localNodes[s];
@@ -154,11 +154,11 @@ inline void LocalLowerMultiplyTranspose
 
         // Multiply the (conjugate-)transpose of this block column of L against
         // this node's portion of the right-hand side.
-        FrontLowerMultiply( orientation, diag, diagOffset, frontL, XNode );
+        FrontLowerMultiply( orientation, diagOffset, frontL, XNode );
 
         // Store this node's portion of the result
         Matrix<T> XNodeT, XNodeB;
-        elem::PartitionDown
+        PartitionDown
         ( XNode, XNodeT,
                  XNodeB, node.size );
         X.localNodes[s] = XNodeT;

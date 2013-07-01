@@ -65,7 +65,7 @@ inline void FrontLDLGeneral
                   AL22B(g);
 
     // Start the algorithm
-    elem::PartitionDownDiagonal
+    PartitionDownDiagonal
     ( AL, ALTL, ALTR,
           ALBL, ALBR, 0 );
     while( ALTL.Width() < AL.Width() )
@@ -195,7 +195,7 @@ inline void FrontLDLSquare
                   AR2B(g);
 
     // Start the algorithm
-    elem::PartitionDownDiagonal
+    PartitionDownDiagonal
     ( AL, ALTL, ALTR,
           ALBL, ALBR, 0 );
     while( ALTL.Width() < AL.Width() )

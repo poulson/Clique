@@ -38,7 +38,6 @@ public:
 #endif
 
 void ReportException( std::exception& e );
-void ReportException( elem::ArgException& e );
 
 // Pull in some of Elemental's imported libraries
 namespace blas = elem::blas;
@@ -72,7 +71,6 @@ using elem::Length;
 // Pull in command-line processing
 using elem::Input;
 using elem::ProcessInput;
-using elem::ArgException;
 
 inline int
 RowToProcess( int i, int blocksize, int commSize )

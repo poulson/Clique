@@ -40,7 +40,7 @@ LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
 #endif
 
         // Add updates from children (if they exist)
-        elem::Zeros( frontBR, updateSize, updateSize );
+        Zeros( frontBR, updateSize, updateSize );
         const int numChildren = node.children.size();
         if( numChildren == 2 )
         {
@@ -93,6 +93,8 @@ LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
                 FrontLDL( ADJOINT, frontL, frontBR );
             else
                 FrontLDL( TRANSPOSE, frontL, frontBR );
+            frontL.GetDiagonal( L.localFronts[s].diag );
+            elem::SetDiagonal( frontL, F(1) );
         }
         else
         {

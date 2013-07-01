@@ -37,30 +37,22 @@ inline void Solve
     CallStackEntry entry("Solve");
 #endif
     const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
+    const Orientation orientation = ( L.isHermitian ? ADJOINT : TRANSPOSE );
     if( !blockLDL )
     {
         // Solve against unit diagonal L
-        LowerSolve( NORMAL, UNIT, info, L, X );
-
+        LowerSolve( NORMAL, info, L, X );
         // Solve against diagonal
         DiagonalSolve( info, L, X );
-
         // Solve against the (conjugate-)transpose of the unit diagonal L
-        if( L.isHermitian )
-            LowerSolve( ADJOINT, UNIT, info, L, X );
-        else
-            LowerSolve( TRANSPOSE, UNIT, info, L, X );
+        LowerSolve( orientation, info, L, X );
     }
     else
     {
         // Solve against block diagonal factor, L D
-        LowerSolve( NORMAL, NON_UNIT, info, L, X );
-
+        LowerSolve( NORMAL, info, L, X );
         // Solve against the (conjugate-)transpose of the block unit diagonal L
-        if( L.isHermitian )
-            LowerSolve( ADJOINT, NON_UNIT, info, L, X );
-        else
-            LowerSolve( TRANSPOSE, NON_UNIT, info, L, X );
+        LowerSolve( orientation, info, L, X );
     }
 }
 

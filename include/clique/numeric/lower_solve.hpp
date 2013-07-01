@@ -12,7 +12,7 @@ namespace cliq {
 
 template<typename F>
 void LowerSolve
-( Orientation orientation, UnitOrNonUnit diag, const DistSymmInfo& info, 
+( Orientation orientation, const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X );
 
 } // namespace cliq
@@ -34,7 +34,7 @@ namespace cliq {
 
 template<typename F>
 inline void LowerSolve
-( Orientation orientation, UnitOrNonUnit diag, const DistSymmInfo& info, 
+( Orientation orientation, const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 {
 #ifndef RELEASE
@@ -42,13 +42,13 @@ inline void LowerSolve
 #endif
     if( orientation == NORMAL )
     {
-        LocalLowerForwardSolve( diag, info, L, X );
-        DistLowerForwardSolve( diag, info, L, X );
+        LocalLowerForwardSolve( info, L, X );
+        DistLowerForwardSolve( info, L, X );
     }
     else
     {
-        DistLowerBackwardSolve( orientation, diag, info, L, X );
-        LocalLowerBackwardSolve( orientation, diag, info, L, X );
+        DistLowerBackwardSolve( orientation, info, L, X );
+        LocalLowerBackwardSolve( orientation, info, L, X );
     }
 }
 
