@@ -51,9 +51,7 @@ inline void FrontBlockLowerForwardSolve
         throw std::logic_error("L and X are assumed to be aligned");
 #endif
     const Grid& g = L.Grid();
-    const int commRank = g.VCRank();
-    const int commSize = g.Size();
-    if( commSize == 1 )
+    if( g.Size() == 1 )
     {
         FrontBlockLowerForwardSolve( L.LockedMatrix(), X.Matrix() );
         return;
@@ -107,8 +105,7 @@ inline void FrontBlockLowerForwardSolve
     }
 #endif
     const Grid& g = L.Grid();
-    const int commSize = g.Size();
-    if( commSize == 1 )
+    if( g.Size() == 1 )
     {
         FrontBlockLowerForwardSolve( L.LockedMatrix(), X.Matrix() );
         return;
@@ -187,7 +184,6 @@ inline void FrontBlockLowerBackwardSolve
 #endif
     const Grid& g = L.Grid();
     const int commSize = g.Size();
-    const int commRank = g.VCRank();
     if( commSize == 1 )
     {
         FrontBlockLowerBackwardSolve

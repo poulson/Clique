@@ -89,7 +89,7 @@ private:
 
     friend class Graph;
     template<typename F> friend class DistSparseMatrix;
-    template<typename F> friend class DistSymmFrontTree;
+    template<typename F> friend struct DistSymmFrontTree;
 };
 
 } // namespace cliq

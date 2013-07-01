@@ -29,13 +29,6 @@ DistFrontTree<F>::DistFrontTree
     if( A.LocalHeight() != map.NumLocalSources() )
         throw std::logic_error("Local mapping was not the right size");
 #endif
-    mpi::Comm comm = A.Comm();
-    const DistGraph& graph = A.DistGraph();
-    const int blocksize = A.Blocksize();
-    const int commSize = mpi::CommSize( comm );
-    const int numSources = graph.NumSources();
-    const int numLocal = sepTree.localSepsAndLeaves.size();
-    const int numDist = sepTree.distSeps.size();
 
     // TODO: Extend the DistSymmFrontTree version to handle the columns as well
     throw std::logic_error("This routine is not yet written");
