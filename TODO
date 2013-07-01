@@ -3,6 +3,8 @@ Functionality
 - Finish implementing DistNodalMatrix
 - Implement versions of Solve routines which supports DistNodalMatrix
 - Implement faster sparse mat-vec
+- Implement constructor for non-trivial DistSparseMatrix from SparseMatrix
+  (and the equivalent for DistMultiVec from MultiVec)
 
 Maintenance
 ===========

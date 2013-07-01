@@ -52,7 +52,6 @@ main( int argc, char* argv[] )
         const int b = Input("--pmlWidth","number of grid points of PML",5);
         const double sigma = Input("--sigma","magnitude of PML profile",1.5);
         const double p = Input("--exponent","exponent of PML profile",3.);
-        const double damping = Input("--damping","damping parameter",7.);
         const bool analytic = Input("--analytic","analytic partitions?",true);
         const bool sequential = Input
             ("--sequential","sequential partitions?",true);
