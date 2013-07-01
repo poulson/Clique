@@ -88,7 +88,7 @@ functioning. Assuming that Clique&#8217;s source code sits in the directory <tt 
 create the following Makefile from any directory:</p>
 <div class="highlight-python"><pre>include /usr/local/conf/cliqvariables
 
-VectorSolve: /home/username/clique/tests/VectorSolve.cpp
+Solve: /home/username/clique/tests/Solve.cpp
     ${CXX} ${CLIQ_COMPILE_FLAGS} $&lt; -o $@ ${CLIQ_LINK_FLAGS} ${CLIQ_LIBS}</pre>
 </div>
 <p>and then simply running <tt class="docutils literal"><span class="pre">make</span></tt> should build the test driver.</p>
@@ -104,7 +104,7 @@ Clique source tree in a subdirectory of your main project folder, say
 <tt class="docutils literal"><span class="pre">external/clique</span></tt>,
 and then create a <tt class="docutils literal"><span class="pre">CMakeLists.txt</span></tt> in your main project folder that builds
 off of the following snippet:</p>
-<div class="highlight-python"><pre>cmake_minimum_required(VERSION 2.8.5)
+<div class="highlight-python"><pre>cmake_minimum_required(VERSION 2.8.10)
 project(Foo)
 
 add_subdirectory(external/clique)

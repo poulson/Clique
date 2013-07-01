@@ -40,7 +40,7 @@ create the following Makefile from any directory::
 
     include /usr/local/conf/cliqvariables
 
-    VectorSolve: /home/username/clique/tests/VectorSolve.cpp
+    Solve: /home/username/clique/tests/Solve.cpp
         ${CXX} ${CLIQ_COMPILE_FLAGS} $< -o $@ ${CLIQ_LINK_FLAGS} ${CLIQ_LIBS}
 
 and then simply running ``make`` should build the test driver.
@@ -58,7 +58,7 @@ Clique source tree in a subdirectory of your main project folder, say
 and then create a ``CMakeLists.txt`` in your main project folder that builds
 off of the following snippet::
 
-    cmake_minimum_required(VERSION 2.8.5)
+    cmake_minimum_required(VERSION 2.8.10)
     project(Foo)
 
     add_subdirectory(external/clique)
