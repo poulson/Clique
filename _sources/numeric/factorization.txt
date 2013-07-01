@@ -38,33 +38,22 @@ This data structure represents a distributed symmetric :math:`LDL^T` or
       :math:`m \times n`, then the associated node has :math:`n` vertices 
       and the lower structure is of size :math:`m-n`.
 
-   .. cpp:member:: mutable Matrix<T> work
+   .. cpp:member:: Matrix<T> diag
 
-      Used for temporary results during operations with this frontal matrix.
+      Stores the diagonal of the frontal matrix after factorization.
 
 .. cpp:type:: struct DistSymmFront<T>
 
-   .. cpp:member:: mutable DistMatrix<T,VC,STAR> front1dL
+   .. cpp:member:: DistMatrix<T,VC,STAR> front1dL
+   .. cpp:member:: DistMatrix<T> front2dL
 
-      The left half of a frontal matrix in a 1D distribution. If `front1dL` is 
-      :math:`m \times n`, then the associated node has :math:`n` vertices 
-      and the lower structure is of size :math:`m-n`.
+      The left half of a frontal matrix in a 1D/2D distribution. 
+      If `front1dL`/`front2dL` is :math:`m \times n`, then the associated node 
+      has :math:`n` vertices and the lower structure is of size :math:`m-n`.
 
-   .. cpp:member:: mutable DistMatrix<T,VC,STAR> work1d
+   .. cpp:member:: DistMatrix<T,VC,STAR> diag1d
 
-      Used for temporary results which are in a 1D distribution.
-
-   .. cpp:member:: mutable DistMatrix<T> front2dL
-
-      The left half of a frontal matrix in a 2D distribution. 
-
-   .. cpp:member:: mutable DistMatrix<T> work2d
-
-      Used for temporary results which are in a 2D distribution.
-
-   .. cpp:member:: DistMatrix<T,VC,STAR> diag
-
-      Used for storing the diagonal of the frontal matrix.
+      Stores the diagonal of the frontal matrix after factorization.
 
 .. cpp:type:: enum SymmFrontType
 

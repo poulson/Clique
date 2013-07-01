@@ -41,7 +41,7 @@ an :math:`LDL^T` or :math:`LDL^H` factorization, the following routines can
 be used to perform various solves against the lower-triangular and diagonal 
 data of a frontal tree.
 
-.. cpp:function:: void LowerSolve( Orientation orientation, UnitOrNonUnit diag, const DistSymmInfo& info, const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
+.. cpp:function:: void LowerSolve( Orientation orientation, const DistSymmInfo& info, const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 
    **TODO: More detailed description.**
 
