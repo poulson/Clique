@@ -55,21 +55,11 @@ DistNodalMatrix<F>::Pull
     for( int s=0; s<numLocal; ++s )
     {
         const SymmNodeInfo& node = info.localNodes[s];
-#ifndef RELEASE
-        if( numRecvRowIndices != node.myOffset )
-            throw std::logic_error
-            ("numRecvRowIndices did not match local offset");
-#endif
         numRecvRowIndices += node.size;
     }
     for( int s=1; s<numDist; ++s )
     {
         const DistSymmNodeInfo& node = info.distNodes[s];
-#ifndef RELEASE
-        if( numRecvRowIndices != node.solveMeta2d.localColOffset )
-            throw std::logic_error
-            ("numRecvRowIndices did not match dist offset");
-#endif
         numRecvRowIndices += node.solveMeta2d.localHeight;
     }
 

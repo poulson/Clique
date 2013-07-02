@@ -335,7 +335,6 @@ void DistSymmetricAnalysis
     bottomDist.solveMeta1d.localSize = topLocal.size;
     bottomDist.offset = topLocal.offset;
     bottomDist.myOffset = topLocal.myOffset;
-    bottomDist.solveMeta1d.localOffset = topLocal.myOffset;
     bottomDist.lowerStruct = topLocal.lowerStruct;
     bottomDist.origLowerStruct = topLocal.origLowerStruct;
     bottomDist.origLowerRelIndices = topLocal.origLowerRelIndices;
@@ -345,11 +344,9 @@ void DistSymmetricAnalysis
     bottomDist.rightSize = -1; // not needed, could compute though
     bottomDist.factorMeta.Empty();
     bottomDist.solveMeta1d.Empty();
-    bottomDist.solveMeta1d.localOffset = topLocal.myOffset;
 
     // Perform the distributed part of the symbolic factorization
     int myOffset = bottomDist.myOffset + bottomDist.size;
-    int localOffset1d = bottomDist.solveMeta1d.localOffset + bottomDist.size;
     for( unsigned s=1; s<numNodes; ++s )
     {
         const DistSymmNode& node = eTree.distNodes[s];
@@ -507,11 +504,8 @@ void DistSymmetricAnalysis
         if( storeFactRecvIndices )
             ComputeFactRecvIndices( nodeInfo, childNodeInfo );
 
-        solveMeta1d.localSize = Length<int>(node.size,teamRank,teamSize);
-        solveMeta1d.localOffset = localOffset1d;
-
         myOffset += nodeInfo.size;
-        localOffset1d += solveMeta1d.localSize;
+        solveMeta1d.localSize = Length<int>(node.size,teamRank,teamSize);
     }
 }
 

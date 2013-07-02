@@ -58,7 +58,7 @@ struct FactorMetadata
 
 struct SolveMetadata1d
 {
-    int localSize, localOffset;
+    int localSize;
     std::deque<int> leftIndices, rightIndices;
     std::vector<int> numChildSendIndices;
     std::vector<std::deque<int> > childRecvIndices;
@@ -74,7 +74,7 @@ struct SolveMetadata1d
 
 struct SolveMetadata2d
 {
-    int localHeight, localWidth, localColOffset, localRowOffset;
+    int localHeight, localWidth;
     std::deque<int> leftIndices, rightIndices;
     std::vector<int> numChildSendIndices;
     std::vector<std::deque<int> > childRecvIndices;
@@ -147,21 +147,24 @@ DistSymmInfo::StoreReordered( std::vector<int>& reordered ) const
 #ifndef RELEASE
     CallStackEntry entry("DistSymmInfo::StoreReordered");
 #endif
-    const int localSize = distNodes.back().solveMeta1d.localOffset +
-                          distNodes.back().solveMeta1d.localSize;
+    int localSize=0;
+    const int numLocal = localNodes.size();
+    for( int s=0; s<numLocal; ++s )
+        localSize += localNodes[s].size;
+    const int numDist = distNodes.size();
+    for( int s=1; s<numDist; ++s )
+        localSize += distNodes[s].solveMeta1d.localSize;
     reordered.resize( localSize );
 
     int localOffset=0;
-    const int numDistNodes = distNodes.size();
-    const int numLocalNodes = localNodes.size();
-    for( int s=0; s<numLocalNodes; ++s )
+    for( int s=0; s<numLocal; ++s )
     {
         const int size = localNodes[s].size;
         const int offset = localNodes[s].offset;
         for( int j=0; j<size; ++j )
             reordered[localOffset++] = j+offset;
     }
-    for( int s=1; s<numDistNodes; ++s )
+    for( int s=1; s<numDist; ++s )
     {
         const int size = distNodes[s].size;
         const int offset = distNodes[s].offset;
