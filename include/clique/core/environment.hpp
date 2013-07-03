@@ -72,6 +72,61 @@ using elem::Length;
 using elem::Input;
 using elem::ProcessInput;
 
+template<typename T>
+inline bool IsSorted( const std::vector<T>& x )
+{
+    const int vecLength = x.size();
+    for( int i=1; i<vecLength; ++i )
+    {
+        if( x[i] < x[i-1] )
+            return false;
+    }
+    return true;
+}
+
+// While is_strictly_sorted exists in Boost, it does not exist in the STL (yet)
+template<typename T>
+inline bool IsStrictlySorted( const std::vector<T>& x )
+{
+    const int vecLength = x.size();
+    for( int i=1; i<vecLength; ++i )
+    {
+        if( x[i] <= x[i-1] )
+            return false;
+    }
+    return true;
+}
+
+inline void Union
+( std::vector<int>& both, 
+  const std::vector<int>& first, const std::vector<int>& second )
+{
+    both.resize( first.size()+second.size() );
+    std::vector<int>::iterator it = std::set_union
+      ( first.begin(), first.end(), second.begin(), second.end(), 
+        both.begin() );
+    both.resize( int(it-both.begin()) );
+}
+
+inline void RelativeIndices
+( std::vector<int>& relIndices, 
+  const std::vector<int>& sub, const std::vector<int>& full )
+{
+    const int numSub = sub.size();
+    relIndices.resize( numSub );
+    std::vector<int>::const_iterator it = full.begin();
+    for( int i=0; i<numSub; ++i )
+    {
+        const int index = sub[i];
+        it = std::lower_bound( it, full.end(), index );
+#ifndef RELEASE
+        if( it == full.end() )
+            throw std::logic_error("Index was not found");
+#endif
+        relIndices[i] = int(it-full.begin());
+    }
+}
+
 inline int
 RowToProcess( int i, int blocksize, int commSize )
 {
@@ -82,23 +137,9 @@ RowToProcess( int i, int blocksize, int commSize )
 }
 
 inline int
-Find( const std::vector<int>& sortedIndices, int index )
-{
-#ifndef RELEASE
-    CallStackEntry entry("Find");
-#endif
-    std::vector<int>::const_iterator vecIt;
-    vecIt = std::lower_bound
-        ( sortedIndices.begin(), sortedIndices.end(), index );
-#ifndef RELEASE
-    if( vecIt == sortedIndices.end() )
-        throw std::logic_error("Could not find index");
-#endif
-    return vecIt - sortedIndices.begin();
-}
-    
-inline int
-Find( const std::vector<int>& sortedIndices, int index, std::string msg )
+Find
+( const std::vector<int>& sortedIndices, int index, 
+  std::string msg="Could not find index" )
 {
 #ifndef RELEASE
     CallStackEntry entry("Find");
@@ -167,10 +208,10 @@ SparseAllToAll
             ( &recvBuffer[displ], count, proc, 0, comm,
               requests[rCount++] );
     }
-# ifdef BARRIER_IN_ALLTOALLV
+#ifdef BARRIER_IN_ALLTOALLV
     // This should help ensure that recvs are posted before the sends
     mpi::Barrier( comm );
-# endif
+#endif
     for( int proc=0; proc<commSize; ++proc )
     {
         int count = sendCounts[proc];

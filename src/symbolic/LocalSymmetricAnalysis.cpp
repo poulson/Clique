@@ -48,117 +48,52 @@ void LocalSymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info )
             SymmNodeInfo& rightChild = info.localNodes[right];
             leftChild.onLeft = true;
             rightChild.onLeft = false;
+#ifndef RELEASE
+            if( !IsStrictlySorted(leftChild.lowerStruct) )
+            {
+                if( IsSorted(leftChild.lowerStruct) )
+                    throw std::logic_error("Repeat in left lower struct");
+                else
+                    throw std::logic_error("Left lower struct not sorted");
+            }
+            if( !IsStrictlySorted(rightChild.lowerStruct) )
+            {
+                if( IsSorted(rightChild.lowerStruct) )
+                    throw std::logic_error("Repeat in right lower struct");
+                else
+                    throw std::logic_error("Right lower struct not sorted");
+            }
+            if( !IsStrictlySorted(node.lowerStruct) )
+            {
+                if( IsSorted(node.lowerStruct) )
+                    throw std::logic_error("Repeat in original lower struct");
+                else
+                    throw std::logic_error("Original lower struct not sorted");
+            }
+#endif
 
             // Union the child lower structs
-            const int numLeftIndices = leftChild.lowerStruct.size();
-            const int numRightIndices = rightChild.lowerStruct.size();
-#ifndef RELEASE
-            for( int i=1; i<numLeftIndices; ++i )
-            {
-                const int thisIndex = leftChild.lowerStruct[i];
-                const int lastIndex = leftChild.lowerStruct[i-1];
-                if( thisIndex < lastIndex )
-                {
-                    std::ostringstream msg;
-                    msg << "Left child struct was not sorted for s=" << s;
-                    throw std::logic_error( msg.str().c_str() );
-                }
-                else if( thisIndex == lastIndex )
-                {
-                    std::ostringstream msg;
-                    msg << "Left child struct had repeated index, " 
-                        << thisIndex << ", for s=" << s;
-                    throw std::logic_error( msg.str().c_str() );
-                }
-            }
-            for( int i=1; i<numRightIndices; ++i )
-            {
-                const int thisIndex = rightChild.lowerStruct[i];
-                const int lastIndex = rightChild.lowerStruct[i-1];
-                if( thisIndex < lastIndex )
-                {
-                    std::ostringstream msg;
-                    msg << "Right child struct was not sorted for s=" << s;
-                    throw std::logic_error( msg.str().c_str() );
-                }
-                else if( thisIndex == lastIndex )
-                {
-                    std::ostringstream msg;
-                    msg << "Right child struct had repeated index, " 
-                        << thisIndex << ", for s=" << s;
-                    throw std::logic_error( msg.str().c_str() );
-                }
-            }
-#endif
-            const int childrenStructMaxSize = numLeftIndices + numRightIndices;
-            childrenStruct.resize( childrenStructMaxSize );
-            it = std::set_union
-            ( leftChild.lowerStruct.begin(), leftChild.lowerStruct.end(),
-              rightChild.lowerStruct.begin(), rightChild.lowerStruct.end(),
-              childrenStruct.begin() );
-            const int childrenStructSize = int(it-childrenStruct.begin());
-            childrenStruct.resize( childrenStructSize );
+            Union
+            ( childrenStruct, leftChild.lowerStruct, rightChild.lowerStruct );
 
             // Union the lower structure of this node
-#ifndef RELEASE
-            for( int i=1; i<numOrigLowerIndices; ++i )
-            {
-                if( node.lowerStruct[i] <= node.lowerStruct[i-1] )
-                {
-                    std::ostringstream msg;
-                    msg << "Original struct not sorted for s=" << s << "\n";
-                    throw std::logic_error( msg.str().c_str() );
-                }
-            }
-#endif
-            const int partialStructMaxSize = 
-                childrenStructSize + numOrigLowerIndices;
-            partialStruct.resize( partialStructMaxSize );
-            it = std::set_union
-            ( node.lowerStruct.begin(), node.lowerStruct.end(),
-              childrenStruct.begin(), childrenStruct.end(),
-              partialStruct.begin() );
-            const int partialStructSize = int(it-partialStruct.begin());
-            partialStruct.resize( partialStructSize );
+            Union( partialStruct, node.lowerStruct, childrenStruct );
 
             // Union again with the node indices
             nodeIndices.resize( node.size );
             for( int i=0; i<node.size; ++i )
                 nodeIndices[i] = node.offset + i;
-            fullStruct.resize( node.size + partialStructSize );
-            it = std::set_union
-            ( partialStruct.begin(), partialStruct.end(),
-              nodeIndices.begin(), nodeIndices.end(),
-              fullStruct.begin() );
-            fullStruct.resize( int(it-fullStruct.begin()) );
+            Union( fullStruct, partialStruct, nodeIndices );
 
             // Construct the relative indices of the original lower structure
-            it = fullStruct.begin();
-            nodeInfo.origLowerRelIndices.resize( numOrigLowerIndices );
-            for( int i=0; i<numOrigLowerIndices; ++i )
-            {
-                const int index = node.lowerStruct[i];
-                it = std::lower_bound ( it, fullStruct.end(), index );
-                nodeInfo.origLowerRelIndices[i] = int(it-fullStruct.begin());
-            }
+            RelativeIndices
+            ( nodeInfo.origLowerRelIndices, node.lowerStruct, fullStruct );
 
             // Construct the relative indices of the children
-            nodeInfo.leftRelIndices.resize( numLeftIndices );
-            it = fullStruct.begin();
-            for( int i=0; i<numLeftIndices; ++i )
-            {
-                const int index = leftChild.lowerStruct[i];
-                it = std::lower_bound( it, fullStruct.end(), index );
-                nodeInfo.leftRelIndices[i] = int(it-fullStruct.begin());
-            }
-            nodeInfo.rightRelIndices.resize( numRightIndices );
-            it = fullStruct.begin();
-            for( int i=0; i<numRightIndices; ++i )
-            {
-                const int index = rightChild.lowerStruct[i];
-                it = std::lower_bound( it, fullStruct.end(), index );
-                nodeInfo.rightRelIndices[i] = int(it-fullStruct.begin());
-            }
+            RelativeIndices
+            ( nodeInfo.leftRelIndices, leftChild.lowerStruct, fullStruct );
+            RelativeIndices
+            ( nodeInfo.rightRelIndices, rightChild.lowerStruct, fullStruct );
 
             // Form lower struct of this node by removing node indices
             // (which take up the first node.size indices of fullStruct)
