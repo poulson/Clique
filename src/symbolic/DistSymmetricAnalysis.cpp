@@ -131,15 +131,15 @@ inline void ComputeStructAndRelIndices
     }
 #endif
 
-    // Union the two child lower structures
+    // Combine the children's structure
     std::vector<int> childrenStruct;
     Union( childrenStruct, myLowerStruct, theirLowerStruct );
 
-    // Union the lower structure of this node
+    // Now add in the original lower structure
     std::vector<int> partialStruct;
     Union( partialStruct, childrenStruct, node.lowerStruct );
 
-    // Union again with the node indices
+    // Now the node indices
     std::vector<int> nodeIndices( node.size );
     for( int i=0; i<node.size; ++i )
         nodeIndices[i] = node.offset + i;
@@ -151,16 +151,10 @@ inline void ComputeStructAndRelIndices
     ( nodeInfo.origLowerRelIndices, node.lowerStruct, fullStruct );
 
     // Construct the relative indices of the children
-    int numLeftIndices, numRightIndices;
-    const int *leftIndices, *rightIndices;
     if( childNode.onLeft )
     {
         nodeInfo.leftSize = childNodeInfo.size;
         nodeInfo.rightSize = theirSize;
-        leftIndices = &myLowerStruct[0];
-        rightIndices = &theirLowerStruct[0];
-        numLeftIndices = myLowerStruct.size();
-        numRightIndices = theirLowerStruct.size();
         RelativeIndices
         ( nodeInfo.leftRelIndices, myLowerStruct, fullStruct );
         RelativeIndices
@@ -170,10 +164,6 @@ inline void ComputeStructAndRelIndices
     {
         nodeInfo.leftSize = theirSize;
         nodeInfo.rightSize = childNodeInfo.size;
-        leftIndices = &theirLowerStruct[0];
-        rightIndices = &myLowerStruct[0];
-        numLeftIndices = theirLowerStruct.size();
-        numRightIndices = myLowerStruct.size();
         RelativeIndices
         ( nodeInfo.leftRelIndices, theirLowerStruct, fullStruct );
         RelativeIndices
@@ -203,6 +193,8 @@ inline void ComputeStructAndRelIndices
     const int gridWidth = nodeInfo.grid->Width();
     const int gridRow = nodeInfo.grid->Row();
     const int gridCol = nodeInfo.grid->Col();
+    const int numLeftIndices = nodeInfo.leftRelIndices.size();
+    const int numRightIndices = nodeInfo.rightRelIndices.size();
     for( int i=0; i<numLeftIndices; ++i )
         if( nodeInfo.leftRelIndices[i] % gridHeight == gridRow )
             factorMeta.leftColIndices.push_back( i );
@@ -283,7 +275,6 @@ void DistSymmetricAnalysis
 
         // Get the lower struct for the child we do not share
         int theirSize;
-        std::vector<int> theirLowerStruct;
         const int teamSize = mpi::CommSize( node.comm );
         const int teamRank = mpi::CommRank( node.comm );
         const int childTeamRank = mpi::CommRank( childNode.comm );
@@ -296,6 +287,7 @@ void DistSymmetricAnalysis
         const bool leftIsFirst = ( onLeft==inFirstTeam );
         const int leftTeamOffset = ( leftIsFirst ? 0 : rightTeamSize );
         const int rightTeamOffset = ( leftIsFirst ? leftTeamSize : 0 );
+        std::vector<int> theirLowerStruct;
         if( leftTeamSize == rightTeamSize )
             internal::GetLowerStructFromPartner
             ( theirSize, theirLowerStruct, node, childNodeInfo );

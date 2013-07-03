@@ -21,8 +21,6 @@ void LocalSymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info )
 
     // Perform the symbolic factorization
     int myOffset = 0;
-    std::vector<int>::iterator it;
-    std::vector<int> childrenStruct, partialStruct, fullStruct, nodeIndices;
     for( int s=0; s<numNodes; ++s )
     {
         const SymmNode& node = *eTree.localNodes[s];
@@ -35,7 +33,6 @@ void LocalSymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info )
         nodeInfo.origLowerStruct = node.lowerStruct;
 
         const int numChildren = node.children.size();
-        const int numOrigLowerIndices = node.lowerStruct.size();
 #ifndef RELEASE
         if( numChildren != 0 && numChildren != 2 )
             throw std::logic_error("Tree must be built from bisections");
@@ -72,17 +69,20 @@ void LocalSymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info )
             }
 #endif
 
-            // Union the child lower structs
+            // Combine the structures of the children
+            std::vector<int> childrenStruct;
             Union
             ( childrenStruct, leftChild.lowerStruct, rightChild.lowerStruct );
 
-            // Union the lower structure of this node
+            // Now add in the original lower structure
+            std::vector<int> partialStruct;
             Union( partialStruct, node.lowerStruct, childrenStruct );
 
-            // Union again with the node indices
-            nodeIndices.resize( node.size );
+            // Now the node indices
+            std::vector<int> nodeIndices( node.size );
             for( int i=0; i<node.size; ++i )
                 nodeIndices[i] = node.offset + i;
+            std::vector<int> fullStruct;
             Union( fullStruct, partialStruct, nodeIndices );
 
             // Construct the relative indices of the original lower structure
@@ -107,6 +107,7 @@ void LocalSymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info )
             nodeInfo.lowerStruct = node.lowerStruct;
             
             // Construct the trivial relative indices of the original structure
+            const int numOrigLowerIndices = node.lowerStruct.size();
             nodeInfo.origLowerRelIndices.resize( numOrigLowerIndices );
             for( int i=0; i<numOrigLowerIndices; ++i )
                 nodeInfo.origLowerRelIndices[i] = i + nodeInfo.size;
