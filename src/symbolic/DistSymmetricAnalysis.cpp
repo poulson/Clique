@@ -13,7 +13,7 @@ namespace cliq {
 
 namespace internal {
 
-inline void GetLowerStructFromPartner
+inline void PairwiseExchangeLowerStruct
 ( int& theirSize, std::vector<int>& theirLowerStruct,
   const DistSymmNode& node, const DistSymmNodeInfo& childNodeInfo )
 {
@@ -45,7 +45,7 @@ inline void GetLowerStructFromPartner
       &theirLowerStruct[0], theirLowerStructSize, partner, 0, node.comm );
 }
 
-inline void GetLowerStruct
+inline void BroadcastLowerStruct
 ( int& theirSize, std::vector<int>& theirLowerStruct,
   const DistSymmNode& node, const DistSymmNodeInfo& childNodeInfo )
 {
@@ -207,19 +207,112 @@ inline void ComputeStructAndRelIndices
     for( int i=0; i<numRightIndices; ++i )
         if( nodeInfo.rightRelIndices[i] % gridWidth == gridCol )
             factorMeta.rightRowIndices.push_back( i );
-
-    // Fill solveMeta1d.{left,right}Indices for use in many solves
-    SolveMetadata1d& solveMeta1d = nodeInfo.solveMeta1d;
-    const int teamSize = mpi::CommSize( node.comm );
-    for( int i=0; i<numLeftIndices; ++i )
-        if( nodeInfo.leftRelIndices[i] % teamSize == teamRank )
-            solveMeta1d.leftIndices.push_back( i );
-    for( int i=0; i<numRightIndices; ++i )
-        if( nodeInfo.rightRelIndices[i] % teamSize == teamRank )
-            solveMeta1d.rightIndices.push_back( i );
 }
 
 } // namespace internal
+
+void ComputeSolveMetadata1d
+( const DistSymmElimTree& eTree, DistSymmInfo& info )
+{
+#ifndef RELEASE
+    CallStackEntry entry("ComputeSolveMetadata1d");
+#endif
+    // Handle the interface node
+    info.distNodes[0].solveMeta1d.Empty();
+    info.distNodes[0].solveMeta1d.localSize = info.localNodes.back().size;
+
+    // Handle the truly distributed nodes
+    const int numDist = info.distNodes.size();
+    for( int s=1; s<numDist; ++s )
+    {
+        const DistSymmNode& node = eTree.distNodes[s];
+        DistSymmNodeInfo& nodeInfo = info.distNodes[s];
+        const int teamSize = mpi::CommSize( node.comm );
+        const int teamRank = mpi::CommRank( node.comm );
+
+        const DistSymmNode& childNode = eTree.distNodes[s-1];
+        const DistSymmNodeInfo& childNodeInfo = info.distNodes[s-1];
+        const int childTeamSize = mpi::CommSize( childNode.comm );
+        const int childTeamRank = mpi::CommRank( childNode.comm );
+        const bool inFirstTeam = ( childTeamRank == teamRank );
+        const bool leftIsFirst = ( childNode.onLeft==inFirstTeam );
+        const int leftTeamSize =
+            ( childNode.onLeft ? childTeamSize : teamSize-childTeamSize );
+        const int rightTeamSize = teamSize - leftTeamSize;
+        const int leftTeamOffset = ( leftIsFirst ? 0 : rightTeamSize );
+        const int rightTeamOffset = ( leftIsFirst ? leftTeamSize : 0 );
+
+        const std::vector<int>& myRelIndices = 
+            ( childNode.onLeft ? nodeInfo.leftRelIndices 
+                               : nodeInfo.rightRelIndices );
+
+        // Fill solveMeta1d.numChildSendIndices
+        SolveMetadata1d& solveMeta1d = nodeInfo.solveMeta1d;
+        solveMeta1d.Empty();
+        solveMeta1d.numChildSendIndices.resize( teamSize );
+        elem::MemZero( &solveMeta1d.numChildSendIndices[0], teamSize );
+        const int updateSize = childNodeInfo.lowerStruct.size();
+        {
+            const int updateAlignment = childNodeInfo.size % childTeamSize;
+            const int updateShift = 
+                Shift( childTeamRank, updateAlignment, childTeamSize );
+            const int updateLocalHeight = 
+                Length( updateSize, updateShift, childTeamSize );
+            for( int iChildLoc=0; 
+                     iChildLoc<updateLocalHeight; ++iChildLoc )
+            {
+                const int iChild = updateShift + iChildLoc*childTeamSize;
+                const int destRank = myRelIndices[iChild] % teamSize;
+                ++solveMeta1d.numChildSendIndices[destRank];
+            }
+        }
+
+        // Fill solveMeta1d.{left,right}Indices for use in many solves
+        const int numLeftIndices = nodeInfo.leftRelIndices.size();
+        const int numRightIndices = nodeInfo.rightRelIndices.size();
+        for( int i=0; i<numLeftIndices; ++i )
+            if( nodeInfo.leftRelIndices[i] % teamSize == teamRank )
+                solveMeta1d.leftIndices.push_back( i );
+        for( int i=0; i<numRightIndices; ++i )
+            if( nodeInfo.rightRelIndices[i] % teamSize == teamRank )
+                solveMeta1d.rightIndices.push_back( i );
+
+        //
+        // Compute the solve recv indices
+        //
+        solveMeta1d.childRecvIndices.resize( teamSize );
+
+        // Compute the recv indices for the left child 
+        const int leftUpdateAlignment = nodeInfo.leftSize % leftTeamSize;
+        const int numLeftSolveIndices = solveMeta1d.leftIndices.size();
+        for( int iPre=0; iPre<numLeftSolveIndices; ++iPre )
+        {
+            const int iChild = solveMeta1d.leftIndices[iPre];
+            const int iFront = nodeInfo.leftRelIndices[iChild];
+            const int iFrontLoc = (iFront-teamRank) / teamSize;
+
+            const int childRank = (iChild+leftUpdateAlignment) % leftTeamSize;
+            const int frontRank = leftTeamOffset + childRank;
+            solveMeta1d.childRecvIndices[frontRank].push_back(iFrontLoc);
+        }
+
+        // Compute the recv indices for the right child
+        const int rightUpdateAlignment = nodeInfo.rightSize % rightTeamSize;
+        const int numRightSolveIndices = solveMeta1d.rightIndices.size();
+        for( int iPre=0; iPre<numRightSolveIndices; ++iPre )
+        {
+            const int iChild = solveMeta1d.rightIndices[iPre];
+            const int iFront = nodeInfo.rightRelIndices[iChild];
+            const int iFrontLoc = (iFront-teamRank) / teamSize;
+
+            const int childRank = (iChild+rightUpdateAlignment) % rightTeamSize;
+            const int frontRank = rightTeamOffset + childRank;
+            solveMeta1d.childRecvIndices[frontRank].push_back(iFrontLoc);
+        }
+
+        solveMeta1d.localSize = Length(node.size,teamRank,teamSize);
+    }
+}
 
 //
 // This is the part of the analysis that requires fine-grain parallelism.
@@ -232,8 +325,8 @@ void DistSymmetricAnalysis
 #ifndef RELEASE
     CallStackEntry entry("DistSymmetricAnalysis");
 #endif
-    const unsigned numNodes = eTree.distNodes.size();
-    info.distNodes.resize( numNodes );
+    const unsigned numDist = eTree.distNodes.size();
+    info.distNodes.resize( numDist );
 
     // The bottom node was analyzed locally, so just copy its results over
     const SymmNodeInfo& topLocal = info.localNodes.back();
@@ -242,7 +335,6 @@ void DistSymmetricAnalysis
     mpi::CommDup( eTree.distNodes[0].comm, bottomDist.comm );
     bottomDist.grid = new Grid( bottomDist.comm );
     bottomDist.size = topLocal.size;
-    bottomDist.solveMeta1d.localSize = topLocal.size;
     bottomDist.offset = topLocal.offset;
     bottomDist.myOffset = topLocal.myOffset;
     bottomDist.lowerStruct = topLocal.lowerStruct;
@@ -253,11 +345,10 @@ void DistSymmetricAnalysis
     bottomDist.leftSize = -1; // not needed, could compute though
     bottomDist.rightSize = -1; // not needed, could compute though
     bottomDist.factorMeta.Empty();
-    bottomDist.solveMeta1d.Empty();
 
     // Perform the distributed part of the symbolic factorization
     int myOffset = bottomDist.myOffset + bottomDist.size;
-    for( unsigned s=1; s<numNodes; ++s )
+    for( unsigned s=1; s<numDist; ++s )
     {
         const DistSymmNode& node = eTree.distNodes[s];
         const DistSymmNode& childNode = eTree.distNodes[s-1];
@@ -274,25 +365,19 @@ void DistSymmetricAnalysis
         nodeInfo.grid = new Grid( nodeInfo.comm );
 
         // Get the lower struct for the child we do not share
-        int theirSize;
         const int teamSize = mpi::CommSize( node.comm );
-        const int teamRank = mpi::CommRank( node.comm );
-        const int childTeamRank = mpi::CommRank( childNode.comm );
         const int childTeamSize = mpi::CommSize( childNode.comm );
         const bool onLeft = childNode.onLeft;
         const int leftTeamSize = 
             ( onLeft ? childTeamSize : teamSize-childTeamSize );
         const int rightTeamSize = teamSize - leftTeamSize;
-        const bool inFirstTeam = ( childTeamRank == teamRank );
-        const bool leftIsFirst = ( onLeft==inFirstTeam );
-        const int leftTeamOffset = ( leftIsFirst ? 0 : rightTeamSize );
-        const int rightTeamOffset = ( leftIsFirst ? leftTeamSize : 0 );
+        int theirSize;
         std::vector<int> theirLowerStruct;
         if( leftTeamSize == rightTeamSize )
-            internal::GetLowerStructFromPartner
+            internal::PairwiseExchangeLowerStruct
             ( theirSize, theirLowerStruct, node, childNodeInfo );
         else
-            internal::GetLowerStruct
+            internal::BroadcastLowerStruct
             ( theirSize, theirLowerStruct, node, childNodeInfo );
 
         // Perform one level of symbolic factorization and then compute
@@ -300,7 +385,6 @@ void DistSymmetricAnalysis
         //
         // TODO: Compute all metadata here?
         nodeInfo.factorMeta.Empty();
-        nodeInfo.solveMeta1d.Empty();
         nodeInfo.solveMeta2d.Empty();
         internal::ComputeStructAndRelIndices
         ( theirSize, theirLowerStruct, node, childNode, 
@@ -315,12 +399,11 @@ void DistSymmetricAnalysis
         const int childGridRow = childNodeInfo.grid->Row();
         const int childGridCol = childNodeInfo.grid->Col();
         const int mySize = childNodeInfo.size;
-        const int myLowerStructSize = childNodeInfo.lowerStruct.size();
+        const int updateSize = childNodeInfo.lowerStruct.size();
         factorMeta.numChildSendIndices.resize( teamSize );
         elem::MemZero( &factorMeta.numChildSendIndices[0], teamSize );
         const std::vector<int>& myRelIndices = 
             ( onLeft ? nodeInfo.leftRelIndices : nodeInfo.rightRelIndices );
-        const int updateSize = myLowerStructSize;
         {
             const int updateColAlignment = mySize % childGridHeight;
             const int updateRowAlignment = mySize % childGridWidth;
@@ -357,57 +440,6 @@ void DistSymmetricAnalysis
             }
         }
 
-        // Fill solveMeta1d.numChildSendIndices
-        SolveMetadata1d& solveMeta1d = nodeInfo.solveMeta1d;
-        solveMeta1d.numChildSendIndices.resize( teamSize );
-        elem::MemZero( &solveMeta1d.numChildSendIndices[0], teamSize );
-        {
-            const int updateAlignment = mySize % childTeamSize;
-            const int updateShift = 
-                Shift( childTeamRank, updateAlignment, childTeamSize );
-            const int updateLocalHeight = 
-                Length( updateSize, updateShift, childTeamSize );
-            for( int iChildLoc=0; 
-                     iChildLoc<updateLocalHeight; ++iChildLoc )
-            {
-                const int iChild = updateShift + iChildLoc*childTeamSize;
-                const int destRank = myRelIndices[iChild] % teamSize;
-                ++solveMeta1d.numChildSendIndices[destRank];
-            }
-        }
-
-        //
-        // Compute the solve recv indices
-        //
-        solveMeta1d.childRecvIndices.resize( teamSize );
-
-        // Compute the recv indices for the left child 
-        const int leftUpdateAlignment = nodeInfo.leftSize % leftTeamSize;
-        const int numLeftSolveIndices = solveMeta1d.leftIndices.size();
-        for( int iPre=0; iPre<numLeftSolveIndices; ++iPre )
-        {
-            const int iChild = solveMeta1d.leftIndices[iPre];
-            const int iFront = nodeInfo.leftRelIndices[iChild];
-            const int iFrontLoc = (iFront-teamRank) / teamSize;
-
-            const int childRank = (iChild+leftUpdateAlignment) % leftTeamSize;
-            const int frontRank = leftTeamOffset + childRank;
-            solveMeta1d.childRecvIndices[frontRank].push_back(iFrontLoc);
-        }
-
-        // Compute the recv indices for the right child
-        const int rightUpdateAlignment = nodeInfo.rightSize % rightTeamSize;
-        const int numRightSolveIndices = solveMeta1d.rightIndices.size();
-        for( int iPre=0; iPre<numRightSolveIndices; ++iPre )
-        {
-            const int iChild = solveMeta1d.rightIndices[iPre];
-            const int iFront = nodeInfo.rightRelIndices[iChild];
-            const int iFrontLoc = (iFront-teamRank) / teamSize;
-
-            const int childRank = (iChild+rightUpdateAlignment) % rightTeamSize;
-            const int frontRank = rightTeamOffset + childRank;
-            solveMeta1d.childRecvIndices[frontRank].push_back(iFrontLoc);
-        }
 
         // Optionally compute the recv indices for the factorization. 
         // This is optional since it requires a nontrivial amount of storage.
@@ -415,8 +447,8 @@ void DistSymmetricAnalysis
             ComputeFactRecvIndices( nodeInfo, childNodeInfo );
 
         myOffset += nodeInfo.size;
-        solveMeta1d.localSize = Length(node.size,teamRank,teamSize);
     }
+    ComputeSolveMetadata1d( eTree, info );
 }
 
 void ComputeFactRecvIndices
