@@ -11,8 +11,6 @@
 
 namespace cliq {
 
-namespace internal {
-
 inline void PairwiseExchangeLowerStruct
 ( int& theirSize, std::vector<int>& theirLowerStruct,
   const DistSymmNode& node, const DistSymmNodeInfo& childNodeInfo )
@@ -185,33 +183,9 @@ inline void ComputeStructAndRelIndices
     if( rootLowerStructSize != lowerStructSize )
         throw std::runtime_error("Root has different lower struct size");
 #endif
-
-    // Fill factorMeta.{left,right}{Col,Row}Indices so that we can reuse them
-    // to compute our recv information for use in many factorizations
-    FactorMetadata& factorMeta = nodeInfo.factorMeta;
-    const int gridHeight = nodeInfo.grid->Height();
-    const int gridWidth = nodeInfo.grid->Width();
-    const int gridRow = nodeInfo.grid->Row();
-    const int gridCol = nodeInfo.grid->Col();
-    const int numLeftIndices = nodeInfo.leftRelIndices.size();
-    const int numRightIndices = nodeInfo.rightRelIndices.size();
-    for( int i=0; i<numLeftIndices; ++i )
-        if( nodeInfo.leftRelIndices[i] % gridHeight == gridRow )
-            factorMeta.leftColIndices.push_back( i );
-    for( int i=0; i<numLeftIndices; ++i )
-        if( nodeInfo.leftRelIndices[i] % gridWidth == gridCol )
-            factorMeta.leftRowIndices.push_back( i );
-    for( int i=0; i<numRightIndices; ++i )
-        if( nodeInfo.rightRelIndices[i] % gridHeight == gridRow )
-            factorMeta.rightColIndices.push_back( i );
-    for( int i=0; i<numRightIndices; ++i )
-        if( nodeInfo.rightRelIndices[i] % gridWidth == gridCol )
-            factorMeta.rightRowIndices.push_back( i );
 }
 
-} // namespace internal
-
-void ComputeSolveMetadata1d
+inline void ComputeSolveMetadata1d
 ( const DistSymmElimTree& eTree, DistSymmInfo& info )
 {
 #ifndef RELEASE
@@ -314,86 +288,47 @@ void ComputeSolveMetadata1d
     }
 }
 
-//
-// This is the part of the analysis that requires fine-grain parallelism.
-// For now, we will assume that the distributed part of the elimination 
-// tree is binary.
-//
-void DistSymmetricAnalysis
-( const DistSymmElimTree& eTree, DistSymmInfo& info, bool storeFactRecvIndices )
+inline void ComputeFactorMetadata
+( const DistSymmElimTree& eTree, DistSymmInfo& info, 
+  bool computeFactRecvIndices )
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistSymmetricAnalysis");
+    CallStackEntry entry("ComputeFactorMetadata");
 #endif
-    const unsigned numDist = eTree.distNodes.size();
-    info.distNodes.resize( numDist );
-
-    // The bottom node was analyzed locally, so just copy its results over
-    const SymmNodeInfo& topLocal = info.localNodes.back();
-    DistSymmNodeInfo& bottomDist = info.distNodes[0];
-    bottomDist.onLeft = eTree.distNodes[0].onLeft;
-    mpi::CommDup( eTree.distNodes[0].comm, bottomDist.comm );
-    bottomDist.grid = new Grid( bottomDist.comm );
-    bottomDist.size = topLocal.size;
-    bottomDist.offset = topLocal.offset;
-    bottomDist.myOffset = topLocal.myOffset;
-    bottomDist.lowerStruct = topLocal.lowerStruct;
-    bottomDist.origLowerStruct = topLocal.origLowerStruct;
-    bottomDist.origLowerRelIndices = topLocal.origLowerRelIndices;
-    bottomDist.leftRelIndices = topLocal.leftRelIndices;
-    bottomDist.rightRelIndices = topLocal.rightRelIndices;
-    bottomDist.leftSize = -1; // not needed, could compute though
-    bottomDist.rightSize = -1; // not needed, could compute though
-    bottomDist.factorMeta.Empty();
-
-    // Perform the distributed part of the symbolic factorization
-    int myOffset = bottomDist.myOffset + bottomDist.size;
-    for( unsigned s=1; s<numDist; ++s )
+    info.distNodes[0].factorMeta.Empty();
+    const int numDist = info.distNodes.size();
+    for( int s=1; s<numDist; ++s )
     {
         const DistSymmNode& node = eTree.distNodes[s];
+        DistSymmNodeInfo& nodeInfo = info.distNodes[s];
+        const int teamSize = mpi::CommSize( node.comm );
+
         const DistSymmNode& childNode = eTree.distNodes[s-1];
         const DistSymmNodeInfo& childNodeInfo = info.distNodes[s-1];
-        DistSymmNodeInfo& nodeInfo = info.distNodes[s];
-        nodeInfo.onLeft = node.onLeft;
-        nodeInfo.size = node.size;
-        nodeInfo.offset = node.offset;
-        nodeInfo.myOffset = myOffset;
-        nodeInfo.origLowerStruct = node.lowerStruct;
 
-        // Duplicate the communicator from the distributed eTree 
-        mpi::CommDup( node.comm, nodeInfo.comm );
-        nodeInfo.grid = new Grid( nodeInfo.comm );
-
-        // Get the lower struct for the child we do not share
-        const int teamSize = mpi::CommSize( node.comm );
-        const int childTeamSize = mpi::CommSize( childNode.comm );
-        const bool onLeft = childNode.onLeft;
-        const int leftTeamSize = 
-            ( onLeft ? childTeamSize : teamSize-childTeamSize );
-        const int rightTeamSize = teamSize - leftTeamSize;
-        int theirSize;
-        std::vector<int> theirLowerStruct;
-        if( leftTeamSize == rightTeamSize )
-            internal::PairwiseExchangeLowerStruct
-            ( theirSize, theirLowerStruct, node, childNodeInfo );
-        else
-            internal::BroadcastLowerStruct
-            ( theirSize, theirLowerStruct, node, childNodeInfo );
-
-        // Perform one level of symbolic factorization and then compute
-        // a wide variety of relative indices
-        //
-        // TODO: Compute all metadata here?
-        nodeInfo.factorMeta.Empty();
-        nodeInfo.solveMeta2d.Empty();
-        internal::ComputeStructAndRelIndices
-        ( theirSize, theirLowerStruct, node, childNode, 
-          nodeInfo, childNodeInfo );
-
-        // Fill factorMeta.numChildSendIndices 
+        // From ComputeStructAndRelIndices
         FactorMetadata& factorMeta = nodeInfo.factorMeta;
+        factorMeta.Empty();
         const int gridHeight = nodeInfo.grid->Height();
         const int gridWidth = nodeInfo.grid->Width();
+        const int gridRow = nodeInfo.grid->Row();
+        const int gridCol = nodeInfo.grid->Col();
+        const int numLeftIndices = nodeInfo.leftRelIndices.size();
+        const int numRightIndices = nodeInfo.rightRelIndices.size();
+        for( int i=0; i<numLeftIndices; ++i )
+            if( nodeInfo.leftRelIndices[i] % gridHeight == gridRow )
+                factorMeta.leftColIndices.push_back( i );
+        for( int i=0; i<numLeftIndices; ++i )
+            if( nodeInfo.leftRelIndices[i] % gridWidth == gridCol )
+                factorMeta.leftRowIndices.push_back( i );
+        for( int i=0; i<numRightIndices; ++i )
+            if( nodeInfo.rightRelIndices[i] % gridHeight == gridRow )
+                factorMeta.rightColIndices.push_back( i );
+        for( int i=0; i<numRightIndices; ++i )
+            if( nodeInfo.rightRelIndices[i] % gridWidth == gridCol )
+                factorMeta.rightRowIndices.push_back( i );
+
+        // Fill factorMeta.numChildSendIndices 
         const int childGridHeight = childNodeInfo.grid->Height();
         const int childGridWidth = childNodeInfo.grid->Width();
         const int childGridRow = childNodeInfo.grid->Row();
@@ -403,7 +338,8 @@ void DistSymmetricAnalysis
         factorMeta.numChildSendIndices.resize( teamSize );
         elem::MemZero( &factorMeta.numChildSendIndices[0], teamSize );
         const std::vector<int>& myRelIndices = 
-            ( onLeft ? nodeInfo.leftRelIndices : nodeInfo.rightRelIndices );
+            ( childNode.onLeft ? nodeInfo.leftRelIndices 
+                               : nodeInfo.rightRelIndices );
         {
             const int updateColAlignment = mySize % childGridHeight;
             const int updateRowAlignment = mySize % childGridWidth;
@@ -440,17 +376,93 @@ void DistSymmetricAnalysis
             }
         }
 
-
         // Optionally compute the recv indices for the factorization. 
         // This is optional since it requires a nontrivial amount of storage.
-        if( storeFactRecvIndices )
+        if( computeFactRecvIndices )
             ComputeFactRecvIndices( nodeInfo, childNodeInfo );
+    }
+}
+
+//
+// This is the part of the analysis that requires fine-grain parallelism.
+// For now, we will assume that the distributed part of the elimination 
+// tree is binary.
+//
+void DistSymmetricAnalysis
+( const DistSymmElimTree& eTree, DistSymmInfo& info, 
+  bool computeFactRecvIndices )
+{
+#ifndef RELEASE
+    CallStackEntry entry("DistSymmetricAnalysis");
+#endif
+    const unsigned numDist = eTree.distNodes.size();
+    info.distNodes.resize( numDist );
+
+    // The bottom node was analyzed locally, so just copy its results over
+    const SymmNodeInfo& topLocal = info.localNodes.back();
+    DistSymmNodeInfo& bottomDist = info.distNodes[0];
+    bottomDist.onLeft = eTree.distNodes[0].onLeft;
+    mpi::CommDup( eTree.distNodes[0].comm, bottomDist.comm );
+    bottomDist.grid = new Grid( bottomDist.comm );
+    bottomDist.size = topLocal.size;
+    bottomDist.offset = topLocal.offset;
+    bottomDist.myOffset = topLocal.myOffset;
+    bottomDist.lowerStruct = topLocal.lowerStruct;
+    bottomDist.origLowerStruct = topLocal.origLowerStruct;
+    bottomDist.origLowerRelIndices = topLocal.origLowerRelIndices;
+    bottomDist.leftRelIndices = topLocal.leftRelIndices;
+    bottomDist.rightRelIndices = topLocal.rightRelIndices;
+    bottomDist.leftSize = -1; // not needed, could compute though
+    bottomDist.rightSize = -1; // not needed, could compute though
+
+    // Perform the distributed part of the symbolic factorization
+    int myOffset = bottomDist.myOffset + bottomDist.size;
+    for( unsigned s=1; s<numDist; ++s )
+    {
+        const DistSymmNode& node = eTree.distNodes[s];
+        const DistSymmNode& childNode = eTree.distNodes[s-1];
+        const DistSymmNodeInfo& childNodeInfo = info.distNodes[s-1];
+        DistSymmNodeInfo& nodeInfo = info.distNodes[s];
+        nodeInfo.onLeft = node.onLeft;
+        nodeInfo.size = node.size;
+        nodeInfo.offset = node.offset;
+        nodeInfo.myOffset = myOffset;
+        nodeInfo.origLowerStruct = node.lowerStruct;
+
+        // Duplicate the communicator from the distributed eTree 
+        mpi::CommDup( node.comm, nodeInfo.comm );
+        nodeInfo.grid = new Grid( nodeInfo.comm );
+
+        // Get the lower struct for the child we do not share
+        const int teamSize = mpi::CommSize( node.comm );
+        const int childTeamSize = mpi::CommSize( childNode.comm );
+        const bool onLeft = childNode.onLeft;
+        const int leftTeamSize = 
+            ( onLeft ? childTeamSize : teamSize-childTeamSize );
+        const int rightTeamSize = teamSize - leftTeamSize;
+        int theirSize;
+        std::vector<int> theirLowerStruct;
+        if( leftTeamSize == rightTeamSize )
+            PairwiseExchangeLowerStruct
+            ( theirSize, theirLowerStruct, node, childNodeInfo );
+        else
+            BroadcastLowerStruct
+            ( theirSize, theirLowerStruct, node, childNodeInfo );
+
+        // Perform one level of symbolic factorization and then compute
+        // a wide variety of relative indices
+        ComputeStructAndRelIndices
+        ( theirSize, theirLowerStruct, node, childNode, 
+          nodeInfo, childNodeInfo );
 
         myOffset += nodeInfo.size;
     }
+    ComputeFactorMetadata( eTree, info, computeFactRecvIndices );
     ComputeSolveMetadata1d( eTree, info );
+    // TODO: ComputeSolveMetadata2d( eTree, info );
 }
 
+// TODO: Simplify this implementation
 void ComputeFactRecvIndices
 ( const DistSymmNodeInfo& node, const DistSymmNodeInfo& childNode )
 {
