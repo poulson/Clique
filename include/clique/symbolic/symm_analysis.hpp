@@ -27,6 +27,8 @@ void DistSymmetricAnalysis
 void ComputeFactRecvIndices
 ( const DistSymmNodeInfo& node,
   const DistSymmNodeInfo& childNode );
+void ComputeSolveMetadata2d
+( const DistSymmElimTree& eTree, DistSymmInfo& info, int width );
 
 inline void SymmetricAnalysis
 ( const DistSymmElimTree& eTree, DistSymmInfo& info, bool storeFactRecvIndices )

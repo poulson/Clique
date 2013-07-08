@@ -288,6 +288,115 @@ inline void ComputeSolveMetadata1d
     }
 }
 
+void ComputeSolveMetadata2d
+( const DistSymmElimTree& eTree, DistSymmInfo& info, int width )
+{
+#ifndef RELEASE
+    CallStackEntry entry("ComputeSolveMetadata2d");
+#endif
+    // Handle the interface node
+    info.distNodes[0].solveMeta2d.Empty();
+    info.distNodes[0].solveMeta2d.localHeight = info.localNodes.back().size;
+    info.distNodes[0].solveMeta2d.localWidth = width;
+
+    // Handle the truly distributed nodes
+    const int numDist = info.distNodes.size();
+    for( int s=1; s<numDist; ++s )
+    {
+        // HERE: Rethink what is being sent. Instead of just row indices, 
+        //       full index pairs instead
+        /*
+
+        const DistSymmNode& node = eTree.distNodes[s];
+        DistSymmNodeInfo& nodeInfo = info.distNodes[s];
+        const int teamSize = mpi::CommSize( node.comm );
+        const int teamRank = mpi::CommRank( node.comm );
+
+        const DistSymmNode& childNode = eTree.distNodes[s-1];
+        const DistSymmNodeInfo& childNodeInfo = info.distNodes[s-1];
+        const int childTeamSize = mpi::CommSize( childNode.comm );
+        const int childTeamRank = mpi::CommRank( childNode.comm );
+        const bool inFirstTeam = ( childTeamRank == teamRank );
+        const bool leftIsFirst = ( childNode.onLeft==inFirstTeam );
+        const int leftTeamSize =
+            ( childNode.onLeft ? childTeamSize : teamSize-childTeamSize );
+        const int rightTeamSize = teamSize - leftTeamSize;
+        const int leftTeamOffset = ( leftIsFirst ? 0 : rightTeamSize );
+        const int rightTeamOffset = ( leftIsFirst ? leftTeamSize : 0 );
+
+        const std::vector<int>& myRelIndices = 
+            ( childNode.onLeft ? nodeInfo.leftRelIndices 
+                               : nodeInfo.rightRelIndices );
+
+        // Fill solveMeta1d.numChildSendIndices
+        SolveMetadata2d& solveMeta2d = nodeInfo.solveMeta2d;
+        solveMeta2d.Empty();
+        solveMeta2d.numChildSendIndices.resize( teamSize );
+        elem::MemZero( &solveMeta2d.numChildSendIndices[0], teamSize );
+        const int updateSize = childNodeInfo.lowerStruct.size();
+        {
+            const int updateAlignment = childNodeInfo.size % childTeamSize;
+            const int updateShift = 
+                Shift( childTeamRank, updateAlignment, childTeamSize );
+            const int updateLocalHeight = 
+                Length( updateSize, updateShift, childTeamSize );
+            for( int iChildLoc=0; 
+                     iChildLoc<updateLocalHeight; ++iChildLoc )
+            {
+                const int iChild = updateShift + iChildLoc*childTeamSize;
+                const int destRank = myRelIndices[iChild] % teamSize;
+                ++solveMeta1d.numChildSendIndices[destRank];
+            }
+        }
+
+        // Fill solveMeta1d.{left,right}Indices for use in many solves
+        const int numLeftIndices = nodeInfo.leftRelIndices.size();
+        const int numRightIndices = nodeInfo.rightRelIndices.size();
+        for( int i=0; i<numLeftIndices; ++i )
+            if( nodeInfo.leftRelIndices[i] % teamSize == teamRank )
+                solveMeta1d.leftIndices.push_back( i );
+        for( int i=0; i<numRightIndices; ++i )
+            if( nodeInfo.rightRelIndices[i] % teamSize == teamRank )
+                solveMeta1d.rightIndices.push_back( i );
+
+        //
+        // Compute the solve recv indices
+        //
+        solveMeta1d.childRecvIndices.resize( teamSize );
+
+        // Compute the recv indices for the left child 
+        const int leftUpdateAlignment = nodeInfo.leftSize % leftTeamSize;
+        const int numLeftSolveIndices = solveMeta1d.leftIndices.size();
+        for( int iPre=0; iPre<numLeftSolveIndices; ++iPre )
+        {
+            const int iChild = solveMeta1d.leftIndices[iPre];
+            const int iFront = nodeInfo.leftRelIndices[iChild];
+            const int iFrontLoc = (iFront-teamRank) / teamSize;
+
+            const int childRank = (iChild+leftUpdateAlignment) % leftTeamSize;
+            const int frontRank = leftTeamOffset + childRank;
+            solveMeta1d.childRecvIndices[frontRank].push_back(iFrontLoc);
+        }
+
+        // Compute the recv indices for the right child
+        const int rightUpdateAlignment = nodeInfo.rightSize % rightTeamSize;
+        const int numRightSolveIndices = solveMeta1d.rightIndices.size();
+        for( int iPre=0; iPre<numRightSolveIndices; ++iPre )
+        {
+            const int iChild = solveMeta1d.rightIndices[iPre];
+            const int iFront = nodeInfo.rightRelIndices[iChild];
+            const int iFrontLoc = (iFront-teamRank) / teamSize;
+
+            const int childRank = (iChild+rightUpdateAlignment) % rightTeamSize;
+            const int frontRank = rightTeamOffset + childRank;
+            solveMeta1d.childRecvIndices[frontRank].push_back(iFrontLoc);
+        }
+
+        solveMeta1d.localSize = Length(node.size,teamRank,teamSize);
+        */
+    }
+}
+
 inline void ComputeFactorMetadata
 ( const DistSymmElimTree& eTree, DistSymmInfo& info, 
   bool computeFactRecvIndices )
@@ -457,9 +566,12 @@ void DistSymmetricAnalysis
 
         myOffset += nodeInfo.size;
     }
+
     ComputeFactorMetadata( eTree, info, computeFactRecvIndices );
+    
+    // This is thankfully independent of the number of right-hand sides,   
+    // unlike 2d solve metadata
     ComputeSolveMetadata1d( eTree, info );
-    // TODO: ComputeSolveMetadata2d( eTree, info );
 }
 
 // TODO: Simplify this implementation

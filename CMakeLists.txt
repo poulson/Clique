@@ -18,28 +18,28 @@ option(CLIQ_EXAMPLES "Build a few example drivers" OFF)
 option(USE_CUSTOM_ALLTOALLV "Avoid MPI_Alltoallv for performance reasons" ON)
 option(BARRIER_IN_ALLTOALLV "Barrier before posting non-blocking recvs" OFF)
 
-set(ELEM_REV 54dc913d86a9)
+set(ELEM_REV 03b809835ab5)
 if(MANUAL_ELEMENTAL)
   include_directories(${ELEM_INCLUDE_DIR})
   include_directories(${MPI_CXX_INCLUDE_PATH})
   # ELEM_CMAKE_DIR?
-elseif(EXISTS ${PROJECT_SOURCE_DIR}/external/elemental-r${ELEM_REV})
-  add_subdirectory(external/elemental-r${ELEM_REV})
-  include_directories(${PROJECT_BINARY_DIR}/external/elemental-r${ELEM_REV}/include)
+elseif(EXISTS ${PROJECT_SOURCE_DIR}/external/elemental-${ELEM_REV})
+  add_subdirectory(external/elemental-${ELEM_REV})
+  include_directories(${PROJECT_BINARY_DIR}/external/elemental-${ELEM_REV}/include)
   include_directories(${MPI_CXX_INCLUDE_PATH})
   set(ELEM_CMAKE_DIR 
-      ${PROJECT_SOURCE_DIR}/external/elemental-r${ELEM_REV}/cmake)
+      ${PROJECT_SOURCE_DIR}/external/elemental-${ELEM_REV}/cmake)
 else()
   find_package(Hg)
   if(HG_FOUND)
     execute_process(COMMAND 
       ${HG_EXECUTABLE} clone http://code.google.com/p/elemental -r ${ELEM_REV}
-      ${PROJECT_SOURCE_DIR}/external/elemental-r${ELEM_REV})
-    add_subdirectory(external/elemental-r${ELEM_REV})
-    include_directories(${PROJECT_BINARY_DIR}/external/elemental-r${ELEM_REV}/include)
+      ${PROJECT_SOURCE_DIR}/external/elemental-${ELEM_REV})
+    add_subdirectory(external/elemental-${ELEM_REV})
+    include_directories(${PROJECT_BINARY_DIR}/external/elemental-${ELEM_REV}/include)
     include_directories(${MPI_CXX_INCLUDE_PATH})
     set(ELEM_CMAKE_DIR 
-        ${PROJECT_SOURCE_DIR}/external/elemental-r${ELEM_REV}/cmake)
+        ${PROJECT_SOURCE_DIR}/external/elemental-${ELEM_REV}/cmake)
   else()
     message(FATAL_ERROR 
       "Could not find Mercurial, which is needed for checking out Elemental")
