@@ -56,7 +56,7 @@ void DistDiagonalSolve
     {
         const DistSymmFront<F>& front = L.distFronts[s];
         elem::DiagonalSolve
-        ( LEFT, NORMAL, front.diag1d.LockedMatrix(), X.distNodes[s-1], true );
+        ( LEFT, NORMAL, front.diag1d, X.distNodes[s-1], true );
     }
 }
 

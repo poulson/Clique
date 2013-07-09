@@ -69,7 +69,7 @@ inline void DistLowerMultiplyNormal
         PartitionDown
         ( W, WT,
              WB, node.size );
-        WT.Matrix() = X.distNodes[s-1];
+        WT = X.distNodes[s-1];
         elem::MakeZeros( WB );
 
         // Now that the right-hand side is set up, perform the multiply
@@ -155,7 +155,7 @@ inline void DistLowerMultiplyNormal
         std::vector<int>().swap( recvDispls );
 
         // Store this node's portion of the result
-        X.distNodes[s-1] = WT.Matrix();
+        X.distNodes[s-1] = WT;
     }
     L.localFronts.back().work.Empty();
     L.distFronts.back().work1d.Empty();
@@ -188,13 +188,8 @@ inline void DistLowerMultiplyTranspose
     else
     {
         const DistSymmFront<T>& rootFront = L.distFronts.back();
-        const Grid& rootGrid = rootFront.front1dL.Grid();
-        Matrix<T>& XRootLoc = X.distNodes.back();
-        DistMatrix<T,VC,STAR> XRoot(rootGrid);
-        View
-        ( XRoot, rootNode.size, width, 0,
-          XRootLoc.Buffer(), XRootLoc.LDim(), rootGrid );
-        rootFront.work1d = XRoot; // store the RHS for use by the children
+        DistMatrix<T,VC,STAR>& XRoot = X.distNodes.back();
+        rootFront.work1d = XRoot;
         FrontLowerMultiply
         ( orientation, diagOffset, rootFront.front1dL, XRoot );
     }
@@ -220,7 +215,8 @@ inline void DistLowerMultiplyTranspose
         PartitionDown
         ( W, WT,
              WB, node.size );
-        Matrix<T>& localXT = ( s>0 ? X.distNodes[s-1] : X.localNodes.back() );
+        Matrix<T>& localXT = 
+          ( s>0 ? X.distNodes[s-1].Matrix() : X.localNodes.back() );
         WT.Matrix() = localXT;
 
         //

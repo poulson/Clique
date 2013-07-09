@@ -78,7 +78,7 @@ inline void DistLowerForwardSolve
         PartitionDown
         ( W, WT,
              WB, node.size );
-        WT.Matrix() = X.distNodes[s-1];
+        WT = X.distNodes[s-1];
         elem::MakeZeros( WB );
 
         // Pack our child's update
@@ -171,7 +171,7 @@ inline void DistLowerForwardSolve
             FrontBlockLowerForwardSolve( front.front2dL, W );
 
         // Store this node's portion of the result
-        X.distNodes[s-1] = WT.Matrix();
+        X.distNodes[s-1] = WT;
     }
     L.localFronts.back().work.Empty();
     L.distFronts.back().work1d.Empty();
@@ -212,12 +212,7 @@ inline void DistLowerBackwardSolve
     else
     {
         const DistSymmFront<F>& rootFront = L.distFronts.back();
-        const Grid& rootGrid = ( frontsAre1d ? rootFront.front1dL.Grid() 
-                                             : rootFront.front2dL.Grid() );
-        Matrix<F>& XRootLoc = X.distNodes.back();
-        rootFront.work1d.Attach
-        ( rootNode.size, width, 0,
-          XRootLoc.Buffer(), XRootLoc.LDim(), rootGrid );
+        View( rootFront.work1d, X.distNodes.back() );
         if( frontType == LDL_1D )
             FrontLowerBackwardSolve
             ( orientation, rootFront.front1dL, rootFront.work1d );
@@ -257,7 +252,8 @@ inline void DistLowerBackwardSolve
         PartitionDown
         ( W, WT,
              WB, node.size );
-        Matrix<F>& XT = ( s>0 ? X.distNodes[s-1] : X.localNodes.back() );
+        Matrix<F>& XT = 
+          ( s>0 ? X.distNodes[s-1].Matrix() : X.localNodes.back() );
         WT.Matrix() = XT;
 
         //

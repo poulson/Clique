@@ -216,12 +216,62 @@ DistNodalMatrix<F>::Pull
     std::vector<int>().swap( sendOffsets );
 
     // Unpack the values
-    // HERE: Dang...need to reorganize data structure
-    throw std::logic_error("This routine is not yet finished");
     /*
     offset=0;
     offsets = recvOffsets;
     matrix.ResizeTo( numRecvInd, width );
+    */
+    // HERE
+    // Fill the set of indices that we will request from each process
+    /*
+    int totalRecvInd=0;
+    std::vector<int> recvSizes( commSize ), recvOffsets( commSize );
+    for( int q=0; q<commSize; ++q )
+    {
+        totalRecvInd += numRecvInd[q];
+        recvSizes[q] = 2*numRecvInd[q];
+        recvOffsets[q] = 2*totalRecvInd;
+    }
+    offset = 0;
+    std::vector<int> recvInd( 2*totalRecvInd ); 
+    std::vector<int> offsets = recvOffsets;
+    for( int s=0; s<numLocal; ++s )
+    {
+        const SymmNodeInfo& node = info.localNodes[s];
+        for( int t=0; t<node.size; ++t )
+        {
+            const int i = mappedInd[offset++];
+            const int q = RowToProcess( i, blocksize, commSize );
+            for( int u=0; u<width; ++u )
+            {
+                recvInd[offsets[q]++] = i;      
+                recvInd[offsets[q]++] = u;
+            }
+        }
+    }
+    for( int s=1; s<numDist; ++s )
+    {
+        const DistSymmNodeInfo& node = info.distNodes[s];
+        const Grid& grid = *node.grid;
+        const int gridRow = grid.Row();
+        const int gridCol = grid.Col();
+        const int gridHeight = grid.Height();
+        const int gridWidth = grid.Width();
+        const int colAlign = 0;
+        const int rowAlign = 0;
+        const int colShift = Shift( gridRow, colAlign, gridHeight );
+        const int rowShift = Shift( gridCol, rowAlign, gridWidth );
+        for( int t=colShift; t<node.size; t+=gridHeight )
+        {
+            const int i = mappedInd[offset++];
+            const int q = RowToProcess( i, blocksize, commSize );
+            for( int u=rowShift; u<width; u+=gridWidth )
+            {
+                recvInd[offsets[q]++] = i;
+                recvInd[offsets[q]++] = u;
+            }
+        }
+    }
     */
 }
 

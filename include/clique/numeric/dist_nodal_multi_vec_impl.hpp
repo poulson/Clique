@@ -55,20 +55,20 @@ DistNodalMultiVec<F>::Pull
     std::vector<int> mappedInd( numRecvInd );
     for( int s=0; s<numLocal; ++s )
     {
-        const SymmNodeInfo& node = info.localNodes[s];
-        for( int t=0; t<node.size; ++t )
-            mappedInd[offset++] = node.offset+t;
+        const SymmNodeInfo& nodeInfo = info.localNodes[s];
+        for( int t=0; t<nodeInfo.size; ++t )
+            mappedInd[offset++] = nodeInfo.offset+t;
     }
     for( int s=1; s<numDist; ++s )
     {
-        const DistSymmNodeInfo& node = info.distNodes[s];
-        const Grid& grid = *node.grid;
+        const DistSymmNodeInfo& nodeInfo = info.distNodes[s];
+        const Grid& grid = *nodeInfo.grid;
         const int gridSize = grid.Size();
         const int gridRank = grid.VCRank();
         const int alignment = 0;
         const int shift = Shift( gridRank, alignment, gridSize );
-        for( int t=shift; t<node.size; t+=gridSize )
-            mappedInd[offset++] = node.offset+t;
+        for( int t=shift; t<nodeInfo.size; t+=gridSize )
+            mappedInd[offset++] = nodeInfo.offset+t;
     }
 #ifndef RELEASE
     if( offset != numRecvInd )
@@ -151,9 +151,9 @@ DistNodalMultiVec<F>::Pull
     localNodes.resize( numLocal );
     for( int s=0; s<numLocal; ++s )
     {
-        const SymmNodeInfo& node = info.localNodes[s];
-        localNodes[s].ResizeTo( node.size, width_ );
-        for( int t=0; t<node.size; ++t )
+        const SymmNodeInfo& nodeInfo = info.localNodes[s];
+        localNodes[s].ResizeTo( nodeInfo.size, width_ );
+        for( int t=0; t<nodeInfo.size; ++t )
         {
             const int i = mappedInd[offset++];
             const int q = RowToProcess( i, blocksize, commSize );
@@ -164,20 +164,17 @@ DistNodalMultiVec<F>::Pull
     distNodes.resize( numDist-1 );
     for( int s=1; s<numDist; ++s )
     {
-        const DistSymmNodeInfo& node = info.distNodes[s];
-        const Grid& grid = *node.grid;
-        const int gridSize = grid.Size();
-        const int gridRank = grid.VCRank();
-        const int alignment = 0;
-        const int shift = Shift( gridRank, alignment, gridSize );
-        const int localHeight = Length( node.size, shift, gridSize );
-        distNodes[s-1].ResizeTo( localHeight, width_ );
+        const DistSymmNodeInfo& nodeInfo = info.distNodes[s];
+        DistMatrix<F,VC,STAR>& XNode = distNodes[s-1];
+        XNode.SetGrid( *nodeInfo.grid );
+        XNode.ResizeTo( nodeInfo.size, width_ );
+        const int localHeight = XNode.LocalHeight();
         for( int tLoc=0; tLoc<localHeight; ++tLoc )
         {
             const int i = mappedInd[offset++];
             const int q = RowToProcess( i, blocksize, commSize );
             for( int j=0; j<width_; ++j )
-                distNodes[s-1].Set( tLoc, j, recvValues[offsets[q]++] );
+                XNode.SetLocal( tLoc, j, recvValues[offsets[q]++] );
         }
     }
 #ifndef RELEASE
@@ -215,20 +212,16 @@ DistNodalMultiVec<F>::Push
     std::vector<int> mappedInd( numSendInd );
     for( int s=0; s<numLocal; ++s )
     {
-        const SymmNodeInfo& node = info.localNodes[s];
-        for( int t=0; t<node.size; ++t )
-            mappedInd[offset++] = node.offset+t;
+        const SymmNodeInfo& nodeInfo = info.localNodes[s];
+        for( int t=0; t<nodeInfo.size; ++t )
+            mappedInd[offset++] = nodeInfo.offset+t;
     }
     for( int s=1; s<numDist; ++s )
     {
-        const DistSymmNodeInfo& node = info.distNodes[s];
-        const Grid& grid = *node.grid;
-        const int gridSize = grid.Size();
-        const int gridRank = grid.VCRank();
-        const int alignment = 0;
-        const int shift = Shift( gridRank, alignment, gridSize );
-        for( int t=shift; t<node.size; t+=gridSize )
-            mappedInd[offset++] = node.offset+t;
+        const DistSymmNodeInfo& nodeInfo = info.distNodes[s];
+        const DistMatrix<F,VC,STAR>& XNode = distNodes[s-1];
+        for( int t=XNode.ColShift(); t<XNode.Height(); t+=XNode.ColStride() )
+            mappedInd[offset++] = nodeInfo.offset+t;
     }
 
     // Convert the indices to the original ordering
@@ -257,8 +250,8 @@ DistNodalMultiVec<F>::Push
     std::vector<int> offsets = sendOffsets;
     for( int s=0; s<numLocal; ++s )
     {
-        const SymmNodeInfo& node = info.localNodes[s];
-        for( int t=0; t<node.size; ++t )
+        const SymmNodeInfo& nodeInfo = info.localNodes[s];
+        for( int t=0; t<nodeInfo.size; ++t )
         {
             const int i = mappedInd[offset++];
             const int q = RowToProcess( i, blocksize, commSize );
@@ -269,20 +262,15 @@ DistNodalMultiVec<F>::Push
     }
     for( int s=1; s<numDist; ++s )
     {
-        const DistSymmNodeInfo& node = info.distNodes[s];
-        const Grid& grid = *node.grid;
-        const int gridSize = grid.Size();
-        const int gridRank = grid.VCRank();
-        const int alignment = 0;
-        const int shift = Shift( gridRank, alignment, gridSize );
-        const int localHeight = Length( node.size, shift, gridSize );
-
+        const DistSymmNodeInfo& nodeInfo = info.distNodes[s];
+        const DistMatrix<F,VC,STAR>& XNode = distNodes[s-1];
+        const int localHeight = XNode.LocalHeight();
         for( int tLoc=0; tLoc<localHeight; ++tLoc )
         {
             const int i = mappedInd[offset++];
             const int q = RowToProcess( i, blocksize, commSize );
             for( int j=0; j<width; ++j )
-                sendValues[offsets[q]*width+j] = distNodes[s-1].Get(tLoc,j);
+                sendValues[offsets[q]*width+j] = XNode.GetLocal(tLoc,j);
             sendInd[offsets[q]++] = i;
         }
     }
