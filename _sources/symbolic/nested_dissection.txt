@@ -148,12 +148,7 @@ DistSymmInfo
 
    .. cpp:member:: std::vector<int> numChildSendInd
 
-   .. cpp:member:: std::deque<int> leftColInd
-   .. cpp:member:: std::deque<int> leftRowInd
-   .. cpp:member:: std::deque<int> rightColInd
-   .. cpp:member:: std::deque<int> rightRowInd
-
-   .. cpp:member:: mutable std::vector<std::deque<int> > childRecvInd
+   .. cpp:member:: mutable std::vector<std::vector<int> > childRecvInd
 
    .. cpp:function:: void EmptyChildRecvIndices() const
 
@@ -167,12 +162,9 @@ DistSymmInfo
 
    .. cpp:member:: int localSize
 
-   .. cpp:member:: std::deque<int> leftInd
-   .. cpp:member:: std::deque<int> rightInd
-
    .. cpp:member:: std::vector<int> numChildSendInd
 
-   .. cpp:member:: std::vector<std::deque<int> > childRecvInd
+   .. cpp:member:: std::vector<std::vector<int> > childRecvInd
 
    .. cpp:function:: void Empty()
 
@@ -183,12 +175,9 @@ DistSymmInfo
    .. cpp:member:: int localHeight
    .. cpp:member:: int localWidth
 
-   .. cpp:member:: std::deque<int> leftInd
-   .. cpp:member:: std::deque<int> rightInd
-
    .. cpp:member:: std::vector<int> numChildSendInd
 
-   .. cpp:member:: std::vector<std::deque<int> > childRecvInd
+   .. cpp:member:: std::vector<std::vector<int> > childRecvInd
 
    .. cpp:function:: void Empty()
 
