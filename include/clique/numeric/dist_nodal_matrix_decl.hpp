@@ -23,6 +23,9 @@ public:
     DistNodalMatrix
     ( const DistMap& inverseMap, const DistSymmInfo& info,
       const DistMultiVec<F>& X );
+    DistNodalMatrix( const DistNodalMultiVec<F>& X );
+
+    const DistNodalMatrix<F>& operator=( const DistNodalMultiVec<F>& X );
 
     void Pull
     ( const DistMap& inverseMap, const DistSymmInfo& info,

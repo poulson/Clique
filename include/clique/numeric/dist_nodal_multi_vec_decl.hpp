@@ -23,6 +23,9 @@ public:
     DistNodalMultiVec
     ( const DistMap& inverseMap, const DistSymmInfo& info,
       const DistMultiVec<F>& X );
+    DistNodalMultiVec( const DistNodalMatrix<F>& X );
+
+    const DistNodalMultiVec<F>& operator=( const DistNodalMatrix<F>& X );
 
     void Pull
     ( const DistMap& inverseMap, const DistSymmInfo& info,
@@ -35,9 +38,8 @@ public:
     int Width() const;
 
     int LocalHeight() const;
-
 private:
-    int height_, width_, localHeight_;
+    int height_, width_;
 };
 
 } // namespace cliq

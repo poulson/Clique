@@ -13,7 +13,7 @@ namespace cliq {
 template<typename F>
 inline
 DistNodalMultiVec<F>::DistNodalMultiVec()
-: height_(0), width_(0), localHeight_(0)
+: height_(0), width_(0)
 { }
 
 template<typename F>
@@ -26,6 +26,44 @@ DistNodalMultiVec<F>::DistNodalMultiVec
     CallStackEntry cse("DistNodalMultiVec::DistNodalMultiVec");
 #endif
     Pull( inverseMap, info, X );
+}
+
+template<typename F>
+inline
+DistNodalMultiVec<F>::DistNodalMultiVec( const DistNodalMatrix<F>& X )
+{
+#ifndef RELEASE
+    CallStackEntry cse("DistNodalMultiVec::DistNodalMultiVec");
+#endif
+    *this = X;
+}
+
+template<typename F>
+inline const DistNodalMultiVec<F>&
+DistNodalMultiVec<F>::operator=( const DistNodalMatrix<F>& X )
+{
+#ifndef RELEASE
+    CallStackEntry cse("DistNodalMultiVec::operator=");
+#endif
+    height_ = X.Height();
+    width_ = X.Width();
+
+    // Copy over the nontrivial distributed nodes
+    const int numDist = X.distNodes.size();
+    distNodes.resize( numDist );
+    for( int s=0; s<numDist; ++s )
+    {
+        distNodes[s].SetGrid( X.distNodes[s].Grid() );
+        distNodes[s] = X.distNodes[s];
+    }
+
+    // Copy over the local nodes
+    const int numLocal = X.localNodes.size();
+    localNodes.resize( numLocal );
+    for( int s=0; s<numLocal; ++s )
+        localNodes[s] = X.localNodes[s];
+
+    return *this;
 }
 
 template<typename F>
@@ -48,7 +86,6 @@ DistNodalMultiVec<F>::Pull
     const int numDist = info.distNodes.size();
     for( int s=1; s<numDist; ++s )
         numRecvInd += info.distNodes[s].solveMeta1d.localSize;
-    localHeight_ = numRecvInd;
     
     // Fill the set of indices that we need to map to the original ordering
     int offset=0;
@@ -339,6 +376,15 @@ DistNodalMultiVec<F>::Width() const
 template<typename F>
 inline int
 DistNodalMultiVec<F>::LocalHeight() const
-{ return localHeight_; }
+{
+    int localHeight = 0;
+    const int numLocal = localNodes.size();
+    const int numDist = distNodes.size();
+    for( int s=0; s<numLocal; ++s )
+        localHeight += localNodes[s].Height();
+    for( int s=0; s<numDist; ++s )
+        localHeight += distNodes[s].LocalHeight();
+    return localHeight;
+}
 
 } // namespace cliq

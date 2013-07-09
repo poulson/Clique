@@ -29,6 +29,8 @@ namespace cliq {
     class DistGraph; 
     template<typename T> class SparseMatrix;
     template<typename T> class DistSparseMatrix;
+    template<typename T> class DistNodalMultiVec;
+    template<typename T> class DistNodalMatrix;
 } 
 #include "clique/core/graph_decl.hpp"
 #include "clique/core/dist_graph_decl.hpp"
@@ -67,8 +69,8 @@ namespace cliq {
 #include "clique/numeric/multiply.hpp"
 
 #include "clique/numeric/dist_nodal_multi_vec_decl.hpp"
-#include "clique/numeric/dist_nodal_multi_vec_impl.hpp"
 #include "clique/numeric/dist_nodal_matrix_decl.hpp"
+#include "clique/numeric/dist_nodal_multi_vec_impl.hpp"
 #include "clique/numeric/dist_nodal_matrix_impl.hpp"
 
 #include "clique/numeric/dist_front_tree_decl.hpp"
