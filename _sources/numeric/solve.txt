@@ -64,7 +64,7 @@ right-hand sides.
 .. cpp:type:: struct DistNodalMultiVec<T>
 
    .. cpp:member:: std::vector<Matrix<T> > localNodes
-   .. cpp:member:: std::vector<Matrix<T> > distNodes
+   .. cpp:member:: std::vector<DistMatrix<T,VC,STAR> > distNodes
 
    .. cpp:function:: DistNodalMultiVec( const DistMap& inverseMap, const DistSymmInfo& info, const DistMultiVec<T>& X )
 
@@ -97,7 +97,7 @@ there are many right-hand sides (in a sense to be made more specific later).
 .. cpp:type:: struct DistNodalMatrix<T>
 
    .. cpp:member:: std::vector<Matrix<T> > localNodes
-   .. cpp:member:: std::vector<Matrix<T> > distNodes
+   .. cpp:member:: std::vector<DistMatrix<T> > distNodes
 
    .. cpp:function:: DistNodalMatrix( const DistMap& inverseMap, const DistSymmInfo& info, const DistMultiVec<T>& X )
 
