@@ -68,6 +68,10 @@ right-hand sides.
 
    .. cpp:function:: DistNodalMultiVec( const DistMap& inverseMap, const DistSymmInfo& info, const DistMultiVec<T>& X )
 
+   .. cpp:function:: DistNodalMultiVec( const DistNodalMatrix<T>& X )
+
+   .. cpp:function:: const DistNodalMultiVec<T>& operator=( const DistNodalMatrix<T>& X )
+
    .. cpp:function:: void Pull( const DistMap& inverseMap, const DistSymmInfo& info, const DistMultiVec<T>& X )
 
    .. cpp:function:: void Push( const DistMap& inverseMap, const DistSymmInfo& info, DistMultiVec<T>& X )
@@ -100,6 +104,10 @@ there are many right-hand sides (in a sense to be made more specific later).
    .. cpp:member:: std::vector<DistMatrix<T> > distNodes
 
    .. cpp:function:: DistNodalMatrix( const DistMap& inverseMap, const DistSymmInfo& info, const DistMultiVec<T>& X )
+
+   .. cpp:function:: DistNodalMatrix( const DistNodalMultiVec<T>& X )
+
+   .. cpp:function:: const DistNodalMatrix<T>& operator=( const DistNodalMultiVec<T>& X )
 
    .. cpp:function:: void Pull( const DistMap& inverseMap, const DistSymmInfo& info, const DistMultiVec<T>& X )
 
