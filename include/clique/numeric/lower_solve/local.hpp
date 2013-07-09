@@ -69,7 +69,7 @@ inline void LocalLowerForwardSolve
             ( leftUpdate, leftWork, leftNodeSize, 0, leftUpdateSize, width );
             for( int iChild=0; iChild<leftUpdateSize; ++iChild )
             {
-                const int iFront = node.leftRelIndices[iChild]; 
+                const int iFront = node.leftRelInd[iChild]; 
                 for( int j=0; j<width; ++j )
                     W.Update( iFront, j, leftUpdate.Get(iChild,j) );
             }
@@ -82,7 +82,7 @@ inline void LocalLowerForwardSolve
               rightWork, rightNodeSize, 0, rightUpdateSize, width );
             for( int iChild=0; iChild<rightUpdateSize; ++iChild )
             {
-                const int iFront = node.rightRelIndices[iChild];
+                const int iFront = node.rightRelInd[iChild];
                 for( int j=0; j<width; ++j )
                     W.Update( iFront, j, rightUpdate.Get(iChild,j) );
             }
@@ -146,12 +146,11 @@ inline void LocalLowerBackwardSolve
         Matrix<F>& parentWork = L.localFronts[parent].work;
         const SymmNodeInfo& parentNode = info.localNodes[parent];
         const int currentUpdateSize = WB.Height();
-        const std::vector<int>& parentRelIndices = 
-          ( node.onLeft ? parentNode.leftRelIndices 
-                        : parentNode.rightRelIndices );
+        const std::vector<int>& parentRelInd = 
+          ( node.onLeft ? parentNode.leftRelInd : parentNode.rightRelInd );
         for( int iCurrent=0; iCurrent<currentUpdateSize; ++iCurrent )
         {
-            const int iParent = parentRelIndices[iCurrent];
+            const int iParent = parentRelInd[iCurrent];
             for( int j=0; j<width; ++j )
                 WB.Set( iCurrent, j, parentWork.Get(iParent,j) );
         }

@@ -57,8 +57,8 @@ DistSymmFrontTree<F>::Initialize
     for( int s=0; s<numLocal; ++s )
     {
         const SepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
-        const int numIndices = sepOrLeaf.indices.size();
-        for( int t=0; t<numIndices; ++t )
+        const int numInd = sepOrLeaf.indices.size();
+        for( int t=0; t<numInd; ++t )
         {
             const int i = sepOrLeaf.indices[t];
 #ifndef RELEASE
@@ -76,8 +76,8 @@ DistSymmFrontTree<F>::Initialize
         const Grid& grid = *node.grid;
         const int rowShift = grid.Col();
         const int rowStride = grid.Width();
-        const int numIndices = sep.indices.size();
-        for( int t=rowShift; t<numIndices; t+=rowStride )
+        const int numInd = sep.indices.size();
+        for( int t=rowShift; t<numInd; t+=rowStride )
         {
             const int i = sep.indices[t];
 #ifndef RELEASE
@@ -100,8 +100,8 @@ DistSymmFrontTree<F>::Initialize
     for( int s=0; s<numLocal; ++s )
     {
         const SepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
-        const int numIndices = sepOrLeaf.indices.size();
-        for( int t=0; t<numIndices; ++t )
+        const int numInd = sepOrLeaf.indices.size();
+        for( int t=0; t<numInd; ++t )
         {
             const int i = sepOrLeaf.indices[t];
 #ifndef RELEASE
@@ -123,8 +123,8 @@ DistSymmFrontTree<F>::Initialize
         const Grid& grid = *node.grid;
         const int rowShift = grid.Col();
         const int rowStride = grid.Width();
-        const int numIndices = sep.indices.size();
-        for( int t=rowShift; t<numIndices; t+=rowStride )
+        const int numInd = sep.indices.size();
+        for( int t=rowShift; t<numInd; t+=rowStride )
         {
             const int i = sep.indices[t];
 #ifndef RELEASE
@@ -282,10 +282,10 @@ DistSymmFrontTree<F>::Initialize
                 {
                     const int origOffset = Find( origLowerStruct, target );
 #ifndef RELEASE
-                    if( origOffset >= (int)node.origLowerRelIndices.size() )
-                        throw std::logic_error("origLowerRelIndices too small");
+                    if( origOffset >= (int)node.origLowerRelInd.size() )
+                        throw std::logic_error("origLowerRelInd too small");
 #endif
-                    const int row = node.origLowerRelIndices[origOffset];
+                    const int row = node.origLowerRelInd[origOffset];
                     front.frontL.Set( row, t, value );
                 }
             }
@@ -347,10 +347,10 @@ DistSymmFrontTree<F>::Initialize
                 {
                     const int origOffset = Find( origLowerStruct, target );
 #ifndef RELEASE
-                    if( origOffset >= (int)node.origLowerRelIndices.size() )
-                        throw std::logic_error("origLowerRelIndices too small");
+                    if( origOffset >= (int)node.origLowerRelInd.size() )
+                        throw std::logic_error("origLowerRelInd too small");
 #endif
-                    const int row = node.origLowerRelIndices[origOffset];
+                    const int row = node.origLowerRelInd[origOffset];
                     if( row % colStride == colShift )
                     {
                         const int localRow = (row-colShift) / colStride;

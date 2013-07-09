@@ -85,22 +85,22 @@ inline void DistLowerMultiplyNormal
         std::vector<int> sendCounts(commSize), sendDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int sendSize = solveMeta.numChildSendIndices[proc]*width;
+            const int sendSize = solveMeta.numChildSendInd[proc]*width;
             sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += sendSize;
         }
         std::vector<T> sendBuffer( sendBufferSize );
 
-        const std::vector<int>& myChildRelIndices = 
-            ( childNode.onLeft ? node.leftRelIndices : node.rightRelIndices );
+        const std::vector<int>& myChildRelInd = 
+            ( childNode.onLeft ? node.leftRelInd : node.rightRelInd );
         const int updateColShift = childUpdate.ColShift();
         const int updateLocalHeight = childUpdate.LocalHeight();
         std::vector<int> packOffsets = sendDispls;
         for( int iChildLoc=0; iChildLoc<updateLocalHeight; ++iChildLoc )
         {
             const int iChild = updateColShift + iChildLoc*childCommSize;
-            const int destRank = myChildRelIndices[iChild] % commSize;
+            const int destRank = myChildRelInd[iChild] % commSize;
             T* packBuf = &sendBuffer[packOffsets[destRank]];
             for( int jChild=0; jChild<width; ++jChild )
                 packBuf[jChild] = childUpdate.GetLocal(iChildLoc,jChild);
@@ -116,7 +116,7 @@ inline void DistLowerMultiplyNormal
         std::vector<int> recvCounts(commSize), recvDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int recvSize = solveMeta.childRecvIndices[proc].size()*width;
+            const int recvSize = solveMeta.childRecvInd[proc].size()*width;
             recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += recvSize;
@@ -138,12 +138,11 @@ inline void DistLowerMultiplyNormal
         for( int proc=0; proc<commSize; ++proc )
         {
             const T* recvValues = &recvBuffer[recvDispls[proc]];
-            const std::deque<int>& recvIndices = 
-                solveMeta.childRecvIndices[proc];
-            const int numRecvIndices = recvIndices.size();
-            for( int k=0; k<numRecvIndices; ++k )
+            const std::deque<int>& recvInd = solveMeta.childRecvInd[proc];
+            const int numRecvInd = recvInd.size();
+            for( int k=0; k<numRecvInd; ++k )
             {
-                const int iFrontLoc = recvIndices[k];
+                const int iFrontLoc = recvInd[k];
                 const T* recvRow = &recvValues[k*width];
                 T* WRow = W.Buffer( iFrontLoc, 0 );
                 const int WLDim = W.LDim();
@@ -235,8 +234,7 @@ inline void DistLowerMultiplyTranspose
         std::vector<int> sendCounts(parentCommSize), sendDispls(parentCommSize);
         for( int proc=0; proc<parentCommSize; ++proc )
         {
-            const int sendSize = 
-                solveMeta.childRecvIndices[proc].size()*width;
+            const int sendSize = solveMeta.childRecvInd[proc].size()*width;
             sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += sendSize;
@@ -247,12 +245,11 @@ inline void DistLowerMultiplyTranspose
         for( int proc=0; proc<parentCommSize; ++proc )
         {
             T* sendValues = &sendBuffer[sendDispls[proc]];
-            const std::deque<int>& recvIndices = 
-                solveMeta.childRecvIndices[proc];
-            const int numRecvIndices = recvIndices.size();
-            for( int k=0; k<numRecvIndices; ++k )
+            const std::deque<int>& recvInd = solveMeta.childRecvInd[proc];
+            const int numRecvInd = recvInd.size();
+            for( int k=0; k<numRecvInd; ++k )
             {
-                const int iFrontLoc = recvIndices[k];
+                const int iFrontLoc = recvInd[k];
                 T* packedRow = &sendValues[k*width];
                 const T* workRow = parentWork.LockedBuffer( iFrontLoc, 0 );
                 const int workLDim = parentWork.LDim();
@@ -267,7 +264,7 @@ inline void DistLowerMultiplyTranspose
         std::vector<int> recvCounts(parentCommSize), recvDispls(parentCommSize);
         for( int proc=0; proc<parentCommSize; ++proc )
         {
-            const int recvSize = solveMeta.numChildSendIndices[proc]*width;
+            const int recvSize = solveMeta.numChildSendInd[proc]*width;
             recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += recvSize;
@@ -286,15 +283,14 @@ inline void DistLowerMultiplyTranspose
         std::vector<int>().swap( sendDispls );
 
         // Unpack the updates using the send approach from the forward solve
-        const std::vector<int>& myRelIndices = 
-            ( node.onLeft ? parentNode.leftRelIndices
-                          : parentNode.rightRelIndices );
+        const std::vector<int>& myRelInd = 
+            ( node.onLeft ? parentNode.leftRelInd : parentNode.rightRelInd );
         const int updateColShift = WB.ColShift();
         const int updateLocalHeight = WB.LocalHeight();
         for( int iUpdateLoc=0; iUpdateLoc<updateLocalHeight; ++iUpdateLoc )
         {
             const int iUpdate = updateColShift + iUpdateLoc*commSize;
-            const int startRank = myRelIndices[iUpdate] % parentCommSize;
+            const int startRank = myRelInd[iUpdate] % parentCommSize;
             const T* recvBuf = &recvBuffer[recvDispls[startRank]];
             for( int jUpdate=0; jUpdate<width; ++jUpdate )
                 WB.SetLocal(iUpdateLoc,jUpdate,recvBuf[jUpdate]);

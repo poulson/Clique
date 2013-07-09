@@ -51,26 +51,26 @@ DistNodalMatrix<F>::Pull
 
     // Traverse our part of the elimination tree to see which row indices
     // we will need
-    int numRecvRowIndices=0;
+    int numRecvRowInd=0;
     for( int s=0; s<numLocal; ++s )
     {
         const SymmNodeInfo& node = info.localNodes[s];
-        numRecvRowIndices += node.size;
+        numRecvRowInd += node.size;
     }
     for( int s=1; s<numDist; ++s )
     {
         const DistSymmNodeInfo& node = info.distNodes[s];
-        numRecvRowIndices += node.solveMeta2d.localHeight;
+        numRecvRowInd += node.solveMeta2d.localHeight;
     }
 
     // Fill the set of indices that we need to map to the original ordering
     int offset=0;
-    std::vector<int> mappedIndices( numRecvRowIndices );
+    std::vector<int> mappedInd( numRecvRowInd );
     for( int s=0; s<numLocal; ++s )
     {
         const SymmNodeInfo& node = info.localNodes[s];
         for( int t=0; t<node.size; ++t )
-            mappedIndices[offset++] = node.offset+t;
+            mappedInd[offset++] = node.offset+t;
     }
     for( int s=1; s<numDist; ++s )
     {
@@ -81,27 +81,27 @@ DistNodalMatrix<F>::Pull
         const int colAlign = 0;
         const int colShift = Shift( gridRow, colAlign, gridHeight );
         for( int t=colShift; t<node.size; t+=gridHeight )
-            mappedIndices[offset++] = node.offset+t;
+            mappedInd[offset++] = node.offset+t;
     }
 #ifndef RELEASE
-    if( offset != numRecvRowIndices )
-        throw std::logic_error("mappedIndices was filled incorrectly");
+    if( offset != numRecvRowInd )
+        throw std::logic_error("mappedInd was filled incorrectly");
 #endif
 
     // Convert the row indices to the original ordering
-    inverseMap.Translate( mappedIndices );
+    inverseMap.Translate( mappedInd );
 
     // Count the number of indices that we will request from each process
     offset = 0;
-    std::vector<int> numRecvIndices( commSize, 0 );
+    std::vector<int> numRecvInd( commSize, 0 );
     for( int s=0; s<numLocal; ++s )
     {
         const SymmNodeInfo& node = info.localNodes[s];
         for( int t=0; t<node.size; ++t )
         {
-            const int i = mappedIndices[offset++];
+            const int i = mappedInd[offset++];
             const int q = RowToProcess( i, blocksize, commSize );
-            numRecvIndices[q] += width;
+            numRecvInd[q] += width;
         }
     }
     for( int s=1; s<numDist; ++s )
@@ -118,35 +118,35 @@ DistNodalMatrix<F>::Pull
         const int localWidth = Length( width, gridCol, rowAlign, gridWidth );
         for( int t=colShift; t<node.size; t+=gridHeight )
         {
-            const int i = mappedIndices[offset++];
+            const int i = mappedInd[offset++];
             const int q = RowToProcess( i, blocksize, commSize );
-            numRecvIndices[q] += localWidth;
+            numRecvInd[q] += localWidth;
         }
     }
 
     // Fill the set of indices that we will request from each process
-    int totalRecvIndices=0;
+    int totalRecvInd=0;
     std::vector<int> recvSizes( commSize ), recvOffsets( commSize );
     for( int q=0; q<commSize; ++q )
     {
-        totalRecvIndices += numRecvIndices[q];
-        recvSizes[q] = 2*numRecvIndices[q];
-        recvOffsets[q] = 2*totalRecvIndices;
+        totalRecvInd += numRecvInd[q];
+        recvSizes[q] = 2*numRecvInd[q];
+        recvOffsets[q] = 2*totalRecvInd;
     }
     offset = 0;
-    std::vector<int> recvIndices( 2*totalRecvIndices ); 
+    std::vector<int> recvInd( 2*totalRecvInd ); 
     std::vector<int> offsets = recvOffsets;
     for( int s=0; s<numLocal; ++s )
     {
         const SymmNodeInfo& node = info.localNodes[s];
         for( int t=0; t<node.size; ++t )
         {
-            const int i = mappedIndices[offset++];
+            const int i = mappedInd[offset++];
             const int q = RowToProcess( i, blocksize, commSize );
             for( int u=0; u<width; ++u )
             {
-                recvIndices[offsets[q]++] = i;      
-                recvIndices[offsets[q]++] = u;
+                recvInd[offsets[q]++] = i;      
+                recvInd[offsets[q]++] = u;
             }
         }
     }
@@ -164,43 +164,43 @@ DistNodalMatrix<F>::Pull
         const int rowShift = Shift( gridCol, rowAlign, gridWidth );
         for( int t=colShift; t<node.size; t+=gridHeight )
         {
-            const int i = mappedIndices[offset++];
+            const int i = mappedInd[offset++];
             const int q = RowToProcess( i, blocksize, commSize );
             for( int u=rowShift; u<width; u+=gridWidth )
             {
-                recvIndices[offsets[q]++] = i;
-                recvIndices[offsets[q]++] = u;
+                recvInd[offsets[q]++] = i;
+                recvInd[offsets[q]++] = u;
             }
         }
     }
 
     // Coordinate for the coming AllToAll to exchange the indices of X
-    std::vector<int> numSendIndices( commSize );
-    mpi::AllToAll( &numRecvIndices[0], 1, &numSendIndices[0], 1, comm );
-    int totalSendIndices=0;
+    std::vector<int> numSendInd( commSize );
+    mpi::AllToAll( &numRecvInd[0], 1, &numSendInd[0], 1, comm );
+    int totalSendInd=0;
     std::vector<int> sendSizes( commSize ), sendOffsets( commSize );
     for( int q=0; q<commSize; ++q )
     {
-        totalSendIndices += numSendIndices[q];
-        sendSizes[q] = 2*numSendIndices[q];
-        sendOffsets[q] = 2*totalSendIndices;
+        totalSendInd += numSendInd[q];
+        sendSizes[q] = 2*numSendInd[q];
+        sendOffsets[q] = 2*totalSendInd;
     }
 
     // Request the indices
-    std::vector<int> sendIndices( 2*totalSendIndices );
+    std::vector<int> sendInd( 2*totalSendInd );
     mpi::AllToAll
-    ( &recvIndices[0], &recvSizes[0], &recvOffsets[0],
-      &sendIndices[0], &sendSizes[0], &sendOffsets[0], comm );
-    // TODO? swap out recvIndices?
+    ( &recvInd[0], &recvSizes[0], &recvOffsets[0],
+      &sendInd[0], &sendSizes[0], &sendOffsets[0], comm );
+    // TODO? swap out recvInd?
 
     // Fulfill the requests
-    std::vector<F> sendValues( totalSendIndices );
-    for( int s=0; s<totalSendIndices; ++s )
+    std::vector<F> sendValues( totalSendInd );
+    for( int s=0; s<totalSendInd; ++s )
         sendValues[s] = 
-            X.GetLocal( sendIndices[2*s]-firstLocalRow, sendIndices[2*s+1] );
+            X.GetLocal( sendInd[2*s]-firstLocalRow, sendInd[2*s+1] );
 
     // Reply with the values
-    std::vector<F> recvValues( totalRecvIndices );
+    std::vector<F> recvValues( totalRecvInd );
     for( int q=0; q<commSize; ++q )
     {
         sendSizes[q] /= 2;
@@ -221,7 +221,7 @@ DistNodalMatrix<F>::Pull
     /*
     offset=0;
     offsets = recvOffsets;
-    matrix.ResizeTo( numRecvIndices, width );
+    matrix.ResizeTo( numRecvInd, width );
     */
 }
 

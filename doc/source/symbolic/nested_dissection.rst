@@ -8,7 +8,7 @@ yields a node in a *separator tree*, which can be used to guide a multifrontal
 algorithm. The following routine uses a parallel graph partitioner (ParMETIS)
 as a means of producing such a separator tree from an arbitrary graph.
 
-.. cpp:function:: void NestedDissection( const DistGraph& graph, DistMap& map, DistSeparatorTree& sepTree, DistSymmInfo& info, bool sequential=true, int cutoff=128, int numDistSeps=1, int numSeqSeps=1, bool storeFactRecvIndices=true )
+.. cpp:function:: void NestedDissection( const DistGraph& graph, DistMap& map, DistSeparatorTree& sepTree, DistSymmInfo& info, bool sequential=true, int cutoff=128, int numDistSeps=1, int numSeqSeps=1, bool storeFactRecvInd=true )
 
    .. note:: 
 
@@ -26,7 +26,7 @@ as a means of producing such a separator tree from an arbitrary graph.
    acceptable leaf node size for nested dissection, the `numDistSeps` and
    `numSeqSeps` variables respectively determine how many distributed and
    sequential separators should be tried for each bisection, and
-   `storeFactRecvIndices` determines whether or not to store information
+   `storeFactRecvInd` determines whether or not to store information
    needed for the redistributions which occur in the subsequent numerical
    factorization
 
@@ -34,7 +34,7 @@ as a means of producing such a separator tree from an arbitrary graph.
    distributed graph, and `tests/Solve.cpp <https://github.com/poulson/Clique/blob/master/tests/Solve.cpp>`__ for its application to the
    underlying graph of a sparse matrix.
 
-.. cpp:function:: void NaturalNestedDissection( int nx, int ny, int nz, const DistGraph& graph, DistMap& map, DistSeparatorTree& sepTree, DistSymmInfo& info, int cutoff=128, bool storeFactRecvIndices=true )
+.. cpp:function:: void NaturalNestedDissection( int nx, int ny, int nz, const DistGraph& graph, DistMap& map, DistSeparatorTree& sepTree, DistSymmInfo& info, int cutoff=128, bool storeFactRecvInd=true )
 
    Similar to :cpp:func:`NestedDissection`, but this version is specialized for 
    regular 3D grids where vertices are only connected to their nearest 
@@ -133,31 +133,31 @@ DistSymmInfo
       The sorted reordered indices of this node's connections to its ancestors
       **after factorization**.
 
-   .. cpp:member:: std::vector<int> origLowerRelIndices
+   .. cpp:member:: std::vector<int> origLowerRelInd
 
       Maps from the original lower structure to their placement in the 
       structure after factorization.
 
-   .. cpp:member:: std::vector<int> leftRelIndices
-   .. cpp:member:: std::vector<int> rightRelIndices
+   .. cpp:member:: std::vector<int> leftRelInd
+   .. cpp:member:: std::vector<int> rightRelInd
 
       The relative indices of the left/right child's lower structure into this 
       structure.
 
 .. cpp:type:: struct FactorMetadata
 
-   .. cpp:member:: std::vector<int> numChildSendIndices
+   .. cpp:member:: std::vector<int> numChildSendInd
 
-   .. cpp:member:: std::deque<int> leftColIndices
-   .. cpp:member:: std::deque<int> leftRowIndices
-   .. cpp:member:: std::deque<int> rightColIndices
-   .. cpp:member:: std::deque<int> rightRowIndices
+   .. cpp:member:: std::deque<int> leftColInd
+   .. cpp:member:: std::deque<int> leftRowInd
+   .. cpp:member:: std::deque<int> rightColInd
+   .. cpp:member:: std::deque<int> rightRowInd
 
-   .. cpp:member:: mutable std::vector<std::deque<int> > childRecvIndices
+   .. cpp:member:: mutable std::vector<std::deque<int> > childRecvInd
 
    .. cpp:function:: void EmptyChildRecvIndices() const
 
-      Clears ``childRecvIndices``
+      Clears ``childRecvInd``
 
    .. cpp:function:: void Empty()
 
@@ -167,12 +167,12 @@ DistSymmInfo
 
    .. cpp:member:: int localSize
 
-   .. cpp:member:: std::deque<int> leftIndices
-   .. cpp:member:: std::deque<int> rightIndices
+   .. cpp:member:: std::deque<int> leftInd
+   .. cpp:member:: std::deque<int> rightInd
 
-   .. cpp:member:: std::vector<int> numChildSendIndices
+   .. cpp:member:: std::vector<int> numChildSendInd
 
-   .. cpp:member:: std::vector<std::deque<int> > childRecvIndices
+   .. cpp:member:: std::vector<std::deque<int> > childRecvInd
 
    .. cpp:function:: void Empty()
 
@@ -183,12 +183,12 @@ DistSymmInfo
    .. cpp:member:: int localHeight
    .. cpp:member:: int localWidth
 
-   .. cpp:member:: std::deque<int> leftIndices
-   .. cpp:member:: std::deque<int> rightIndices
+   .. cpp:member:: std::deque<int> leftInd
+   .. cpp:member:: std::deque<int> rightInd
 
-   .. cpp:member:: std::vector<int> numChildSendIndices
+   .. cpp:member:: std::vector<int> numChildSendInd
 
-   .. cpp:member:: std::vector<std::deque<int> > childRecvIndices
+   .. cpp:member:: std::vector<std::deque<int> > childRecvInd
 
    .. cpp:function:: void Empty()
 
@@ -240,13 +240,13 @@ DistSymmInfo
       The sorted reordered indices of this node's connections to its 
       ancestors **after factorization**.
 
-   .. cpp:member:: std::vector<int> origLowerRelIndices
+   .. cpp:member:: std::vector<int> origLowerRelInd
 
       Maps from the original lower structure to their placement in the 
       structure after factorization.
 
-   .. cpp:member:: std::vector<int> leftRelIndices
-   .. cpp:member:: std::vector<int> rightRelIndices
+   .. cpp:member:: std::vector<int> leftRelInd
+   .. cpp:member:: std::vector<int> rightRelInd
 
       The relative indices of the left/right child's lower structure into this 
       structure.

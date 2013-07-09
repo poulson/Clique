@@ -53,10 +53,10 @@ LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
             const int leftUpdateSize = leftUpdate.Height();
             for( int jChild=0; jChild<leftUpdateSize; ++jChild )
             {
-                const int jFront = node.leftRelIndices[jChild];
+                const int jFront = node.leftRelInd[jChild];
                 for( int iChild=0; iChild<leftUpdateSize; ++iChild )
                 {
-                    const int iFront = node.leftRelIndices[iChild];
+                    const int iFront = node.leftRelInd[iChild];
                     const F value = leftUpdate.Get(iChild,jChild);
                     if( jFront < node.size )
                         frontL.Update( iFront, jFront, value );
@@ -71,10 +71,10 @@ LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
             const int rightUpdateSize = rightUpdate.Height();
             for( int jChild=0; jChild<rightUpdateSize; ++jChild )
             {
-                const int jFront = node.rightRelIndices[jChild];
+                const int jFront = node.rightRelInd[jChild];
                 for( int iChild=0; iChild<rightUpdateSize; ++iChild )
                 {
-                    const int iFront = node.rightRelIndices[iChild];
+                    const int iFront = node.rightRelInd[iChild];
                     const F value = rightUpdate.Get(iChild,jChild);
                     if( jFront < node.size )
                         frontL.Update( iFront, jFront, value );

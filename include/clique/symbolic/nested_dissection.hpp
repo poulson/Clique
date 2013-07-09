@@ -37,7 +37,7 @@ void NestedDissection
         int numDistSeps=1, 
         int numSeqSeps=1, 
         int cutoff=128, 
-        bool storeFactRecvIndices=false );
+        bool storeFactRecvInd=false );
 
 int Bisect
 ( const Graph& graph, 
@@ -498,7 +498,7 @@ NestedDissection
         int numDistSeps, 
         int numSeqSeps, 
         int cutoff,
-        bool storeFactRecvIndices )
+        bool storeFactRecvInd )
 {
 #ifndef RELEASE
     CallStackEntry entry("NestedDissection");
@@ -533,7 +533,7 @@ NestedDissection
 #endif
 
     // Run the symbolic analysis
-    SymmetricAnalysis( eTree, info, storeFactRecvIndices );
+    SymmetricAnalysis( eTree, info, storeFactRecvInd );
 }
 
 inline int 
@@ -1067,7 +1067,7 @@ BuildChildFromPerm
 
     // Pack the row indices and how many column entries there will be per row
     std::vector<int> rowSendLengths( numSendRows );
-    std::vector<int> rowSendIndices( numSendRows );
+    std::vector<int> rowSendInd( numSendRows );
     std::vector<int> offsets = rowSendOffsets;
     for( int s=0; s<numLocalSources; ++s )
     {
@@ -1076,7 +1076,7 @@ BuildChildFromPerm
         {
             const int q = leftTeamOffset + 
                 RowToProcess( i, leftTeamBlocksize, leftTeamSize );
-            rowSendIndices[offsets[q]] = i;
+            rowSendInd[offsets[q]] = i;
             rowSendLengths[offsets[q]] = graph.NumConnections( s );
             ++offsets[q];
         }
@@ -1085,7 +1085,7 @@ BuildChildFromPerm
             const int q = rightTeamOffset + 
                 RowToProcess
                 ( i-leftChildSize, rightTeamBlocksize, rightTeamSize );
-            rowSendIndices[offsets[q]] = i;
+            rowSendInd[offsets[q]] = i;
             rowSendLengths[offsets[q]] = graph.NumConnections( s );
             ++offsets[q];
         }
@@ -1098,14 +1098,14 @@ BuildChildFromPerm
       &rowRecvLengths[0], &rowRecvSizes[0], &rowRecvOffsets[0], comm );
 
     // Perform the row indices exchange
-    std::vector<int> rowRecvIndices( numRecvRows );
+    std::vector<int> rowRecvInd( numRecvRows );
     mpi::AllToAll
-    ( &rowSendIndices[0], &rowSendSizes[0], &rowSendOffsets[0],
-      &rowRecvIndices[0], &rowRecvSizes[0], &rowRecvOffsets[0], comm );
-    std::vector<int>().swap( rowSendIndices );
+    ( &rowSendInd[0], &rowSendSizes[0], &rowSendOffsets[0],
+      &rowRecvInd[0], &rowRecvSizes[0], &rowRecvOffsets[0], comm );
+    std::vector<int>().swap( rowSendInd );
 
     // Set up for sending the column indices
-    int numSendIndices=0;
+    int numSendInd=0;
     std::vector<int> indexSendSizes( commSize, 0 );
     std::vector<int> indexSendOffsets( commSize );
     for( int q=0; q<commSize; ++q )
@@ -1115,11 +1115,11 @@ BuildChildFromPerm
         for( int s=0; s<numRows; ++s )
             indexSendSizes[q] += rowSendLengths[offset+s];
 
-        indexSendOffsets[q] = numSendIndices;
-        numSendIndices += indexSendSizes[q];
+        indexSendOffsets[q] = numSendInd;
+        numSendInd += indexSendSizes[q];
     }
     std::vector<int>().swap( rowSendLengths );
-    int numRecvIndices=0;
+    int numRecvInd=0;
     std::vector<int> indexRecvSizes( commSize, 0 );
     std::vector<int> indexRecvOffsets( commSize );
     for( int q=0; q<commSize; ++q )
@@ -1129,14 +1129,14 @@ BuildChildFromPerm
         for( int s=0; s<numRows; ++s )
             indexRecvSizes[q] += rowRecvLengths[offset+s];
 
-        indexRecvOffsets[q] = numRecvIndices;
-        numRecvIndices += indexRecvSizes[q];
+        indexRecvOffsets[q] = numRecvInd;
+        numRecvInd += indexRecvSizes[q];
     }
     std::vector<int>().swap( rowSendSizes );
     std::vector<int>().swap( rowSendOffsets );
 
     // Pack the indices
-    std::vector<int> sendIndices( numSendIndices );
+    std::vector<int> sendInd( numSendInd );
     offsets = indexSendOffsets;
     for( int s=0; s<numLocalSources; ++s )
     {
@@ -1150,7 +1150,7 @@ BuildChildFromPerm
             const int numConnections = graph.NumConnections( s );
             const int localEdgeOffset = graph.LocalEdgeOffset( s );
             for( int j=0; j<numConnections; ++j )
-                sendIndices[offset++] = graph.Target( localEdgeOffset+j );
+                sendInd[offset++] = graph.Target( localEdgeOffset+j );
         }
         else if( i < leftChildSize+rightChildSize )
         {
@@ -1162,21 +1162,21 @@ BuildChildFromPerm
             const int numConnections = graph.NumConnections( s );
             const int localEdgeOffset = graph.LocalEdgeOffset( s );
             for( int j=0; j<numConnections; ++j )
-                sendIndices[offset++] = graph.Target( localEdgeOffset+j );
+                sendInd[offset++] = graph.Target( localEdgeOffset+j );
         }
     }
 
     // Send/recv the column indices
-    std::vector<int> recvIndices( numRecvIndices );
+    std::vector<int> recvInd( numRecvInd );
     mpi::AllToAll
-    ( &sendIndices[0], &indexSendSizes[0], &indexSendOffsets[0],
-      &recvIndices[0], &indexRecvSizes[0], &indexRecvOffsets[0], comm );
-    std::vector<int>().swap( sendIndices );
+    ( &sendInd[0], &indexSendSizes[0], &indexSendOffsets[0],
+      &recvInd[0], &indexRecvSizes[0], &indexRecvOffsets[0], comm );
+    std::vector<int>().swap( sendInd );
     std::vector<int>().swap( indexSendSizes );
     std::vector<int>().swap( indexSendOffsets );
 
     // Get the indices after reordering
-    perm.Translate( recvIndices );
+    perm.Translate( recvInd );
 
     // Put the connections into our new graph
     const int childTeamRank = 
@@ -1190,11 +1190,11 @@ BuildChildFromPerm
         child.ResizeTo( rightChildSize );
 
     child.StartAssembly();
-    child.Reserve( recvIndices.size() );
+    child.Reserve( recvInd.size() );
     int offset=0;
     for( int s=0; s<numRecvRows; ++s )
     {
-        const int source = rowRecvIndices[s];
+        const int source = rowRecvInd[s];
         const int numConnections = rowRecvLengths[s];
 #ifndef RELEASE
         const int childFirstLocalSource = child.FirstLocalSource();
@@ -1206,7 +1206,7 @@ BuildChildFromPerm
 #endif
         for( int t=0; t<numConnections; ++t )
         {
-            const int target = recvIndices[offset++];
+            const int target = recvInd[offset++];
             if( onLeft )
             {
 #ifndef RELEASE
@@ -1264,8 +1264,8 @@ BuildMap
     for( int s=0; s<numLocal; ++s )
     {
         const SepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
-        const int numIndices = sepOrLeaf.indices.size();
-        for( int t=0; t<numIndices; ++t )
+        const int numInd = sepOrLeaf.indices.size();
+        for( int t=0; t<numInd; ++t )
         {
             const int i = sepOrLeaf.indices[t];
 #ifndef RELEASE
@@ -1284,11 +1284,11 @@ BuildMap
     for( int s=0; s<numDist; ++s )
     {
         const DistSeparator& sep = sepTree.distSeps[s];
-        const int numIndices = sep.indices.size();
+        const int numInd = sep.indices.size();
         const int teamSize = mpi::CommSize( sep.comm );
         const int teamRank = mpi::CommRank( sep.comm );
-        const int numLocalIndices = Length( numIndices, teamRank, teamSize );
-        for( int tLocal=0; tLocal<numLocalIndices; ++tLocal )
+        const int numLocalInd = Length( numInd, teamRank, teamSize );
+        for( int tLocal=0; tLocal<numLocalInd; ++tLocal )
         {
             const int t = teamRank + tLocal*teamSize;
             const int i = sep.indices[t];
@@ -1319,38 +1319,38 @@ BuildMap
         sendOffsets[q] = numSends;
         numSends += sendSizes[q];
     }
-    std::vector<int> sendIndices( numSends );
-    std::vector<int> sendOrigIndices( numSends );
+    std::vector<int> sendInd( numSends );
+    std::vector<int> sendOrigInd( numSends );
     std::vector<int> offsets = sendOffsets;
     for( int s=0; s<numLocal; ++s )
     {
         const SepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
-        const int numIndices = sepOrLeaf.indices.size();
-        for( int t=0; t<numIndices; ++t )
+        const int numInd = sepOrLeaf.indices.size();
+        for( int t=0; t<numInd; ++t )
         {
             const int i = sepOrLeaf.indices[t];
             const int iMapped = sepOrLeaf.offset + t;
             const int q = RowToProcess( i, blocksize, commSize );
-            sendOrigIndices[offsets[q]] = i;
-            sendIndices[offsets[q]] = iMapped;
+            sendOrigInd[offsets[q]] = i;
+            sendInd[offsets[q]] = iMapped;
             ++offsets[q];
         }
     }
     for( int s=0; s<numDist; ++s )
     {
         const DistSeparator& sep = sepTree.distSeps[s];
-        const int numIndices = sep.indices.size();
+        const int numInd = sep.indices.size();
         const int teamSize = mpi::CommSize( sep.comm );
         const int teamRank = mpi::CommRank( sep.comm );
-        const int numLocalIndices = Length( numIndices, teamRank, teamSize );
-        for( int tLocal=0; tLocal<numLocalIndices; ++tLocal )
+        const int numLocalInd = Length( numInd, teamRank, teamSize );
+        for( int tLocal=0; tLocal<numLocalInd; ++tLocal )
         {
             const int t = teamRank + tLocal*teamSize;
             const int i = sep.indices[t];
             const int iMapped = sep.offset + t;
             const int q = RowToProcess( i, blocksize, commSize );
-            sendOrigIndices[offsets[q]] = i;
-            sendIndices[offsets[q]] = iMapped;
+            sendOrigInd[offsets[q]] = i;
+            sendInd[offsets[q]] = iMapped;
             ++offsets[q];
         }
     }
@@ -1368,22 +1368,22 @@ BuildMap
     if( numRecvs != numLocalSources )
         throw std::logic_error("incorrect number of recv indices");
 #endif
-    std::vector<int> recvIndices( numRecvs );
+    std::vector<int> recvInd( numRecvs );
     mpi::AllToAll
-    ( &sendIndices[0], &sendSizes[0], &sendOffsets[0],
-      &recvIndices[0], &recvSizes[0], &recvOffsets[0], comm );
+    ( &sendInd[0], &sendSizes[0], &sendOffsets[0],
+      &recvInd[0], &recvSizes[0], &recvOffsets[0], comm );
 
     // Perform an AllToAll to exchange the original indices
-    std::vector<int> recvOrigIndices( numRecvs );
+    std::vector<int> recvOrigInd( numRecvs );
     mpi::AllToAll
-    ( &sendOrigIndices[0], &sendSizes[0], &sendOffsets[0],
-      &recvOrigIndices[0], &recvSizes[0], &recvOffsets[0], comm );
+    ( &sendOrigInd[0], &sendSizes[0], &sendOffsets[0],
+      &recvOrigInd[0], &recvSizes[0], &recvOffsets[0], comm );
 
     // Unpack the indices
     const int firstLocalSource = graph.FirstLocalSource();
     for( int s=0; s<numRecvs; ++s )
     {
-        const int i = recvOrigIndices[s];
+        const int i = recvOrigInd[s];
         const int iLocal = i - firstLocalSource;
 #ifndef RELEASE
         if( iLocal < 0 || iLocal >= numLocalSources )
@@ -1394,7 +1394,7 @@ BuildMap
             throw std::logic_error( msg.str().c_str() );
         }
 #endif
-        const int iMapped = recvIndices[s];
+        const int iMapped = recvInd[s];
 #ifndef RELEASE
         if( iMapped < 0 || iMapped >= graph.NumSources() )
         {

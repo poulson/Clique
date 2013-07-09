@@ -91,7 +91,7 @@ inline void DistLowerForwardSolve
         std::vector<int> sendCounts(commSize), sendDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int sendSize = solveMeta.numChildSendIndices[proc]*width;
+            const int sendSize = solveMeta.numChildSendInd[proc]*width;
             sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += sendSize;
@@ -99,15 +99,15 @@ inline void DistLowerForwardSolve
         std::vector<F> sendBuffer( sendBufferSize );
 
         const bool onLeft = childNode.onLeft;
-        const std::vector<int>& myChildRelIndices = 
-            ( onLeft ? node.leftRelIndices : node.rightRelIndices );
+        const std::vector<int>& myChildRelInd = 
+            ( onLeft ? node.leftRelInd : node.rightRelInd );
         const int updateColShift = childUpdate.ColShift();
         const int updateLocalHeight = childUpdate.LocalHeight();
         std::vector<int> packOffsets = sendDispls;
         for( int iChildLoc=0; iChildLoc<updateLocalHeight; ++iChildLoc )
         {
             const int iChild = updateColShift + iChildLoc*childCommSize;
-            const int destRank = myChildRelIndices[iChild] % commSize;
+            const int destRank = myChildRelInd[iChild] % commSize;
             F* packBuf = &sendBuffer[packOffsets[destRank]];
             for( int jChild=0; jChild<width; ++jChild )
                 packBuf[jChild] = childUpdate.GetLocal(iChildLoc,jChild);
@@ -123,7 +123,7 @@ inline void DistLowerForwardSolve
         std::vector<int> recvCounts(commSize), recvDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int recvSize = solveMeta.childRecvIndices[proc].size()*width;
+            const int recvSize = solveMeta.childRecvInd[proc].size()*width;
             recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += recvSize;
@@ -145,11 +145,10 @@ inline void DistLowerForwardSolve
         for( int proc=0; proc<commSize; ++proc )
         {
             const F* recvValues = &recvBuffer[recvDispls[proc]];
-            const std::deque<int>& recvIndices = 
-                solveMeta.childRecvIndices[proc];
-            for( unsigned k=0; k<recvIndices.size(); ++k )
+            const std::deque<int>& recvInd = solveMeta.childRecvInd[proc];
+            for( unsigned k=0; k<recvInd.size(); ++k )
             {
-                const int iFrontLoc = recvIndices[k];
+                const int iFrontLoc = recvInd[k];
                 const F* recvRow = &recvValues[k*width];
                 F* WRow = W.Buffer( iFrontLoc, 0 );
                 const int WLDim = W.LDim();
@@ -271,7 +270,7 @@ inline void DistLowerBackwardSolve
         std::vector<int> sendCounts(parentCommSize), sendDispls(parentCommSize);
         for( int proc=0; proc<parentCommSize; ++proc )
         {
-            const int sendSize = solveMeta.childRecvIndices[proc].size()*width;
+            const int sendSize = solveMeta.childRecvInd[proc].size()*width;
             sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += sendSize;
@@ -282,11 +281,10 @@ inline void DistLowerBackwardSolve
         for( int proc=0; proc<parentCommSize; ++proc )
         {
             F* sendValues = &sendBuffer[sendDispls[proc]];
-            const std::deque<int>& recvIndices = 
-                solveMeta.childRecvIndices[proc];
-            for( unsigned k=0; k<recvIndices.size(); ++k )
+            const std::deque<int>& recvInd = solveMeta.childRecvInd[proc];
+            for( unsigned k=0; k<recvInd.size(); ++k )
             {
-                const int iFrontLoc = recvIndices[k];
+                const int iFrontLoc = recvInd[k];
                 F* sendRow = &sendValues[k*width];
                 const F* workRow = parentWork.LockedBuffer( iFrontLoc, 0 );
                 const int workLDim = parentWork.LDim();
@@ -301,7 +299,7 @@ inline void DistLowerBackwardSolve
         std::vector<int> recvCounts(parentCommSize), recvDispls(parentCommSize);
         for( int proc=0; proc<parentCommSize; ++proc )
         {
-            const int recvSize = solveMeta.numChildSendIndices[proc]*width;
+            const int recvSize = solveMeta.numChildSendInd[proc]*width;
             recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += recvSize;
@@ -321,14 +319,14 @@ inline void DistLowerBackwardSolve
 
         // Unpack the updates using the send approach from the forward solve
         const bool onLeft = node.onLeft;
-        const std::vector<int>& myRelIndices = 
-            ( onLeft ? parentNode.leftRelIndices : parentNode.rightRelIndices );
+        const std::vector<int>& myRelInd = 
+            ( onLeft ? parentNode.leftRelInd : parentNode.rightRelInd );
         const int updateColShift = WB.ColShift();
         const int updateLocalHeight = WB.LocalHeight();
         for( int iUpdateLoc=0; iUpdateLoc<updateLocalHeight; ++iUpdateLoc )
         {
             const int iUpdate = updateColShift + iUpdateLoc*commSize;
-            const int startRank = myRelIndices[iUpdate] % parentCommSize;
+            const int startRank = myRelInd[iUpdate] % parentCommSize;
             const F* recvBuf = &recvBuffer[recvDispls[startRank]];
             for( int j=0; j<width; ++j )
                 WB.SetLocal(iUpdateLoc,j,recvBuf[j]);

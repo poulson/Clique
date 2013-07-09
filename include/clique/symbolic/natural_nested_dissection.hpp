@@ -19,7 +19,7 @@ void NaturalNestedDissection
         DistSeparatorTree& sepTree, 
         DistSymmInfo& info,
         int cutoff=128, 
-        bool storeFactRecvIndices=false );
+        bool storeFactRecvInd=false );
 
 int NaturalBisect
 (       int nx, 
@@ -454,7 +454,7 @@ NaturalNestedDissection
         DistSeparatorTree& sepTree, 
         DistSymmInfo& info,
         int cutoff, 
-        bool storeFactRecvIndices )
+        bool storeFactRecvInd )
 {
 #ifndef RELEASE
     CallStackEntry entry("NaturalNestedDissection");
@@ -488,7 +488,7 @@ NaturalNestedDissection
 #endif
 
     // Run the symbolic analysis
-    SymmetricAnalysis( eTree, info, storeFactRecvIndices );
+    SymmetricAnalysis( eTree, info, storeFactRecvInd );
 }
 
 inline int 

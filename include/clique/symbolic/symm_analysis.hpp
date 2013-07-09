@@ -12,7 +12,7 @@ namespace cliq {
 
 void SymmetricAnalysis
 ( const DistSymmElimTree& eTree, DistSymmInfo& info, 
-  bool storeFactRecvIndices=true );
+  bool storeFactRecvInd=true );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -22,22 +22,22 @@ void LocalSymmetricAnalysis
 ( const DistSymmElimTree& eTree, DistSymmInfo& info );
 void DistSymmetricAnalysis
 ( const DistSymmElimTree& eTree, DistSymmInfo& info, 
-  bool storeFactRecvIndices=true );
+  bool storeFactRecvInd=true );
 
-void ComputeFactRecvIndices
+void ComputeFactRecvInd
 ( const DistSymmNodeInfo& node,
   const DistSymmNodeInfo& childNode );
 void ComputeSolveMetadata2d
 ( const DistSymmElimTree& eTree, DistSymmInfo& info, int width );
 
 inline void SymmetricAnalysis
-( const DistSymmElimTree& eTree, DistSymmInfo& info, bool storeFactRecvIndices )
+( const DistSymmElimTree& eTree, DistSymmInfo& info, bool storeFactRecvInd )
 {
 #ifndef RELEASE
     CallStackEntry entry("SymmetricAnalysis");
 #endif
     LocalSymmetricAnalysis( eTree, info );
-    DistSymmetricAnalysis( eTree, info, storeFactRecvIndices );
+    DistSymmetricAnalysis( eTree, info, storeFactRecvInd );
 }
 
 } // namespace cliq

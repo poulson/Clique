@@ -41,23 +41,23 @@ DistNodalMultiVec<F>::Pull
     width_ = X.Width();
 
     // Traverse our part of the elimination tree to see how many indices we need
-    int numRecvIndices=0;
+    int numRecvInd=0;
     const int numLocal = info.localNodes.size();
     for( int s=0; s<numLocal; ++s )
-        numRecvIndices += info.localNodes[s].size;
+        numRecvInd += info.localNodes[s].size;
     const int numDist = info.distNodes.size();
     for( int s=1; s<numDist; ++s )
-        numRecvIndices += info.distNodes[s].solveMeta1d.localSize;
-    localHeight_ = numRecvIndices;
+        numRecvInd += info.distNodes[s].solveMeta1d.localSize;
+    localHeight_ = numRecvInd;
     
     // Fill the set of indices that we need to map to the original ordering
     int offset=0;
-    std::vector<int> mappedIndices( numRecvIndices );
+    std::vector<int> mappedInd( numRecvInd );
     for( int s=0; s<numLocal; ++s )
     {
         const SymmNodeInfo& node = info.localNodes[s];
         for( int t=0; t<node.size; ++t )
-            mappedIndices[offset++] = node.offset+t;
+            mappedInd[offset++] = node.offset+t;
     }
     for( int s=1; s<numDist; ++s )
     {
@@ -68,24 +68,24 @@ DistNodalMultiVec<F>::Pull
         const int alignment = 0;
         const int shift = Shift( gridRank, alignment, gridSize );
         for( int t=shift; t<node.size; t+=gridSize )
-            mappedIndices[offset++] = node.offset+t;
+            mappedInd[offset++] = node.offset+t;
     }
 #ifndef RELEASE
-    if( offset != numRecvIndices )
-        throw std::logic_error("mappedIndices was filled incorrectly");
+    if( offset != numRecvInd )
+        throw std::logic_error("mappedInd was filled incorrectly");
 #endif
 
     // Convert the indices to the original ordering
-    inverseMap.Translate( mappedIndices );
+    inverseMap.Translate( mappedInd );
 
     // Figure out how many entries each process owns that we need
     mpi::Comm comm = X.Comm();
     const int commSize = mpi::CommSize( comm );
     std::vector<int> recvSizes( commSize, 0 );
     const int blocksize = X.Blocksize();
-    for( int s=0; s<numRecvIndices; ++s )
+    for( int s=0; s<numRecvInd; ++s )
     {
-        const int i = mappedIndices[s];
+        const int i = mappedInd[s];
         const int q = RowToProcess( i, blocksize, commSize );
         ++recvSizes[q];
     }
@@ -96,42 +96,41 @@ DistNodalMultiVec<F>::Pull
         recvOffsets[q] = offset;
         offset += recvSizes[q];
     }
-    std::vector<int> recvIndices( numRecvIndices );
+    std::vector<int> recvInd( numRecvInd );
     std::vector<int> offsets = recvOffsets;
-    for( int s=0; s<numRecvIndices; ++s )
+    for( int s=0; s<numRecvInd; ++s )
     {
-        const int i = mappedIndices[s];
+        const int i = mappedInd[s];
         const int q = RowToProcess( i, blocksize, commSize );
-        recvIndices[offsets[q]++] = i;
+        recvInd[offsets[q]++] = i;
     }
 
     // Coordinate for the coming AllToAll to exchange the indices of X
     std::vector<int> sendSizes( commSize );
     mpi::AllToAll( &recvSizes[0], 1, &sendSizes[0], 1, comm );
-    int numSendIndices=0;
+    int numSendInd=0;
     std::vector<int> sendOffsets( commSize );
     for( int q=0; q<commSize; ++q )
     {
-        sendOffsets[q] = numSendIndices;
-        numSendIndices += sendSizes[q];
+        sendOffsets[q] = numSendInd;
+        numSendInd += sendSizes[q];
     }
 
     // Request the indices
-    std::vector<int> sendIndices( numSendIndices );
+    std::vector<int> sendInd( numSendInd );
     mpi::AllToAll
-    ( &recvIndices[0], &recvSizes[0], &recvOffsets[0],
-      &sendIndices[0], &sendSizes[0], &sendOffsets[0], comm );
+    ( &recvInd[0], &recvSizes[0], &recvOffsets[0],
+      &sendInd[0], &sendSizes[0], &sendOffsets[0], comm );
 
     // Fulfill the requests
-    std::vector<F> sendValues( numSendIndices*width_ );
+    std::vector<F> sendValues( numSendInd*width_ );
     const int firstLocalRow = X.FirstLocalRow();
-    for( int s=0; s<numSendIndices; ++s )
+    for( int s=0; s<numSendInd; ++s )
         for( int j=0; j<width_; ++j )
-            sendValues[s*width_+j] = 
-                X.GetLocal( sendIndices[s]-firstLocalRow, j );
+            sendValues[s*width_+j] = X.GetLocal( sendInd[s]-firstLocalRow, j );
 
     // Reply with the values
-    std::vector<F> recvValues( numRecvIndices*width_ );
+    std::vector<F> recvValues( numRecvInd*width_ );
     for( int q=0; q<commSize; ++q )
     {
         sendSizes[q] *= width_;
@@ -156,7 +155,7 @@ DistNodalMultiVec<F>::Pull
         localNodes[s].ResizeTo( node.size, width_ );
         for( int t=0; t<node.size; ++t )
         {
-            const int i = mappedIndices[offset++];
+            const int i = mappedInd[offset++];
             const int q = RowToProcess( i, blocksize, commSize );
             for( int j=0; j<width_; ++j )
                 localNodes[s].Set( t, j, recvValues[offsets[q]++] );
@@ -175,14 +174,14 @@ DistNodalMultiVec<F>::Pull
         distNodes[s-1].ResizeTo( localHeight, width_ );
         for( int tLoc=0; tLoc<localHeight; ++tLoc )
         {
-            const int i = mappedIndices[offset++];
+            const int i = mappedInd[offset++];
             const int q = RowToProcess( i, blocksize, commSize );
             for( int j=0; j<width_; ++j )
                 distNodes[s-1].Set( tLoc, j, recvValues[offsets[q]++] );
         }
     }
 #ifndef RELEASE
-    if( offset != numRecvIndices )
+    if( offset != numRecvInd )
         throw std::logic_error("Unpacked wrong number of indices");
 #endif
 }
@@ -211,14 +210,14 @@ DistNodalMultiVec<F>::Push
     const int numLocal = info.localNodes.size();
 
     // Fill the set of indices that we need to map to the original ordering
-    const int numSendIndices = LocalHeight();
+    const int numSendInd = LocalHeight();
     int offset=0;
-    std::vector<int> mappedIndices( numSendIndices );
+    std::vector<int> mappedInd( numSendInd );
     for( int s=0; s<numLocal; ++s )
     {
         const SymmNodeInfo& node = info.localNodes[s];
         for( int t=0; t<node.size; ++t )
-            mappedIndices[offset++] = node.offset+t;
+            mappedInd[offset++] = node.offset+t;
     }
     for( int s=1; s<numDist; ++s )
     {
@@ -229,17 +228,17 @@ DistNodalMultiVec<F>::Push
         const int alignment = 0;
         const int shift = Shift( gridRank, alignment, gridSize );
         for( int t=shift; t<node.size; t+=gridSize )
-            mappedIndices[offset++] = node.offset+t;
+            mappedInd[offset++] = node.offset+t;
     }
 
     // Convert the indices to the original ordering
-    inverseMap.Translate( mappedIndices );
+    inverseMap.Translate( mappedInd );
 
     // Figure out how many indices each process owns that we need to send
     std::vector<int> sendSizes( commSize, 0 );
-    for( int s=0; s<numSendIndices; ++s )
+    for( int s=0; s<numSendInd; ++s )
     {
-        const int i = mappedIndices[s];
+        const int i = mappedInd[s];
         const int q = RowToProcess( i, blocksize, commSize );
         ++sendSizes[q];
     }
@@ -253,19 +252,19 @@ DistNodalMultiVec<F>::Push
 
     // Pack the send indices and values
     offset=0;
-    std::vector<F> sendValues( numSendIndices*width );
-    std::vector<int> sendIndices( numSendIndices );
+    std::vector<F> sendValues( numSendInd*width );
+    std::vector<int> sendInd( numSendInd );
     std::vector<int> offsets = sendOffsets;
     for( int s=0; s<numLocal; ++s )
     {
         const SymmNodeInfo& node = info.localNodes[s];
         for( int t=0; t<node.size; ++t )
         {
-            const int i = mappedIndices[offset++];
+            const int i = mappedInd[offset++];
             const int q = RowToProcess( i, blocksize, commSize );
             for( int j=0; j<width; ++j )
                 sendValues[offsets[q]*width+j] = localNodes[s].Get(t,j);    
-            sendIndices[offsets[q]++] = i;
+            sendInd[offsets[q]++] = i;
         }
     }
     for( int s=1; s<numDist; ++s )
@@ -280,37 +279,37 @@ DistNodalMultiVec<F>::Push
 
         for( int tLoc=0; tLoc<localHeight; ++tLoc )
         {
-            const int i = mappedIndices[offset++];
+            const int i = mappedInd[offset++];
             const int q = RowToProcess( i, blocksize, commSize );
             for( int j=0; j<width; ++j )
                 sendValues[offsets[q]*width+j] = distNodes[s-1].Get(tLoc,j);
-            sendIndices[offsets[q]++] = i;
+            sendInd[offsets[q]++] = i;
         }
     }
 
     // Coordinate for the coming AllToAll to exchange the indices of x
     std::vector<int> recvSizes( commSize );
     mpi::AllToAll( &sendSizes[0], 1, &recvSizes[0], 1, comm );
-    int numRecvIndices=0;
+    int numRecvInd=0;
     std::vector<int> recvOffsets( commSize );
     for( int q=0; q<commSize; ++q )
     {
-        recvOffsets[q] = numRecvIndices;
-        numRecvIndices += recvSizes[q];
+        recvOffsets[q] = numRecvInd;
+        numRecvInd += recvSizes[q];
     }
 #ifndef RELEASE
-    if( numRecvIndices != localHeight )
-        throw std::logic_error("numRecvIndices was not equal to local height");
+    if( numRecvInd != localHeight )
+        throw std::logic_error("numRecvInd was not equal to local height");
 #endif
 
     // Send the indices
-    std::vector<int> recvIndices( numRecvIndices );
+    std::vector<int> recvInd( numRecvInd );
     mpi::AllToAll
-    ( &sendIndices[0], &sendSizes[0], &sendOffsets[0],
-      &recvIndices[0], &recvSizes[0], &recvOffsets[0], comm );
+    ( &sendInd[0], &sendSizes[0], &sendOffsets[0],
+      &recvInd[0], &recvSizes[0], &recvOffsets[0], comm );
 
     // Send the values
-    std::vector<F> recvValues( numRecvIndices*width );
+    std::vector<F> recvValues( numRecvInd*width );
     for( int q=0; q<commSize; ++q )
     {
         sendSizes[q] *= width;
@@ -326,9 +325,9 @@ DistNodalMultiVec<F>::Push
     std::vector<int>().swap( sendOffsets );
 
     // Unpack the values
-    for( int s=0; s<numRecvIndices; ++s )
+    for( int s=0; s<numRecvInd; ++s )
     {
-        const int i = recvIndices[s];
+        const int i = recvInd[s];
         const int iLocal = i - firstLocalRow;
 #ifndef RELEASE
         if( iLocal < 0 || iLocal >= localHeight )

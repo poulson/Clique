@@ -28,11 +28,11 @@ public:
     // calling this routine will have the DistMap map the indices to the 
     // owning process
     void StoreOwners
-    ( int numSource, std::vector<int>& localIndices, mpi::Comm comm );
+    ( int numSource, std::vector<int>& localInd, mpi::Comm comm );
 
     // Map manipulation
     // Collectively map each process's local set of indices
-    void Translate( std::vector<int>& localIndices ) const;
+    void Translate( std::vector<int>& localInd ) const;
     // Form the inverse map
     void FormInverse( DistMap& inverseMap ) const;
     // composite(i) := second(first(i))

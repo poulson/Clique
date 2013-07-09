@@ -26,32 +26,31 @@ struct SymmNodeInfo
     bool onLeft;
     int myOffset;
     std::vector<int> lowerStruct;
-    std::vector<int> origLowerRelIndices;
+    std::vector<int> origLowerRelInd;
     // (maps from the child update indices to our frontal indices).
-    std::vector<int> leftRelIndices, rightRelIndices;
+    std::vector<int> leftRelInd, rightRelInd;
 };
 
 struct FactorMetadata
 {
-    std::vector<int> numChildSendIndices;
-    std::deque<int> leftColIndices, leftRowIndices,
-                    rightColIndices, rightRowIndices;
+    std::vector<int> numChildSendInd;
+    std::deque<int> leftColInd, leftRowInd, rightColInd, rightRowInd;
     // This information does not necessarily have to be kept and can be
     // computed from the above information (albeit somewhat expensively).
-    mutable std::vector<std::deque<int> > childRecvIndices;
+    mutable std::vector<std::deque<int> > childRecvInd;
 
     void EmptyChildRecvIndices() const
     {
-        std::vector<std::deque<int> >().swap( childRecvIndices );
+        std::vector<std::deque<int> >().swap( childRecvInd );
     }
 
     void Empty()
     {
-        std::deque<int>().swap( leftColIndices );
-        std::deque<int>().swap( leftRowIndices );
-        std::deque<int>().swap( rightColIndices );
-        std::deque<int>().swap( rightRowIndices );
-        std::vector<int>().swap( numChildSendIndices );
+        std::deque<int>().swap( leftColInd );
+        std::deque<int>().swap( leftRowInd );
+        std::deque<int>().swap( rightColInd );
+        std::deque<int>().swap( rightRowInd );
+        std::vector<int>().swap( numChildSendInd );
         EmptyChildRecvIndices();
     }
 };
@@ -59,32 +58,32 @@ struct FactorMetadata
 struct SolveMetadata1d
 {
     int localSize;
-    std::deque<int> leftIndices, rightIndices;
-    std::vector<int> numChildSendIndices;
-    std::vector<std::deque<int> > childRecvIndices;
+    std::deque<int> leftInd, rightInd;
+    std::vector<int> numChildSendInd;
+    std::vector<std::deque<int> > childRecvInd;
 
     void Empty()
     {
-        std::deque<int>().swap( leftIndices );
-        std::deque<int>().swap( rightIndices );
-        std::vector<int>().swap( numChildSendIndices );
-        std::vector<std::deque<int> >().swap( childRecvIndices );
+        std::deque<int>().swap( leftInd );
+        std::deque<int>().swap( rightInd );
+        std::vector<int>().swap( numChildSendInd );
+        std::vector<std::deque<int> >().swap( childRecvInd );
     }
 };
 
 struct SolveMetadata2d
 {
     int localHeight, localWidth;
-    std::deque<int> leftIndices, rightIndices;
-    std::vector<int> numChildSendIndices;
-    std::vector<std::deque<int> > childRecvIndices;
+    std::deque<int> leftInd, rightInd;
+    std::vector<int> numChildSendInd;
+    std::vector<std::deque<int> > childRecvInd;
 
     void Empty()
     {
-        std::deque<int>().swap( leftIndices );
-        std::deque<int>().swap( rightIndices );
-        std::vector<int>().swap( numChildSendIndices );
-        std::vector<std::deque<int> >().swap( childRecvIndices );
+        std::deque<int>().swap( leftInd );
+        std::deque<int>().swap( rightInd );
+        std::vector<int>().swap( numChildSendInd );
+        std::vector<std::deque<int> >().swap( childRecvInd );
     }
 };
 
@@ -104,13 +103,13 @@ struct DistSymmNodeInfo
     Grid* grid;
     int myOffset, leftSize, rightSize;
     std::vector<int> lowerStruct;
-    std::vector<int> origLowerRelIndices;
+    std::vector<int> origLowerRelInd;
 
     // The relative indices of our child
     // (maps from the child update indices to our frontal indices).
     // These could be replaced with just the relative indices of our local 
     // submatrices of the child updates.
-    std::vector<int> leftRelIndices, rightRelIndices;
+    std::vector<int> leftRelInd, rightRelInd;
 
     FactorMetadata factorMeta;
     SolveMetadata1d solveMeta1d;

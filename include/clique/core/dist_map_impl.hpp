@@ -34,7 +34,7 @@ DistMap::~DistMap()
 
 inline void
 DistMap::StoreOwners
-( int numSources, std::vector<int>& localIndices, mpi::Comm comm )
+( int numSources, std::vector<int>& localInd, mpi::Comm comm )
 {
 #ifndef RELEASE
     CallStackEntry entry("DistMap::StoreOwners");
@@ -47,10 +47,10 @@ DistMap::StoreOwners
 
     // Exchange via AllToAlls
     std::vector<int> sendSizes( commSize, 0 );
-    const int numLocalIndices = localIndices.size();
-    for( int s=0; s<numLocalIndices; ++s )
+    const int numLocalInd = localInd.size();
+    for( int s=0; s<numLocalInd; ++s )
     {
-        const int i = localIndices[s];
+        const int i = localInd[s];
         const int q = RowToProcess( i, blocksize, commSize );
         ++sendSizes[q];
     }
@@ -71,17 +71,17 @@ DistMap::StoreOwners
         throw std::logic_error("Incorrect number of recv indices");
 #endif
     std::vector<int> offsets = sendOffsets;
-    std::vector<int> sendIndices( numSends );
-    for( int s=0; s<numLocalIndices; ++s )
+    std::vector<int> sendInd( numSends );
+    for( int s=0; s<numLocalInd; ++s )
     {
-        const int i = localIndices[s];
+        const int i = localInd[s];
         const int q = RowToProcess( i, blocksize, commSize );
-        sendIndices[offsets[q]++] = i;
+        sendInd[offsets[q]++] = i;
     }
-    std::vector<int> recvIndices( numRecvs );
+    std::vector<int> recvInd( numRecvs );
     mpi::AllToAll
-    ( &sendIndices[0], &sendSizes[0], &sendOffsets[0],
-      &recvIndices[0], &recvSizes[0], &recvOffsets[0], comm );
+    ( &sendInd[0], &sendSizes[0], &sendOffsets[0],
+      &recvInd[0], &recvSizes[0], &recvOffsets[0], comm );
 
     // Form map
     for( int q=0; q<commSize; ++q )
@@ -90,7 +90,7 @@ DistMap::StoreOwners
         const int offset = recvOffsets[q];
         for( int s=0; s<size; ++s )
         {
-            const int i = recvIndices[offset+s];
+            const int i = recvInd[offset+s];
             const int iLocal = i - firstLocalSource;
             SetLocal( iLocal, q );
         }
@@ -98,19 +98,19 @@ DistMap::StoreOwners
 }
 
 inline void
-DistMap::Translate( std::vector<int>& localIndices ) const
+DistMap::Translate( std::vector<int>& localInd ) const
 {
 #ifndef RELEASE
     CallStackEntry entry("DistMap::Translate");
 #endif
     const int commSize = mpi::CommSize( comm_ );
-    const int numLocalIndices = localIndices.size();
+    const int numLocalInd = localInd.size();
 
     // Count how many indices we need each process to map
     std::vector<int> requestSizes( commSize, 0 );
-    for( int s=0; s<numLocalIndices; ++s )
+    for( int s=0; s<numLocalInd; ++s )
     {
-        const int i = localIndices[s];
+        const int i = localInd[s];
 #ifndef RELEASE
         if( i < 0 )
             throw std::logic_error("Index was negative");
@@ -145,9 +145,9 @@ DistMap::Translate( std::vector<int>& localIndices ) const
     // Pack the requested information 
     std::vector<int> requests( numRequests );
     std::vector<int> offsets = requestOffsets;
-    for( int s=0; s<numLocalIndices; ++s )
+    for( int s=0; s<numLocalInd; ++s )
     {
-        const int i = localIndices[s];
+        const int i = localInd[s];
         if( i < numSources_ )
         {
             const int q = RowToProcess( i, blocksize_, commSize );
@@ -186,13 +186,13 @@ DistMap::Translate( std::vector<int>& localIndices ) const
 
     // Unpack in the same way we originally packed
     offsets = requestOffsets;
-    for( int s=0; s<numLocalIndices; ++s )
+    for( int s=0; s<numLocalInd; ++s )
     {
-        const int i = localIndices[s];
+        const int i = localInd[s];
         if( i < numSources_ )
         {
             const int q = RowToProcess( i, blocksize_, commSize );
-            localIndices[s] = requests[offsets[q]++];
+            localInd[s] = requests[offsets[q]++];
         }
     }
 }

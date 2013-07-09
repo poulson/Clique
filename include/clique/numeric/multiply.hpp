@@ -52,8 +52,8 @@ void Multiply
     std::set<int> indexSet;
     for( int e=0; e<numLocalEntries; ++e )
         indexSet.insert( A.Col(e) );
-    const int numRecvIndices = indexSet.size();
-    std::vector<int> recvIndices( numRecvIndices );
+    const int numRecvInd = indexSet.size();
+    std::vector<int> recvInd( numRecvInd );
     std::vector<int> recvSizes( commSize, 0 );
     std::vector<int> recvOffsets( commSize );
     {
@@ -71,7 +71,7 @@ void Multiply
                 lastOffset = offset;
                 ++qPrev;
             }
-            recvIndices[offset++] = j;
+            recvInd[offset++] = j;
         }
         while( qPrev != commSize-1 )
         {
@@ -86,23 +86,23 @@ void Multiply
     // Coordinate
     std::vector<int> sendSizes( commSize );
     mpi::AllToAll( &recvSizes[0], 1, &sendSizes[0], 1, comm );
-    int numSendIndices=0;
+    int numSendInd=0;
     std::vector<int> sendOffsets( commSize );
     for( int q=0; q<commSize; ++q )
     {
-        sendOffsets[q] = numSendIndices;
-        numSendIndices += sendSizes[q];
+        sendOffsets[q] = numSendInd;
+        numSendInd += sendSizes[q];
     }
-    std::vector<int> sendIndices( numSendIndices );
+    std::vector<int> sendInd( numSendInd );
     mpi::AllToAll
-    ( &recvIndices[0], &recvSizes[0], &recvOffsets[0],
-      &sendIndices[0], &sendSizes[0], &sendOffsets[0], comm );
+    ( &recvInd[0], &recvSizes[0], &recvOffsets[0],
+      &sendInd[0], &sendSizes[0], &sendOffsets[0], comm );
 
     // Pack the send values
-    std::vector<T> sendValues( numSendIndices*width );
-    for( int s=0; s<numSendIndices; ++s )
+    std::vector<T> sendValues( numSendInd*width );
+    for( int s=0; s<numSendInd; ++s )
     {
-        const int i = sendIndices[s];
+        const int i = sendInd[s];
         const int iLocal = i - firstLocalRow;
 #ifndef RELEASE
         if( iLocal < 0 || iLocal >= XLocalHeight )
@@ -113,7 +113,7 @@ void Multiply
     }
 
     // Send them back
-    std::vector<T> recvValues( numRecvIndices*width );
+    std::vector<T> recvValues( numRecvInd*width );
     for( int q=0; q<commSize; ++q )
     {
         sendSizes[q] *= width;
@@ -133,7 +133,7 @@ void Multiply
         for( int k=0; k<rowSize; ++k )
         {
             const int col = A.Col( offset+k );
-            const int colOffset = Find( recvIndices, col );
+            const int colOffset = Find( recvInd, col );
             const T AValue = A.Value(k+offset);
             for( int j=0; j<width; ++j )
             {

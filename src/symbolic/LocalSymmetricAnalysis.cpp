@@ -79,21 +79,21 @@ void LocalSymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info )
             Union( partialStruct, node.lowerStruct, childrenStruct );
 
             // Now the node indices
-            std::vector<int> nodeIndices( node.size );
+            std::vector<int> nodeInd( node.size );
             for( int i=0; i<node.size; ++i )
-                nodeIndices[i] = node.offset + i;
+                nodeInd[i] = node.offset + i;
             std::vector<int> fullStruct;
-            Union( fullStruct, partialStruct, nodeIndices );
+            Union( fullStruct, partialStruct, nodeInd );
 
             // Construct the relative indices of the original lower structure
             RelativeIndices
-            ( nodeInfo.origLowerRelIndices, node.lowerStruct, fullStruct );
+            ( nodeInfo.origLowerRelInd, node.lowerStruct, fullStruct );
 
             // Construct the relative indices of the children
             RelativeIndices
-            ( nodeInfo.leftRelIndices, leftChild.lowerStruct, fullStruct );
+            ( nodeInfo.leftRelInd, leftChild.lowerStruct, fullStruct );
             RelativeIndices
-            ( nodeInfo.rightRelIndices, rightChild.lowerStruct, fullStruct );
+            ( nodeInfo.rightRelInd, rightChild.lowerStruct, fullStruct );
 
             // Form lower struct of this node by removing node indices
             // (which take up the first node.size indices of fullStruct)
@@ -107,10 +107,10 @@ void LocalSymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info )
             nodeInfo.lowerStruct = node.lowerStruct;
             
             // Construct the trivial relative indices of the original structure
-            const int numOrigLowerIndices = node.lowerStruct.size();
-            nodeInfo.origLowerRelIndices.resize( numOrigLowerIndices );
-            for( int i=0; i<numOrigLowerIndices; ++i )
-                nodeInfo.origLowerRelIndices[i] = i + nodeInfo.size;
+            const int numOrigLowerInd = node.lowerStruct.size();
+            nodeInfo.origLowerRelInd.resize( numOrigLowerInd );
+            for( int i=0; i<numOrigLowerInd; ++i )
+                nodeInfo.origLowerRelInd[i] = i + nodeInfo.size;
         }
 
         myOffset += nodeInfo.size;
