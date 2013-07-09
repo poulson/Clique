@@ -61,7 +61,7 @@ algorithm. The following routine uses a parallel graph partitioner (ParMETIS)
 as a means of producing such a separator tree from an arbitrary graph.</p>
 <dl class="function">
 <dt id="NestedDissection__DistGraphCR.DistMapR.DistSeparatorTreeR.DistSymmInfoR.b.i.i.i.b">
-void <tt class="descname">NestedDissection</tt><big>(</big><a class="reference internal" href="../core/dist_graph.html#DistGraph__class" title="DistGraph">const DistGraph&amp;</a> <em>graph</em>, <a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">DistMap&amp;</a> <em>map</em>, <a class="reference internal" href="#DistSeparatorTree__struct" title="DistSeparatorTree">DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="#DistSymmInfo__struct" title="DistSymmInfo">DistSymmInfo&amp;</a> <em>info</em>, bool <em>sequential</em><em>=true</em>, int <em>cutoff</em><em>=128</em>, int <em>numDistSeps</em><em>=1</em>, int <em>numSeqSeps</em><em>=1</em>, bool <em>storeFactRecvIndices</em><em>=true </em><big>)</big><a class="headerlink" href="#NestedDissection__DistGraphCR.DistMapR.DistSeparatorTreeR.DistSymmInfoR.b.i.i.i.b" title="Permalink to this definition">¶</a></dt>
+void <tt class="descname">NestedDissection</tt><big>(</big><a class="reference internal" href="../core/dist_graph.html#DistGraph__class" title="DistGraph">const DistGraph&amp;</a> <em>graph</em>, <a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">DistMap&amp;</a> <em>map</em>, <a class="reference internal" href="#DistSeparatorTree__struct" title="DistSeparatorTree">DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="#DistSymmInfo__struct" title="DistSymmInfo">DistSymmInfo&amp;</a> <em>info</em>, bool <em>sequential</em><em>=true</em>, int <em>cutoff</em><em>=128</em>, int <em>numDistSeps</em><em>=1</em>, int <em>numSeqSeps</em><em>=1</em>, bool <em>storeFactRecvInd</em><em>=true </em><big>)</big><a class="headerlink" href="#NestedDissection__DistGraphCR.DistMapR.DistSeparatorTreeR.DistSymmInfoR.b.i.i.i.b" title="Permalink to this definition">¶</a></dt>
 <dd><div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">Since partition refinement via KL-FM is not very scalable from the runtime
@@ -78,7 +78,7 @@ The <cite>cutoff</cite> parameter determines the maximum
 acceptable leaf node size for nested dissection, the <cite>numDistSeps</cite> and
 <cite>numSeqSeps</cite> variables respectively determine how many distributed and
 sequential separators should be tried for each bisection, and
-<cite>storeFactRecvIndices</cite> determines whether or not to store information
+<cite>storeFactRecvInd</cite> determines whether or not to store information
 needed for the redistributions which occur in the subsequent numerical
 factorization</p>
 <p>See <a class="reference external" href="https://github.com/poulson/Clique/blob/master/tests/NestedDissection.cpp">tests/NestedDissection</a> for an example of its usage directly on a
@@ -88,7 +88,7 @@ underlying graph of a sparse matrix.</p>
 
 <dl class="function">
 <dt id="NaturalNestedDissection__i.i.i.DistGraphCR.DistMapR.DistSeparatorTreeR.DistSymmInfoR.i.b">
-void <tt class="descname">NaturalNestedDissection</tt><big>(</big>int <em>nx</em>, int <em>ny</em>, int <em>nz</em>, <a class="reference internal" href="../core/dist_graph.html#DistGraph__class" title="DistGraph">const DistGraph&amp;</a> <em>graph</em>, <a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">DistMap&amp;</a> <em>map</em>, <a class="reference internal" href="#DistSeparatorTree__struct" title="DistSeparatorTree">DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="#DistSymmInfo__struct" title="DistSymmInfo">DistSymmInfo&amp;</a> <em>info</em>, int <em>cutoff</em><em>=128</em>, bool <em>storeFactRecvIndices</em><em>=true </em><big>)</big><a class="headerlink" href="#NaturalNestedDissection__i.i.i.DistGraphCR.DistMapR.DistSeparatorTreeR.DistSymmInfoR.i.b" title="Permalink to this definition">¶</a></dt>
+void <tt class="descname">NaturalNestedDissection</tt><big>(</big>int <em>nx</em>, int <em>ny</em>, int <em>nz</em>, <a class="reference internal" href="../core/dist_graph.html#DistGraph__class" title="DistGraph">const DistGraph&amp;</a> <em>graph</em>, <a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">DistMap&amp;</a> <em>map</em>, <a class="reference internal" href="#DistSeparatorTree__struct" title="DistSeparatorTree">DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="#DistSymmInfo__struct" title="DistSymmInfo">DistSymmInfo&amp;</a> <em>info</em>, int <em>cutoff</em><em>=128</em>, bool <em>storeFactRecvInd</em><em>=true </em><big>)</big><a class="headerlink" href="#NaturalNestedDissection__i.i.i.DistGraphCR.DistMapR.DistSeparatorTreeR.DistSymmInfoR.i.b" title="Permalink to this definition">¶</a></dt>
 <dd><p>Similar to <a class="reference internal" href="#NestedDissection__DistGraphCR.DistMapR.DistSeparatorTreeR.DistSymmInfoR.b.i.i.i.b" title="NestedDissection"><tt class="xref cpp cpp-func docutils literal"><span class="pre">NestedDissection()</span></tt></a>, but this version is specialized for
 regular 3D grids where vertices are only connected to their nearest
 neighbors. In this case, the graph can analytically be recursively bisected,
@@ -223,20 +223,20 @@ std::vector&lt;int&gt; <tt class="descname">lowerStruct</tt><a class="headerlink
 </dd></dl>
 
 <dl class="member">
-<dt id="SymmNodeInfo::origLowerRelIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">origLowerRelIndices</tt><a class="headerlink" href="#SymmNodeInfo::origLowerRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmNodeInfo::origLowerRelInd__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">origLowerRelInd</tt><a class="headerlink" href="#SymmNodeInfo::origLowerRelInd__std::vector:i:" title="Permalink to this definition">¶</a></dt>
 <dd><p>Maps from the original lower structure to their placement in the
 structure after factorization.</p>
 </dd></dl>
 
 <dl class="member">
-<dt id="SymmNodeInfo::leftRelIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">leftRelIndices</tt><a class="headerlink" href="#SymmNodeInfo::leftRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmNodeInfo::leftRelInd__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">leftRelInd</tt><a class="headerlink" href="#SymmNodeInfo::leftRelInd__std::vector:i:" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="member">
-<dt id="SymmNodeInfo::rightRelIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">rightRelIndices</tt><a class="headerlink" href="#SymmNodeInfo::rightRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="SymmNodeInfo::rightRelInd__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">rightRelInd</tt><a class="headerlink" href="#SymmNodeInfo::rightRelInd__std::vector:i:" title="Permalink to this definition">¶</a></dt>
 <dd><p>The relative indices of the left/right child&#8217;s lower structure into this
 structure.</p>
 </dd></dl>
@@ -247,39 +247,39 @@ structure.</p>
 <dt id="FactorMetadata__struct">
 <em class="property">type </em>struct <tt class="descname">FactorMetadata</tt><a class="headerlink" href="#FactorMetadata__struct" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="member">
-<dt id="FactorMetadata::numChildSendIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">numChildSendIndices</tt><a class="headerlink" href="#FactorMetadata::numChildSendIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="FactorMetadata::numChildSendInd__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">numChildSendInd</tt><a class="headerlink" href="#FactorMetadata::numChildSendInd__std::vector:i:" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="member">
-<dt id="FactorMetadata::leftColIndices__std::deque:i:">
-std::deque&lt;int&gt; <tt class="descname">leftColIndices</tt><a class="headerlink" href="#FactorMetadata::leftColIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="FactorMetadata::leftColInd__std::deque:i:">
+std::deque&lt;int&gt; <tt class="descname">leftColInd</tt><a class="headerlink" href="#FactorMetadata::leftColInd__std::deque:i:" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="member">
-<dt id="FactorMetadata::leftRowIndices__std::deque:i:">
-std::deque&lt;int&gt; <tt class="descname">leftRowIndices</tt><a class="headerlink" href="#FactorMetadata::leftRowIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="FactorMetadata::leftRowInd__std::deque:i:">
+std::deque&lt;int&gt; <tt class="descname">leftRowInd</tt><a class="headerlink" href="#FactorMetadata::leftRowInd__std::deque:i:" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="member">
-<dt id="FactorMetadata::rightColIndices__std::deque:i:">
-std::deque&lt;int&gt; <tt class="descname">rightColIndices</tt><a class="headerlink" href="#FactorMetadata::rightColIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="FactorMetadata::rightColInd__std::deque:i:">
+std::deque&lt;int&gt; <tt class="descname">rightColInd</tt><a class="headerlink" href="#FactorMetadata::rightColInd__std::deque:i:" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="member">
-<dt id="FactorMetadata::rightRowIndices__std::deque:i:">
-std::deque&lt;int&gt; <tt class="descname">rightRowIndices</tt><a class="headerlink" href="#FactorMetadata::rightRowIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="FactorMetadata::rightRowInd__std::deque:i:">
+std::deque&lt;int&gt; <tt class="descname">rightRowInd</tt><a class="headerlink" href="#FactorMetadata::rightRowInd__std::deque:i:" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="member">
-<dt id="FactorMetadata::childRecvIndices__mutable-std::vector:std::deque:i::">
-mutable std::vector&lt;std::deque&lt;int&gt;&gt; <tt class="descname">childRecvIndices</tt><a class="headerlink" href="#FactorMetadata::childRecvIndices__mutable-std::vector:std::deque:i::" title="Permalink to this definition">¶</a></dt>
+<dt id="FactorMetadata::childRecvInd__mutable-std::vector:std::deque:i::">
+mutable std::vector&lt;std::deque&lt;int&gt;&gt; <tt class="descname">childRecvInd</tt><a class="headerlink" href="#FactorMetadata::childRecvInd__mutable-std::vector:std::deque:i::" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="FactorMetadata::EmptyChildRecvIndicesC">
 void <tt class="descname">EmptyChildRecvIndices</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#FactorMetadata::EmptyChildRecvIndicesC" title="Permalink to this definition">¶</a></dt>
-<dd><p>Clears <tt class="docutils literal"><span class="pre">childRecvIndices</span></tt></p>
+<dd><p>Clears <tt class="docutils literal"><span class="pre">childRecvInd</span></tt></p>
 </dd></dl>
 
 <dl class="function">
@@ -299,23 +299,23 @@ int <tt class="descname">localSize</tt><a class="headerlink" href="#SolveMetadat
 <dd></dd></dl>
 
 <dl class="member">
-<dt id="SolveMetadata1d::leftIndices__std::deque:i:">
-std::deque&lt;int&gt; <tt class="descname">leftIndices</tt><a class="headerlink" href="#SolveMetadata1d::leftIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="SolveMetadata1d::leftInd__std::deque:i:">
+std::deque&lt;int&gt; <tt class="descname">leftInd</tt><a class="headerlink" href="#SolveMetadata1d::leftInd__std::deque:i:" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="member">
-<dt id="SolveMetadata1d::rightIndices__std::deque:i:">
-std::deque&lt;int&gt; <tt class="descname">rightIndices</tt><a class="headerlink" href="#SolveMetadata1d::rightIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="SolveMetadata1d::rightInd__std::deque:i:">
+std::deque&lt;int&gt; <tt class="descname">rightInd</tt><a class="headerlink" href="#SolveMetadata1d::rightInd__std::deque:i:" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="member">
-<dt id="SolveMetadata1d::numChildSendIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">numChildSendIndices</tt><a class="headerlink" href="#SolveMetadata1d::numChildSendIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="SolveMetadata1d::numChildSendInd__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">numChildSendInd</tt><a class="headerlink" href="#SolveMetadata1d::numChildSendInd__std::vector:i:" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="member">
-<dt id="SolveMetadata1d::childRecvIndices__std::vector:std::deque:i::">
-std::vector&lt;std::deque&lt;int&gt;&gt; <tt class="descname">childRecvIndices</tt><a class="headerlink" href="#SolveMetadata1d::childRecvIndices__std::vector:std::deque:i::" title="Permalink to this definition">¶</a></dt>
+<dt id="SolveMetadata1d::childRecvInd__std::vector:std::deque:i::">
+std::vector&lt;std::deque&lt;int&gt;&gt; <tt class="descname">childRecvInd</tt><a class="headerlink" href="#SolveMetadata1d::childRecvInd__std::vector:std::deque:i::" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
@@ -340,23 +340,23 @@ int <tt class="descname">localWidth</tt><a class="headerlink" href="#SolveMetada
 <dd></dd></dl>
 
 <dl class="member">
-<dt id="SolveMetadata2d::leftIndices__std::deque:i:">
-std::deque&lt;int&gt; <tt class="descname">leftIndices</tt><a class="headerlink" href="#SolveMetadata2d::leftIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="SolveMetadata2d::leftInd__std::deque:i:">
+std::deque&lt;int&gt; <tt class="descname">leftInd</tt><a class="headerlink" href="#SolveMetadata2d::leftInd__std::deque:i:" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="member">
-<dt id="SolveMetadata2d::rightIndices__std::deque:i:">
-std::deque&lt;int&gt; <tt class="descname">rightIndices</tt><a class="headerlink" href="#SolveMetadata2d::rightIndices__std::deque:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="SolveMetadata2d::rightInd__std::deque:i:">
+std::deque&lt;int&gt; <tt class="descname">rightInd</tt><a class="headerlink" href="#SolveMetadata2d::rightInd__std::deque:i:" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="member">
-<dt id="SolveMetadata2d::numChildSendIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">numChildSendIndices</tt><a class="headerlink" href="#SolveMetadata2d::numChildSendIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="SolveMetadata2d::numChildSendInd__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">numChildSendInd</tt><a class="headerlink" href="#SolveMetadata2d::numChildSendInd__std::vector:i:" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="member">
-<dt id="SolveMetadata2d::childRecvIndices__std::vector:std::deque:i::">
-std::vector&lt;std::deque&lt;int&gt;&gt; <tt class="descname">childRecvIndices</tt><a class="headerlink" href="#SolveMetadata2d::childRecvIndices__std::vector:std::deque:i::" title="Permalink to this definition">¶</a></dt>
+<dt id="SolveMetadata2d::childRecvInd__std::vector:std::deque:i::">
+std::vector&lt;std::deque&lt;int&gt;&gt; <tt class="descname">childRecvInd</tt><a class="headerlink" href="#SolveMetadata2d::childRecvInd__std::vector:std::deque:i::" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
@@ -435,20 +435,20 @@ ancestors <strong>after factorization</strong>.</p>
 </dd></dl>
 
 <dl class="member">
-<dt id="DistSymmNodeInfo::origLowerRelIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">origLowerRelIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::origLowerRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="DistSymmNodeInfo::origLowerRelInd__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">origLowerRelInd</tt><a class="headerlink" href="#DistSymmNodeInfo::origLowerRelInd__std::vector:i:" title="Permalink to this definition">¶</a></dt>
 <dd><p>Maps from the original lower structure to their placement in the
 structure after factorization.</p>
 </dd></dl>
 
 <dl class="member">
-<dt id="DistSymmNodeInfo::leftRelIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">leftRelIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::leftRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="DistSymmNodeInfo::leftRelInd__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">leftRelInd</tt><a class="headerlink" href="#DistSymmNodeInfo::leftRelInd__std::vector:i:" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="member">
-<dt id="DistSymmNodeInfo::rightRelIndices__std::vector:i:">
-std::vector&lt;int&gt; <tt class="descname">rightRelIndices</tt><a class="headerlink" href="#DistSymmNodeInfo::rightRelIndices__std::vector:i:" title="Permalink to this definition">¶</a></dt>
+<dt id="DistSymmNodeInfo::rightRelInd__std::vector:i:">
+std::vector&lt;int&gt; <tt class="descname">rightRelInd</tt><a class="headerlink" href="#DistSymmNodeInfo::rightRelInd__std::vector:i:" title="Permalink to this definition">¶</a></dt>
 <dd><p>The relative indices of the left/right child&#8217;s lower structure into this
 structure.</p>
 </dd></dl>

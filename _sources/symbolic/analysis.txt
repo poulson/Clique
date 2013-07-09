@@ -14,7 +14,7 @@ The following routine is called ``SymmetricAnalysis`` instead of
 symbolic factorization, it also computes and stores other data which is
 useful for numerical factorization and solves.
 
-.. cpp:function:: void SymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info, bool storeFactRecvIndices=true )
+.. cpp:function:: void SymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info, bool storeFactRecvInd=true )
     
 .. note:: 
    Most users will not need to directly call this routine, as it is 
