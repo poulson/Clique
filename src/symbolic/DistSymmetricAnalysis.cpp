@@ -219,8 +219,7 @@ inline void ComputeStructAndRelInd
 #endif
 }
 
-inline void ComputeSolveMetadata1d
-( const DistSymmElimTree& eTree, DistSymmInfo& info )
+inline void ComputeSolveMetadata1d( DistSymmInfo& info )
 {
 #ifndef RELEASE
     CallStackEntry entry("ComputeSolveMetadata1d");
@@ -233,13 +232,11 @@ inline void ComputeSolveMetadata1d
     const int numDist = info.distNodes.size();
     for( int s=1; s<numDist; ++s )
     {
-        const DistSymmNode& node = eTree.distNodes[s];
-        DistSymmNodeInfo& nodeInfo = info.distNodes[s];
+        DistSymmNodeInfo& node = info.distNodes[s];
         const int teamSize = mpi::CommSize( node.comm );
         const int teamRank = mpi::CommRank( node.comm );
 
-        const DistSymmNode& childNode = eTree.distNodes[s-1];
-        const DistSymmNodeInfo& childNodeInfo = info.distNodes[s-1];
+        const DistSymmNodeInfo& childNode = info.distNodes[s-1];
         const int childTeamSize = mpi::CommSize( childNode.comm );
         const int childTeamRank = mpi::CommRank( childNode.comm );
         const bool inFirstTeam = ( childTeamRank == teamRank );
@@ -251,16 +248,16 @@ inline void ComputeSolveMetadata1d
         const int rightTeamOffset = ( leftIsFirst ? leftTeamSize : 0 );
 
         const std::vector<int>& myRelInd = 
-            ( childNode.onLeft ? nodeInfo.leftRelInd : nodeInfo.rightRelInd );
+            ( childNode.onLeft ? node.leftRelInd : node.rightRelInd );
 
         // Fill solveMeta1d.numChildSendInd
-        SolveMetadata1d& solveMeta1d = nodeInfo.solveMeta1d;
+        SolveMetadata1d& solveMeta1d = node.solveMeta1d;
         solveMeta1d.Empty();
         solveMeta1d.numChildSendInd.resize( teamSize );
         elem::MemZero( &solveMeta1d.numChildSendInd[0], teamSize );
-        const int updateSize = childNodeInfo.lowerStruct.size();
+        const int updateSize = childNode.lowerStruct.size();
         {
-            const int align = childNodeInfo.size % childTeamSize;
+            const int align = childNode.size % childTeamSize;
             const int shift = Shift( childTeamRank, align, childTeamSize );
             const int localHeight = Length( updateSize, shift, childTeamSize );
             for( int iChildLoc=0; iChildLoc<localHeight; ++iChildLoc )
@@ -272,14 +269,14 @@ inline void ComputeSolveMetadata1d
         }
 
         // Fill solveMeta1d.{left,right}Ind for use in many solves
-        const int numLeftInd = nodeInfo.leftRelInd.size();
-        const int numRightInd = nodeInfo.rightRelInd.size();
+        const int numLeftInd = node.leftRelInd.size();
+        const int numRightInd = node.rightRelInd.size();
         std::vector<int> leftInd, rightInd; 
         for( int i=0; i<numLeftInd; ++i )
-            if( nodeInfo.leftRelInd[i] % teamSize == teamRank )
+            if( node.leftRelInd[i] % teamSize == teamRank )
                 leftInd.push_back( i );
         for( int i=0; i<numRightInd; ++i )
-            if( nodeInfo.rightRelInd[i] % teamSize == teamRank )
+            if( node.rightRelInd[i] % teamSize == teamRank )
                 rightInd.push_back( i );
 
         //
@@ -288,12 +285,12 @@ inline void ComputeSolveMetadata1d
         solveMeta1d.childRecvInd.resize( teamSize );
 
         // Compute the recv indices for the left child 
-        const int leftAlign = nodeInfo.leftSize % leftTeamSize;
+        const int leftAlign = node.leftSize % leftTeamSize;
         const int numLeftSolveInd = leftInd.size();
         for( int iPre=0; iPre<numLeftSolveInd; ++iPre )
         {
             const int iChild = leftInd[iPre];
-            const int iFront = nodeInfo.leftRelInd[iChild];
+            const int iFront = node.leftRelInd[iChild];
             const int iFrontLoc = (iFront-teamRank) / teamSize;
 
             const int childRank = (iChild+leftAlign) % leftTeamSize;
@@ -302,12 +299,12 @@ inline void ComputeSolveMetadata1d
         }
 
         // Compute the recv indices for the right child
-        const int rightAlign = nodeInfo.rightSize % rightTeamSize;
+        const int rightAlign = node.rightSize % rightTeamSize;
         const int numRightSolveInd = rightInd.size();
         for( int iPre=0; iPre<numRightSolveInd; ++iPre )
         {
             const int iChild = rightInd[iPre];
-            const int iFront = nodeInfo.rightRelInd[iChild];
+            const int iFront = node.rightRelInd[iChild];
             const int iFrontLoc = (iFront-teamRank) / teamSize;
 
             const int childRank = (iChild+rightAlign) % rightTeamSize;
@@ -319,8 +316,7 @@ inline void ComputeSolveMetadata1d
     }
 }
 
-void ComputeSolveMetadata2d
-( const DistSymmElimTree& eTree, DistSymmInfo& info, int width )
+void ComputeSolveMetadata2d( DistSymmInfo& info, int width )
 {
 #ifndef RELEASE
     CallStackEntry entry("ComputeSolveMetadata2d");
@@ -334,14 +330,12 @@ void ComputeSolveMetadata2d
     const int numDist = info.distNodes.size();
     for( int s=1; s<numDist; ++s )
     {
-        const DistSymmNode& node = eTree.distNodes[s];
-        DistSymmNodeInfo& nodeInfo = info.distNodes[s];
+        DistSymmNodeInfo& node = info.distNodes[s];
         const int teamSize = mpi::CommSize( node.comm );
         const int teamRank = mpi::CommRank( node.comm );
-        const Grid& grid = *nodeInfo.grid;
+        const Grid& grid = *node.grid;
 
-        const DistSymmNode& childNode = eTree.distNodes[s-1];
-        const DistSymmNodeInfo& childNodeInfo = info.distNodes[s-1];
+        const DistSymmNodeInfo& childNode = info.distNodes[s-1];
         const int childTeamSize = mpi::CommSize( childNode.comm );
         const int childTeamRank = mpi::CommRank( childNode.comm );
         const bool inFirstTeam = ( childTeamRank == teamRank );
@@ -351,18 +345,18 @@ void ComputeSolveMetadata2d
         const int rightTeamSize = teamSize - leftTeamSize;
         const int leftTeamOffset = ( leftIsFirst ? 0 : rightTeamSize );
         const int rightTeamOffset = ( leftIsFirst ? leftTeamSize : 0 );
-        const Grid& childGrid = *childNodeInfo.grid; 
+        const Grid& childGrid = *childNode.grid; 
 
         // Fill solveMeta2d.numChildSendInd
-        SolveMetadata2d& solveMeta2d = nodeInfo.solveMeta2d;
+        SolveMetadata2d& solveMeta2d = node.solveMeta2d;
         solveMeta2d.Empty();
         solveMeta2d.numChildSendInd.resize( teamSize );
         elem::MemZero( &solveMeta2d.numChildSendInd[0], teamSize );
-        const int updateSize = childNodeInfo.lowerStruct.size();
+        const int updateSize = childNode.lowerStruct.size();
         const std::vector<int>& myRelInd = 
-            ( childNode.onLeft ? nodeInfo.leftRelInd : nodeInfo.rightRelInd );
+            ( childNode.onLeft ? node.leftRelInd : node.rightRelInd );
         {
-            const int colAlign = childNodeInfo.size % childGrid.Height();
+            const int colAlign = childNode.size % childGrid.Height();
             const int colShift = 
                 Shift( childGrid.Row(), colAlign, childGrid.Height() );
             const int localHeight = 
@@ -387,19 +381,19 @@ void ComputeSolveMetadata2d
         }
 
         // Fill solveMeta2d.{left,right}Ind for use in many solves
-        const int numLeftInd = nodeInfo.leftRelInd.size();
-        const int numRightInd = nodeInfo.rightRelInd.size();
+        const int numLeftInd = node.leftRelInd.size();
+        const int numRightInd = node.rightRelInd.size();
         std::vector<int> leftRowInd, rightRowInd;
         for( int i=0; i<numLeftInd; ++i )
-            if( nodeInfo.leftRelInd[i] % grid.Height() == grid.Row() )
+            if( node.leftRelInd[i] % grid.Height() == grid.Row() )
                 leftRowInd.push_back( i );
         for( int i=0; i<numRightInd; ++i )
-            if( nodeInfo.rightRelInd[i] % grid.Height() == grid.Row() )
+            if( node.rightRelInd[i] % grid.Height() == grid.Row() )
                 rightRowInd.push_back( i );
 
         // Get the child grid dimensions
         int childGridDims[4];
-        GetChildGridDims( nodeInfo, childNodeInfo, childGridDims );
+        GetChildGridDims( node, childNode, childGridDims );
         const int leftGridHeight = childGridDims[0];
         const int leftGridWidth = childGridDims[1];
         const int rightGridHeight = childGridDims[2];
@@ -411,14 +405,14 @@ void ComputeSolveMetadata2d
         solveMeta2d.childRecvInd.resize( teamSize );
 
         // Compute the recv indices for the left child 
-        const int leftColAlign = nodeInfo.leftSize % leftGridHeight;
+        const int leftColAlign = node.leftSize % leftGridHeight;
         const int numLeftRowInd = leftRowInd.size();
         const int rowShift = Shift( grid.Col(), 0, grid.Width() );
         const int localWidth = Length( width, rowShift, grid.Width() );
         for( int iPre=0; iPre<numLeftRowInd; ++iPre )
         {
             const int iChild = leftRowInd[iPre];
-            const int iFront = nodeInfo.leftRelInd[iChild];
+            const int iFront = node.leftRelInd[iChild];
             const int iFrontLoc = (iFront-grid.Row()) / grid.Height();
             const int childRow = (iChild+leftColAlign) % leftGridHeight;
             for( int jLoc=0; jLoc<localWidth; ++jLoc )
@@ -433,12 +427,12 @@ void ComputeSolveMetadata2d
         }
 
         // Compute the recv indices for the right child
-        const int rightColAlign = nodeInfo.rightSize % rightGridHeight;
+        const int rightColAlign = node.rightSize % rightGridHeight;
         const int numRightRowInd = rightRowInd.size();
         for( int iPre=0; iPre<numRightRowInd; ++iPre )
         {
             const int iChild = rightRowInd[iPre];
-            const int iFront = nodeInfo.rightRelInd[iChild];
+            const int iFront = node.rightRelInd[iChild];
             const int iFrontLoc = (iFront-teamRank) / teamSize;
             const int childRow = (iChild+rightColAlign) % rightGridHeight;
             for( int jLoc=0; jLoc<localWidth; ++jLoc )
@@ -457,8 +451,7 @@ void ComputeSolveMetadata2d
     }
 }
 
-inline void ComputeFactorMetadata
-( const DistSymmElimTree& eTree, DistSymmInfo& info, bool computeFactRecvInd )
+inline void ComputeFactorMetadata( DistSymmInfo& info, bool computeFactRecvInd )
 {
 #ifndef RELEASE
     CallStackEntry entry("ComputeFactorMetadata");
@@ -467,28 +460,25 @@ inline void ComputeFactorMetadata
     const int numDist = info.distNodes.size();
     for( int s=1; s<numDist; ++s )
     {
-        const DistSymmNode& node = eTree.distNodes[s];
-        DistSymmNodeInfo& nodeInfo = info.distNodes[s];
+        DistSymmNodeInfo& node = info.distNodes[s];
         const int teamSize = mpi::CommSize( node.comm );
-
-        const DistSymmNode& childNode = eTree.distNodes[s-1];
-        const DistSymmNodeInfo& childNodeInfo = info.distNodes[s-1];
+        const DistSymmNodeInfo& childNode = info.distNodes[s-1];
 
         // Fill factorMeta.numChildSendInd 
-        FactorMetadata& factorMeta = nodeInfo.factorMeta;
+        FactorMetadata& factorMeta = node.factorMeta;
         factorMeta.Empty();
-        const int gridHeight = nodeInfo.grid->Height();
-        const int gridWidth = nodeInfo.grid->Width();
-        const int childGridHeight = childNodeInfo.grid->Height();
-        const int childGridWidth = childNodeInfo.grid->Width();
-        const int childGridRow = childNodeInfo.grid->Row();
-        const int childGridCol = childNodeInfo.grid->Col();
-        const int mySize = childNodeInfo.size;
-        const int updateSize = childNodeInfo.lowerStruct.size();
+        const int gridHeight = node.grid->Height();
+        const int gridWidth = node.grid->Width();
+        const int childGridHeight = childNode.grid->Height();
+        const int childGridWidth = childNode.grid->Width();
+        const int childGridRow = childNode.grid->Row();
+        const int childGridCol = childNode.grid->Col();
+        const int mySize = childNode.size;
+        const int updateSize = childNode.lowerStruct.size();
         factorMeta.numChildSendInd.resize( teamSize );
         elem::MemZero( &factorMeta.numChildSendInd[0], teamSize );
         const std::vector<int>& myRelInd = 
-            ( childNode.onLeft ? nodeInfo.leftRelInd : nodeInfo.rightRelInd );
+            ( childNode.onLeft ? node.leftRelInd : node.rightRelInd );
         {
             const int colAlign = mySize % childGridHeight;
             const int rowAlign = mySize % childGridWidth;
@@ -527,7 +517,7 @@ inline void ComputeFactorMetadata
         // Optionally compute the recv indices for the factorization. 
         // This is optional since it requires a nontrivial amount of storage.
         if( computeFactRecvInd )
-            ComputeFactRecvInd( nodeInfo, childNodeInfo );
+            ComputeFactRecvInd( node, childNode );
     }
 }
 
@@ -595,11 +585,11 @@ void DistSymmetricAnalysis
         myOffset += nodeInfo.size;
     }
 
-    ComputeFactorMetadata( eTree, info, computeFactRecvInd );
+    ComputeFactorMetadata( info, computeFactRecvInd );
     
     // This is thankfully independent of the number of right-hand sides,   
     // unlike 2d solve metadata
-    ComputeSolveMetadata1d( eTree, info );
+    ComputeSolveMetadata1d( info );
 }
 
 // TODO: Simplify this implementation
