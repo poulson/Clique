@@ -34,22 +34,17 @@ struct SymmNodeInfo
 struct FactorMetadata
 {
     std::vector<int> numChildSendInd;
-    std::deque<int> leftColInd, leftRowInd, rightColInd, rightRowInd;
     // This information does not necessarily have to be kept and can be
     // computed from the above information (albeit somewhat expensively).
-    mutable std::vector<std::deque<int> > childRecvInd;
+    mutable std::vector<std::vector<int> > childRecvInd;
 
     void EmptyChildRecvIndices() const
     {
-        std::vector<std::deque<int> >().swap( childRecvInd );
+        std::vector<std::vector<int> >().swap( childRecvInd );
     }
 
     void Empty()
     {
-        std::deque<int>().swap( leftColInd );
-        std::deque<int>().swap( leftRowInd );
-        std::deque<int>().swap( rightColInd );
-        std::deque<int>().swap( rightRowInd );
         std::vector<int>().swap( numChildSendInd );
         EmptyChildRecvIndices();
     }
@@ -58,32 +53,26 @@ struct FactorMetadata
 struct SolveMetadata1d
 {
     int localSize;
-    std::deque<int> leftInd, rightInd;
     std::vector<int> numChildSendInd;
-    std::vector<std::deque<int> > childRecvInd;
+    std::vector<std::vector<int> > childRecvInd;
 
     void Empty()
     {
-        std::deque<int>().swap( leftInd );
-        std::deque<int>().swap( rightInd );
         std::vector<int>().swap( numChildSendInd );
-        std::vector<std::deque<int> >().swap( childRecvInd );
+        std::vector<std::vector<int> >().swap( childRecvInd );
     }
 };
 
 struct SolveMetadata2d
 {
     int localHeight, localWidth;
-    std::deque<int> leftRowInd, rightRowInd;
     std::vector<int> numChildSendInd;
-    std::vector<std::deque<int> > childRecvInd;
+    std::vector<std::vector<int> > childRecvInd;
 
     void Empty()
     {
-        std::deque<int>().swap( leftRowInd );
-        std::deque<int>().swap( rightRowInd );
         std::vector<int>().swap( numChildSendInd );
-        std::vector<std::deque<int> >().swap( childRecvInd );
+        std::vector<std::vector<int> >().swap( childRecvInd );
     }
 };
 

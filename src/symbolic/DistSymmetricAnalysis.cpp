@@ -274,12 +274,13 @@ inline void ComputeSolveMetadata1d
         // Fill solveMeta1d.{left,right}Ind for use in many solves
         const int numLeftInd = nodeInfo.leftRelInd.size();
         const int numRightInd = nodeInfo.rightRelInd.size();
+        std::vector<int> leftInd, rightInd; 
         for( int i=0; i<numLeftInd; ++i )
             if( nodeInfo.leftRelInd[i] % teamSize == teamRank )
-                solveMeta1d.leftInd.push_back( i );
+                leftInd.push_back( i );
         for( int i=0; i<numRightInd; ++i )
             if( nodeInfo.rightRelInd[i] % teamSize == teamRank )
-                solveMeta1d.rightInd.push_back( i );
+                rightInd.push_back( i );
 
         //
         // Compute the solve recv indices
@@ -288,10 +289,10 @@ inline void ComputeSolveMetadata1d
 
         // Compute the recv indices for the left child 
         const int leftAlign = nodeInfo.leftSize % leftTeamSize;
-        const int numLeftSolveInd = solveMeta1d.leftInd.size();
+        const int numLeftSolveInd = leftInd.size();
         for( int iPre=0; iPre<numLeftSolveInd; ++iPre )
         {
-            const int iChild = solveMeta1d.leftInd[iPre];
+            const int iChild = leftInd[iPre];
             const int iFront = nodeInfo.leftRelInd[iChild];
             const int iFrontLoc = (iFront-teamRank) / teamSize;
 
@@ -302,10 +303,10 @@ inline void ComputeSolveMetadata1d
 
         // Compute the recv indices for the right child
         const int rightAlign = nodeInfo.rightSize % rightTeamSize;
-        const int numRightSolveInd = solveMeta1d.rightInd.size();
+        const int numRightSolveInd = rightInd.size();
         for( int iPre=0; iPre<numRightSolveInd; ++iPre )
         {
-            const int iChild = solveMeta1d.rightInd[iPre];
+            const int iChild = rightInd[iPre];
             const int iFront = nodeInfo.rightRelInd[iChild];
             const int iFrontLoc = (iFront-teamRank) / teamSize;
 
@@ -388,12 +389,13 @@ void ComputeSolveMetadata2d
         // Fill solveMeta2d.{left,right}Ind for use in many solves
         const int numLeftInd = nodeInfo.leftRelInd.size();
         const int numRightInd = nodeInfo.rightRelInd.size();
+        std::vector<int> leftRowInd, rightRowInd;
         for( int i=0; i<numLeftInd; ++i )
             if( nodeInfo.leftRelInd[i] % grid.Height() == grid.Row() )
-                solveMeta2d.leftRowInd.push_back( i );
+                leftRowInd.push_back( i );
         for( int i=0; i<numRightInd; ++i )
             if( nodeInfo.rightRelInd[i] % grid.Height() == grid.Row() )
-                solveMeta2d.rightRowInd.push_back( i );
+                rightRowInd.push_back( i );
 
         // Get the child grid dimensions
         int childGridDims[4];
@@ -410,12 +412,12 @@ void ComputeSolveMetadata2d
 
         // Compute the recv indices for the left child 
         const int leftColAlign = nodeInfo.leftSize % leftGridHeight;
-        const int numLeftRowInd = solveMeta2d.leftRowInd.size();
+        const int numLeftRowInd = leftRowInd.size();
         const int rowShift = Shift( grid.Col(), 0, grid.Width() );
         const int localWidth = Length( width, rowShift, grid.Width() );
         for( int iPre=0; iPre<numLeftRowInd; ++iPre )
         {
-            const int iChild = solveMeta2d.leftRowInd[iPre];
+            const int iChild = leftRowInd[iPre];
             const int iFront = nodeInfo.leftRelInd[iChild];
             const int iFrontLoc = (iFront-grid.Row()) / grid.Height();
             const int childRow = (iChild+leftColAlign) % leftGridHeight;
@@ -432,10 +434,10 @@ void ComputeSolveMetadata2d
 
         // Compute the recv indices for the right child
         const int rightColAlign = nodeInfo.rightSize % rightGridHeight;
-        const int numRightRowInd = solveMeta2d.rightRowInd.size();
+        const int numRightRowInd = rightRowInd.size();
         for( int iPre=0; iPre<numRightRowInd; ++iPre )
         {
-            const int iChild = solveMeta2d.rightRowInd[iPre];
+            const int iChild = rightRowInd[iPre];
             const int iFront = nodeInfo.rightRelInd[iChild];
             const int iFrontLoc = (iFront-teamRank) / teamSize;
             const int childRow = (iChild+rightColAlign) % rightGridHeight;
@@ -472,29 +474,11 @@ inline void ComputeFactorMetadata
         const DistSymmNode& childNode = eTree.distNodes[s-1];
         const DistSymmNodeInfo& childNodeInfo = info.distNodes[s-1];
 
-        // From ComputeStructAndRelInd
+        // Fill factorMeta.numChildSendInd 
         FactorMetadata& factorMeta = nodeInfo.factorMeta;
         factorMeta.Empty();
         const int gridHeight = nodeInfo.grid->Height();
         const int gridWidth = nodeInfo.grid->Width();
-        const int gridRow = nodeInfo.grid->Row();
-        const int gridCol = nodeInfo.grid->Col();
-        const int numLeftInd = nodeInfo.leftRelInd.size();
-        const int numRightInd = nodeInfo.rightRelInd.size();
-        for( int i=0; i<numLeftInd; ++i )
-            if( nodeInfo.leftRelInd[i] % gridHeight == gridRow )
-                factorMeta.leftColInd.push_back( i );
-        for( int i=0; i<numLeftInd; ++i )
-            if( nodeInfo.leftRelInd[i] % gridWidth == gridCol )
-                factorMeta.leftRowInd.push_back( i );
-        for( int i=0; i<numRightInd; ++i )
-            if( nodeInfo.rightRelInd[i] % gridHeight == gridRow )
-                factorMeta.rightColInd.push_back( i );
-        for( int i=0; i<numRightInd; ++i )
-            if( nodeInfo.rightRelInd[i] % gridWidth == gridCol )
-                factorMeta.rightRowInd.push_back( i );
-
-        // Fill factorMeta.numChildSendInd 
         const int childGridHeight = childNodeInfo.grid->Height();
         const int childGridWidth = childNodeInfo.grid->Width();
         const int childGridRow = childNodeInfo.grid->Row();
@@ -648,25 +632,40 @@ void ComputeFactRecvInd
 #endif
 
     const FactorMetadata& factorMeta = node.factorMeta;
-    factorMeta.childRecvInd.resize( teamSize );
-    const int numLeftColInd = factorMeta.leftColInd.size();
-    const int numLeftRowInd = factorMeta.leftRowInd.size();
-    const int numRightColInd = factorMeta.rightColInd.size();
-    const int numRightRowInd = factorMeta.rightRowInd.size();
-    std::deque<int>::const_iterator it;
-
-    // Compute the recv indices of the left child from each process 
-    const int gridRow = node.grid->Row();
-    const int gridCol = node.grid->Col();
     const int gridHeight = node.grid->Height();
     const int gridWidth = node.grid->Width();
+    const int gridRow = node.grid->Row();
+    const int gridCol = node.grid->Col();
+    const int numLeftInd = node.leftRelInd.size();
+    const int numRightInd = node.rightRelInd.size();
+    std::vector<int> leftRowInd, leftColInd, rightRowInd, rightColInd;
+    for( int i=0; i<numLeftInd; ++i )
+        if( node.leftRelInd[i] % gridHeight == gridRow )
+            leftColInd.push_back( i );
+    for( int i=0; i<numLeftInd; ++i )
+        if( node.leftRelInd[i] % gridWidth == gridCol )
+            leftRowInd.push_back( i );
+    for( int i=0; i<numRightInd; ++i )
+        if( node.rightRelInd[i] % gridHeight == gridRow )
+            rightColInd.push_back( i );
+    for( int i=0; i<numRightInd; ++i )
+        if( node.rightRelInd[i] % gridWidth == gridCol )
+            rightRowInd.push_back( i );
+
+    // Compute the recv indices of the left child from each process 
     const int childTeamRank = mpi::CommRank( childNode.comm );
     const bool inFirstTeam = ( childTeamRank == teamRank );
     const bool leftIsFirst = ( onLeft==inFirstTeam );
     const int leftTeamOffset = ( leftIsFirst ? 0 : rightTeamSize );
+    factorMeta.childRecvInd.resize( teamSize );
+    std::vector<int>::const_iterator it;
+    const int numLeftColInd = leftColInd.size();
+    const int numLeftRowInd = leftRowInd.size();
+    const int numRightColInd = rightColInd.size();
+    const int numRightRowInd = rightRowInd.size();
     for( int jPre=0; jPre<numLeftRowInd; ++jPre )
     {
-        const int jChild = factorMeta.leftRowInd[jPre];
+        const int jChild = leftRowInd[jPre];
         const int jFront = node.leftRelInd[jChild];
 #ifndef RELEASE
         if( (jFront-gridCol) % gridWidth != 0 )
@@ -676,14 +675,11 @@ void ComputeFactRecvInd
         const int childCol = (jChild+node.leftSize) % leftGridWidth;
 
         // Find the first iPre that maps to the lower triangle
-        it = std::lower_bound
-             ( factorMeta.leftColInd.begin(),
-               factorMeta.leftColInd.end(), jChild );
-        const int iPreStart = int(it-factorMeta.leftColInd.begin());
-
+        it = std::lower_bound( leftColInd.begin(), leftColInd.end(), jChild );
+        const int iPreStart = int(it-leftColInd.begin());
         for( int iPre=iPreStart; iPre<numLeftColInd; ++iPre )
         {
-            const int iChild = factorMeta.leftColInd[iPre];
+            const int iChild = leftColInd[iPre];
             const int iFront = node.leftRelInd[iChild];
 #ifndef RELEASE
             if( iChild < jChild )
@@ -706,7 +702,7 @@ void ComputeFactRecvInd
     const int rightTeamOffset = ( leftIsFirst ? leftTeamSize : 0 );
     for( int jPre=0; jPre<numRightRowInd; ++jPre )
     {
-        const int jChild = factorMeta.rightRowInd[jPre];
+        const int jChild = rightRowInd[jPre];
         const int jFront = node.rightRelInd[jChild];
 #ifndef RELEASE
         if( (jFront-gridCol) % gridWidth != 0 )
@@ -716,13 +712,11 @@ void ComputeFactRecvInd
         const int childCol = (jChild+node.rightSize) % rightGridWidth;
 
         // Find the first iPre that maps to the lower triangle
-        it = std::lower_bound
-             ( factorMeta.rightColInd.begin(),
-               factorMeta.rightColInd.end(), jChild );
-        const int iPreStart = int(it-factorMeta.rightColInd.begin());
+        it = std::lower_bound( rightColInd.begin(), rightColInd.end(), jChild );
+        const int iPreStart = int(it-rightColInd.begin());
         for( int iPre=iPreStart; iPre<numRightColInd; ++iPre )
         {
-            const int iChild = factorMeta.rightColInd[iPre];
+            const int iChild = rightColInd[iPre];
             const int iFront = node.rightRelInd[iChild];
 #ifndef RELEASE
             if( iChild < jChild )

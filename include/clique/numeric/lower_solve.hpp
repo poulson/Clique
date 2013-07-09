@@ -14,6 +14,10 @@ template<typename F>
 void LowerSolve
 ( Orientation orientation, const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X );
+template<typename F>
+void LowerSolve
+( Orientation orientation, const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X );
 
 } // namespace cliq
 
@@ -51,5 +55,27 @@ inline void LowerSolve
         LocalLowerBackwardSolve( orientation, info, L, X );
     }
 }
+
+/*
+template<typename F>
+inline void LowerSolve
+( Orientation orientation, const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X )
+{
+#ifndef RELEASE
+    CallStackEntry entry("LowerSolve");
+#endif
+    if( orientation == NORMAL )
+    {
+        LocalLowerForwardSolve( info, L, X );
+        DistLowerForwardSolve( info, L, X );
+    }
+    else
+    {
+        DistLowerBackwardSolve( orientation, info, L, X );
+        LocalLowerBackwardSolve( orientation, info, L, X );
+    }
+}
+*/
 
 } // namespace cliq

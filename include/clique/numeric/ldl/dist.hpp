@@ -171,7 +171,7 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
         for( unsigned proc=0; proc<commSize; ++proc )
         {
             const F* recvValues = &recvBuffer[recvDispls[proc]];
-            const std::deque<int>& recvInd = factorMeta.childRecvInd[proc];
+            const std::vector<int>& recvInd = factorMeta.childRecvInd[proc];
             const int numRecvIndexPairs = recvInd.size()/2;
             for( int k=0; k<numRecvIndexPairs; ++k )
             {

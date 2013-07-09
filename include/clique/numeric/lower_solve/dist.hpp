@@ -14,11 +14,19 @@ template<typename F>
 void DistLowerForwardSolve
 ( const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X );
+template<typename F> 
+void DistLowerForwardSolve
+( const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X );
 
 template<typename F>
 void DistLowerBackwardSolve
 ( Orientation orientation, const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X );
+template<typename F>
+void DistLowerBackwardSolve
+( Orientation orientation, const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -55,22 +63,23 @@ inline void DistLowerForwardSolve
     // Perform the distributed portion of the forward solve
     for( int s=1; s<numDistNodes; ++s )
     {
-        const DistSymmNodeInfo& childNode = info.distNodes[s-1];
         const DistSymmNodeInfo& node = info.distNodes[s];
-        const DistSymmFront<F>& childFront = L.distFronts[s-1];
         const DistSymmFront<F>& front = L.distFronts[s];
-        const Grid& childGrid = ( frontsAre1d ? childFront.front1dL.Grid()
-                                              : childFront.front2dL.Grid() );
         const Grid& grid = ( frontsAre1d ? front.front1dL.Grid()
                                          : front.front2dL.Grid() );
         mpi::Comm comm = grid.VCComm();
-        mpi::Comm childComm = childGrid.VCComm();
         const int commSize = mpi::CommSize( comm );
+
+        const DistSymmNodeInfo& childNode = info.distNodes[s-1];
+        const DistSymmFront<F>& childFront = L.distFronts[s-1];
+        const Grid& childGrid = ( frontsAre1d ? childFront.front1dL.Grid()
+                                              : childFront.front2dL.Grid() );
+        mpi::Comm childComm = childGrid.VCComm();
         const int childCommSize = mpi::CommSize( childComm );
-        const int frontHeight = ( frontsAre1d ? front.front1dL.Height()
-                                              : front.front2dL.Height() );
 
         // Set up a workspace
+        const int frontHeight = ( frontsAre1d ? front.front1dL.Height()
+                                              : front.front2dL.Height() );
         DistMatrix<F,VC,STAR>& W = front.work1d;
         W.SetGrid( grid );
         W.ResizeTo( frontHeight, width );
@@ -85,7 +94,7 @@ inline void DistLowerForwardSolve
         const SolveMetadata1d& solveMeta = node.solveMeta1d;
         DistMatrix<F,VC,STAR>& childW = childFront.work1d;
         const int updateSize = childW.Height()-childNode.size;
-        DistMatrix<F,VC,STAR> childUpdate;
+        DistMatrix<F,VC,STAR> childUpdate( childW.Grid() );
         LockedView( childUpdate, childW, childNode.size, 0, updateSize, width );
         int sendBufferSize = 0;
         std::vector<int> sendCounts(commSize), sendDispls(commSize);
@@ -101,17 +110,16 @@ inline void DistLowerForwardSolve
         const bool onLeft = childNode.onLeft;
         const std::vector<int>& myChildRelInd = 
             ( onLeft ? node.leftRelInd : node.rightRelInd );
-        const int updateColShift = childUpdate.ColShift();
-        const int updateLocalHeight = childUpdate.LocalHeight();
+        const int colShift = childUpdate.ColShift();
+        const int localHeight = childUpdate.LocalHeight();
         std::vector<int> packOffsets = sendDispls;
-        for( int iChildLoc=0; iChildLoc<updateLocalHeight; ++iChildLoc )
+        for( int iChildLoc=0; iChildLoc<localHeight; ++iChildLoc )
         {
-            const int iChild = updateColShift + iChildLoc*childCommSize;
+            const int iChild = colShift + iChildLoc*childCommSize;
             const int destRank = myChildRelInd[iChild] % commSize;
-            F* packBuf = &sendBuffer[packOffsets[destRank]];
             for( int jChild=0; jChild<width; ++jChild )
-                packBuf[jChild] = childUpdate.GetLocal(iChildLoc,jChild);
-            packOffsets[destRank] += width;
+                sendBuffer[packOffsets[destRank]++] = 
+                    childUpdate.GetLocal(iChildLoc,jChild);
         }
         std::vector<int>().swap( packOffsets );
         childW.Empty();
@@ -145,7 +153,7 @@ inline void DistLowerForwardSolve
         for( int proc=0; proc<commSize; ++proc )
         {
             const F* recvValues = &recvBuffer[recvDispls[proc]];
-            const std::deque<int>& recvInd = solveMeta.childRecvInd[proc];
+            const std::vector<int>& recvInd = solveMeta.childRecvInd[proc];
             for( unsigned k=0; k<recvInd.size(); ++k )
             {
                 const int iFrontLoc = recvInd[k];
@@ -175,6 +183,158 @@ inline void DistLowerForwardSolve
     }
     L.localFronts.back().work.Empty();
     L.distFronts.back().work1d.Empty();
+}
+
+template<typename F> 
+inline void DistLowerForwardSolve
+( const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X )
+{
+#ifndef RELEASE
+    CallStackEntry entry("DistLowerForwardSolve");
+#endif
+    const int numDistNodes = info.distNodes.size();
+    const int width = X.Width();
+    const SymmFrontType frontType = L.frontType;
+    if( FrontsAre1d(frontType) )
+        throw std::logic_error("This solve mode is not yet implemented");
+
+    // Copy the information from the local portion into the distributed leaf
+    const SymmFront<F>& localRootFront = L.localFronts.back();
+    const DistSymmFront<F>& distLeafFront = L.distFronts[0];
+    const Grid& leafGrid = distLeafFront.front2dL.Grid();
+    distLeafFront.work2d.LockedAttach
+    ( localRootFront.work.Height(), localRootFront.work.Width(), 0,
+      localRootFront.work.LockedBuffer(), localRootFront.work.LDim(), 
+      leafGrid );
+    
+    // Perform the distributed portion of the forward solve
+    for( int s=1; s<numDistNodes; ++s )
+    {
+        const DistSymmNodeInfo& node = info.distNodes[s];
+        const DistSymmFront<F>& front = L.distFronts[s];
+        const Grid& grid = front.front2dL.Grid();
+        const int gridHeight = grid.Height();
+        const int gridWidth = grid.Width();
+        mpi::Comm comm = grid.VCComm();
+        const int commSize = mpi::CommSize( comm );
+
+        const DistSymmNodeInfo& childNode = info.distNodes[s-1];
+        const DistSymmFront<F>& childFront = L.distFronts[s-1];
+        const Grid& childGrid = childFront.front2dL.Grid();
+        const int childGridHeight = childGrid.Height();
+        const int childGridWidth = childGrid.Width();
+
+        // Set up a workspace
+        const int frontHeight = front.front2dL.Height();
+        DistMatrix<F>& W = front.work2d;
+        W.SetGrid( grid );
+        W.ResizeTo( frontHeight, width );
+        DistMatrix<F> WT(grid), WB(grid);
+        PartitionDown
+        ( W, WT,
+             WB, node.size );
+        WT = X.distNodes[s-1];
+        elem::MakeZeros( WB );
+
+        // Pack our child's update
+        const SolveMetadata2d& solveMeta = node.solveMeta2d;
+        DistMatrix<F>& childW = childFront.work2d;
+        const int updateSize = childW.Height()-childNode.size;
+        DistMatrix<F> childUpdate( childW.Grid() );
+        LockedView( childUpdate, childW, childNode.size, 0, updateSize, width );
+        int sendBufferSize = 0;
+        std::vector<int> sendCounts(commSize), sendDispls(commSize);
+        for( int proc=0; proc<commSize; ++proc )
+        {
+            const int sendSize = solveMeta.numChildSendInd[proc];
+            sendCounts[proc] = sendSize;
+            sendDispls[proc] = sendBufferSize;
+            sendBufferSize += sendSize;
+        }
+        std::vector<F> sendBuffer( sendBufferSize );
+
+        // TODO: Pack send data
+        // HERE
+        const bool onLeft = childNode.onLeft;
+        const std::vector<int>& myChildRelInd = 
+            ( onLeft ? node.leftRelInd : node.rightRelInd );
+        const int colShift = childUpdate.ColShift();
+        const int rowShift = childUpdate.RowShift();
+        const int localWidth = childUpdate.LocalWidth();
+        const int localHeight = childUpdate.LocalHeight();
+        std::vector<int> packOffsets = sendDispls;
+        for( int iChildLoc=0; iChildLoc<localHeight; ++iChildLoc )
+        {
+            const int iChild = colShift + iChildLoc*childGridHeight;
+            const int destRow = myChildRelInd[iChild] % gridHeight;
+            for( int jChildLoc=0; jChildLoc<localWidth; ++jChildLoc )
+            {
+                const int jChild = rowShift + jChildLoc*childGridWidth;
+                const int destCol = jChild % gridWidth;
+                const int destRank = destRow + destCol*gridHeight;
+                sendBuffer[packOffsets[destRank]++] = 
+                    childUpdate.GetLocal(iChildLoc,jChildLoc);
+            }
+        }
+        std::vector<int>().swap( packOffsets );
+        childW.Empty();
+        if( s == 1 )
+            L.localFronts.back().work.Empty();
+
+        // Set up the receive buffer
+        int recvBufferSize = 0;
+        std::vector<int> recvCounts(commSize), recvDispls(commSize);
+        for( int proc=0; proc<commSize; ++proc )
+        {
+            const int recvSize = solveMeta.childRecvInd[proc].size()/2;
+            recvCounts[proc] = recvSize;
+            recvDispls[proc] = recvBufferSize;
+            recvBufferSize += recvSize;
+        }
+        std::vector<F> recvBuffer( recvBufferSize );
+#ifndef RELEASE
+        VerifySendsAndRecvs( sendCounts, recvCounts, comm );
+#endif
+
+        // AllToAll to send and receive the child updates
+        SparseAllToAll
+        ( sendBuffer, sendCounts, sendDispls,
+          recvBuffer, recvCounts, recvDispls, comm );
+        std::vector<F>().swap( sendBuffer );
+        std::vector<int>().swap( sendCounts );
+        std::vector<int>().swap( sendDispls );
+
+        // Unpack the child updates (with an Axpy)
+        for( int proc=0; proc<commSize; ++proc )
+        {
+            const F* recvValues = &recvBuffer[recvDispls[proc]];
+            const std::vector<int>& recvInd = solveMeta.childRecvInd[proc];
+            for( unsigned k=0; k<recvInd.size()/2; ++k )
+            {
+                const int iFrontLoc = recvInd[2*k+0];
+                const int jLoc = recvInd[2*k+1];
+                W.SetLocal( iFrontLoc, jLoc, recvValues[k] );
+            }
+        }
+        std::vector<F>().swap( recvBuffer );
+        std::vector<int>().swap( recvCounts );
+        std::vector<int>().swap( recvDispls );
+
+        // Now that the RHS is set up, perform this node's solve
+        // TODO
+        /*
+        if( frontType == LDL_SELINV_2D )
+            FrontFastLowerForwardSolve( front.front2dL, W );
+        else // frontType == BLOCK_LDL_2D
+            FrontBlockLowerForwardSolve( front.front2dL, W );
+        */
+
+        // Store this node's portion of the result
+        X.distNodes[s-1] = WT;
+    }
+    L.localFronts.back().work.Empty();
+    L.distFronts.back().work2d.Empty();
 }
 
 template<typename F>
@@ -277,7 +437,7 @@ inline void DistLowerBackwardSolve
         for( int proc=0; proc<parentCommSize; ++proc )
         {
             F* sendValues = &sendBuffer[sendDispls[proc]];
-            const std::deque<int>& recvInd = solveMeta.childRecvInd[proc];
+            const std::vector<int>& recvInd = solveMeta.childRecvInd[proc];
             for( unsigned k=0; k<recvInd.size(); ++k )
             {
                 const int iFrontLoc = recvInd[k];
@@ -317,11 +477,11 @@ inline void DistLowerBackwardSolve
         const bool onLeft = node.onLeft;
         const std::vector<int>& myRelInd = 
             ( onLeft ? parentNode.leftRelInd : parentNode.rightRelInd );
-        const int updateColShift = WB.ColShift();
-        const int updateLocalHeight = WB.LocalHeight();
-        for( int iUpdateLoc=0; iUpdateLoc<updateLocalHeight; ++iUpdateLoc )
+        const int colShift = WB.ColShift();
+        const int localHeight = WB.LocalHeight();
+        for( int iUpdateLoc=0; iUpdateLoc<localHeight; ++iUpdateLoc )
         {
-            const int iUpdate = updateColShift + iUpdateLoc*commSize;
+            const int iUpdate = colShift + iUpdateLoc*commSize;
             const int startRank = myRelInd[iUpdate] % parentCommSize;
             const F* recvBuf = &recvBuffer[recvDispls[startRank]];
             for( int j=0; j<width; ++j )
