@@ -181,6 +181,5 @@ endif()
 
 # If Clique is a subproject, then pass some variables to the parent
 if(NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-  include(${ELEM_CMAKE_DIR}/elem_sub.cmake)
   include(./cmake/clique_sub.cmake)
 endif()
