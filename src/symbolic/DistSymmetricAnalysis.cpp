@@ -11,7 +11,7 @@
 
 namespace cliq {
 
-inline void GetGridDims
+inline void GetChildGridDims
 ( const DistSymmNodeInfo& node, const DistSymmNodeInfo& childNode, 
   int* childGridDims )
 {
@@ -385,15 +385,23 @@ void ComputeSolveMetadata2d
             }
         }
 
-        // Fill solveMeta1d.{left,right}Ind for use in many solves
+        // Fill solveMeta2d.{left,right}Ind for use in many solves
         const int numLeftInd = nodeInfo.leftRelInd.size();
         const int numRightInd = nodeInfo.rightRelInd.size();
         for( int i=0; i<numLeftInd; ++i )
             if( nodeInfo.leftRelInd[i] % grid.Height() == grid.Row() )
-                solveMeta2d.leftInd.push_back( i );
+                solveMeta2d.leftRowInd.push_back( i );
         for( int i=0; i<numRightInd; ++i )
             if( nodeInfo.rightRelInd[i] % grid.Height() == grid.Row() )
-                solveMeta2d.rightInd.push_back( i );
+                solveMeta2d.rightRowInd.push_back( i );
+
+        // Get the child grid dimensions
+        int childGridDims[4];
+        GetChildGridDims( nodeInfo, childNodeInfo, childGridDims );
+        const int leftGridHeight = childGridDims[0];
+        const int leftGridWidth = childGridDims[1];
+        const int rightGridHeight = childGridDims[2];
+        const int rightGridWidth = childGridDims[3];
 
         //
         // Compute the solve recv indices
@@ -401,37 +409,49 @@ void ComputeSolveMetadata2d
         solveMeta2d.childRecvInd.resize( teamSize );
 
         // Compute the recv indices for the left child 
-        // HERE: Need partner team's grid sizes
-        /*
-        const int leftAlign = nodeInfo.leftSize % leftTeamSize;
-        const int numLeftSolveInd = solveMeta1d.leftInd.size();
-        for( int iPre=0; iPre<numLeftSolveInd; ++iPre )
+        const int leftColAlign = nodeInfo.leftSize % leftGridHeight;
+        const int numLeftRowInd = solveMeta2d.leftRowInd.size();
+        const int rowShift = Shift( grid.Col(), 0, grid.Width() );
+        const int localWidth = Length( width, rowShift, grid.Width() );
+        for( int iPre=0; iPre<numLeftRowInd; ++iPre )
         {
-            const int iChild = solveMeta1d.leftInd[iPre];
+            const int iChild = solveMeta2d.leftRowInd[iPre];
             const int iFront = nodeInfo.leftRelInd[iChild];
-            const int iFrontLoc = (iFront-teamRank) / teamSize;
-
-            const int childRank = (iChild+leftAlign) % leftTeamSize;
-            const int frontRank = leftTeamOffset + childRank;
-            solveMeta1d.childRecvInd[frontRank].push_back(iFrontLoc);
+            const int iFrontLoc = (iFront-grid.Row()) / grid.Height();
+            const int childRow = (iChild+leftColAlign) % leftGridHeight;
+            for( int jLoc=0; jLoc<localWidth; ++jLoc )
+            {
+                const int j = rowShift + jLoc*grid.Width(); 
+                const int childCol = j % leftGridWidth;
+                const int childRank = childRow + childCol*leftGridHeight;
+                const int frontRank = leftTeamOffset + childRank;
+                solveMeta2d.childRecvInd[frontRank].push_back(iFrontLoc);
+                solveMeta2d.childRecvInd[frontRank].push_back(jLoc);
+             }
         }
 
         // Compute the recv indices for the right child
-        const int rightAlign = nodeInfo.rightSize % rightTeamSize;
-        const int numRightSolveInd = solveMeta1d.rightInd.size();
-        for( int iPre=0; iPre<numRightSolveInd; ++iPre )
+        const int rightColAlign = nodeInfo.rightSize % rightGridHeight;
+        const int numRightRowInd = solveMeta2d.rightRowInd.size();
+        for( int iPre=0; iPre<numRightRowInd; ++iPre )
         {
-            const int iChild = solveMeta1d.rightInd[iPre];
+            const int iChild = solveMeta2d.rightRowInd[iPre];
             const int iFront = nodeInfo.rightRelInd[iChild];
             const int iFrontLoc = (iFront-teamRank) / teamSize;
-
-            const int childRank = (iChild+rightAlign) % rightTeamSize;
-            const int frontRank = rightTeamOffset + childRank;
-            solveMeta1d.childRecvInd[frontRank].push_back(iFrontLoc);
+            const int childRow = (iChild+rightColAlign) % rightGridHeight;
+            for( int jLoc=0; jLoc<localWidth; ++jLoc )
+            {
+                const int j = rowShift + jLoc*grid.Width();
+                const int childCol = j % rightGridWidth;
+                const int childRank = childRow + childCol*rightGridHeight;
+                const int frontRank = rightTeamOffset + childRank;
+                solveMeta2d.childRecvInd[frontRank].push_back(iFrontLoc);
+                solveMeta2d.childRecvInd[frontRank].push_back(jLoc);
+            }
         }
 
-        solveMeta1d.localSize = Length(node.size,teamRank,teamSize);
-        */
+        solveMeta2d.localHeight = Length(node.size,grid.Row(),grid.Height());
+        solveMeta2d.localWidth = localWidth;
     }
 }
 
@@ -607,7 +627,7 @@ void ComputeFactRecvInd
 #endif
     // Communicate to get the grid sizes
     int childGridDims[4];
-    GetGridDims( node, childNode, childGridDims );
+    GetChildGridDims( node, childNode, childGridDims );
     const int leftGridHeight = childGridDims[0];
     const int leftGridWidth = childGridDims[1];
     const int rightGridHeight = childGridDims[2];

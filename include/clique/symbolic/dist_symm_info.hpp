@@ -74,14 +74,14 @@ struct SolveMetadata1d
 struct SolveMetadata2d
 {
     int localHeight, localWidth;
-    std::deque<int> leftInd, rightInd;
+    std::deque<int> leftRowInd, rightRowInd;
     std::vector<int> numChildSendInd;
     std::vector<std::deque<int> > childRecvInd;
 
     void Empty()
     {
-        std::deque<int>().swap( leftInd );
-        std::deque<int>().swap( rightInd );
+        std::deque<int>().swap( leftRowInd );
+        std::deque<int>().swap( rightRowInd );
         std::vector<int>().swap( numChildSendInd );
         std::vector<std::deque<int> >().swap( childRecvInd );
     }
