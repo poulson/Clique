@@ -156,6 +156,7 @@ DistSymmFrontTree<F>::Initialize
       &sendRows[0], &sendRowSizes[0], &sendRowOffsets[0], comm );
 
     // Pack the number of nonzeros per row (and the nonzeros themselves)
+    // TODO: Avoid sending upper-triangular data
     int numSendEntries=0;
     const int firstLocalRow = A.FirstLocalRow();
     std::vector<int> sendRowLengths( numSendRows );
@@ -286,6 +287,10 @@ DistSymmFrontTree<F>::Initialize
                         throw std::logic_error("origLowerRelInd too small");
 #endif
                     const int row = node.origLowerRelInd[origOffset];
+#ifndef RELEASE
+                    if( row < t )
+                        throw std::logic_error("Tried to touch upper triangle");
+#endif
                     front.frontL.Set( row, t, value );
                 }
             }
@@ -351,6 +356,10 @@ DistSymmFrontTree<F>::Initialize
                         throw std::logic_error("origLowerRelInd too small");
 #endif
                     const int row = node.origLowerRelInd[origOffset];
+#ifndef RELEASE
+                    if( row < t )
+                        throw std::logic_error("Tried to touch upper triangle");
+#endif
                     if( row % colStride == colShift )
                     {
                         const int localRow = (row-colShift) / colStride;

@@ -103,7 +103,6 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
         {
             const int jChild = updateRowShift + jChildLoc*childGridWidth;
             const int destGridCol = myChildRelInd[jChild] % gridWidth;
-
             int localColShift;
             if( updateColShift > jChild )
                 localColShift = 0;
@@ -115,11 +114,13 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
                      iChildLoc<updateLocalHeight; ++iChildLoc )
             {
                 const int iChild = updateColShift + iChildLoc*childGridHeight;
-                const int destGridRow = myChildRelInd[iChild] % gridHeight;
-
-                const int destRank = destGridRow + destGridCol*gridHeight;
-                sendBuffer[packOffsets[destRank]++] = 
-                    childUpdate.GetLocal(iChildLoc,jChildLoc);
+                if( iChild >= jChild )
+                {
+                    const int destGridRow = myChildRelInd[iChild] % gridHeight;
+                    const int destRank = destGridRow + destGridCol*gridHeight;
+                    sendBuffer[packOffsets[destRank]++] = 
+                        childUpdate.GetLocal(iChildLoc,jChildLoc);
+                }
             }
         }
 #ifndef RELEASE
@@ -178,6 +179,12 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
                 const int iFrontLoc = recvInd[2*k+0];
                 const int jFrontLoc = recvInd[2*k+1];
                 const F value = recvValues[k];
+#ifndef RELEASE
+                const int iFront = grid.Row() + iFrontLoc*gridHeight;
+                const int jFront = grid.Col() + jFrontLoc*gridWidth;
+                if( iFront < jFront )
+                    throw std::logic_error("Tried to update upper triangle");
+#endif
                 if( jFrontLoc < leftLocalWidth )
                     front.front2dL.UpdateLocal( iFrontLoc, jFrontLoc, value );
                 else

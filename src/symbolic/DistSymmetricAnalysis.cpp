@@ -264,29 +264,25 @@ inline void ComputeMultiVecCommMeta( DistSymmInfo& info )
         commMeta.childRecvInd.resize( teamSize );
 
         // Compute the recv indices for the left child 
-        const int leftAlign = node.leftSize % leftTeamSize;
         const int numLeftSolveInd = leftInd.size();
         for( int iPre=0; iPre<numLeftSolveInd; ++iPre )
         {
             const int iChild = leftInd[iPre];
             const int iFront = node.leftRelInd[iChild];
             const int iFrontLoc = (iFront-teamRank) / teamSize;
-
-            const int childRank = (iChild+leftAlign) % leftTeamSize;
+            const int childRank = (node.leftSize+iChild) % leftTeamSize;
             const int frontRank = leftTeamOffset + childRank;
             commMeta.childRecvInd[frontRank].push_back(iFrontLoc);
         }
 
         // Compute the recv indices for the right child
-        const int rightAlign = node.rightSize % rightTeamSize;
         const int numRightSolveInd = rightInd.size();
         for( int iPre=0; iPre<numRightSolveInd; ++iPre )
         {
             const int iChild = rightInd[iPre];
             const int iFront = node.rightRelInd[iChild];
             const int iFrontLoc = (iFront-teamRank) / teamSize;
-
-            const int childRank = (iChild+rightAlign) % rightTeamSize;
+            const int childRank = (node.rightSize+iChild) % rightTeamSize;
             const int frontRank = rightTeamOffset + childRank;
             commMeta.childRecvInd[frontRank].push_back(iFrontLoc);
         }
@@ -350,10 +346,12 @@ inline void ComputeFactorCommMeta( DistSymmInfo& info, bool computeFactRecvInd )
                          iChildLoc<localHeight; ++iChildLoc )
                 {
                     const int iChild = colShift + iChildLoc*childGridHeight;
-                    const int destGridRow = myRelInd[iChild] % gridHeight;
-
-                    const int destRank = destGridRow + destGridCol*gridHeight;
-                    ++commMeta.numChildSendInd[destRank];
+                    if( iChild >= jChild )
+                    {
+                        const int destGridRow = myRelInd[iChild] % gridHeight;
+                        const int destRank = destGridRow+destGridCol*gridHeight;
+                        ++commMeta.numChildSendInd[destRank];
+                    }
                 }
             }
         }

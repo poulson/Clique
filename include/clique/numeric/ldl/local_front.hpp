@@ -70,6 +70,7 @@ inline void FrontLDL( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR )
         ( AL21, AL21T,
                 AL21B, AL22.Width() );
         elem::Gemm( NORMAL, orientation, F(-1), S21, AL21T, F(1), AL22 );
+        elem::MakeTriangular( LOWER, AL22 );
         elem::internal::TrrkNT
         ( LOWER, orientation, F(-1), S21B, AL21B, F(1), ABR );
         //--------------------------------------------------------------------//

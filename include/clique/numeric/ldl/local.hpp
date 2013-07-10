@@ -54,10 +54,15 @@ LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
             for( int jChild=0; jChild<leftUpdateSize; ++jChild )
             {
                 const int jFront = node.leftRelInd[jChild];
-                for( int iChild=0; iChild<leftUpdateSize; ++iChild )
+                for( int iChild=jChild; iChild<leftUpdateSize; ++iChild )
                 {
                     const int iFront = node.leftRelInd[iChild];
                     const F value = leftUpdate.Get(iChild,jChild);
+#ifndef RELEASE
+                    if( iFront < jFront )
+                        throw std::logic_error
+                        ("Tried to update upper triangle");
+#endif
                     if( jFront < node.size )
                         frontL.Update( iFront, jFront, value );
                     else if( iFront >= node.size )
@@ -72,10 +77,15 @@ LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
             for( int jChild=0; jChild<rightUpdateSize; ++jChild )
             {
                 const int jFront = node.rightRelInd[jChild];
-                for( int iChild=0; iChild<rightUpdateSize; ++iChild )
+                for( int iChild=jChild; iChild<rightUpdateSize; ++iChild )
                 {
                     const int iFront = node.rightRelInd[iChild];
                     const F value = rightUpdate.Get(iChild,jChild);
+#ifndef RELEASE
+                    if( iFront < jFront )
+                        throw std::logic_error
+                        ("Tried to update upper triangle");
+#endif
                     if( jFront < node.size )
                         frontL.Update( iFront, jFront, value );
                     else if( iFront >= node.size )

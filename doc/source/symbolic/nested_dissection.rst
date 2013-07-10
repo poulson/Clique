@@ -172,9 +172,6 @@ DistSymmInfo
 
 .. cpp:type:: struct MatrixCommMeta
 
-   .. cpp:member:: int localHeight
-   .. cpp:member:: int localWidth
-
    .. cpp:member:: std::vector<int> numChildSendInd
 
    .. cpp:member:: std::vector<std::vector<int> > childRecvInd

@@ -63,7 +63,6 @@ struct MultiVecCommMeta
 
 struct MatrixCommMeta
 {
-    int localHeight, localWidth;
     std::vector<int> numChildSendInd;
     std::vector<std::vector<int> > childRecvInd;
 

@@ -1,16 +1,12 @@
 Functionality
 =============
-- Modify metadata to be member of appropriate class:
-  a) FactorMetadata: stay member of DistSymmInfo
-  b) (Solve)Metadata1d: member of DistNodalMultiVec
-  c) (Solve)Metadata2d: member of DistNodalMatrix
-- Implement versions of Solve routines which supports DistNodalMatrix
 - Implement faster sparse mat-vec
 - Implement constructor for non-trivial DistSparseMatrix from SparseMatrix
   (and the equivalent for DistMultiVec from MultiVec)
 
 Maintenance
 ===========
+- Find a way to avoid redundancy in local portion of Solve
 - Convert to header-file structure which is similar to Elemental
 - Switch from current flat layout for supernodal trees into an actual (custom) 
   tree data structure?
