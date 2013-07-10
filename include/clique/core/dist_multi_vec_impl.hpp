@@ -142,7 +142,8 @@ Axpy( T alpha, const DistMultiVec<T>& X, DistMultiVec<T>& Y )
 template<typename T>
 inline 
 DistMultiVec<T>::DistMultiVec()
-: height_(0), comm_(mpi::COMM_WORLD), blocksize_(0), firstLocalRow_(0)
+: height_(0), width_(0), comm_(mpi::COMM_WORLD), 
+  blocksize_(0), firstLocalRow_(0)
 { }
 
 template<typename T>

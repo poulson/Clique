@@ -416,7 +416,32 @@ inline void FrontLowerForwardSolve( const DistMatrix<F>& L, DistMatrix<F>& X )
         throw std::logic_error( msg.str().c_str() );
     }
 #endif
-    elem::internal::TrsmLLNMedium( NON_UNIT, F(1), L, X, false );
+    const Grid& g = L.Grid();
+    if( g.Size() == 1 )
+    {
+        FrontLowerForwardSolve( L.LockedMatrix(), X.Matrix() );
+        return;
+    }
+
+    // Separate the top and bottom portions of X and L
+    const int snSize = L.Width();
+    DistMatrix<F> LT(g),
+                  LB(g);
+    LockedPartitionDown
+    ( L, LT,
+         LB, snSize );
+    DistMatrix<F> XT(g),
+                  XB(g);
+    PartitionDown
+    ( X, XT,
+         XB, snSize );
+
+    // XT := LT XT
+    // TODO: Replace with TrsmLLNMedium?
+    elem::Trsm( LEFT, LOWER, NORMAL, NON_UNIT, F(1), LT, XT );
+
+    // XB := XB - LB XT
+    elem::Gemm( NORMAL, NORMAL, F(-1), LB, XT, F(1), XB );
 }
 
 template<typename F>
@@ -516,7 +541,7 @@ inline void FrontLowerBackwardSolve
          XB, L.Width() );
 
     elem::Gemm( orientation, NORMAL, F(-1), LB, XB, F(1), XT );
-    elem::internal::TrsmLLTMedium( orientation, NON_UNIT, F(1), LT, XT, false );
+    elem::Trsm( LEFT, LOWER, orientation, NON_UNIT, F(1), LT, XT );
 }
 
 } // namespace cliq

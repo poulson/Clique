@@ -153,7 +153,8 @@ DistNodalMatrix<F>::ComputeCommMetas( const DistSymmInfo& info ) const
             const int rowAlign = 0;
             const int rowShift =
                 Shift( childGrid.Col(), rowAlign, childGrid.Width() );
-            const int localWidth = Length( width_, rowShift, childGrid.Width() );
+            const int localWidth = 
+                Length( width_, rowShift, childGrid.Width() );
             for( int iChildLoc=0; iChildLoc<localHeight; ++iChildLoc )
             {
                 const int iChild = colShift + iChildLoc*childGrid.Height();
