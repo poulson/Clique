@@ -326,7 +326,7 @@ inline void LocalLowerBackwardSolve
         {
             parentWork.Empty();
             if( parent == numLocalNodes-1 )
-                L.distFronts[0].work1d.Empty();
+                L.distFronts[0].work2d.Empty();
         }
 
         // Solve against this front
@@ -340,7 +340,7 @@ inline void LocalLowerBackwardSolve
     }
 
     // Ensure that all of the temporary buffers are freed (this is overkill)
-    L.distFronts[0].work1d.Empty();
+    L.distFronts[0].work2d.Empty();
     for( int s=0; s<numLocalNodes; ++s )
         L.localFronts[s].work.Empty();
 }

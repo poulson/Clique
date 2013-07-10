@@ -316,7 +316,7 @@ inline void DistLowerForwardSolve
             {
                 const int iFrontLoc = recvInd[2*k+0];
                 const int jLoc = recvInd[2*k+1];
-                W.SetLocal( iFrontLoc, jLoc, recvValues[k] );
+                W.UpdateLocal( iFrontLoc, jLoc, recvValues[k] );
             }
         }
         std::vector<F>().swap( recvBuffer );

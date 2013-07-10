@@ -192,6 +192,8 @@ DistNodalMatrix<F>::ComputeCommMetas( const DistSymmInfo& info ) const
         // Compute the solve recv indices
         //
         commMeta.childRecvInd.resize( teamSize );
+        for( int q=0; q<teamSize; ++q )
+            commMeta.childRecvInd[q].clear();
         const int colShift = grid.Row();
         const int rowShift = grid.Col();
         const int localWidth = Length( width_, rowShift, gridWidth );
