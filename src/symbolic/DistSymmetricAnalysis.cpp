@@ -11,26 +11,6 @@
 
 namespace cliq {
 
-inline void GetChildGridDims
-( const DistSymmNodeInfo& node, const DistSymmNodeInfo& childNode, 
-  int* childGridDims )
-{
-    const bool onLeft = childNode.onLeft;
-    const int childTeamRank = mpi::CommRank( childNode.comm );
-    elem::MemZero( childGridDims, 4 );
-    if( onLeft && childTeamRank == 0 )
-    {
-        childGridDims[0] = childNode.grid->Height();
-        childGridDims[1] = childNode.grid->Width();
-    }
-    else if( !onLeft && childTeamRank == 0 )
-    {
-        childGridDims[2] = childNode.grid->Height();
-        childGridDims[3] = childNode.grid->Width();
-    }
-    mpi::AllReduce( childGridDims, 4, mpi::SUM, node.comm );
-}
-
 inline void PairwiseExchangeLowerStruct
 ( int& theirSize, std::vector<int>& theirLowerStruct,
   const DistSymmNode& node, const DistSymmNodeInfo& childNodeInfo )
@@ -219,14 +199,14 @@ inline void ComputeStructAndRelInd
 #endif
 }
 
-inline void ComputeSolveMetadata1d( DistSymmInfo& info )
+inline void ComputeMultiVecCommMeta( DistSymmInfo& info )
 {
 #ifndef RELEASE
-    CallStackEntry entry("ComputeSolveMetadata1d");
+    CallStackEntry entry("ComputeMultiVecCommMeta");
 #endif
     // Handle the interface node
-    info.distNodes[0].solveMeta1d.Empty();
-    info.distNodes[0].solveMeta1d.localSize = info.localNodes.back().size;
+    info.distNodes[0].multiVecMeta.Empty();
+    info.distNodes[0].multiVecMeta.localSize = info.localNodes.back().size;
 
     // Handle the truly distributed nodes
     const int numDist = info.distNodes.size();
@@ -250,11 +230,11 @@ inline void ComputeSolveMetadata1d( DistSymmInfo& info )
         const std::vector<int>& myRelInd = 
             ( childNode.onLeft ? node.leftRelInd : node.rightRelInd );
 
-        // Fill solveMeta1d.numChildSendInd
-        SolveMetadata1d& solveMeta1d = node.solveMeta1d;
-        solveMeta1d.Empty();
-        solveMeta1d.numChildSendInd.resize( teamSize );
-        elem::MemZero( &solveMeta1d.numChildSendInd[0], teamSize );
+        // Fill numChildSendInd
+        MultiVecCommMeta& commMeta = node.multiVecMeta;
+        commMeta.Empty();
+        commMeta.numChildSendInd.resize( teamSize );
+        elem::MemZero( &commMeta.numChildSendInd[0], teamSize );
         const int updateSize = childNode.lowerStruct.size();
         {
             const int align = childNode.size % childTeamSize;
@@ -264,11 +244,10 @@ inline void ComputeSolveMetadata1d( DistSymmInfo& info )
             {
                 const int iChild = shift + iChildLoc*childTeamSize;
                 const int destRank = myRelInd[iChild] % teamSize;
-                ++solveMeta1d.numChildSendInd[destRank];
+                ++commMeta.numChildSendInd[destRank];
             }
         }
 
-        // Fill solveMeta1d.{left,right}Ind for use in many solves
         const int numLeftInd = node.leftRelInd.size();
         const int numRightInd = node.rightRelInd.size();
         std::vector<int> leftInd, rightInd; 
@@ -282,7 +261,7 @@ inline void ComputeSolveMetadata1d( DistSymmInfo& info )
         //
         // Compute the solve recv indices
         //
-        solveMeta1d.childRecvInd.resize( teamSize );
+        commMeta.childRecvInd.resize( teamSize );
 
         // Compute the recv indices for the left child 
         const int leftAlign = node.leftSize % leftTeamSize;
@@ -295,7 +274,7 @@ inline void ComputeSolveMetadata1d( DistSymmInfo& info )
 
             const int childRank = (iChild+leftAlign) % leftTeamSize;
             const int frontRank = leftTeamOffset + childRank;
-            solveMeta1d.childRecvInd[frontRank].push_back(iFrontLoc);
+            commMeta.childRecvInd[frontRank].push_back(iFrontLoc);
         }
 
         // Compute the recv indices for the right child
@@ -309,152 +288,17 @@ inline void ComputeSolveMetadata1d( DistSymmInfo& info )
 
             const int childRank = (iChild+rightAlign) % rightTeamSize;
             const int frontRank = rightTeamOffset + childRank;
-            solveMeta1d.childRecvInd[frontRank].push_back(iFrontLoc);
+            commMeta.childRecvInd[frontRank].push_back(iFrontLoc);
         }
 
-        solveMeta1d.localSize = Length(node.size,teamRank,teamSize);
+        commMeta.localSize = Length(node.size,teamRank,teamSize);
     }
 }
 
-void ComputeSolveMetadata2d( DistSymmInfo& info, int width )
+inline void ComputeFactorCommMeta( DistSymmInfo& info, bool computeFactRecvInd )
 {
 #ifndef RELEASE
-    CallStackEntry entry("ComputeSolveMetadata2d");
-#endif
-    // Handle the interface node
-    info.distNodes[0].solveMeta2d.Empty();
-    info.distNodes[0].solveMeta2d.localHeight = info.localNodes.back().size;
-    info.distNodes[0].solveMeta2d.localWidth = width;
-
-    // Handle the truly distributed nodes
-    const int numDist = info.distNodes.size();
-    for( int s=1; s<numDist; ++s )
-    {
-        DistSymmNodeInfo& node = info.distNodes[s];
-        const int teamSize = mpi::CommSize( node.comm );
-        const int teamRank = mpi::CommRank( node.comm );
-        const Grid& grid = *node.grid;
-
-        const DistSymmNodeInfo& childNode = info.distNodes[s-1];
-        const int childTeamSize = mpi::CommSize( childNode.comm );
-        const int childTeamRank = mpi::CommRank( childNode.comm );
-        const bool inFirstTeam = ( childTeamRank == teamRank );
-        const bool leftIsFirst = ( childNode.onLeft==inFirstTeam );
-        const int leftTeamSize =
-            ( childNode.onLeft ? childTeamSize : teamSize-childTeamSize );
-        const int rightTeamSize = teamSize - leftTeamSize;
-        const int leftTeamOffset = ( leftIsFirst ? 0 : rightTeamSize );
-        const int rightTeamOffset = ( leftIsFirst ? leftTeamSize : 0 );
-        const Grid& childGrid = *childNode.grid; 
-
-        // Fill solveMeta2d.numChildSendInd
-        SolveMetadata2d& solveMeta2d = node.solveMeta2d;
-        solveMeta2d.Empty();
-        solveMeta2d.numChildSendInd.resize( teamSize );
-        elem::MemZero( &solveMeta2d.numChildSendInd[0], teamSize );
-        const int updateSize = childNode.lowerStruct.size();
-        const std::vector<int>& myRelInd = 
-            ( childNode.onLeft ? node.leftRelInd : node.rightRelInd );
-        {
-            const int colAlign = childNode.size % childGrid.Height();
-            const int colShift = 
-                Shift( childGrid.Row(), colAlign, childGrid.Height() );
-            const int localHeight = 
-                Length( updateSize, colShift, childGrid.Height() );
-
-            const int rowAlign = 0;
-            const int rowShift = 
-                Shift( childGrid.Col(), rowAlign, childGrid.Width() );
-            const int localWidth = Length( width, rowShift, childGrid.Width() );
-            for( int iChildLoc=0; iChildLoc<localHeight; ++iChildLoc )
-            {
-                const int iChild = colShift + iChildLoc*childGrid.Height();
-                const int destRow = myRelInd[iChild] % grid.Height();
-                for( int jChildLoc=0; jChildLoc<localWidth; ++jChildLoc )
-                {
-                    const int jChild = rowShift + jChildLoc*childGrid.Width();
-                    const int destCol = jChild % grid.Width();
-                    const int destRank = destRow + destCol*grid.Height();
-                    ++solveMeta2d.numChildSendInd[destRank];
-                }
-            }
-        }
-
-        // Fill solveMeta2d.{left,right}Ind for use in many solves
-        const int numLeftInd = node.leftRelInd.size();
-        const int numRightInd = node.rightRelInd.size();
-        std::vector<int> leftRowInd, rightRowInd;
-        for( int i=0; i<numLeftInd; ++i )
-            if( node.leftRelInd[i] % grid.Height() == grid.Row() )
-                leftRowInd.push_back( i );
-        for( int i=0; i<numRightInd; ++i )
-            if( node.rightRelInd[i] % grid.Height() == grid.Row() )
-                rightRowInd.push_back( i );
-
-        // Get the child grid dimensions
-        int childGridDims[4];
-        GetChildGridDims( node, childNode, childGridDims );
-        const int leftGridHeight = childGridDims[0];
-        const int leftGridWidth = childGridDims[1];
-        const int rightGridHeight = childGridDims[2];
-        const int rightGridWidth = childGridDims[3];
-
-        //
-        // Compute the solve recv indices
-        //
-        solveMeta2d.childRecvInd.resize( teamSize );
-
-        // Compute the recv indices for the left child 
-        const int leftColAlign = node.leftSize % leftGridHeight;
-        const int numLeftRowInd = leftRowInd.size();
-        const int rowShift = Shift( grid.Col(), 0, grid.Width() );
-        const int localWidth = Length( width, rowShift, grid.Width() );
-        for( int iPre=0; iPre<numLeftRowInd; ++iPre )
-        {
-            const int iChild = leftRowInd[iPre];
-            const int iFront = node.leftRelInd[iChild];
-            const int iFrontLoc = (iFront-grid.Row()) / grid.Height();
-            const int childRow = (iChild+leftColAlign) % leftGridHeight;
-            for( int jLoc=0; jLoc<localWidth; ++jLoc )
-            {
-                const int j = rowShift + jLoc*grid.Width(); 
-                const int childCol = j % leftGridWidth;
-                const int childRank = childRow + childCol*leftGridHeight;
-                const int frontRank = leftTeamOffset + childRank;
-                solveMeta2d.childRecvInd[frontRank].push_back(iFrontLoc);
-                solveMeta2d.childRecvInd[frontRank].push_back(jLoc);
-             }
-        }
-
-        // Compute the recv indices for the right child
-        const int rightColAlign = node.rightSize % rightGridHeight;
-        const int numRightRowInd = rightRowInd.size();
-        for( int iPre=0; iPre<numRightRowInd; ++iPre )
-        {
-            const int iChild = rightRowInd[iPre];
-            const int iFront = node.rightRelInd[iChild];
-            const int iFrontLoc = (iFront-teamRank) / teamSize;
-            const int childRow = (iChild+rightColAlign) % rightGridHeight;
-            for( int jLoc=0; jLoc<localWidth; ++jLoc )
-            {
-                const int j = rowShift + jLoc*grid.Width();
-                const int childCol = j % rightGridWidth;
-                const int childRank = childRow + childCol*rightGridHeight;
-                const int frontRank = rightTeamOffset + childRank;
-                solveMeta2d.childRecvInd[frontRank].push_back(iFrontLoc);
-                solveMeta2d.childRecvInd[frontRank].push_back(jLoc);
-            }
-        }
-
-        solveMeta2d.localHeight = Length(node.size,grid.Row(),grid.Height());
-        solveMeta2d.localWidth = localWidth;
-    }
-}
-
-inline void ComputeFactorMetadata( DistSymmInfo& info, bool computeFactRecvInd )
-{
-#ifndef RELEASE
-    CallStackEntry entry("ComputeFactorMetadata");
+    CallStackEntry entry("ComputeFactorCommMeta");
 #endif
     info.distNodes[0].factorMeta.Empty();
     const int numDist = info.distNodes.size();
@@ -465,8 +309,8 @@ inline void ComputeFactorMetadata( DistSymmInfo& info, bool computeFactRecvInd )
         const DistSymmNodeInfo& childNode = info.distNodes[s-1];
 
         // Fill factorMeta.numChildSendInd 
-        FactorMetadata& factorMeta = node.factorMeta;
-        factorMeta.Empty();
+        FactorCommMeta& commMeta = node.factorMeta;
+        commMeta.Empty();
         const int gridHeight = node.grid->Height();
         const int gridWidth = node.grid->Width();
         const int childGridHeight = childNode.grid->Height();
@@ -475,8 +319,8 @@ inline void ComputeFactorMetadata( DistSymmInfo& info, bool computeFactRecvInd )
         const int childGridCol = childNode.grid->Col();
         const int mySize = childNode.size;
         const int updateSize = childNode.lowerStruct.size();
-        factorMeta.numChildSendInd.resize( teamSize );
-        elem::MemZero( &factorMeta.numChildSendInd[0], teamSize );
+        commMeta.numChildSendInd.resize( teamSize );
+        elem::MemZero( &commMeta.numChildSendInd[0], teamSize );
         const std::vector<int>& myRelInd = 
             ( childNode.onLeft ? node.leftRelInd : node.rightRelInd );
         {
@@ -509,7 +353,7 @@ inline void ComputeFactorMetadata( DistSymmInfo& info, bool computeFactRecvInd )
                     const int destGridRow = myRelInd[iChild] % gridHeight;
 
                     const int destRank = destGridRow + destGridCol*gridHeight;
-                    ++factorMeta.numChildSendInd[destRank];
+                    ++commMeta.numChildSendInd[destRank];
                 }
             }
         }
@@ -585,11 +429,11 @@ void DistSymmetricAnalysis
         myOffset += nodeInfo.size;
     }
 
-    ComputeFactorMetadata( info, computeFactRecvInd );
+    ComputeFactorCommMeta( info, computeFactRecvInd );
     
     // This is thankfully independent of the number of right-hand sides,   
-    // unlike 2d solve metadata
-    ComputeSolveMetadata1d( info );
+    // unlike the 2d equivalent
+    ComputeMultiVecCommMeta( info );
 }
 
 // TODO: Simplify this implementation
@@ -621,7 +465,7 @@ void ComputeFactRecvInd
         throw std::runtime_error("Computed right grid incorrectly");
 #endif
 
-    const FactorMetadata& factorMeta = node.factorMeta;
+    const FactorCommMeta& commMeta = node.factorMeta;
     const int gridHeight = node.grid->Height();
     const int gridWidth = node.grid->Width();
     const int gridRow = node.grid->Row();
@@ -647,7 +491,7 @@ void ComputeFactRecvInd
     const bool inFirstTeam = ( childTeamRank == teamRank );
     const bool leftIsFirst = ( onLeft==inFirstTeam );
     const int leftTeamOffset = ( leftIsFirst ? 0 : rightTeamSize );
-    factorMeta.childRecvInd.resize( teamSize );
+    commMeta.childRecvInd.resize( teamSize );
     std::vector<int>::const_iterator it;
     const int numLeftColInd = leftColInd.size();
     const int numLeftRowInd = leftRowInd.size();
@@ -683,8 +527,8 @@ void ComputeFactRecvInd
             const int childRank = childRow + childCol*leftGridHeight;
 
             const int frontRank = leftTeamOffset + childRank;
-            factorMeta.childRecvInd[frontRank].push_back(iFrontLoc);
-            factorMeta.childRecvInd[frontRank].push_back(jFrontLoc);
+            commMeta.childRecvInd[frontRank].push_back(iFrontLoc);
+            commMeta.childRecvInd[frontRank].push_back(jFrontLoc);
         }
     }
     
@@ -720,10 +564,30 @@ void ComputeFactRecvInd
             const int childRank = childRow + childCol*rightGridHeight;
 
             const int frontRank = rightTeamOffset + childRank;
-            factorMeta.childRecvInd[frontRank].push_back(iFrontLoc);
-            factorMeta.childRecvInd[frontRank].push_back(jFrontLoc);
+            commMeta.childRecvInd[frontRank].push_back(iFrontLoc);
+            commMeta.childRecvInd[frontRank].push_back(jFrontLoc);
         }
     }
+}
+
+void GetChildGridDims
+( const DistSymmNodeInfo& node, const DistSymmNodeInfo& childNode, 
+  int* childGridDims )
+{
+    const bool onLeft = childNode.onLeft;
+    const int childTeamRank = mpi::CommRank( childNode.comm );
+    elem::MemZero( childGridDims, 4 );
+    if( onLeft && childTeamRank == 0 )
+    {
+        childGridDims[0] = childNode.grid->Height();
+        childGridDims[1] = childNode.grid->Width();
+    }
+    else if( !onLeft && childTeamRank == 0 )
+    {
+        childGridDims[2] = childNode.grid->Height();
+        childGridDims[3] = childNode.grid->Width();
+    }
+    mpi::AllReduce( childGridDims, 4, mpi::SUM, node.comm );
 }
 
 } // namespace cliq

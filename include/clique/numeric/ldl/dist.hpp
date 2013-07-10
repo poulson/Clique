@@ -78,14 +78,14 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
         const unsigned childGridWidth = childGrid.Width();
 
         // Pack our child's update
-        const FactorMetadata& factorMeta = node.factorMeta;
+        const FactorCommMeta& commMeta = node.factorMeta;
         const DistMatrix<F>& childUpdate = childFront.work2d;
         const bool onLeft = childNode.onLeft;
         std::vector<int> sendCounts(commSize), sendDispls(commSize);
         int sendBufferSize = 0;
         for( unsigned proc=0; proc<commSize; ++proc )
         {
-            const int sendSize = factorMeta.numChildSendInd[proc];
+            const int sendSize = commMeta.numChildSendInd[proc];
             sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += sendSize;
@@ -126,7 +126,7 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
         for( unsigned proc=0; proc<commSize; ++proc )
         {
             if( packOffsets[proc]-sendDispls[proc] != 
-                factorMeta.numChildSendInd[proc] )
+                commMeta.numChildSendInd[proc] )
                 throw std::logic_error("Error in packing stage");
         }
 #endif
@@ -136,14 +136,14 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
             topLocalFront.work.Empty();
 
         // Set up the recv buffer for the AllToAll
-        const bool computeFactRecvInd = ( factorMeta.childRecvInd.size() == 0 );
+        const bool computeFactRecvInd = ( commMeta.childRecvInd.size() == 0 );
         if( computeFactRecvInd )
             ComputeFactRecvInd( node, childNode );
         std::vector<int> recvCounts(commSize), recvDispls(commSize);
         int recvBufferSize=0;
         for( unsigned proc=0; proc<commSize; ++proc )
         {
-            const int recvSize = factorMeta.childRecvInd[proc].size()/2;
+            const int recvSize = commMeta.childRecvInd[proc].size()/2;
             recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += recvSize;
@@ -171,7 +171,7 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
         for( unsigned proc=0; proc<commSize; ++proc )
         {
             const F* recvValues = &recvBuffer[recvDispls[proc]];
-            const std::vector<int>& recvInd = factorMeta.childRecvInd[proc];
+            const std::vector<int>& recvInd = commMeta.childRecvInd[proc];
             const int numRecvIndexPairs = recvInd.size()/2;
             for( int k=0; k<numRecvIndexPairs; ++k )
             {
@@ -190,7 +190,7 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
         std::vector<int>().swap( recvCounts );
         std::vector<int>().swap( recvDispls );
         if( computeFactRecvInd )
-            factorMeta.EmptyChildRecvIndices();
+            commMeta.EmptyChildRecvIndices();
 
         // Now that the frontal matrix is set up, perform the factorization
         if( !blockLDL )

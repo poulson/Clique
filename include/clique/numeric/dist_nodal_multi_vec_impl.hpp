@@ -85,7 +85,7 @@ DistNodalMultiVec<F>::Pull
         numRecvInd += info.localNodes[s].size;
     const int numDist = info.distNodes.size();
     for( int s=1; s<numDist; ++s )
-        numRecvInd += info.distNodes[s].solveMeta1d.localSize;
+        numRecvInd += info.distNodes[s].multiVecMeta.localSize;
     
     // Fill the set of indices that we need to map to the original ordering
     int offset=0;

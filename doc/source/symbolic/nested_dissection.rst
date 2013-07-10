@@ -144,7 +144,7 @@ DistSymmInfo
       The relative indices of the left/right child's lower structure into this 
       structure.
 
-.. cpp:type:: struct FactorMetadata
+.. cpp:type:: struct FactorCommMeta
 
    .. cpp:member:: std::vector<int> numChildSendInd
 
@@ -158,7 +158,7 @@ DistSymmInfo
 
       Clears all members of structure
 
-.. cpp:type:: struct SolveMetadata1d
+.. cpp:type:: struct MultiVecCommMeta
 
    .. cpp:member:: int localSize
 
@@ -170,7 +170,7 @@ DistSymmInfo
 
       Clears all members of structure
 
-.. cpp:type:: struct SolveMetadata2d
+.. cpp:type:: struct MatrixCommMeta
 
    .. cpp:member:: int localHeight
    .. cpp:member:: int localWidth
@@ -240,9 +240,8 @@ DistSymmInfo
       The relative indices of the left/right child's lower structure into this 
       structure.
 
-   .. cpp:member:: FactorMetadata factorMeta
-   .. cpp:member:: SolveMetadata1d solveMeta1d
-   .. cpp:member:: SolveMetadata2d solveMeta2d
+   .. cpp:member:: FactorCommMeta factorMeta
+   .. cpp:member:: MultiVecCommMeta multiVecMeta
 
 .. cpp:type:: struct DistSymmInfo
 

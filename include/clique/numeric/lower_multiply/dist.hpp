@@ -76,7 +76,7 @@ inline void DistLowerMultiplyNormal
         FrontLowerMultiply( NORMAL, diagOffset, front.front1dL, W );
 
         // Pack our child's update
-        const SolveMetadata1d& solveMeta = node.solveMeta1d;
+        const MultiVecCommMeta& commMeta = node.multiVecMeta;
         DistMatrix<T,VC,STAR>& childW = childFront.work1d;
         const int updateSize = childW.Height()-childNode.size;
         DistMatrix<T,VC,STAR> childUpdate;
@@ -85,7 +85,7 @@ inline void DistLowerMultiplyNormal
         std::vector<int> sendCounts(commSize), sendDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int sendSize = solveMeta.numChildSendInd[proc]*width;
+            const int sendSize = commMeta.numChildSendInd[proc]*width;
             sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += sendSize;
@@ -115,7 +115,7 @@ inline void DistLowerMultiplyNormal
         std::vector<int> recvCounts(commSize), recvDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int recvSize = solveMeta.childRecvInd[proc].size()*width;
+            const int recvSize = commMeta.childRecvInd[proc].size()*width;
             recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += recvSize;
@@ -137,7 +137,7 @@ inline void DistLowerMultiplyNormal
         for( int proc=0; proc<commSize; ++proc )
         {
             const T* recvValues = &recvBuffer[recvDispls[proc]];
-            const std::vector<int>& recvInd = solveMeta.childRecvInd[proc];
+            const std::vector<int>& recvInd = commMeta.childRecvInd[proc];
             const int numRecvInd = recvInd.size();
             for( int k=0; k<numRecvInd; ++k )
             {
@@ -224,12 +224,12 @@ inline void DistLowerMultiplyTranspose
 
         // Pack the relevant portions of the parent's RHS's
         // (which are stored in 'work1d')
-        const SolveMetadata1d& solveMeta = parentNode.solveMeta1d;
+        const MultiVecCommMeta& commMeta = parentNode.multiVecMeta;
         int sendBufferSize = 0;
         std::vector<int> sendCounts(parentCommSize), sendDispls(parentCommSize);
         for( int proc=0; proc<parentCommSize; ++proc )
         {
-            const int sendSize = solveMeta.childRecvInd[proc].size()*width;
+            const int sendSize = commMeta.childRecvInd[proc].size()*width;
             sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += sendSize;
@@ -240,7 +240,7 @@ inline void DistLowerMultiplyTranspose
         for( int proc=0; proc<parentCommSize; ++proc )
         {
             T* sendValues = &sendBuffer[sendDispls[proc]];
-            const std::vector<int>& recvInd = solveMeta.childRecvInd[proc];
+            const std::vector<int>& recvInd = commMeta.childRecvInd[proc];
             const int numRecvInd = recvInd.size();
             for( int k=0; k<numRecvInd; ++k )
             {
@@ -259,7 +259,7 @@ inline void DistLowerMultiplyTranspose
         std::vector<int> recvCounts(parentCommSize), recvDispls(parentCommSize);
         for( int proc=0; proc<parentCommSize; ++proc )
         {
-            const int recvSize = solveMeta.numChildSendInd[proc]*width;
+            const int recvSize = commMeta.numChildSendInd[proc]*width;
             recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += recvSize;

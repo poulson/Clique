@@ -37,6 +37,8 @@ public:
     int Height() const;
     int Width() const;
 
+    mutable std::vector<MatrixCommMeta> commMetas;
+    void ComputeCommMetas( const DistSymmInfo& info ) const;
 private:
     int height_, width_;
 };

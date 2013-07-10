@@ -91,7 +91,7 @@ inline void DistLowerForwardSolve
         elem::MakeZeros( WB );
 
         // Pack our child's update
-        const SolveMetadata1d& solveMeta = node.solveMeta1d;
+        const MultiVecCommMeta& commMeta = node.multiVecMeta;
         DistMatrix<F,VC,STAR>& childW = childFront.work1d;
         const int updateSize = childW.Height()-childNode.size;
         DistMatrix<F,VC,STAR> childUpdate( childW.Grid() );
@@ -100,7 +100,7 @@ inline void DistLowerForwardSolve
         std::vector<int> sendCounts(commSize), sendDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int sendSize = solveMeta.numChildSendInd[proc]*width;
+            const int sendSize = commMeta.numChildSendInd[proc]*width;
             sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += sendSize;
@@ -131,7 +131,7 @@ inline void DistLowerForwardSolve
         std::vector<int> recvCounts(commSize), recvDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int recvSize = solveMeta.childRecvInd[proc].size()*width;
+            const int recvSize = commMeta.childRecvInd[proc].size()*width;
             recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += recvSize;
@@ -153,7 +153,7 @@ inline void DistLowerForwardSolve
         for( int proc=0; proc<commSize; ++proc )
         {
             const F* recvValues = &recvBuffer[recvDispls[proc]];
-            const std::vector<int>& recvInd = solveMeta.childRecvInd[proc];
+            const std::vector<int>& recvInd = commMeta.childRecvInd[proc];
             for( unsigned k=0; k<recvInd.size(); ++k )
             {
                 const int iFrontLoc = recvInd[k];
@@ -198,6 +198,9 @@ inline void DistLowerForwardSolve
     const SymmFrontType frontType = L.frontType;
     if( FrontsAre1d(frontType) )
         throw std::logic_error("This solve mode is not yet implemented");
+    const bool computeCommMetas = ( X.commMetas.size() == 0 );
+    if( computeCommMetas )
+        X.ComputeCommMetas( info );
 
     // Copy the information from the local portion into the distributed leaf
     const SymmFront<F>& localRootFront = L.localFronts.back();
@@ -238,7 +241,7 @@ inline void DistLowerForwardSolve
         elem::MakeZeros( WB );
 
         // Pack our child's update
-        const SolveMetadata2d& solveMeta = node.solveMeta2d;
+        const MatrixCommMeta& commMeta = X.commMetas[s-1];
         DistMatrix<F>& childW = childFront.work2d;
         const int updateSize = childW.Height()-childNode.size;
         DistMatrix<F> childUpdate( childW.Grid() );
@@ -247,7 +250,7 @@ inline void DistLowerForwardSolve
         std::vector<int> sendCounts(commSize), sendDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int sendSize = solveMeta.numChildSendInd[proc];
+            const int sendSize = commMeta.numChildSendInd[proc];
             sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += sendSize;
@@ -287,7 +290,7 @@ inline void DistLowerForwardSolve
         std::vector<int> recvCounts(commSize), recvDispls(commSize);
         for( int proc=0; proc<commSize; ++proc )
         {
-            const int recvSize = solveMeta.childRecvInd[proc].size()/2;
+            const int recvSize = commMeta.childRecvInd[proc].size()/2;
             recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += recvSize;
@@ -309,7 +312,7 @@ inline void DistLowerForwardSolve
         for( int proc=0; proc<commSize; ++proc )
         {
             const F* recvValues = &recvBuffer[recvDispls[proc]];
-            const std::vector<int>& recvInd = solveMeta.childRecvInd[proc];
+            const std::vector<int>& recvInd = commMeta.childRecvInd[proc];
             for( unsigned k=0; k<recvInd.size()/2; ++k )
             {
                 const int iFrontLoc = recvInd[2*k+0];
@@ -421,12 +424,12 @@ inline void DistLowerBackwardSolve
         //
 
         // Pack the updates using the recv approach from the forward solve
-        const SolveMetadata1d& solveMeta = parentNode.solveMeta1d;
+        const MultiVecCommMeta& commMeta = parentNode.multiVecMeta;
         int sendBufferSize = 0;
         std::vector<int> sendCounts(parentCommSize), sendDispls(parentCommSize);
         for( int proc=0; proc<parentCommSize; ++proc )
         {
-            const int sendSize = solveMeta.childRecvInd[proc].size()*width;
+            const int sendSize = commMeta.childRecvInd[proc].size()*width;
             sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += sendSize;
@@ -437,7 +440,7 @@ inline void DistLowerBackwardSolve
         for( int proc=0; proc<parentCommSize; ++proc )
         {
             F* sendValues = &sendBuffer[sendDispls[proc]];
-            const std::vector<int>& recvInd = solveMeta.childRecvInd[proc];
+            const std::vector<int>& recvInd = commMeta.childRecvInd[proc];
             for( unsigned k=0; k<recvInd.size(); ++k )
             {
                 const int iFrontLoc = recvInd[k];
@@ -455,7 +458,7 @@ inline void DistLowerBackwardSolve
         std::vector<int> recvCounts(parentCommSize), recvDispls(parentCommSize);
         for( int proc=0; proc<parentCommSize; ++proc )
         {
-            const int recvSize = solveMeta.numChildSendInd[proc]*width;
+            const int recvSize = commMeta.numChildSendInd[proc]*width;
             recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += recvSize;

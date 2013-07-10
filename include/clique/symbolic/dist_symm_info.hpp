@@ -31,7 +31,7 @@ struct SymmNodeInfo
     std::vector<int> leftRelInd, rightRelInd;
 };
 
-struct FactorMetadata
+struct FactorCommMeta
 {
     std::vector<int> numChildSendInd;
     // This information does not necessarily have to be kept and can be
@@ -39,18 +39,16 @@ struct FactorMetadata
     mutable std::vector<std::vector<int> > childRecvInd;
 
     void EmptyChildRecvIndices() const
-    {
-        std::vector<std::vector<int> >().swap( childRecvInd );
-    }
+    { std::vector<std::vector<int> >().swap(childRecvInd); }
 
     void Empty()
     {
-        std::vector<int>().swap( numChildSendInd );
+        std::vector<int>().swap(numChildSendInd);
         EmptyChildRecvIndices();
     }
 };
 
-struct SolveMetadata1d
+struct MultiVecCommMeta
 {
     int localSize;
     std::vector<int> numChildSendInd;
@@ -63,7 +61,7 @@ struct SolveMetadata1d
     }
 };
 
-struct SolveMetadata2d
+struct MatrixCommMeta
 {
     int localHeight, localWidth;
     std::vector<int> numChildSendInd;
@@ -100,9 +98,8 @@ struct DistSymmNodeInfo
     // submatrices of the child updates.
     std::vector<int> leftRelInd, rightRelInd;
 
-    FactorMetadata factorMeta;
-    SolveMetadata1d solveMeta1d;
-    SolveMetadata2d solveMeta2d;
+    FactorCommMeta factorMeta;
+    MultiVecCommMeta multiVecMeta;
 };
 
 struct DistSymmInfo
@@ -110,9 +107,14 @@ struct DistSymmInfo
     std::vector<SymmNodeInfo> localNodes;
     std::vector<DistSymmNodeInfo> distNodes;
     ~DistSymmInfo();
-
-    void StoreReordered( std::vector<int>& reordered ) const;
 };
+
+// Utilities
+void ComputeFactRecvInd
+( const DistSymmNodeInfo& node, const DistSymmNodeInfo& childNode );
+void GetChildGridDims
+( const DistSymmNodeInfo& node, const DistSymmNodeInfo& childNode,
+  int* childGridDims );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -126,42 +128,6 @@ DistSymmInfo::~DistSymmInfo()
     {
         delete distNodes[s].grid;
         mpi::CommFree( distNodes[s].comm );
-    }
-}
-
-inline void
-DistSymmInfo::StoreReordered( std::vector<int>& reordered ) const
-{
-#ifndef RELEASE
-    CallStackEntry entry("DistSymmInfo::StoreReordered");
-#endif
-    int localSize=0;
-    const int numLocal = localNodes.size();
-    for( int s=0; s<numLocal; ++s )
-        localSize += localNodes[s].size;
-    const int numDist = distNodes.size();
-    for( int s=1; s<numDist; ++s )
-        localSize += distNodes[s].solveMeta1d.localSize;
-    reordered.resize( localSize );
-
-    int localOffset=0;
-    for( int s=0; s<numLocal; ++s )
-    {
-        const int size = localNodes[s].size;
-        const int offset = localNodes[s].offset;
-        for( int j=0; j<size; ++j )
-            reordered[localOffset++] = j+offset;
-    }
-    for( int s=1; s<numDist; ++s )
-    {
-        const int size = distNodes[s].size;
-        const int offset = distNodes[s].offset;
-        const Grid& grid = *distNodes[s].grid;
-        const int gridSize = grid.Size();
-        const int gridRank = grid.Rank();
-        // ASSUMPTION: The alignment is zero
-        for( int j=gridRank; j<size; j+=gridSize )
-            reordered[localOffset++] = j+offset;
     }
 }
 

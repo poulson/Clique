@@ -121,6 +121,9 @@ there are many right-hand sides (in a sense to be made more specific later).
 
       Returns the number of vectors.
 
+   .. cpp:member:: mutable std::vector<MatrixCommMeta> commMetas
+   .. cpp:function:: void ComputeCommMetas( const DistSymmInfo& info ) const
+
 .. cpp:type:: struct DistNodalMatrix<F>
 
    Same as above, but this implies that the underlying datatype `F` is a field.
