@@ -24,6 +24,7 @@ main( int argc, char* argv[] )
         const int n3 = Input("--n3","third grid dimension",30);
         const int numRhs = Input("--numRhs","number of right-hand sides",5);
         const bool solve2d = Input("--solve2d","use 2d solve?",false);
+        const bool selInv = Input("--selInv","selectively invert?",false);
         const bool sequential = Input
             ("--sequential","sequential partitions?",true);
         const int numDistSeps = Input
@@ -189,9 +190,19 @@ main( int argc, char* argv[] )
         mpi::Barrier( comm );
         const double ldlStart = mpi::Time();
         if( solve2d )
-            LDL( info, frontTree, LDL_2D );
+        {
+            if( selInv )
+                LDL( info, frontTree, LDL_SELINV_2D );
+            else
+                LDL( info, frontTree, LDL_2D );
+        }
         else
-            LDL( info, frontTree, LDL_1D );
+        {
+            if( selInv )
+                LDL( info, frontTree, LDL_SELINV_1D );
+            else
+                LDL( info, frontTree, LDL_1D );
+        }
         mpi::Barrier( comm );
         const double ldlStop = mpi::Time();
         if( commRank == 0 )
