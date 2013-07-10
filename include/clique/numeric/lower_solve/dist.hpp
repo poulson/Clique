@@ -197,7 +197,9 @@ inline void DistLowerForwardSolve
     const int width = X.Width();
     const SymmFrontType frontType = L.frontType;
     if( FrontsAre1d(frontType) )
-        throw std::logic_error("This solve mode is not yet implemented");
+        throw std::logic_error("1d solves not yet implemented");
+    if( frontType == SYMM_2D )
+        throw std::logic_error("SYMM_2D mode not yet implemented");
     const bool computeCommMetas = ( X.commMetas.size() == 0 );
     if( computeCommMetas )
         X.ComputeCommMetas( info );
@@ -257,8 +259,7 @@ inline void DistLowerForwardSolve
         }
         std::vector<F> sendBuffer( sendBufferSize );
 
-        // TODO: Pack send data
-        // HERE
+        // Pack send data
         const bool onLeft = childNode.onLeft;
         const std::vector<int>& myChildRelInd = 
             ( onLeft ? node.leftRelInd : node.rightRelInd );
@@ -325,7 +326,7 @@ inline void DistLowerForwardSolve
         std::vector<int>().swap( recvDispls );
 
         // Now that the RHS is set up, perform this node's solve
-        // TODO
+        // TODO: Handle non-inverted case
         /*
         if( frontType == LDL_SELINV_2D )
             FrontFastLowerForwardSolve( front.front2dL, W );
@@ -510,6 +511,190 @@ inline void DistLowerBackwardSolve
             else // frontType == BLOCK_LDL_2D
                 FrontBlockLowerBackwardSolve
                 ( orientation, front.front2dL, front.work1d );
+        }
+        else
+        {
+            View( localRootFront.work, W.Matrix() );
+            if( !blockLDL )
+                FrontLowerBackwardSolve
+                ( orientation, localRootFront.frontL, localRootFront.work );
+            else
+                FrontBlockLowerBackwardSolve
+                ( orientation, localRootFront.frontL, localRootFront.work );
+        }
+
+        // Store this node's portion of the result
+        XT = WT.Matrix();
+    }
+}
+
+template<typename F>
+inline void DistLowerBackwardSolve
+( Orientation orientation, const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X )
+{
+#ifndef RELEASE
+    CallStackEntry entry("DistLowerBackwardSolve");
+#endif
+    const int numDistNodes = info.distNodes.size();
+    const int width = X.Width();
+    const SymmFrontType frontType = L.frontType;
+    const bool blockLDL = ( frontType == BLOCK_LDL_2D );
+    if( FrontsAre1d(frontType) )
+        throw std::logic_error("1d solve mode is not yet implemented");
+    if( frontType == SYMM_2D )
+        throw std::logic_error("SYMM_2D solve mode not yet implemented");
+
+    // Directly operate on the root separator's portion of the right-hand sides
+    const DistSymmNodeInfo& rootNode = info.distNodes.back();
+    const SymmFront<F>& localRootFront = L.localFronts.back();
+    if( numDistNodes == 1 )
+    {
+        View( localRootFront.work, X.localNodes.back() );
+        if( !blockLDL )
+            FrontLowerBackwardSolve
+            ( orientation, localRootFront.frontL, localRootFront.work );
+        else
+            FrontBlockLowerBackwardSolve
+            ( orientation, localRootFront.frontL, localRootFront.work );
+    }
+    else
+    {
+        const DistSymmFront<F>& rootFront = L.distFronts.back();
+        View( rootFront.work2d, X.distNodes.back() );
+        // TODO: What about non-inverted case?!?
+        /*
+        if( frontType == LDL_SELINV_2D )
+            FrontFastLowerBackwardSolve
+            ( orientation, rootFront.front2dL, rootFront.work2d );
+        else
+            FrontBlockLowerBackwardSolve
+            ( orientation, rootFront.front2dL, rootFront.work2d );
+        */
+    }
+
+    for( int s=numDistNodes-2; s>=0; --s )
+    {
+        const DistSymmNodeInfo& parentNode = info.distNodes[s+1];
+        const DistSymmNodeInfo& node = info.distNodes[s];
+        const DistSymmFront<F>& parentFront = L.distFronts[s+1];
+        const DistSymmFront<F>& front = L.distFronts[s];
+        const Grid& grid = front.front2dL.Grid();
+        const int gridHeight = grid.Height(); 
+        const int gridWidth = grid.Width();
+        const Grid& parentGrid = parentFront.front2dL.Grid();
+        const int parentGridHeight = parentGrid.Height();
+        const int parentGridWidth = parentGrid.Width();
+        mpi::Comm comm = grid.VCComm(); 
+        mpi::Comm parentComm = parentGrid.VCComm();
+        const int parentCommSize = mpi::CommSize( parentComm );
+        const int frontHeight = front.front2dL.Height();
+
+        // Set up a workspace
+        DistMatrix<F>& W = front.work1d;
+        W.SetGrid( grid );
+        W.ResizeTo( frontHeight, width );
+        DistMatrix<F> WT(grid), WB(grid);
+        PartitionDown
+        ( W, WT,
+             WB, node.size );
+        Matrix<F>& XT = 
+          ( s>0 ? X.distNodes[s-1].Matrix() : X.localNodes.back() );
+        WT.Matrix() = XT;
+
+        //
+        // Set the bottom from the parent
+        //
+
+        // Pack the updates using the recv approach from the forward solve
+        const MatrixCommMeta& commMeta = X.commMetas[s];
+        int sendBufferSize = 0;
+        std::vector<int> sendCounts(parentCommSize), sendDispls(parentCommSize);
+        for( int proc=0; proc<parentCommSize; ++proc )
+        {
+            // childRecvInd contains pairs of indices, but we will send one
+            // floating-point value per pair
+            const int sendSize = commMeta.childRecvInd[proc].size()/2;
+            sendCounts[proc] = sendSize;
+            sendDispls[proc] = sendBufferSize;
+            sendBufferSize += sendSize;
+        }
+        std::vector<F> sendBuffer( sendBufferSize );
+
+        DistMatrix<F>& parentWork = parentFront.work2d;
+        for( int proc=0; proc<parentCommSize; ++proc )
+        {
+            F* sendValues = &sendBuffer[sendDispls[proc]];
+            const std::vector<int>& recvInd = commMeta.childRecvInd[proc];
+            for( unsigned k=0; k<recvInd.size()/2; ++k )
+            {
+                const int iFrontLoc = recvInd[2*k+0];
+                const int jLoc = recvInd[2*k+1];
+                sendValues[k] = parentWork.GetLocal( iFrontLoc, jLoc );
+            }
+        }
+        parentWork.Empty();
+
+        // Set up the receive buffer
+        int recvBufferSize = 0;
+        std::vector<int> recvCounts(parentCommSize), recvDispls(parentCommSize);
+        for( int proc=0; proc<parentCommSize; ++proc )
+        {
+            const int recvSize = commMeta.numChildSendInd[proc];
+            recvCounts[proc] = recvSize;
+            recvDispls[proc] = recvBufferSize;
+            recvBufferSize += recvSize;
+        }
+        std::vector<F> recvBuffer( recvBufferSize );
+#ifndef RELEASE
+        VerifySendsAndRecvs( sendCounts, recvCounts, parentComm );
+#endif
+
+        // AllToAll to send and recv parent updates
+        SparseAllToAll
+        ( sendBuffer, sendCounts, sendDispls,
+          recvBuffer, recvCounts, recvDispls, parentComm );
+        std::vector<F>().swap( sendBuffer );
+        std::vector<int>().swap( sendCounts );
+        std::vector<int>().swap( sendDispls );
+
+        // Unpack the updates using the send approach from the forward solve
+        const bool onLeft = node.onLeft;
+        const std::vector<int>& myRelInd = 
+            ( onLeft ? parentNode.leftRelInd : parentNode.rightRelInd );
+        const int colShift = WB.ColShift();
+        const int rowShift = WB.RowShift();
+        const int localHeight = WB.LocalHeight();
+        const int localWidth = WB.LocalWidth();
+        for( int iUpdateLoc=0; iUpdateLoc<localHeight; ++iUpdateLoc )
+        {
+            const int iUpdate = colShift + iUpdateLoc*gridHeight;
+            const int startRow = myRelInd[iUpdate] % parentGridHeight;
+            for( int jLoc=0; jLoc<localWidth; ++jLoc )
+            {
+                const int jUpdate = rowShift + jLoc*gridWidth;
+                const int startCol = jUpdate % parentGridWidth;
+                const int startRank = startRow + startCol*parentGridHeight;
+                WB.SetLocal
+                ( iUpdateLoc, jLoc, recvBuffer[recvDispls[startRank]++] );
+            }
+        }
+        std::vector<F>().swap( recvBuffer );
+        std::vector<int>().swap( recvCounts );
+        std::vector<int>().swap( recvDispls );
+
+        // Call the custom node backward solve
+        if( s > 0 )
+        {
+            // TODO: Handle non-inverted case
+            /*
+            if( frontType == LDL_SELINV_2D )
+                FrontFastLowerBackwardSolve
+                ( orientation, front.front2dL, W );
+            else // frontType == BLOCK_LDL_2D
+                FrontBlockLowerBackwardSolve
+                ( orientation, front.front2dL, front.work2d );
+            */
         }
         else
         {
