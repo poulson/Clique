@@ -403,6 +403,14 @@
   </dt>
 
       
+  <dt><a href="numeric/solve.html#DistNodalMatrix:T:::commMetas__mutable-std::vector:MatrixCommMeta:">DistNodalMatrix&lt;T&gt;::commMetas (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="numeric/solve.html#DistNodalMatrix:T:::ComputeCommMetas__DistSymmInfoCRC">DistNodalMatrix&lt;T&gt;::ComputeCommMetas (C++ function)</a>
+  </dt>
+
+      
   <dt><a href="numeric/solve.html#DistNodalMatrix:T:::DistNodalMatrix__DistMapCR.DistSymmInfoCR.DistMultiVec:T:CR">DistNodalMatrix&lt;T&gt;::DistNodalMatrix (C++ function)</a>, <a href="numeric/solve.html#DistNodalMatrix:T:::DistNodalMatrix__DistNodalMultiVec:T:CR">[1]</a>
   </dt>
 
@@ -450,6 +458,8 @@
   <dt><a href="numeric/solve.html#DistNodalMultiVec:T:::distNodes__std::vector:DistMatrix:T.VC.STAR::">DistNodalMultiVec&lt;T&gt;::distNodes (C++ member)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="numeric/solve.html#DistNodalMultiVec:T:::HeightC">DistNodalMultiVec&lt;T&gt;::Height (C++ function)</a>
   </dt>
@@ -458,8 +468,6 @@
   <dt><a href="numeric/solve.html#DistNodalMultiVec:T:::LocalHeightC">DistNodalMultiVec&lt;T&gt;::LocalHeight (C++ function)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="numeric/solve.html#DistNodalMultiVec:T:::localNodes__std::vector:Matrix:T::">DistNodalMultiVec&lt;T&gt;::localNodes (C++ member)</a>
   </dt>
@@ -741,7 +749,7 @@
   </dt>
 
       
-  <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::factorMeta__FactorMetadata">DistSymmNodeInfo::factorMeta (C++ member)</a>
+  <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::factorMeta__FactorCommMeta">DistSymmNodeInfo::factorMeta (C++ member)</a>
   </dt>
 
       
@@ -758,6 +766,10 @@
 
       
   <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::lowerStruct__std::vector:i:">DistSymmNodeInfo::lowerStruct (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::multiVecMeta__MultiVecCommMeta">DistSymmNodeInfo::multiVecMeta (C++ member)</a>
   </dt>
 
       
@@ -793,14 +805,6 @@
   </dt>
 
       
-  <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::solveMeta1d__SolveMetadata1d">DistSymmNodeInfo::solveMeta1d (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#DistSymmNodeInfo::solveMeta2d__SolveMetadata2d">DistSymmNodeInfo::solveMeta2d (C++ member)</a>
-  </dt>
-
-      
   <dt><a href="core/environment.html#DumpCallStack">DumpCallStack (C++ function)</a>
   </dt>
 
@@ -811,25 +815,25 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="symbolic/nested_dissection.html#FactorMetadata__struct">FactorMetadata (C++ type)</a>
+  <dt><a href="symbolic/nested_dissection.html#FactorCommMeta__struct">FactorCommMeta (C++ type)</a>
   </dt>
 
       
-  <dt><a href="symbolic/nested_dissection.html#FactorMetadata::childRecvInd__mutable-std::vector:std::vector:i::">FactorMetadata::childRecvInd (C++ member)</a>
+  <dt><a href="symbolic/nested_dissection.html#FactorCommMeta::childRecvInd__mutable-std::vector:std::vector:i::">FactorCommMeta::childRecvInd (C++ member)</a>
   </dt>
 
       
-  <dt><a href="symbolic/nested_dissection.html#FactorMetadata::Empty">FactorMetadata::Empty (C++ function)</a>
+  <dt><a href="symbolic/nested_dissection.html#FactorCommMeta::Empty">FactorCommMeta::Empty (C++ function)</a>
   </dt>
 
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="symbolic/nested_dissection.html#FactorMetadata::EmptyChildRecvIndicesC">FactorMetadata::EmptyChildRecvIndices (C++ function)</a>
+  <dt><a href="symbolic/nested_dissection.html#FactorCommMeta::EmptyChildRecvIndicesC">FactorCommMeta::EmptyChildRecvIndices (C++ function)</a>
   </dt>
 
       
-  <dt><a href="symbolic/nested_dissection.html#FactorMetadata::numChildSendInd__std::vector:i:">FactorMetadata::numChildSendInd (C++ member)</a>
+  <dt><a href="symbolic/nested_dissection.html#FactorCommMeta::numChildSendInd__std::vector:i:">FactorCommMeta::numChildSendInd (C++ member)</a>
   </dt>
 
       
@@ -1009,6 +1013,30 @@
   </dt>
 
       
+  <dt><a href="symbolic/nested_dissection.html#MatrixCommMeta__struct">MatrixCommMeta (C++ type)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#MatrixCommMeta::childRecvInd__std::vector:std::vector:i::">MatrixCommMeta::childRecvInd (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#MatrixCommMeta::Empty">MatrixCommMeta::Empty (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#MatrixCommMeta::localHeight__i">MatrixCommMeta::localHeight (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#MatrixCommMeta::localWidth__i">MatrixCommMeta::localWidth (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#MatrixCommMeta::numChildSendInd__std::vector:i:">MatrixCommMeta::numChildSendInd (C++ member)</a>
+  </dt>
+
+      
   <dt><a href="numeric/multiplication.html#Multiply__T.DistSparseMatrix:T:CR.DistMultiVec:T:CR.T.DistMultiVec:T:R">Multiply (C++ function)</a>
   </dt>
 
@@ -1056,6 +1084,26 @@
 
       
   <dt><a href="core/multi_vec.html#MultiVec:T:::WidthC">MultiVec&lt;T&gt;::Width (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#MultiVecCommMeta__struct">MultiVecCommMeta (C++ type)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#MultiVecCommMeta::childRecvInd__std::vector:std::vector:i::">MultiVecCommMeta::childRecvInd (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#MultiVecCommMeta::Empty">MultiVecCommMeta::Empty (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#MultiVecCommMeta::localSize__i">MultiVecCommMeta::localSize (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="symbolic/nested_dissection.html#MultiVecCommMeta::numChildSendInd__std::vector:i:">MultiVecCommMeta::numChildSendInd (C++ member)</a>
   </dt>
 
   </dl></td>
@@ -1147,50 +1195,6 @@
   </dt>
 
       
-  <dt><a href="symbolic/nested_dissection.html#SolveMetadata1d__struct">SolveMetadata1d (C++ type)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#SolveMetadata1d::childRecvInd__std::vector:std::vector:i::">SolveMetadata1d::childRecvInd (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#SolveMetadata1d::Empty">SolveMetadata1d::Empty (C++ function)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#SolveMetadata1d::localSize__i">SolveMetadata1d::localSize (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#SolveMetadata1d::numChildSendInd__std::vector:i:">SolveMetadata1d::numChildSendInd (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#SolveMetadata2d__struct">SolveMetadata2d (C++ type)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#SolveMetadata2d::childRecvInd__std::vector:std::vector:i::">SolveMetadata2d::childRecvInd (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#SolveMetadata2d::Empty">SolveMetadata2d::Empty (C++ function)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#SolveMetadata2d::localHeight__i">SolveMetadata2d::localHeight (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#SolveMetadata2d::localWidth__i">SolveMetadata2d::localWidth (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="symbolic/nested_dissection.html#SolveMetadata2d::numChildSendInd__std::vector:i:">SolveMetadata2d::numChildSendInd (C++ member)</a>
-  </dt>
-
-      
   <dt><a href="core/sparse_matrix.html#SparseMatrix:F:__class">SparseMatrix&lt;F&gt; (C++ type)</a>
   </dt>
 
@@ -1258,8 +1262,6 @@
   <dt><a href="core/sparse_matrix.html#SparseMatrix:T:::Row__iC">SparseMatrix&lt;T&gt;::Row (C++ function)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="core/sparse_matrix.html#SparseMatrix:T:::SourceBuffer">SparseMatrix&lt;T&gt;::SourceBuffer (C++ function)</a>
   </dt>
@@ -1280,6 +1282,8 @@
   <dt><a href="core/sparse_matrix.html#SparseMatrix:T:::TargetBuffer">SparseMatrix&lt;T&gt;::TargetBuffer (C++ function)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="core/sparse_matrix.html#SparseMatrix:T:::Update__i.i.T">SparseMatrix&lt;T&gt;::Update (C++ function)</a>
   </dt>
