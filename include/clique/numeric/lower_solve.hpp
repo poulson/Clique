@@ -56,7 +56,6 @@ inline void LowerSolve
     }
 }
 
-/*
 template<typename F>
 inline void LowerSolve
 ( Orientation orientation, const DistSymmInfo& info, 
@@ -76,6 +75,5 @@ inline void LowerSolve
         LocalLowerBackwardSolve( orientation, info, L, X );
     }
 }
-*/
 
 } // namespace cliq

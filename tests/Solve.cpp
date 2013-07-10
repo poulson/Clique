@@ -23,6 +23,7 @@ main( int argc, char* argv[] )
         const int n2 = Input("--n2","second grid dimension",30);
         const int n3 = Input("--n3","third grid dimension",30);
         const int numRhs = Input("--numRhs","number of right-hand sides",5);
+        const bool solve2d = Input("--solve2d","use 2d solve?",false);
         const bool sequential = Input
             ("--sequential","sequential partitions?",true);
         const int numDistSeps = Input
@@ -187,7 +188,10 @@ main( int argc, char* argv[] )
         }
         mpi::Barrier( comm );
         const double ldlStart = mpi::Time();
-        LDL( info, frontTree, LDL_1D );
+        if( solve2d )
+            LDL( info, frontTree, LDL_2D );
+        else
+            LDL( info, frontTree, LDL_1D );
         mpi::Barrier( comm );
         const double ldlStop = mpi::Time();
         if( commRank == 0 )
@@ -216,10 +220,20 @@ main( int argc, char* argv[] )
             std::cout.flush();
         }
         const double solveStart = mpi::Time();
-        DistNodalMultiVec<double> YNodal;
-        YNodal.Pull( inverseMap, info, Y );
-        Solve( info, frontTree, YNodal );
-        YNodal.Push( inverseMap, info, Y );
+        if( solve2d )
+        {
+            DistNodalMatrix<double> YNodal;
+            YNodal.Pull( inverseMap, info, Y );
+            Solve( info, frontTree, YNodal );
+            YNodal.Push( inverseMap, info, Y );
+        }
+        else
+        {
+            DistNodalMultiVec<double> YNodal;
+            YNodal.Pull( inverseMap, info, Y );
+            Solve( info, frontTree, YNodal );
+            YNodal.Push( inverseMap, info, Y );
+        }
         mpi::Barrier( comm );
         const double solveStop = mpi::Time();
         if( commRank == 0 )

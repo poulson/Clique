@@ -13,19 +13,22 @@ namespace cliq {
 template<typename F>
 void FrontBlockLowerForwardSolve
 ( const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
-
 template<typename F>
 void FrontBlockLowerForwardSolve
 ( const DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X );
+template<typename F>
+void FrontBlockLowerForwardSolve( const DistMatrix<F>& L, DistMatrix<F>& X );
 
 template<typename F>
 void FrontBlockLowerBackwardSolve
 ( Orientation orientation, 
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
-
 template<typename F>
 void FrontBlockLowerBackwardSolve
 ( Orientation orientation, const DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X );
+template<typename F>
+void FrontBlockLowerBackwardSolve
+( Orientation orientation, const DistMatrix<F>& L, DistMatrix<F>& X );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -150,6 +153,52 @@ inline void FrontBlockLowerForwardSolve
 }
 
 template<typename F>
+inline void FrontBlockLowerForwardSolve
+( const DistMatrix<F>& L, DistMatrix<F>& X )
+{
+#ifndef RELEASE
+    CallStackEntry entry("FrontBlockLowerForwardSolve");
+    if( L.Grid() != X.Grid() )
+        throw std::logic_error
+        ("L and X must be distributed over the same grid");
+    if( L.Height() < L.Width() || L.Height() != X.Height() )
+    {
+        std::ostringstream msg;
+        msg << "Nonconformal solve:\n"
+            << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
+            << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
+        throw std::logic_error( msg.str().c_str() );
+    }
+#endif
+    const Grid& g = L.Grid();
+    if( g.Size() == 1 )
+    {
+        FrontBlockLowerForwardSolve( L.LockedMatrix(), X.Matrix() );
+        return;
+    }
+
+    // Separate the top and bottom portions of X and L
+    const int snSize = L.Width();
+    DistMatrix<F> LT(g),
+                  LB(g);
+    LockedPartitionDown
+    ( L, LT, 
+         LB, snSize );
+    DistMatrix<F> XT(g),
+                  XB(g);
+    PartitionDown
+    ( X, XT,
+         XB, snSize );
+
+    // XT := inv(ATL) XT
+    DistMatrix<F> Z( XT );
+    elem::Gemm( NORMAL, NORMAL, F(1), LT, Z, XT );
+
+    // XB := XB - LB XT
+    elem::Gemm( NORMAL, NORMAL, F(-1), LB, XT, F(1), XB );
+}
+
+template<typename F>
 inline void FrontBlockLowerBackwardSolve
 ( Orientation orientation, 
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
@@ -250,7 +299,6 @@ inline void FrontBlockLowerBackwardSolve
     if( XB.Height() == 0 )
         return;
 
-
     DistMatrix<F,MR,STAR> ZT_MR_STAR( g );
     DistMatrix<F,VR,STAR> ZT_VR_STAR( g );
     ZT_MR_STAR.AlignWith( LB );
@@ -290,6 +338,56 @@ inline void FrontBlockLowerBackwardSolve
         // XT[VC,* ] -= ZT[VC,* ]
         elem::Axpy( F(-1), ZT_VC_STAR, XT );
     }
+}
+
+template<typename F>
+inline void FrontBlockLowerBackwardSolve
+( Orientation orientation, const DistMatrix<F>& L, DistMatrix<F>& X )
+{
+#ifndef RELEASE
+    CallStackEntry entry("FrontBlockLowerBackwardSolve");
+    if( L.Grid() != X.Grid() )
+        throw std::logic_error
+        ("L and X must be distributed over the same grid");
+    if( L.Height() < L.Width() || L.Height() != X.Height() )
+    {
+        std::ostringstream msg;
+        msg << "Nonconformal solve:\n"
+            << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
+            << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
+        throw std::logic_error( msg.str().c_str() );
+    }
+    if( orientation == NORMAL )
+        throw std::logic_error("This solve must be (conjugate-)transposed");
+#endif
+    const Grid& g = L.Grid();
+    if( g.Size() == 1 )
+    {
+        FrontBlockLowerBackwardSolve
+        ( orientation, L.LockedMatrix(), X.Matrix() );
+        return;
+    }
+
+    const int snSize = L.Width();
+    DistMatrix<F> LT(g),
+                  LB(g);
+    LockedPartitionDown
+    ( L, LT,
+         LB, snSize );
+    DistMatrix<F> XT(g),
+                  XB(g);
+    PartitionDown
+    ( X, XT,
+         XB, snSize );
+    if( XB.Height() == 0 )
+        return;
+
+    // YT := LB^{T/H} XB
+    DistMatrix<F> YT( XT.Grid() );
+    elem::Gemm( orientation, NORMAL, F(1), LB, XB, YT );
+
+    // XT := XT - inv(ATL) YT
+    elem::Gemm( NORMAL, NORMAL, F(-1), LT, YT, F(1), XT );
 }
 
 } // namespace cliq

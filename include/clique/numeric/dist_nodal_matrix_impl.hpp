@@ -118,7 +118,7 @@ DistNodalMatrix<F>::ComputeCommMetas( const DistSymmInfo& info ) const
     // Handle the non-trivially distributed nodes
     for( int s=1; s<numDist; ++s )
     {
-        DistSymmNodeInfo& node = info.distNodes[s];
+        const DistSymmNodeInfo& node = info.distNodes[s];
         const int teamSize = mpi::CommSize( node.comm );
         const int teamRank = mpi::CommRank( node.comm );
         const Grid& grid = *node.grid;

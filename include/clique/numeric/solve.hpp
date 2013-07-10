@@ -14,6 +14,10 @@ template<typename F>
 void Solve
 ( const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X );
+template<typename F>
+void Solve
+( const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X );
 
 template<typename F>
 void SymmetricSolve
@@ -32,6 +36,34 @@ template<typename F>
 inline void Solve
 ( const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
+{
+#ifndef RELEASE
+    CallStackEntry entry("Solve");
+#endif
+    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
+    const Orientation orientation = ( L.isHermitian ? ADJOINT : TRANSPOSE );
+    if( !blockLDL )
+    {
+        // Solve against unit diagonal L
+        LowerSolve( NORMAL, info, L, X );
+        // Solve against diagonal
+        DiagonalSolve( info, L, X );
+        // Solve against the (conjugate-)transpose of the unit diagonal L
+        LowerSolve( orientation, info, L, X );
+    }
+    else
+    {
+        // Solve against block diagonal factor, L D
+        LowerSolve( NORMAL, info, L, X );
+        // Solve against the (conjugate-)transpose of the block unit diagonal L
+        LowerSolve( orientation, info, L, X );
+    }
+}
+
+template<typename F>
+inline void Solve
+( const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("Solve");

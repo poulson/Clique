@@ -14,12 +14,17 @@ template<typename F>
 void FrontLowerForwardSolve
 ( const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
   bool singleL11AllGather=true );
+template<typename F>
+void FrontLowerForwardSolve( const DistMatrix<F>& L, DistMatrix<F>& X );
 
 template<typename F>
-inline void FrontLowerBackwardSolve
+void FrontLowerBackwardSolve
 ( Orientation orientation, 
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
   bool singleL11AllGather=true );
+template<typename F>
+void FrontLowerBackwardSolve
+( Orientation orientation, const DistMatrix<F>& L, DistMatrix<F>& X );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -395,6 +400,26 @@ inline void FrontLowerForwardSolve
 }
 
 template<typename F>
+inline void FrontLowerForwardSolve( const DistMatrix<F>& L, DistMatrix<F>& X )
+{
+#ifndef RELEASE
+    CallStackEntry entry("FrontLowerForwardSolve");
+    if( L.Grid() != X.Grid() )
+        throw std::logic_error
+        ("L and X must be distributed over the same grid");
+    if( L.Height() < L.Width() || L.Height() != X.Height() )
+    {
+        std::ostringstream msg;
+        msg << "Nonconformal solve:\n"
+            << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
+            << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
+        throw std::logic_error( msg.str().c_str() );
+    }
+#endif
+    elem::internal::TrsmLLNMedium( NON_UNIT, F(1), L, X, false );
+}
+
+template<typename F>
 inline void FrontLowerBackwardSolve
 ( Orientation orientation, 
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
@@ -449,6 +474,49 @@ inline void FrontLowerBackwardSolve
         internal::BackwardSingle( orientation, LT, XT );
     else
         internal::BackwardMany( orientation, LT, XT );
+}
+
+template<typename F>
+inline void FrontLowerBackwardSolve
+( Orientation orientation, const DistMatrix<F>& L, DistMatrix<F>& X )
+{
+#ifndef RELEASE
+    CallStackEntry entry("FrontLowerBackwardSolve");
+    if( L.Grid() != X.Grid() )
+        throw std::logic_error
+        ("L and X must be distributed over the same grid");
+    if( L.Height() < L.Width() || L.Height() != X.Height() )
+    {
+        std::ostringstream msg;
+        msg << "Nonconformal solve:\n"
+            << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
+            << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
+        throw std::logic_error( msg.str().c_str() );
+    }
+    if( orientation == NORMAL )
+        throw std::logic_error("This solve must be (conjugate-)transposed");
+#endif
+    const Grid& g = L.Grid();
+    if( g.Size() == 1 )
+    {
+        FrontLowerBackwardSolve( orientation, L.LockedMatrix(), X.Matrix() );
+        return;
+    }
+
+    DistMatrix<F> LT(g),
+                  LB(g);
+    LockedPartitionDown
+    ( L, LT,
+         LB, L.Width() );
+
+    DistMatrix<F> XT(g),
+                  XB(g);
+    PartitionDown
+    ( X, XT,
+         XB, L.Width() );
+
+    elem::Gemm( orientation, NORMAL, F(-1), LB, XB, F(1), XT );
+    elem::internal::TrsmLLTMedium( orientation, NON_UNIT, F(1), LT, XT, false );
 }
 
 } // namespace cliq

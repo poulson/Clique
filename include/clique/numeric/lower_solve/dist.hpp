@@ -198,8 +198,6 @@ inline void DistLowerForwardSolve
     const SymmFrontType frontType = L.frontType;
     if( FrontsAre1d(frontType) )
         throw std::logic_error("1d solves not yet implemented");
-    if( frontType == SYMM_2D )
-        throw std::logic_error("SYMM_2D mode not yet implemented");
     const bool computeCommMetas = ( X.commMetas.size() == 0 );
     if( computeCommMetas )
         X.ComputeCommMetas( info );
@@ -209,7 +207,7 @@ inline void DistLowerForwardSolve
     const DistSymmFront<F>& distLeafFront = L.distFronts[0];
     const Grid& leafGrid = distLeafFront.front2dL.Grid();
     distLeafFront.work2d.LockedAttach
-    ( localRootFront.work.Height(), localRootFront.work.Width(), 0,
+    ( localRootFront.work.Height(), localRootFront.work.Width(), 0, 0,
       localRootFront.work.LockedBuffer(), localRootFront.work.LDim(), 
       leafGrid );
     
@@ -326,13 +324,12 @@ inline void DistLowerForwardSolve
         std::vector<int>().swap( recvDispls );
 
         // Now that the RHS is set up, perform this node's solve
-        // TODO: Handle non-inverted case
-        /*
         if( frontType == LDL_SELINV_2D )
             FrontFastLowerForwardSolve( front.front2dL, W );
-        else // frontType == BLOCK_LDL_2D
+        else if( frontType == LDL_2D )
+            FrontLowerForwardSolve( front.front2dL, W );
+        else // BLOCK_LDL_2D
             FrontBlockLowerForwardSolve( front.front2dL, W );
-        */
 
         // Store this node's portion of the result
         X.distNodes[s-1] = WT;
@@ -542,8 +539,6 @@ inline void DistLowerBackwardSolve
     const bool blockLDL = ( frontType == BLOCK_LDL_2D );
     if( FrontsAre1d(frontType) )
         throw std::logic_error("1d solve mode is not yet implemented");
-    if( frontType == SYMM_2D )
-        throw std::logic_error("SYMM_2D solve mode not yet implemented");
 
     // Directly operate on the root separator's portion of the right-hand sides
     const DistSymmNodeInfo& rootNode = info.distNodes.back();
@@ -562,15 +557,15 @@ inline void DistLowerBackwardSolve
     {
         const DistSymmFront<F>& rootFront = L.distFronts.back();
         View( rootFront.work2d, X.distNodes.back() );
-        // TODO: What about non-inverted case?!?
-        /*
         if( frontType == LDL_SELINV_2D )
             FrontFastLowerBackwardSolve
+            ( orientation, rootFront.front2dL, rootFront.work2d );
+        else if( frontType == LDL_2D )
+            FrontLowerBackwardSolve
             ( orientation, rootFront.front2dL, rootFront.work2d );
         else
             FrontBlockLowerBackwardSolve
             ( orientation, rootFront.front2dL, rootFront.work2d );
-        */
     }
 
     for( int s=numDistNodes-2; s>=0; --s )
@@ -585,13 +580,12 @@ inline void DistLowerBackwardSolve
         const Grid& parentGrid = parentFront.front2dL.Grid();
         const int parentGridHeight = parentGrid.Height();
         const int parentGridWidth = parentGrid.Width();
-        mpi::Comm comm = grid.VCComm(); 
         mpi::Comm parentComm = parentGrid.VCComm();
         const int parentCommSize = mpi::CommSize( parentComm );
         const int frontHeight = front.front2dL.Height();
 
         // Set up a workspace
-        DistMatrix<F>& W = front.work1d;
+        DistMatrix<F>& W = front.work2d;
         W.SetGrid( grid );
         W.ResizeTo( frontHeight, width );
         DistMatrix<F> WT(grid), WB(grid);
@@ -687,14 +681,15 @@ inline void DistLowerBackwardSolve
         if( s > 0 )
         {
             // TODO: Handle non-inverted case
-            /*
             if( frontType == LDL_SELINV_2D )
                 FrontFastLowerBackwardSolve
                 ( orientation, front.front2dL, W );
-            else // frontType == BLOCK_LDL_2D
+            else if( frontType == LDL_2D )
+                FrontLowerBackwardSolve
+                ( orientation, front.front2dL, front.work2d );
+            else
                 FrontBlockLowerBackwardSolve
                 ( orientation, front.front2dL, front.work2d );
-            */
         }
         else
         {

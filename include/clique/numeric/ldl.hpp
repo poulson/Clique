@@ -63,8 +63,8 @@ LDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, SymmFrontType newFrontType )
 #endif
     if( L.frontType != SYMM_2D )
         throw std::logic_error
-        ("Should only perform LDL factorization of 2D "
-         "symmetric/Hermitian matrices");
+        ("Should only perform LDL factorization of 2D symmetric/Hermitian "
+         "matrices");
 
     bool blockLDL;
     if( newFrontType == LDL_2D || newFrontType == LDL_1D || 
