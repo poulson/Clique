@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>The MultiVec class &mdash; Clique 0.1 documentation</title>
+    <title>Sparsity-independent vectors &mdash; Clique 0.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -26,28 +26,37 @@
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="../_static/theme_extras.js"></script>
-    <link rel="top" title="Clique 0.1 documentation" href="../index.html" /> 
+    <link rel="top" title="Clique 0.1 documentation" href="../index.html" />
+    <link rel="up" title="Core functionality" href="../core.html" />
+    <link rel="next" title="Symbolic computation" href="../symbolic.html" />
+    <link rel="prev" title="Sparse matrices" href="sparse_matrix.html" /> 
   </head>
   <body>
       <div class="header"><h1 class="heading"><a href="../index.html">
           <span>Clique 0.1 documentation</span></a></h1>
-        <h2 class="heading"><span>The MultiVec class</span></h2>
+        <h2 class="heading"><span>Sparsity-independent vectors</span></h2>
       </div>
       <div class="topnav">
       
         <p>
+        «&#160;&#160;<a href="sparse_matrix.html">Sparse matrices</a>
+        &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../symbolic.html">Symbolic computation</a>&#160;&#160;»
         </p>
 
       </div>
       <div class="content">
         
         
-  <div class="section" id="the-multivec-class">
-<h1>The MultiVec class<a class="headerlink" href="#the-multivec-class" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="sparsity-independent-vectors">
+<h1>Sparsity-independent vectors<a class="headerlink" href="#sparsity-independent-vectors" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="the-multivec-class">
+<h2>The MultiVec class<a class="headerlink" href="#the-multivec-class" title="Permalink to this headline">¶</a></h2>
 <p>The <a class="reference internal" href="#MultiVec:T:__class" title="MultiVec&lt;T&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">MultiVec&lt;T&gt;</span></tt></a> class is the standard interface in Clique for
 setting up multiple right-hand sides for sequential solves: it is a simplified
-version of <a class="reference internal" href="dist_multi_vec.html#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistMultiVec&lt;T&gt;</span></tt></a>.</p>
+version of <a class="reference internal" href="#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistMultiVec&lt;T&gt;</span></tt></a>.</p>
 <dl class="type">
 <dt id="MultiVec:T:__class">
 <em class="property">type </em>class <tt class="descname">MultiVec&lt;T&gt;</tt><a class="headerlink" href="#MultiVec:T:__class" title="Permalink to this definition">¶</a></dt>
@@ -161,13 +170,179 @@ void <tt class="descname">Axpy</tt><big>(</big>T <em>alpha</em>, <a class="refer
 </dd></dl>
 
 </div>
+<div class="section" id="the-distmultivec-class">
+<h2>The DistMultiVec class<a class="headerlink" href="#the-distmultivec-class" title="Permalink to this headline">¶</a></h2>
+<p>The <a class="reference internal" href="#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistMultiVec&lt;T&gt;</span></tt></a> class is the standard interface in Clique
+for setting up several right-hand sides for solves: it uses the same simple
+one-dimensional distribution as <a class="reference internal" href="sparse_matrix.html#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistSparseMatrix&lt;T&gt;</span></tt></a> and is meant
+to be simple to use.</p>
+<dl class="type">
+<dt id="DistMultiVec:T:__class">
+<em class="property">type </em>class <tt class="descname">DistMultiVec&lt;T&gt;</tt><a class="headerlink" href="#DistMultiVec:T:__class" title="Permalink to this definition">¶</a></dt>
+<dd><p class="rubric">Constructors</p>
+<dl class="function">
+<dt id="DistMultiVec:T:::DistMultiVec">
+ <tt class="descname">DistMultiVec</tt><big>(</big><big>)</big><a class="headerlink" href="#DistMultiVec:T:::DistMultiVec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructs a single vector of length zero over <tt class="docutils literal"><span class="pre">mpi::COMM_WORLD</span></tt>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistMultiVec:T:::DistMultiVec__mpi::Comm">
+ <tt class="descname">DistMultiVec</tt><big>(</big>mpi::Comm <em>comm</em><big>)</big><a class="headerlink" href="#DistMultiVec:T:::DistMultiVec__mpi::Comm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructs a single vector of length zero over the specified communicator.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistMultiVec:T:::DistMultiVec__i.i.mpi::Comm">
+ <tt class="descname">DistMultiVec</tt><big>(</big>int <em>height</em>, int <em>width</em>, mpi::Comm <em>comm</em><big>)</big><a class="headerlink" href="#DistMultiVec:T:::DistMultiVec__i.i.mpi::Comm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructs <cite>width</cite> vectors, each of the given height, over a particular
+communicator.</p>
+</dd></dl>
+
+<p class="rubric">High-level information</p>
+<dl class="function">
+<dt id="DistMultiVec:T:::HeightC">
+int <tt class="descname">Height</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistMultiVec:T:::HeightC" title="Permalink to this definition">¶</a></dt>
+<dd><p>The length of the vectors.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistMultiVec:T:::WidthC">
+int <tt class="descname">Width</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistMultiVec:T:::WidthC" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of vectors.</p>
+</dd></dl>
+
+<p class="rubric">Communicator-management</p>
+<dl class="function">
+<dt id="DistMultiVec:T:::SetComm__mpi::Comm">
+void <tt class="descname">SetComm</tt><big>(</big>mpi::Comm <em>comm</em><big>)</big><a class="headerlink" href="#DistMultiVec:T:::SetComm__mpi::Comm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Empties the multi-vector and reconfigures it to be distributed over the
+specified communicator.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistMultiVec:T:::CommC">
+mpi::Comm <tt class="descname">Comm</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistMultiVec:T:::CommC" title="Permalink to this definition">¶</a></dt>
+<dd><p>The communciator for the distributed multi-vector.</p>
+</dd></dl>
+
+<p class="rubric">Distribution information</p>
+<dl class="function">
+<dt id="DistMultiVec:T:::BlocksizeC">
+int <tt class="descname">Blocksize</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistMultiVec:T:::BlocksizeC" title="Permalink to this definition">¶</a></dt>
+<dd><p>The distribution blocksize of the multi-vector: the process with
+rank <tt class="docutils literal"><span class="pre">r</span></tt>&#8216;s first local row is global row <tt class="docutils literal"><span class="pre">r*blocksize</span></tt>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistMultiVec:T:::FirstLocalRowC">
+int <tt class="descname">FirstLocalRow</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistMultiVec:T:::FirstLocalRowC" title="Permalink to this definition">¶</a></dt>
+<dd><p>The global index of the first row assigned to this process.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistMultiVec:T:::LocalHeightC">
+int <tt class="descname">LocalHeight</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistMultiVec:T:::LocalHeightC" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of rows assigned to this process.</p>
+</dd></dl>
+
+<p class="rubric">Local data</p>
+<dl class="function">
+<dt id="DistMultiVec:T:::GetLocal__i.iC">
+T <tt class="descname">GetLocal</tt><big>(</big>int <em>localRow</em>, int <em>col</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistMultiVec:T:::GetLocal__i.iC" title="Permalink to this definition">¶</a></dt>
+<dd><p>The value of the specified local entry in the <cite>col</cite> vector.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistMultiVec:T:::SetLocal__i.i.T">
+void <tt class="descname">SetLocal</tt><big>(</big>int <em>localRow</em>, int <em>col</em>, T <em>value</em><big>)</big><a class="headerlink" href="#DistMultiVec:T:::SetLocal__i.i.T" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets a local entry equal to a particular value.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistMultiVec:T:::UpdateLocal__i.i.T">
+void <tt class="descname">UpdateLocal</tt><big>(</big>int <em>localRow</em>, int <em>col</em>, T <em>value</em><big>)</big><a class="headerlink" href="#DistMultiVec:T:::UpdateLocal__i.i.T" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add the specified value onto a local entry of the distributed
+multi-vector.</p>
+</dd></dl>
+
+<p class="rubric">For modifying the size of the multi-vector</p>
+<dl class="function">
+<dt id="DistMultiVec:T:::Empty">
+void <tt class="descname">Empty</tt><big>(</big><big>)</big><a class="headerlink" href="#DistMultiVec:T:::Empty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Frees all resources and empties the multi-vector.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistMultiVec:T:::ResizeTo__i.i">
+void <tt class="descname">ResizeTo</tt><big>(</big>int <em>height</em>, int <em>width</em><big>)</big><a class="headerlink" href="#DistMultiVec:T:::ResizeTo__i.i" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resizes the multi-vector to have <cite>width</cite> vectors, each of the specified
+height.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistMultiVec:T:::assign-operator__DistMultiVec:T:CR">
+<a class="reference internal" href="#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;">const DistMultiVec&lt;T&gt;&amp;</a> <tt class="descname">operator=</tt><big>(</big><a class="reference internal" href="#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;">const DistMultiVec&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#DistMultiVec:T:::assign-operator__DistMultiVec:T:CR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Makes this multi-vector a copy of the given multi-vector.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="type">
+<dt id="DistMultiVec:F:__class">
+<em class="property">type </em>class <tt class="descname">DistMultiVec&lt;F&gt;</tt><a class="headerlink" href="#DistMultiVec:F:__class" title="Permalink to this definition">¶</a></dt>
+<dd><p>The same as <a class="reference internal" href="#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistMultiVec&lt;T&gt;</span></tt></a>, but the implication is that the
+underlying datatype <cite>F</cite> is a field rather than just a ring.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="MakeZeros__DistMultiVec:T:R">
+void <tt class="descname">MakeZeros</tt><big>(</big><a class="reference internal" href="#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;">DistMultiVec&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#MakeZeros__DistMultiVec:T:R" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets every entry in the multi-vector to zero.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="MakeUniform__DistMultiVec:T:R">
+void <tt class="descname">MakeUniform</tt><big>(</big><a class="reference internal" href="#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;">DistMultiVec&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#MakeUniform__DistMultiVec:T:R" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets each entry in the multi-vector to a sample from the unit ball
+appropriate for type <tt class="docutils literal"><span class="pre">T</span></tt>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="Norms__DistMultiVec:F:CR.std::vector:typename-Base:F:::type:R">
+void <tt class="descname">Norms</tt><big>(</big><a class="reference internal" href="#DistMultiVec:F:__class" title="DistMultiVec&lt;F&gt;">const DistMultiVec&lt;F&gt;&amp;</a> <em>X</em>, std::vector&lt;typename Base&lt;F&gt;::type&gt;&amp; <em>norms</em><big>)</big><a class="headerlink" href="#Norms__DistMultiVec:F:CR.std::vector:typename-Base:F:::type:R" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the Euclidean norms of each of the column vectors.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="Norm__DistMultiVec:F:CR">
+<a class="reference internal" href="environment.html#Base:F:::type" title="Base&lt;F&gt;::type">typename Base&lt;F&gt;::type</a> <tt class="descname">Norm</tt><big>(</big><a class="reference internal" href="#DistMultiVec:F:__class" title="DistMultiVec&lt;F&gt;">const DistMultiVec&lt;F&gt;&amp;</a> <em>x</em><big>)</big><a class="headerlink" href="#Norm__DistMultiVec:F:CR" title="Permalink to this definition">¶</a></dt>
+<dd><div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This only applies when there is only a single column.</p>
+</div>
+<p>Returns the Euclidean norm of the column-vector <tt class="docutils literal"><span class="pre">x</span></tt>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="Axpy__T.DistMultiVec:T:CR.DistMultiVec:T:R">
+void <tt class="descname">Axpy</tt><big>(</big>T <em>alpha</em>, <a class="reference internal" href="#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;">const DistMultiVec&lt;T&gt;&amp;</a> <em>X</em>, <a class="reference internal" href="#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;">DistMultiVec&lt;T&gt;&amp;</a> <em>Y</em><big>)</big><a class="headerlink" href="#Axpy__T.DistMultiVec:T:CR.DistMultiVec:T:R" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates <span class="math">\(Y := \alpha X + Y\)</span>.</p>
+</dd></dl>
+
+</div>
+</div>
 
 
       </div>
       <div class="bottomnav">
       
         <p>
+        «&#160;&#160;<a href="sparse_matrix.html">Sparse matrices</a>
+        &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="../symbolic.html">Symbolic computation</a>&#160;&#160;»
         </p>
 
       </div>

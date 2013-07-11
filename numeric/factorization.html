@@ -28,8 +28,8 @@
     <script type="text/javascript" src="../_static/theme_extras.js"></script>
     <link rel="top" title="Clique 0.1 documentation" href="../index.html" />
     <link rel="up" title="Numerics" href="../numeric.html" />
-    <link rel="next" title="Solves" href="solve.html" />
-    <link rel="prev" title="Multiplication" href="multiplication.html" /> 
+    <link rel="next" title="Supernodal data structures" href="supernodal.html" />
+    <link rel="prev" title="Frontal trees" href="front_tree.html" /> 
   </head>
   <body>
       <div class="header"><h1 class="heading"><a href="../index.html">
@@ -39,11 +39,11 @@
       <div class="topnav">
       
         <p>
-        «&#160;&#160;<a href="multiplication.html">Multiplication</a>
+        «&#160;&#160;<a href="front_tree.html">Frontal trees</a>
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
         &#160;&#160;::&#160;&#160;
-        <a href="solve.html">Solves</a>&#160;&#160;»
+        <a href="supernodal.html">Supernodal data structures</a>&#160;&#160;»
         </p>
 
       </div>
@@ -56,7 +56,7 @@
 <h2>LDL factorization<a class="headerlink" href="#ldl-factorization" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="LDL__DistSymmInfoR.DistSymmFrontTree:F:R.SymmFrontType">
-void <tt class="descname">LDL</tt><big>(</big><a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="#DistSymmFrontTree:F:__struct" title="DistSymmFrontTree&lt;F&gt;">DistSymmFrontTree&lt;F&gt;&amp;</a> <em>L</em>, <a class="reference internal" href="#SymmFrontType__enum" title="SymmFrontType">SymmFrontType</a> <em>newFrontType</em><big>)</big><a class="headerlink" href="#LDL__DistSymmInfoR.DistSymmFrontTree:F:R.SymmFrontType" title="Permalink to this definition">¶</a></dt>
+void <tt class="descname">LDL</tt><big>(</big><a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="front_tree.html#DistSymmFrontTree:F:__struct" title="DistSymmFrontTree&lt;F&gt;">DistSymmFrontTree&lt;F&gt;&amp;</a> <em>L</em>, <a class="reference internal" href="front_tree.html#SymmFrontType__enum" title="SymmFrontType">SymmFrontType</a> <em>newFrontType</em><big>)</big><a class="headerlink" href="#LDL__DistSymmInfoR.DistSymmFrontTree:F:R.SymmFrontType" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performs either an <span class="math">\(LDL^T\)</span> or <span class="math">\(LDL^H\)</span> factorization, depending
 on whether <cite>L</cite> is marked as Hermitian. See
 <a class="reference external" href="https://github.com/poulson/Clique/blob/master/tests/Solve.cpp">tests/Solve</a> for an example usage.</p>
@@ -68,157 +68,6 @@ which are not Hermitian positive-definite.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="data-structures">
-<h2>Data structures<a class="headerlink" href="#data-structures" title="Permalink to this headline">¶</a></h2>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">The following data structure is meant to be treated as a black-box by the
-vast majority of users, but its member variables are documented here for
-users who are interested.</p>
-</div>
-<div class="section" id="distsymmfronttree">
-<h3>DistSymmFrontTree<a class="headerlink" href="#distsymmfronttree" title="Permalink to this headline">¶</a></h3>
-<p>This data structure represents a distributed symmetric <span class="math">\(LDL^T\)</span> or
-<span class="math">\(LDL^H\)</span> factorization.</p>
-<dl class="type">
-<dt id="SymmFront:T:__struct">
-<em class="property">type </em>struct <tt class="descname">SymmFront&lt;T&gt;</tt><a class="headerlink" href="#SymmFront:T:__struct" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="member">
-<dt id="SymmFront:T:::frontL__Matrix:T:">
-<a class="reference internal" href="../core/environment.html#Matrix:T:__class" title="Matrix&lt;T&gt;">Matrix&lt;T&gt;</a> <tt class="descname">frontL</tt><a class="headerlink" href="#SymmFront:T:::frontL__Matrix:T:" title="Permalink to this definition">¶</a></dt>
-<dd><p>The left half of a local symmetric frontal matrix. If <cite>frontL</cite> is
-<span class="math">\(m \times n\)</span>, then the associated node has <span class="math">\(n\)</span> vertices
-and the lower structure is of size <span class="math">\(m-n\)</span>.</p>
-</dd></dl>
-
-<dl class="member">
-<dt id="SymmFront:T:::diag__Matrix:T:">
-<a class="reference internal" href="../core/environment.html#Matrix:T:__class" title="Matrix&lt;T&gt;">Matrix&lt;T&gt;</a> <tt class="descname">diag</tt><a class="headerlink" href="#SymmFront:T:::diag__Matrix:T:" title="Permalink to this definition">¶</a></dt>
-<dd><p>Stores the diagonal of the frontal matrix after factorization.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="type">
-<dt id="DistSymmFront:T:__struct">
-<em class="property">type </em>struct <tt class="descname">DistSymmFront&lt;T&gt;</tt><a class="headerlink" href="#DistSymmFront:T:__struct" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="member">
-<dt id="DistSymmFront:T:::front1dL__DistMatrix:T.VC.STAR:">
-<a class="reference internal" href="../core/environment.html#DistMatrix:T.VC.STAR:__class" title="DistMatrix&lt;T, VC, STAR&gt;">DistMatrix&lt;T, VC, STAR&gt;</a> <tt class="descname">front1dL</tt><a class="headerlink" href="#DistSymmFront:T:::front1dL__DistMatrix:T.VC.STAR:" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="member">
-<dt id="DistSymmFront:T:::front2dL__DistMatrix:T:">
-<a class="reference internal" href="../core/environment.html#DistMatrix:T:__class" title="DistMatrix&lt;T&gt;">DistMatrix&lt;T&gt;</a> <tt class="descname">front2dL</tt><a class="headerlink" href="#DistSymmFront:T:::front2dL__DistMatrix:T:" title="Permalink to this definition">¶</a></dt>
-<dd><p>The left half of a frontal matrix in a 1D/2D distribution.
-If <cite>front1dL</cite>/<cite>front2dL</cite> is <span class="math">\(m \times n\)</span>, then the associated node
-has <span class="math">\(n\)</span> vertices and the lower structure is of size <span class="math">\(m-n\)</span>.</p>
-</dd></dl>
-
-<dl class="member">
-<dt id="DistSymmFront:T:::diag1d__DistMatrix:T.VC.STAR:">
-<a class="reference internal" href="../core/environment.html#DistMatrix:T.VC.STAR:__class" title="DistMatrix&lt;T, VC, STAR&gt;">DistMatrix&lt;T, VC, STAR&gt;</a> <tt class="descname">diag1d</tt><a class="headerlink" href="#DistSymmFront:T:::diag1d__DistMatrix:T.VC.STAR:" title="Permalink to this definition">¶</a></dt>
-<dd><p>Stores the diagonal of the frontal matrix after factorization.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="type">
-<dt id="SymmFrontType__enum">
-<em class="property">type </em>enum <tt class="descname">SymmFrontType</tt><a class="headerlink" href="#SymmFrontType__enum" title="Permalink to this definition">¶</a></dt>
-<dd><p>Can be set to either</p>
-<ul class="simple">
-<li><tt class="docutils literal"><span class="pre">SYMM_1D</span></tt>: Symmetric/Hermitian fronts distributed in a 1D manner</li>
-<li><tt class="docutils literal"><span class="pre">SYMM_2D</span></tt>: Symmetric/Hermitian fronts distributed in a 2D manner</li>
-<li><tt class="docutils literal"><span class="pre">LDL_1D</span></tt>: LDL factorization distributed in a 1D manner</li>
-<li><tt class="docutils literal"><span class="pre">LDL_2D</span></tt>: LDL factorization distributed in a 2D manner</li>
-<li><tt class="docutils literal"><span class="pre">LDL_SELINV_1D</span></tt>: LDL factorization with inverted diagonal blocks
-distributed in a 1D manner</li>
-<li><tt class="docutils literal"><span class="pre">LDL_SELINV_2D</span></tt>: LDL factorization with inverted diagonal blocks
-distributed in a 2D manner</li>
-<li><tt class="docutils literal"><span class="pre">BLOCK_LDL_2D</span></tt>: Block LDL factorization with fronts distributed in a
-2D manner</li>
-</ul>
-</dd></dl>
-
-<dl class="type">
-<dt id="DistSymmFrontTree:T:__struct">
-<em class="property">type </em>struct <tt class="descname">DistSymmFrontTree&lt;T&gt;</tt><a class="headerlink" href="#DistSymmFrontTree:T:__struct" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="member">
-<dt id="DistSymmFrontTree:T:::isHermitian__b">
-bool <tt class="descname">isHermitian</tt><a class="headerlink" href="#DistSymmFrontTree:T:::isHermitian__b" title="Permalink to this definition">¶</a></dt>
-<dd><p>If true, the matrix is assumed to be Hermitian; otherwise, it is
-treated as symmetric.</p>
-</dd></dl>
-
-<dl class="member">
-<dt id="DistSymmFrontTree:T:::frontType__SymmFrontType">
-<a class="reference internal" href="#SymmFrontType__enum" title="SymmFrontType">SymmFrontType</a> <tt class="descname">frontType</tt><a class="headerlink" href="#DistSymmFrontTree:T:::frontType__SymmFrontType" title="Permalink to this definition">¶</a></dt>
-<dd><p>Specifies the form of the frontal matrices.</p>
-</dd></dl>
-
-<dl class="member">
-<dt id="DistSymmFrontTree:T:::localFronts__std::vector:SymmFront:T::">
-std::vector&lt;SymmFront&lt;T&gt;&gt; <tt class="descname">localFronts</tt><a class="headerlink" href="#DistSymmFrontTree:T:::localFronts__std::vector:SymmFront:T::" title="Permalink to this definition">¶</a></dt>
-<dd><p>The vector of local frontal matrices.</p>
-</dd></dl>
-
-<dl class="member">
-<dt id="DistSymmFrontTree:T:::distFronts__std::vector:DistSymmFront:T::">
-std::vector&lt;DistSymmFront&lt;T&gt;&gt; <tt class="descname">distFronts</tt><a class="headerlink" href="#DistSymmFrontTree:T:::distFronts__std::vector:DistSymmFront:T::" title="Permalink to this definition">¶</a></dt>
-<dd><p>The vector of distributed frontal matrices.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="DistSymmFrontTree:T:::DistSymmFrontTree__Orientation.DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR">
- <tt class="descname">DistSymmFrontTree</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../core/dist_sparse_matrix.html#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;">const DistSparseMatrix&lt;T&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>map</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSeparatorTree__struct" title="DistSeparatorTree">const DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em><big>)</big><a class="headerlink" href="#DistSymmFrontTree:T:::DistSymmFrontTree__Orientation.DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR" title="Permalink to this definition">¶</a></dt>
-<dd><p>A constructor which converts a distributed sparse matrix into a symmetric
-frontal tree which is ready for factorization (e.g., with
-<a class="reference internal" href="#LDL__DistSymmInfoR.DistSymmFrontTree:F:R.SymmFrontType" title="LDL"><tt class="xref cpp cpp-func docutils literal"><span class="pre">LDL()</span></tt></a> or <tt class="xref cpp cpp-func docutils literal"><span class="pre">BlockLDL()</span></tt>).</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="DistSymmFrontTree:T:::Initialize__Orientation.DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR">
-void <tt class="descname">Initialize</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../core/dist_sparse_matrix.html#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;">const DistSparseMatrix&lt;T&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>map</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSeparatorTree__struct" title="DistSeparatorTree">const DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em><big>)</big><a class="headerlink" href="#DistSymmFrontTree:T:::Initialize__Orientation.DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR" title="Permalink to this definition">¶</a></dt>
-<dd><p>The same as the <a class="reference internal" href="#DistSymmFrontTree:T:::DistSymmFrontTree__Orientation.DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR" title="DistSymmFrontTree&lt;T&gt;::DistSymmFrontTree"><tt class="xref cpp cpp-func docutils literal"><span class="pre">DistSymmFrontTree&lt;T&gt;::DistSymmFrontTree()</span></tt></a>
-constructor, but callable after construction.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="DistSymmFrontTree:T:::TopLeftMemoryInfo__doubleR.doubleR.doubleR.doubleRC">
-void <tt class="descname">TopLeftMemoryInfo</tt><big>(</big>double&amp; <em>numLocalEntries</em>, double&amp; <em>minLocalEntries</em>, double&amp; <em>maxLocalEntries</em>, double&amp; <em>numGlobalEntries</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSymmFrontTree:T:::TopLeftMemoryInfo__doubleR.doubleR.doubleR.doubleRC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistSymmFrontTree:T:::BottomLeftMemoryInfo__doubleR.doubleR.doubleR.doubleRC">
-void <tt class="descname">BottomLeftMemoryInfo</tt><big>(</big>double&amp; <em>numLocalEntries</em>, double&amp; <em>minLocalEntries</em>, double&amp; <em>maxLocalEntries</em>, double&amp; <em>numGlobalEntries</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSymmFrontTree:T:::BottomLeftMemoryInfo__doubleR.doubleR.doubleR.doubleRC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistSymmFrontTree:T:::MemoryInfo__doubleR.doubleR.doubleR.doubleRC">
-void <tt class="descname">MemoryInfo</tt><big>(</big>double&amp; <em>numLocalEntries</em>, double&amp; <em>minLocalEntries</em>, double&amp; <em>maxLocalEntries</em>, double&amp; <em>numGlobalEntries</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSymmFrontTree:T:::MemoryInfo__doubleR.doubleR.doubleR.doubleRC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistSymmFrontTree:T:::FactorizationWork__doubleR.doubleR.doubleR.doubleR.bC">
-void <tt class="descname">FactorizationWork</tt><big>(</big>double&amp; <em>numLocalFlops</em>, double&amp; <em>minLocalFlops</em>, double&amp; <em>maxLocalFlops</em>, double&amp; <em>numGlobalFlops</em>, bool <em>selInv</em><em>=false </em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSymmFrontTree:T:::FactorizationWork__doubleR.doubleR.doubleR.doubleR.bC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="DistSymmFrontTree:T:::SolveWork__doubleR.doubleR.doubleR.doubleR.iC">
-void <tt class="descname">SolveWork</tt><big>(</big>double&amp; <em>numLocalFlops</em>, double&amp; <em>minLocalFlops</em>, double&amp; <em>maxLocalFlops</em>, double&amp; <em>numGlobalFlops</em>, int <em>numRhs</em><em>=1 </em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSymmFrontTree:T:::SolveWork__doubleR.doubleR.doubleR.doubleR.iC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="type">
-<dt id="DistSymmFrontTree:F:__struct">
-<em class="property">type </em>struct <tt class="descname">DistSymmFrontTree&lt;F&gt;</tt><a class="headerlink" href="#DistSymmFrontTree:F:__struct" title="Permalink to this definition">¶</a></dt>
-<dd><p>Same as above, but this implies that the underlying datatype <cite>F</cite> is a field.</p>
-</dd></dl>
-
-</div>
-</div>
 </div>
 
 
@@ -226,11 +75,11 @@ void <tt class="descname">SolveWork</tt><big>(</big>double&amp; <em>numLocalFlop
       <div class="bottomnav">
       
         <p>
-        «&#160;&#160;<a href="multiplication.html">Multiplication</a>
+        «&#160;&#160;<a href="front_tree.html">Frontal trees</a>
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
         &#160;&#160;::&#160;&#160;
-        <a href="solve.html">Solves</a>&#160;&#160;»
+        <a href="supernodal.html">Supernodal data structures</a>&#160;&#160;»
         </p>
 
       </div>

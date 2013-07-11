@@ -1,5 +1,8 @@
+Maps
+====
+
 The DistMap class
-=================
+-----------------
 The :cpp:type:`DistMap` class is essentially used for handling distributed 
 permutations and can serve as a black box for the vast majority of users.
 

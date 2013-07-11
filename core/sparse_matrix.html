@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>The SparseMatrix class &mdash; Clique 0.1 documentation</title>
+    <title>Sparse matrices &mdash; Clique 0.1 documentation</title>
     
     <link rel="stylesheet" href="../_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -28,33 +28,35 @@
     <script type="text/javascript" src="../_static/theme_extras.js"></script>
     <link rel="top" title="Clique 0.1 documentation" href="../index.html" />
     <link rel="up" title="Core functionality" href="../core.html" />
-    <link rel="next" title="The DistSparseMatrix class" href="dist_sparse_matrix.html" />
-    <link rel="prev" title="The DistMap class" href="dist_map.html" /> 
+    <link rel="next" title="Sparsity-independent vectors" href="multi_vec.html" />
+    <link rel="prev" title="Maps" href="map.html" /> 
   </head>
   <body>
       <div class="header"><h1 class="heading"><a href="../index.html">
           <span>Clique 0.1 documentation</span></a></h1>
-        <h2 class="heading"><span>The SparseMatrix class</span></h2>
+        <h2 class="heading"><span>Sparse matrices</span></h2>
       </div>
       <div class="topnav">
       
         <p>
-        «&#160;&#160;<a href="dist_map.html">The DistMap class</a>
+        «&#160;&#160;<a href="map.html">Maps</a>
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
         &#160;&#160;::&#160;&#160;
-        <a href="dist_sparse_matrix.html">The DistSparseMatrix class</a>&#160;&#160;»
+        <a href="multi_vec.html">Sparsity-independent vectors</a>&#160;&#160;»
         </p>
 
       </div>
       <div class="content">
         
         
-  <div class="section" id="the-sparsematrix-class">
-<h1>The SparseMatrix class<a class="headerlink" href="#the-sparsematrix-class" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="sparse-matrices">
+<h1>Sparse matrices<a class="headerlink" href="#sparse-matrices" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="the-sparsematrix-class">
+<h2>The SparseMatrix class<a class="headerlink" href="#the-sparsematrix-class" title="Permalink to this headline">¶</a></h2>
 <p>The <a class="reference internal" href="#SparseMatrix:T:__class" title="SparseMatrix&lt;T&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">SparseMatrix&lt;T&gt;</span></tt></a> class is supposed to provide a simple means
 of forming sequential sparse matrices within Clique and is a simplification of
-the upcoming <a class="reference internal" href="dist_sparse_matrix.html#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistSparseMatrix&lt;T&gt;</span></tt></a> class
+the upcoming <a class="reference internal" href="#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistSparseMatrix&lt;T&gt;</span></tt></a> class
 (which most users will work with).
 One might start by first constructing an empty double-precision
 <span class="math">\(N \times N\)</span> sparse matrix, e.g., with</p>
@@ -275,17 +277,299 @@ the underlying datatype <cite>F</cite> is a field rather than just a ring.</p>
 </dd></dl>
 
 </div>
+<div class="section" id="the-distsparsematrix-class">
+<h2>The DistSparseMatrix class<a class="headerlink" href="#the-distsparsematrix-class" title="Permalink to this headline">¶</a></h2>
+<p>The <a class="reference internal" href="#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistSparseMatrix&lt;T&gt;</span></tt></a> class is meant to provide a convenient
+means of building a distributed sparse matrix within Clique.
+After initializing a real double-precision <span class="math">\(N \times N\)</span> sparse matrix
+distributed over the communicator <tt class="docutils literal"><span class="pre">comm</span></tt>, e.g., with</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="n">DistSparseMatrix</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">A</span><span class="p">(</span> <span class="n">N</span><span class="p">,</span> <span class="n">comm</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p>the first row that a particular process owns, as well as how many rows it
+owns, can be returned with</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="k">const</span> <span class="kt">int</span> <span class="n">firstLocalRow</span> <span class="o">=</span> <span class="n">A</span><span class="p">.</span><span class="n">FirstLocalRow</span><span class="p">();</span>
+<span class="k">const</span> <span class="kt">int</span> <span class="n">localHeight</span> <span class="o">=</span> <span class="n">A</span><span class="p">.</span><span class="n">LocalHeight</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>Each process is then responsible for specifying the nonzeros in rows
+<tt class="docutils literal"><span class="pre">[firstLocalRow,firstLocalRow+localHeight)</span></tt>, and this is accomplished by
+<em>updating</em> particular locations in the matrix. It is instructive to look at an
+example of filling a 7-point finite-difference stencil over an <span class="math">\(n_1 \times n_2 \times n_3\)</span> grid before describing the individual functions</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="n">A</span><span class="p">.</span><span class="n">StartAssembly</span><span class="p">();</span>
+<span class="n">A</span><span class="p">.</span><span class="n">Reserve</span><span class="p">(</span> <span class="mi">7</span><span class="o">*</span><span class="n">localHeight</span> <span class="p">);</span>
+<span class="k">for</span><span class="p">(</span> <span class="kt">int</span> <span class="n">iLocal</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">iLocal</span><span class="o">&lt;</span><span class="n">localHeight</span><span class="p">;</span> <span class="o">++</span><span class="n">iLocal</span> <span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">const</span> <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">firstLocalRow</span> <span class="o">+</span> <span class="n">iLocal</span><span class="p">;</span>
+    <span class="k">const</span> <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="n">i</span> <span class="o">%</span> <span class="n">n1</span><span class="p">;</span>
+    <span class="k">const</span> <span class="kt">int</span> <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span><span class="o">/</span><span class="n">n1</span><span class="p">)</span> <span class="o">%</span> <span class="n">n2</span><span class="p">;</span>
+    <span class="k">const</span> <span class="kt">int</span> <span class="n">z</span> <span class="o">=</span> <span class="n">i</span><span class="o">/</span><span class="p">(</span><span class="n">n1</span><span class="o">*</span><span class="n">n2</span><span class="p">);</span>
+
+    <span class="n">A</span><span class="p">.</span><span class="n">Update</span><span class="p">(</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="mf">6.</span> <span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span> <span class="n">x</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">)</span>
+        <span class="n">A</span><span class="p">.</span><span class="n">Update</span><span class="p">(</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span> <span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span> <span class="n">x</span> <span class="o">!=</span> <span class="n">n1</span><span class="o">-</span><span class="mi">1</span> <span class="p">)</span>
+        <span class="n">A</span><span class="p">.</span><span class="n">Update</span><span class="p">(</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span> <span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span> <span class="n">y</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">)</span>
+        <span class="n">A</span><span class="p">.</span><span class="n">Update</span><span class="p">(</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="o">-</span><span class="n">n1</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span> <span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span> <span class="n">y</span> <span class="o">!=</span> <span class="n">n2</span><span class="o">-</span><span class="mi">1</span> <span class="p">)</span>
+        <span class="n">A</span><span class="p">.</span><span class="n">Update</span><span class="p">(</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="n">n1</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span> <span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span> <span class="n">z</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">)</span>
+        <span class="n">A</span><span class="p">.</span><span class="n">Update</span><span class="p">(</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="o">-</span><span class="n">n1</span><span class="o">*</span><span class="n">n2</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span> <span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span> <span class="n">z</span> <span class="o">!=</span> <span class="n">n3</span><span class="o">-</span><span class="mi">1</span> <span class="p">)</span>
+        <span class="n">A</span><span class="p">.</span><span class="n">Update</span><span class="p">(</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="n">n1</span><span class="o">*</span><span class="n">n2</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span> <span class="p">);</span>
+<span class="p">}</span>
+<span class="n">A</span><span class="p">.</span><span class="n">StopAssembly</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>The first thing to notice is that all routines which relate to modifying the
+sparse matrix are wrapped with <a class="reference internal" href="#DistSparseMatrix:T:::StartAssembly" title="DistSparseMatrix&lt;T&gt;::StartAssembly"><tt class="xref cpp cpp-func docutils literal"><span class="pre">DistSparseMatrix&lt;T&gt;::StartAssembly()</span></tt></a>
+and <a class="reference internal" href="#DistSparseMatrix:T:::StopAssembly" title="DistSparseMatrix&lt;T&gt;::StopAssembly"><tt class="xref cpp cpp-func docutils literal"><span class="pre">DistSparseMatrix&lt;T&gt;::StopAssembly()</span></tt></a>.
+If the updates were all naively appended to the end of a contiguous region of
+memory, then larger and larger regions of memory would frequently need to be
+allocated and the previous contents would be copied into each new buffer.
+In order to prevent this issue, one can simply pass an upper-bound on the
+number of local updates to the <a class="reference internal" href="#DistSparseMatrix:T:::Reserve__i" title="DistSparseMatrix&lt;T&gt;::Reserve"><tt class="xref cpp cpp-func docutils literal"><span class="pre">DistSparseMatrix&lt;T&gt;::Reserve()</span></tt></a>
+member function before performing any updates.</p>
+<p>After finishing assembly, all updates to the same entry are combined and the
+nonzero triples, which contain the row index, column index, and value, are
+sorted in lexicographical order based upon the row and column indices
+(respectively).</p>
+<dl class="type">
+<dt id="DistSparseMatrix:T:__class">
+<em class="property">type </em>class <tt class="descname">DistSparseMatrix&lt;T&gt;</tt><a class="headerlink" href="#DistSparseMatrix:T:__class" title="Permalink to this definition">¶</a></dt>
+<dd><p class="rubric">Constructors</p>
+<dl class="function">
+<dt id="DistSparseMatrix:T:::DistSparseMatrix">
+ <tt class="descname">DistSparseMatrix</tt><big>(</big><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::DistSparseMatrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructs an empty <span class="math">\(0 \times 0\)</span> sparse matrix over
+<tt class="docutils literal"><span class="pre">mpi::COMM_WORLD</span></tt>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::DistSparseMatrix__mpi::Comm">
+ <tt class="descname">DistSparseMatrix</tt><big>(</big>mpi::Comm <em>comm</em><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::DistSparseMatrix__mpi::Comm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructs an empty <span class="math">\(0 \times 0\)</span> sparse matrix over the specified
+communicator.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::DistSparseMatrix__i.mpi::Comm">
+ <tt class="descname">DistSparseMatrix</tt><big>(</big>int <em>height</em>, mpi::Comm <em>comm</em><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::DistSparseMatrix__i.mpi::Comm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructs a <cite>height</cite> <span class="math">\(\times\)</span> <cite>height</cite> sparse matrix over the
+specified communicator.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::DistSparseMatrix__i.i.mpi::Comm">
+ <tt class="descname">DistSparseMatrix</tt><big>(</big>int <em>height</em>, int <em>width</em>, mpi::Comm <em>comm</em><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::DistSparseMatrix__i.i.mpi::Comm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructs a <cite>height</cite> <span class="math">\(\times\)</span> <cite>width</cite> sparse matrix over the
+specified communicator.</p>
+</dd></dl>
+
+<p class="rubric">High-level information</p>
+<dl class="function">
+<dt id="DistSparseMatrix:T:::HeightC">
+int <tt class="descname">Height</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::HeightC" title="Permalink to this definition">¶</a></dt>
+<dd><p>The height of the sparse matrix.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::WidthC">
+int <tt class="descname">Width</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::WidthC" title="Permalink to this definition">¶</a></dt>
+<dd><p>The width of the sparse matrix.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::DistGraph">
+<a class="reference internal" href="graph.html#DistGraph__class" title="DistGraph">DistGraph&amp;</a> <tt class="descname">DistGraph</tt><big>(</big><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::DistGraph" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::LockedDistGraphC">
+<a class="reference internal" href="graph.html#DistGraph__class" title="DistGraph">const DistGraph&amp;</a> <tt class="descname">LockedDistGraph</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::LockedDistGraphC" title="Permalink to this definition">¶</a></dt>
+<dd><p>The underlying (immutable) distributed graph of the sparse matrix.</p>
+</dd></dl>
+
+<p class="rubric">Communicator-management</p>
+<dl class="function">
+<dt id="DistSparseMatrix:T:::SetComm__mpi::Comm">
+void <tt class="descname">SetComm</tt><big>(</big>mpi::Comm <em>comm</em><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::SetComm__mpi::Comm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Empties the sparse matrix and switches to the specified team of
+processes.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::CommC">
+mpi::Comm <tt class="descname">Comm</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::CommC" title="Permalink to this definition">¶</a></dt>
+<dd><p>The communicator for the distributed sparse matrix.</p>
+</dd></dl>
+
+<p class="rubric">Distribution information</p>
+<dl class="function">
+<dt id="DistSparseMatrix:T:::BlocksizeC">
+int <tt class="descname">Blocksize</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::BlocksizeC" title="Permalink to this definition">¶</a></dt>
+<dd><p>The distribution blocksize of the distributed sparse matrix:
+the process with rank <tt class="docutils literal"><span class="pre">r</span></tt>&#8216;s first local row is global row
+<tt class="docutils literal"><span class="pre">r*blocksize</span></tt>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::FirstLocalRowC">
+int <tt class="descname">FirstLocalRow</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::FirstLocalRowC" title="Permalink to this definition">¶</a></dt>
+<dd><p>The global index of the first row assigned to this process.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::LocalHeightC">
+int <tt class="descname">LocalHeight</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::LocalHeightC" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of rows assigned to this process.</p>
+</dd></dl>
+
+<p class="rubric">Assembly-related routines</p>
+<dl class="function">
+<dt id="DistSparseMatrix:T:::StartAssembly">
+void <tt class="descname">StartAssembly</tt><big>(</big><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::StartAssembly" title="Permalink to this definition">¶</a></dt>
+<dd><p>This should be called before applying any updates to the sparse matrix.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::StopAssembly">
+void <tt class="descname">StopAssembly</tt><big>(</big><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::StopAssembly" title="Permalink to this definition">¶</a></dt>
+<dd><p>This should be called after all updates have been applied to the sparse
+matrix, as it handles combining updates to the same entry and converting
+the entry information into the proper internal format.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::Reserve__i">
+void <tt class="descname">Reserve</tt><big>(</big>int <em>numLocalEntries</em><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::Reserve__i" title="Permalink to this definition">¶</a></dt>
+<dd><p>This routine should be given an upper bound on the number of updates
+that will be applied by this process so that an appropriate amount of
+memory can be allocated to store the update information.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::Update__i.i.T">
+void <tt class="descname">Update</tt><big>(</big>int <em>row</em>, int <em>col</em>, T <em>value</em><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::Update__i.i.T" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add the specified value onto the entry of our local portion of the
+sparse matrix with the specified indices.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::CapacityC">
+int <tt class="descname">Capacity</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::CapacityC" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of updates which can be applied before a memory allocation
+will be required (including current local updates).</p>
+</dd></dl>
+
+<p class="rubric">Local data</p>
+<dl class="function">
+<dt id="DistSparseMatrix:T:::NumLocalEntriesC">
+int <tt class="descname">NumLocalEntries</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::NumLocalEntriesC" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of local nonzero entries in the sparse matrix.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::Row__iC">
+int <tt class="descname">Row</tt><big>(</big>int <em>localEntry</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::Row__iC" title="Permalink to this definition">¶</a></dt>
+<dd><p>The row index of the specified local nonzero entry.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::Col__iC">
+int <tt class="descname">Col</tt><big>(</big>int <em>localEntry</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::Col__iC" title="Permalink to this definition">¶</a></dt>
+<dd><p>The column index of the specified local nonzero entry.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::Value__iC">
+T <tt class="descname">Value</tt><big>(</big>int <em>localEntry</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::Value__iC" title="Permalink to this definition">¶</a></dt>
+<dd><p>The numerical value of the specified local nonzero entry.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::LocalEntryOffset__iC">
+int <tt class="descname">LocalEntryOffset</tt><big>(</big>int <em>localRow</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::LocalEntryOffset__iC" title="Permalink to this definition">¶</a></dt>
+<dd><p>The first local nonzero entry which lies within a row with local index
+greater than or equal to the specified value (assuming it exists).</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::NumConnections__iC">
+int <tt class="descname">NumConnections</tt><big>(</big>int <em>localRow</em><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::NumConnections__iC" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of nonzeros within the specified local row.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::SourceBuffer">
+int* <tt class="descname">SourceBuffer</tt><big>(</big><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::SourceBuffer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::LockedSourceBufferC">
+const int* <tt class="descname">LockedSourceBuffer</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::LockedSourceBufferC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a (const) pointer to the contiguous array of local source indices.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::TargetBuffer">
+int* <tt class="descname">TargetBuffer</tt><big>(</big><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::TargetBuffer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::LockedTargetBufferC">
+const int* <tt class="descname">LockedTargetBuffer</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::LockedTargetBufferC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a (const) pointer to the contiguous array of local target indices.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::ValueBuffer">
+T* <tt class="descname">ValueBuffer</tt><big>(</big><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::ValueBuffer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::LockedValueBufferC">
+const T* <tt class="descname">LockedValueBuffer</tt><big>(</big><big>)</big><tt class="descclassname"> const</tt><a class="headerlink" href="#DistSparseMatrix:T:::LockedValueBufferC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a (const) pointer to the contiguous array of local nonzero values.</p>
+</dd></dl>
+
+<p class="rubric">For modifying the size of the matrix</p>
+<dl class="function">
+<dt id="DistSparseMatrix:T:::Empty">
+void <tt class="descname">Empty</tt><big>(</big><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::Empty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Frees all resources and sets the sparse matrix to be zero by zero.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="DistSparseMatrix:T:::ResizeTo__i.i">
+void <tt class="descname">ResizeTo</tt><big>(</big>int <em>height</em>, int <em>width</em><big>)</big><a class="headerlink" href="#DistSparseMatrix:T:::ResizeTo__i.i" title="Permalink to this definition">¶</a></dt>
+<dd><p>Frees all resources and sets the sparse matrix to be
+<cite>height</cite> <span class="math">\(\times\)</span> <cite>width</cite>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="type">
+<dt id="DistSparseMatrix:F:__class">
+<em class="property">type </em>class <tt class="descname">DistSparseMatrix&lt;F&gt;</tt><a class="headerlink" href="#DistSparseMatrix:F:__class" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is the same as <a class="reference internal" href="#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistSparseMatrix&lt;T&gt;</span></tt></a>, but the implication
+is that the underlying datatype <cite>F</cite> is a field rather than just a ring.</p>
+</dd></dl>
+
+</div>
+</div>
 
 
       </div>
       <div class="bottomnav">
       
         <p>
-        «&#160;&#160;<a href="dist_map.html">The DistMap class</a>
+        «&#160;&#160;<a href="map.html">Maps</a>
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
         &#160;&#160;::&#160;&#160;
-        <a href="dist_sparse_matrix.html">The DistSparseMatrix class</a>&#160;&#160;»
+        <a href="multi_vec.html">Sparsity-independent vectors</a>&#160;&#160;»
         </p>
 
       </div>
