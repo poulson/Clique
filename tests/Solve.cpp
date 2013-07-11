@@ -165,20 +165,27 @@ main( int argc, char* argv[] )
             std::cout << "done, " << buildStop-buildStart << " seconds"
                       << std::endl;
 
-        if( commRank == 0 )
-            std::cout << "Original memory usage for fronts..." << std::endl;
         double numLocalEntries, minLocalEntries, maxLocalEntries, 
                numGlobalEntries;
         frontTree.MemoryInfo
         ( numLocalEntries, minLocalEntries, maxLocalEntries, numGlobalEntries );
+        double numLocalFlops, minLocalFlops, maxLocalFlops, numGlobalFlops;
+        frontTree.FactorizationWork
+        ( numLocalFlops, minLocalFlops, maxLocalFlops, numGlobalFlops );
         if( commRank == 0 )
         {
-            std::cout << "  min local: " << minLocalEntries*sizeof(double)/1e6 
+            std::cout << "Original memory usage for fronts...\n"
+                      << "  min local: " << minLocalEntries*sizeof(double)/1e6 
                       << " MB\n"
                       << "  max local: " << maxLocalEntries*sizeof(double)/1e6 
                       << " MB\n"
                       << "  global:    " << numGlobalEntries*sizeof(double)/1e6
                       << " MB\n"
+                      << "\n"
+                      << "Factorization work...\n"
+                      << "  min local: " << minLocalFlops/1.e9 << " GFlops\n"
+                      << "  max local: " << maxLocalFlops/1.e9 << " GFlops\n"
+                      << "  global:    " << numGlobalFlops/1.e9 << " GFlops\n"
                       << std::endl;
         }
 

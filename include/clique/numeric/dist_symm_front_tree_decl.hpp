@@ -93,6 +93,14 @@ struct DistSymmFrontTree
     void MemoryInfo
     ( double& numLocalEntries, double& minLocalEntries, double& maxLocalEntries,
       double& numGlobalEntries ) const;
+
+    void FactorizationWork
+    ( double& numLocalFlops, double& minLocalFlops, double& maxLocalFlops,
+      double& numGlobalFlops ) const;
+
+    void SolveWork
+    ( double& numLocalFlops, double& minLocalFlops, double& maxLocalFlops,
+      double& numGlobalFlops ) const;
 };
 
 } // namespace cliq

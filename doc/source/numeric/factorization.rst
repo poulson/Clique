@@ -106,6 +106,16 @@ This data structure represents a distributed symmetric :math:`LDL^T` or
       The same as the :cpp:func:`DistSymmFrontTree\<T>::DistSymmFrontTree`
       constructor, but callable after construction.
 
+   .. cpp:function:: void TopLeftMemoryInfo( double& numLocalEntries, double& minLocalEntries, double& maxLocalEntries, double& numGlobalEntries ) const
+
+   .. cpp:function:: void BottomLeftMemoryInfo( double& numLocalEntries, double& minLocalEntries, double& maxLocalEntries, double& numGlobalEntries ) const
+
+   .. cpp:function:: void MemoryInfo( double& numLocalEntries, double& minLocalEntries, double& maxLocalEntries, double& numGlobalEntries ) const
+
+   .. cpp:function:: void FactorizationWork( double& numLocalFlops, double& minLocalFlops, double& maxLocalFlops, double& numGlobalFlops ) const
+
+   .. cpp:function:: void SolveWork( double& numLocalFlops, double& minLocalFlops, double& maxLocalFlops, double& numGlobalFlops ) const
+
 .. cpp:type:: struct DistSymmFrontTree<F>
 
    Same as above, but this implies that the underlying datatype `F` is a field.

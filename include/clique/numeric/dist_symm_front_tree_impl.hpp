@@ -408,7 +408,7 @@ DistSymmFrontTree<F>::MemoryInfo
   double& numGlobalEntries ) const
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistSymmFrontTree::MemInfo");
+    CallStackEntry entry("DistSymmFrontTree::MemoryInfo");
 #endif
     numLocalEntries = numGlobalEntries = 0;
     const int numLocalFronts = localFronts.size();
@@ -550,6 +550,108 @@ DistSymmFrontTree<F>::BottomLeftMemoryInfo
     mpi::AllReduce( &numLocalEntries, &minLocalEntries, 1, mpi::MIN, comm );
     mpi::AllReduce( &numLocalEntries, &maxLocalEntries, 1, mpi::MAX, comm );
     mpi::AllReduce( &numLocalEntries, &numGlobalEntries, 1, mpi::SUM, comm );
+}
+
+template<typename F>
+inline void
+DistSymmFrontTree<F>::FactorizationWork
+( double& numLocalFlops, double& minLocalFlops, double& maxLocalFlops, 
+  double& numGlobalFlops ) const
+{
+#ifndef RELEASE
+    CallStackEntry entry("DistSymmFrontTree::FactorizationWork");
+#endif
+    numLocalFlops = numGlobalFlops = 0;
+    const int numLocalFronts = localFronts.size();
+    const int numDistFronts = distFronts.size();
+    const bool frontsAre1d = FrontsAre1d( frontType );
+    const Grid& grid = ( frontsAre1d ? distFronts.back().front1dL.Grid() 
+                                     : distFronts.back().front2dL.Grid() );
+    mpi::Comm comm = grid.Comm();
+
+    for( int s=0; s<numLocalFronts; ++s )
+    {
+        const SymmFront<F>& front = localFronts[s];
+        const double m = front.frontL.Height();
+        const double n = front.frontL.Width();
+        numLocalFlops += (1./3.)*n*n*n; // n x n LDL
+        numLocalFlops += (m-n)*n*n; // n x n trsv, m-n r.h.s.
+        numLocalFlops += (m-n)*(m-n)*n; // (m-n) x (m-n), rank-n
+    }
+    for( int s=1; s<numDistFronts; ++s )
+    {
+        const DistSymmFront<F>& front = distFronts[s];
+        const double m = 
+          ( frontsAre1d ? front.front1dL.Height() : front.front2dL.Height() );
+        const double n = 
+          ( frontsAre1d ? front.front1dL.Width() : front.front2dL.Width() );
+        const double pFront = 
+          ( frontsAre1d ? front.front1dL.Grid().Size()
+                        : front.front2dL.Grid().Size() );
+        numLocalFlops += (1./3.)*n*n*n/pFront;
+        numLocalFlops += (m-n)*n*n/pFront;
+        numLocalFlops += (m-n)*(m-n)*n/pFront; 
+    }
+
+    // Since there are equal numbers of multiplies and adds, and the former
+    // takes 6 times as much work in standard complex arithmetic, while the 
+    // later only takes twice, the average is 4x more work
+    if( elem::IsComplex<F>::val )
+        numLocalFlops *= 4;
+
+    mpi::AllReduce( &numLocalFlops, &minLocalFlops, 1, mpi::MIN, comm );
+    mpi::AllReduce( &numLocalFlops, &maxLocalFlops, 1, mpi::MAX, comm );
+    mpi::AllReduce( &numLocalFlops, &numGlobalFlops, 1, mpi::SUM, comm );
+}
+
+template<typename F>
+inline void
+DistSymmFrontTree<F>::SolveWork
+( double& numLocalFlops, double& minLocalFlops, double& maxLocalFlops, 
+  double& numGlobalFlops ) const
+{
+#ifndef RELEASE
+    CallStackEntry entry("DistSymmFrontTree::SolveWork");
+#endif
+    numLocalFlops = numGlobalFlops = 0;
+    const int numLocalFronts = localFronts.size();
+    const int numDistFronts = distFronts.size();
+    const bool frontsAre1d = FrontsAre1d( frontType );
+    const Grid& grid = ( frontsAre1d ? distFronts.back().front1dL.Grid() 
+                                     : distFronts.back().front2dL.Grid() );
+    mpi::Comm comm = grid.Comm();
+
+    for( int s=0; s<numLocalFronts; ++s )
+    {
+        const SymmFront<F>& front = localFronts[s];
+        const double m = front.frontL.Height();
+        const double n = front.frontL.Width();
+        numLocalFlops += n*n;
+        numLocalFlops += 2*(m-n)*n;
+    }
+    for( int s=1; s<numDistFronts; ++s )
+    {
+        const DistSymmFront<F>& front = distFronts[s];
+        const double m = 
+          ( frontsAre1d ? front.front1dL.Height() : front.front2dL.Height() );
+        const double n = 
+          ( frontsAre1d ? front.front1dL.Width() : front.front2dL.Width() );
+        const double pFront = 
+          ( frontsAre1d ? front.front1dL.Grid().Size()
+                        : front.front2dL.Grid().Size() );
+        numLocalFlops += n*n/pFront;
+        numLocalFlops += 2*(m-n)*n/pFront;
+    }
+
+    // Since there are equal numbers of multiplies and adds, and the former
+    // takes 6 times as much work in standard complex arithmetic, while the 
+    // later only takes twice, the average is 4x more work
+    if( elem::IsComplex<F>::val )
+        numLocalFlops *= 4;
+
+    mpi::AllReduce( &numLocalFlops, &minLocalFlops, 1, mpi::MIN, comm );
+    mpi::AllReduce( &numLocalFlops, &maxLocalFlops, 1, mpi::MAX, comm );
+    mpi::AllReduce( &numLocalFlops, &numGlobalFlops, 1, mpi::SUM, comm );
 }
 
 } // namespace cliq
