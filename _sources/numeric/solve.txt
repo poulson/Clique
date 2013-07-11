@@ -95,8 +95,7 @@ right-hand sides.
 DistNodalMatrix
 ^^^^^^^^^^^^^^^
 
-The following structure is a work in progress and should be used in cases where
-there are many right-hand sides (in a sense to be made more specific later).
+The following structure should be used when there are many right-hand sides.
 
 .. cpp:type:: struct DistNodalMatrix<T>
 
