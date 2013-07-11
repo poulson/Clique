@@ -96,11 +96,11 @@ struct DistSymmFrontTree
 
     void FactorizationWork
     ( double& numLocalFlops, double& minLocalFlops, double& maxLocalFlops,
-      double& numGlobalFlops ) const;
+      double& numGlobalFlops, bool selInv=false ) const;
 
     void SolveWork
     ( double& numLocalFlops, double& minLocalFlops, double& maxLocalFlops,
-      double& numGlobalFlops ) const;
+      double& numGlobalFlops, int numRhs=1 ) const;
 };
 
 } // namespace cliq

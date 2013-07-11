@@ -131,14 +131,14 @@ main( int argc, char* argv[] )
 
         if( commRank == 0 )
         {
-            const int numDistNodes = info.distNodes.size();
-            const int numLocalNodes = info.localNodes.size();
+            const int distNodes = info.distNodes.size();
+            const int localNodes = info.localNodes.size();
             const int rootSepSize = info.distNodes.back().size;
             std::cout << "\n"
                       << "On the root process:\n"
                       << "-----------------------------------------\n"
-                      << numLocalNodes << " local nodes\n"
-                      << numDistNodes  << " distributed nodes\n"
+                      << localNodes << " local nodes\n"
+                      << distNodes  << " distributed nodes\n"
                       << rootSepSize << " vertices in root separator\n"
                       << std::endl;
         }
@@ -165,28 +165,40 @@ main( int argc, char* argv[] )
             std::cout << "done, " << buildStop-buildStart << " seconds"
                       << std::endl;
 
-        double numLocalEntries, minLocalEntries, maxLocalEntries, 
-               numGlobalEntries;
+        double localEntries, minLocalEntries, maxLocalEntries, globalEntries;
         frontTree.MemoryInfo
-        ( numLocalEntries, minLocalEntries, maxLocalEntries, numGlobalEntries );
-        double numLocalFlops, minLocalFlops, maxLocalFlops, numGlobalFlops;
+        ( localEntries, minLocalEntries, maxLocalEntries, globalEntries );
+        double localFactFlops, minLocalFactFlops, maxLocalFactFlops, 
+               globalFactFlops;
         frontTree.FactorizationWork
-        ( numLocalFlops, minLocalFlops, maxLocalFlops, numGlobalFlops );
+        ( localFactFlops, minLocalFactFlops, maxLocalFactFlops, 
+          globalFactFlops, selInv );
+        double localSolveFlops, minLocalSolveFlops, maxLocalSolveFlops,
+               globalSolveFlops;
+        frontTree.SolveWork
+        ( localSolveFlops, minLocalSolveFlops, maxLocalSolveFlops,
+          globalSolveFlops, numRhs );
         if( commRank == 0 )
         {
-            std::cout << "Original memory usage for fronts...\n"
-                      << "  min local: " << minLocalEntries*sizeof(double)/1e6 
-                      << " MB\n"
-                      << "  max local: " << maxLocalEntries*sizeof(double)/1e6 
-                      << " MB\n"
-                      << "  global:    " << numGlobalEntries*sizeof(double)/1e6
-                      << " MB\n"
-                      << "\n"
-                      << "Factorization work...\n"
-                      << "  min local: " << minLocalFlops/1.e9 << " GFlops\n"
-                      << "  max local: " << maxLocalFlops/1.e9 << " GFlops\n"
-                      << "  global:    " << numGlobalFlops/1.e9 << " GFlops\n"
-                      << std::endl;
+            std::cout 
+              << "Original memory usage for fronts...\n"
+              << "  min local: " << minLocalEntries*sizeof(double)/1e6 
+              << " MB\n"
+              << "  max local: " << maxLocalEntries*sizeof(double)/1e6 
+              << " MB\n"
+              << "  global:    " << globalEntries*sizeof(double)/1e6
+              << " MB\n"
+              << "\n"
+              << "Factorization (and possibly sel-inv) work...\n"
+              << "  min local: " << minLocalFactFlops/1.e9 << " GFlops\n"
+              << "  max local: " << maxLocalFactFlops/1.e9 << " GFlops\n"
+              << "  global:    " << globalFactFlops/1.e9 << " GFlops\n"
+              << "\n"
+              << "Solve...\n"
+              << "  min local: " << minLocalSolveFlops/1.e9 << " GFlops\n"
+              << "  max local: " << maxLocalSolveFlops/1.e9 << " GFlops\n"
+              << "  global:    " << globalSolveFlops/1.e9 << " GFlops\n"
+              << std::endl;
         }
 
         if( commRank == 0 )
@@ -212,22 +224,24 @@ main( int argc, char* argv[] )
         }
         mpi::Barrier( comm );
         const double ldlStop = mpi::Time();
+        const double factTime = ldlStop - ldlStart;
+        const double factGFlops = globalFactFlops/(1.e9*factTime);
         if( commRank == 0 )
-            std::cout << "done, " << ldlStop-ldlStart << " seconds" 
-                      << std::endl;
+            std::cout << "done, " << factTime << " seconds, " 
+                      << factGFlops << " GFlop/s" << std::endl;
 
         if( commRank == 0 )
             std::cout << "Memory usage for fronts after factorization..."
                       << std::endl;
         frontTree.MemoryInfo
-        ( numLocalEntries, minLocalEntries, maxLocalEntries, numGlobalEntries );
+        ( localEntries, minLocalEntries, maxLocalEntries, globalEntries );
         if( commRank == 0 )
         {
             std::cout << "  min local: " << minLocalEntries*sizeof(double)/1e6 
                       << " MB\n"
                       << "  max local: " << maxLocalEntries*sizeof(double)/1e6 
                       << " MB\n"
-                      << "  global:    " << numGlobalEntries*sizeof(double)/1e6
+                      << "  global:    " << globalEntries*sizeof(double)/1e6
                       << " MB\n"
                       << std::endl;
         }
@@ -254,9 +268,11 @@ main( int argc, char* argv[] )
         }
         mpi::Barrier( comm );
         const double solveStop = mpi::Time();
+        const double solveTime = solveStop - solveStart;
+        const double solveGFlops = globalSolveFlops/(1.e9*solveTime);
         if( commRank == 0 )
-            std::cout << "done, " << solveStop-solveStart << " seconds"
-                      << std::endl;
+            std::cout << "done, " << solveTime << " seconds, "
+                      << solveGFlops << " GFlop/s" << std::endl;
 
         if( commRank == 0 )
             std::cout << "Checking error in computed solution..." << std::endl;

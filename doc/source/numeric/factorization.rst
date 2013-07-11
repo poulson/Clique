@@ -112,9 +112,9 @@ This data structure represents a distributed symmetric :math:`LDL^T` or
 
    .. cpp:function:: void MemoryInfo( double& numLocalEntries, double& minLocalEntries, double& maxLocalEntries, double& numGlobalEntries ) const
 
-   .. cpp:function:: void FactorizationWork( double& numLocalFlops, double& minLocalFlops, double& maxLocalFlops, double& numGlobalFlops ) const
+   .. cpp:function:: void FactorizationWork( double& numLocalFlops, double& minLocalFlops, double& maxLocalFlops, double& numGlobalFlops, bool selInv=false ) const
 
-   .. cpp:function:: void SolveWork( double& numLocalFlops, double& minLocalFlops, double& maxLocalFlops, double& numGlobalFlops ) const
+   .. cpp:function:: void SolveWork( double& numLocalFlops, double& minLocalFlops, double& maxLocalFlops, double& numGlobalFlops, int numRhs=1 ) const
 
 .. cpp:type:: struct DistSymmFrontTree<F>
 

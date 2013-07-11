@@ -556,7 +556,7 @@ template<typename F>
 inline void
 DistSymmFrontTree<F>::FactorizationWork
 ( double& numLocalFlops, double& minLocalFlops, double& maxLocalFlops, 
-  double& numGlobalFlops ) const
+  double& numGlobalFlops, bool selInv ) const
 {
 #ifndef RELEASE
     CallStackEntry entry("DistSymmFrontTree::FactorizationWork");
@@ -591,6 +591,8 @@ DistSymmFrontTree<F>::FactorizationWork
         numLocalFlops += (1./3.)*n*n*n/pFront;
         numLocalFlops += (m-n)*n*n/pFront;
         numLocalFlops += (m-n)*(m-n)*n/pFront; 
+        if( selInv )
+            numLocalFlops += (1./3.)*n*n*n/pFront;
     }
 
     // Since there are equal numbers of multiplies and adds, and the former
@@ -608,7 +610,7 @@ template<typename F>
 inline void
 DistSymmFrontTree<F>::SolveWork
 ( double& numLocalFlops, double& minLocalFlops, double& maxLocalFlops, 
-  double& numGlobalFlops ) const
+  double& numGlobalFlops, int numRhs ) const
 {
 #ifndef RELEASE
     CallStackEntry entry("DistSymmFrontTree::SolveWork");
@@ -649,6 +651,7 @@ DistSymmFrontTree<F>::SolveWork
     if( elem::IsComplex<F>::val )
         numLocalFlops *= 4;
 
+    numLocalFlops *= numRhs;
     mpi::AllReduce( &numLocalFlops, &minLocalFlops, 1, mpi::MIN, comm );
     mpi::AllReduce( &numLocalFlops, &maxLocalFlops, 1, mpi::MAX, comm );
     mpi::AllReduce( &numLocalFlops, &numGlobalFlops, 1, mpi::SUM, comm );
