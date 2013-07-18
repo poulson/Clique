@@ -7,7 +7,7 @@
 #  which can be found in the LICENSE file in the root directory, or at 
 #  http://opensource.org/licenses/BSD-2-Clause
 #
-cmake_minimum_required(VERSION 2.8.10) # needed for Mercurial downloads
+cmake_minimum_required(VERSION 2.8.8) 
 project(Clique)
 
 set(Clique_VERSION_MAJOR 0)
@@ -18,32 +18,17 @@ option(CLIQ_EXAMPLES "Build a few example drivers" OFF)
 option(USE_CUSTOM_ALLTOALLV "Avoid MPI_Alltoallv for performance reasons" ON)
 option(BARRIER_IN_ALLTOALLV "Barrier before posting non-blocking recvs" OFF)
 
-set(ELEM_REV 03b809835ab5)
 if(MANUAL_ELEMENTAL)
   include_directories(${ELEM_INCLUDE_DIR})
   include_directories(${MPI_CXX_INCLUDE_PATH})
   # ELEM_CMAKE_DIR?
-elseif(EXISTS ${PROJECT_SOURCE_DIR}/external/elemental-${ELEM_REV})
-  add_subdirectory(external/elemental-${ELEM_REV})
-  include_directories(${PROJECT_BINARY_DIR}/external/elemental-${ELEM_REV}/include)
-  include_directories(${MPI_CXX_INCLUDE_PATH})
-  set(ELEM_CMAKE_DIR 
-      ${PROJECT_SOURCE_DIR}/external/elemental-${ELEM_REV}/cmake)
+  # Must demand Elemental_SHA1 equals REQ_ELEM_SHA1
+  set(REQ_ELEM_SHA1 9512986bb76f77bd81680a148608e5f182a0bf35)
 else()
-  find_package(Hg)
-  if(HG_FOUND)
-    execute_process(COMMAND 
-      ${HG_EXECUTABLE} clone http://code.google.com/p/elemental -r ${ELEM_REV}
-      ${PROJECT_SOURCE_DIR}/external/elemental-${ELEM_REV})
-    add_subdirectory(external/elemental-${ELEM_REV})
-    include_directories(${PROJECT_BINARY_DIR}/external/elemental-${ELEM_REV}/include)
-    include_directories(${MPI_CXX_INCLUDE_PATH})
-    set(ELEM_CMAKE_DIR 
-        ${PROJECT_SOURCE_DIR}/external/elemental-${ELEM_REV}/cmake)
-  else()
-    message(FATAL_ERROR 
-      "Could not find Mercurial, which is needed for checking out Elemental")
-  endif()
+  add_subdirectory(${PROJECT_SOURCE_DIR}/external/elemental)
+  include_directories(${PROJECT_BINARY_DIR}/external/elemental/include)
+  include_directories(${MPI_CXX_INCLUDE_PATH})
+  set(ELEM_CMAKE_DIR ${PROJECT_SOURCE_DIR}/external/elemental/cmake)
 endif()
 if(HAVE_QT5)
   include_directories(${Qt5Widgets_INCLUDE_DIRS})

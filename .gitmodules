@@ -1,0 +1,3 @@
+[submodule "external/elemental"]
+	path = external/elemental
+	url = git://github.com/poulson/Elemental.git
