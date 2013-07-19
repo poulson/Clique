@@ -11,6 +11,10 @@
 namespace cliq {
 
 typedef unsigned char byte;
+
+void PrintVersion( std::ostream& os=std::cout );
+void PrintCCompilerInfo( std::ostream& os=std::cout );
+void PrintCxxCompilerInfo( std::ostream& os=std::cout );
  
 bool Initialized();
 void Initialize( int& argc, char**& argv );

@@ -17,14 +17,16 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CLIQUE_CONFIG_HPP
-#define CLIQUE_CONFIG_HPP 1
+#ifndef CLIQUE_CONFIG_H
+#define CLIQUE_CONFIG_H
 
-#define Clique_VERSION_MAJOR @Clique_VERSION_MAJOR@
-#define Clique_VERSION_MINOR @Clique_VERSION_MINOR@
+/* Version information */
+#define Clique_VERSION_MAJOR "@Clique_VERSION_MAJOR@"
+#define Clique_VERSION_MINOR "@Clique_VERSION_MINOR@"
 
+/* Miscellaneous */
 #cmakedefine USE_CUSTOM_ALLTOALLV
 #cmakedefine BARRIER_IN_ALLTOALLV
 #cmakedefine HAVE_PARMETIS
 
-#endif /* CLIQUE_CONFIG_HPP */
+#endif /* CLIQUE_CONFIG_H */
