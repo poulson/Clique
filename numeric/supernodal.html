@@ -74,7 +74,7 @@ std::vector&lt;DistMatrix&lt;T, VC, STAR&gt;&gt; <tt class="descname">distNodes<
 
 <dl class="function">
 <dt id="DistNodalMultiVec:T:::DistNodalMultiVec__DistMapCR.DistSymmInfoCR.DistMultiVec:T:CR">
- <tt class="descname">DistNodalMultiVec</tt><big>(</big><a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>inverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="../core/dist_multi_vec.html#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;">const DistMultiVec&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#DistNodalMultiVec:T:::DistNodalMultiVec__DistMapCR.DistSymmInfoCR.DistMultiVec:T:CR" title="Permalink to this definition">¶</a></dt>
+ <tt class="descname">DistNodalMultiVec</tt><big>(</big><a class="reference internal" href="../core/map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>inverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="../core/multi_vec.html#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;">const DistMultiVec&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#DistNodalMultiVec:T:::DistNodalMultiVec__DistMapCR.DistSymmInfoCR.DistMultiVec:T:CR" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
@@ -89,12 +89,12 @@ std::vector&lt;DistMatrix&lt;T, VC, STAR&gt;&gt; <tt class="descname">distNodes<
 
 <dl class="function">
 <dt id="DistNodalMultiVec:T:::Pull__DistMapCR.DistSymmInfoCR.DistMultiVec:T:CR">
-void <tt class="descname">Pull</tt><big>(</big><a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>inverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="../core/dist_multi_vec.html#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;">const DistMultiVec&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#DistNodalMultiVec:T:::Pull__DistMapCR.DistSymmInfoCR.DistMultiVec:T:CR" title="Permalink to this definition">¶</a></dt>
+void <tt class="descname">Pull</tt><big>(</big><a class="reference internal" href="../core/map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>inverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="../core/multi_vec.html#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;">const DistMultiVec&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#DistNodalMultiVec:T:::Pull__DistMapCR.DistSymmInfoCR.DistMultiVec:T:CR" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="DistNodalMultiVec:T:::Push__DistMapCR.DistSymmInfoCR.DistMultiVec:T:R">
-void <tt class="descname">Push</tt><big>(</big><a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>inverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="../core/dist_multi_vec.html#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;">DistMultiVec&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#DistNodalMultiVec:T:::Push__DistMapCR.DistSymmInfoCR.DistMultiVec:T:R" title="Permalink to this definition">¶</a></dt>
+void <tt class="descname">Push</tt><big>(</big><a class="reference internal" href="../core/map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>inverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="../core/multi_vec.html#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;">DistMultiVec&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#DistNodalMultiVec:T:::Push__DistMapCR.DistSymmInfoCR.DistMultiVec:T:R" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
@@ -142,7 +142,7 @@ std::vector&lt;DistMatrix&lt;T&gt;&gt; <tt class="descname">distNodes</tt><a cla
 
 <dl class="function">
 <dt id="DistNodalMatrix:T:::DistNodalMatrix__DistMapCR.DistSymmInfoCR.DistMultiVec:T:CR">
- <tt class="descname">DistNodalMatrix</tt><big>(</big><a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>inverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="../core/dist_multi_vec.html#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;">const DistMultiVec&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#DistNodalMatrix:T:::DistNodalMatrix__DistMapCR.DistSymmInfoCR.DistMultiVec:T:CR" title="Permalink to this definition">¶</a></dt>
+ <tt class="descname">DistNodalMatrix</tt><big>(</big><a class="reference internal" href="../core/map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>inverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="../core/multi_vec.html#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;">const DistMultiVec&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#DistNodalMatrix:T:::DistNodalMatrix__DistMapCR.DistSymmInfoCR.DistMultiVec:T:CR" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
@@ -157,12 +157,12 @@ std::vector&lt;DistMatrix&lt;T&gt;&gt; <tt class="descname">distNodes</tt><a cla
 
 <dl class="function">
 <dt id="DistNodalMatrix:T:::Pull__DistMapCR.DistSymmInfoCR.DistMultiVec:T:CR">
-void <tt class="descname">Pull</tt><big>(</big><a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>inverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="../core/dist_multi_vec.html#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;">const DistMultiVec&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#DistNodalMatrix:T:::Pull__DistMapCR.DistSymmInfoCR.DistMultiVec:T:CR" title="Permalink to this definition">¶</a></dt>
+void <tt class="descname">Pull</tt><big>(</big><a class="reference internal" href="../core/map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>inverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="../core/multi_vec.html#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;">const DistMultiVec&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#DistNodalMatrix:T:::Pull__DistMapCR.DistSymmInfoCR.DistMultiVec:T:CR" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="DistNodalMatrix:T:::Push__DistMapCR.DistSymmInfoCR.DistMultiVec:T:R">
-void <tt class="descname">Push</tt><big>(</big><a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>inverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="../core/dist_multi_vec.html#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;">DistMultiVec&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#DistNodalMatrix:T:::Push__DistMapCR.DistSymmInfoCR.DistMultiVec:T:R" title="Permalink to this definition">¶</a></dt>
+void <tt class="descname">Push</tt><big>(</big><a class="reference internal" href="../core/map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>inverseMap</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, <a class="reference internal" href="../core/multi_vec.html#DistMultiVec:T:__class" title="DistMultiVec&lt;T&gt;">DistMultiVec&lt;T&gt;&amp;</a> <em>X</em><big>)</big><a class="headerlink" href="#DistNodalMatrix:T:::Push__DistMapCR.DistSymmInfoCR.DistMultiVec:T:R" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">

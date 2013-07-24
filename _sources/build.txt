@@ -8,9 +8,12 @@ dependencies first.
 Getting Clique's source
 =======================
 The best way to get a copy of Clique's source is to install 
-`Mercurial <http://mercurial.selenic.com>`_ and run ::
+`git <http://git-scm.com>`_ and run ::
 
-    hg clone http://bitbucket.org/poulson/clique clique
+    git clone --recursive git://github.com/poulson/Clique.git
+
+The ``--recursive`` option ensures that Elemental is checked out as a 
+`git submodule <http://git-scm.com/book/en/Git-Tools-Submodules>`__.
 
 Building Clique
 ===============

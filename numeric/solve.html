@@ -29,7 +29,7 @@
     <link rel="top" title="Clique 0.1 documentation" href="../index.html" />
     <link rel="up" title="Numerics" href="../numeric.html" />
     <link rel="next" title="Input/output" href="../io.html" />
-    <link rel="prev" title="Supernodal data structures" href="supernodal.html" /> 
+    <link rel="prev" title="Factorization" href="factorization.html" /> 
   </head>
   <body>
       <div class="header"><h1 class="heading"><a href="../index.html">
@@ -39,7 +39,7 @@
       <div class="topnav">
       
         <p>
-        «&#160;&#160;<a href="supernodal.html">Supernodal data structures</a>
+        «&#160;&#160;<a href="factorization.html">Factorization</a>
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
         &#160;&#160;::&#160;&#160;
@@ -56,7 +56,7 @@
 <h2>Black-box solvers<a class="headerlink" href="#black-box-solvers" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="SymmetricSolve__DistSparseMatrix:F:CR.DistMultiVec:F:R.b.i.i.i">
-void <tt class="descname">SymmetricSolve</tt><big>(</big><a class="reference internal" href="../core/dist_sparse_matrix.html#DistSparseMatrix:F:__class" title="DistSparseMatrix&lt;F&gt;">const DistSparseMatrix&lt;F&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/dist_multi_vec.html#DistMultiVec:F:__class" title="DistMultiVec&lt;F&gt;">DistMultiVec&lt;F&gt;&amp;</a> <em>X</em>, bool <em>sequential</em><em>=true</em>, int <em>numDistSeps</em><em>=1</em>, int <em>numSeqSeps</em><em>=1</em>, int <em>cutoff</em><em>=128 </em><big>)</big><a class="headerlink" href="#SymmetricSolve__DistSparseMatrix:F:CR.DistMultiVec:F:R.b.i.i.i" title="Permalink to this definition">¶</a></dt>
+void <tt class="descname">SymmetricSolve</tt><big>(</big><a class="reference internal" href="../core/sparse_matrix.html#DistSparseMatrix:F:__class" title="DistSparseMatrix&lt;F&gt;">const DistSparseMatrix&lt;F&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/multi_vec.html#DistMultiVec:F:__class" title="DistMultiVec&lt;F&gt;">DistMultiVec&lt;F&gt;&amp;</a> <em>X</em>, bool <em>sequential</em><em>=true</em>, int <em>numDistSeps</em><em>=1</em>, int <em>numSeqSeps</em><em>=1</em>, int <em>cutoff</em><em>=128 </em><big>)</big><a class="headerlink" href="#SymmetricSolve__DistSparseMatrix:F:CR.DistMultiVec:F:R.b.i.i.i" title="Permalink to this definition">¶</a></dt>
 <dd><p>Overwrites <span class="math">\(x\)</span> with <span class="math">\(A^{-1} x\)</span>, where <span class="math">\(A\)</span> is assumed to be
 symmetric. The main optional argument is
 whether or not graph partitioning should be performed sequentially or in
@@ -71,7 +71,7 @@ subdomain size is (<cite>cutoff</cite>). See
 
 <dl class="function">
 <dt id="HermitianSolve__DistSparseMatrix:F:CR.DistMultiVec:F:R.b.i.i.i">
-void <tt class="descname">HermitianSolve</tt><big>(</big><a class="reference internal" href="../core/dist_sparse_matrix.html#DistSparseMatrix:F:__class" title="DistSparseMatrix&lt;F&gt;">const DistSparseMatrix&lt;F&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/dist_multi_vec.html#DistMultiVec:F:__class" title="DistMultiVec&lt;F&gt;">DistMultiVec&lt;F&gt;&amp;</a> <em>X</em>, bool <em>sequential</em><em>=true</em>, int <em>numDistSeps</em><em>=1</em>, int <em>numSeqSeps</em><em>=1</em>, int <em>cutoff</em><em>=128 </em><big>)</big><a class="headerlink" href="#HermitianSolve__DistSparseMatrix:F:CR.DistMultiVec:F:R.b.i.i.i" title="Permalink to this definition">¶</a></dt>
+void <tt class="descname">HermitianSolve</tt><big>(</big><a class="reference internal" href="../core/sparse_matrix.html#DistSparseMatrix:F:__class" title="DistSparseMatrix&lt;F&gt;">const DistSparseMatrix&lt;F&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/multi_vec.html#DistMultiVec:F:__class" title="DistMultiVec&lt;F&gt;">DistMultiVec&lt;F&gt;&amp;</a> <em>X</em>, bool <em>sequential</em><em>=true</em>, int <em>numDistSeps</em><em>=1</em>, int <em>numSeqSeps</em><em>=1</em>, int <em>cutoff</em><em>=128 </em><big>)</big><a class="headerlink" href="#HermitianSolve__DistSparseMatrix:F:CR.DistMultiVec:F:R.b.i.i.i" title="Permalink to this definition">¶</a></dt>
 <dd><p>Overwrites <span class="math">\(x\)</span> with <span class="math">\(A^{-1} x\)</span>, where <span class="math">\(A\)</span> is assumed to be
 Hermitian. The optional arguments are identical to those of
 <a class="reference internal" href="#SymmetricSolve__DistSparseMatrix:F:CR.DistMultiVec:F:R.b.i.i.i" title="SymmetricSolve"><tt class="xref cpp cpp-func docutils literal"><span class="pre">SymmetricSolve()</span></tt></a>.</p>
@@ -116,7 +116,7 @@ void <tt class="descname">DiagonalSolve</tt><big>(</big><a class="reference inte
       <div class="bottomnav">
       
         <p>
-        «&#160;&#160;<a href="supernodal.html">Supernodal data structures</a>
+        «&#160;&#160;<a href="factorization.html">Factorization</a>
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
         &#160;&#160;::&#160;&#160;

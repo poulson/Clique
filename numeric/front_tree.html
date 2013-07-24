@@ -28,8 +28,8 @@
     <script type="text/javascript" src="../_static/theme_extras.js"></script>
     <link rel="top" title="Clique 0.1 documentation" href="../index.html" />
     <link rel="up" title="Numerics" href="../numeric.html" />
-    <link rel="next" title="Factorization" href="factorization.html" />
-    <link rel="prev" title="Multiplication" href="multiplication.html" /> 
+    <link rel="next" title="Sparsity-dependent vectors" href="supernodal.html" />
+    <link rel="prev" title="Numerics" href="../numeric.html" /> 
   </head>
   <body>
       <div class="header"><h1 class="heading"><a href="../index.html">
@@ -39,11 +39,11 @@
       <div class="topnav">
       
         <p>
-        «&#160;&#160;<a href="multiplication.html">Multiplication</a>
+        «&#160;&#160;<a href="../numeric.html">Numerics</a>
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
         &#160;&#160;::&#160;&#160;
-        <a href="factorization.html">Factorization</a>&#160;&#160;»
+        <a href="supernodal.html">Sparsity-dependent vectors</a>&#160;&#160;»
         </p>
 
       </div>
@@ -147,7 +147,7 @@ std::vector&lt;DistSymmFront&lt;T&gt;&gt; <tt class="descname">distFronts</tt><a
 
 <dl class="function">
 <dt id="DistSymmFrontTree:T:::DistSymmFrontTree__Orientation.DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR">
- <tt class="descname">DistSymmFrontTree</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../core/dist_sparse_matrix.html#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;">const DistSparseMatrix&lt;T&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>map</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSeparatorTree__struct" title="DistSeparatorTree">const DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em><big>)</big><a class="headerlink" href="#DistSymmFrontTree:T:::DistSymmFrontTree__Orientation.DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR" title="Permalink to this definition">¶</a></dt>
+ <tt class="descname">DistSymmFrontTree</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../core/sparse_matrix.html#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;">const DistSparseMatrix&lt;T&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>map</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSeparatorTree__struct" title="DistSeparatorTree">const DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em><big>)</big><a class="headerlink" href="#DistSymmFrontTree:T:::DistSymmFrontTree__Orientation.DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR" title="Permalink to this definition">¶</a></dt>
 <dd><p>A constructor which converts a distributed sparse matrix into a symmetric
 frontal tree which is ready for factorization (e.g., with
 <a class="reference internal" href="factorization.html#LDL__DistSymmInfoR.DistSymmFrontTree:F:R.SymmFrontType" title="LDL"><tt class="xref cpp cpp-func docutils literal"><span class="pre">LDL()</span></tt></a> or <tt class="xref cpp cpp-func docutils literal"><span class="pre">BlockLDL()</span></tt>).</p>
@@ -155,7 +155,7 @@ frontal tree which is ready for factorization (e.g., with
 
 <dl class="function">
 <dt id="DistSymmFrontTree:T:::Initialize__Orientation.DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR">
-void <tt class="descname">Initialize</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../core/dist_sparse_matrix.html#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;">const DistSparseMatrix&lt;T&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/dist_map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>map</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSeparatorTree__struct" title="DistSeparatorTree">const DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em><big>)</big><a class="headerlink" href="#DistSymmFrontTree:T:::Initialize__Orientation.DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR" title="Permalink to this definition">¶</a></dt>
+void <tt class="descname">Initialize</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../core/sparse_matrix.html#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;">const DistSparseMatrix&lt;T&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>map</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSeparatorTree__struct" title="DistSeparatorTree">const DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em><big>)</big><a class="headerlink" href="#DistSymmFrontTree:T:::Initialize__Orientation.DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR" title="Permalink to this definition">¶</a></dt>
 <dd><p>The same as the <a class="reference internal" href="#DistSymmFrontTree:T:::DistSymmFrontTree__Orientation.DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR" title="DistSymmFrontTree&lt;T&gt;::DistSymmFrontTree"><tt class="xref cpp cpp-func docutils literal"><span class="pre">DistSymmFrontTree&lt;T&gt;::DistSymmFrontTree()</span></tt></a>
 constructor, but callable after construction.</p>
 </dd></dl>
@@ -201,11 +201,11 @@ void <tt class="descname">SolveWork</tt><big>(</big>double&amp; <em>numLocalFlop
       <div class="bottomnav">
       
         <p>
-        «&#160;&#160;<a href="multiplication.html">Multiplication</a>
+        «&#160;&#160;<a href="../numeric.html">Numerics</a>
         &#160;&#160;::&#160;&#160;
         <a class="uplink" href="../index.html">Contents</a>
         &#160;&#160;::&#160;&#160;
-        <a href="factorization.html">Factorization</a>&#160;&#160;»
+        <a href="supernodal.html">Sparsity-dependent vectors</a>&#160;&#160;»
         </p>
 
       </div>
