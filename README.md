@@ -10,7 +10,19 @@ You may check out a copy of Clique using the command:
 
     git clone --recursive git://github.com/poulson/Clique.git
 
-The ``--recursive`` argument handles checking out [Elemental](http://github.com/poulson/Elemental) as a [git submodule](http://git-scm.com/book/en/Git-Tools-Submodules).
+The ``--recursive`` argument handles checking out [Elemental](http://github.com/poulson/Elemental) as a [git submodule](http://git-scm.com/book/en/Git-Tools-Submodules). If you have an especially outdated version of git, then you may 
+instead need to run:
+
+    git clone git://github.com/poulson/Clique.git
+    cd Clique
+    git submodule update --init
+
+and, with even older versions of git:
+
+    git clone git://github.com/poulson/Clique.git
+    cd Clique
+    git submodule init
+    git submodule update
 
 ### Documentation
 

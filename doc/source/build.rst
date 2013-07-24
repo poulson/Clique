@@ -14,6 +14,19 @@ The best way to get a copy of Clique's source is to install
 
 The ``--recursive`` option ensures that Elemental is checked out as a 
 `git submodule <http://git-scm.com/book/en/Git-Tools-Submodules>`__.
+If you have an especially outdated version of git, then you may 
+instead need to run ::
+
+    git clone git://github.com/poulson/Clique.git
+    cd Clique
+    git submodule update --init
+
+and, with even older versions of git ::
+
+    git clone git://github.com/poulson/Clique.git
+    cd Clique
+    git submodule init
+    git submodule update
 
 Building Clique
 ===============
