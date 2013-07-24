@@ -62,7 +62,19 @@ dependencies first.</p>
 <div class="highlight-python"><pre>git clone --recursive git://github.com/poulson/Clique.git</pre>
 </div>
 <p>The <tt class="docutils literal"><span class="pre">--recursive</span></tt> option ensures that Elemental is checked out as a
-<a class="reference external" href="http://git-scm.com/book/en/Git-Tools-Submodules">git submodule</a>.</p>
+<a class="reference external" href="http://git-scm.com/book/en/Git-Tools-Submodules">git submodule</a>.
+If you have an especially outdated version of git, then you may
+instead need to run</p>
+<div class="highlight-python"><pre>git clone git://github.com/poulson/Clique.git
+cd Clique
+git submodule update --init</pre>
+</div>
+<p>and, with even older versions of git</p>
+<div class="highlight-python"><pre>git clone git://github.com/poulson/Clique.git
+cd Clique
+git submodule init
+git submodule update</pre>
+</div>
 </div>
 <div class="section" id="building-clique">
 <h2>Building Clique<a class="headerlink" href="#building-clique" title="Permalink to this headline">¶</a></h2>
