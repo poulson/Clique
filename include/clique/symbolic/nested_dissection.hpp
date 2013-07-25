@@ -7,6 +7,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef CLIQ_SYMBOLIC_NESTEDDISSECTION_HPP
+#define CLIQ_SYMBOLIC_NESTEDDISSECTION_HPP
 
 #ifdef HAVE_PARMETIS
 # include "parmetis.h"
@@ -1409,3 +1412,5 @@ BuildMap
 }
 
 } // namespace cliq
+
+#endif // ifndef CLIQ_SYMBOLIC_NESTEDDISSECTION_HPP

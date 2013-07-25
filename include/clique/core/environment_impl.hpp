@@ -7,74 +7,64 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef CLIQ_CORE_ENVIRONMENT_IMPL_HPP
+#define CLIQ_CORE_ENVIRONMENT_IMPL_HPP
+
+#include "clique/core/environment_decl.hpp"
 
 namespace cliq {
 
-typedef unsigned char byte;
-
-void PrintVersion( std::ostream& os=std::cout );
-void PrintCCompilerInfo( std::ostream& os=std::cout );
-void PrintCxxCompilerInfo( std::ostream& os=std::cout );
- 
-bool Initialized();
-void Initialize( int& argc, char**& argv );
-void Finalize();
-
-#ifndef RELEASE
-void PushCallStack( std::string s );
-void PopCallStack();
-void DumpCallStack();
-
-class CallStackEntry
+// For getting the MPI argument instance (for internal usage)
+inline void Args::HandleVersion( std::ostream& os ) const
 {
-public:
-    CallStackEntry( std::string s ) 
-    { 
-        if( !std::uncaught_exception() )
-            PushCallStack(s);
+    std::string version = "--version";
+    char** arg = std::find( argv_, argv_+argc_, version );
+    const bool foundVersion = ( arg != argv_+argc_ );
+    if( foundVersion )
+    {
+        if( mpi::WorldRank() == 0 )
+            PrintVersion();
+        throw elem::ArgException();
     }
-    ~CallStackEntry() 
-    { 
-        if( !std::uncaught_exception() )
-            PopCallStack(); 
+}
+
+inline void Args::HandleBuild( std::ostream& os ) const
+{
+    std::string build = "--build";
+    char** arg = std::find( argv_, argv_+argc_, build );
+    const bool foundBuild = ( arg != argv_+argc_ );
+    if( foundBuild )
+    {
+        if( mpi::WorldRank() == 0 )
+        {
+            PrintVersion();
+            PrintConfig();
+            PrintCCompilerInfo();
+            PrintCxxCompilerInfo();
+        }
+        throw elem::ArgException();
     }
-};
-#endif
+}
 
-void ReportException( std::exception& e );
+// For processing command-line arguments
+template<typename T>
+inline T
+Input( std::string name, std::string desc )
+{ return GetArgs().Input<T>( name, desc ); }
 
-// Pull in some of Elemental's imported libraries
-namespace blas = elem::blas;
-namespace lapack = elem::lapack;
-namespace mpi = elem::mpi;
+template<typename T>
+inline T
+Input( std::string name, std::string desc, T defaultVal )
+{ return GetArgs().Input( name, desc, defaultVal ); }
 
-// Pull in a number of useful enums from Elemental
-using namespace elem::distribution_wrapper;
-using namespace elem::left_or_right_wrapper;
-using namespace elem::orientation_wrapper;
-using namespace elem::unit_or_non_unit_wrapper;
-using namespace elem::upper_or_lower_wrapper;
+inline void
+ProcessInput()
+{ GetArgs().Process(); }
 
-// For scalar operations
-using elem::Base;
-using elem::Complex;
-using elem::Abs;
-using elem::Sqrt;
-
-// Pull in a few classes from Elemental
-using elem::Matrix;
-using elem::Grid;
-using elem::DistMatrix;
-using elem::View;
-using elem::LockedView;
-
-// Pull in a few indexing routines
-using elem::Shift;
-using elem::Length;
-
-// Pull in command-line processing
-using elem::Input;
-using elem::ProcessInput;
+inline void
+PrintInputReport()
+{ GetArgs().PrintReport(); }
 
 template<typename T>
 inline bool IsSorted( const std::vector<T>& x )
@@ -142,8 +132,7 @@ RowToProcess( int i, int blocksize, int commSize )
 
 inline int
 Find
-( const std::vector<int>& sortedInd, int index, 
-  std::string msg="Could not find index" )
+( const std::vector<int>& sortedInd, int index, std::string msg )
 {
 #ifndef RELEASE
     CallStackEntry entry("Find");
@@ -233,3 +222,5 @@ SparseAllToAll
 }
 
 } // namespace cliq
+
+#endif // ifndef CLIQ_CORE_ENVIRONMENT_IMPL_HPP

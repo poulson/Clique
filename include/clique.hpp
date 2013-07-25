@@ -21,7 +21,8 @@
 // The core of the library
 //
 
-#include "clique/core/environment.hpp"
+#include "clique/core/environment_decl.hpp"
+#include "clique/core/environment_impl.hpp"
 
 // Data-structure declarations (are these needed?!?)
 namespace cliq { 

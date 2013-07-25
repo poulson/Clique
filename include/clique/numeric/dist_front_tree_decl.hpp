@@ -7,6 +7,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef CLIQ_NUMERIC_DISTFRONTTREE_DECL_HPP
+#define CLIQ_NUMERIC_DISTFRONTTREE_DECL_HPP
 
 namespace cliq {
 
@@ -76,3 +79,5 @@ struct DistFrontTree
 };
 
 } // namespace cliq
+
+#endif // ifndef CLIQ_NUMERIC_DISTFRONTTREE_DECL_HPP

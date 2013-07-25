@@ -7,6 +7,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef CLIQ_CORE_DISTMAP_IMPL_HPP
+#define CLIQ_CORE_DISTMAP_IMPL_HPP
 
 namespace cliq {
 
@@ -405,3 +408,5 @@ DistMap::operator=( const DistMap& map )
 }
 
 } // namespace cliq
+
+#endif // ifndef CLIQ_CORE_DISTMAP_IMPL_HPP

@@ -7,6 +7,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef CLIQ_CORE_DISTMULTIVEC_DECL_HPP
+#define CLIQ_CORE_DISTMULTIVEC_DECL_HPP
 
 namespace cliq {
 
@@ -80,3 +83,5 @@ template<typename T>
 void Axpy( T alpha, const DistMultiVec<T>& X, DistMultiVec<T>& Y );
 
 } // namespace cliq
+
+#endif // ifndef CLIQ_CORE_DISTMULTIVEC_DECL_HPP

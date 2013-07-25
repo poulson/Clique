@@ -11,7 +11,8 @@
 
 namespace { 
 bool cliqueInitializedElemental; 
-bool initializedClique = false;
+int numCliqueInits = 0;
+cliq::Args* args = 0;
 #ifndef RELEASE
 std::stack<std::string> callStack;
 #endif
@@ -27,6 +28,21 @@ void PrintVersion( std::ostream& os )
                              << Clique_VERSION_MINOR << "\n"
        << "  Build type:   " << CMAKE_BUILD_TYPE << "\n"
        << std::endl;
+}
+
+void PrintConfig( std::ostream& os )
+{
+    os << "Clique configuration:\n";
+#ifdef USE_CUSTOM_ALLTOALLV
+    os << "  USE_CUSTOM_ALLTOALLV\n";
+#endif
+#ifdef BARRIER_IN_ALLTOALLV
+    os << "  BARRIER_IN_ALLTOALLV\n";
+#endif
+#ifdef HAVE_PARMETIS
+    os << "  HAVE_PARMETIS\n";
+#endif
+    elem::PrintConfig( os );
 }
 
 void PrintCCompilerInfo( std::ostream& os )
@@ -55,16 +71,20 @@ void PrintCxxCompilerInfo( std::ostream& os )
 }
 
 bool Initialized()
-{ return ::initializedClique; }
+{ return ::numCliqueInits > 0; }
 
 void Initialize( int& argc, char**& argv )
 {
     // If Clique has already been initialized, this is a no-op
-    if( ::initializedClique )
+    if( ::numCliqueInits > 0 )
+    {
+        ++::numCliqueInits;
         return;
+    }
 
-    const bool mustInitElemental = !elem::Initialized();
-    if( mustInitElemental )
+    ::args = new Args( argc, argv );
+    ::numCliqueInits = 1;
+    if( !elem::Initialized() )
     {
         elem::Initialize( argc, argv );
         ::cliqueInitializedElemental = true;
@@ -73,19 +93,21 @@ void Initialize( int& argc, char**& argv )
     {
         ::cliqueInitializedElemental = false;
     }
-    ::initializedClique = true;
 }
 
 void Finalize()
 {
-    // If Clique is not currently initialized, then this is a no-op
-    if( !::initializedClique )
-        return;
-    
+    if( ::numCliqueInits <= 0 )
+        throw std::logic_error("Finalized Clique more than initialized");
+    --::numCliqueInits;
     if( ::cliqueInitializedElemental )
         elem::Finalize();
 
-    ::initializedClique = false;
+    if( ::numCliqueInits == 0 )
+    {
+        delete ::args;    
+        ::args = 0;
+    }
 }
 
 #ifndef RELEASE
@@ -114,6 +136,13 @@ void ReportException( std::exception& e )
 #ifndef RELEASE
     DumpCallStack();
 #endif
+}
+
+Args& GetArgs()
+{
+    if( args == 0 )
+        throw std::runtime_error("No available instance of Args");
+    return *::args;
 }
 
 } // namespace cliq

@@ -7,6 +7,9 @@
    which can be found in the LICENSE file in the root directory, or at 
    http://opensource.org/licenses/BSD-2-Clause
 */
+#pragma once
+#ifndef CLIQ_CORE_GRAPH_DECL_HPP
+#define CLIQ_CORE_GRAPH_DECL_HPP
 
 namespace cliq {
 
@@ -75,3 +78,5 @@ private:
 };
 
 } // namespace cliq
+
+#endif // ifndef CLIQ_CORE_GRAPH_DECL_HPP
