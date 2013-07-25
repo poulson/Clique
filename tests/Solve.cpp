@@ -25,6 +25,7 @@ main( int argc, char* argv[] )
         const int numRhs = Input("--numRhs","number of right-hand sides",5);
         const bool solve2d = Input("--solve2d","use 2d solve?",false);
         const bool selInv = Input("--selInv","selectively invert?",false);
+        const bool natural = Input("--natural","analytical nested-diss?",true);
         const bool sequential = Input
             ("--sequential","sequential partitions?",true);
         const int numDistSeps = Input
@@ -33,6 +34,8 @@ main( int argc, char* argv[] )
         const int numSeqSeps = Input
             ("--numSeqSeps",
              "number of separators to try per sequential partition",1);
+        const int nbFact = Input("--nbFact","factorization blocksize",96);
+        const int nbSolve = Input("--nbSolve","solve blocksize",96);
         const int cutoff = Input("--cutoff","cutoff for nested dissection",128);
         const bool print = Input("--print","print matrix?",false);
         const bool display = Input("--display","display matrix?",false);
@@ -119,9 +122,17 @@ main( int argc, char* argv[] )
         DistSymmInfo info;
         DistSeparatorTree sepTree;
         DistMap map, inverseMap;
-        NestedDissection
-        ( graph, map, sepTree, info, 
-          sequential, numDistSeps, numSeqSeps, cutoff );
+        if( natural )
+        {
+            NaturalNestedDissection
+            ( n1, n2, n3, graph, map, sepTree, info, cutoff );
+        }
+        else
+        {
+            NestedDissection
+            ( graph, map, sepTree, info, 
+              sequential, numDistSeps, numSeqSeps, cutoff );
+        }
         map.FormInverse( inverseMap );
         mpi::Barrier( comm );
         const double nestedStop = mpi::Time();
@@ -206,6 +217,7 @@ main( int argc, char* argv[] )
             std::cout << "Running LDL^T and redistribution...";
             std::cout.flush();
         }
+        elem::SetBlocksize( nbFact );
         mpi::Barrier( comm );
         const double ldlStart = mpi::Time();
         if( solve2d )
@@ -251,6 +263,7 @@ main( int argc, char* argv[] )
             std::cout << "Solving against Y...";
             std::cout.flush();
         }
+        elem::SetBlocksize( nbSolve );
         const double solveStart = mpi::Time();
         if( solve2d )
         {

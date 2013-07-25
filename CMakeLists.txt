@@ -123,7 +123,7 @@ include_directories("${PROJECT_BINARY_DIR}/include")
 # Build the test drivers if necessary
 if(CLIQ_TESTS)
   set(TEST_DIR ${PROJECT_SOURCE_DIR}/tests)
-  set(TESTS FileSpeed NaturalSolve Version)
+  set(TESTS FileSpeed Version)
   if(HAVE_PARMETIS)
     list(APPEND TESTS Bisection NestedDissection Refactor SimpleSolve Solve) 
   endif()
