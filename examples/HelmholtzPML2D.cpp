@@ -8,6 +8,8 @@
    http://opensource.org/licenses/BSD-2-Clause
 */
 #include "clique.hpp"
+#include "elemental/lapack-like/Norm/Max.hpp"
+#include "elemental/lapack-like/SVD.hpp"
 using namespace cliq;
 
 Complex<double> PML( double x, double w, double p, double sigma, double k )

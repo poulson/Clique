@@ -8,6 +8,7 @@
    http://opensource.org/licenses/BSD-2-Clause
 */
 #include "clique.hpp"
+#include "elemental/matrices/Uniform.hpp"
 using namespace cliq;
 
 int

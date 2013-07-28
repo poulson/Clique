@@ -1,12 +1,10 @@
 Functionality
 =============
-- Implement faster sparse mat-vec
 - Implement constructor for non-trivial DistSparseMatrix from SparseMatrix
   (and the equivalent for DistMultiVec from MultiVec)
 
 Maintenance
 ===========
 - Find a way to avoid redundancy in local portion of Solve
-- Convert to header-file structure which is similar to Elemental
 - Switch from current flat layout for supernodal trees into an actual (custom) 
   tree data structure?

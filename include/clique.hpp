@@ -10,10 +10,26 @@
 #ifndef CLIQUE_HPP
 #define CLIQUE_HPP
 
-#include "elemental.hpp"
 #include <algorithm>
 #include <map>
 #include <set>
+
+#include "elemental-lite.hpp"
+#include "elemental/blas-like/level1/Adjoint.hpp"
+#include "elemental/blas-like/level1/Axpy.hpp"
+#include "elemental/blas-like/level1/Conjugate.hpp"
+#include "elemental/blas-like/level1/DiagonalSolve.hpp"
+#include "elemental/blas-like/level1/MakeTrapezoidal.hpp"
+#include "elemental/blas-like/level1/MakeTriangular.hpp"
+#include "elemental/blas-like/level1/SetDiagonal.hpp"
+#include "elemental/blas-like/level3/Gemm.hpp"
+#include "elemental/blas-like/level3/Trdtrmm.hpp"
+#include "elemental/blas-like/level3/Trmm.hpp"
+#include "elemental/blas-like/level3/Trsm.hpp"
+#include "elemental/lapack-like/LDL.hpp"
+#include "elemental/lapack-like/TriangularInverse.hpp"
+#include "elemental/matrices/Zeros.hpp"
+#include "elemental/io.hpp"
 
 #include "clique/config.h"
 

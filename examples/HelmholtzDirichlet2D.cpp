@@ -8,6 +8,8 @@
    http://opensource.org/licenses/BSD-2-Clause
 */
 #include "clique.hpp"
+#include "elemental/lapack-like/Norm/Max.hpp"
+#include "elemental/lapack-like/SVD.hpp"
 using namespace cliq;
 
 int

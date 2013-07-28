@@ -100,6 +100,6 @@ off of the following snippet::
 Troubleshooting
 ===============
 If you run into problems, please email
-`jack.poulson@gmail.com <mailto:jack.poulson@gmail.com>`_. If you are having 
+`jackpoulson@lavabit.com <mailto:jackpoulson@lavabit.com>`_. If you are having 
 build problems, please make sure to attach the file ``include/clique/config.h``,
 which should be generated within your build directory.
