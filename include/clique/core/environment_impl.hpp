@@ -103,11 +103,11 @@ inline void Union
 }
 
 inline void RelativeIndices
-( std::vector<int>& relInd, 
+( std::vector<int>& relInds, 
   const std::vector<int>& sub, const std::vector<int>& full )
 {
     const int numSub = sub.size();
-    relInd.resize( numSub );
+    relInds.resize( numSub );
     std::vector<int>::const_iterator it = full.begin();
     for( int i=0; i<numSub; ++i )
     {
@@ -117,7 +117,7 @@ inline void RelativeIndices
         if( it == full.end() )
             throw std::logic_error("Index was not found");
 #endif
-        relInd[i] = int(it-full.begin());
+        relInds[i] = int(it-full.begin());
     }
 }
 
@@ -132,18 +132,18 @@ RowToProcess( int i, int blocksize, int commSize )
 
 inline int
 Find
-( const std::vector<int>& sortedInd, int index, std::string msg )
+( const std::vector<int>& sortedInds, int index, std::string msg )
 {
 #ifndef RELEASE
     CallStackEntry entry("Find");
 #endif
     std::vector<int>::const_iterator vecIt;
-    vecIt = std::lower_bound( sortedInd.begin(), sortedInd.end(), index );
+    vecIt = std::lower_bound( sortedInds.begin(), sortedInds.end(), index );
 #ifndef RELEASE
-    if( vecIt == sortedInd.end() )
+    if( vecIt == sortedInds.end() )
         throw std::logic_error( msg.c_str() );
 #endif
-    return vecIt - sortedInd.begin();
+    return vecIt - sortedInds.begin();
 }
 
 inline void

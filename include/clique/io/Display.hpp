@@ -331,7 +331,7 @@ DisplayLocal( const DistSymmInfo& info, bool beforeFact, std::string title )
     CallStackEntry cse("DisplayLocal [DistSymmInfo]");
 #endif
 #ifdef HAVE_QT5
-    const int n = info.distNodes.back().size + info.distNodes.back().offset;
+    const int n = info.distNodes.back().size + info.distNodes.back().off;
     Matrix<int>* graphMat = new Matrix<int>;
     elem::Zeros( *graphMat, n, n );
 
@@ -341,20 +341,20 @@ DisplayLocal( const DistSymmInfo& info, bool beforeFact, std::string title )
         const SymmNodeInfo& node = info.localNodes[s];
         for( int j=0; j<node.size; ++j )
             for( int i=0; i<node.size; ++i )
-                graphMat->Set( i+node.offset, j+node.offset, 1 );
+                graphMat->Set( i+node.off, j+node.off, 1 );
         if( beforeFact )
         {
             const int origStructSize = node.origLowerStruct.size();
             for( int i=0; i<origStructSize; ++i )
                 for( int j=0; j<node.size; ++j )
-                    graphMat->Set( node.origLowerStruct[i], j+node.offset, 1 );
+                    graphMat->Set( node.origLowerStruct[i], j+node.off, 1 );
         }
         else
         {
             const int structSize = node.lowerStruct.size();
             for( int i=0; i<structSize; ++i )
                 for( int j=0; j<node.size; ++j )
-                    graphMat->Set( node.lowerStruct[i], j+node.offset, 1 );
+                    graphMat->Set( node.lowerStruct[i], j+node.off, 1 );
         }
     }
 
@@ -364,20 +364,20 @@ DisplayLocal( const DistSymmInfo& info, bool beforeFact, std::string title )
         const DistSymmNodeInfo& node = info.distNodes[s];
         for( int j=0; j<node.size; ++j )
             for( int i=0; i<node.size; ++i )
-                graphMat->Set( i+node.offset, j+node.offset, 1 );
+                graphMat->Set( i+node.off, j+node.off, 1 );
         if( beforeFact )
         {
             const int origStructSize = node.origLowerStruct.size();
             for( int i=0; i<origStructSize; ++i )
                 for( int j=0; j<node.size; ++j )
-                    graphMat->Set( node.origLowerStruct[i], j+node.offset, 1 );
+                    graphMat->Set( node.origLowerStruct[i], j+node.off, 1 );
         }
         else
         {
             const int structSize = node.lowerStruct.size();
             for( int i=0; i<structSize; ++i )
                 for( int j=0; j<node.size; ++j )
-                    graphMat->Set( node.lowerStruct[i], j+node.offset, 1 );
+                    graphMat->Set( node.lowerStruct[i], j+node.off, 1 );
         }
     }
 

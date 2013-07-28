@@ -131,28 +131,28 @@ void FormDiagonalBlocks
     const F* LBuffer = L.LockedBuffer();
     if( conjugate )
     {
-        for( int iLocal=0; iLocal<localHeight; ++iLocal )
+        for( int iLoc=0; iLoc<localHeight; ++iLoc )
         {
-            const int i = colShift + iLocal*commSize;
+            const int i = colShift + iLoc*commSize;
             const int block = i / blocksize;
             const int jStart = block*blocksize;
             const int b = std::min(height-jStart,blocksize);
-            for( int jOffset=0; jOffset<b; ++jOffset )
-                sendBuffer[iLocal*blocksize+jOffset] = 
-                    Conj(LBuffer[iLocal+(jStart+jOffset)*LLDim]);
+            for( int jOff=0; jOff<b; ++jOff )
+                sendBuffer[iLoc*blocksize+jOff] = 
+                    Conj(LBuffer[iLoc+(jStart+jOff)*LLDim]);
         }
     }
     else
     {
-        for( int iLocal=0; iLocal<localHeight; ++iLocal )
+        for( int iLoc=0; iLoc<localHeight; ++iLoc )
         {
-            const int i = colShift + iLocal*commSize;
+            const int i = colShift + iLoc*commSize;
             const int block = i / blocksize;
             const int jStart = block*blocksize;
             const int b = std::min(height-jStart,blocksize);
-            for( int jOffset=0; jOffset<b; ++jOffset )
-                sendBuffer[iLocal*blocksize+jOffset] = 
-                    LBuffer[iLocal+(jStart+jOffset)*LLDim];
+            for( int jOff=0; jOff<b; ++jOff )
+                sendBuffer[iLoc*blocksize+jOff] = 
+                    LBuffer[iLoc+(jStart+jOff)*LLDim];
         }
     }
 
@@ -168,11 +168,11 @@ void FormDiagonalBlocks
     {
         const F* procRecv = &recvBuffer[proc*portionSize];
         const int procLocalHeight = Length<int>(height,proc,commSize);
-        for( int iLocal=0; iLocal<procLocalHeight; ++iLocal )
+        for( int iLoc=0; iLoc<procLocalHeight; ++iLoc )
         {
-            const int i = proc + iLocal*commSize;
-            for( int jOffset=0; jOffset<blocksize; ++jOffset )
-                DBuffer[jOffset+i*DLDim] = procRecv[jOffset+iLocal*blocksize];
+            const int i = proc + iLoc*commSize;
+            for( int jOff=0; jOff<blocksize; ++jOff )
+                DBuffer[jOff+i*DLDim] = procRecv[jOff+iLoc*blocksize];
         }
     }
 }
@@ -192,11 +192,11 @@ void AccumulateRHS( const DistMatrix<F,VC,STAR>& X, DistMatrix<F,STAR,STAR>& Z )
     F* ZBuffer = Z.Buffer();
     const int XLDim = X.LDim();
     const int ZLDim = Z.LDim();
-    for( int iLocal=0; iLocal<localHeight; ++iLocal )
+    for( int iLoc=0; iLoc<localHeight; ++iLoc )
     {
-        const int i = colShift + iLocal*commSize;
+        const int i = colShift + iLoc*commSize;
         for( int j=0; j<width; ++j )
-            ZBuffer[i+j*ZLDim] = XBuffer[iLocal+j*XLDim];
+            ZBuffer[i+j*ZLDim] = XBuffer[iLoc+j*XLDim];
     }
     mpi::AllReduce( ZBuffer, ZLDim*width, mpi::SUM, X.Grid().VCComm() );
 }

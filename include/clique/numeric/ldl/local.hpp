@@ -47,19 +47,19 @@ LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
         const int numChildren = node.children.size();
         if( numChildren == 2 )
         {
-            const int leftIndex = node.children[0];
-            const int rightIndex = node.children[1];
-            Matrix<F>& leftUpdate = L.localFronts[leftIndex].work;
-            Matrix<F>& rightUpdate = L.localFronts[rightIndex].work;
+            const int leftInd = node.children[0];
+            const int rightInd = node.children[1];
+            Matrix<F>& leftUpdate = L.localFronts[leftInd].work;
+            Matrix<F>& rightUpdate = L.localFronts[rightInd].work;
 
             // Add the left child's update matrix
             const int leftUpdateSize = leftUpdate.Height();
             for( int jChild=0; jChild<leftUpdateSize; ++jChild )
             {
-                const int jFront = node.leftRelInd[jChild];
+                const int jFront = node.leftRelInds[jChild];
                 for( int iChild=jChild; iChild<leftUpdateSize; ++iChild )
                 {
-                    const int iFront = node.leftRelInd[iChild];
+                    const int iFront = node.leftRelInds[iChild];
                     const F value = leftUpdate.Get(iChild,jChild);
 #ifndef RELEASE
                     if( iFront < jFront )
@@ -79,10 +79,10 @@ LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
             const int rightUpdateSize = rightUpdate.Height();
             for( int jChild=0; jChild<rightUpdateSize; ++jChild )
             {
-                const int jFront = node.rightRelInd[jChild];
+                const int jFront = node.rightRelInds[jChild];
                 for( int iChild=jChild; iChild<rightUpdateSize; ++iChild )
                 {
-                    const int iFront = node.rightRelInd[iChild];
+                    const int iFront = node.rightRelInds[iChild];
                     const F value = rightUpdate.Get(iChild,jChild);
 #ifndef RELEASE
                     if( iFront < jFront )

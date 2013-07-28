@@ -7,7 +7,7 @@
 void CliqOrder( ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *sizes )
 {
   idx_t i, nvtxs;
-  idx_t offsets[3];
+  idx_t offs[3];
   idx_t *where;
 
   nvtxs = graph->nvtxs;
@@ -23,11 +23,11 @@ void CliqOrder( ctrl_t *ctrl, graph_t *graph, idx_t *order, idx_t *sizes )
   sizes[0] = graph->pwgts[0];
   sizes[1] = graph->pwgts[1];
   sizes[2] = graph->pwgts[2];
-  offsets[0] = 0;
-  offsets[1] = sizes[0];
-  offsets[2] = sizes[0]+sizes[1];
+  offs[0] = 0;
+  offs[1] = sizes[0];
+  offs[2] = sizes[0]+sizes[1];
   for( i=0; i<nvtxs; ++i )
-      order[i] = offsets[where[i]]++;
+      order[i] = offs[where[i]]++;
 
   FreeGraph(&graph);
 }

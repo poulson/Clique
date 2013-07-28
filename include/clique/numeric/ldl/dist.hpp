@@ -88,24 +88,24 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
         int sendBufferSize = 0;
         for( unsigned proc=0; proc<commSize; ++proc )
         {
-            const int sendSize = commMeta.numChildSendInd[proc];
+            const int sendSize = commMeta.numChildSendInds[proc];
             sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += sendSize;
         }
         std::vector<F> sendBuffer( sendBufferSize );
 
-        const std::vector<int>& myChildRelInd = 
-            ( onLeft ? node.leftRelInd : node.rightRelInd );
+        const std::vector<int>& myChildRelInds = 
+            ( onLeft ? node.leftRelInds : node.rightRelInds );
         const int updateColShift = childUpdate.ColShift();
         const int updateRowShift = childUpdate.RowShift();
         const int updateLocalHeight = childUpdate.LocalHeight();
         const int updateLocalWidth = childUpdate.LocalWidth();
-        std::vector<int> packOffsets = sendDispls;
+        std::vector<int> packOffs = sendDispls;
         for( int jChildLoc=0; jChildLoc<updateLocalWidth; ++jChildLoc )
         {
             const int jChild = updateRowShift + jChildLoc*childGridWidth;
-            const int destGridCol = myChildRelInd[jChild] % gridWidth;
+            const int destGridCol = myChildRelInds[jChild] % gridWidth;
             int localColShift;
             if( updateColShift > jChild )
                 localColShift = 0;
@@ -119,9 +119,9 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
                 const int iChild = updateColShift + iChildLoc*childGridHeight;
                 if( iChild >= jChild )
                 {
-                    const int destGridRow = myChildRelInd[iChild] % gridHeight;
+                    const int destGridRow = myChildRelInds[iChild] % gridHeight;
                     const int destRank = destGridRow + destGridCol*gridHeight;
-                    sendBuffer[packOffsets[destRank]++] = 
+                    sendBuffer[packOffs[destRank]++] = 
                         childUpdate.GetLocal(iChildLoc,jChildLoc);
                 }
             }
@@ -129,25 +129,25 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
 #ifndef RELEASE
         for( unsigned proc=0; proc<commSize; ++proc )
         {
-            if( packOffsets[proc]-sendDispls[proc] != 
-                commMeta.numChildSendInd[proc] )
+            if( packOffs[proc]-sendDispls[proc] != 
+                commMeta.numChildSendInds[proc] )
                 throw std::logic_error("Error in packing stage");
         }
 #endif
-        std::vector<int>().swap( packOffsets );
+        std::vector<int>().swap( packOffs );
         childFront.work2d.Empty();
         if( s == 1 )
             topLocalFront.work.Empty();
 
         // Set up the recv buffer for the AllToAll
-        const bool computeFactRecvInd = ( commMeta.childRecvInd.size() == 0 );
-        if( computeFactRecvInd )
-            ComputeFactRecvInd( node, childNode );
+        const bool computeFactRecvInds = ( commMeta.childRecvInds.size() == 0 );
+        if( computeFactRecvInds )
+            ComputeFactRecvInds( node, childNode );
         std::vector<int> recvCounts(commSize), recvDispls(commSize);
         int recvBufferSize=0;
         for( unsigned proc=0; proc<commSize; ++proc )
         {
-            const int recvSize = commMeta.childRecvInd[proc].size()/2;
+            const int recvSize = commMeta.childRecvInds[proc].size()/2;
             recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += recvSize;
@@ -174,14 +174,14 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
             Length<int>( node.size, grid.Row(), gridHeight );
         for( unsigned proc=0; proc<commSize; ++proc )
         {
-            const F* recvValues = &recvBuffer[recvDispls[proc]];
-            const std::vector<int>& recvInd = commMeta.childRecvInd[proc];
-            const int numRecvIndexPairs = recvInd.size()/2;
-            for( int k=0; k<numRecvIndexPairs; ++k )
+            const F* recvVals = &recvBuffer[recvDispls[proc]];
+            const std::vector<int>& recvInds = commMeta.childRecvInds[proc];
+            const int numRecvIndPairs = recvInds.size()/2;
+            for( int k=0; k<numRecvIndPairs; ++k )
             {
-                const int iFrontLoc = recvInd[2*k+0];
-                const int jFrontLoc = recvInd[2*k+1];
-                const F value = recvValues[k];
+                const int iFrontLoc = recvInds[2*k+0];
+                const int jFrontLoc = recvInds[2*k+1];
+                const F value = recvVals[k];
 #ifndef RELEASE
                 const int iFront = grid.Row() + iFrontLoc*gridHeight;
                 const int jFront = grid.Col() + jFrontLoc*gridWidth;
@@ -199,7 +199,7 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
         std::vector<F>().swap( recvBuffer );
         std::vector<int>().swap( recvCounts );
         std::vector<int>().swap( recvDispls );
-        if( computeFactRecvInd )
+        if( computeFactRecvInds )
             commMeta.EmptyChildRecvIndices();
 
         // Now that the frontal matrix is set up, perform the factorization

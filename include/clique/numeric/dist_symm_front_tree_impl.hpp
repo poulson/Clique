@@ -60,10 +60,10 @@ DistSymmFrontTree<F>::Initialize
     for( int s=0; s<numLocal; ++s )
     {
         const SepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
-        const int numInd = sepOrLeaf.indices.size();
-        for( int t=0; t<numInd; ++t )
+        const int numInds = sepOrLeaf.inds.size();
+        for( int t=0; t<numInds; ++t )
         {
-            const int i = sepOrLeaf.indices[t];
+            const int i = sepOrLeaf.inds[t];
 #ifndef RELEASE
             if( i < 0 || i >= numSources )
                 throw std::logic_error("separator index was out of bounds");
@@ -79,10 +79,10 @@ DistSymmFrontTree<F>::Initialize
         const Grid& grid = *node.grid;
         const int rowShift = grid.Col();
         const int rowStride = grid.Width();
-        const int numInd = sep.indices.size();
-        for( int t=rowShift; t<numInd; t+=rowStride )
+        const int numInds = sep.inds.size();
+        for( int t=rowShift; t<numInds; t+=rowStride )
         {
-            const int i = sep.indices[t];
+            const int i = sep.inds[t];
 #ifndef RELEASE
             if( i < 0 || i >= numSources )
                 throw std::logic_error("separator index was out of bounds");
@@ -92,31 +92,31 @@ DistSymmFrontTree<F>::Initialize
         }
     }
     int numRecvRows=0;
-    std::vector<int> recvRowOffsets( commSize );
+    std::vector<int> recvRowOffs( commSize );
     for( int q=0; q<commSize; ++q )
     {
-        recvRowOffsets[q] = numRecvRows;
+        recvRowOffs[q] = numRecvRows;
         numRecvRows += recvRowSizes[q];
     }
     std::vector<int> recvRows( numRecvRows );
-    std::vector<int> offsets = recvRowOffsets;
+    std::vector<int> offs = recvRowOffs;
     for( int s=0; s<numLocal; ++s )
     {
         const SepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
-        const int numInd = sepOrLeaf.indices.size();
-        for( int t=0; t<numInd; ++t )
+        const int numInds = sepOrLeaf.inds.size();
+        for( int t=0; t<numInds; ++t )
         {
-            const int i = sepOrLeaf.indices[t];
+            const int i = sepOrLeaf.inds[t];
 #ifndef RELEASE
             if( i < 0 || i >= numSources )
                 throw std::logic_error("separator index was out of bounds");
 #endif
             const int q = RowToProcess( i, blocksize, commSize );
 #ifndef RELEASE            
-            if( offsets[q] >= numRecvRows )
+            if( offs[q] >= numRecvRows )
                 throw std::logic_error("offset got too large");
 #endif
-            recvRows[offsets[q]++] = i;
+            recvRows[offs[q]++] = i;
         }
     }
     for( int s=0; s<numDist; ++s )
@@ -126,20 +126,20 @@ DistSymmFrontTree<F>::Initialize
         const Grid& grid = *node.grid;
         const int rowShift = grid.Col();
         const int rowStride = grid.Width();
-        const int numInd = sep.indices.size();
-        for( int t=rowShift; t<numInd; t+=rowStride )
+        const int numInds = sep.inds.size();
+        for( int t=rowShift; t<numInds; t+=rowStride )
         {
-            const int i = sep.indices[t];
+            const int i = sep.inds[t];
 #ifndef RELEASE
             if( i < 0 || i >= numSources )
                 throw std::logic_error("separator index was out of bounds");
 #endif
             const int q = RowToProcess( i, blocksize, commSize );
 #ifndef RELEASE            
-            if( offsets[q] >= numRecvRows )
+            if( offs[q] >= numRecvRows )
                 throw std::logic_error("offset got too large");
 #endif
-            recvRows[offsets[q]++] = i;
+            recvRows[offs[q]++] = i;
         }
     }
 
@@ -147,58 +147,58 @@ DistSymmFrontTree<F>::Initialize
     std::vector<int> sendRowSizes( commSize );
     mpi::AllToAll( &recvRowSizes[0], 1, &sendRowSizes[0], 1, comm );
     int numSendRows=0;
-    std::vector<int> sendRowOffsets( commSize );
+    std::vector<int> sendRowOffs( commSize );
     for( int q=0; q<commSize; ++q )
     {
-        sendRowOffsets[q] = numSendRows;
+        sendRowOffs[q] = numSendRows;
         numSendRows += sendRowSizes[q];
     }
     std::vector<int> sendRows( numSendRows );
     mpi::AllToAll
-    ( &recvRows[0], &recvRowSizes[0], &recvRowOffsets[0],
-      &sendRows[0], &sendRowSizes[0], &sendRowOffsets[0], comm );
+    ( &recvRows[0], &recvRowSizes[0], &recvRowOffs[0],
+      &sendRows[0], &sendRowSizes[0], &sendRowOffs[0], comm );
 
     // Pack the number of nonzeros per row (and the nonzeros themselves)
     // TODO: Avoid sending upper-triangular data
     int numSendEntries=0;
     const int firstLocalRow = A.FirstLocalRow();
-    std::vector<int> sendRowLengths( numSendRows );
-    std::vector<int> sendEntriesSizes( commSize, 0 );
-    std::vector<int> sendEntriesOffsets( commSize );
+    std::vector<int> sendRowLengths( numSendRows ),
+                     sendEntriesSizes( commSize, 0 ),
+                     sendEntriesOffs( commSize );
     for( int q=0; q<commSize; ++q )
     {
         const int size = sendRowSizes[q];
-        const int offset = sendRowOffsets[q];
-        sendEntriesOffsets[q] = numSendEntries;
+        const int off = sendRowOffs[q];
+        sendEntriesOffs[q] = numSendEntries;
         for( int s=0; s<size; ++s )
         {
-            const int i = sendRows[s+offset];
+            const int i = sendRows[s+off];
             const int iLocal = i - firstLocalRow;
             const int numConnections = A.NumConnections( iLocal );
             numSendEntries += numConnections;
             sendEntriesSizes[q] += numConnections;
-            sendRowLengths[s+offset] = numConnections;
+            sendRowLengths[s+off] = numConnections;
         }
     }
     std::vector<F> sendEntries( numSendEntries );
     std::vector<int> sendTargets( numSendEntries );
     for( int q=0; q<commSize; ++q )
     {
-        int index = sendEntriesOffsets[q];
+        int index = sendEntriesOffs[q];
         const int size = sendRowSizes[q];
-        const int offset = sendRowOffsets[q];
+        const int off = sendRowOffs[q];
         for( int s=0; s<size; ++s )
         {
-            const int i = sendRows[s+offset];
+            const int i = sendRows[s+off];
             const int iLocal = i - firstLocalRow;
-            const int numConnections = sendRowLengths[s+offset];
-            const int localEntryOffset = A.LocalEntryOffset( iLocal );
+            const int numConnections = sendRowLengths[s+off];
+            const int localEntryOff = A.LocalEntryOffset( iLocal );
             for( int t=0; t<numConnections; ++t )
             {
-                const F value = A.Value( localEntryOffset+t );
-                const int col = A.Col( localEntryOffset+t );
-                const int targetOffset = Find( targets, col );
-                const int mappedTarget = mappedTargets[targetOffset];
+                const F value = A.Value( localEntryOff+t );
+                const int col = A.Col( localEntryOff+t );
+                const int targetOff = Find( targets, col );
+                const int mappedTarget = mappedTargets[targetOff];
 #ifndef RELEASE
                 if( index >= numSendEntries )
                     throw std::logic_error("send entry index got too big");
@@ -209,7 +209,7 @@ DistSymmFrontTree<F>::Initialize
             }
         }
 #ifndef RELEASE
-        if( index != sendEntriesOffsets[q]+sendEntriesSizes[q] )
+        if( index != sendEntriesOffs[q]+sendEntriesSizes[q] )
             throw std::logic_error("index was not the correct value");
 #endif
     }
@@ -217,33 +217,33 @@ DistSymmFrontTree<F>::Initialize
     // Send back the number of nonzeros per row and the nonzeros themselves
     std::vector<int> recvRowLengths( numRecvRows );
     mpi::AllToAll
-    ( &sendRowLengths[0], &sendRowSizes[0], &sendRowOffsets[0],
-      &recvRowLengths[0], &recvRowSizes[0], &recvRowOffsets[0], comm );
+    ( &sendRowLengths[0], &sendRowSizes[0], &sendRowOffs[0],
+      &recvRowLengths[0], &recvRowSizes[0], &recvRowOffs[0], comm );
     int numRecvEntries=0;
-    std::vector<int> recvEntriesSizes( commSize, 0 );
-    std::vector<int> recvEntriesOffsets( commSize );
+    std::vector<int> recvEntriesSizes( commSize, 0 ),
+                     recvEntriesOffs( commSize );
     for( int q=0; q<commSize; ++q )
     {
         const int size = recvRowSizes[q];
-        const int offset = recvRowOffsets[q];
+        const int off = recvRowOffs[q];
         for( int s=0; s<size; ++s )
-            recvEntriesSizes[q] += recvRowLengths[offset+s];
+            recvEntriesSizes[q] += recvRowLengths[off+s];
 
-        recvEntriesOffsets[q] = numRecvEntries; 
+        recvEntriesOffs[q] = numRecvEntries; 
         numRecvEntries += recvEntriesSizes[q];
     }
     std::vector<F> recvEntries( numRecvEntries );
     std::vector<int> recvTargets( numRecvEntries );
     mpi::AllToAll
-    ( &sendEntries[0], &sendEntriesSizes[0], &sendEntriesOffsets[0],
-      &recvEntries[0], &recvEntriesSizes[0], &recvEntriesOffsets[0], comm );
+    ( &sendEntries[0], &sendEntriesSizes[0], &sendEntriesOffs[0],
+      &recvEntries[0], &recvEntriesSizes[0], &recvEntriesOffs[0], comm );
     mpi::AllToAll
-    ( &sendTargets[0], &sendEntriesSizes[0], &sendEntriesOffsets[0],
-      &recvTargets[0], &recvEntriesSizes[0], &recvEntriesOffsets[0], comm );
+    ( &sendTargets[0], &sendEntriesSizes[0], &sendEntriesOffs[0],
+      &recvTargets[0], &recvEntriesSizes[0], &recvEntriesOffs[0], comm );
 
     // Unpack the received entries
-    offsets = recvRowOffsets;
-    std::vector<int> entryOffsets = recvEntriesOffsets;
+    offs = recvRowOffs;
+    std::vector<int> entryOffs = recvEntriesOffs;
     localFronts.resize( numLocal );
     for( int s=0; s<numLocal; ++s )
     {
@@ -253,43 +253,43 @@ DistSymmFrontTree<F>::Initialize
         const std::vector<int>& origLowerStruct = node.origLowerStruct;
 
         const int size = node.size;
-        const int offset = node.offset;
+        const int off = node.off;
         const int lowerSize = node.lowerStruct.size();
         Zeros( front.frontL, size+lowerSize, size );
 
 #ifndef RELEASE
-        if( size != (int)sepOrLeaf.indices.size() )
+        if( size != (int)sepOrLeaf.inds.size() )
             throw std::logic_error("Mismatch between separator and node size");
 #endif
 
         for( int t=0; t<size; ++t )
         {
-            const int i = sepOrLeaf.indices[t];
+            const int i = sepOrLeaf.inds[t];
             const int q = RowToProcess( i, blocksize, commSize );
 
-            int& entryOffset = entryOffsets[q];
-            const int numEntries = recvRowLengths[offsets[q]++];
+            int& entryOff = entryOffs[q];
+            const int numEntries = recvRowLengths[offs[q]++];
 
             for( int k=0; k<numEntries; ++k )
             {
-                const F value = recvEntries[entryOffset];
-                const int target = recvTargets[entryOffset];
-                ++entryOffset;
+                const F value = recvEntries[entryOff];
+                const int target = recvTargets[entryOff];
+                ++entryOff;
 
-                if( target < offset+t )
+                if( target < off+t )
                     continue;
-                else if( target < offset+size )
+                else if( target < off+size )
                 {
-                    front.frontL.Set( target-offset, t, value );
+                    front.frontL.Set( target-off, t, value );
                 }
                 else
                 {
-                    const int origOffset = Find( origLowerStruct, target );
+                    const int origOff = Find( origLowerStruct, target );
 #ifndef RELEASE
-                    if( origOffset >= (int)node.origLowerRelInd.size() )
-                        throw std::logic_error("origLowerRelInd too small");
+                    if( origOff >= (int)node.origLowerRelInds.size() )
+                        throw std::logic_error("origLowerRelInds too small");
 #endif
-                    const int row = node.origLowerRelInd[origOffset];
+                    const int row = node.origLowerRelInds[origOff];
 #ifndef RELEASE
                     if( row < t )
                         throw std::logic_error("Tried to touch upper triangle");
@@ -315,50 +315,50 @@ DistSymmFrontTree<F>::Initialize
         const int rowStride = grid.Width();
 
         const int size = node.size;
-        const int offset = node.offset;
+        const int off = node.off;
         const int lowerSize = node.lowerStruct.size();
         front.front2dL.SetGrid( grid );
         Zeros( front.front2dL, size+lowerSize, size );
 
 #ifndef RELEASE
-        if( size != (int)sep.indices.size() )
+        if( size != (int)sep.inds.size() )
             throw std::logic_error("Mismatch in separator and node sizes");
 #endif
 
         for( int t=rowShift; t<size; t+=rowStride )
         {
-            const int i = sep.indices[t];
+            const int i = sep.inds[t];
             const int q = RowToProcess( i, blocksize, commSize );
             const int localCol = (t-rowShift) / rowStride;
 
-            int& entryOffset = entryOffsets[q];
-            const int numEntries = recvRowLengths[offsets[q]++];
+            int& entryOff = entryOffs[q];
+            const int numEntries = recvRowLengths[offs[q]++];
 
             for( int k=0; k<numEntries; ++k )
             {
-                const F value = recvEntries[entryOffset];
-                const int target = recvTargets[entryOffset];
-                ++entryOffset;
+                const F value = recvEntries[entryOff];
+                const int target = recvTargets[entryOff];
+                ++entryOff;
 
-                if( target < offset+t )
+                if( target < off+t )
                     continue;
-                else if( target < offset+size )
+                else if( target < off+size )
                 {
-                    if( (target-offset) % colStride == colShift )
+                    if( (target-off) % colStride == colShift )
                     {
-                        const int row = target-offset;
+                        const int row = target-off;
                         const int localRow = (row-colShift) / colStride;
                         front.front2dL.SetLocal( localRow, localCol, value );
                     }
                 }
                 else 
                 {
-                    const int origOffset = Find( origLowerStruct, target );
+                    const int origOff = Find( origLowerStruct, target );
 #ifndef RELEASE
-                    if( origOffset >= (int)node.origLowerRelInd.size() )
-                        throw std::logic_error("origLowerRelInd too small");
+                    if( origOff >= (int)node.origLowerRelInds.size() )
+                        throw std::logic_error("origLowerRelInds too small");
 #endif
-                    const int row = node.origLowerRelInd[origOffset];
+                    const int row = node.origLowerRelInds[origOff];
 #ifndef RELEASE
                     if( row < t )
                         throw std::logic_error("Tried to touch upper triangle");
@@ -374,8 +374,8 @@ DistSymmFrontTree<F>::Initialize
     }
 #ifndef RELEASE
     for( int q=0; q<commSize; ++q )
-        if( entryOffsets[q] != recvEntriesOffsets[q]+recvEntriesSizes[q] )
-            throw std::logic_error("entryOffsets were incorrect");
+        if( entryOffs[q] != recvEntriesOffs[q]+recvEntriesSizes[q] )
+            throw std::logic_error("entryOffs were incorrect");
 #endif
     
     // Copy information from the local root to the dist leaf

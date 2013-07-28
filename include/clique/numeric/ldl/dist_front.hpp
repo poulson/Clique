@@ -122,10 +122,6 @@ inline void FrontLDLGeneral
         ( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
         AL21.TransposeFrom( S21Trans_STAR_MC );
         //--------------------------------------------------------------------//
-        AL21_VC_STAR.FreeAlignments();
-        AL21_VR_STAR.FreeAlignments();
-        S21Trans_STAR_MC.FreeAlignments();
-        AL21AdjOrTrans_STAR_MR.FreeAlignments();
 
         elem::SlidePartitionDownDiagonal
         ( ALTL, /**/ ALTR,  AL00, AL01, /**/ AL02,
@@ -272,9 +268,6 @@ inline void FrontLDLSquare
         ( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
         AL21.TransposeFrom( S21Trans_STAR_MC );
         //--------------------------------------------------------------------//
-        AL21_VC_STAR.FreeAlignments();
-        S21Trans_STAR_MC.FreeAlignments();
-        AL21AdjOrTrans_STAR_MR.FreeAlignments();
 
         elem::SlidePartitionDownDiagonal
         ( ALTL, /**/ ALTR,  AL00, AL01, /**/ AL02,

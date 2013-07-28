@@ -66,7 +66,7 @@ inline void
 DistSparseMatrix<T>::SetComm( mpi::Comm comm )
 { 
     distGraph_.SetComm( comm ); 
-    std::vector<T>().swap( values_ );
+    std::vector<T>().swap( vals_ );
 }
 
 template<typename T>
@@ -114,22 +114,22 @@ DistSparseMatrix<T>::Capacity() const
 
 template<typename T>
 inline int
-DistSparseMatrix<T>::Row( int localIndex ) const
+DistSparseMatrix<T>::Row( int localInd ) const
 { 
 #ifndef RELEASE 
     CallStackEntry entry("DistSparseMatrix::Row");
 #endif
-    return distGraph_.Source( localIndex );
+    return distGraph_.Source( localInd );
 }
 
 template<typename T>
 inline int
-DistSparseMatrix<T>::Col( int localIndex ) const
+DistSparseMatrix<T>::Col( int localInd ) const
 { 
 #ifndef RELEASE 
     CallStackEntry entry("DistSparseMatrix::Col");
 #endif
-    return distGraph_.Target( localIndex );
+    return distGraph_.Target( localInd );
 }
 
 template<typename T>
@@ -154,14 +154,14 @@ DistSparseMatrix<T>::NumConnections( int localRow ) const
 
 template<typename T>
 inline T
-DistSparseMatrix<T>::Value( int localIndex ) const
+DistSparseMatrix<T>::Value( int localInd ) const
 { 
 #ifndef RELEASE 
     CallStackEntry entry("DistSparseMatrix::Value");
-    if( localIndex < 0 || localIndex >= (int)values_.size() )
+    if( localInd < 0 || localInd >= (int)vals_.size() )
         throw std::logic_error("Entry number out of bounds");
 #endif
-    return values_[localIndex];
+    return vals_[localInd];
 }
 
 template<typename T>
@@ -177,7 +177,7 @@ DistSparseMatrix<T>::TargetBuffer()
 template<typename T>
 inline T*
 DistSparseMatrix<T>::ValueBuffer()
-{ return &values_[0]; }
+{ return &vals_[0]; }
 
 template<typename T>
 inline const int*
@@ -192,7 +192,7 @@ DistSparseMatrix<T>::LockedTargetBuffer() const
 template<typename T>
 inline const T*
 DistSparseMatrix<T>::LockedValueBuffer() const
-{ return &values_[0]; }
+{ return &vals_[0]; }
 
 template<typename T>
 inline bool
@@ -208,6 +208,7 @@ DistSparseMatrix<T>::StartAssembly()
 #ifndef RELEASE
     CallStackEntry entry("DistSparseMatrix::StartAssembly");
 #endif
+    multMeta.ready = false;
     distGraph_.EnsureNotAssembling();
     distGraph_.assembling_ = true;
 }
@@ -226,13 +227,13 @@ DistSparseMatrix<T>::StopAssembly()
     // Ensure that the connection pairs are sorted
     if( !distGraph_.sorted_ )
     {
-        const int numLocalEntries = values_.size();
+        const int numLocalEntries = vals_.size();
         std::vector<Entry<T> > entries( numLocalEntries );
         for( int s=0; s<numLocalEntries; ++s )
         {
             entries[s].i = distGraph_.sources_[s];
             entries[s].j = distGraph_.targets_[s];
-            entries[s].value = values_[s];
+            entries[s].value = vals_[s];
         }
         std::sort( entries.begin(), entries.end(), CompareEntries );
 
@@ -255,12 +256,12 @@ DistSparseMatrix<T>::StopAssembly()
 
         distGraph_.sources_.resize( numUnique );
         distGraph_.targets_.resize( numUnique );
-        values_.resize( numUnique );
+        vals_.resize( numUnique );
         for( int s=0; s<numUnique; ++s )
         {
             distGraph_.sources_[s] = entries[s].i;
             distGraph_.targets_[s] = entries[s].j;
-            values_[s] = entries[s].value;
+            vals_[s] = entries[s].value;
         }
     }
     distGraph_.ComputeLocalEdgeOffsets();
@@ -271,7 +272,7 @@ inline void
 DistSparseMatrix<T>::Reserve( int numLocalEntries )
 { 
     distGraph_.Reserve( numLocalEntries );
-    values_.reserve( numLocalEntries );
+    vals_.reserve( numLocalEntries );
 }
 
 template<typename T>
@@ -283,7 +284,7 @@ DistSparseMatrix<T>::Update( int row, int col, T value )
     EnsureConsistentSizes();
 #endif
     distGraph_.Insert( row, col );
-    values_.push_back( value );
+    vals_.push_back( value );
 }
 
 template<typename T>
@@ -291,7 +292,7 @@ inline void
 DistSparseMatrix<T>::Empty()
 {
     distGraph_.Empty();
-    std::vector<T>().swap( values_ );
+    std::vector<T>().swap( vals_ );
 }
 
 template<typename T>
@@ -299,7 +300,7 @@ inline void
 DistSparseMatrix<T>::ResizeTo( int height, int width )
 {
     distGraph_.ResizeTo( height, width );
-    std::vector<T>().swap( values_ );
+    std::vector<T>().swap( vals_ );
 }
 
 template<typename T>
@@ -307,7 +308,7 @@ inline void
 DistSparseMatrix<T>::EnsureConsistentSizes() const
 { 
     distGraph_.EnsureConsistentSizes();
-    if( distGraph_.NumLocalEdges() != (int)values_.size() )
+    if( distGraph_.NumLocalEdges() != (int)vals_.size() )
         throw std::logic_error("Inconsistent sparsity sizes");
 }
 
@@ -316,7 +317,7 @@ inline void
 DistSparseMatrix<T>::EnsureConsistentCapacities() const
 { 
     distGraph_.EnsureConsistentCapacities();
-    if( distGraph_.Capacity() != values_.capacity() )
+    if( distGraph_.Capacity() != vals_.capacity() )
         throw std::logic_error("Inconsistent sparsity capacities");
 }
 

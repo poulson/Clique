@@ -109,8 +109,8 @@ main( int argc, char* argv[] )
             {
                 const int i = 
                     ( numDistNodes > 1 ? 
-                      sepTree.distSeps.back().indices[s] :
-                      sepTree.localSepsAndLeaves.back()->indices[s] );
+                      sepTree.distSeps.back().inds[s] :
+                      sepTree.localSepsAndLeaves.back()->inds[s] );
                 const int x = i % n;
                 const int y = (i/n) % n;
                 const int z = i/(n*n);

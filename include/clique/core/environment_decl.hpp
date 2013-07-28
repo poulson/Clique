@@ -101,6 +101,13 @@ public:
 void ReportException( std::exception& e );
 
 template<typename T>
+struct Entry
+{
+    int i, j;
+    T value;
+};
+
+template<typename T>
 bool IsSorted( const std::vector<T>& x );
 // While is_strictly_sorted exists in Boost, it does not exist in the STL (yet)
 template<typename T>
@@ -111,13 +118,13 @@ void Union
   const std::vector<int>& first, const std::vector<int>& second );
 
 void RelativeIndices
-( std::vector<int>& relInd, 
+( std::vector<int>& relInds, 
   const std::vector<int>& sub, const std::vector<int>& full );
 
 int RowToProcess( int i, int blocksize, int commSize );
 
 int Find
-( const std::vector<int>& sortedInd, int index, 
+( const std::vector<int>& sortedInds, int index, 
   std::string msg="Could not find index" );
 
 void

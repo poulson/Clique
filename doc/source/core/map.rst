@@ -25,7 +25,7 @@ permutations and can serve as a black box for the vast majority of users.
 
    .. rubric:: Map manipulation routines
 
-   .. cpp:function:: void Translate( std::vector<int>& localInd ) const
+   .. cpp:function:: void Translate( std::vector<int>& localInds ) const
 
       Collectively maps each process's set of local indices.
 

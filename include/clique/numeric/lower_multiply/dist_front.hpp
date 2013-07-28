@@ -15,17 +15,16 @@ namespace cliq {
 
 template<typename T>
 void FrontLowerMultiply
-( Orientation orientation, int diagOffset,
+( Orientation orientation, int diagOff,
   const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X );
 
 template<typename T>
 void FrontLowerMultiplyNormal
-( int diagOffset,
-  const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X );
+( int diagOff, const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X );
 
 template<typename T>
 void FrontLowerMultiplyTranspose
-( Orientation orientation, int diagOffset,
+( Orientation orientation, int diagOff,
   const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X );
 
 //----------------------------------------------------------------------------//
@@ -36,7 +35,7 @@ namespace internal {
 using namespace elem;
 
 template<typename T>
-void ModifyForTrmm( DistMatrix<T,STAR,STAR>& D, int diagOffset )
+void ModifyForTrmm( DistMatrix<T,STAR,STAR>& D, int diagOff )
 {
 #ifndef RELEASE
     cliq::CallStackEntry entry("ModifyForTrmm");
@@ -44,7 +43,7 @@ void ModifyForTrmm( DistMatrix<T,STAR,STAR>& D, int diagOffset )
     const int height = D.Height();
     for( int j=0; j<height; ++j )
     {
-        const int length = std::min(-diagOffset,height-j);
+        const int length = std::min(-diagOff,height-j);
         MemZero( D.Buffer(j,j), length );
     }
 }
@@ -53,21 +52,21 @@ void ModifyForTrmm( DistMatrix<T,STAR,STAR>& D, int diagOffset )
 
 template<typename T>
 inline void FrontLowerMultiply
-( Orientation orientation, int diagOffset,
+( Orientation orientation, int diagOff,
   const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("FrontLowerMultiply");
 #endif
     if( orientation == NORMAL )
-        FrontLowerMultiplyNormal( diagOffset, L, X );
+        FrontLowerMultiplyNormal( diagOff, L, X );
     else
-        FrontLowerMultiplyTranspose( orientation, diagOffset, L, X );
+        FrontLowerMultiplyTranspose( orientation, diagOff, L, X );
 }
 
 template<typename T>
 inline void FrontLowerMultiplyNormal
-( int diagOffset, const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X )
+( int diagOff, const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("FrontLowerMultiplyNormal");
@@ -84,7 +83,7 @@ inline void FrontLowerMultiplyNormal
     }
     if( L.ColAlignment() != X.ColAlignment() )
         throw std::logic_error("L and X are assumed to be aligned");
-    if( diagOffset > 0 )
+    if( diagOff > 0 )
         throw std::logic_error("Diagonal offsets cannot be positive");
 #endif
     const Grid& g = L.Grid();
@@ -128,7 +127,7 @@ inline void FrontLowerMultiplyNormal
         X1_STAR_STAR = X1;
         elem::LocalGemm( NORMAL, NORMAL, T(1), L21, X1_STAR_STAR, T(1), X2 );
 
-        if( diagOffset == 0 )
+        if( diagOff == 0 )
         {
             L11_STAR_STAR = L11;
             elem::LocalTrmm
@@ -138,7 +137,7 @@ inline void FrontLowerMultiplyNormal
         else
         {
             L11_STAR_STAR = L11;
-            internal::ModifyForTrmm( L11_STAR_STAR, diagOffset );
+            internal::ModifyForTrmm( L11_STAR_STAR, diagOff );
             elem::LocalTrmm
             ( LEFT, LOWER, NORMAL, NON_UNIT, 
               T(1), L11_STAR_STAR, X1_STAR_STAR );
@@ -162,7 +161,7 @@ inline void FrontLowerMultiplyNormal
 
 template<typename T>
 inline void FrontLowerMultiplyTranspose
-( Orientation orientation, int diagOffset,
+( Orientation orientation, int diagOff,
   const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X )
 {
 #ifndef RELEASE
@@ -182,7 +181,7 @@ inline void FrontLowerMultiplyTranspose
         throw std::logic_error("L and X are assumed to be aligned");
     if( orientation == NORMAL )
         throw std::logic_error("Orientation must be (conjugate-)transposed");
-    if( diagOffset > 0 )
+    if( diagOff > 0 )
         throw std::logic_error("Diagonal offsets cannot be positive");
 #endif
     const Grid& g = L.Grid();
@@ -225,7 +224,7 @@ inline void FrontLowerMultiplyTranspose
         //--------------------------------------------------------------------//
         X1_STAR_STAR = X1; // Can this be avoided?
         L11_STAR_STAR = L11;
-        if( diagOffset == 0 )
+        if( diagOff == 0 )
         {
             elem::LocalTrmm
             ( LEFT, LOWER, orientation, NON_UNIT, 
@@ -233,7 +232,7 @@ inline void FrontLowerMultiplyTranspose
         }
         else
         {
-            internal::ModifyForTrmm( L11_STAR_STAR, diagOffset );
+            internal::ModifyForTrmm( L11_STAR_STAR, diagOff );
             elem::LocalTrmm
             ( LEFT, LOWER, orientation, NON_UNIT, 
               T(1), L11_STAR_STAR, X1_STAR_STAR );

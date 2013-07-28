@@ -37,7 +37,7 @@ DistMap::~DistMap()
 
 inline void
 DistMap::StoreOwners
-( int numSources, std::vector<int>& localInd, mpi::Comm comm )
+( int numSources, std::vector<int>& localInds, mpi::Comm comm )
 {
 #ifndef RELEASE
     CallStackEntry entry("DistMap::StoreOwners");
@@ -50,22 +50,21 @@ DistMap::StoreOwners
 
     // Exchange via AllToAlls
     std::vector<int> sendSizes( commSize, 0 );
-    const int numLocalInd = localInd.size();
-    for( int s=0; s<numLocalInd; ++s )
+    const int numLocalInds = localInds.size();
+    for( int s=0; s<numLocalInds; ++s )
     {
-        const int i = localInd[s];
+        const int i = localInds[s];
         const int q = RowToProcess( i, blocksize, commSize );
         ++sendSizes[q];
     }
     std::vector<int> recvSizes( commSize );
     mpi::AllToAll( &sendSizes[0], 1, &recvSizes[0], 1, comm );
-    std::vector<int> sendOffsets( commSize ),
-                     recvOffsets( commSize );
+    std::vector<int> sendOffs( commSize ), recvOffs( commSize );
     int numSends=0, numRecvs=0;
     for( int q=0; q<commSize; ++q )
     {
-        sendOffsets[q] = numSends;
-        recvOffsets[q] = numRecvs;
+        sendOffs[q] = numSends;
+        recvOffs[q] = numRecvs;
         numSends += sendSizes[q];
         numRecvs += recvSizes[q];
     }
@@ -73,27 +72,27 @@ DistMap::StoreOwners
     if( numRecvs != NumLocalSources() )
         throw std::logic_error("Incorrect number of recv indices");
 #endif
-    std::vector<int> offsets = sendOffsets;
-    std::vector<int> sendInd( numSends );
-    for( int s=0; s<numLocalInd; ++s )
+    std::vector<int> offs = sendOffs;
+    std::vector<int> sendInds( numSends );
+    for( int s=0; s<numLocalInds; ++s )
     {
-        const int i = localInd[s];
+        const int i = localInds[s];
         const int q = RowToProcess( i, blocksize, commSize );
-        sendInd[offsets[q]++] = i;
+        sendInds[offs[q]++] = i;
     }
-    std::vector<int> recvInd( numRecvs );
+    std::vector<int> recvInds( numRecvs );
     mpi::AllToAll
-    ( &sendInd[0], &sendSizes[0], &sendOffsets[0],
-      &recvInd[0], &recvSizes[0], &recvOffsets[0], comm );
+    ( &sendInds[0], &sendSizes[0], &sendOffs[0],
+      &recvInds[0], &recvSizes[0], &recvOffs[0], comm );
 
     // Form map
     for( int q=0; q<commSize; ++q )
     {
         const int size = recvSizes[q];
-        const int offset = recvOffsets[q];
+        const int off = recvOffs[q];
         for( int s=0; s<size; ++s )
         {
-            const int i = recvInd[offset+s];
+            const int i = recvInds[off+s];
             const int iLocal = i - firstLocalSource;
             SetLocal( iLocal, q );
         }
@@ -101,19 +100,19 @@ DistMap::StoreOwners
 }
 
 inline void
-DistMap::Translate( std::vector<int>& localInd ) const
+DistMap::Translate( std::vector<int>& localInds ) const
 {
 #ifndef RELEASE
     CallStackEntry entry("DistMap::Translate");
 #endif
     const int commSize = mpi::CommSize( comm_ );
-    const int numLocalInd = localInd.size();
+    const int numLocalInds = localInds.size();
 
     // Count how many indices we need each process to map
     std::vector<int> requestSizes( commSize, 0 );
-    for( int s=0; s<numLocalInd; ++s )
+    for( int s=0; s<numLocalInds; ++s )
     {
-        const int i = localInd[s];
+        const int i = localInds[s];
 #ifndef RELEASE
         if( i < 0 )
             throw std::logic_error("Index was negative");
@@ -131,38 +130,38 @@ DistMap::Translate( std::vector<int>& localInd ) const
 
     // Prepare for the AllToAll to exchange request sizes
     int numRequests=0;
-    std::vector<int> requestOffsets( commSize );
+    std::vector<int> requestOffs( commSize );
     for( int q=0; q<commSize; ++q )
     {
-        requestOffsets[q] = numRequests;
+        requestOffs[q] = numRequests;
         numRequests += requestSizes[q];
     }
     int numFulfills=0;
-    std::vector<int> fulfillOffsets( commSize );
+    std::vector<int> fulfillOffs( commSize );
     for( int q=0; q<commSize; ++q )
     {
-        fulfillOffsets[q] = numFulfills;
+        fulfillOffs[q] = numFulfills;
         numFulfills += fulfillSizes[q];
     }
 
     // Pack the requested information 
     std::vector<int> requests( numRequests );
-    std::vector<int> offsets = requestOffsets;
-    for( int s=0; s<numLocalInd; ++s )
+    std::vector<int> offs = requestOffs;
+    for( int s=0; s<numLocalInds; ++s )
     {
-        const int i = localInd[s];
+        const int i = localInds[s];
         if( i < numSources_ )
         {
             const int q = RowToProcess( i, blocksize_, commSize );
-            requests[offsets[q]++] = i;
+            requests[offs[q]++] = i;
         }
     }
 
     // Perform the first index exchange
     std::vector<int> fulfills( numFulfills );
     mpi::AllToAll
-    ( &requests[0], &requestSizes[0], &requestOffsets[0],
-      &fulfills[0], &fulfillSizes[0], &fulfillOffsets[0], comm_ );
+    ( &requests[0], &requestSizes[0], &requestOffs[0],
+      &fulfills[0], &fulfillSizes[0], &fulfillOffs[0], comm_ );
 
     // Map all of the indices in 'fulfills'
     for( int s=0; s<numFulfills; ++s )
@@ -184,18 +183,18 @@ DistMap::Translate( std::vector<int>& localInd ) const
 
     // Send everything back
     mpi::AllToAll
-    ( &fulfills[0], &fulfillSizes[0], &fulfillOffsets[0],
-      &requests[0], &requestSizes[0], &requestOffsets[0], comm_ );
+    ( &fulfills[0], &fulfillSizes[0], &fulfillOffs[0],
+      &requests[0], &requestSizes[0], &requestOffs[0], comm_ );
 
     // Unpack in the same way we originally packed
-    offsets = requestOffsets;
-    for( int s=0; s<numLocalInd; ++s )
+    offs = requestOffs;
+    for( int s=0; s<numLocalInds; ++s )
     {
-        const int i = localInd[s];
+        const int i = localInds[s];
         if( i < numSources_ )
         {
             const int q = RowToProcess( i, blocksize_, commSize );
-            localInd[s] = requests[offsets[q]++];
+            localInds[s] = requests[offs[q]++];
         }
     }
 }
@@ -224,10 +223,10 @@ DistMap::FormInverse( DistMap& inverseMap ) const
 
     // Prepare for the AllToAll to exchange send sizes
     int numSends=0;
-    std::vector<int> sendOffsets( commSize );
+    std::vector<int> sendOffs( commSize );
     for( int q=0; q<commSize; ++q )
     {
-        sendOffsets[q] = numSends;
+        sendOffs[q] = numSends;
         numSends += sendSizes[q];
     }
 #ifndef RELEASE
@@ -235,10 +234,10 @@ DistMap::FormInverse( DistMap& inverseMap ) const
         throw std::logic_error("Miscalculated numSends");
 #endif
     int numReceives=0;
-    std::vector<int> recvOffsets( commSize );
+    std::vector<int> recvOffs( commSize );
     for( int q=0; q<commSize; ++q )
     {
-        recvOffsets[q] = numReceives;
+        recvOffs[q] = numReceives;
         numReceives += recvSizes[q];
     }
 #ifndef RELEASE
@@ -248,29 +247,29 @@ DistMap::FormInverse( DistMap& inverseMap ) const
 
     // Pack our map information
     std::vector<int> sends( numSends );
-    std::vector<int> offsets = sendOffsets;
+    std::vector<int> offs = sendOffs;
     for( int s=0; s<numLocalSources; ++s )
     {
         const int i = map_[s];
         const int q = RowToProcess( i, blocksize_, commSize );
-        sends[offsets[q]++] = s+firstLocalSource_;
-        sends[offsets[q]++] = i;
+        sends[offs[q]++] = s+firstLocalSource_;
+        sends[offs[q]++] = i;
     }
 
     // Send out the map information
     std::vector<int> recvs( numReceives );
     mpi::AllToAll
-    ( &sends[0], &sendSizes[0], &sendOffsets[0],
-      &recvs[0], &recvSizes[0], &recvOffsets[0], comm_ );
+    ( &sends[0], &sendSizes[0], &sendOffs[0],
+      &recvs[0], &recvSizes[0], &recvOffs[0], comm_ );
 
     // Form our part of the inverse map
     inverseMap.numSources_ = numSources_;
     inverseMap.SetComm( comm_ );
     for( int s=0; s<numReceives; s+=2 )
     {
-        const int origIndex = recvs[s];
-        const int mappedIndex = recvs[s+1];
-        inverseMap.SetLocal( mappedIndex-firstLocalSource_, origIndex );
+        const int origInd = recvs[s];
+        const int mappedInd = recvs[s+1];
+        inverseMap.SetLocal( mappedInd-firstLocalSource_, origInd );
     }
 }
 

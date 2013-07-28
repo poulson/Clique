@@ -42,8 +42,6 @@ void Multiply
     const int XLocalHeight = X.LocalHeight();
     const int YLocalHeight = Y.LocalHeight();
     const int width = X.Width();
-    const int blocksize = A.Blocksize();
-    const int firstLocalRow = A.FirstLocalRow();
     const int numLocalEntries = A.NumLocalEntries();
 
     // Y := beta Y
@@ -51,97 +49,116 @@ void Multiply
         for( int iLocal=0; iLocal<YLocalHeight; ++iLocal )
             Y.SetLocal( iLocal, j, beta*Y.GetLocal(iLocal,j) );
 
-    // Compute the set of row indices that we need from X
-    std::set<int> indexSet;
-    for( int e=0; e<numLocalEntries; ++e )
-        indexSet.insert( A.Col(e) );
-    const int numRecvInd = indexSet.size();
-    std::vector<int> recvInd( numRecvInd );
-    std::vector<int> recvSizes( commSize, 0 );
-    std::vector<int> recvOffsets( commSize );
+    SparseMultMeta<T>& meta = A.multMeta;
+    if( !meta.ready )
     {
-        int offset=0, lastOffset=0, qPrev=0;
-        std::set<int>::const_iterator setIt;
-        for( setIt=indexSet.begin(); setIt!=indexSet.end(); ++setIt )
+        // Compute the set of row indices that we need from X
+        std::set<int> indexSet;
+        for( int e=0; e<numLocalEntries; ++e )
+            indexSet.insert( A.Col(e) );
+        const int numRecvInds = indexSet.size();
+        std::vector<int> recvInds( numRecvInds );
+        meta.recvSizes.clear();
+        meta.recvSizes.resize( commSize, 0 );
+        meta.recvOffs.resize( commSize );
+        const int blocksize = A.Blocksize();
         {
-            const int j = *setIt;
-            const int q = RowToProcess( j, blocksize, commSize );
-            while( qPrev != q )
+            int off=0, lastOff=0, qPrev=0;
+            std::set<int>::const_iterator setIt;
+            for( setIt=indexSet.begin(); setIt!=indexSet.end(); ++setIt )
             {
-                recvSizes[qPrev] = offset - lastOffset;
-                recvOffsets[qPrev+1] = offset;
-
-                lastOffset = offset;
+                const int j = *setIt;
+                const int q = RowToProcess( j, blocksize, commSize );
+                while( qPrev != q )
+                {
+                    meta.recvSizes[qPrev] = off - lastOff;
+                    meta.recvOffs[qPrev+1] = off;
+    
+                    lastOff = off;
+                    ++qPrev;
+                }
+                recvInds[off++] = j;
+            }
+            while( qPrev != commSize-1 )
+            {
+                meta.recvSizes[qPrev] = off - lastOff;
+                meta.recvOffs[qPrev+1] = off;
+                lastOff = off;
                 ++qPrev;
             }
-            recvInd[offset++] = j;
+            meta.recvSizes[commSize-1] = off - lastOff;
         }
-        while( qPrev != commSize-1 )
+
+        // Coordinate
+        meta.sendSizes.resize( commSize );
+        mpi::AllToAll( &meta.recvSizes[0], 1, &meta.sendSizes[0], 1, comm );
+        int numSendInds=0;
+        meta.sendOffs.resize( commSize );
+        for( int q=0; q<commSize; ++q )
         {
-            recvSizes[qPrev] = offset - lastOffset;
-            recvOffsets[qPrev+1] = offset;
-            lastOffset = offset;
-            ++qPrev;
+            meta.sendOffs[q] = numSendInds;
+            numSendInds += meta.sendSizes[q];
         }
-        recvSizes[commSize-1] = offset - lastOffset;
+        meta.sendInds.resize( numSendInds );
+        mpi::AllToAll
+        ( &recvInds[0],       &meta.recvSizes[0], &meta.recvOffs[0],
+          &meta.sendInds[0], &meta.sendSizes[0], &meta.sendOffs[0], comm );
+
+        meta.colOffs.resize( numLocalEntries );
+        for( int s=0; s<numLocalEntries; ++s )
+            meta.colOffs[s] = Find( recvInds, A.Col(s) );
+        meta.numRecvInds = numRecvInds;
+        meta.ready = true;
     }
 
-    // Coordinate
-    std::vector<int> sendSizes( commSize );
-    mpi::AllToAll( &recvSizes[0], 1, &sendSizes[0], 1, comm );
-    int numSendInd=0;
-    std::vector<int> sendOffsets( commSize );
+    // Convert the sizes and offsets to be compatible with the current width
+    std::vector<int> recvSizes=meta.recvSizes,
+                     recvOffs=meta.recvOffs,
+                     sendSizes=meta.sendSizes,
+                     sendOffs=meta.sendOffs;
     for( int q=0; q<commSize; ++q )
     {
-        sendOffsets[q] = numSendInd;
-        numSendInd += sendSizes[q];
+        recvSizes[q] *= width;    
+        recvOffs[q] *= width;
+        sendSizes[q] *= width;
+        sendOffs[q] *= width;
     }
-    std::vector<int> sendInd( numSendInd );
-    mpi::AllToAll
-    ( &recvInd[0], &recvSizes[0], &recvOffsets[0],
-      &sendInd[0], &sendSizes[0], &sendOffsets[0], comm );
 
     // Pack the send values
-    std::vector<T> sendValues( numSendInd*width );
-    for( int s=0; s<numSendInd; ++s )
+    const int numSendInds = meta.sendInds.size();
+    const int firstLocalRow = A.FirstLocalRow();
+    std::vector<T> sendVals( numSendInds*width );
+    for( int s=0; s<numSendInds; ++s )
     {
-        const int i = sendInd[s];
+        const int i = meta.sendInds[s];
         const int iLocal = i - firstLocalRow;
 #ifndef RELEASE
         if( iLocal < 0 || iLocal >= XLocalHeight )
             throw std::logic_error("iLocal was out of bounds");
 #endif
         for( int j=0; j<width; ++j )
-            sendValues[s*width+j] = X.GetLocal( iLocal, j );
+            sendVals[s*width+j] = X.GetLocal( iLocal, j );
     }
 
-    // Send them back
-    std::vector<T> recvValues( numRecvInd*width );
-    for( int q=0; q<commSize; ++q )
-    {
-        sendSizes[q] *= width;
-        sendOffsets[q] *= width;
-        recvSizes[q] *= width;
-        recvOffsets[q] *= width;
-    }
+    // Now send them
+    std::vector<T> recvVals( meta.numRecvInds*width );
     mpi::AllToAll
-    ( &sendValues[0], &sendSizes[0], &sendOffsets[0],
-      &recvValues[0], &recvSizes[0], &recvOffsets[0], comm );
+    ( &sendVals[0], &sendSizes[0], &sendOffs[0],
+      &recvVals[0], &recvSizes[0], &recvOffs[0], comm );
      
     // Perform the local multiply-accumulate, y := alpha A x + y
     for( int iLocal=0; iLocal<YLocalHeight; ++iLocal )
     {
-        const int offset = A.LocalEntryOffset( iLocal );
+        const int off = A.LocalEntryOffset( iLocal );
         const int rowSize = A.NumConnections( iLocal );
         for( int k=0; k<rowSize; ++k )
         {
-            const int col = A.Col( offset+k );
-            const int colOffset = Find( recvInd, col );
-            const T AValue = A.Value(k+offset);
+            const int colOff = meta.colOffs[k+off];
+            const T AVal = A.Value(k+off);
             for( int j=0; j<width; ++j )
             {
-                const T XValue = recvValues[colOffset*width+j];
-                const T update = alpha*AValue*XValue;
+                const T XVal = recvVals[colOff*width+j];
+                const T update = alpha*AVal*XVal;
                 Y.UpdateLocal( iLocal, j, update );
             }
         }

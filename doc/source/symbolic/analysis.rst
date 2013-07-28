@@ -14,7 +14,7 @@ The following routine is called ``SymmetricAnalysis`` instead of
 symbolic factorization, it also computes and stores other data which is
 useful for numerical factorization and solves.
 
-.. cpp:function:: void SymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info, bool storeFactRecvInd=true )
+.. cpp:function:: void SymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info, bool storeFactRecvInds=true )
     
 .. note:: 
    Most users will not need to directly call this routine, as it is 
@@ -37,7 +37,7 @@ DistSymmElimTree
 
       The size of this node in the elimination tree.
 
-   .. cpp:member:: int offset
+   .. cpp:member:: int off
 
       The first reordered index of the vertices in this node.
 
@@ -68,7 +68,7 @@ DistSymmElimTree
 
       The number of vertices in this node.
 
-   .. cpp:member:: int offset
+   .. cpp:member:: int off
 
       The first reordered index for the vertices in this node.
 

@@ -18,7 +18,7 @@ namespace cliq {
 
 struct SymmNode
 {
-    int size, offset; 
+    int size, off; 
     int parent; // -1 if root separator
     std::vector<int> children;
     std::vector<int> lowerStruct;
@@ -28,7 +28,7 @@ struct DistSymmNode
 {
     bool onLeft; // irrelevant if root node
     mpi::Comm comm;
-    int size, offset;
+    int size, off;
     std::vector<int> lowerStruct;
 };
 

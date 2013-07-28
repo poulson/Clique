@@ -18,7 +18,7 @@ struct SymmNodeInfo
     //
     // This is known before analysis
     //
-    int size, offset; 
+    int size, off; 
     int parent; // -1 if root separator
     std::vector<int> children;
     std::vector<int> origLowerStruct;
@@ -27,26 +27,26 @@ struct SymmNodeInfo
     // The following is computed during analysis
     //
     bool onLeft;
-    int myOffset;
+    int myOff;
     std::vector<int> lowerStruct;
-    std::vector<int> origLowerRelInd;
+    std::vector<int> origLowerRelInds;
     // (maps from the child update indices to our frontal indices).
-    std::vector<int> leftRelInd, rightRelInd;
+    std::vector<int> leftRelInds, rightRelInds;
 };
 
 struct FactorCommMeta
 {
-    std::vector<int> numChildSendInd;
+    std::vector<int> numChildSendInds;
     // This information does not necessarily have to be kept and can be
     // computed from the above information (albeit somewhat expensively).
-    mutable std::vector<std::vector<int> > childRecvInd;
+    mutable std::vector<std::vector<int> > childRecvInds;
 
     void EmptyChildRecvIndices() const
-    { std::vector<std::vector<int> >().swap(childRecvInd); }
+    { std::vector<std::vector<int> >().swap(childRecvInds); }
 
     void Empty()
     {
-        std::vector<int>().swap(numChildSendInd);
+        std::vector<int>().swap(numChildSendInds);
         EmptyChildRecvIndices();
     }
 };
@@ -54,25 +54,25 @@ struct FactorCommMeta
 struct MultiVecCommMeta
 {
     int localSize;
-    std::vector<int> numChildSendInd;
-    std::vector<std::vector<int> > childRecvInd;
+    std::vector<int> numChildSendInds;
+    std::vector<std::vector<int> > childRecvInds;
 
     void Empty()
     {
-        std::vector<int>().swap( numChildSendInd );
-        std::vector<std::vector<int> >().swap( childRecvInd );
+        std::vector<int>().swap( numChildSendInds );
+        std::vector<std::vector<int> >().swap( childRecvInds );
     }
 };
 
 struct MatrixCommMeta
 {
-    std::vector<int> numChildSendInd;
-    std::vector<std::vector<int> > childRecvInd;
+    std::vector<int> numChildSendInds;
+    std::vector<std::vector<int> > childRecvInds;
 
     void Empty()
     {
-        std::vector<int>().swap( numChildSendInd );
-        std::vector<std::vector<int> >().swap( childRecvInd );
+        std::vector<int>().swap( numChildSendInds );
+        std::vector<std::vector<int> >().swap( childRecvInds );
     }
 };
 
@@ -81,7 +81,7 @@ struct DistSymmNodeInfo
     //
     // This is known before analysis
     //
-    int size, offset;
+    int size, off;
     std::vector<int> origLowerStruct;
     bool onLeft;
     mpi::Comm comm;
@@ -90,15 +90,15 @@ struct DistSymmNodeInfo
     // The following is computed during analysis
     //
     Grid* grid;
-    int myOffset, leftSize, rightSize;
+    int myOff, leftSize, rightSize;
     std::vector<int> lowerStruct;
-    std::vector<int> origLowerRelInd;
+    std::vector<int> origLowerRelInds;
 
     // The relative indices of our child
     // (maps from the child update indices to our frontal indices).
     // These could be replaced with just the relative indices of our local 
     // submatrices of the child updates.
-    std::vector<int> leftRelInd, rightRelInd;
+    std::vector<int> leftRelInds, rightRelInds;
 
     FactorCommMeta factorMeta;
     MultiVecCommMeta multiVecMeta;
@@ -112,7 +112,7 @@ struct DistSymmInfo
 };
 
 // Utilities
-void ComputeFactRecvInd
+void ComputeFactRecvInds
 ( const DistSymmNodeInfo& node, const DistSymmNodeInfo& childNode );
 void GetChildGridDims
 ( const DistSymmNodeInfo& node, const DistSymmNodeInfo& childNode,

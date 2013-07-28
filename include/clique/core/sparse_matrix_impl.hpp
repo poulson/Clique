@@ -147,10 +147,10 @@ SparseMatrix<T>::Value( int index ) const
 { 
 #ifndef RELEASE 
     CallStackEntry entry("SparseMatrix::Value");
-    if( index < 0 || index >= values_.size() )
+    if( index < 0 || index >= vals_.size() )
         throw std::logic_error("Entry number out of bounds");
 #endif
-    return values_[index];
+    return vals_[index];
 }
 
 template<typename T>
@@ -166,7 +166,7 @@ SparseMatrix<T>::TargetBuffer()
 template<typename T>
 inline T*
 SparseMatrix<T>::ValueBuffer()
-{ return &values_[0]; }
+{ return &vals_[0]; }
 
 template<typename T>
 inline const int*
@@ -181,7 +181,7 @@ SparseMatrix<T>::LockedTargetBuffer() const
 template<typename T>
 inline const T*
 SparseMatrix<T>::LockedValueBuffer() const
-{ return &values_[0]; }
+{ return &vals_[0]; }
 
 template<typename T>
 inline bool
@@ -213,13 +213,13 @@ SparseMatrix<T>::StopAssembly()
     // Ensure that the connection pairs are sorted
     if( !graph_.sorted_ )
     {
-        const int numEntries = values_.size();
+        const int numEntries = vals_.size();
         std::vector<Entry<T> > entries( numEntries );
         for( int s=0; s<numEntries; ++s )
         {
             entries[s].i = graph_.sources_[s];
             entries[s].j = graph_.targets_[s];
-            entries[s].value = values_[s];
+            entries[s].value = vals_[s];
         }
         std::sort( entries.begin(), entries.end(), CompareEntries );
 
@@ -242,12 +242,12 @@ SparseMatrix<T>::StopAssembly()
 
         graph_.sources_.resize( numUnique );
         graph_.targets_.resize( numUnique );
-        values_.resize( numUnique );
+        vals_.resize( numUnique );
         for( int s=0; s<numUnique; ++s )
         {
             graph_.sources_[s] = entries[s].i;
             graph_.targets_[s] = entries[s].j;
-            values_[s] = entries[s].value;
+            vals_[s] = entries[s].value;
         }
     }
     graph_.ComputeEdgeOffsets();
@@ -258,7 +258,7 @@ inline void
 SparseMatrix<T>::Reserve( int numEntries )
 { 
     graph_.Reserve( numEntries );
-    values_.reserve( numEntries );
+    vals_.reserve( numEntries );
 }
 
 template<typename T>
@@ -270,7 +270,7 @@ SparseMatrix<T>::Update( int row, int col, T value )
     EnsureConsistentSizes();
 #endif
     graph_.Insert( row, col );
-    values_.push_back( value );
+    vals_.push_back( value );
 }
 
 template<typename T>
@@ -278,7 +278,7 @@ inline void
 SparseMatrix<T>::Empty()
 {
     graph_.Empty();
-    std::vector<T>().swap( values_ );
+    std::vector<T>().swap( vals_ );
 }
 
 template<typename T>
@@ -286,7 +286,7 @@ inline void
 SparseMatrix<T>::ResizeTo( int height, int width )
 {
     graph_.ResizeTo( height, width );
-    std::vector<T>().swap( values_ );
+    std::vector<T>().swap( vals_ );
 }
 
 template<typename T>
@@ -297,7 +297,7 @@ SparseMatrix<T>::operator=( const SparseMatrix<T>& A )
     CallStackEntry entry("SparseMatrix::operator=");
 #endif
     graph_ = A.graph_;
-    values_ = A.values_;
+    vals_ = A.vals_;
     return *this;
 }
 
@@ -315,7 +315,7 @@ SparseMatrix<T>::operator=( const DistSparseMatrix<T>& A )
         ("Can not yet construct from distributed sparse matrix");
 
     graph_ = A.graph_;
-    values_ = A.values_;
+    vals_ = A.vals_;
     return *this;
 }
 
@@ -324,7 +324,7 @@ inline void
 SparseMatrix<T>::EnsureConsistentSizes() const
 { 
     graph_.EnsureConsistentSizes();
-    if( graph_.NumEdges() != values_.size() )
+    if( graph_.NumEdges() != vals_.size() )
         throw std::logic_error("Inconsistent sparsity sizes");
 }
 
@@ -333,7 +333,7 @@ inline void
 SparseMatrix<T>::EnsureConsistentCapacities() const
 { 
     graph_.EnsureConsistentCapacities();
-    if( graph_.Capacity() != values_.capacity() )
+    if( graph_.Capacity() != vals_.capacity() )
         throw std::logic_error("Inconsistent sparsity capacities");
 }
 

@@ -136,20 +136,20 @@ DistNodalMatrix<F>::ComputeCommMetas( const DistSymmInfo& info ) const
         const int leftTeamSize =
             ( childNode.onLeft ? childTeamSize : teamSize-childTeamSize );
         const int rightTeamSize = teamSize - leftTeamSize;
-        const int leftTeamOffset = ( leftIsFirst ? 0 : rightTeamSize );
-        const int rightTeamOffset = ( leftIsFirst ? leftTeamSize : 0 );
+        const int leftTeamOff = ( leftIsFirst ? 0 : rightTeamSize );
+        const int rightTeamOff = ( leftIsFirst ? leftTeamSize : 0 );
         const Grid& childGrid = *childNode.grid;
         const int childGridHeight = childGrid.Height();
         const int childGridWidth = childGrid.Width();
 
-        // Fill numChildSendInd
+        // Fill numChildSendInds
         MatrixCommMeta& commMeta = commMetas[s-1];
         commMeta.Empty();
-        commMeta.numChildSendInd.resize( teamSize );
-        elem::MemZero( &commMeta.numChildSendInd[0], teamSize );
+        commMeta.numChildSendInds.resize( teamSize );
+        elem::MemZero( &commMeta.numChildSendInds[0], teamSize );
         const int updateSize = childNode.lowerStruct.size();
-        const std::vector<int>& myRelInd =
-            ( childNode.onLeft ? node.leftRelInd : node.rightRelInd );
+        const std::vector<int>& myRelInds =
+            ( childNode.onLeft ? node.leftRelInds : node.rightRelInds );
         {
             const int colAlign = childNode.size % childGridHeight;
             const int colShift =
@@ -162,26 +162,26 @@ DistNodalMatrix<F>::ComputeCommMetas( const DistSymmInfo& info ) const
             for( int iChildLoc=0; iChildLoc<localHeight; ++iChildLoc )
             {
                 const int iChild = colShift + iChildLoc*childGridHeight;
-                const int destRow = myRelInd[iChild] % gridHeight;
+                const int destRow = myRelInds[iChild] % gridHeight;
                 for( int jChildLoc=0; jChildLoc<localWidth; ++jChildLoc )
                 {
                     const int jChild = rowShift + jChildLoc*childGridWidth;
                     const int destCol = jChild % gridWidth;
                     const int destRank = destRow + destCol*gridHeight;
-                    ++commMeta.numChildSendInd[destRank];
+                    ++commMeta.numChildSendInds[destRank];
                 }
             }
         }
 
-        const int numLeftInd = node.leftRelInd.size();
-        const int numRightInd = node.rightRelInd.size();
-        std::vector<int> leftRowInd, rightRowInd;
-        for( int i=0; i<numLeftInd; ++i )
-            if( node.leftRelInd[i] % gridHeight == grid.Row() )
-                leftRowInd.push_back( i );
-        for( int i=0; i<numRightInd; ++i )
-            if( node.rightRelInd[i] % gridHeight == grid.Row() )
-                rightRowInd.push_back( i );
+        const int numLeftInds = node.leftRelInds.size();
+        const int numRightInds = node.rightRelInds.size();
+        std::vector<int> leftRowInds, rightRowInds;
+        for( int i=0; i<numLeftInds; ++i )
+            if( node.leftRelInds[i] % gridHeight == grid.Row() )
+                leftRowInds.push_back( i );
+        for( int i=0; i<numRightInds; ++i )
+            if( node.rightRelInds[i] % gridHeight == grid.Row() )
+                rightRowInds.push_back( i );
 
         // Get the child grid dimensions
         int childGridDims[4];
@@ -194,18 +194,18 @@ DistNodalMatrix<F>::ComputeCommMetas( const DistSymmInfo& info ) const
         //
         // Compute the solve recv indices
         //
-        commMeta.childRecvInd.resize( teamSize );
+        commMeta.childRecvInds.resize( teamSize );
         for( int q=0; q<teamSize; ++q )
-            commMeta.childRecvInd[q].clear();
+            commMeta.childRecvInds[q].clear();
         const int colShift = grid.Row();
         const int rowShift = grid.Col();
         const int localWidth = Length( width_, rowShift, gridWidth );
         // Append the indices from the left child
-        const int numLeftRowInd = leftRowInd.size();
-        for( int iPre=0; iPre<numLeftRowInd; ++iPre )
+        const int numLeftRowInds = leftRowInds.size();
+        for( int iPre=0; iPre<numLeftRowInds; ++iPre )
         {
-            const int iChild = leftRowInd[iPre];
-            const int iFront = node.leftRelInd[iChild];
+            const int iChild = leftRowInds[iPre];
+            const int iFront = node.leftRelInds[iChild];
             const int iFrontLoc = (iFront-colShift) / gridHeight;
             const int childRow = (node.leftSize+iChild) % leftGridHeight;
             for( int jLoc=0; jLoc<localWidth; ++jLoc )
@@ -213,17 +213,17 @@ DistNodalMatrix<F>::ComputeCommMetas( const DistSymmInfo& info ) const
                 const int j = rowShift + jLoc*gridWidth;
                 const int childCol = j % leftGridWidth;
                 const int childRank = childRow + childCol*leftGridHeight;
-                const int frontRank = leftTeamOffset + childRank;
-                commMeta.childRecvInd[frontRank].push_back(iFrontLoc);
-                commMeta.childRecvInd[frontRank].push_back(jLoc);
+                const int frontRank = leftTeamOff + childRank;
+                commMeta.childRecvInds[frontRank].push_back(iFrontLoc);
+                commMeta.childRecvInds[frontRank].push_back(jLoc);
              }
         }
         // Append the indices from the right child
-        const int numRightRowInd = rightRowInd.size();
-        for( int iPre=0; iPre<numRightRowInd; ++iPre )
+        const int numRightRowInds = rightRowInds.size();
+        for( int iPre=0; iPre<numRightRowInds; ++iPre )
         {
-            const int iChild = rightRowInd[iPre];
-            const int iFront = node.rightRelInd[iChild];
+            const int iChild = rightRowInds[iPre];
+            const int iFront = node.rightRelInds[iChild];
             const int iFrontLoc = (iFront-colShift) / gridHeight;
             const int childRow = (node.rightSize+iChild) % rightGridHeight;
             for( int jLoc=0; jLoc<localWidth; ++jLoc )
@@ -231,9 +231,9 @@ DistNodalMatrix<F>::ComputeCommMetas( const DistSymmInfo& info ) const
                 const int j = rowShift + jLoc*gridWidth;
                 const int childCol = j % rightGridWidth;
                 const int childRank = childRow + childCol*rightGridHeight;
-                const int frontRank = rightTeamOffset + childRank;
-                commMeta.childRecvInd[frontRank].push_back(iFrontLoc);
-                commMeta.childRecvInd[frontRank].push_back(jLoc);
+                const int frontRank = rightTeamOff + childRank;
+                commMeta.childRecvInds[frontRank].push_back(iFrontLoc);
+                commMeta.childRecvInds[frontRank].push_back(jLoc);
             }
         }
     }

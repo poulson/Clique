@@ -15,15 +15,14 @@ namespace cliq {
 
 template<typename T>
 void FrontLowerMultiply
-( Orientation orientation, int diagOffset, const Matrix<T>& L, Matrix<T>& X );
+( Orientation orientation, int diagOff, const Matrix<T>& L, Matrix<T>& X );
 
 template<typename T>
-void FrontLowerMultiplyNormal
-( int diagOffset, const Matrix<T>& L, Matrix<T>& X );
+void FrontLowerMultiplyNormal( int diagOff, const Matrix<T>& L, Matrix<T>& X );
 
 template<typename T>
 void FrontLowerMultiplyTranspose
-( Orientation orientation, int diagOffset, const Matrix<T>& L, Matrix<T>& X );
+( Orientation orientation, int diagOff, const Matrix<T>& L, Matrix<T>& X );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -34,19 +33,19 @@ using namespace elem;
 
 template<typename T> 
 void ModifyForTrmm
-( Matrix<T>& D, int diagOffset, std::vector<Matrix<T> >& diagonals )
+( Matrix<T>& D, int diagOff, std::vector<Matrix<T> >& diagonals )
 {
 #ifndef RELEASE
     CallStackEntry entry("ModifyForTrmm");
 #endif
-    diagonals.resize( -diagOffset );
-    for( int i=0; i<-diagOffset; ++i )
+    diagonals.resize( -diagOff );
+    for( int i=0; i<-diagOff; ++i )
         diagonals[i].ResizeTo( D.DiagonalLength(-i), 1 );
 
     const int height = D.Height();
     for( int j=0; j<height; ++j )
     {
-        const int length = std::min(-diagOffset,height-j);
+        const int length = std::min(-diagOff,height-j);
         for( int i=0; i<length; ++i )    
         {
             diagonals[i].Set( j, 0, D.Get(j+i,j) );
@@ -57,7 +56,7 @@ void ModifyForTrmm
 
 template<typename T> 
 void ReplaceAfterTrmm
-( Matrix<T>& D, int diagOffset, 
+( Matrix<T>& D, int diagOff, 
   const std::vector<Matrix<T> >& diagonals )
 {
 #ifndef RELEASE
@@ -66,7 +65,7 @@ void ReplaceAfterTrmm
     const int height = D.Height();
     for( int j=0; j<height; ++j )
     {
-        const int length = std::min(-diagOffset,height-j);
+        const int length = std::min(-diagOff,height-j);
         for( int i=0; i<length; ++i )    
             D.Set( j+i, j, diagonals[i].Get(j,0) );
     }
@@ -76,21 +75,20 @@ void ReplaceAfterTrmm
 
 template<typename T>
 inline void FrontLowerMultiply
-( Orientation orientation, int diagOffset,
-  const Matrix<T>& L, Matrix<T>& X )
+( Orientation orientation, int diagOff, const Matrix<T>& L, Matrix<T>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("FrontLowerMultiply");
 #endif
     if( orientation == NORMAL )
-        FrontLowerMultiplyNormal( diagOffset, L, X );
+        FrontLowerMultiplyNormal( diagOff, L, X );
     else
-        FrontLowerMultiplyTranspose( orientation, diagOffset, L, X );
+        FrontLowerMultiplyTranspose( orientation, diagOff, L, X );
 }
 
 template<typename T>
 inline void FrontLowerMultiplyNormal
-( int diagOffset, const Matrix<T>& L, Matrix<T>& X )
+( int diagOff, const Matrix<T>& L, Matrix<T>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("FrontLowerMultiplyNormal");
@@ -102,41 +100,34 @@ inline void FrontLowerMultiplyNormal
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
         throw std::logic_error( msg.str().c_str() );
     }
-    if( diagOffset > 0 )
+    if( diagOff > 0 )
         throw std::logic_error("Diagonal offsets cannot be positive");
 #endif
     // Danger, Will Robinson!
     Matrix<T>* LMod = const_cast<Matrix<T>*>(&L);
-    Matrix<T> LT,
-              LB;
-    PartitionDown
-    ( *LMod, LT,
-             LB, L.Width() );
-
-    Matrix<T> XT, 
-              XB;
-    PartitionDown
-    ( X, XT,
-         XB, L.Width() );
+    Matrix<T> LT, LB;
+    PartitionDown( *LMod, LT, LB, L.Width() );
+    Matrix<T> XT, XB;
+    PartitionDown( X, XT, XB, L.Width() );
 
     elem::Gemm( NORMAL, NORMAL, T(1), LB, XT, T(1), XB );
 
-    if( diagOffset == 0 )
+    if( diagOff == 0 )
     {
         elem::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, T(1), LT, XT );
     }
     else
     {
         std::vector<Matrix<T> > diagonals;
-        internal::ModifyForTrmm( LT, diagOffset, diagonals );
+        internal::ModifyForTrmm( LT, diagOff, diagonals );
         elem::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, T(1), LT, XT );
-        internal::ReplaceAfterTrmm( LT, diagOffset, diagonals );
+        internal::ReplaceAfterTrmm( LT, diagOff, diagonals );
     }
 }
 
 template<typename T>
 inline void FrontLowerMultiplyTranspose
-( Orientation orientation, int diagOffset, const Matrix<T>& L, Matrix<T>& X )
+( Orientation orientation, int diagOff, const Matrix<T>& L, Matrix<T>& X )
 {
 #ifndef RELEASE
     CallStackEntry entry("FrontLowerMultiplyTranspose");
@@ -150,33 +141,25 @@ inline void FrontLowerMultiplyTranspose
     }
     if( orientation == NORMAL )
         throw std::logic_error("Orientation must be (conjugate-)transposed");
-    if( diagOffset > 0 )
+    if( diagOff > 0 )
         throw std::logic_error("Diagonal offsets cannot be positive");
 #endif
     // Danger, Will Robinson!
     Matrix<T>* LMod = const_cast<Matrix<T>*>(&L);
-    Matrix<T> LT,
-              LB;
-    PartitionDown
-    ( *LMod, LT,
-             LB, L.Width() );
-
-    Matrix<T> XT, 
-              XB;
-    PartitionDown
-    ( X, XT,
-         XB, L.Width() );
-
-    if( diagOffset == 0 )
+    Matrix<T> LT, LB;
+    PartitionDown( *LMod, LT, LB, L.Width() );
+    Matrix<T> XT, XB;
+    PartitionDown( X, XT, XB, L.Width() );
+    if( diagOff == 0 )
     {
         elem::Trmm( LEFT, LOWER, orientation, NON_UNIT, T(1), LT, XT );
     }
     else
     {
         std::vector<Matrix<T> > diagonals;
-        internal::ModifyForTrmm( LT, diagOffset, diagonals );
+        internal::ModifyForTrmm( LT, diagOff, diagonals );
         elem::Trmm( LEFT, LOWER, orientation, NON_UNIT, T(1), LT, XT );
-        internal::ReplaceAfterTrmm( LT, diagOffset, diagonals );
+        internal::ReplaceAfterTrmm( LT, diagOff, diagonals );
     }
 
     elem::Gemm( orientation, NORMAL, T(1), LB, XB, T(1), XT );

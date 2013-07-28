@@ -16,15 +16,15 @@ namespace cliq {
 struct SepOrLeaf
 {
     int parent; // -1 if local root
-    int offset;
-    std::vector<int> indices;
+    int off;
+    std::vector<int> inds;
 };
 
 struct DistSeparator
 {
     mpi::Comm comm;
-    int offset;
-    std::vector<int> indices;
+    int off;
+    std::vector<int> inds;
 };
 
 struct DistSeparatorTree

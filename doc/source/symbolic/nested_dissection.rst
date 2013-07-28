@@ -8,7 +8,7 @@ yields a node in a *separator tree*, which can be used to guide a multifrontal
 algorithm. The following routine uses a parallel graph partitioner (ParMETIS)
 as a means of producing such a separator tree from an arbitrary graph.
 
-.. cpp:function:: void NestedDissection( const DistGraph& graph, DistMap& map, DistSeparatorTree& sepTree, DistSymmInfo& info, bool sequential=true, int cutoff=128, int numDistSeps=1, int numSeqSeps=1, bool storeFactRecvInd=true )
+.. cpp:function:: void NestedDissection( const DistGraph& graph, DistMap& map, DistSeparatorTree& sepTree, DistSymmInfo& info, bool sequential=true, int cutoff=128, int numDistSeps=1, int numSeqSeps=1, bool storeFactRecvInds=true )
 
    .. note:: 
 
@@ -26,7 +26,7 @@ as a means of producing such a separator tree from an arbitrary graph.
    acceptable leaf node size for nested dissection, the `numDistSeps` and
    `numSeqSeps` variables respectively determine how many distributed and
    sequential separators should be tried for each bisection, and
-   `storeFactRecvInd` determines whether or not to store information
+   `storeFactRecvInds` determines whether or not to store information
    needed for the redistributions which occur in the subsequent numerical
    factorization
 
@@ -34,7 +34,7 @@ as a means of producing such a separator tree from an arbitrary graph.
    distributed graph, and `tests/Solve.cpp <https://github.com/poulson/Clique/blob/master/tests/Solve.cpp>`__ for its application to the
    underlying graph of a sparse matrix.
 
-.. cpp:function:: void NaturalNestedDissection( int nx, int ny, int nz, const DistGraph& graph, DistMap& map, DistSeparatorTree& sepTree, DistSymmInfo& info, int cutoff=128, bool storeFactRecvInd=true )
+.. cpp:function:: void NaturalNestedDissection( int nx, int ny, int nz, const DistGraph& graph, DistMap& map, DistSeparatorTree& sepTree, DistSymmInfo& info, int cutoff=128, bool storeFactRecvInds=true )
 
    Similar to :cpp:func:`NestedDissection`, but this version is specialized for 
    regular 3D grids where vertices are only connected to their nearest 
@@ -58,7 +58,7 @@ DistSeparatorTree
 
       The index of the local parent separator (:math:`-1` if it does not exist).
 
-   .. cpp:member:: int offset
+   .. cpp:member:: int off
 
       The first reordered index of this node.
 
@@ -72,7 +72,7 @@ DistSeparatorTree
 
       The communicator for this distributed separator.
 
-   .. cpp:member:: int offset
+   .. cpp:member:: int off
 
       The first reordered index of this separator.
 
@@ -105,7 +105,7 @@ DistSymmInfo
 
       The number of vertices in this node.
 
-   .. cpp:member:: int offset
+   .. cpp:member:: int off
 
       The first reordered index of the vertices in this node.
 
@@ -124,7 +124,7 @@ DistSymmInfo
 
       Whether or not this node is a left child (assuming it has a parent).
 
-   .. cpp:member:: int myOffset
+   .. cpp:member:: int myOff
 
       The sum of the node sizes for all previously ordered nodes.
 
@@ -133,26 +133,26 @@ DistSymmInfo
       The sorted reordered indices of this node's connections to its ancestors
       **after factorization**.
 
-   .. cpp:member:: std::vector<int> origLowerRelInd
+   .. cpp:member:: std::vector<int> origLowerRelInds
 
       Maps from the original lower structure to their placement in the 
       structure after factorization.
 
-   .. cpp:member:: std::vector<int> leftRelInd
-   .. cpp:member:: std::vector<int> rightRelInd
+   .. cpp:member:: std::vector<int> leftRelInds
+   .. cpp:member:: std::vector<int> rightRelInds
 
       The relative indices of the left/right child's lower structure into this 
       structure.
 
 .. cpp:type:: struct FactorCommMeta
 
-   .. cpp:member:: std::vector<int> numChildSendInd
+   .. cpp:member:: std::vector<int> numChildSendInds
 
-   .. cpp:member:: mutable std::vector<std::vector<int> > childRecvInd
+   .. cpp:member:: mutable std::vector<std::vector<int> > childRecvInds
 
    .. cpp:function:: void EmptyChildRecvIndices() const
 
-      Clears ``childRecvInd``
+      Clears ``childRecvInds``
 
    .. cpp:function:: void Empty()
 
@@ -162,9 +162,9 @@ DistSymmInfo
 
    .. cpp:member:: int localSize
 
-   .. cpp:member:: std::vector<int> numChildSendInd
+   .. cpp:member:: std::vector<int> numChildSendInds
 
-   .. cpp:member:: std::vector<std::vector<int> > childRecvInd
+   .. cpp:member:: std::vector<std::vector<int> > childRecvInds
 
    .. cpp:function:: void Empty()
 
@@ -172,9 +172,9 @@ DistSymmInfo
 
 .. cpp:type:: struct MatrixCommMeta
 
-   .. cpp:member:: std::vector<int> numChildSendInd
+   .. cpp:member:: std::vector<int> numChildSendInds
 
-   .. cpp:member:: std::vector<std::vector<int> > childRecvInd
+   .. cpp:member:: std::vector<std::vector<int> > childRecvInds
 
    .. cpp:function:: void Empty()
 
@@ -188,7 +188,7 @@ DistSymmInfo
 
       The number of vertices in this node.
 
-   .. cpp:member:: int offset
+   .. cpp:member:: int off
 
       The first reordered index of the vertices in this node.
 
@@ -212,7 +212,7 @@ DistSymmInfo
       The process grid which will be used to distribute the frontal matrix for
       this node.
 
-   .. cpp:member:: int myOffset
+   .. cpp:member:: int myOff
 
       The sum of the node sizes for all previously ordered nodes.
 
@@ -226,13 +226,13 @@ DistSymmInfo
       The sorted reordered indices of this node's connections to its 
       ancestors **after factorization**.
 
-   .. cpp:member:: std::vector<int> origLowerRelInd
+   .. cpp:member:: std::vector<int> origLowerRelInds
 
       Maps from the original lower structure to their placement in the 
       structure after factorization.
 
-   .. cpp:member:: std::vector<int> leftRelInd
-   .. cpp:member:: std::vector<int> rightRelInd
+   .. cpp:member:: std::vector<int> leftRelInds
+   .. cpp:member:: std::vector<int> rightRelInds
 
       The relative indices of the left/right child's lower structure into this 
       structure.

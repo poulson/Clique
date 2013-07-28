@@ -64,14 +64,7 @@ public:
 
 private:
     cliq::Graph graph_;
-    std::vector<T> values_;
-
-    template<typename U>
-    struct Entry
-    {
-        int i, j;
-        U value;
-    };
+    std::vector<T> vals_;
 
     static bool CompareEntries( const Entry<T>& a, const Entry<T>& b );
 

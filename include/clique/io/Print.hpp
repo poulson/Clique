@@ -171,7 +171,7 @@ PrintLocal( const DistSymmInfo& info, std::ostream& os )
     for( int s=0; s<numLocal; ++s )
     {
         const SymmNodeInfo& node = info.localNodes[s];
-        os << " size=" << node.size << ", offset=" << node.offset << "\n"; 
+        os << " size=" << node.size << ", offset=" << node.off << "\n"; 
     }
 
     os << "Distributed nodes:" << std::endl;
@@ -179,7 +179,7 @@ PrintLocal( const DistSymmInfo& info, std::ostream& os )
     for( int s=0; s<numDist; ++s )
     {
         const DistSymmNodeInfo& node = info.distNodes[s];
-        os << " size=" << node.size << ", offset=" << node.offset << "\n";
+        os << " size=" << node.size << ", offset=" << node.off << "\n";
     }
 }
 

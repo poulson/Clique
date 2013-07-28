@@ -22,7 +22,7 @@ void NaturalNestedDissection
         DistSeparatorTree& sepTree, 
         DistSymmInfo& info,
         int cutoff=128, 
-        bool storeFactRecvInd=false );
+        bool storeFactRecvInds=false );
 
 int NaturalBisect
 (       int nx, 
@@ -66,7 +66,7 @@ NaturalNestedDissectionRecursion
         DistSeparatorTree& sepTree, 
         DistSymmElimTree& eTree,
         int parent, 
-        int offset, 
+        int off, 
         int cutoff=128 )
 {
 #ifndef RELEASE
@@ -79,26 +79,26 @@ NaturalNestedDissectionRecursion
         sepTree.localSepsAndLeaves.push_back( new SepOrLeaf );
         SepOrLeaf& leaf = *sepTree.localSepsAndLeaves.back();
         leaf.parent = parent;
-        leaf.offset = offset;
-        leaf.indices = perm;
+        leaf.off = off;
+        leaf.inds = perm;
 
         // Fill in this node of the local elimination tree
         eTree.localNodes.push_back( new SymmNode );
         SymmNode& node = *eTree.localNodes.back();
         node.size = numSources;
-        node.offset = offset;
+        node.off = off;
         node.parent = parent;
         std::vector<int>().swap( node.children );
         std::set<int> connectedAncestors;
         for( int s=0; s<node.size; ++s )
         {
             const int numConnections = graph.NumConnections( s );
-            const int edgeOffset = graph.EdgeOffset( s );
+            const int edgeOff = graph.EdgeOffset( s );
             for( int t=0; t<numConnections; ++t )
             {
-                const int target = graph.Target( edgeOffset+t );
+                const int target = graph.Target( edgeOff+t );
                 if( target >= numSources )
-                    connectedAncestors.insert( offset+target );
+                    connectedAncestors.insert( off+target );
             }
         }
         node.lowerStruct.resize( connectedAncestors.size() );
@@ -127,32 +127,32 @@ NaturalNestedDissectionRecursion
         sepTree.localSepsAndLeaves.push_back( new SepOrLeaf );
         SepOrLeaf& sep = *sepTree.localSepsAndLeaves.back();
         sep.parent = parent;
-        sep.offset = offset + (numSources-sepSize);
-        sep.indices.resize( sepSize );
+        sep.off = off + (numSources-sepSize);
+        sep.inds.resize( sepSize );
         for( int s=0; s<sepSize; ++s )
         {
             const int mappedSource = s + (numSources-sepSize);
-            sep.indices[s] = inverseMap[mappedSource];
+            sep.inds[s] = inverseMap[mappedSource];
         }
     
         // Fill in this node in the local elimination tree
         eTree.localNodes.push_back( new SymmNode );
         SymmNode& node = *eTree.localNodes.back();
         node.size = sepSize;
-        node.offset = sep.offset;
+        node.off = sep.off;
         node.parent = parent;
         node.children.resize( 2 );
         std::set<int> connectedAncestors;
         for( int s=0; s<sepSize; ++s )
         {
-            const int source = sep.indices[s];
+            const int source = sep.inds[s];
             const int numConnections = graph.NumConnections( source );
-            const int edgeOffset = graph.EdgeOffset( source );
+            const int edgeOff = graph.EdgeOffset( source );
             for( int t=0; t<numConnections; ++t )
             {
-                const int target = graph.Target( edgeOffset+t );
+                const int target = graph.Target( edgeOff+t );
                 if( target >= numSources )
-                    connectedAncestors.insert( offset+target );
+                    connectedAncestors.insert( off+target );
             }
         }
         node.lowerStruct.resize( connectedAncestors.size() );
@@ -162,7 +162,7 @@ NaturalNestedDissectionRecursion
 
         // Finish computing the separator indices
         for( int s=0; s<sepSize; ++s )
-            sep.indices[s] = perm[sep.indices[s]];
+            sep.inds[s] = perm[sep.inds[s]];
 
         // Construct the inverse maps from the child indices to the original
         // degrees of freedom
@@ -181,11 +181,11 @@ NaturalNestedDissectionRecursion
         node.children[1] = eTree.localNodes.size();
         NaturalNestedDissectionRecursion
         ( nxRight, nyRight, nzRight, rightChild, rightPerm, sepTree, eTree, 
-          parent, offset+leftChildSize, cutoff );
+          parent, off+leftChildSize, cutoff );
         node.children[0] = eTree.localNodes.size();
         NaturalNestedDissectionRecursion
         ( nxLeft, nyLeft, nzLeft, leftChild, leftPerm, sepTree, eTree, 
-          parent, offset, cutoff );
+          parent, off, cutoff );
     }
 }
 
@@ -199,7 +199,7 @@ NaturalNestedDissectionRecursion
         DistSeparatorTree& sepTree, 
         DistSymmElimTree& eTree,
         int depth, 
-        int offset, 
+        int off, 
         bool onLeft,
         int cutoff=128 )
 {
@@ -231,16 +231,16 @@ NaturalNestedDissectionRecursion
         // (we will finish computing the separator indices at the end)
         DistSeparator& sep = sepTree.distSeps[distDepth-1-depth];
         mpi::CommDup( comm, sep.comm );
-        sep.offset = offset + (numSources-sepSize);
-        sep.indices.resize( sepSize );
+        sep.off = off + (numSources-sepSize);
+        sep.inds.resize( sepSize );
         for( int s=0; s<sepSize; ++s )
-            sep.indices[s] = s + (numSources-sepSize);
-        inverseMap.Translate( sep.indices );
+            sep.inds[s] = s + (numSources-sepSize);
+        inverseMap.Translate( sep.inds );
 
         // Fill in this node of the DistSymmElimTree
         DistSymmNode& node = eTree.distNodes[distDepth-depth];
         node.size = sepSize;
-        node.offset = sep.offset;
+        node.off = sep.off;
         node.onLeft = onLeft;
         mpi::CommDup( comm, node.comm );
         const int numLocalSources = graph.NumLocalSources();
@@ -248,18 +248,18 @@ NaturalNestedDissectionRecursion
         std::set<int> localConnectedAncestors;
         for( int s=0; s<sepSize; ++s )
         {
-            const int source = sep.indices[s];
+            const int source = sep.inds[s];
             if( source >= firstLocalSource && 
                 source < firstLocalSource+numLocalSources )
             {
                 const int localSource = source - firstLocalSource;
                 const int numConnections = graph.NumConnections( localSource );
-                const int localOffset = graph.LocalEdgeOffset( localSource );
+                const int localOff = graph.LocalEdgeOffset( localSource );
                 for( int t=0; t<numConnections; ++t )
                 {
-                    const int target = graph.Target( localOffset+t );
+                    const int target = graph.Target( localOff+t );
                     if( target >= numSources )
-                        localConnectedAncestors.insert( offset+target );
+                        localConnectedAncestors.insert( off+target );
                 }
             }
         }
@@ -273,17 +273,17 @@ NaturalNestedDissectionRecursion
         ( localConnectedAncestors.begin(), localConnectedAncestors.end(), 
           localConnectedVec.begin() );
         int sumOfLocalConnectedSizes=0;
-        std::vector<int> localConnectedOffsets( commSize );
+        std::vector<int> localConnectedOffs( commSize );
         for( int q=0; q<commSize; ++q )
         {
-            localConnectedOffsets[q] = sumOfLocalConnectedSizes;
+            localConnectedOffs[q] = sumOfLocalConnectedSizes;
             sumOfLocalConnectedSizes += localConnectedSizes[q];
         }
         std::vector<int> localConnections( sumOfLocalConnectedSizes );
         mpi::AllGather
         ( &localConnectedVec[0], numLocalConnected,
           &localConnections[0], 
-          &localConnectedSizes[0], &localConnectedOffsets[0], comm );
+          &localConnectedSizes[0], &localConnectedOffs[0], comm );
         std::set<int> connectedAncestors
         ( localConnections.begin(), localConnections.end() );
         node.lowerStruct.resize( connectedAncestors.size() );
@@ -292,7 +292,7 @@ NaturalNestedDissectionRecursion
           node.lowerStruct.begin() );
 
         // Finish computing the separator indices
-        perm.Translate( sep.indices );
+        perm.Translate( sep.inds );
 
         // Construct map from child indices to the original ordering
         DistMap newPerm( child.NumSources(), child.Comm() );
@@ -308,10 +308,10 @@ NaturalNestedDissectionRecursion
         perm.Extend( newPerm );
 
         // Recurse
-        const int newOffset = ( childIsOnLeft ? offset : offset+leftChildSize );
+        const int newOff = ( childIsOnLeft ? off : off+leftChildSize );
         NaturalNestedDissectionRecursion
         ( nxChild, nyChild, nzChild, child, newPerm, sepTree, eTree, depth+1, 
-          newOffset, childIsOnLeft, cutoff );
+          newOff, childIsOnLeft, cutoff );
     }
     else if( graph.NumSources() <= cutoff )
     {
@@ -323,8 +323,8 @@ NaturalNestedDissectionRecursion
         sepTree.localSepsAndLeaves.push_back( new SepOrLeaf );
         SepOrLeaf& leaf = *sepTree.localSepsAndLeaves.back();
         leaf.parent = -1;
-        leaf.offset = offset;
-        leaf.indices = perm.Map();
+        leaf.off = off;
+        leaf.inds = perm.Map();
 
         // Fill in this node of the local and distributed parts of the 
         // elimination tree
@@ -334,19 +334,19 @@ NaturalNestedDissectionRecursion
         mpi::CommDup( comm, distNode.comm );
         distNode.onLeft = onLeft;
         distNode.size = localNode.size = numSources;
-        distNode.offset = localNode.offset = offset;
+        distNode.off = localNode.off = off;
         localNode.parent = -1;
         std::vector<int>().swap( localNode.children );
         std::set<int> connectedAncestors;
         for( int s=0; s<numSources; ++s )
         {
             const int numConnections = seqGraph.NumConnections( s );
-            const int edgeOffset = seqGraph.EdgeOffset( s );
+            const int edgeOff = seqGraph.EdgeOffset( s );
             for( int t=0; t<numConnections; ++t )
             {
-                const int target = seqGraph.Target( edgeOffset+t );
+                const int target = seqGraph.Target( edgeOff+t );
                 if( target >= numSources )
-                    connectedAncestors.insert( offset+target );
+                    connectedAncestors.insert( off+target );
             }
         }
         localNode.lowerStruct.resize( connectedAncestors.size() );
@@ -379,12 +379,12 @@ NaturalNestedDissectionRecursion
         sepTree.localSepsAndLeaves.push_back( new SepOrLeaf );
         SepOrLeaf& sep = *sepTree.localSepsAndLeaves.back();
         sep.parent = -1;
-        sep.offset = offset + (numSources-sepSize);
-        sep.indices.resize( sepSize );
+        sep.off = off + (numSources-sepSize);
+        sep.inds.resize( sepSize );
         for( int s=0; s<sepSize; ++s )
         {
             const int mappedSource = s + (numSources-sepSize);
-            sep.indices[s] = inverseMap[mappedSource];
+            sep.inds[s] = inverseMap[mappedSource];
         }
         
         // Fill in this node in both the local and distributed parts of 
@@ -395,20 +395,20 @@ NaturalNestedDissectionRecursion
         mpi::CommDup( comm, distNode.comm );
         distNode.onLeft = onLeft;
         distNode.size = localNode.size = sepSize;
-        distNode.offset = localNode.offset = sep.offset;
+        distNode.off = localNode.off = sep.off;
         localNode.parent = -1;
         localNode.children.resize( 2 );
         std::set<int> connectedAncestors;
         for( int s=0; s<sepSize; ++s )
         {
-            const int source = sep.indices[s];
+            const int source = sep.inds[s];
             const int numConnections = seqGraph.NumConnections( source );
-            const int edgeOffset = seqGraph.EdgeOffset( source );
+            const int edgeOff = seqGraph.EdgeOffset( source );
             for( int t=0; t<numConnections; ++t )
             {
-                const int target = seqGraph.Target( edgeOffset+t );
+                const int target = seqGraph.Target( edgeOff+t );
                 if( target >= numSources )
-                    connectedAncestors.insert( offset+target );
+                    connectedAncestors.insert( off+target );
             }
         }
         localNode.lowerStruct.resize( connectedAncestors.size() );
@@ -420,7 +420,7 @@ NaturalNestedDissectionRecursion
         // Finish computing the separator indices
         // (This is a faster version of the Translate member function)
         for( int s=0; s<sepSize; ++s )
-            sep.indices[s] = perm.GetLocal( sep.indices[s] );
+            sep.inds[s] = perm.GetLocal( sep.inds[s] );
 
         // Construct the inverse maps from the child indices to the original
         // degrees of freedom
@@ -439,11 +439,11 @@ NaturalNestedDissectionRecursion
         localNode.children[1] = eTree.localNodes.size();
         NaturalNestedDissectionRecursion
         ( nxRight, nyRight, nzRight, rightChild, rightPerm, sepTree, eTree, 
-          parent, offset+leftChildSize, cutoff );
+          parent, off+leftChildSize, cutoff );
         localNode.children[0] = eTree.localNodes.size();
         NaturalNestedDissectionRecursion
         ( nxLeft, nyLeft, nzLeft, leftChild, leftPerm, sepTree, eTree, 
-          parent, offset, cutoff );
+          parent, off, cutoff );
     }
 }
 
@@ -457,7 +457,7 @@ NaturalNestedDissection
         DistSeparatorTree& sepTree, 
         DistSymmInfo& info,
         int cutoff, 
-        bool storeFactRecvInd )
+        bool storeFactRecvInds )
 {
 #ifndef RELEASE
     CallStackEntry entry("NaturalNestedDissection");
@@ -491,7 +491,7 @@ NaturalNestedDissection
 #endif
 
     // Run the symbolic analysis
-    SymmetricAnalysis( eTree, info, storeFactRecvInd );
+    SymmetricAnalysis( eTree, info, storeFactRecvInds );
 }
 
 inline int 
@@ -535,24 +535,24 @@ NaturalBisect
         sepSize = ny*nz;
 
         // Fill the left side
-        int offset=0;
+        int off=0;
         for( int z=0; z<nz; ++z )
             for( int y=0; y<ny; ++y )
                 for( int x=0; x<nxLeft; ++x )
-                    perm[x+y*nx+z*nx*ny] = offset++;
+                    perm[x+y*nx+z*nx*ny] = off++;
 
         // Fill the right side
-        offset = leftChildSize;
+        off = leftChildSize;
         for( int z=0; z<nz; ++z )
             for( int y=0; y<ny; ++y )
                 for( int x=nxLeft+1; x<nx; ++x )
-                    perm[x+y*nx+z*nx*ny] = offset++;
+                    perm[x+y*nx+z*nx*ny] = off++;
 
         // Fill the separator
-        offset=leftChildSize+rightChildSize;
+        off=leftChildSize+rightChildSize;
         for( int z=0; z<nz; ++z )
             for( int y=0; y<ny; ++y )
-                perm[nxLeft+y*nx+z*nx*ny] = offset++;
+                perm[nxLeft+y*nx+z*nx*ny] = off++;
     }
     else if( ny >= nx && ny >= nz )
     {
@@ -569,24 +569,24 @@ NaturalBisect
         sepSize = nx*nz;
 
         // Fill the left side
-        int offset=0;
+        int off=0;
         for( int z=0; z<nz; ++z )
             for( int y=0; y<nyLeft; ++y )
                 for( int x=0; x<nx; ++x )
-                    perm[x+y*nx+z*nx*ny] = offset++;
+                    perm[x+y*nx+z*nx*ny] = off++;
 
         // Fill the right side
-        offset = leftChildSize;
+        off = leftChildSize;
         for( int z=0; z<nz; ++z )
             for( int y=nyLeft+1; y<ny; ++y )
                 for( int x=0; x<nx; ++x )
-                    perm[x+y*nx+z*nx*ny] = offset++;
+                    perm[x+y*nx+z*nx*ny] = off++;
 
         // Fill the separator
-        offset=leftChildSize+rightChildSize;
+        off=leftChildSize+rightChildSize;
         for( int z=0; z<nz; ++z )
             for( int x=0; x<nx; ++x )
-                perm[x+nyLeft*nx+z*nx*ny] = offset++;
+                perm[x+nyLeft*nx+z*nx*ny] = off++;
     }
     else
     {
@@ -603,24 +603,24 @@ NaturalBisect
         sepSize = nx*ny;
 
         // Fill the left side
-        int offset=0;
+        int off=0;
         for( int z=0; z<nzLeft; ++z )
             for( int y=0; y<ny; ++y )
                 for( int x=0; x<nx; ++x )
-                    perm[x+y*nx+z*nx*ny] = offset++;
+                    perm[x+y*nx+z*nx*ny] = off++;
 
         // Fill the right side
-        offset = leftChildSize;
+        off = leftChildSize;
         for( int z=nzLeft+1; z<nz; ++z )
             for( int y=0; y<ny; ++y )
                 for( int x=0; x<nx; ++x )
-                    perm[x+y*nx+z*nx*ny] = offset++;
+                    perm[x+y*nx+z*nx*ny] = off++;
 
         // Fill the separator
-        offset=leftChildSize+rightChildSize;
+        off=leftChildSize+rightChildSize;
         for( int y=0; y<ny; ++y )
             for( int x=0; x<nx; ++x )
-                perm[x+y*nx+nzLeft*nx*ny] = offset++;
+                perm[x+y*nx+nzLeft*nx*ny] = off++;
     }
 #ifndef RELEASE
     EnsurePermutation( perm );
@@ -676,8 +676,8 @@ NaturalBisect
 
             sepSize = ny*nz;
 
-            const int rightOffset=leftChildSize, 
-                      sepOffset=leftChildSize+rightChildSize;
+            const int rightOff=leftChildSize, 
+                      sepOff=leftChildSize+rightChildSize;
             for( int iLocal=0; iLocal<numLocalSources; ++iLocal )
             {
                 const int i = iLocal + firstLocalSource;
@@ -687,19 +687,19 @@ NaturalBisect
                 if( x < nxLeft )
                 {
                     const int xLeft = x;
-                    const int leftIndex = xLeft + y*nxLeft + z*nxLeft*ny;
-                    perm.SetLocal( iLocal, leftIndex );
+                    const int leftInd = xLeft + y*nxLeft + z*nxLeft*ny;
+                    perm.SetLocal( iLocal, leftInd );
                 }
                 else if( x > nxLeft )
                 {
                     const int xRight = x-(nxLeft+1);
-                    const int rightIndex = xRight + y*nxRight + z*nxRight*ny;
-                    perm.SetLocal( iLocal, rightOffset+rightIndex );
+                    const int rightInd = xRight + y*nxRight + z*nxRight*ny;
+                    perm.SetLocal( iLocal, rightOff+rightInd );
                 }
                 else
                 {
-                    const int sepIndex = y + z*ny;
-                    perm.SetLocal( iLocal, sepOffset+sepIndex );
+                    const int sepInd = y + z*ny;
+                    perm.SetLocal( iLocal, sepOff+sepInd );
                 }
             }
         }
@@ -717,8 +717,8 @@ NaturalBisect
 
             sepSize = nx*nz;
 
-            const int rightOffset=leftChildSize, 
-                      sepOffset=leftChildSize+rightChildSize;
+            const int rightOff=leftChildSize, 
+                      sepOff=leftChildSize+rightChildSize;
             for( int iLocal=0; iLocal<numLocalSources; ++iLocal )
             {
                 const int i = iLocal + firstLocalSource;
@@ -728,19 +728,19 @@ NaturalBisect
                 if( y < nyLeft )
                 {
                     const int yLeft = y;
-                    const int leftIndex = x + yLeft*nx + z*nx*nyLeft;
-                    perm.SetLocal( iLocal, leftIndex );
+                    const int leftInd = x + yLeft*nx + z*nx*nyLeft;
+                    perm.SetLocal( iLocal, leftInd );
                 }
                 else if( y > nyLeft )
                 {
                     const int yRight = y - (nyLeft+1);
-                    const int rightIndex = x + yRight*nx + z*nx*nyRight;
-                    perm.SetLocal( iLocal, rightOffset+rightIndex );
+                    const int rightInd = x + yRight*nx + z*nx*nyRight;
+                    perm.SetLocal( iLocal, rightOff+rightInd );
                 }
                 else
                 {
-                    const int sepIndex = x + z*nx;
-                    perm.SetLocal( iLocal, sepOffset+sepIndex );
+                    const int sepInd = x + z*nx;
+                    perm.SetLocal( iLocal, sepOff+sepInd );
                 }
             }
         }
@@ -758,8 +758,8 @@ NaturalBisect
 
             sepSize = nx*ny;
 
-            const int rightOffset=leftChildSize, 
-                      sepOffset=leftChildSize+rightChildSize;
+            const int rightOff=leftChildSize, 
+                      sepOff=leftChildSize+rightChildSize;
             for( int iLocal=0; iLocal<numLocalSources; ++iLocal )
             {
                 const int i = iLocal + firstLocalSource;
@@ -769,19 +769,19 @@ NaturalBisect
                 if( z < nzLeft )
                 {
                     const int zLeft = z;
-                    const int leftIndex = x + y*nx + zLeft*nx*ny;
-                    perm.SetLocal( iLocal, leftIndex );
+                    const int leftInd = x + y*nx + zLeft*nx*ny;
+                    perm.SetLocal( iLocal, leftInd );
                 }
                 else if( z > nzLeft )
                 {
                     const int zRight = z - (nzLeft+1);
-                    const int rightIndex = x + y*nx + zRight*nx*ny;
-                    perm.SetLocal( iLocal, rightOffset+rightIndex );
+                    const int rightInd = x + y*nx + zRight*nx*ny;
+                    perm.SetLocal( iLocal, rightOff+rightInd );
                 }
                 else
                 {
-                    const int sepIndex = x + y*nx;
-                    perm.SetLocal( iLocal, sepOffset+sepIndex );
+                    const int sepInd = x + y*nx;
+                    perm.SetLocal( iLocal, sepOff+sepInd );
                 }
             }
         }

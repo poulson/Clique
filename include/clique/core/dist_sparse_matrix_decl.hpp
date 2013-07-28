@@ -13,6 +13,18 @@
 
 namespace cliq {
 
+template<typename T>
+struct SparseMultMeta
+{
+    bool ready;
+    int numRecvInds;
+    std::vector<int> sendSizes, sendOffs,
+                     recvSizes, recvOffs;
+    std::vector<int> sendInds, colOffs;
+
+    SparseMultMeta() : ready(false) { }
+};
+
 // Use a simple 1d distribution where each process owns a fixed number of rows,
 //     if last process,  height - (commSize-1)*floor(height/commSize)
 //     otherwise,        floor(height/commSize)
@@ -51,9 +63,9 @@ public:
     int Capacity() const;
 
     // Local data
-    int Row( int localIndex ) const;
-    int Col( int localIndex ) const;
-    T Value( int localIndex ) const;
+    int Row( int localInd ) const;
+    int Col( int localInd ) const;
+    T Value( int localInd ) const;
     int NumLocalEntries() const;
     int LocalEntryOffset( int localRow ) const;
     int NumConnections( int localRow ) const;
@@ -71,16 +83,11 @@ public:
 
     // TODO: operator=
 
+    mutable SparseMultMeta<T> multMeta;
+
 private:
     cliq::DistGraph distGraph_;
-    std::vector<T> values_;
-
-    template<typename U>
-    struct Entry
-    {
-        int i, j;
-        U value;
-    };
+    std::vector<T> vals_;
 
     static bool CompareEntries( const Entry<T>& a, const Entry<T>& b );
 

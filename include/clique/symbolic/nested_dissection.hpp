@@ -40,7 +40,7 @@ void NestedDissection
         int numDistSeps=1, 
         int numSeqSeps=1, 
         int cutoff=128, 
-        bool storeFactRecvInd=false );
+        bool storeFactRecvInds=false );
 
 int Bisect
 ( const Graph& graph, 
@@ -118,7 +118,7 @@ NestedDissectionRecursion
         DistSeparatorTree& sepTree, 
         DistSymmElimTree& eTree,
         int parent, 
-        int offset, 
+        int off, 
         int numSeps=5,
         int cutoff=128 )
 {
@@ -132,26 +132,26 @@ NestedDissectionRecursion
         sepTree.localSepsAndLeaves.push_back( new SepOrLeaf );
         SepOrLeaf& leaf = *sepTree.localSepsAndLeaves.back();
         leaf.parent = parent;
-        leaf.offset = offset;
-        leaf.indices = perm;
+        leaf.off = off;
+        leaf.inds = perm;
 
         // Fill in this node of the local elimination tree
         eTree.localNodes.push_back( new SymmNode );
         SymmNode& node = *eTree.localNodes.back();
         node.size = numSources;
-        node.offset = offset;
+        node.off = off;
         node.parent = parent;
         std::vector<int>().swap( node.children );
         std::set<int> connectedAncestors;
         for( int s=0; s<node.size; ++s )
         {
             const int numConnections = graph.NumConnections( s );
-            const int edgeOffset = graph.EdgeOffset( s );
+            const int edgeOff = graph.EdgeOffset( s );
             for( int t=0; t<numConnections; ++t )
             {
-                const int target = graph.Target( edgeOffset+t );
+                const int target = graph.Target( edgeOff+t );
                 if( target >= numSources )
-                    connectedAncestors.insert( offset+target );
+                    connectedAncestors.insert( off+target );
             }
         }
         node.lowerStruct.resize( connectedAncestors.size() );
@@ -176,32 +176,32 @@ NestedDissectionRecursion
         sepTree.localSepsAndLeaves.push_back( new SepOrLeaf );
         SepOrLeaf& sep = *sepTree.localSepsAndLeaves.back();
         sep.parent = parent;
-        sep.offset = offset + (numSources-sepSize);
-        sep.indices.resize( sepSize );
+        sep.off = off + (numSources-sepSize);
+        sep.inds.resize( sepSize );
         for( int s=0; s<sepSize; ++s )
         {
             const int mappedSource = s + (numSources-sepSize);
-            sep.indices[s] = inverseMap[mappedSource];
+            sep.inds[s] = inverseMap[mappedSource];
         }
     
         // Fill in this node in the local elimination tree
         eTree.localNodes.push_back( new SymmNode );
         SymmNode& node = *eTree.localNodes.back();
         node.size = sepSize;
-        node.offset = sep.offset;
+        node.off = sep.off;
         node.parent = parent;
         node.children.resize( 2 );
         std::set<int> connectedAncestors;
         for( int s=0; s<sepSize; ++s )
         {
-            const int source = sep.indices[s];
+            const int source = sep.inds[s];
             const int numConnections = graph.NumConnections( source );
-            const int edgeOffset = graph.EdgeOffset( source );
+            const int edgeOff = graph.EdgeOffset( source );
             for( int t=0; t<numConnections; ++t )
             {
-                const int target = graph.Target( edgeOffset+t );
+                const int target = graph.Target( edgeOff+t );
                 if( target >= numSources )
-                    connectedAncestors.insert( offset+target );
+                    connectedAncestors.insert( off+target );
             }
         }
         node.lowerStruct.resize( connectedAncestors.size() );
@@ -211,7 +211,7 @@ NestedDissectionRecursion
 
         // Finish computing the separator indices
         for( int s=0; s<sepSize; ++s )
-            sep.indices[s] = perm[sep.indices[s]];
+            sep.inds[s] = perm[sep.inds[s]];
 
         // Construct the inverse maps from the child indices to the original
         // degrees of freedom
@@ -229,11 +229,11 @@ NestedDissectionRecursion
         const int parent = eTree.localNodes.size()-1;
         node.children[1] = eTree.localNodes.size();
         NestedDissectionRecursion
-        ( rightChild, rightPerm, sepTree, eTree, parent, offset+leftChildSize,
+        ( rightChild, rightPerm, sepTree, eTree, parent, off+leftChildSize,
           numSeps, cutoff );
         node.children[0] = eTree.localNodes.size();
         NestedDissectionRecursion
-        ( leftChild, leftPerm, sepTree, eTree, parent, offset, 
+        ( leftChild, leftPerm, sepTree, eTree, parent, off, 
           numSeps, cutoff );
     }
 }
@@ -245,7 +245,7 @@ NestedDissectionRecursion
         DistSeparatorTree& sepTree, 
         DistSymmElimTree& eTree,
         int depth, 
-        int offset, 
+        int off, 
         bool onLeft,
         bool sequential=true,
         int numDistSeps=1, 
@@ -279,16 +279,16 @@ NestedDissectionRecursion
         // (we will finish computing the separator indices at the end)
         DistSeparator& sep = sepTree.distSeps[distDepth-1-depth];
         mpi::CommDup( comm, sep.comm );
-        sep.offset = offset + (numSources-sepSize);
-        sep.indices.resize( sepSize );
+        sep.off = off + (numSources-sepSize);
+        sep.inds.resize( sepSize );
         for( int s=0; s<sepSize; ++s )
-            sep.indices[s] = s + (numSources-sepSize);
-        inverseMap.Translate( sep.indices );
+            sep.inds[s] = s + (numSources-sepSize);
+        inverseMap.Translate( sep.inds );
 
         // Fill in this node of the DistSymmElimTree
         DistSymmNode& node = eTree.distNodes[distDepth-depth];
         node.size = sepSize;
-        node.offset = sep.offset;
+        node.off = sep.off;
         node.onLeft = onLeft;
         mpi::CommDup( comm, node.comm );
         const int numLocalSources = graph.NumLocalSources();
@@ -296,18 +296,18 @@ NestedDissectionRecursion
         std::set<int> localConnectedAncestors;
         for( int s=0; s<sepSize; ++s )
         {
-            const int source = sep.indices[s];
+            const int source = sep.inds[s];
             if( source >= firstLocalSource && 
                 source < firstLocalSource+numLocalSources )
             {
                 const int localSource = source - firstLocalSource;
                 const int numConnections = graph.NumConnections( localSource );
-                const int localOffset = graph.LocalEdgeOffset( localSource );
+                const int localOff = graph.LocalEdgeOffset( localSource );
                 for( int t=0; t<numConnections; ++t )
                 {
-                    const int target = graph.Target( localOffset+t );
+                    const int target = graph.Target( localOff+t );
                     if( target >= numSources )
-                        localConnectedAncestors.insert( offset+target );
+                        localConnectedAncestors.insert( off+target );
                 }
             }
         }
@@ -321,17 +321,17 @@ NestedDissectionRecursion
         ( localConnectedAncestors.begin(), localConnectedAncestors.end(), 
           localConnectedVec.begin() );
         int sumOfLocalConnectedSizes=0;
-        std::vector<int> localConnectedOffsets( commSize );
+        std::vector<int> localConnectedOffs( commSize );
         for( int q=0; q<commSize; ++q )
         {
-            localConnectedOffsets[q] = sumOfLocalConnectedSizes;
+            localConnectedOffs[q] = sumOfLocalConnectedSizes;
             sumOfLocalConnectedSizes += localConnectedSizes[q];
         }
         std::vector<int> localConnections( sumOfLocalConnectedSizes );
         mpi::AllGather
         ( &localConnectedVec[0], numLocalConnected,
           &localConnections[0], 
-          &localConnectedSizes[0], &localConnectedOffsets[0], comm );
+          &localConnectedSizes[0], &localConnectedOffs[0], comm );
         std::set<int> connectedAncestors
         ( localConnections.begin(), localConnections.end() );
         node.lowerStruct.resize( connectedAncestors.size() );
@@ -340,7 +340,7 @@ NestedDissectionRecursion
           node.lowerStruct.begin() );
 
         // Finish computing the separator indices
-        perm.Translate( sep.indices );
+        perm.Translate( sep.inds );
 
         // Construct map from child indices to the original ordering
         DistMap newPerm( child.NumSources(), child.Comm() );
@@ -356,9 +356,9 @@ NestedDissectionRecursion
         perm.Extend( newPerm );
 
         // Recurse
-        const int newOffset = ( childIsOnLeft ? offset : offset+leftChildSize );
+        const int newOff = ( childIsOnLeft ? off : off+leftChildSize );
         NestedDissectionRecursion
-        ( child, newPerm, sepTree, eTree, depth+1, newOffset, 
+        ( child, newPerm, sepTree, eTree, depth+1, newOff, 
           childIsOnLeft, sequential, numDistSeps, numSeqSeps, cutoff );
     }
     else if( graph.NumSources() <= cutoff )
@@ -371,8 +371,8 @@ NestedDissectionRecursion
         sepTree.localSepsAndLeaves.push_back( new SepOrLeaf );
         SepOrLeaf& leaf = *sepTree.localSepsAndLeaves.back();
         leaf.parent = -1;
-        leaf.offset = offset;
-        leaf.indices = perm.Map();
+        leaf.off = off;
+        leaf.inds = perm.Map();
 
         // Fill in this node of the local and distributed parts of the 
         // elimination tree
@@ -382,19 +382,19 @@ NestedDissectionRecursion
         mpi::CommDup( comm, distNode.comm );
         distNode.onLeft = onLeft;
         distNode.size = localNode.size = numSources;
-        distNode.offset = localNode.offset = offset;
+        distNode.off = localNode.off = off;
         localNode.parent = -1;
         std::vector<int>().swap( localNode.children );
         std::set<int> connectedAncestors;
         for( int s=0; s<numSources; ++s )
         {
             const int numConnections = seqGraph.NumConnections( s );
-            const int edgeOffset = seqGraph.EdgeOffset( s );
+            const int edgeOff = seqGraph.EdgeOffset( s );
             for( int t=0; t<numConnections; ++t )
             {
-                const int target = seqGraph.Target( edgeOffset+t );
+                const int target = seqGraph.Target( edgeOff+t );
                 if( target >= numSources )
-                    connectedAncestors.insert( offset+target );
+                    connectedAncestors.insert( off+target );
             }
         }
         localNode.lowerStruct.resize( connectedAncestors.size() );
@@ -423,12 +423,12 @@ NestedDissectionRecursion
         sepTree.localSepsAndLeaves.push_back( new SepOrLeaf );
         SepOrLeaf& sep = *sepTree.localSepsAndLeaves.back();
         sep.parent = -1;
-        sep.offset = offset + (numSources-sepSize);
-        sep.indices.resize( sepSize );
+        sep.off = off + (numSources-sepSize);
+        sep.inds.resize( sepSize );
         for( int s=0; s<sepSize; ++s )
         {
             const int mappedSource = s + (numSources-sepSize);
-            sep.indices[s] = inverseMap[mappedSource];
+            sep.inds[s] = inverseMap[mappedSource];
         }
         
         // Fill in this node in both the local and distributed parts of 
@@ -439,20 +439,20 @@ NestedDissectionRecursion
         mpi::CommDup( comm, distNode.comm );
         distNode.onLeft = onLeft;
         distNode.size = localNode.size = sepSize;
-        distNode.offset = localNode.offset = sep.offset;
+        distNode.off = localNode.off = sep.off;
         localNode.parent = -1;
         localNode.children.resize( 2 );
         std::set<int> connectedAncestors;
         for( int s=0; s<sepSize; ++s )
         {
-            const int source = sep.indices[s];
+            const int source = sep.inds[s];
             const int numConnections = seqGraph.NumConnections( source );
-            const int edgeOffset = seqGraph.EdgeOffset( source );
+            const int edgeOff = seqGraph.EdgeOffset( source );
             for( int t=0; t<numConnections; ++t )
             {
-                const int target = seqGraph.Target( edgeOffset+t );
+                const int target = seqGraph.Target( edgeOff+t );
                 if( target >= numSources )
-                    connectedAncestors.insert( offset+target );
+                    connectedAncestors.insert( off+target );
             }
         }
         localNode.lowerStruct.resize( connectedAncestors.size() );
@@ -464,7 +464,7 @@ NestedDissectionRecursion
         // Finish computing the separator indices
         // (This is a faster version of the Translate member function)
         for( int s=0; s<sepSize; ++s )
-            sep.indices[s] = perm.GetLocal( sep.indices[s] );
+            sep.inds[s] = perm.GetLocal( sep.inds[s] );
 
         // Construct the inverse maps from the child indices to the original
         // degrees of freedom
@@ -482,11 +482,11 @@ NestedDissectionRecursion
         const int parent=0;
         localNode.children[1] = eTree.localNodes.size();
         NestedDissectionRecursion
-        ( rightChild, rightPerm, sepTree, eTree, parent, offset+leftChildSize, 
+        ( rightChild, rightPerm, sepTree, eTree, parent, off+leftChildSize, 
           numSeqSeps, cutoff );
         localNode.children[0] = eTree.localNodes.size();
         NestedDissectionRecursion
-        ( leftChild, leftPerm, sepTree, eTree, parent, offset, 
+        ( leftChild, leftPerm, sepTree, eTree, parent, off, 
           numSeqSeps, cutoff );
     }
 }
@@ -501,7 +501,7 @@ NestedDissection
         int numDistSeps, 
         int numSeqSeps, 
         int cutoff,
-        bool storeFactRecvInd )
+        bool storeFactRecvInds )
 {
 #ifndef RELEASE
     CallStackEntry entry("NestedDissection");
@@ -536,7 +536,7 @@ NestedDissection
 #endif
 
     // Run the symbolic analysis
-    SymmetricAnalysis( eTree, info, storeFactRecvInd );
+    SymmetricAnalysis( eTree, info, storeFactRecvInds );
 }
 
 inline int 
@@ -560,7 +560,7 @@ Bisect
     std::vector<idx_t> xAdj( numSources+1 );
     std::vector<idx_t> adjacency( numValidEdges );
     int validCounter=0;
-    int sourceOffset=0;
+    int sourceOff=0;
     int prevSource=-1;
     for( int edge=0; edge<numEdges; ++edge )
     {
@@ -572,7 +572,7 @@ Bisect
 #endif
         while( source != prevSource )
         {
-            xAdj[sourceOffset++] = validCounter;
+            xAdj[sourceOff++] = validCounter;
             ++prevSource;
         }
         if( source != target && target < numSources )
@@ -582,7 +582,7 @@ Bisect
         }
     }
 #ifndef RELEASE
-    if( sourceOffset != numSources )
+    if( sourceOff != numSources )
         throw std::logic_error("Mistake in xAdj computation");
 #endif
     xAdj[numSources] = numValidEdges;
@@ -643,7 +643,7 @@ Bisect
     std::vector<idx_t> xAdj( numLocalSources+1 );
     std::vector<idx_t> adjacency( numLocalValidEdges );
     int validCounter=0;
-    int sourceOffset=0;
+    int sourceOff=0;
     int prevSource=firstLocalSource-1;
     for( int localEdge=0; localEdge<numLocalEdges; ++localEdge )
     {
@@ -655,7 +655,7 @@ Bisect
 #endif
         while( source != prevSource )
         {
-            xAdj[sourceOffset++] = validCounter;
+            xAdj[sourceOff++] = validCounter;
             ++prevSource;
         }
         if( source != target && target < numSources )
@@ -665,7 +665,7 @@ Bisect
         }
     }
 #ifndef RELEASE
-    if( sourceOffset != numLocalSources )
+    if( sourceOff != numLocalSources )
         throw std::logic_error("Mistake in xAdj computation");
 #endif
     xAdj[numLocalSources] = numLocalValidEdges;
@@ -677,16 +677,16 @@ Bisect
     if( sequential )
     {
         // Gather the number of local valid edges on the root process
-        std::vector<int> edgeSizes( commSize ), edgeOffsets;
+        std::vector<int> edgeSizes( commSize ), edgeOffs;
         mpi::AllGather( &numLocalValidEdges, 1, &edgeSizes[0], 1, comm );
         int numEdges;
         if( commRank == 0 )
         {
-            edgeOffsets.resize( commSize );
+            edgeOffs.resize( commSize );
             numEdges=0;
             for( int q=0; q<commSize; ++q )
             {
-                edgeOffsets[q] = numEdges;
+                edgeOffs[q] = numEdges;
                 numEdges += edgeSizes[q];
             }
         }
@@ -709,9 +709,9 @@ Bisect
             // Remove the padding
             for( int q=1; q<commSize; ++q )
             {
-                const int edgeOffset = q*maxLocalValidEdges;
+                const int edgeOff = q*maxLocalValidEdges;
                 for( int j=0; j<edgeSizes[q]; ++j )
-                    globalAdj[edgeOffsets[q]+j] = globalAdj[edgeOffset+j];
+                    globalAdj[edgeOffs[q]+j] = globalAdj[edgeOff+j];
             }
             globalAdj.resize( numEdges );
         }
@@ -725,7 +725,7 @@ Bisect
         if( commRank == 0 )
             for( int q=1; q<commSize; ++q )
                 for( int j=0; j<blocksize; ++j )
-                    globalXAdj[q*blocksize+j] += edgeOffsets[q];
+                    globalXAdj[q*blocksize+j] += edgeOffs[q];
         // Fix the remaining entries
         const int numRemaining = numSources - commSize*blocksize;
         if( commRank == commSize-1 )
@@ -736,7 +736,7 @@ Bisect
             ( &globalXAdj[commSize*blocksize], numRemaining, 
               commSize-1, 0, comm );
             for( int j=0; j<numRemaining; ++j )
-                globalXAdj[commSize*blocksize+j] += edgeOffsets[commSize-1];
+                globalXAdj[commSize*blocksize+j] += edgeOffs[commSize-1];
             globalXAdj[numSources] = numEdges;
         }
 
@@ -852,7 +852,7 @@ ReverseOrder( DistSeparatorTree& sepTree, DistSymmElimTree& eTree )
     // Reverse the order of the pointers and indices in the elimination and 
     // separator trees (so that the leaves come first)
     const int numLocalNodes = eTree.localNodes.size();
-    const int lastIndex = numLocalNodes-1;
+    const int lastInd = numLocalNodes-1;
     if( numLocalNodes != 1 )
     {
         // Switch the pointers for the root and last nodes
@@ -867,18 +867,18 @@ ReverseOrder( DistSeparatorTree& sepTree, DistSymmElimTree& eTree )
 
         // Update their parent indices to what their final values will be
         // (The root node's parent index does not need to be changed.)
-        lastNode->parent = lastIndex - lastNode->parent;
-        lastLeaf->parent = lastIndex - lastLeaf->parent;
+        lastNode->parent = lastInd - lastNode->parent;
+        lastLeaf->parent = lastInd - lastLeaf->parent;
         // Update their children's indices
         // (The last node will not have children)
         const int numRootChildren = rootNode->children.size();
         for( int c=0; c<numRootChildren; ++c )
-            rootNode->children[c] = lastIndex - rootNode->children[c];
+            rootNode->children[c] = lastInd - rootNode->children[c];
     }
     // Switch the middle nodes (we will miss the middle node if an odd number)
     for( int s=1; s<numLocalNodes/2; ++s )
     {
-        const int t = lastIndex - s;
+        const int t = lastInd - s;
         // Switch the pointers for the last and right nodes
         SymmNode* leftNode = eTree.localNodes[s];
         SymmNode* rightNode = eTree.localNodes[t];
@@ -889,31 +889,31 @@ ReverseOrder( DistSeparatorTree& sepTree, DistSymmElimTree& eTree )
         sepTree.localSepsAndLeaves[s] = rightSepOrLeaf;
         sepTree.localSepsAndLeaves[t] = leftSepOrLeaf;
         // Update their parent indices to what their final values will be
-        leftNode->parent = lastIndex - leftNode->parent;
-        rightNode->parent = lastIndex - rightNode->parent;
-        leftSepOrLeaf->parent = lastIndex - leftSepOrLeaf->parent;
-        rightSepOrLeaf->parent = lastIndex - rightSepOrLeaf->parent;
+        leftNode->parent = lastInd - leftNode->parent;
+        rightNode->parent = lastInd - rightNode->parent;
+        leftSepOrLeaf->parent = lastInd - leftSepOrLeaf->parent;
+        rightSepOrLeaf->parent = lastInd - rightSepOrLeaf->parent;
         // Update their children's indices
         const int numLeftChildren = leftNode->children.size();
         for( int c=0; c<numLeftChildren; ++c )
-            leftNode->children[c] = lastIndex - leftNode->children[c];
+            leftNode->children[c] = lastInd - leftNode->children[c];
         const int numRightChildren = rightNode->children.size();
         for( int c=0; c<numRightChildren; ++c )
-            rightNode->children[c] = lastIndex - rightNode->children[c];
+            rightNode->children[c] = lastInd - rightNode->children[c];
     }
     // Handle the middle node if it exists
     if( numLocalNodes % 2 != 0 )
     {
-        const int midIndex = numLocalNodes/2;
+        const int midInd = numLocalNodes/2;
         // Update the parent indices to the final values
-        SymmNode* middleNode = eTree.localNodes[midIndex];
-        SepOrLeaf* middleSepOrLeaf = sepTree.localSepsAndLeaves[midIndex];
-        middleNode->parent = lastIndex - middleNode->parent;
-        middleSepOrLeaf->parent = lastIndex - middleSepOrLeaf->parent;
+        SymmNode* middleNode = eTree.localNodes[midInd];
+        SepOrLeaf* middleSepOrLeaf = sepTree.localSepsAndLeaves[midInd];
+        middleNode->parent = lastInd - middleNode->parent;
+        middleSepOrLeaf->parent = lastInd - middleSepOrLeaf->parent;
         // Update the children's indices
         const int numChildren = middleNode->children.size();
         for( int c=0; c<numChildren; ++c )
-            middleNode->children[c] = lastIndex - middleNode->children[c];
+            middleNode->children[c] = lastInd - middleNode->children[c];
     }
 }
 
@@ -950,11 +950,11 @@ BuildChildrenFromPerm
     {
         const int source = s;
         const int inverseSource = inversePerm[s];
-        const int offset = graph.EdgeOffset( inverseSource );
+        const int off = graph.EdgeOffset( inverseSource );
         const int numConnections = graph.NumConnections( inverseSource );
         for( int t=0; t<numConnections; ++t )
         {
-            const int inverseTarget = graph.Target( offset+t );
+            const int inverseTarget = graph.Target( off+t );
             const int target = ( inverseTarget < numSources ? 
                                  perm[inverseTarget] :
                                  inverseTarget );
@@ -976,11 +976,11 @@ BuildChildrenFromPerm
     {
         const int source = s+leftChildSize;
         const int inverseSource = inversePerm[source];
-        const int offset = graph.EdgeOffset( inverseSource );
+        const int off = graph.EdgeOffset( inverseSource );
         const int numConnections = graph.NumConnections( inverseSource );
         for( int t=0; t<numConnections; ++t )
         {
-            const int inverseTarget = graph.Target( offset+t );
+            const int inverseTarget = graph.Target( off+t );
             const int target = ( inverseTarget < numSources ?
                                  perm[inverseTarget] :
                                  inverseTarget );
@@ -1020,8 +1020,8 @@ BuildChildFromPerm
     const bool smallOnLeft = ( leftChildSize <= rightChildSize );
     const int leftTeamSize = ( smallOnLeft ? smallTeamSize : largeTeamSize );
     const int rightTeamSize = ( smallOnLeft ? largeTeamSize : smallTeamSize );
-    const int leftTeamOffset = ( smallOnLeft ? 0 : smallTeamSize );
-    const int rightTeamOffset = ( smallOnLeft ? smallTeamSize : 0 );
+    const int leftTeamOff = ( smallOnLeft ? 0 : smallTeamSize );
+    const int rightTeamOff = ( smallOnLeft ? smallTeamSize : 0 );
     onLeft = ( inSmallTeam == smallOnLeft );
 
     const int leftTeamBlocksize = leftChildSize / leftTeamSize;
@@ -1034,13 +1034,13 @@ BuildChildFromPerm
         const int i = perm.GetLocal(s);
         if( i < leftChildSize )
         {
-            const int q = leftTeamOffset + 
+            const int q = leftTeamOff + 
                 RowToProcess( i, leftTeamBlocksize, leftTeamSize );
             ++rowSendSizes[q];
         }
         else if( i < leftChildSize+rightChildSize )
         {
-            const int q = rightTeamOffset +
+            const int q = rightTeamOff +
                 RowToProcess
                 ( i-leftChildSize, rightTeamBlocksize, rightTeamSize );
             ++rowSendSizes[q];
@@ -1054,136 +1054,136 @@ BuildChildFromPerm
     // Prepare for the AllToAll to exchange the row indices and 
     // the number of column indices per row
     int numSendRows=0;
-    std::vector<int> rowSendOffsets( commSize );
+    std::vector<int> rowSendOffs( commSize );
     for( int q=0; q<commSize; ++q )
     {
-        rowSendOffsets[q] = numSendRows;
+        rowSendOffs[q] = numSendRows;
         numSendRows += rowSendSizes[q];
     }
     int numRecvRows=0;
-    std::vector<int> rowRecvOffsets( commSize );
+    std::vector<int> rowRecvOffs( commSize );
     for( int q=0; q<commSize; ++q )
     {
-        rowRecvOffsets[q] = numRecvRows;
+        rowRecvOffs[q] = numRecvRows;
         numRecvRows += rowRecvSizes[q];
     }
 
     // Pack the row indices and how many column entries there will be per row
     std::vector<int> rowSendLengths( numSendRows );
-    std::vector<int> rowSendInd( numSendRows );
-    std::vector<int> offsets = rowSendOffsets;
+    std::vector<int> rowSendInds( numSendRows );
+    std::vector<int> offs = rowSendOffs;
     for( int s=0; s<numLocalSources; ++s )
     {
         const int i = perm.GetLocal(s);
         if( i < leftChildSize )
         {
-            const int q = leftTeamOffset + 
+            const int q = leftTeamOff + 
                 RowToProcess( i, leftTeamBlocksize, leftTeamSize );
-            rowSendInd[offsets[q]] = i;
-            rowSendLengths[offsets[q]] = graph.NumConnections( s );
-            ++offsets[q];
+            rowSendInds[offs[q]] = i;
+            rowSendLengths[offs[q]] = graph.NumConnections( s );
+            ++offs[q];
         }
         else if( i < leftChildSize+rightChildSize )
         {
-            const int q = rightTeamOffset + 
+            const int q = rightTeamOff + 
                 RowToProcess
                 ( i-leftChildSize, rightTeamBlocksize, rightTeamSize );
-            rowSendInd[offsets[q]] = i;
-            rowSendLengths[offsets[q]] = graph.NumConnections( s );
-            ++offsets[q];
+            rowSendInds[offs[q]] = i;
+            rowSendLengths[offs[q]] = graph.NumConnections( s );
+            ++offs[q];
         }
     }
 
     // Perform the row lengths exchange
     std::vector<int> rowRecvLengths( numRecvRows );
     mpi::AllToAll
-    ( &rowSendLengths[0], &rowSendSizes[0], &rowSendOffsets[0],
-      &rowRecvLengths[0], &rowRecvSizes[0], &rowRecvOffsets[0], comm );
+    ( &rowSendLengths[0], &rowSendSizes[0], &rowSendOffs[0],
+      &rowRecvLengths[0], &rowRecvSizes[0], &rowRecvOffs[0], comm );
 
     // Perform the row indices exchange
-    std::vector<int> rowRecvInd( numRecvRows );
+    std::vector<int> rowRecvInds( numRecvRows );
     mpi::AllToAll
-    ( &rowSendInd[0], &rowSendSizes[0], &rowSendOffsets[0],
-      &rowRecvInd[0], &rowRecvSizes[0], &rowRecvOffsets[0], comm );
-    std::vector<int>().swap( rowSendInd );
+    ( &rowSendInds[0], &rowSendSizes[0], &rowSendOffs[0],
+      &rowRecvInds[0], &rowRecvSizes[0], &rowRecvOffs[0], comm );
+    std::vector<int>().swap( rowSendInds );
 
     // Set up for sending the column indices
-    int numSendInd=0;
-    std::vector<int> indexSendSizes( commSize, 0 );
-    std::vector<int> indexSendOffsets( commSize );
+    int numSendInds=0;
+    std::vector<int> indSendSizes( commSize, 0 );
+    std::vector<int> indSendOffs( commSize );
     for( int q=0; q<commSize; ++q )
     {
         const int numRows = rowSendSizes[q];
-        const int offset = rowSendOffsets[q];
+        const int off = rowSendOffs[q];
         for( int s=0; s<numRows; ++s )
-            indexSendSizes[q] += rowSendLengths[offset+s];
+            indSendSizes[q] += rowSendLengths[off+s];
 
-        indexSendOffsets[q] = numSendInd;
-        numSendInd += indexSendSizes[q];
+        indSendOffs[q] = numSendInds;
+        numSendInds += indSendSizes[q];
     }
     std::vector<int>().swap( rowSendLengths );
-    int numRecvInd=0;
-    std::vector<int> indexRecvSizes( commSize, 0 );
-    std::vector<int> indexRecvOffsets( commSize );
+    int numRecvInds=0;
+    std::vector<int> indRecvSizes( commSize, 0 );
+    std::vector<int> indRecvOffs( commSize );
     for( int q=0; q<commSize; ++q )
     {
         const int numRows = rowRecvSizes[q];
-        const int offset = rowRecvOffsets[q];
+        const int off = rowRecvOffs[q];
         for( int s=0; s<numRows; ++s )
-            indexRecvSizes[q] += rowRecvLengths[offset+s];
+            indRecvSizes[q] += rowRecvLengths[off+s];
 
-        indexRecvOffsets[q] = numRecvInd;
-        numRecvInd += indexRecvSizes[q];
+        indRecvOffs[q] = numRecvInds;
+        numRecvInds += indRecvSizes[q];
     }
     std::vector<int>().swap( rowSendSizes );
-    std::vector<int>().swap( rowSendOffsets );
+    std::vector<int>().swap( rowSendOffs );
 
     // Pack the indices
-    std::vector<int> sendInd( numSendInd );
-    offsets = indexSendOffsets;
+    std::vector<int> sendInds( numSendInds );
+    offs = indSendOffs;
     for( int s=0; s<numLocalSources; ++s )
     {
         const int i = perm.GetLocal(s);
         if( i < leftChildSize )
         {
-            const int q = leftTeamOffset + 
+            const int q = leftTeamOff + 
                 RowToProcess( i, leftTeamBlocksize, leftTeamSize );
 
-            int& offset = offsets[q];
+            int& off = offs[q];
             const int numConnections = graph.NumConnections( s );
-            const int localEdgeOffset = graph.LocalEdgeOffset( s );
+            const int localEdgeOff = graph.LocalEdgeOffset( s );
             for( int j=0; j<numConnections; ++j )
-                sendInd[offset++] = graph.Target( localEdgeOffset+j );
+                sendInds[off++] = graph.Target( localEdgeOff+j );
         }
         else if( i < leftChildSize+rightChildSize )
         {
-            const int q = rightTeamOffset + 
+            const int q = rightTeamOff + 
                 RowToProcess
                 ( i-leftChildSize, rightTeamBlocksize, rightTeamSize );
                
-            int& offset = offsets[q];
+            int& off = offs[q];
             const int numConnections = graph.NumConnections( s );
-            const int localEdgeOffset = graph.LocalEdgeOffset( s );
+            const int localEdgeOff = graph.LocalEdgeOffset( s );
             for( int j=0; j<numConnections; ++j )
-                sendInd[offset++] = graph.Target( localEdgeOffset+j );
+                sendInds[off++] = graph.Target( localEdgeOff+j );
         }
     }
 
     // Send/recv the column indices
-    std::vector<int> recvInd( numRecvInd );
+    std::vector<int> recvInds( numRecvInds );
     mpi::AllToAll
-    ( &sendInd[0], &indexSendSizes[0], &indexSendOffsets[0],
-      &recvInd[0], &indexRecvSizes[0], &indexRecvOffsets[0], comm );
-    std::vector<int>().swap( sendInd );
-    std::vector<int>().swap( indexSendSizes );
-    std::vector<int>().swap( indexSendOffsets );
+    ( &sendInds[0], &indSendSizes[0], &indSendOffs[0],
+      &recvInds[0], &indRecvSizes[0], &indRecvOffs[0], comm );
+    std::vector<int>().swap( sendInds );
+    std::vector<int>().swap( indSendSizes );
+    std::vector<int>().swap( indSendOffs );
 
     // Get the indices after reordering
-    perm.Translate( recvInd );
+    perm.Translate( recvInds );
 
     // Put the connections into our new graph
     const int childTeamRank = 
-        ( onLeft ? commRank-leftTeamOffset : commRank-rightTeamOffset );
+        ( onLeft ? commRank-leftTeamOff : commRank-rightTeamOff );
     MPI_Comm childComm;
     mpi::CommSplit( comm, onLeft, childTeamRank, childComm );
     child.SetComm( childComm );
@@ -1193,11 +1193,11 @@ BuildChildFromPerm
         child.ResizeTo( rightChildSize );
 
     child.StartAssembly();
-    child.Reserve( recvInd.size() );
-    int offset=0;
+    child.Reserve( recvInds.size() );
+    int off=0;
     for( int s=0; s<numRecvRows; ++s )
     {
-        const int source = rowRecvInd[s];
+        const int source = rowRecvInds[s];
         const int numConnections = rowRecvLengths[s];
 #ifndef RELEASE
         const int childFirstLocalSource = child.FirstLocalSource();
@@ -1209,7 +1209,7 @@ BuildChildFromPerm
 #endif
         for( int t=0; t<numConnections; ++t )
         {
-            const int target = recvInd[offset++];
+            const int target = recvInds[off++];
             if( onLeft )
             {
 #ifndef RELEASE
@@ -1267,10 +1267,10 @@ BuildMap
     for( int s=0; s<numLocal; ++s )
     {
         const SepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
-        const int numInd = sepOrLeaf.indices.size();
-        for( int t=0; t<numInd; ++t )
+        const int numInds = sepOrLeaf.inds.size();
+        for( int t=0; t<numInds; ++t )
         {
-            const int i = sepOrLeaf.indices[t];
+            const int i = sepOrLeaf.inds[t];
 #ifndef RELEASE
             if( i < 0 || i >= graph.NumSources() )
             {
@@ -1287,14 +1287,14 @@ BuildMap
     for( int s=0; s<numDist; ++s )
     {
         const DistSeparator& sep = sepTree.distSeps[s];
-        const int numInd = sep.indices.size();
+        const int numInds = sep.inds.size();
         const int teamSize = mpi::CommSize( sep.comm );
         const int teamRank = mpi::CommRank( sep.comm );
-        const int numLocalInd = Length( numInd, teamRank, teamSize );
-        for( int tLocal=0; tLocal<numLocalInd; ++tLocal )
+        const int numLocalInds = Length( numInds, teamRank, teamSize );
+        for( int tLocal=0; tLocal<numLocalInds; ++tLocal )
         {
             const int t = teamRank + tLocal*teamSize;
-            const int i = sep.indices[t];
+            const int i = sep.inds[t];
 #ifndef RELEASE
             if( i < 0 || i >= graph.NumSources() )
             {
@@ -1316,54 +1316,54 @@ BuildMap
 
     // Pack the reordered indices
     int numSends = 0;
-    std::vector<int> sendOffsets( commSize );
+    std::vector<int> sendOffs( commSize );
     for( int q=0; q<commSize; ++q )
     {
-        sendOffsets[q] = numSends;
+        sendOffs[q] = numSends;
         numSends += sendSizes[q];
     }
-    std::vector<int> sendInd( numSends );
-    std::vector<int> sendOrigInd( numSends );
-    std::vector<int> offsets = sendOffsets;
+    std::vector<int> sendInds( numSends );
+    std::vector<int> sendOrigInds( numSends );
+    std::vector<int> offs = sendOffs;
     for( int s=0; s<numLocal; ++s )
     {
         const SepOrLeaf& sepOrLeaf = *sepTree.localSepsAndLeaves[s];
-        const int numInd = sepOrLeaf.indices.size();
-        for( int t=0; t<numInd; ++t )
+        const int numInds = sepOrLeaf.inds.size();
+        for( int t=0; t<numInds; ++t )
         {
-            const int i = sepOrLeaf.indices[t];
-            const int iMapped = sepOrLeaf.offset + t;
+            const int i = sepOrLeaf.inds[t];
+            const int iMapped = sepOrLeaf.off + t;
             const int q = RowToProcess( i, blocksize, commSize );
-            sendOrigInd[offsets[q]] = i;
-            sendInd[offsets[q]] = iMapped;
-            ++offsets[q];
+            sendOrigInds[offs[q]] = i;
+            sendInds[offs[q]] = iMapped;
+            ++offs[q];
         }
     }
     for( int s=0; s<numDist; ++s )
     {
         const DistSeparator& sep = sepTree.distSeps[s];
-        const int numInd = sep.indices.size();
+        const int numInds = sep.inds.size();
         const int teamSize = mpi::CommSize( sep.comm );
         const int teamRank = mpi::CommRank( sep.comm );
-        const int numLocalInd = Length( numInd, teamRank, teamSize );
-        for( int tLocal=0; tLocal<numLocalInd; ++tLocal )
+        const int numLocalInds = Length( numInds, teamRank, teamSize );
+        for( int tLocal=0; tLocal<numLocalInds; ++tLocal )
         {
             const int t = teamRank + tLocal*teamSize;
-            const int i = sep.indices[t];
-            const int iMapped = sep.offset + t;
+            const int i = sep.inds[t];
+            const int iMapped = sep.off + t;
             const int q = RowToProcess( i, blocksize, commSize );
-            sendOrigInd[offsets[q]] = i;
-            sendInd[offsets[q]] = iMapped;
-            ++offsets[q];
+            sendOrigInds[offs[q]] = i;
+            sendInds[offs[q]] = iMapped;
+            ++offs[q];
         }
     }
 
     // Perform an AllToAll to exchange the reordered indices
     int numRecvs = 0;
-    std::vector<int> recvOffsets( commSize );
+    std::vector<int> recvOffs( commSize );
     for( int q=0; q<commSize; ++q )
     {
-        recvOffsets[q] = numRecvs;
+        recvOffs[q] = numRecvs;
         numRecvs += recvSizes[q];
     }
 #ifndef RELEASE
@@ -1371,22 +1371,22 @@ BuildMap
     if( numRecvs != numLocalSources )
         throw std::logic_error("incorrect number of recv indices");
 #endif
-    std::vector<int> recvInd( numRecvs );
+    std::vector<int> recvInds( numRecvs );
     mpi::AllToAll
-    ( &sendInd[0], &sendSizes[0], &sendOffsets[0],
-      &recvInd[0], &recvSizes[0], &recvOffsets[0], comm );
+    ( &sendInds[0], &sendSizes[0], &sendOffs[0],
+      &recvInds[0], &recvSizes[0], &recvOffs[0], comm );
 
     // Perform an AllToAll to exchange the original indices
-    std::vector<int> recvOrigInd( numRecvs );
+    std::vector<int> recvOrigInds( numRecvs );
     mpi::AllToAll
-    ( &sendOrigInd[0], &sendSizes[0], &sendOffsets[0],
-      &recvOrigInd[0], &recvSizes[0], &recvOffsets[0], comm );
+    ( &sendOrigInds[0], &sendSizes[0], &sendOffs[0],
+      &recvOrigInds[0], &recvSizes[0], &recvOffs[0], comm );
 
     // Unpack the indices
     const int firstLocalSource = graph.FirstLocalSource();
     for( int s=0; s<numRecvs; ++s )
     {
-        const int i = recvOrigInd[s];
+        const int i = recvOrigInds[s];
         const int iLocal = i - firstLocalSource;
 #ifndef RELEASE
         if( iLocal < 0 || iLocal >= numLocalSources )
@@ -1397,7 +1397,7 @@ BuildMap
             throw std::logic_error( msg.str().c_str() );
         }
 #endif
-        const int iMapped = recvInd[s];
+        const int iMapped = recvInds[s];
 #ifndef RELEASE
         if( iMapped < 0 || iMapped >= graph.NumSources() )
         {

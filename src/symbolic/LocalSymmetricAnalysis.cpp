@@ -20,14 +20,14 @@ void LocalSymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info )
     info.localNodes.resize( numNodes );
 
     // Perform the symbolic factorization
-    int myOffset = 0;
+    int myOff= 0;
     for( int s=0; s<numNodes; ++s )
     {
         const SymmNode& node = *eTree.localNodes[s];
         SymmNodeInfo& nodeInfo = info.localNodes[s];
         nodeInfo.size = node.size;
-        nodeInfo.offset = node.offset;
-        nodeInfo.myOffset = myOffset;
+        nodeInfo.off= node.off;
+        nodeInfo.myOff= myOff;
         nodeInfo.parent = node.parent;
         nodeInfo.children = node.children;
         nodeInfo.origLowerStruct = node.lowerStruct;
@@ -79,21 +79,21 @@ void LocalSymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info )
             Union( partialStruct, node.lowerStruct, childrenStruct );
 
             // Now the node indices
-            std::vector<int> nodeInd( node.size );
+            std::vector<int> nodeInds( node.size );
             for( int i=0; i<node.size; ++i )
-                nodeInd[i] = node.offset + i;
+                nodeInds[i] = node.off+ i;
             std::vector<int> fullStruct;
-            Union( fullStruct, partialStruct, nodeInd );
+            Union( fullStruct, partialStruct, nodeInds );
 
             // Construct the relative indices of the original lower structure
             RelativeIndices
-            ( nodeInfo.origLowerRelInd, node.lowerStruct, fullStruct );
+            ( nodeInfo.origLowerRelInds, node.lowerStruct, fullStruct );
 
             // Construct the relative indices of the children
             RelativeIndices
-            ( nodeInfo.leftRelInd, leftChild.lowerStruct, fullStruct );
+            ( nodeInfo.leftRelInds, leftChild.lowerStruct, fullStruct );
             RelativeIndices
-            ( nodeInfo.rightRelInd, rightChild.lowerStruct, fullStruct );
+            ( nodeInfo.rightRelInds, rightChild.lowerStruct, fullStruct );
 
             // Form lower struct of this node by removing node indices
             // (which take up the first node.size indices of fullStruct)
@@ -107,13 +107,13 @@ void LocalSymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info )
             nodeInfo.lowerStruct = node.lowerStruct;
             
             // Construct the trivial relative indices of the original structure
-            const int numOrigLowerInd = node.lowerStruct.size();
-            nodeInfo.origLowerRelInd.resize( numOrigLowerInd );
-            for( int i=0; i<numOrigLowerInd; ++i )
-                nodeInfo.origLowerRelInd[i] = i + nodeInfo.size;
+            const int numOrigLowerInds = node.lowerStruct.size();
+            nodeInfo.origLowerRelInds.resize( numOrigLowerInds );
+            for( int i=0; i<numOrigLowerInds; ++i )
+                nodeInfo.origLowerRelInds[i] = i + nodeInfo.size;
         }
 
-        myOffset += nodeInfo.size;
+        myOff += nodeInfo.size;
     }
 }
 
