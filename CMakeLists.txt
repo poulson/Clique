@@ -125,7 +125,8 @@ if(CLIQ_TESTS)
   set(TEST_DIR ${PROJECT_SOURCE_DIR}/tests)
   set(TESTS FileSpeed Version)
   if(HAVE_PARMETIS)
-    list(APPEND TESTS Bisection NestedDissection Refactor SimpleSolve Solve) 
+    list(APPEND TESTS Bisection NestedDissection Refactor SimpleSolve Solve
+                      SolveRange) 
   endif()
 
   # Build the tests

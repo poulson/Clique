@@ -22,7 +22,9 @@ main( int argc, char* argv[] )
         const int n1 = Input("--n1","first grid dimension",30);
         const int n2 = Input("--n2","second grid dimension",30);
         const int n3 = Input("--n3","third grid dimension",30);
-        const int numRhs = Input("--numRhs","number of right-hand sides",5);
+        const int numRhsBeg = Input("--numRhsBeg","min number of rhs's",100);
+        const int numRhsInc = Input("--numRhsInc","stepsize for rhs's",100);
+        const int numRhsEnd = Input("--numRhsEnd","max number of rhs's",1000);
         const bool solve2d = Input("--solve2d","use 2d solve?",false);
         const bool selInv = Input("--selInv","selectively invert?",false);
         const bool natural = Input("--natural","analytical nested-diss?",true);
@@ -35,14 +37,16 @@ main( int argc, char* argv[] )
             ("--numSeqSeps",
              "number of separators to try per sequential partition",1);
         const int nbFact = Input("--nbFact","factorization blocksize",96);
-        const int nbSolve = Input("--nbSolve","solve blocksize",96);
+        const int nbSolveBeg = Input("--nbSolveBeg","min solve blocksize",96);
+        const int nbSolveInc = Input("--nbSolveInc","stepsize for bsize",16);
+        const int nbSolveEnd = Input("--nbSolveEnd","max solve blocksize",256);
         const int cutoff = Input("--cutoff","cutoff for nested dissection",128);
         const bool print = Input("--print","print matrix?",false);
         const bool display = Input("--display","display matrix?",false);
         ProcessInput();
 
         const int N = n1*n2*n3;
-        DistSparseMatrix<double> A( N, comm );
+        DistSparseMatrix<Complex<double> > A( N, comm );
 
         // Fill our portion of the 3D negative Laplacian using a n1 x n2 x n3
         // 7-point stencil in natural ordering: (x,y,z) at x + y*n1 + z*n1*n2
@@ -93,24 +97,6 @@ main( int argc, char* argv[] )
             Print( A );
             Print( A.DistGraph() );
         }
-
-        if( commRank == 0 )
-        {
-            std::cout << "Generating random X and forming Y := A X...";
-            std::cout.flush();
-        }
-        const double multiplyStart = mpi::Time();
-        DistMultiVec<double> X( N, numRhs, comm ), Y( N, numRhs, comm );
-        MakeUniform( X );
-        MakeZeros( Y );
-        Multiply( 1., A, X, 0., Y );
-        std::vector<double> YOrigNorms;
-        Norms( Y, YOrigNorms );
-        mpi::Barrier( comm );
-        const double multiplyStop = mpi::Time();
-        if( commRank == 0 )
-            std::cout << "done, " << multiplyStop-multiplyStart << " seconds"
-                      << std::endl;
 
         if( commRank == 0 )
         {
@@ -169,7 +155,8 @@ main( int argc, char* argv[] )
         }
         mpi::Barrier( comm );
         const double buildStart = mpi::Time();
-        DistSymmFrontTree<double> frontTree( TRANSPOSE, A, map, sepTree, info );
+        DistSymmFrontTree<Complex<double> > 
+            frontTree( TRANSPOSE, A, map, sepTree, info );
         mpi::Barrier( comm );
         const double buildStop = mpi::Time();
         if( commRank == 0 )
@@ -184,31 +171,21 @@ main( int argc, char* argv[] )
         frontTree.FactorizationWork
         ( localFactFlops, minLocalFactFlops, maxLocalFactFlops, 
           globalFactFlops, selInv );
-        double localSolveFlops, minLocalSolveFlops, maxLocalSolveFlops,
-               globalSolveFlops;
-        frontTree.SolveWork
-        ( localSolveFlops, minLocalSolveFlops, maxLocalSolveFlops,
-          globalSolveFlops, numRhs );
         if( commRank == 0 )
         {
             std::cout 
               << "Original memory usage for fronts...\n"
-              << "  min local: " << minLocalEntries*sizeof(double)/1e6 
+              << "  min local: " << minLocalEntries*2*sizeof(double)/1e6 
               << " MB\n"
-              << "  max local: " << maxLocalEntries*sizeof(double)/1e6 
+              << "  max local: " << maxLocalEntries*2*sizeof(double)/1e6 
               << " MB\n"
-              << "  global:    " << globalEntries*sizeof(double)/1e6
+              << "  global:    " << globalEntries*2*sizeof(double)/1e6
               << " MB\n"
               << "\n"
               << "Factorization (and possibly sel-inv) work...\n"
               << "  min local: " << minLocalFactFlops/1.e9 << " GFlops\n"
               << "  max local: " << maxLocalFactFlops/1.e9 << " GFlops\n"
               << "  global:    " << globalFactFlops/1.e9 << " GFlops\n"
-              << "\n"
-              << "Solve...\n"
-              << "  min local: " << minLocalSolveFlops/1.e9 << " GFlops\n"
-              << "  max local: " << maxLocalSolveFlops/1.e9 << " GFlops\n"
-              << "  global:    " << globalSolveFlops/1.e9 << " GFlops\n"
               << std::endl;
         }
 
@@ -249,68 +226,71 @@ main( int argc, char* argv[] )
         ( localEntries, minLocalEntries, maxLocalEntries, globalEntries );
         if( commRank == 0 )
         {
-            std::cout << "  min local: " << minLocalEntries*sizeof(double)/1e6 
+            std::cout << "  min local: " << minLocalEntries*2*sizeof(double)/1e6
                       << " MB\n"
-                      << "  max local: " << maxLocalEntries*sizeof(double)/1e6 
+                      << "  max local: " << maxLocalEntries*2*sizeof(double)/1e6
                       << " MB\n"
-                      << "  global:    " << globalEntries*sizeof(double)/1e6
+                      << "  global:    " << globalEntries*2*sizeof(double)/1e6
                       << " MB\n"
                       << std::endl;
         }
 
-        if( commRank == 0 )
+        for( int numRhs=numRhsBeg; numRhs<=numRhsEnd; numRhs+=numRhsInc )
         {
-            std::cout << "Solving against Y...";
-            std::cout.flush();
-        }
-        elem::SetBlocksize( nbSolve );
-        double solveStart, solveStop;
-        if( solve2d )
-        {
-            DistNodalMatrix<double> YNodal;
-            YNodal.Pull( inverseMap, info, Y );
-            mpi::Barrier( comm );
-            solveStart = mpi::Time();
-            Solve( info, frontTree, YNodal );
-            mpi::Barrier( comm );
-            solveStop = mpi::Time();
-            YNodal.Push( inverseMap, info, Y );
-        }
-        else
-        {
-            DistNodalMultiVec<double> YNodal;
-            YNodal.Pull( inverseMap, info, Y );
-            mpi::Barrier( comm );
-            solveStart = mpi::Time();
-            Solve( info, frontTree, YNodal );
-            mpi::Barrier( comm );
-            solveStop = mpi::Time();
-            YNodal.Push( inverseMap, info, Y );
-        }
-        const double solveTime = solveStop - solveStart;
-        const double solveGFlops = globalSolveFlops/(1.e9*solveTime);
-        if( commRank == 0 )
-            std::cout << "done, " << solveTime << " seconds, "
-                      << solveGFlops << " GFlop/s" << std::endl;
-
-        if( commRank == 0 )
-            std::cout << "Checking error in computed solution..." << std::endl;
-        std::vector<double> XNorms, YNorms;
-        Norms( X, XNorms );
-        Norms( Y, YNorms );
-        Axpy( -1., X, Y );
-        std::vector<double> errorNorms;
-        Norms( Y, errorNorms );
-        if( commRank == 0 )
-        {
-            for( int j=0; j<numRhs; ++j )
+            double localSolveFlops, minLocalSolveFlops, maxLocalSolveFlops,
+                   globalSolveFlops;
+            frontTree.SolveWork
+            ( localSolveFlops, minLocalSolveFlops, maxLocalSolveFlops,
+              globalSolveFlops, numRhs );
+            if( commRank == 0 )
             {
-                std::cout << "Right-hand side " << j << ":\n"
-                          << "|| x     ||_2 = " << XNorms[j] << "\n"
-                          << "|| xComp ||_2 = " << YNorms[j] << "\n"
-                          << "|| A x   ||_2 = " << YOrigNorms[j] << "\n"
-                          << "|| error ||_2 = " << errorNorms[j] << "\n"
-                          << std::endl;
+                std::cout
+                  << "Solve with " << numRhs << " right-hand sides...\n"
+                  << "  min local: " << minLocalSolveFlops/1.e9 << " GFlops\n"
+                  << "  max local: " << maxLocalSolveFlops/1.e9 << " GFlops\n"
+                  << "  global:    " << globalSolveFlops/1.e9 << " GFlops\n"
+                  << std::endl;
+            }
+
+            DistMultiVec<Complex<double> > Y( N, numRhs, comm );
+            for( int nbSolve=nbSolveBeg; nbSolve<=nbSolveEnd; 
+                 nbSolve+=nbSolveInc )
+            {
+                MakeUniform( Y );
+                elem::SetBlocksize( nbSolve );
+                if( commRank == 0 )
+                {
+                    std::cout << "  nbSolve=" << nbSolve << "...";
+                    std::cout.flush();
+                }
+                double solveStart, solveStop;
+                if( solve2d )
+                {
+                    DistNodalMatrix<Complex<double> > YNodal;
+                    YNodal.Pull( inverseMap, info, Y );
+                    mpi::Barrier( comm );
+                    solveStart = mpi::Time();
+                    Solve( info, frontTree, YNodal );
+                    mpi::Barrier( comm );
+                    solveStop = mpi::Time();
+                    YNodal.Push( inverseMap, info, Y );
+                }
+                else
+                {
+                    DistNodalMultiVec<Complex<double> > YNodal;
+                    YNodal.Pull( inverseMap, info, Y );
+                    mpi::Barrier( comm );
+                    solveStart = mpi::Time();
+                    Solve( info, frontTree, YNodal );
+                    mpi::Barrier( comm );
+                    solveStop = mpi::Time();
+                    YNodal.Push( inverseMap, info, Y );
+                }
+                const double solveTime = solveStop - solveStart;
+                const double solveGFlops = globalSolveFlops/(1.e9*solveTime);
+                if( commRank == 0 )
+                    std::cout << "done, " << solveTime << " seconds, "
+                              << solveGFlops << " GFlop/s" << std::endl;
             }
         }
     }
