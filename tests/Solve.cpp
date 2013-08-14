@@ -230,7 +230,7 @@ main( int argc, char* argv[] )
         else
         {
             if( selInv )
-                LDL( info, frontTree, LDL_SELINV_1D );
+                LDL( info, frontTree, LDL_SELINV_2D );
             else
                 LDL( info, frontTree, LDL_1D );
         }
