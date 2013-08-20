@@ -39,7 +39,6 @@ void Multiply
 #endif
     mpi::Comm comm = A.Comm();
     const int commSize = mpi::CommSize( comm );
-    const int XLocalHeight = X.LocalHeight();
     const int YLocalHeight = Y.LocalHeight();
     const int width = X.Width();
     const int numLocalEntries = A.NumLocalEntries();
@@ -133,7 +132,7 @@ void Multiply
         const int i = meta.sendInds[s];
         const int iLocal = i - firstLocalRow;
 #ifndef RELEASE
-        if( iLocal < 0 || iLocal >= XLocalHeight )
+        if( iLocal < 0 || iLocal >= X.LocalHeight() )
             throw std::logic_error("iLocal was out of bounds");
 #endif
         for( int j=0; j<width; ++j )

@@ -241,7 +241,6 @@ DistNodalMultiVec<F>::Push
 
     const int commSize = mpi::CommSize( comm );
     const int blocksize = X.Blocksize();
-    const int localHeight = X.LocalHeight();
     const int firstLocalRow = X.FirstLocalRow();
     const int numDist = info.distNodes.size();
     const int numLocal = info.localNodes.size();
@@ -302,7 +301,6 @@ DistNodalMultiVec<F>::Push
     }
     for( int s=1; s<numDist; ++s )
     {
-        const DistSymmNodeInfo& nodeInfo = info.distNodes[s];
         const DistMatrix<F,VC,STAR>& XNode = distNodes[s-1];
         const int localHeight = XNode.LocalHeight();
         for( int tLoc=0; tLoc<localHeight; ++tLoc )
@@ -326,7 +324,7 @@ DistNodalMultiVec<F>::Push
         numRecvInds += recvSizes[q];
     }
 #ifndef RELEASE
-    if( numRecvInds != localHeight )
+    if( numRecvInds != X.LocalHeight() )
         throw std::logic_error("numRecvInds was not equal to local height");
 #endif
 
@@ -358,7 +356,7 @@ DistNodalMultiVec<F>::Push
         const int i = recvInds[s];
         const int iLocal = i - firstLocalRow;
 #ifndef RELEASE
-        if( iLocal < 0 || iLocal >= localHeight )
+        if( iLocal < 0 || iLocal >= X.LocalHeight() )
             throw std::logic_error("iLocal was out of bounds");
 #endif
         for( int j=0; j<width; ++j )

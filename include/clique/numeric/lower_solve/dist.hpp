@@ -357,7 +357,6 @@ inline void DistLowerBackwardSolve
         throw std::logic_error("This solve mode is not yet implemented");
 
     // Directly operate on the root separator's portion of the right-hand sides
-    const DistSymmNodeInfo& rootNode = info.distNodes.back();
     const SymmFront<F>& localRootFront = L.localFronts.back();
     if( numDistNodes == 1 )
     {
@@ -538,7 +537,6 @@ inline void DistLowerBackwardSolve
         throw std::logic_error("1d solve mode is not yet implemented");
 
     // Directly operate on the root separator's portion of the right-hand sides
-    const DistSymmNodeInfo& rootNode = info.distNodes.back();
     const SymmFront<F>& localRootFront = L.localFronts.back();
     if( numDistNodes == 1 )
     {
