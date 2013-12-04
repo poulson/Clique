@@ -45,7 +45,7 @@ inline void InitializeDistLeaf
 ( const DistSymmInfo& info, DistSymmFrontTree<F>& L )
 {
 #ifndef RELEASE
-    CallStackEntry entry("InitializeDistLeaf");
+    CallStackEntry cse("InitializeDistLeaf");
 #endif
     const DistSymmNodeInfo& node = info.distNodes[0];
     Matrix<F>& topLocalFrontL = L.localFronts.back().frontL;
@@ -62,10 +62,10 @@ inline void
 LDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, SymmFrontType newFrontType )
 {
 #ifndef RELEASE
-    CallStackEntry entry("LDL");
+    CallStackEntry cse("LDL");
 #endif
     if( L.frontType != SYMM_2D )
-        throw std::logic_error
+        LogicError
         ("Should only perform LDL factorization of 2D symmetric/Hermitian "
          "matrices");
 
@@ -82,7 +82,7 @@ LDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, SymmFrontType newFrontType )
         L.frontType = BLOCK_LDL_2D;
     }
     else
-        throw std::logic_error("Invalid new front type");
+        LogicError("Invalid new front type");
 
     LocalLDL( info, L, blockLDL );
     DistLDL( info, L, blockLDL );

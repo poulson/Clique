@@ -94,7 +94,7 @@ inline int
 DistSparseMatrix<T>::NumLocalEntries() const
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistSparseMatrix::NumLocalEntries");
+    CallStackEntry cse("DistSparseMatrix::NumLocalEntries");
     EnsureConsistentSizes();
 #endif
     return distGraph_.NumLocalEdges();
@@ -105,7 +105,7 @@ inline int
 DistSparseMatrix<T>::Capacity() const
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistSparseMatrix::Capacity");
+    CallStackEntry cse("DistSparseMatrix::Capacity");
     EnsureConsistentSizes();
     EnsureConsistentCapacities();
 #endif
@@ -117,7 +117,7 @@ inline int
 DistSparseMatrix<T>::Row( int localInd ) const
 { 
 #ifndef RELEASE 
-    CallStackEntry entry("DistSparseMatrix::Row");
+    CallStackEntry cse("DistSparseMatrix::Row");
 #endif
     return distGraph_.Source( localInd );
 }
@@ -127,7 +127,7 @@ inline int
 DistSparseMatrix<T>::Col( int localInd ) const
 { 
 #ifndef RELEASE 
-    CallStackEntry entry("DistSparseMatrix::Col");
+    CallStackEntry cse("DistSparseMatrix::Col");
 #endif
     return distGraph_.Target( localInd );
 }
@@ -137,7 +137,7 @@ inline int
 DistSparseMatrix<T>::LocalEntryOffset( int localRow ) const
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistSparseMatrix::LocalEntryOffset");
+    CallStackEntry cse("DistSparseMatrix::LocalEntryOffset");
 #endif
     return distGraph_.LocalEdgeOffset( localRow );
 }
@@ -147,7 +147,7 @@ inline int
 DistSparseMatrix<T>::NumConnections( int localRow ) const
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistSparseMatrix::NumConnections");
+    CallStackEntry cse("DistSparseMatrix::NumConnections");
 #endif
     return distGraph_.NumConnections( localRow );
 }
@@ -157,9 +157,9 @@ inline T
 DistSparseMatrix<T>::Value( int localInd ) const
 { 
 #ifndef RELEASE 
-    CallStackEntry entry("DistSparseMatrix::Value");
+    CallStackEntry cse("DistSparseMatrix::Value");
     if( localInd < 0 || localInd >= (int)vals_.size() )
-        throw std::logic_error("Entry number out of bounds");
+        LogicError("Entry number out of bounds");
 #endif
     return vals_[localInd];
 }
@@ -206,7 +206,7 @@ inline void
 DistSparseMatrix<T>::StartAssembly()
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistSparseMatrix::StartAssembly");
+    CallStackEntry cse("DistSparseMatrix::StartAssembly");
 #endif
     multMeta.ready = false;
     distGraph_.EnsureNotAssembling();
@@ -218,10 +218,10 @@ inline void
 DistSparseMatrix<T>::StopAssembly()
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistSparseMatrix::StopAssembly");
+    CallStackEntry cse("DistSparseMatrix::StopAssembly");
 #endif
     if( !distGraph_.assembling_ )
-        throw std::logic_error("Cannot stop assembly without starting");
+        LogicError("Cannot stop assembly without starting");
     distGraph_.assembling_ = false;
 
     // Ensure that the connection pairs are sorted
@@ -280,7 +280,7 @@ inline void
 DistSparseMatrix<T>::Update( int row, int col, T value )
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistSparseMatrix::Update");
+    CallStackEntry cse("DistSparseMatrix::Update");
     EnsureConsistentSizes();
 #endif
     distGraph_.Insert( row, col );
@@ -309,7 +309,7 @@ DistSparseMatrix<T>::EnsureConsistentSizes() const
 { 
     distGraph_.EnsureConsistentSizes();
     if( distGraph_.NumLocalEdges() != (int)vals_.size() )
-        throw std::logic_error("Inconsistent sparsity sizes");
+        LogicError("Inconsistent sparsity sizes");
 }
 
 template<typename T>
@@ -318,7 +318,7 @@ DistSparseMatrix<T>::EnsureConsistentCapacities() const
 { 
     distGraph_.EnsureConsistentCapacities();
     if( distGraph_.Capacity() != vals_.capacity() )
-        throw std::logic_error("Inconsistent sparsity capacities");
+        LogicError("Inconsistent sparsity capacities");
 }
 
 } // namespace cliq

@@ -35,12 +35,12 @@ inline
 SparseMatrix<T>::SparseMatrix( const SparseMatrix<T>& A )
 { 
 #ifndef RELEASE
-    CallStackEntry entry("SparseMatrix::SparseMatrix");
+    CallStackEntry cse("SparseMatrix::SparseMatrix");
 #endif
     if( &A != this )
         *this = A;
     else
-        throw std::logic_error("Tried to construct sparse matrix with itself");
+        LogicError("Tried to construct sparse matrix with itself");
 }
 
 template<typename T>
@@ -48,7 +48,7 @@ inline
 SparseMatrix<T>::SparseMatrix( const DistSparseMatrix<T>& A )
 { 
 #ifndef RELEASE
-    CallStackEntry entry("SparseMatrix::SparseMatrix");
+    CallStackEntry cse("SparseMatrix::SparseMatrix");
 #endif
     *this = A;
 }
@@ -83,7 +83,7 @@ inline int
 SparseMatrix<T>::NumEntries() const
 {
 #ifndef RELEASE
-    CallStackEntry entry("SparseMatrix::NumEntries");
+    CallStackEntry cse("SparseMatrix::NumEntries");
     EnsureConsistentSizes();
 #endif
     return graph_.NumEdges();
@@ -94,7 +94,7 @@ inline int
 SparseMatrix<T>::Capacity() const
 {
 #ifndef RELEASE
-    CallStackEntry entry("SparseMatrix::Capacity");
+    CallStackEntry cse("SparseMatrix::Capacity");
     EnsureConsistentSizes();
     EnsureConsistentCapacities();
 #endif
@@ -106,7 +106,7 @@ inline int
 SparseMatrix<T>::Row( int index ) const
 { 
 #ifndef RELEASE 
-    CallStackEntry entry("SparseMatrix::Row");
+    CallStackEntry cse("SparseMatrix::Row");
 #endif
     return graph_.Source( index );
 }
@@ -116,7 +116,7 @@ inline int
 SparseMatrix<T>::Col( int index ) const
 { 
 #ifndef RELEASE 
-    CallStackEntry entry("SparseMatrix::Col");
+    CallStackEntry cse("SparseMatrix::Col");
 #endif
     return graph_.Target( index );
 }
@@ -126,7 +126,7 @@ inline int
 SparseMatrix<T>::EntryOffset( int row ) const
 {
 #ifndef RELEASE
-    CallStackEntry entry("SparseMatrix::EntryOffset");
+    CallStackEntry cse("SparseMatrix::EntryOffset");
 #endif
     return graph_.EdgeOffset( row );
 }
@@ -136,7 +136,7 @@ inline int
 SparseMatrix<T>::NumConnections( int row ) const
 {
 #ifndef RELEASE
-    CallStackEntry entry("SparseMatrix::NumConnections");
+    CallStackEntry cse("SparseMatrix::NumConnections");
 #endif
     return graph_.NumConnections( row );
 }
@@ -146,9 +146,9 @@ inline T
 SparseMatrix<T>::Value( int index ) const
 { 
 #ifndef RELEASE 
-    CallStackEntry entry("SparseMatrix::Value");
+    CallStackEntry cse("SparseMatrix::Value");
     if( index < 0 || index >= vals_.size() )
-        throw std::logic_error("Entry number out of bounds");
+        LogicError("Entry number out of bounds");
 #endif
     return vals_[index];
 }
@@ -193,7 +193,7 @@ inline void
 SparseMatrix<T>::StartAssembly()
 {
 #ifndef RELEASE
-    CallStackEntry entry("SparseMatrix::StartAssembly");
+    CallStackEntry cse("SparseMatrix::StartAssembly");
 #endif
     graph_.EnsureNotAssembling();
     graph_.assembling_ = true;
@@ -204,10 +204,10 @@ inline void
 SparseMatrix<T>::StopAssembly()
 {
 #ifndef RELEASE
-    CallStackEntry entry("SparseMatrix::StopAssembly");
+    CallStackEntry cse("SparseMatrix::StopAssembly");
 #endif
     if( !graph_.assembling_ )
-        throw std::logic_error("Cannot stop assembly without starting");
+        LogicError("Cannot stop assembly without starting");
     graph_.assembling_ = false;
 
     // Ensure that the connection pairs are sorted
@@ -266,7 +266,7 @@ inline void
 SparseMatrix<T>::Update( int row, int col, T value )
 {
 #ifndef RELEASE
-    CallStackEntry entry("SparseMatrix::Update");
+    CallStackEntry cse("SparseMatrix::Update");
     EnsureConsistentSizes();
 #endif
     graph_.Insert( row, col );
@@ -294,7 +294,7 @@ inline const SparseMatrix<T>&
 SparseMatrix<T>::operator=( const SparseMatrix<T>& A )
 {
 #ifndef RELEASE
-    CallStackEntry entry("SparseMatrix::operator=");
+    CallStackEntry cse("SparseMatrix::operator=");
 #endif
     graph_ = A.graph_;
     vals_ = A.vals_;
@@ -306,13 +306,12 @@ inline const SparseMatrix<T>&
 SparseMatrix<T>::operator=( const DistSparseMatrix<T>& A )
 {
 #ifndef RELEASE
-    CallStackEntry entry("SparseMatrix::operator=");
+    CallStackEntry cse("SparseMatrix::operator=");
 #endif
     mpi::Comm comm = A.Comm();
     const int commSize = mpi::CommSize( comm );
     if( commSize != 1 )
-        throw std::logic_error
-        ("Can not yet construct from distributed sparse matrix");
+        LogicError("Can not yet construct from distributed sparse matrix");
 
     graph_ = A.graph_;
     vals_ = A.vals_;
@@ -325,7 +324,7 @@ SparseMatrix<T>::EnsureConsistentSizes() const
 { 
     graph_.EnsureConsistentSizes();
     if( graph_.NumEdges() != vals_.size() )
-        throw std::logic_error("Inconsistent sparsity sizes");
+        LogicError("Inconsistent sparsity sizes");
 }
 
 template<typename T>
@@ -334,7 +333,7 @@ SparseMatrix<T>::EnsureConsistentCapacities() const
 { 
     graph_.EnsureConsistentCapacities();
     if( graph_.Capacity() != vals_.capacity() )
-        throw std::logic_error("Inconsistent sparsity capacities");
+        LogicError("Inconsistent sparsity capacities");
 }
 
 } // namespace cliq

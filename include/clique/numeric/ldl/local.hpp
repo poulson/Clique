@@ -26,7 +26,7 @@ inline void
 LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
 {
 #ifndef RELEASE
-    CallStackEntry entry("LocalLDL");
+    CallStackEntry cse("LocalLDL");
 #endif
     const int numLocalNodes = info.localNodes.size();
     for( int s=0; s<numLocalNodes; ++s )
@@ -39,7 +39,7 @@ LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
 #ifndef RELEASE
         if( frontL.Height() != node.size+updateSize ||
             frontL.Width() != node.size )
-            throw std::logic_error("Front was not the proper size");
+            LogicError("Front was not the proper size");
 #endif
 
         // Add updates from children (if they exist)
@@ -63,8 +63,7 @@ LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
                     const F value = leftUpdate.Get(iChild,jChild);
 #ifndef RELEASE
                     if( iFront < jFront )
-                        throw std::logic_error
-                        ("Tried to update upper triangle");
+                        LogicError("Tried to update upper triangle");
 #endif
                     if( jFront < node.size )
                         frontL.Update( iFront, jFront, value );
@@ -86,8 +85,7 @@ LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
                     const F value = rightUpdate.Get(iChild,jChild);
 #ifndef RELEASE
                     if( iFront < jFront )
-                        throw std::logic_error
-                        ("Tried to update upper triangle");
+                        LogicError("Tried to update upper triangle");
 #endif
                     if( jFront < node.size )
                         frontL.Update( iFront, jFront, value );
@@ -102,20 +100,12 @@ LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
         // Call the custom partial LDL
         if( !blockLDL )
         {
-            if( L.isHermitian )
-                FrontLDL( ADJOINT, frontL, frontBR );
-            else
-                FrontLDL( TRANSPOSE, frontL, frontBR );
+            FrontLDL( frontL, frontBR, L.isHermitian );
             frontL.GetDiagonal( L.localFronts[s].diag );
             elem::SetDiagonal( frontL, F(1) );
         }
         else
-        {
-            if( L.isHermitian )
-                FrontBlockLDL( ADJOINT, frontL, frontBR );
-            else
-                FrontBlockLDL( TRANSPOSE, frontL, frontBR );
-        }
+            FrontBlockLDL( frontL, frontBR, L.isHermitian );
     }
 }
 

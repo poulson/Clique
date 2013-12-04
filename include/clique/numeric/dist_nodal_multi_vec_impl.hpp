@@ -112,7 +112,7 @@ DistNodalMultiVec<F>::Pull
     }
 #ifndef RELEASE
     if( off != numRecvInds )
-        throw std::logic_error("mappedInds was filled incorrectly");
+        LogicError("mappedInds was filled incorrectly");
 #endif
 
     // Convert the indices to the original ordering
@@ -219,7 +219,7 @@ DistNodalMultiVec<F>::Pull
     }
 #ifndef RELEASE
     if( off != numRecvInds )
-        throw std::logic_error("Unpacked wrong number of indices");
+        LogicError("Unpacked wrong number of indices");
 #endif
 }
 
@@ -325,7 +325,7 @@ DistNodalMultiVec<F>::Push
     }
 #ifndef RELEASE
     if( numRecvInds != X.LocalHeight() )
-        throw std::logic_error("numRecvInds was not equal to local height");
+        LogicError("numRecvInds was not equal to local height");
 #endif
 
     // Send the indices
@@ -357,7 +357,7 @@ DistNodalMultiVec<F>::Push
         const int iLocal = i - firstLocalRow;
 #ifndef RELEASE
         if( iLocal < 0 || iLocal >= X.LocalHeight() )
-            throw std::logic_error("iLocal was out of bounds");
+            LogicError("iLocal was out of bounds");
 #endif
         for( int j=0; j<width; ++j )
             X.SetLocal( iLocal, j, recvVals[s*width+j] );

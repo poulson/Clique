@@ -13,7 +13,9 @@
 
 namespace cliq {
 
-typedef unsigned char byte;
+using elem::byte;
+using elem::Int;
+using elem::Unsigned;
 
 // Pull in some of Elemental's imported libraries
 namespace blas = elem::blas;
@@ -43,6 +45,10 @@ using elem::LockedView;
 // Pull in a few indexing routines
 using elem::Shift;
 using elem::Length;
+
+// For easily throwing errors
+using elem::LogicError;
+using elem::RuntimeError;
 
 void PrintVersion( std::ostream& os=std::cout );
 void PrintConfig( std::ostream& os=std::cout );
@@ -103,7 +109,7 @@ void ReportException( std::exception& e );
 template<typename T>
 struct Entry
 {
-    int i, j;
+    Int i, j;
     T value;
 };
 
@@ -114,17 +120,21 @@ template<typename T>
 bool IsStrictlySorted( const std::vector<T>& x );
 
 void Union
-( std::vector<int>& both, 
-  const std::vector<int>& first, const std::vector<int>& second );
+( std::vector<Int>& both, 
+  const std::vector<Int>& first, const std::vector<Int>& second );
+std::vector<Int> 
+Union( const std::vector<Int>& first, const std::vector<Int>& second );
 
 void RelativeIndices
-( std::vector<int>& relInds, 
-  const std::vector<int>& sub, const std::vector<int>& full );
+( std::vector<Int>& relInds, 
+  const std::vector<Int>& sub, const std::vector<Int>& full );
+std::vector<Int>
+RelativeIndices( const std::vector<Int>& sub, const std::vector<Int>& full );
 
-int RowToProcess( int i, int blocksize, int commSize );
+Int RowToProcess( Int i, Int blocksize, Int commSize );
 
-int Find
-( const std::vector<int>& sortedInds, int index, 
+Int Find
+( const std::vector<Int>& sortedInds, Int index, 
   std::string msg="Could not find index" );
 
 void

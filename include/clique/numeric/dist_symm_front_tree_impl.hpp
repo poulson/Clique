@@ -28,11 +28,11 @@ DistSymmFrontTree<F>::Initialize
   const DistSymmInfo& info )
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistSymmFrontTree::Initialize");
+    CallStackEntry cse("DistSymmFrontTree::Initialize");
     if( orientation == NORMAL )
-        throw std::logic_error("Matrix must be symmetric or Hermitian");
+        LogicError("Matrix must be symmetric or Hermitian");
     if( A.LocalHeight() != reordering.NumLocalSources() )
-        throw std::logic_error("Local mapping was not the right size");
+        LogicError("Local mapping was not the right size");
 #endif
     isHermitian = ( orientation != TRANSPOSE );
     frontType = SYMM_2D;
@@ -66,7 +66,7 @@ DistSymmFrontTree<F>::Initialize
             const int i = sepOrLeaf.inds[t];
 #ifndef RELEASE
             if( i < 0 || i >= numSources )
-                throw std::logic_error("separator index was out of bounds");
+                LogicError("separator index was out of bounds");
 #endif
             const int q = RowToProcess( i, blocksize, commSize );
             ++recvRowSizes[q];
@@ -85,7 +85,7 @@ DistSymmFrontTree<F>::Initialize
             const int i = sep.inds[t];
 #ifndef RELEASE
             if( i < 0 || i >= numSources )
-                throw std::logic_error("separator index was out of bounds");
+                LogicError("separator index was out of bounds");
 #endif
             const int q = RowToProcess( i, blocksize, commSize );
             ++recvRowSizes[q];
@@ -109,12 +109,12 @@ DistSymmFrontTree<F>::Initialize
             const int i = sepOrLeaf.inds[t];
 #ifndef RELEASE
             if( i < 0 || i >= numSources )
-                throw std::logic_error("separator index was out of bounds");
+                LogicError("separator index was out of bounds");
 #endif
             const int q = RowToProcess( i, blocksize, commSize );
 #ifndef RELEASE            
             if( offs[q] >= numRecvRows )
-                throw std::logic_error("offset got too large");
+                LogicError("offset got too large");
 #endif
             recvRows[offs[q]++] = i;
         }
@@ -132,12 +132,12 @@ DistSymmFrontTree<F>::Initialize
             const int i = sep.inds[t];
 #ifndef RELEASE
             if( i < 0 || i >= numSources )
-                throw std::logic_error("separator index was out of bounds");
+                LogicError("separator index was out of bounds");
 #endif
             const int q = RowToProcess( i, blocksize, commSize );
 #ifndef RELEASE            
             if( offs[q] >= numRecvRows )
-                throw std::logic_error("offset got too large");
+                LogicError("offset got too large");
 #endif
             recvRows[offs[q]++] = i;
         }
@@ -201,7 +201,7 @@ DistSymmFrontTree<F>::Initialize
                 const int mappedTarget = mappedTargets[targetOff];
 #ifndef RELEASE
                 if( index >= numSendEntries )
-                    throw std::logic_error("send entry index got too big");
+                    LogicError("send entry index got too big");
 #endif
                 sendEntries[index] = (isHermitian ? elem::Conj(value) : value);
                 sendTargets[index] = mappedTarget;
@@ -210,7 +210,7 @@ DistSymmFrontTree<F>::Initialize
         }
 #ifndef RELEASE
         if( index != sendEntriesOffs[q]+sendEntriesSizes[q] )
-            throw std::logic_error("index was not the correct value");
+            LogicError("index was not the correct value");
 #endif
     }
 
@@ -259,7 +259,7 @@ DistSymmFrontTree<F>::Initialize
 
 #ifndef RELEASE
         if( size != (int)sepOrLeaf.inds.size() )
-            throw std::logic_error("Mismatch between separator and node size");
+            LogicError("Mismatch between separator and node size");
 #endif
 
         for( int t=0; t<size; ++t )
@@ -287,12 +287,12 @@ DistSymmFrontTree<F>::Initialize
                     const int origOff = Find( origLowerStruct, target );
 #ifndef RELEASE
                     if( origOff >= (int)node.origLowerRelInds.size() )
-                        throw std::logic_error("origLowerRelInds too small");
+                        LogicError("origLowerRelInds too small");
 #endif
                     const int row = node.origLowerRelInds[origOff];
 #ifndef RELEASE
                     if( row < t )
-                        throw std::logic_error("Tried to touch upper triangle");
+                        LogicError("Tried to touch upper triangle");
 #endif
                     front.frontL.Set( row, t, value );
                 }
@@ -322,7 +322,7 @@ DistSymmFrontTree<F>::Initialize
 
 #ifndef RELEASE
         if( size != (int)sep.inds.size() )
-            throw std::logic_error("Mismatch in separator and node sizes");
+            LogicError("Mismatch in separator and node sizes");
 #endif
 
         for( int t=rowShift; t<size; t+=rowStride )
@@ -356,12 +356,12 @@ DistSymmFrontTree<F>::Initialize
                     const int origOff = Find( origLowerStruct, target );
 #ifndef RELEASE
                     if( origOff >= (int)node.origLowerRelInds.size() )
-                        throw std::logic_error("origLowerRelInds too small");
+                        LogicError("origLowerRelInds too small");
 #endif
                     const int row = node.origLowerRelInds[origOff];
 #ifndef RELEASE
                     if( row < t )
-                        throw std::logic_error("Tried to touch upper triangle");
+                        LogicError("Tried to touch upper triangle");
 #endif
                     if( row % colStride == colShift )
                     {
@@ -375,7 +375,7 @@ DistSymmFrontTree<F>::Initialize
 #ifndef RELEASE
     for( int q=0; q<commSize; ++q )
         if( entryOffs[q] != recvEntriesOffs[q]+recvEntriesSizes[q] )
-            throw std::logic_error("entryOffs were incorrect");
+            LogicError("entryOffs were incorrect");
 #endif
     
     // Copy information from the local root to the dist leaf
@@ -399,7 +399,7 @@ DistSymmFrontTree<F>::DistSymmFrontTree
   const DistSymmInfo& info )
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistSymmFrontTree::DistSymmFrontTree");
+    CallStackEntry cse("DistSymmFrontTree::DistSymmFrontTree");
 #endif
     Initialize( orientation, A, reordering, sepTree, info );
 }
@@ -411,7 +411,7 @@ DistSymmFrontTree<F>::MemoryInfo
   double& numGlobalEntries ) const
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistSymmFrontTree::MemoryInfo");
+    CallStackEntry cse("DistSymmFrontTree::MemoryInfo");
 #endif
     numLocalEntries = numGlobalEntries = 0;
     const int numLocalFronts = localFronts.size();
@@ -438,9 +438,9 @@ DistSymmFrontTree<F>::MemoryInfo
         numLocalEntries += front.work2d.AllocatedMemory();
     }
 
-    mpi::AllReduce( &numLocalEntries, &minLocalEntries, 1, mpi::MIN, comm );
-    mpi::AllReduce( &numLocalEntries, &maxLocalEntries, 1, mpi::MAX, comm );
-    mpi::AllReduce( &numLocalEntries, &numGlobalEntries, 1, mpi::SUM, comm );
+    minLocalEntries = mpi::AllReduce( numLocalEntries, mpi::MIN, comm );
+    maxLocalEntries = mpi::AllReduce( numLocalEntries, mpi::MAX, comm );
+    numGlobalEntries = mpi::AllReduce( numLocalEntries, mpi::SUM, comm );
 }
 
 template<typename F>
@@ -450,7 +450,7 @@ DistSymmFrontTree<F>::TopLeftMemoryInfo
   double& numGlobalEntries ) const
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistSymmFrontTree::TopLeftMemInfo");
+    CallStackEntry cse("DistSymmFrontTree::TopLeftMemInfo");
 #endif
     numLocalEntries = numGlobalEntries = 0;
     const int numLocalFronts = localFronts.size();
@@ -494,9 +494,9 @@ DistSymmFrontTree<F>::TopLeftMemoryInfo
         numLocalEntries += front.diag.AllocatedMemory();
     }
 
-    mpi::AllReduce( &numLocalEntries, &minLocalEntries, 1, mpi::MIN, comm );
-    mpi::AllReduce( &numLocalEntries, &maxLocalEntries, 1, mpi::MAX, comm );
-    mpi::AllReduce( &numLocalEntries, &numGlobalEntries, 1, mpi::SUM, comm );
+    minLocalEntries = mpi::AllReduce( numLocalEntries, mpi::MIN, comm );
+    maxLocalEntries = mpi::AllReduce( numLocalEntries, mpi::MAX, comm );
+    numGlobalEntries = mpi::AllReduce( numLocalEntries, mpi::SUM, comm );
 }
 
 template<typename F>
@@ -506,7 +506,7 @@ DistSymmFrontTree<F>::BottomLeftMemoryInfo
   double& numGlobalEntries ) const
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistSymmFrontTree::BottomLeftMemInfo");
+    CallStackEntry cse("DistSymmFrontTree::BottomLeftMemInfo");
 #endif
     numLocalEntries = numGlobalEntries = 0;
     const int numLocalFronts = localFronts.size();
@@ -550,9 +550,9 @@ DistSymmFrontTree<F>::BottomLeftMemoryInfo
         numLocalEntries += front.diag.AllocatedMemory();
     }
 
-    mpi::AllReduce( &numLocalEntries, &minLocalEntries, 1, mpi::MIN, comm );
-    mpi::AllReduce( &numLocalEntries, &maxLocalEntries, 1, mpi::MAX, comm );
-    mpi::AllReduce( &numLocalEntries, &numGlobalEntries, 1, mpi::SUM, comm );
+    minLocalEntries = mpi::AllReduce( numLocalEntries, mpi::MIN, comm );
+    maxLocalEntries = mpi::AllReduce( numLocalEntries, mpi::MAX, comm );
+    numGlobalEntries = mpi::AllReduce( numLocalEntries, mpi::SUM, comm );
 }
 
 template<typename F>
@@ -562,7 +562,7 @@ DistSymmFrontTree<F>::FactorizationWork
   double& numGlobalFlops, bool selInv ) const
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistSymmFrontTree::FactorizationWork");
+    CallStackEntry cse("DistSymmFrontTree::FactorizationWork");
 #endif
     numLocalFlops = numGlobalFlops = 0;
     const int numLocalFronts = localFronts.size();
@@ -604,9 +604,9 @@ DistSymmFrontTree<F>::FactorizationWork
     if( elem::IsComplex<F>::val )
         numLocalFlops *= 4;
 
-    mpi::AllReduce( &numLocalFlops, &minLocalFlops, 1, mpi::MIN, comm );
-    mpi::AllReduce( &numLocalFlops, &maxLocalFlops, 1, mpi::MAX, comm );
-    mpi::AllReduce( &numLocalFlops, &numGlobalFlops, 1, mpi::SUM, comm );
+    minLocalFlops = mpi::AllReduce( numLocalFlops, mpi::MIN, comm );
+    maxLocalFlops = mpi::AllReduce( numLocalFlops, mpi::MAX, comm );
+    numGlobalFlops = mpi::AllReduce( numLocalFlops, mpi::SUM, comm );
 }
 
 template<typename F>
@@ -616,7 +616,7 @@ DistSymmFrontTree<F>::SolveWork
   double& numGlobalFlops, int numRhs ) const
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistSymmFrontTree::SolveWork");
+    CallStackEntry cse("DistSymmFrontTree::SolveWork");
 #endif
     numLocalFlops = numGlobalFlops = 0;
     const int numLocalFronts = localFronts.size();
@@ -655,9 +655,9 @@ DistSymmFrontTree<F>::SolveWork
         numLocalFlops *= 4;
 
     numLocalFlops *= numRhs;
-    mpi::AllReduce( &numLocalFlops, &minLocalFlops, 1, mpi::MIN, comm );
-    mpi::AllReduce( &numLocalFlops, &maxLocalFlops, 1, mpi::MAX, comm );
-    mpi::AllReduce( &numLocalFlops, &numGlobalFlops, 1, mpi::SUM, comm );
+    minLocalFlops = mpi::AllReduce( numLocalFlops, mpi::MIN, comm );
+    maxLocalFlops = mpi::AllReduce( numLocalFlops, mpi::MAX, comm );
+    numGlobalFlops = mpi::AllReduce( numLocalFlops, mpi::SUM, comm );
 }
 
 } // namespace cliq

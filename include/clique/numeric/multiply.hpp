@@ -29,13 +29,13 @@ void Multiply
   T beta,                                      DistMultiVec<T>& Y )
 {
 #ifndef RELEASE
-    CallStackEntry entry("Multiply");
+    CallStackEntry cse("Multiply");
     if( A.Height() != Y.Height() || A.Width() != X.Height() || 
         X.Width() != Y.Width() )
-        throw std::logic_error("A, X, and Y did not conform");
+        LogicError("A, X, and Y did not conform");
     if( !mpi::CongruentComms( A.Comm(), X.Comm() ) || 
         !mpi::CongruentComms( X.Comm(), Y.Comm() ) )
-        throw std::logic_error("Communicators did not match");
+        LogicError("Communicators did not match");
 #endif
     mpi::Comm comm = A.Comm();
     const int commSize = mpi::CommSize( comm );
@@ -133,7 +133,7 @@ void Multiply
         const int iLocal = i - firstLocalRow;
 #ifndef RELEASE
         if( iLocal < 0 || iLocal >= X.LocalHeight() )
-            throw std::logic_error("iLocal was out of bounds");
+            LogicError("iLocal was out of bounds");
 #endif
         for( int j=0; j<width; ++j )
             sendVals[s*width+j] = X.GetLocal( iLocal, j );

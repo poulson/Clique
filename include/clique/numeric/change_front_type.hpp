@@ -26,7 +26,7 @@ template<typename F>
 inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
 {
 #ifndef RELEASE
-    CallStackEntry entry("ChangeFrontType");
+    CallStackEntry cse("ChangeFrontType");
 #endif
     // Check if this call can be a no-op
     if( frontType == L.frontType ) 
@@ -119,7 +119,7 @@ inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
         }
     }
     else
-        throw std::logic_error("Unavailable front type change");
+        LogicError("Unavailable front type change");
     L.frontType = frontType;
 }
 

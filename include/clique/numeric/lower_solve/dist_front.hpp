@@ -115,42 +115,42 @@ void FormDiagonalBlocks
 {
     const Grid& g = L.Grid();
 
-    const int height = L.Width();
-    const int blocksize = Blocksize();
+    const Int height = L.Width();
+    const Int blocksize = Blocksize();
 
     const int commRank = g.VCRank();
     const int commSize = g.Size();
 
-    const int localHeight = Length<int>(height,commRank,commSize);
-    const int maxLocalHeight = MaxLength<int>(height,commSize);
-    const int portionSize = maxLocalHeight*blocksize;
+    const Int localHeight = Length(height,commRank,commSize);
+    const Int maxLocalHeight = MaxLength(height,commSize);
+    const Int portionSize = maxLocalHeight*blocksize;
 
     std::vector<F> sendBuffer( portionSize );
-    const int colShift = L.ColShift();
-    const int LLDim = L.LDim();
+    const Int colShift = L.ColShift();
+    const Int LLDim = L.LDim();
     const F* LBuffer = L.LockedBuffer();
     if( conjugate )
     {
-        for( int iLoc=0; iLoc<localHeight; ++iLoc )
+        for( Int iLoc=0; iLoc<localHeight; ++iLoc )
         {
-            const int i = colShift + iLoc*commSize;
-            const int block = i / blocksize;
-            const int jStart = block*blocksize;
-            const int b = std::min(height-jStart,blocksize);
-            for( int jOff=0; jOff<b; ++jOff )
+            const Int i = colShift + iLoc*commSize;
+            const Int block = i / blocksize;
+            const Int jStart = block*blocksize;
+            const Int b = std::min(height-jStart,blocksize);
+            for( Int jOff=0; jOff<b; ++jOff )
                 sendBuffer[iLoc*blocksize+jOff] = 
                     Conj(LBuffer[iLoc+(jStart+jOff)*LLDim]);
         }
     }
     else
     {
-        for( int iLoc=0; iLoc<localHeight; ++iLoc )
+        for( Int iLoc=0; iLoc<localHeight; ++iLoc )
         {
-            const int i = colShift + iLoc*commSize;
-            const int block = i / blocksize;
-            const int jStart = block*blocksize;
-            const int b = std::min(height-jStart,blocksize);
-            for( int jOff=0; jOff<b; ++jOff )
+            const Int i = colShift + iLoc*commSize;
+            const Int block = i / blocksize;
+            const Int jStart = block*blocksize;
+            const Int b = std::min(height-jStart,blocksize);
+            for( Int jOff=0; jOff<b; ++jOff )
                 sendBuffer[iLoc*blocksize+jOff] = 
                     LBuffer[iLoc+(jStart+jOff)*LLDim];
         }
@@ -163,15 +163,15 @@ void FormDiagonalBlocks
     
     D.ResizeTo( blocksize, height );
     F* DBuffer = D.Buffer();
-    const int DLDim = D.LDim();
-    for( int proc=0; proc<commSize; ++proc )
+    const Int DLDim = D.LDim();
+    for( Int proc=0; proc<commSize; ++proc )
     {
         const F* procRecv = &recvBuffer[proc*portionSize];
-        const int procLocalHeight = Length<int>(height,proc,commSize);
-        for( int iLoc=0; iLoc<procLocalHeight; ++iLoc )
+        const Int procLocalHeight = Length(height,proc,commSize);
+        for( Int iLoc=0; iLoc<procLocalHeight; ++iLoc )
         {
-            const int i = proc + iLoc*commSize;
-            for( int jOff=0; jOff<blocksize; ++jOff )
+            const Int i = proc + iLoc*commSize;
+            for( Int jOff=0; jOff<blocksize; ++jOff )
                 DBuffer[jOff+i*DLDim] = procRecv[jOff+iLoc*blocksize];
         }
     }
@@ -180,22 +180,22 @@ void FormDiagonalBlocks
 template<typename F>
 void AccumulateRHS( const DistMatrix<F,VC,STAR>& X, DistMatrix<F,STAR,STAR>& Z )
 {
-    const int height = X.Height();
-    const int width = X.Width();
+    const Int height = X.Height();
+    const Int width = X.Width();
     Z.Empty();
     elem::Zeros( Z, height, width );
 
-    const int localHeight = X.LocalHeight();
-    const int colShift = X.ColShift();
+    const Int localHeight = X.LocalHeight();
+    const Int colShift = X.ColShift();
     const int commSize = X.Grid().Size();
     const F* XBuffer = X.LockedBuffer();
     F* ZBuffer = Z.Buffer();
-    const int XLDim = X.LDim();
-    const int ZLDim = Z.LDim();
-    for( int iLoc=0; iLoc<localHeight; ++iLoc )
+    const Int XLDim = X.LDim();
+    const Int ZLDim = Z.LDim();
+    for( Int iLoc=0; iLoc<localHeight; ++iLoc )
     {
-        const int i = colShift + iLoc*commSize;
-        for( int j=0; j<width; ++j )
+        const Int i = colShift + iLoc*commSize;
+        for( Int j=0; j<width; ++j )
             ZBuffer[i+j*ZLDim] = XBuffer[iLoc+j*XLDim];
     }
     mpi::AllReduce( ZBuffer, ZLDim*width, mpi::SUM, X.Grid().VCComm() );
@@ -314,14 +314,14 @@ void BackwardSingle
         FormDiagonalBlocks( L, D, false );
     else 
         FormDiagonalBlocks( L, D, true );
-    const int blocksize = Blocksize();
-    const int firstBlocksize = 
+    const Int blocksize = Blocksize();
+    const Int firstBlocksize = 
         ( L.Height()%blocksize==0 ?
           blocksize :
           L.Height()%blocksize );
 
     // Start the algorithm
-    int b = firstBlocksize;
+    Int b = firstBlocksize;
     LockedPartitionUpDiagonal
     ( L, LTL, LTR,
          LBL, LBR, 0 );
@@ -381,20 +381,19 @@ inline void FrontLowerForwardSolve
   bool singleL11AllGather )
 {
 #ifndef RELEASE
-    CallStackEntry entry("FrontLowerForwardSolve");
+    CallStackEntry cse("FrontLowerForwardSolve");
     if( L.Grid() != X.Grid() )
-        throw std::logic_error
-        ("L and X must be distributed over the same grid");
+        LogicError("L and X must be distributed over the same grid");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
         msg << "Nonconformal solve:\n"
             << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        throw std::logic_error( msg.str().c_str() );
+        LogicError( msg.str() );
     }
-    if( L.ColAlignment() != X.ColAlignment() )
-        throw std::logic_error("L and X are assumed to be aligned");
+    if( L.ColAlign() != X.ColAlign() )
+        LogicError("L and X are assumed to be aligned");
 #endif
     if( singleL11AllGather )
         internal::ForwardSingle( L, X );
@@ -406,17 +405,16 @@ template<typename F>
 inline void FrontLowerForwardSolve( const DistMatrix<F>& L, DistMatrix<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("FrontLowerForwardSolve");
+    CallStackEntry cse("FrontLowerForwardSolve");
     if( L.Grid() != X.Grid() )
-        throw std::logic_error
-        ("L and X must be distributed over the same grid");
+        LogicError("L and X must be distributed over the same grid");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
         msg << "Nonconformal solve:\n"
             << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        throw std::logic_error( msg.str().c_str() );
+        LogicError( msg.str() );
     }
 #endif
     const Grid& g = L.Grid();
@@ -427,7 +425,7 @@ inline void FrontLowerForwardSolve( const DistMatrix<F>& L, DistMatrix<F>& X )
     }
 
     // Separate the top and bottom portions of X and L
-    const int snSize = L.Width();
+    const Int snSize = L.Width();
     DistMatrix<F> LT(g),
                   LB(g);
     LockedPartitionDown
@@ -454,22 +452,21 @@ inline void FrontLowerBackwardSolve
   bool singleL11AllGather )
 {
 #ifndef RELEASE
-    CallStackEntry entry("FrontLowerBackwardSolve");
+    CallStackEntry cse("FrontLowerBackwardSolve");
     if( L.Grid() != X.Grid() )
-        throw std::logic_error
-        ("L and X must be distributed over the same grid");
+        LogicError("L and X must be distributed over the same grid");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
         msg << "Nonconformal solve:\n"
             << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        throw std::logic_error( msg.str().c_str() );
+        LogicError( msg.str() );
     }
-    if( L.ColAlignment() != X.ColAlignment() )
-        throw std::logic_error("L and X are assumed to be aligned");
+    if( L.ColAlign() != X.ColAlign() )
+        LogicError("L and X are assumed to be aligned");
     if( orientation == NORMAL )
-        throw std::logic_error("This solve must be (conjugate-)transposed");
+        LogicError("This solve must be (conjugate-)transposed");
 #endif
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
@@ -509,20 +506,19 @@ inline void FrontLowerBackwardSolve
 ( Orientation orientation, const DistMatrix<F>& L, DistMatrix<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("FrontLowerBackwardSolve");
+    CallStackEntry cse("FrontLowerBackwardSolve");
     if( L.Grid() != X.Grid() )
-        throw std::logic_error
-        ("L and X must be distributed over the same grid");
+        LogicError("L and X must be distributed over the same grid");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
         msg << "Nonconformal solve:\n"
             << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        throw std::logic_error( msg.str().c_str() );
+        LogicError( msg.str() );
     }
     if( orientation == NORMAL )
-        throw std::logic_error("This solve must be (conjugate-)transposed");
+        LogicError("This solve must be (conjugate-)transposed");
 #endif
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
@@ -531,17 +527,11 @@ inline void FrontLowerBackwardSolve
         return;
     }
 
-    DistMatrix<F> LT(g),
-                  LB(g);
-    LockedPartitionDown
-    ( L, LT,
-         LB, L.Width() );
+    DistMatrix<F> LT(g), LB(g);
+    LockedPartitionDown( L, LT, LB, L.Width() );
 
-    DistMatrix<F> XT(g),
-                  XB(g);
-    PartitionDown
-    ( X, XT,
-         XB, L.Width() );
+    DistMatrix<F> XT(g), XB(g);
+    PartitionDown( X, XT, XB, L.Width() );
 
     elem::Gemm( orientation, NORMAL, F(-1), LB, XB, F(1), XT );
     elem::Trsm( LEFT, LOWER, orientation, NON_UNIT, F(1), LT, XT );

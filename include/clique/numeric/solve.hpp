@@ -41,7 +41,7 @@ inline void Solve
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("Solve");
+    CallStackEntry cse("Solve");
 #endif
     const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
     const Orientation orientation = ( L.isHermitian ? ADJOINT : TRANSPOSE );
@@ -69,7 +69,7 @@ inline void Solve
   const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("Solve");
+    CallStackEntry cse("Solve");
 #endif
     const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
     const Orientation orientation = ( L.isHermitian ? ADJOINT : TRANSPOSE );
@@ -97,7 +97,7 @@ inline void SymmetricSolve
   bool sequential, int numDistSeps, int numSeqSeps, int cutoff )
 {
 #ifndef RELEASE
-    CallStackEntry entry("SymmetricSolve");
+    CallStackEntry cse("SymmetricSolve");
 #endif
     DistSymmInfo info;
     DistSeparatorTree sepTree;
@@ -122,7 +122,7 @@ inline void HermitianSolve
   bool sequential, int numDistSeps, int numSeqSeps, int cutoff )
 {
 #ifndef RELEASE
-    CallStackEntry entry("HermitianSolve");
+    CallStackEntry cse("HermitianSolve");
 #endif
     DistSymmInfo info;
     DistSeparatorTree sepTree;

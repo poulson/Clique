@@ -26,7 +26,7 @@ inline void
 DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistLDL");
+    CallStackEntry cse("DistLDL");
 #endif
     // The bottom front is already computed, so just view it
     SymmFront<F>& topLocalFront = L.localFronts.back();
@@ -53,19 +53,19 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
     }
 
     // Perform the distributed portion of the factorization
-    const unsigned numDistNodes = info.distNodes.size();
-    for( unsigned s=1; s<numDistNodes; ++s )
+    const Unsigned numDistNodes = info.distNodes.size();
+    for( Unsigned s=1; s<numDistNodes; ++s )
     {
         const DistSymmNodeInfo& childNode = info.distNodes[s-1];
         const DistSymmNodeInfo& node = info.distNodes[s];
-        const int updateSize = node.lowerStruct.size();
+        const Int updateSize = node.lowerStruct.size();
         DistSymmFront<F>& childFront = L.distFronts[s-1];
         DistSymmFront<F>& front = L.distFronts[s];
         front.work2d.Empty();
 #ifndef RELEASE
         if( front.front2dL.Height() != node.size+updateSize ||
             front.front2dL.Width() != node.size )
-            throw std::logic_error("Front was not the proper size");
+            LogicError("Front was not the proper size");
 #endif
 
         // Grab this front's grid information
@@ -85,38 +85,38 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
         const DistMatrix<F>& childUpdate = childFront.work2d;
         const bool onLeft = childNode.onLeft;
         std::vector<int> sendCounts(commSize), sendDispls(commSize);
-        int sendBufferSize = 0;
-        for( unsigned proc=0; proc<commSize; ++proc )
+        Int sendBufferSize = 0;
+        for( Unsigned proc=0; proc<commSize; ++proc )
         {
-            const int sendSize = commMeta.numChildSendInds[proc];
+            const Int sendSize = commMeta.numChildSendInds[proc];
             sendCounts[proc] = sendSize;
             sendDispls[proc] = sendBufferSize;
             sendBufferSize += sendSize;
         }
         std::vector<F> sendBuffer( sendBufferSize );
 
-        const std::vector<int>& myChildRelInds = 
+        const std::vector<Int>& myChildRelInds = 
             ( onLeft ? node.leftRelInds : node.rightRelInds );
-        const int updateColShift = childUpdate.ColShift();
-        const int updateRowShift = childUpdate.RowShift();
-        const int updateLocalHeight = childUpdate.LocalHeight();
-        const int updateLocalWidth = childUpdate.LocalWidth();
+        const Int updateColShift = childUpdate.ColShift();
+        const Int updateRowShift = childUpdate.RowShift();
+        const Int updateLocalHeight = childUpdate.LocalHeight();
+        const Int updateLocalWidth = childUpdate.LocalWidth();
         std::vector<int> packOffs = sendDispls;
-        for( int jChildLoc=0; jChildLoc<updateLocalWidth; ++jChildLoc )
+        for( Int jChildLoc=0; jChildLoc<updateLocalWidth; ++jChildLoc )
         {
-            const int jChild = updateRowShift + jChildLoc*childGridWidth;
+            const Int jChild = updateRowShift + jChildLoc*childGridWidth;
             const int destGridCol = myChildRelInds[jChild] % gridWidth;
-            int localColShift;
+            Int localColShift;
             if( updateColShift > jChild )
                 localColShift = 0;
             else if( (jChild-updateColShift) % childGridHeight == 0 )
                 localColShift = (jChild-updateColShift)/childGridHeight;
             else
                 localColShift = (jChild-updateColShift)/childGridHeight + 1;
-            for( int iChildLoc=localColShift; 
+            for( Int iChildLoc=localColShift; 
                      iChildLoc<updateLocalHeight; ++iChildLoc )
             {
-                const int iChild = updateColShift + iChildLoc*childGridHeight;
+                const Int iChild = updateColShift + iChildLoc*childGridHeight;
                 if( iChild >= jChild )
                 {
                     const int destGridRow = myChildRelInds[iChild] % gridHeight;
@@ -131,7 +131,7 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
         {
             if( packOffs[proc]-sendDispls[proc] != 
                 commMeta.numChildSendInds[proc] )
-                throw std::logic_error("Error in packing stage");
+                LogicError("Error in packing stage");
         }
 #endif
         std::vector<int>().swap( packOffs );
@@ -144,10 +144,10 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
         if( computeFactRecvInds )
             ComputeFactRecvInds( node, childNode );
         std::vector<int> recvCounts(commSize), recvDispls(commSize);
-        int recvBufferSize=0;
+        Int recvBufferSize=0;
         for( unsigned proc=0; proc<commSize; ++proc )
         {
-            const int recvSize = commMeta.childRecvInds[proc].size()/2;
+            const Int recvSize = commMeta.childRecvInds[proc].size()/2;
             recvCounts[proc] = recvSize;
             recvDispls[proc] = recvBufferSize;
             recvBufferSize += recvSize;
@@ -169,24 +169,23 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
         front.work2d.SetGrid( front.front2dL.Grid() );
         front.work2d.Align( node.size % gridHeight, node.size % gridWidth );
         Zeros( front.work2d, updateSize, updateSize );
-        const int leftLocalWidth = front.front2dL.LocalWidth();
-        const int topLocalHeight = 
-            Length<int>( node.size, grid.Row(), gridHeight );
+        const Int leftLocalWidth = front.front2dL.LocalWidth();
+        const Int topLocalHeight = Length( node.size, grid.Row(), gridHeight );
         for( unsigned proc=0; proc<commSize; ++proc )
         {
             const F* recvVals = &recvBuffer[recvDispls[proc]];
-            const std::vector<int>& recvInds = commMeta.childRecvInds[proc];
-            const int numRecvIndPairs = recvInds.size()/2;
-            for( int k=0; k<numRecvIndPairs; ++k )
+            const std::vector<Int>& recvInds = commMeta.childRecvInds[proc];
+            const Int numRecvIndPairs = recvInds.size()/2;
+            for( Int k=0; k<numRecvIndPairs; ++k )
             {
-                const int iFrontLoc = recvInds[2*k+0];
-                const int jFrontLoc = recvInds[2*k+1];
+                const Int iFrontLoc = recvInds[2*k+0];
+                const Int jFrontLoc = recvInds[2*k+1];
                 const F value = recvVals[k];
 #ifndef RELEASE
-                const int iFront = grid.Row() + iFrontLoc*gridHeight;
-                const int jFront = grid.Col() + jFrontLoc*gridWidth;
+                const Int iFront = grid.Row() + iFrontLoc*gridHeight;
+                const Int jFront = grid.Col() + jFrontLoc*gridWidth;
                 if( iFront < jFront )
-                    throw std::logic_error("Tried to update upper triangle");
+                    LogicError("Tried to update upper triangle");
 #endif
                 if( jFrontLoc < leftLocalWidth )
                     front.front2dL.UpdateLocal( iFrontLoc, jFrontLoc, value );
@@ -205,10 +204,7 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
         // Now that the frontal matrix is set up, perform the factorization
         if( !blockLDL )
         {
-            if( L.isHermitian )
-                FrontLDL( ADJOINT, front.front2dL, front.work2d );
-            else
-                FrontLDL( TRANSPOSE, front.front2dL, front.work2d );
+            FrontLDL( front.front2dL, front.work2d, L.isHermitian );
 
             // Store the diagonal in a [VC,* ] distribution
             DistMatrix<F,MD,STAR> diag( grid );
@@ -218,12 +214,7 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
             elem::SetDiagonal( front.front2dL, F(1) );
         }
         else
-        {
-            if( L.isHermitian )
-                FrontBlockLDL( ADJOINT, front.front2dL, front.work2d );
-            else
-                FrontBlockLDL( TRANSPOSE, front.front2dL, front.work2d );
-        }
+            FrontBlockLDL( front.front2dL, front.work2d, L.isHermitian );
     }
     L.localFronts.back().work.Empty();
     L.distFronts.back().work2d.Empty();

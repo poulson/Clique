@@ -41,7 +41,7 @@ inline void DistLowerForwardSolve
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistLowerForwardSolve");
+    CallStackEntry cse("DistLowerForwardSolve");
 #endif
     const int numDistNodes = info.distNodes.size();
     const int width = X.Width();
@@ -51,7 +51,7 @@ inline void DistLowerForwardSolve
         frontType != LDL_SELINV_1D && 
         frontType != LDL_SELINV_2D && 
         frontType != BLOCK_LDL_2D )
-        throw std::logic_error("This solve mode is not yet implemented");
+        LogicError("This solve mode is not yet implemented");
 
     // Copy the information from the local portion into the distributed leaf
     const SymmFront<F>& localRootFront = L.localFronts.back();
@@ -192,13 +192,13 @@ inline void DistLowerForwardSolve
   const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistLowerForwardSolve");
+    CallStackEntry cse("DistLowerForwardSolve");
 #endif
     const int numDistNodes = info.distNodes.size();
     const int width = X.Width();
     const SymmFrontType frontType = L.frontType;
     if( FrontsAre1d(frontType) )
-        throw std::logic_error("1d solves not yet implemented");
+        LogicError("1d solves not yet implemented");
     const bool computeCommMetas = ( X.commMetas.size() == 0 );
     if( computeCommMetas )
         X.ComputeCommMetas( info );
@@ -343,7 +343,7 @@ inline void DistLowerBackwardSolve
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistLowerBackwardSolve");
+    CallStackEntry cse("DistLowerBackwardSolve");
 #endif
     const int numDistNodes = info.distNodes.size();
     const int width = X.Width();
@@ -354,7 +354,7 @@ inline void DistLowerBackwardSolve
         frontType != LDL_SELINV_1D && 
         frontType != LDL_SELINV_2D && 
         frontType != BLOCK_LDL_2D )
-        throw std::logic_error("This solve mode is not yet implemented");
+        LogicError("This solve mode is not yet implemented");
 
     // Directly operate on the root separator's portion of the right-hand sides
     const SymmFront<F>& localRootFront = L.localFronts.back();
@@ -527,14 +527,14 @@ inline void DistLowerBackwardSolve
   const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistLowerBackwardSolve");
+    CallStackEntry cse("DistLowerBackwardSolve");
 #endif
     const int numDistNodes = info.distNodes.size();
     const int width = X.Width();
     const SymmFrontType frontType = L.frontType;
     const bool blockLDL = ( frontType == BLOCK_LDL_2D );
     if( FrontsAre1d(frontType) )
-        throw std::logic_error("1d solve mode is not yet implemented");
+        LogicError("1d solve mode is not yet implemented");
 
     // Directly operate on the root separator's portion of the right-hand sides
     const SymmFront<F>& localRootFront = L.localFronts.back();

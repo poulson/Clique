@@ -18,7 +18,7 @@ inline void
 MakeZeros( DistMultiVec<T>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("MakeZeros");
+    CallStackEntry cse("MakeZeros");
 #endif
     const int localHeight = X.LocalHeight();
     const int width = X.Width();
@@ -32,20 +32,20 @@ inline void
 MakeUniform( DistMultiVec<T>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("MakeUniform");
+    CallStackEntry cse("MakeUniform");
 #endif
     const int localHeight = X.LocalHeight();
     const int width = X.Width();
     for( int j=0; j<width; ++j )
         for( int iLocal=0; iLocal<localHeight; ++iLocal )
-            X.SetLocal( iLocal, j, elem::SampleUnitBall<T>() );
+            X.SetLocal( iLocal, j, elem::SampleBall<T>() );
 }
 
 template<typename F>
 void Norms( const DistMultiVec<F>& X, std::vector<BASE(F)>& norms )
 {
 #ifndef RELEASE
-    CallStackEntry entry("Norms");
+    CallStackEntry cse("Norms");
 #endif
     typedef BASE(F) R;
     const int localHeight = X.LocalHeight();
@@ -112,10 +112,10 @@ template<typename F>
 BASE(F) Norm( const DistMultiVec<F>& x )
 {
 #ifndef RELEASE
-    CallStackEntry entry("Norm");
+    CallStackEntry cse("Norm");
 #endif
     if( x.Width() != 1 )
-        throw std::logic_error("Norm only applies when there is one column");
+        LogicError("Norm only applies when there is one column");
     typedef BASE(F) R;
     std::vector<R> norms;
     Norms( x, norms );
@@ -127,13 +127,13 @@ inline void
 Axpy( T alpha, const DistMultiVec<T>& X, DistMultiVec<T>& Y )
 {
 #ifndef RELEASE
-    CallStackEntry entry("Axpy");
+    CallStackEntry cse("Axpy");
     if( !mpi::CongruentComms( X.Comm(), Y.Comm() ) )
-        throw std::logic_error("X and Y must have congruent communicators");
+        LogicError("X and Y must have congruent communicators");
     if( X.Height() != Y.Height() )
-        throw std::logic_error("X and Y must be the same height");
+        LogicError("X and Y must be the same height");
     if( X.Width() != Y.Width() )
-        throw std::logic_error("X and Y must be the same width");
+        LogicError("X and Y must be the same width");
 #endif
     const int localHeight = X.LocalHeight(); 
     const int width = X.Width();
@@ -232,7 +232,7 @@ inline T
 DistMultiVec<T>::GetLocal( int localRow, int col ) const
 { 
 #ifndef RELEASE 
-    CallStackEntry entry("DistMultiVec::GetLocal");
+    CallStackEntry cse("DistMultiVec::GetLocal");
 #endif
     return multiVec_.Get(localRow,col);
 }
@@ -242,7 +242,7 @@ inline void
 DistMultiVec<T>::SetLocal( int localRow, int col, T value )
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistMultiVec::SetLocal");
+    CallStackEntry cse("DistMultiVec::SetLocal");
 #endif
     multiVec_.Set(localRow,col,value);
 }
@@ -252,7 +252,7 @@ inline void
 DistMultiVec<T>::UpdateLocal( int localRow, int col, T value )
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistMultiVec::UpdateLocal");
+    CallStackEntry cse("DistMultiVec::UpdateLocal");
 #endif
     multiVec_.Update(localRow,col,value);
 }
@@ -290,7 +290,7 @@ const DistMultiVec<T>&
 DistMultiVec<T>::operator=( const DistMultiVec<T>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistMultiVec::operator=");
+    CallStackEntry cse("DistMultiVec::operator=");
 #endif
     height_ = X.height_;
     width_ = X.width_;

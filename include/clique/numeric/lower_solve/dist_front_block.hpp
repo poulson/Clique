@@ -42,20 +42,19 @@ inline void FrontBlockLowerForwardSolve
 ( const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("FrontBlockLowerForwardSolve");
+    CallStackEntry cse("FrontBlockLowerForwardSolve");
     if( L.Grid() != X.Grid() )
-        throw std::logic_error
-        ("L and X must be distributed over the same grid");
+        LogicError("L and X must be distributed over the same grid");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
         msg << "Nonconformal solve:\n"
             << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        throw std::logic_error( msg.str().c_str() );
+        LogicError( msg.str() );
     }
-    if( L.ColAlignment() != X.ColAlignment() )
-        throw std::logic_error("L and X are assumed to be aligned");
+    if( L.ColAlign() != X.ColAlign() )
+        LogicError("L and X are assumed to be aligned");
 #endif
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
@@ -94,17 +93,16 @@ inline void FrontBlockLowerForwardSolve
 ( const DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("FrontBlockLowerForwardSolve");
+    CallStackEntry cse("FrontBlockLowerForwardSolve");
     if( L.Grid() != X.Grid() )
-        throw std::logic_error
-        ("L and X must be distributed over the same grid");
+        LogicError("L and X must be distributed over the same grid");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
         msg << "Nonconformal solve:\n"
             << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        throw std::logic_error( msg.str().c_str() );
+        LogicError( msg.str() );
     }
 #endif
     const Grid& g = L.Grid();
@@ -160,17 +158,16 @@ inline void FrontBlockLowerForwardSolve
 ( const DistMatrix<F>& L, DistMatrix<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("FrontBlockLowerForwardSolve");
+    CallStackEntry cse("FrontBlockLowerForwardSolve");
     if( L.Grid() != X.Grid() )
-        throw std::logic_error
-        ("L and X must be distributed over the same grid");
+        LogicError("L and X must be distributed over the same grid");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
         msg << "Nonconformal solve:\n"
             << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        throw std::logic_error( msg.str().c_str() );
+        LogicError( msg.str() );
     }
 #endif
     const Grid& g = L.Grid();
@@ -207,22 +204,21 @@ inline void FrontBlockLowerBackwardSolve
   const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("FrontBlockLowerBackwardSolve");
+    CallStackEntry cse("FrontBlockLowerBackwardSolve");
     if( L.Grid() != X.Grid() )
-        throw std::logic_error
-        ("L and X must be distributed over the same grid");
+        LogicError("L and X must be distributed over the same grid");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
         msg << "Nonconformal solve:\n"
             << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        throw std::logic_error( msg.str().c_str() );
+        LogicError( msg.str() );
     }
-    if( L.ColAlignment() != X.ColAlignment() )
-        throw std::logic_error("L and X are assumed to be aligned");
+    if( L.ColAlign() != X.ColAlign() )
+        LogicError("L and X are assumed to be aligned");
     if( orientation == NORMAL )
-        throw std::logic_error("This solve must be (conjugate-)transposed");
+        LogicError("This solve must be (conjugate-)transposed");
 #endif
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
@@ -264,20 +260,19 @@ inline void FrontBlockLowerBackwardSolve
 ( Orientation orientation, const DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("FrontBlockLowerBackwardSolve");
+    CallStackEntry cse("FrontBlockLowerBackwardSolve");
     if( L.Grid() != X.Grid() )
-        throw std::logic_error
-        ("L and X must be distributed over the same grid");
+        LogicError("L and X must be distributed over the same grid");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
         msg << "Nonconformal solve:\n"
             << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        throw std::logic_error( msg.str().c_str() );
+        LogicError( msg.str() );
     }
     if( orientation == NORMAL )
-        throw std::logic_error("This solve must be (conjugate-)transposed");
+        LogicError("This solve must be (conjugate-)transposed");
 #endif
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
@@ -348,20 +343,19 @@ inline void FrontBlockLowerBackwardSolve
 ( Orientation orientation, const DistMatrix<F>& L, DistMatrix<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("FrontBlockLowerBackwardSolve");
+    CallStackEntry cse("FrontBlockLowerBackwardSolve");
     if( L.Grid() != X.Grid() )
-        throw std::logic_error
-        ("L and X must be distributed over the same grid");
+        LogicError("L and X must be distributed over the same grid");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
         msg << "Nonconformal solve:\n"
             << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        throw std::logic_error( msg.str().c_str() );
+        LogicError( msg.str() );
     }
     if( orientation == NORMAL )
-        throw std::logic_error("This solve must be (conjugate-)transposed");
+        LogicError("This solve must be (conjugate-)transposed");
 #endif
     const Grid& g = L.Grid();
     if( g.Size() == 1 )

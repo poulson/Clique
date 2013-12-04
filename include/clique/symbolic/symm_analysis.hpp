@@ -31,7 +31,7 @@ inline void SymmetricAnalysis
 ( const DistSymmElimTree& eTree, DistSymmInfo& info, bool storeFactRecvInds )
 {
 #ifndef RELEASE
-    CallStackEntry entry("SymmetricAnalysis");
+    CallStackEntry cse("SymmetricAnalysis");
 #endif
     LocalSymmetricAnalysis( eTree, info );
     DistSymmetricAnalysis( eTree, info, storeFactRecvInds );

@@ -28,14 +28,14 @@ template<typename F>
 inline void FrontLowerForwardSolve( const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("FrontLowerForwardSolve");
+    CallStackEntry cse("FrontLowerForwardSolve");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
         msg << "Nonconformal solve:\n"
             << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        throw std::logic_error( msg.str().c_str() );
+        LogicError( msg.str() );
     }
 #endif
     Matrix<F> LT,
@@ -59,17 +59,17 @@ inline void FrontLowerBackwardSolve
 ( Orientation orientation, const Matrix<F>& L, Matrix<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("FrontLowerBackwardSolve");
+    CallStackEntry cse("FrontLowerBackwardSolve");
     if( L.Height() < L.Width() || L.Height() != X.Height() )
     {
         std::ostringstream msg;
         msg << "Nonconformal solve:\n"
             << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        throw std::logic_error( msg.str().c_str() );
+        LogicError( msg.str() );
     }
     if( orientation == NORMAL )
-        throw std::logic_error("This solve must be (conjugate-)transposed");
+        LogicError("This solve must be (conjugate-)transposed");
 #endif
     Matrix<F> LT,
               LB;

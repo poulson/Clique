@@ -123,7 +123,7 @@ NestedDissectionRecursion
         int cutoff=128 )
 {
 #ifndef RELEASE
-    CallStackEntry entry("NestedDissectionRecursion");
+    CallStackEntry cse("NestedDissectionRecursion");
 #endif
     if( graph.NumSources() <= cutoff )
     {
@@ -253,7 +253,7 @@ NestedDissectionRecursion
         int cutoff=128 )
 {
 #ifndef RELEASE
-    CallStackEntry entry("NestedDissectionRecursion");
+    CallStackEntry cse("NestedDissectionRecursion");
 #endif
     const int distDepth = sepTree.distSeps.size();
     mpi::Comm comm = graph.Comm();
@@ -504,7 +504,7 @@ NestedDissection
         bool storeFactRecvInds )
 {
 #ifndef RELEASE
-    CallStackEntry entry("NestedDissection");
+    CallStackEntry cse("NestedDissection");
 #endif
     // NOTE: There is a potential memory leak here if these data structures 
     //       are reused. Their destructors should call a member function which
@@ -545,7 +545,7 @@ Bisect
   std::vector<int>& perm, int numSeps )
 {
 #ifndef RELEASE
-    CallStackEntry entry("Bisect");
+    CallStackEntry cse("Bisect");
 #endif
     // METIS assumes that there are no self-connections or connections 
     // outside the sources, so we must manually remove them from our graph
@@ -568,7 +568,7 @@ Bisect
         const int target = graph.Target( edge );
 #ifndef RELEASE
         if( source < prevSource )
-            throw std::runtime_error("sources were not properly sorted");
+            RuntimeError("sources were not properly sorted");
 #endif
         while( source != prevSource )
         {
@@ -583,7 +583,7 @@ Bisect
     }
 #ifndef RELEASE
     if( sourceOff != numSources )
-        throw std::logic_error("Mistake in xAdj computation");
+        LogicError("Mistake in xAdj computation");
 #endif
     xAdj[numSources] = numValidEdges;
 
@@ -617,13 +617,13 @@ Bisect
         int numSeqSeps )
 {
 #ifndef RELEASE
-    CallStackEntry entry("Bisect");
+    CallStackEntry cse("Bisect");
 #endif
     mpi::Comm comm = graph.Comm();
     const int commSize = mpi::CommSize( comm );
     const int commRank = mpi::CommRank( comm );
     if( commSize == 1 )
-        throw std::logic_error
+        LogicError
         ("This routine assumes at least two processes are used, "
          "otherwise one child will be lost");
 
@@ -651,7 +651,7 @@ Bisect
         const int target = graph.Target( localEdge );
 #ifndef RELEASE
         if( source < prevSource )
-            throw std::runtime_error("sources were not properly sorted");
+            RuntimeError("sources were not properly sorted");
 #endif
         while( source != prevSource )
         {
@@ -666,7 +666,7 @@ Bisect
     }
 #ifndef RELEASE
     if( sourceOff != numLocalSources )
-        throw std::logic_error("Mistake in xAdj computation");
+        LogicError("Mistake in xAdj computation");
 #endif
     xAdj[numLocalSources] = numLocalValidEdges;
 
@@ -729,12 +729,11 @@ Bisect
         // Fix the remaining entries
         const int numRemaining = numSources - commSize*blocksize;
         if( commRank == commSize-1 )
-            mpi::Send( &xAdj[blocksize], numRemaining, 0, 0, comm );
+            mpi::Send( &xAdj[blocksize], numRemaining, 0, comm );
         if( commRank == 0 )
         {
             mpi::Recv
-            ( &globalXAdj[commSize*blocksize], numRemaining, 
-              commSize-1, 0, comm );
+            ( &globalXAdj[commSize*blocksize], numRemaining, commSize-1, comm );
             for( int j=0; j<numRemaining; ++j )
                 globalXAdj[commSize*blocksize+j] += edgeOffs[commSize-1];
             globalXAdj[numSources] = numEdges;
@@ -762,10 +761,10 @@ Bisect
         // Make sure the last process gets the straggling entries
         if( commRank == 0 )
             mpi::Send
-            ( &seqPerm[commSize*blocksize], numRemaining, commSize-1, 0, comm );
+            ( &seqPerm[commSize*blocksize], numRemaining, commSize-1, comm );
         if( commRank == commSize-1 )
             mpi::Recv
-            ( perm.Buffer()+blocksize, numLocalSources-blocksize, 0, 0, comm );
+            ( perm.Buffer()+blocksize, numLocalSources-blocksize, 0, comm );
 
         // Broadcast the sizes information from the root
         mpi::Broadcast( (byte*)&sizes[0], 3*sizeof(idx_t), 0, comm );
@@ -799,7 +798,7 @@ inline void
 EnsurePermutation( const std::vector<int>& map )
 {
 #ifndef RELEASE
-    CallStackEntry entry("EnsurePermutation");
+    CallStackEntry cse("EnsurePermutation");
 #endif
     const int numSources = map.size();
     std::vector<int> timesMapped( numSources, 0 );
@@ -812,7 +811,7 @@ EnsurePermutation( const std::vector<int>& map )
             std::ostringstream msg;
             msg << timesMapped[i] << " vertices were relabeled as "
                 << i << " in sequential map";
-            throw std::logic_error( msg.str().c_str() );
+            LogicError( msg.str() );
         }
     }
 }
@@ -821,7 +820,7 @@ inline void
 EnsurePermutation( const DistMap& map )
 {
 #ifndef RELEASE
-    CallStackEntry entry("EnsurePermutation");
+    CallStackEntry cse("EnsurePermutation");
 #endif
     mpi::Comm comm = map.Comm();
     const int commRank = mpi::CommRank( comm );
@@ -840,7 +839,7 @@ EnsurePermutation( const DistMap& map )
                 std::ostringstream msg;
                 msg << timesMapped[i] << " vertices were relabeled as "
                     << i << " in parallel map";
-                throw std::logic_error( msg.str().c_str() );
+                LogicError( msg.str() );
             }
         }
     }
@@ -924,7 +923,7 @@ BuildChildrenFromPerm
   int rightChildSize, Graph& rightChild )
 {
 #ifndef RELEASE
-    CallStackEntry entry("BuildChildrenFromPerm");
+    CallStackEntry cse("BuildChildrenFromPerm");
     const int sepSize = graph.NumSources() - leftChildSize - rightChildSize;
 #endif
     const int numSources = graph.NumSources();
@@ -960,8 +959,7 @@ BuildChildrenFromPerm
                                  inverseTarget );
 #ifndef RELEASE
             if( target >= leftChildSize && target < (numSources-sepSize) )
-                throw std::logic_error
-                ("Invalid bisection, left set touches right set");
+                LogicError("Invalid bisection, left set touches right set");
 #endif
             leftChild.Insert( source, target );
         }
@@ -986,8 +984,7 @@ BuildChildrenFromPerm
                                  inverseTarget );
 #ifndef RELEASE
             if( target < leftChildSize )
-                throw std::logic_error
-                ("Invalid bisection, right set touches left set");
+                LogicError("Invalid bisection, right set touches left set");
 #endif
             // The targets that are in parent separators do not need to be
             rightChild.Insert( source-leftChildSize, target-leftChildSize );
@@ -1003,7 +1000,7 @@ BuildChildFromPerm
   bool& onLeft, DistGraph& child )
 {
 #ifndef RELEASE
-    CallStackEntry entry("BuildChildFromPerm");
+    CallStackEntry cse("BuildChildFromPerm");
     const int numSources = graph.NumSources();
     const int sepSize = numSources - leftChildSize - rightChildSize;
 #endif
@@ -1205,7 +1202,7 @@ BuildChildFromPerm
         const int adjustedSource = ( onLeft ? source : source-leftChildSize );
         if( adjustedSource < childFirstLocalSource || 
             adjustedSource >= childFirstLocalSource+numChildLocalSources )
-            throw std::logic_error("source was out of bounds");
+            LogicError("source was out of bounds");
 #endif
         for( int t=0; t<numConnections; ++t )
         {
@@ -1219,7 +1216,7 @@ BuildChildFromPerm
                     msg << "Invalid dist bisection, left set touches right:\n"
                         << "  " << source << " touches " << target << " and "
                         << "leftChildSize=" << leftChildSize;
-                    throw std::logic_error( msg.str().c_str() );
+                    LogicError( msg.str() );
                 }
 #endif
                 child.Insert( source, target );
@@ -1228,7 +1225,7 @@ BuildChildFromPerm
             {
 #ifndef RELEASE
                 if( target < leftChildSize )
-                    throw std::logic_error
+                    LogicError
                     ("Invalid dist bisection, right set touches left set");
 #endif
                 child.Insert( source-leftChildSize, target-leftChildSize );
@@ -1245,7 +1242,7 @@ BuildMap
         DistMap& map )
 {
 #ifndef RELEASE
-    CallStackEntry entry("BuildMap");
+    CallStackEntry cse("BuildMap");
 #endif
     mpi::Comm comm = graph.Comm();
     const int commSize = mpi::CommSize( comm );
@@ -1277,7 +1274,7 @@ BuildMap
                 std::ostringstream msg;
                 msg << "local separator index, " << i << ", was not in [0,"
                     << graph.NumSources() << ")";
-                throw std::logic_error( msg.str().c_str() );
+                LogicError( msg.str() );
             }
 #endif
             const int q = RowToProcess( i, blocksize, commSize );
@@ -1301,7 +1298,7 @@ BuildMap
                 std::ostringstream msg;
                 msg << "dist separator index, " << i << ", was not in [0,"
                     << graph.NumSources() << ")";
-                throw std::logic_error( msg.str().c_str() );
+                LogicError( msg.str() );
             }
 #endif
             const int q = RowToProcess( i, blocksize, commSize );
@@ -1369,7 +1366,7 @@ BuildMap
 #ifndef RELEASE
     const int numLocalSources = map.NumLocalSources();
     if( numRecvs != numLocalSources )
-        throw std::logic_error("incorrect number of recv indices");
+        LogicError("incorrect number of recv indices");
 #endif
     std::vector<int> recvInds( numRecvs );
     mpi::AllToAll
@@ -1394,7 +1391,7 @@ BuildMap
             std::ostringstream msg;
             msg << "Local index was out of bounds: " << iLocal 
                 << " is not in [0," << numLocalSources << ")" << std::endl;
-            throw std::logic_error( msg.str().c_str() );
+            LogicError( msg.str() );
         }
 #endif
         const int iMapped = recvInds[s];
@@ -1404,7 +1401,7 @@ BuildMap
             std::ostringstream msg;
             msg << "mapped index, " << iMapped << ", was not in [0,"
                 << graph.NumSources() << ")";
-            throw std::logic_error( msg.str().c_str() );
+            LogicError( msg.str() );
         }
 #endif
         map.SetLocal( iLocal, iMapped );

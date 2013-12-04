@@ -41,7 +41,7 @@ inline void LocalLowerForwardSolve
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("LocalLowerForwardSolve");
+    CallStackEntry cse("LocalLowerForwardSolve");
 #endif
     const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
     const int numLocalNodes = info.localNodes.size();
@@ -73,9 +73,8 @@ inline void LocalLowerForwardSolve
             const int rightUpdateSize = rightWork.Height()-rightNodeSize;
 
             // Add the left child's update onto ours
-            Matrix<F> leftUpdate;
-            LockedView
-            ( leftUpdate, leftWork, leftNodeSize, 0, leftUpdateSize, width );
+            auto leftUpdate = 
+                LockedView( leftWork, leftNodeSize, 0, leftUpdateSize, width );
             for( int iChild=0; iChild<leftUpdateSize; ++iChild )
             {
                 const int iFront = node.leftRelInds[iChild]; 
@@ -85,10 +84,9 @@ inline void LocalLowerForwardSolve
             leftWork.Empty();
 
             // Add the right child's update onto ours
-            Matrix<F> rightUpdate;
-            LockedView
-            ( rightUpdate, 
-              rightWork, rightNodeSize, 0, rightUpdateSize, width );
+            auto rightUpdate =
+                LockedView
+                ( rightWork, rightNodeSize, 0, rightUpdateSize, width );
             for( int iChild=0; iChild<rightUpdateSize; ++iChild )
             {
                 const int iFront = node.rightRelInds[iChild];
@@ -117,7 +115,7 @@ inline void LocalLowerForwardSolve
   const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("LocalLowerForwardSolve");
+    CallStackEntry cse("LocalLowerForwardSolve");
 #endif
     const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
     const int numLocalNodes = info.localNodes.size();
@@ -149,9 +147,8 @@ inline void LocalLowerForwardSolve
             const int rightUpdateSize = rightWork.Height()-rightNodeSize;
 
             // Add the left child's update onto ours
-            Matrix<F> leftUpdate;
-            LockedView
-            ( leftUpdate, leftWork, leftNodeSize, 0, leftUpdateSize, width );
+            auto leftUpdate =
+                LockedView( leftWork, leftNodeSize, 0, leftUpdateSize, width );
             for( int iChild=0; iChild<leftUpdateSize; ++iChild )
             {
                 const int iFront = node.leftRelInds[iChild]; 
@@ -161,10 +158,9 @@ inline void LocalLowerForwardSolve
             leftWork.Empty();
 
             // Add the right child's update onto ours
-            Matrix<F> rightUpdate;
-            LockedView
-            ( rightUpdate, 
-              rightWork, rightNodeSize, 0, rightUpdateSize, width );
+            auto rightUpdate =
+                LockedView
+                ( rightWork, rightNodeSize, 0, rightUpdateSize, width );
             for( int iChild=0; iChild<rightUpdateSize; ++iChild )
             {
                 const int iFront = node.rightRelInds[iChild];
@@ -192,7 +188,7 @@ inline void LocalLowerBackwardSolve
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("LocalLowerBackwardSolve");
+    CallStackEntry cse("LocalLowerBackwardSolve");
 #endif
     const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
     const int numLocalNodes = info.localNodes.size();
@@ -216,14 +212,14 @@ inline void LocalLowerBackwardSolve
         {
             std::ostringstream msg;
             msg << "Parent index was negative: " << parent;
-            throw std::logic_error( msg.str().c_str() );
+            LogicError( msg.str() );
         }
         if( parent >= numLocalNodes )  
         {
             std::ostringstream msg;
             msg << "Parent index was too large: " << parent << " >= "
                 << numLocalNodes;
-            throw std::logic_error( msg.str().c_str() );
+            LogicError( msg.str() );
         }
 #endif
         Matrix<F>& parentWork = L.localFronts[parent].work;
@@ -269,7 +265,7 @@ inline void LocalLowerBackwardSolve
   const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("LocalLowerBackwardSolve");
+    CallStackEntry cse("LocalLowerBackwardSolve");
 #endif
     const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
     const int numLocalNodes = info.localNodes.size();
@@ -293,14 +289,14 @@ inline void LocalLowerBackwardSolve
         {
             std::ostringstream msg;
             msg << "Parent index was negative: " << parent;
-            throw std::logic_error( msg.str().c_str() );
+            LogicError( msg.str() );
         }
         if( parent >= numLocalNodes )  
         {
             std::ostringstream msg;
             msg << "Parent index was too large: " << parent << " >= "
                 << numLocalNodes;
-            throw std::logic_error( msg.str().c_str() );
+            LogicError( msg.str() );
         }
 #endif
         Matrix<F>& parentWork = L.localFronts[parent].work;

@@ -40,7 +40,7 @@ inline void LowerMultiply
   DistNodalMultiVec<T>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("LowerMultiply");
+    CallStackEntry cse("LowerMultiply");
 #endif
     if( orientation == NORMAL )
     {

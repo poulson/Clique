@@ -45,7 +45,7 @@ inline void LowerSolve
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("LowerSolve");
+    CallStackEntry cse("LowerSolve");
 #endif
     if( orientation == NORMAL )
     {
@@ -65,7 +65,7 @@ inline void LowerSolve
   const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("LowerSolve");
+    CallStackEntry cse("LowerSolve");
 #endif
     if( orientation == NORMAL )
     {

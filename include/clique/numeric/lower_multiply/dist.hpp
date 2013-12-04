@@ -34,12 +34,12 @@ inline void DistLowerMultiplyNormal
   const DistSymmFrontTree<T>& L, DistNodalMultiVec<T>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistLowerMultiplyNormal");
+    CallStackEntry cse("DistLowerMultiplyNormal");
 #endif
     const int numDistNodes = info.distNodes.size();
     const int width = X.Width();
     if( L.frontType != SYMM_1D && L.frontType != LDL_1D )
-        throw std::logic_error("This multiply mode is not yet implemented");
+        LogicError("This multiply mode is not yet implemented");
 
     // Copy the information from the local portion into the distributed leaf
     const SymmFront<T>& localRootFront = L.localFronts.back();
@@ -168,12 +168,12 @@ inline void DistLowerMultiplyTranspose
   DistNodalMultiVec<T>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistLowerMultiplyTranspose");
+    CallStackEntry cse("DistLowerMultiplyTranspose");
 #endif
     const int numDistNodes = info.distNodes.size();
     const int width = X.Width();
     if( L.frontType != SYMM_1D && L.frontType != LDL_1D )
-        throw std::logic_error("This multiply mode is not yet implemented");
+        LogicError("This multiply mode is not yet implemented");
 
     // Directly operate on the root separator's portion of the right-hand sides
     const DistSymmNodeInfo& rootNode = info.distNodes.back();

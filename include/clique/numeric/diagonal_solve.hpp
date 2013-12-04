@@ -50,7 +50,7 @@ inline void LocalDiagonalSolve
   DistNodalMultiVec<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("LocalDiagonalSolve");
+    CallStackEntry cse("LocalDiagonalSolve");
 #endif
     const int numLocalNodes = info.localNodes.size();
     for( int s=0; s<numLocalNodes; ++s )
@@ -64,7 +64,7 @@ inline void LocalDiagonalSolve
   DistNodalMatrix<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("LocalDiagonalSolve");
+    CallStackEntry cse("LocalDiagonalSolve");
 #endif
     const int numLocalNodes = info.localNodes.size();
     for( int s=0; s<numLocalNodes; ++s )
@@ -78,7 +78,7 @@ void DistDiagonalSolve
   DistNodalMultiVec<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistDiagonalSolve");
+    CallStackEntry cse("DistDiagonalSolve");
 #endif
     const int numDistNodes = info.distNodes.size();
     for( int s=1; s<numDistNodes; ++s )
@@ -95,7 +95,7 @@ void DistDiagonalSolve
   DistNodalMatrix<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("DistDiagonalSolve");
+    CallStackEntry cse("DistDiagonalSolve");
 #endif
     const int numDistNodes = info.distNodes.size();
     for( int s=1; s<numDistNodes; ++s )
@@ -112,7 +112,7 @@ inline void DiagonalSolve
   DistNodalMultiVec<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("DiagonalSolve");
+    CallStackEntry cse("DiagonalSolve");
 #endif
     LocalDiagonalSolve( info, L, X );
     DistDiagonalSolve( info, L, X );
@@ -124,7 +124,7 @@ inline void DiagonalSolve
   DistNodalMatrix<F>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("DiagonalSolve");
+    CallStackEntry cse("DiagonalSolve");
 #endif
     LocalDiagonalSolve( info, L, X );
     DistDiagonalSolve( info, L, X );

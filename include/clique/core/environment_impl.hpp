@@ -69,8 +69,8 @@ PrintInputReport()
 template<typename T>
 inline bool IsSorted( const std::vector<T>& x )
 {
-    const int vecLength = x.size();
-    for( int i=1; i<vecLength; ++i )
+    const Int vecLength = x.size();
+    for( Int i=1; i<vecLength; ++i )
     {
         if( x[i] < x[i-1] )
             return false;
@@ -82,8 +82,8 @@ inline bool IsSorted( const std::vector<T>& x )
 template<typename T>
 inline bool IsStrictlySorted( const std::vector<T>& x )
 {
-    const int vecLength = x.size();
-    for( int i=1; i<vecLength; ++i )
+    const Int vecLength = x.size();
+    for( Int i=1; i<vecLength; ++i )
     {
         if( x[i] <= x[i-1] )
             return false;
@@ -92,37 +92,53 @@ inline bool IsStrictlySorted( const std::vector<T>& x )
 }
 
 inline void Union
-( std::vector<int>& both, 
-  const std::vector<int>& first, const std::vector<int>& second )
+( std::vector<Int>& both, 
+  const std::vector<Int>& first, const std::vector<Int>& second )
 {
     both.resize( first.size()+second.size() );
-    std::vector<int>::iterator it = std::set_union
+    std::vector<Int>::iterator it = std::set_union
       ( first.begin(), first.end(), second.begin(), second.end(), 
         both.begin() );
-    both.resize( int(it-both.begin()) );
+    both.resize( Int(it-both.begin()) );
+}
+
+inline std::vector<Int>
+Union( const std::vector<Int>& first, const std::vector<Int>& second )
+{ 
+    std::vector<Int> both;
+    Union( both, first, second );
+    return both;
 }
 
 inline void RelativeIndices
-( std::vector<int>& relInds, 
-  const std::vector<int>& sub, const std::vector<int>& full )
+( std::vector<Int>& relInds, 
+  const std::vector<Int>& sub, const std::vector<Int>& full )
 {
-    const int numSub = sub.size();
+    const Int numSub = sub.size();
     relInds.resize( numSub );
-    std::vector<int>::const_iterator it = full.begin();
-    for( int i=0; i<numSub; ++i )
+    std::vector<Int>::const_iterator it = full.begin();
+    for( Int i=0; i<numSub; ++i )
     {
-        const int index = sub[i];
+        const Int index = sub[i];
         it = std::lower_bound( it, full.end(), index );
 #ifndef RELEASE
         if( it == full.end() )
-            throw std::logic_error("Index was not found");
+            LogicError("Index was not found");
 #endif
-        relInds[i] = int(it-full.begin());
+        relInds[i] = Int(it-full.begin());
     }
 }
 
-inline int
-RowToProcess( int i, int blocksize, int commSize )
+inline std::vector<Int> RelativeIndices
+( const std::vector<Int>& sub, const std::vector<Int>& full )
+{
+    std::vector<Int> relInds;
+    RelativeIndices( relInds, sub, full );
+    return relInds;
+}
+
+inline Int
+RowToProcess( Int i, Int blocksize, Int commSize )
 {
     if( blocksize > 0 )
         return std::min( i/blocksize, commSize-1 );
@@ -130,18 +146,18 @@ RowToProcess( int i, int blocksize, int commSize )
         return commSize-1;
 }
 
-inline int
+inline Int
 Find
-( const std::vector<int>& sortedInds, int index, std::string msg )
+( const std::vector<Int>& sortedInds, Int index, std::string msg )
 {
 #ifndef RELEASE
-    CallStackEntry entry("Find");
+    CallStackEntry cse("Find");
 #endif
-    std::vector<int>::const_iterator vecIt;
+    std::vector<Int>::const_iterator vecIt;
     vecIt = std::lower_bound( sortedInds.begin(), sortedInds.end(), index );
 #ifndef RELEASE
     if( vecIt == sortedInds.end() )
-        throw std::logic_error( msg.c_str() );
+        LogicError( msg );
 #endif
     return vecIt - sortedInds.begin();
 }
@@ -164,7 +180,7 @@ VerifySendsAndRecvs
             msg << "Expected recv count of " << recvCounts[proc]
                 << " but recv'd " << actualRecvCounts[proc]
                 << " from process " << proc << "\n";
-            throw std::logic_error( msg.str().c_str() );
+            LogicError( msg.str() );
         }
     }
 }
@@ -197,8 +213,7 @@ SparseAllToAll
         int displ = recvDispls[proc];
         if( count != 0 )
             mpi::IRecv
-            ( &recvBuffer[displ], count, proc, 0, comm,
-              requests[rCount++] );
+            ( &recvBuffer[displ], count, proc, comm, requests[rCount++] );
     }
 #ifdef BARRIER_IN_ALLTOALLV
     // This should help ensure that recvs are posted before the sends
@@ -210,8 +225,7 @@ SparseAllToAll
         int displ = sendDispls[proc];
         if( count != 0 )
             mpi::ISend
-            ( &sendBuffer[displ], count, proc, 0, comm,
-              requests[rCount++] );
+            ( &sendBuffer[displ], count, proc, comm, requests[rCount++] );
     }
     mpi::WaitAll( numSends+numRecvs, &requests[0], &statuses[0] );
 #else

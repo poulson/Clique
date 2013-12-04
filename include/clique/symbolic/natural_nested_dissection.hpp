@@ -70,7 +70,7 @@ NaturalNestedDissectionRecursion
         int cutoff=128 )
 {
 #ifndef RELEASE
-    CallStackEntry entry("NaturalNestedDissectionRecursion");
+    CallStackEntry cse("NaturalNestedDissectionRecursion");
 #endif
     if( graph.NumSources() <= cutoff )
     {
@@ -204,7 +204,7 @@ NaturalNestedDissectionRecursion
         int cutoff=128 )
 {
 #ifndef RELEASE
-    CallStackEntry entry("NaturalNestedDissectionRecursion");
+    CallStackEntry cse("NaturalNestedDissectionRecursion");
 #endif
     const int distDepth = sepTree.distSeps.size();
     mpi::Comm comm = graph.Comm();
@@ -460,7 +460,7 @@ NaturalNestedDissection
         bool storeFactRecvInds )
 {
 #ifndef RELEASE
-    CallStackEntry entry("NaturalNestedDissection");
+    CallStackEntry cse("NaturalNestedDissection");
 #endif
     // NOTE: There is a potential memory leak here if these data structures 
     //       are reused. Their destructors should call a member function which
@@ -511,12 +511,11 @@ NaturalBisect
         std::vector<int>& perm )
 {
 #ifndef RELEASE
-    CallStackEntry entry("NaturalBisect");
+    CallStackEntry cse("NaturalBisect");
 #endif
     const int numSources = graph.NumSources();
     if( numSources == 0 )
-        throw std::logic_error
-        ("There is no reason to bisect an empty sequential graph");
+        LogicError("There is no reason to bisect an empty sequential graph");
 
     int leftChildSize, rightChildSize, sepSize;
     perm.resize( numSources );
@@ -644,7 +643,7 @@ NaturalBisect
         bool& onLeft )
 {
 #ifndef RELEASE
-    CallStackEntry entry("NaturalBisect");
+    CallStackEntry cse("NaturalBisect");
 #endif
     const int numSources = graph.NumSources();
     const int firstLocalSource = graph.FirstLocalSource();
@@ -652,7 +651,7 @@ NaturalBisect
     mpi::Comm comm = graph.Comm();
     const int commSize = mpi::CommSize( comm );
     if( commSize == 1 )
-        throw std::logic_error
+        LogicError
         ("This routine assumes at least two processes are used, "
          "otherwise one child will be lost");
 

@@ -34,19 +34,19 @@ inline
 Graph::Graph( const Graph& graph )
 {
 #ifndef RELEASE
-    CallStackEntry entry("Graph::Graph");
+    CallStackEntry cse("Graph::Graph");
 #endif
     if( &graph != this )
         *this = graph;
     else
-        throw std::logic_error("Tried to construct a graph with itself");
+        LogicError("Tried to construct a graph with itself");
 }
     
 inline
 Graph::Graph( const DistGraph& graph )
 {
 #ifndef RELEASE
-    CallStackEntry entry("Graph::Graph");
+    CallStackEntry cse("Graph::Graph");
 #endif
     *this = graph;
 }
@@ -67,7 +67,7 @@ inline int
 Graph::NumEdges() const
 {
 #ifndef RELEASE
-    CallStackEntry entry("Graph::NumEdges");
+    CallStackEntry cse("Graph::NumEdges");
     EnsureConsistentSizes();
 #endif
     return sources_.size();
@@ -77,7 +77,7 @@ inline int
 Graph::Capacity() const
 {
 #ifndef RELEASE
-    CallStackEntry entry("Graph::Capacity");
+    CallStackEntry cse("Graph::Capacity");
     EnsureConsistentSizes();
     EnsureConsistentCapacities();
 #endif
@@ -88,9 +88,9 @@ inline int
 Graph::Source( int edge ) const
 {
 #ifndef RELEASE
-    CallStackEntry entry("Graph::Source");
+    CallStackEntry cse("Graph::Source");
     if( edge < 0 || edge >= (int)sources_.size() )
-        throw std::logic_error("Edge number out of bounds");
+        LogicError("Edge number out of bounds");
 #endif
     EnsureNotAssembling();
     return sources_[edge];
@@ -100,9 +100,9 @@ inline int
 Graph::Target( int edge ) const
 {
 #ifndef RELEASE
-    CallStackEntry entry("Graph::Target");
+    CallStackEntry cse("Graph::Target");
     if( edge < 0 || edge >= (int)targets_.size() )
-        throw std::logic_error("Edge number out of bounds");
+        LogicError("Edge number out of bounds");
 #endif
     EnsureNotAssembling();
     return targets_[edge];
@@ -112,15 +112,15 @@ inline int
 Graph::EdgeOffset( int source ) const
 {
 #ifndef RELEASE
-    CallStackEntry entry("Graph::EdgeOffset");
+    CallStackEntry cse("Graph::EdgeOffset");
     if( source < 0 )
-        throw std::logic_error("Negative source index");
+        LogicError("Negative source index");
     if( source > numSources_ )
     {
         std::ostringstream msg;
         msg << "Source index was too large: " << source << " is not in "
             << "[0," << numSources_ << "]";
-        throw std::logic_error( msg.str().c_str() );
+        LogicError( msg.str() );
     }
 #endif
     EnsureNotAssembling();
@@ -131,7 +131,7 @@ inline int
 Graph::NumConnections( int source ) const
 {
 #ifndef RELEASE
-    CallStackEntry entry("Graph::NumConnections");
+    CallStackEntry cse("Graph::NumConnections");
 #endif
     return EdgeOffset(source+1) - EdgeOffset(source);
 }
@@ -156,7 +156,7 @@ inline const Graph&
 Graph::operator=( const Graph& graph )
 {
 #ifndef RELEASE
-    CallStackEntry entry("Graph::operator=");
+    CallStackEntry cse("Graph::operator=");
 #endif
     numSources_ = graph.numSources_;
     numTargets_ = graph.numTargets_;
@@ -173,12 +173,12 @@ inline const Graph&
 Graph::operator=( const DistGraph& graph )
 {
 #ifndef RELEASE
-    CallStackEntry entry("Graph::operator=");
+    CallStackEntry cse("Graph::operator=");
 #endif
     mpi::Comm comm = graph.Comm();
     const int commSize = mpi::CommSize( comm );
     if( commSize != 1 )
-        throw std::logic_error
+        LogicError
         ("Cannot yet construct sequential graph from distributed graph");
 
     numSources_ = graph.numSources_;
@@ -201,7 +201,7 @@ inline void
 Graph::StartAssembly()
 {
 #ifndef RELEASE
-    CallStackEntry entry("Graph::StartAssembly");
+    CallStackEntry cse("Graph::StartAssembly");
 #endif
     EnsureNotAssembling();
     assembling_ = true;
@@ -211,10 +211,10 @@ inline void
 Graph::StopAssembly()
 {
 #ifndef RELEASE
-    CallStackEntry entry("Graph::StopAssembly");
+    CallStackEntry cse("Graph::StopAssembly");
 #endif
     if( !assembling_ )
-        throw std::logic_error("Cannot stop assembly without starting");
+        LogicError("Cannot stop assembly without starting");
     assembling_ = false;
 
     // Ensure that the connection pairs are sorted
@@ -252,7 +252,7 @@ inline void
 Graph::ComputeEdgeOffsets()
 {
 #ifndef RELEASE
-    CallStackEntry entry("Graph::ComputeEdgeOffsets");
+    CallStackEntry cse("Graph::ComputeEdgeOffsets");
 #endif
     // Compute the edge offsets
     int sourceOffset = 0;
@@ -264,7 +264,7 @@ Graph::ComputeEdgeOffsets()
         const int source = Source( edge );
 #ifndef RELEASE
         if( source < prevSource )
-            throw std::runtime_error("sources were not properly sorted");
+            RuntimeError("sources were not properly sorted");
 #endif
         while( source != prevSource )
         {
@@ -286,7 +286,7 @@ inline void
 Graph::Insert( int source, int target )
 {
 #ifndef RELEASE
-    CallStackEntry entry("Graph::Insert");
+    CallStackEntry cse("Graph::Insert");
     EnsureConsistentSizes();
     const int capacity = Capacity();
     const int numEdges = NumEdges();
@@ -295,14 +295,14 @@ Graph::Insert( int source, int target )
         std::ostringstream msg;
         msg << "Source was out of bounds: " << source << " is not in [0,"
             << numSources_ << ")";
-        throw std::logic_error( msg.str().c_str() );
+        LogicError( msg.str() );
     }
     if( numEdges == capacity )
         std::cerr << "WARNING: Pushing back without first reserving space" 
                   << std::endl;
 #endif
     if( !assembling_ )
-        throw std::logic_error("Must start assembly before pushing back");
+        LogicError("Must start assembly before pushing back");
     if( sorted_ && sources_.size() != 0 )
     {
         if( source < sources_.back() )
@@ -346,21 +346,21 @@ inline void
 Graph::EnsureNotAssembling() const
 {
     if( assembling_ )
-        throw std::logic_error("Should have finished assembling first");
+        LogicError("Should have finished assembling first");
 }
 
 inline void
 Graph::EnsureConsistentSizes() const
 { 
     if( sources_.size() != targets_.size() )
-        throw std::logic_error("Inconsistent graph sizes");
+        LogicError("Inconsistent graph sizes");
 }
 
 inline void
 Graph::EnsureConsistentCapacities() const
 { 
     if( sources_.capacity() != targets_.capacity() )
-        throw std::logic_error("Inconsistent graph capacities");
+        LogicError("Inconsistent graph capacities");
 }
 
 } // namespace cliq

@@ -14,14 +14,14 @@ namespace cliq {
 void LocalSymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info )
 {
 #ifndef RELEASE
-    CallStackEntry entry("LocalSymmetricAnalysis");
+    CallStackEntry cse("LocalSymmetricAnalysis");
 #endif
-    const int numNodes = eTree.localNodes.size();
+    const Int numNodes = eTree.localNodes.size();
     info.localNodes.resize( numNodes );
 
     // Perform the symbolic factorization
-    int myOff= 0;
-    for( int s=0; s<numNodes; ++s )
+    Int myOff= 0;
+    for( Int s=0; s<numNodes; ++s )
     {
         const SymmNode& node = *eTree.localNodes[s];
         SymmNodeInfo& nodeInfo = info.localNodes[s];
@@ -32,15 +32,15 @@ void LocalSymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info )
         nodeInfo.children = node.children;
         nodeInfo.origLowerStruct = node.lowerStruct;
 
-        const int numChildren = node.children.size();
+        const Int numChildren = node.children.size();
 #ifndef RELEASE
         if( numChildren != 0 && numChildren != 2 )
-            throw std::logic_error("Tree must be built from bisections");
+            LogicError("Tree must be built from bisections");
 #endif
         if( numChildren == 2 )
         {
-            const int left = node.children[0];
-            const int right = node.children[1];
+            const Int left = node.children[0];
+            const Int right = node.children[1];
             SymmNodeInfo& leftChild = info.localNodes[left];
             SymmNodeInfo& rightChild = info.localNodes[right];
             leftChild.onLeft = true;
@@ -49,57 +49,54 @@ void LocalSymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info )
             if( !IsStrictlySorted(leftChild.lowerStruct) )
             {
                 if( IsSorted(leftChild.lowerStruct) )
-                    throw std::logic_error("Repeat in left lower struct");
+                    LogicError("Repeat in left lower struct");
                 else
-                    throw std::logic_error("Left lower struct not sorted");
+                    LogicError("Left lower struct not sorted");
             }
             if( !IsStrictlySorted(rightChild.lowerStruct) )
             {
                 if( IsSorted(rightChild.lowerStruct) )
-                    throw std::logic_error("Repeat in right lower struct");
+                    LogicError("Repeat in right lower struct");
                 else
-                    throw std::logic_error("Right lower struct not sorted");
+                    LogicError("Right lower struct not sorted");
             }
             if( !IsStrictlySorted(node.lowerStruct) )
             {
                 if( IsSorted(node.lowerStruct) )
-                    throw std::logic_error("Repeat in original lower struct");
+                    LogicError("Repeat in original lower struct");
                 else
-                    throw std::logic_error("Original lower struct not sorted");
+                    LogicError("Original lower struct not sorted");
             }
 #endif
 
             // Combine the structures of the children
-            std::vector<int> childrenStruct;
-            Union
-            ( childrenStruct, leftChild.lowerStruct, rightChild.lowerStruct );
+            auto childrenStruct = 
+                Union( leftChild.lowerStruct, rightChild.lowerStruct );
 
             // Now add in the original lower structure
-            std::vector<int> partialStruct;
-            Union( partialStruct, node.lowerStruct, childrenStruct );
+            auto partialStruct = Union( node.lowerStruct, childrenStruct );
 
             // Now the node indices
-            std::vector<int> nodeInds( node.size );
-            for( int i=0; i<node.size; ++i )
+            std::vector<Int> nodeInds( node.size );
+            for( Int i=0; i<node.size; ++i )
                 nodeInds[i] = node.off+ i;
-            std::vector<int> fullStruct;
-            Union( fullStruct, partialStruct, nodeInds );
+            auto fullStruct = Union( partialStruct, nodeInds );
 
             // Construct the relative indices of the original lower structure
-            RelativeIndices
-            ( nodeInfo.origLowerRelInds, node.lowerStruct, fullStruct );
+            nodeInfo.origLowerRelInds = 
+                RelativeIndices( node.lowerStruct, fullStruct );
 
             // Construct the relative indices of the children
-            RelativeIndices
-            ( nodeInfo.leftRelInds, leftChild.lowerStruct, fullStruct );
-            RelativeIndices
-            ( nodeInfo.rightRelInds, rightChild.lowerStruct, fullStruct );
+            nodeInfo.leftRelInds = 
+                RelativeIndices( leftChild.lowerStruct, fullStruct );
+            nodeInfo.rightRelInds =
+                RelativeIndices( rightChild.lowerStruct, fullStruct );
 
             // Form lower struct of this node by removing node indices
             // (which take up the first node.size indices of fullStruct)
-            const int lowerStructSize = fullStruct.size()-node.size;
+            const Int lowerStructSize = fullStruct.size()-node.size;
             nodeInfo.lowerStruct.resize( lowerStructSize );
-            for( int i=0; i<lowerStructSize; ++i )
+            for( Int i=0; i<lowerStructSize; ++i )
                 nodeInfo.lowerStruct[i] = fullStruct[node.size+i];
         }
         else // numChildren == 0, so this is a leaf node 
@@ -107,9 +104,9 @@ void LocalSymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info )
             nodeInfo.lowerStruct = node.lowerStruct;
             
             // Construct the trivial relative indices of the original structure
-            const int numOrigLowerInds = node.lowerStruct.size();
+            const Int numOrigLowerInds = node.lowerStruct.size();
             nodeInfo.origLowerRelInds.resize( numOrigLowerInds );
-            for( int i=0; i<numOrigLowerInds; ++i )
+            for( Int i=0; i<numOrigLowerInds; ++i )
                 nodeInfo.origLowerRelInds[i] = i + nodeInfo.size;
         }
 

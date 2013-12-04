@@ -34,7 +34,7 @@ inline void LocalLowerMultiplyNormal
   const DistSymmFrontTree<T>& L, DistNodalMultiVec<T>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("LocalLowerMultiplyNormal");
+    CallStackEntry cse("LocalLowerMultiplyNormal");
 #endif
     const int numLocalNodes = info.localNodes.size();
     const int width = X.Width();
@@ -69,9 +69,8 @@ inline void LocalLowerMultiplyNormal
             const int rightUpdateSize = rightWork.Height()-rightNodeSize;
 
             // Add the left child's update onto ours
-            Matrix<T> leftUpdate;
-            LockedView
-            ( leftUpdate, leftWork, leftNodeSize, 0, leftUpdateSize, width );
+            auto leftUpdate =
+                LockedView( leftWork, leftNodeSize, 0, leftUpdateSize, width );
             for( int iChild=0; iChild<leftUpdateSize; ++iChild )
             {
                 const int iFront = node.leftRelInds[iChild];
@@ -81,10 +80,9 @@ inline void LocalLowerMultiplyNormal
             leftWork.Empty();
 
             // Add the right child's update onto ours
-            Matrix<T> rightUpdate;
-            LockedView
-            ( rightUpdate, 
-              rightWork, rightNodeSize, 0, rightUpdateSize, width );
+            auto rightUpdate =
+                LockedView
+                ( rightWork, rightNodeSize, 0, rightUpdateSize, width );
             for( int iChild=0; iChild<rightUpdateSize; ++iChild )
             {
                 const int iFront = node.rightRelInds[iChild];
@@ -107,7 +105,7 @@ inline void LocalLowerMultiplyTranspose
   DistNodalMultiVec<T>& X )
 {
 #ifndef RELEASE
-    CallStackEntry entry("LocalLowerMultiplyTranspose");
+    CallStackEntry cse("LocalLowerMultiplyTranspose");
 #endif
     const int numLocalNodes = info.localNodes.size();
     const int width = X.Width();

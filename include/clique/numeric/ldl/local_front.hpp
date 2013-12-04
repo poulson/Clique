@@ -14,23 +14,21 @@
 namespace cliq {
 
 template<typename F> 
-void FrontLDL( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR );
+void FrontLDL( Matrix<F>& AL, Matrix<F>& ABR, bool conjugate=false );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
 template<typename F> 
-inline void FrontLDL( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR )
+inline void FrontLDL( Matrix<F>& AL, Matrix<F>& ABR, bool conjugate=false )
 {
 #ifndef RELEASE
-    CallStackEntry entry("FrontLDL");
+    CallStackEntry cse("FrontLDL");
     if( ABR.Height() != ABR.Width() )
-        throw std::logic_error("ABR must be square");
+        LogicError("ABR must be square");
     if( AL.Height() != AL.Width() + ABR.Width() )
-        throw std::logic_error("AL and ABR don't have conformal dimensions");
-    if( orientation == NORMAL )
-        throw std::logic_error("FrontLDL must be (conjugate-)transposed.");
+        LogicError("AL and ABR don't have conformal dimensions");
 #endif
     Matrix<F>
         ALTL, ALTR,  AL00, AL01, AL02,
@@ -43,6 +41,8 @@ inline void FrontLDL( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR )
               S21B;
     Matrix<F> AL21T,
               AL21B;
+
+    const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
 
     // Start the algorithm
     PartitionDownDiagonal
@@ -59,7 +59,8 @@ inline void FrontLDL( Orientation orientation, Matrix<F>& AL, Matrix<F>& ABR )
         //--------------------------------------------------------------------//
         // This routine is unblocked, hence the need for us to generalize to 
         // an (ideally) faster blocked algorithm.
-        elem::ldl::Var3( orientation, AL11, d1 );
+        elem::ldl::Var3( AL11, conjugate );
+        AL11.GetDiagonal( d1 );
 
         elem::Trsm( RIGHT, LOWER, orientation, UNIT, F(1), AL11, AL21 );
 
