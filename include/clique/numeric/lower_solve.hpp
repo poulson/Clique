@@ -54,8 +54,9 @@ inline void LowerSolve
     }
     else
     {
-        DistLowerBackwardSolve( orientation, info, L, X );
-        LocalLowerBackwardSolve( orientation, info, L, X );
+        const bool conjugate = ( orientation==ADJOINT );
+        DistLowerBackwardSolve( info, L, X, conjugate );
+        LocalLowerBackwardSolve( info, L, X, conjugate );
     }
 }
 
@@ -74,8 +75,9 @@ inline void LowerSolve
     }
     else
     {
-        DistLowerBackwardSolve( orientation, info, L, X );
-        LocalLowerBackwardSolve( orientation, info, L, X );
+        const bool conjugate = ( orientation==ADJOINT );
+        DistLowerBackwardSolve( info, L, X, conjugate );
+        LocalLowerBackwardSolve( info, L, X, conjugate );
     }
 }
 

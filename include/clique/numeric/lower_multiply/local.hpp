@@ -20,9 +20,9 @@ void LocalLowerMultiplyNormal
 
 template<typename T>
 void LocalLowerMultiplyTranspose
-( Orientation orientation, int diagOff,
-  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, 
-  DistNodalMultiVec<T>& X );
+( int diagOff, const DistSymmInfo& info, 
+  const DistSymmFrontTree<T>& L, DistNodalMultiVec<T>& X,
+  bool conjugate=false );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -100,15 +100,16 @@ inline void LocalLowerMultiplyNormal
 
 template<typename T> 
 inline void LocalLowerMultiplyTranspose
-( Orientation orientation, int diagOff,
-  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, 
-  DistNodalMultiVec<T>& X )
+( int diagOff, const DistSymmInfo& info, 
+  const DistSymmFrontTree<T>& L, DistNodalMultiVec<T>& X,
+  bool conjugate )
 {
 #ifndef RELEASE
     CallStackEntry cse("LocalLowerMultiplyTranspose");
 #endif
     const int numLocalNodes = info.localNodes.size();
     const int width = X.Width();
+    const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
 
     for( int s=numLocalNodes-2; s>=0; --s )
     {

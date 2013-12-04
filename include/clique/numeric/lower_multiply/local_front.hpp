@@ -22,7 +22,7 @@ void FrontLowerMultiplyNormal( int diagOff, const Matrix<T>& L, Matrix<T>& X );
 
 template<typename T>
 void FrontLowerMultiplyTranspose
-( Orientation orientation, int diagOff, const Matrix<T>& L, Matrix<T>& X );
+( int diagOff, const Matrix<T>& L, Matrix<T>& X, bool conjugate=false );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -83,7 +83,10 @@ inline void FrontLowerMultiply
     if( orientation == NORMAL )
         FrontLowerMultiplyNormal( diagOff, L, X );
     else
-        FrontLowerMultiplyTranspose( orientation, diagOff, L, X );
+    {
+        const bool conjugate = ( orientation==ADJOINT );
+        FrontLowerMultiplyTranspose( diagOff, L, X, conjugate );
+    }
 }
 
 template<typename T>
@@ -127,7 +130,7 @@ inline void FrontLowerMultiplyNormal
 
 template<typename T>
 inline void FrontLowerMultiplyTranspose
-( Orientation orientation, int diagOff, const Matrix<T>& L, Matrix<T>& X )
+( int diagOff, const Matrix<T>& L, Matrix<T>& X, bool conjugate )
 {
 #ifndef RELEASE
     CallStackEntry cse("FrontLowerMultiplyTranspose");
@@ -139,11 +142,10 @@ inline void FrontLowerMultiplyTranspose
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
         LogicError( msg.str() );
     }
-    if( orientation == NORMAL )
-        LogicError("Orientation must be (conjugate-)transposed");
     if( diagOff > 0 )
         LogicError("Diagonal offsets cannot be positive");
 #endif
+    const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
     // Danger, Will Robinson!
     Matrix<T>* LMod = const_cast<Matrix<T>*>(&L);
     Matrix<T> LT, LB;

@@ -24,12 +24,14 @@ void LocalLowerForwardSolve
 
 template<typename F> 
 void LocalLowerBackwardSolve
-( Orientation orientation, const DistSymmInfo& info, 
-  const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X );
+( const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X,
+  bool conjugate=false );
 template<typename F> 
 void LocalLowerBackwardSolve
-( Orientation orientation, const DistSymmInfo& info, 
-  const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X );
+( const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X,
+  bool conjugate=false );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -184,8 +186,9 @@ inline void LocalLowerForwardSolve
 
 template<typename F> 
 inline void LocalLowerBackwardSolve
-( Orientation orientation, const DistSymmInfo& info, 
-  const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
+( const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X,
+  bool conjugate )
 {
 #ifndef RELEASE
     CallStackEntry cse("LocalLowerBackwardSolve");
@@ -245,9 +248,9 @@ inline void LocalLowerBackwardSolve
 
         // Solve against this front
         if( !blockLDL )
-            FrontLowerBackwardSolve( orientation, frontL, W );
+            FrontLowerBackwardSolve( frontL, W, conjugate );
         else
-            FrontBlockLowerBackwardSolve( orientation, frontL, W );
+            FrontBlockLowerBackwardSolve( frontL, W, conjugate );
 
         // Store this node's portion of the result
         X.localNodes[s] = WT;
@@ -261,8 +264,9 @@ inline void LocalLowerBackwardSolve
 
 template<typename F> 
 inline void LocalLowerBackwardSolve
-( Orientation orientation, const DistSymmInfo& info, 
-  const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X )
+( const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X,
+  bool conjugate )
 {
 #ifndef RELEASE
     CallStackEntry cse("LocalLowerBackwardSolve");
@@ -322,9 +326,9 @@ inline void LocalLowerBackwardSolve
 
         // Solve against this front
         if( !blockLDL )
-            FrontLowerBackwardSolve( orientation, frontL, W );
+            FrontLowerBackwardSolve( frontL, W, conjugate );
         else
-            FrontBlockLowerBackwardSolve( orientation, frontL, W );
+            FrontBlockLowerBackwardSolve( frontL, W, conjugate );
 
         // Store this node's portion of the result
         X.localNodes[s] = WT;

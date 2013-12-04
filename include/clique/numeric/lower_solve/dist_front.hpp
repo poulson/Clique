@@ -22,12 +22,11 @@ void FrontLowerForwardSolve( const DistMatrix<F>& L, DistMatrix<F>& X );
 
 template<typename F>
 void FrontLowerBackwardSolve
-( Orientation orientation, 
-  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
-  bool singleL11AllGather=true );
+( const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
+  bool conjugate=false, bool singleL11AllGather=true );
 template<typename F>
 void FrontLowerBackwardSolve
-( Orientation orientation, const DistMatrix<F>& L, DistMatrix<F>& X );
+( const DistMatrix<F>& L, DistMatrix<F>& X, bool conjugate=false );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -280,17 +279,18 @@ void ForwardSingle( const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 
 template<typename F>
 void BackwardMany
-( Orientation orientation, 
-  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
+( const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
+  bool conjugate=false )
 {
     // TODO: Replace this with modified inline code?
+    const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
     elem::internal::TrsmLLTSmall( orientation, NON_UNIT, F(1), L, X, true );
 }
 
 template<typename F>
 void BackwardSingle
-( Orientation orientation,
-  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
+( const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
+  bool conjugate=false )
 {
     const Grid& g = L.Grid();
 
@@ -306,19 +306,18 @@ void BackwardSingle
 
     // Temporary distributions
     DistMatrix<F,STAR,STAR> L11_STAR_STAR(g);
-    DistMatrix<F,STAR,STAR> L11AdjOrTrans_STAR_STAR(g);
+    DistMatrix<F,STAR,STAR> L11Trans_STAR_STAR(g);
     DistMatrix<F,STAR,STAR> Z1_STAR_STAR(g);
 
     DistMatrix<F,STAR,STAR> D(g);
-    if( orientation == TRANSPOSE ) 
-        FormDiagonalBlocks( L, D, false );
-    else 
-        FormDiagonalBlocks( L, D, true );
+    FormDiagonalBlocks( L, D, conjugate );
     const Int blocksize = Blocksize();
     const Int firstBlocksize = 
         ( L.Height()%blocksize==0 ?
           blocksize :
           L.Height()%blocksize );
+
+    const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
 
     // Start the algorithm
     Int b = firstBlocksize;
@@ -342,7 +341,7 @@ void BackwardSingle
          /**/ /**/
           XB,  X2, b );
 
-        LockedView( L11AdjOrTrans_STAR_STAR, D, 0, L00.Height(), b, b );
+        LockedView( L11Trans_STAR_STAR, D, 0, L00.Height(), b, b );
 
         //--------------------------------------------------------------------//
         // X1 -= L21' X2
@@ -352,8 +351,7 @@ void BackwardSingle
 
         // X1 := L11^-1 X1
         elem::LocalTrsm
-        ( LEFT, UPPER, NORMAL, UNIT, 
-          F(1), L11AdjOrTrans_STAR_STAR, Z1_STAR_STAR );
+        ( LEFT, UPPER, NORMAL, UNIT, F(1), L11Trans_STAR_STAR, Z1_STAR_STAR );
         X1 = Z1_STAR_STAR;
         //--------------------------------------------------------------------//
 
@@ -447,9 +445,8 @@ inline void FrontLowerForwardSolve( const DistMatrix<F>& L, DistMatrix<F>& X )
 
 template<typename F>
 inline void FrontLowerBackwardSolve
-( Orientation orientation, 
-  const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
-  bool singleL11AllGather )
+( const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
+  bool conjugate, bool singleL11AllGather )
 {
 #ifndef RELEASE
     CallStackEntry cse("FrontLowerBackwardSolve");
@@ -465,13 +462,11 @@ inline void FrontLowerBackwardSolve
     }
     if( L.ColAlign() != X.ColAlign() )
         LogicError("L and X are assumed to be aligned");
-    if( orientation == NORMAL )
-        LogicError("This solve must be (conjugate-)transposed");
 #endif
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
     {
-        FrontLowerBackwardSolve( orientation, L.LockedMatrix(), X.Matrix() );
+        FrontLowerBackwardSolve( L.LockedMatrix(), X.Matrix(), conjugate );
         return;
     }
 
@@ -491,19 +486,20 @@ inline void FrontLowerBackwardSolve
     {
         // Subtract off the parent updates
         DistMatrix<F,STAR,STAR> Z(g);
+        const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
         elem::LocalGemm( orientation, NORMAL, F(-1), LB, XB, Z );
         XT.SumScatterUpdate( F(1), Z );
     }
 
     if( singleL11AllGather )
-        internal::BackwardSingle( orientation, LT, XT );
+        internal::BackwardSingle( LT, XT, conjugate );
     else
-        internal::BackwardMany( orientation, LT, XT );
+        internal::BackwardMany( LT, XT, conjugate );
 }
 
 template<typename F>
 inline void FrontLowerBackwardSolve
-( Orientation orientation, const DistMatrix<F>& L, DistMatrix<F>& X )
+( const DistMatrix<F>& L, DistMatrix<F>& X, bool conjugate )
 {
 #ifndef RELEASE
     CallStackEntry cse("FrontLowerBackwardSolve");
@@ -517,13 +513,11 @@ inline void FrontLowerBackwardSolve
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
         LogicError( msg.str() );
     }
-    if( orientation == NORMAL )
-        LogicError("This solve must be (conjugate-)transposed");
 #endif
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
     {
-        FrontLowerBackwardSolve( orientation, L.LockedMatrix(), X.Matrix() );
+        FrontLowerBackwardSolve( L.LockedMatrix(), X.Matrix(), conjugate );
         return;
     }
 
@@ -533,6 +527,7 @@ inline void FrontLowerBackwardSolve
     DistMatrix<F> XT(g), XB(g);
     PartitionDown( X, XT, XB, L.Width() );
 
+    const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
     elem::Gemm( orientation, NORMAL, F(-1), LB, XB, F(1), XT );
     elem::Trsm( LEFT, LOWER, orientation, NON_UNIT, F(1), LT, XT );
 }

@@ -15,8 +15,8 @@ namespace cliq {
 
 template<typename T>
 void FrontLowerMultiply
-( Orientation orientation, int diagOff,
-  const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X );
+( Orientation orientation, 
+  int diagOff, const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X );
 
 template<typename T>
 void FrontLowerMultiplyNormal
@@ -24,8 +24,8 @@ void FrontLowerMultiplyNormal
 
 template<typename T>
 void FrontLowerMultiplyTranspose
-( Orientation orientation, int diagOff,
-  const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X );
+( int diagOff, const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X,
+  bool conjugate=false );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -61,7 +61,10 @@ inline void FrontLowerMultiply
     if( orientation == NORMAL )
         FrontLowerMultiplyNormal( diagOff, L, X );
     else
-        FrontLowerMultiplyTranspose( orientation, diagOff, L, X );
+    {
+        const bool conjugate = ( orientation==ADJOINT );
+        FrontLowerMultiplyTranspose( diagOff, L, X, conjugate );
+    }
 }
 
 template<typename T>
@@ -160,8 +163,8 @@ inline void FrontLowerMultiplyNormal
 
 template<typename T>
 inline void FrontLowerMultiplyTranspose
-( Orientation orientation, int diagOff,
-  const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X )
+( int diagOff, const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X,
+  bool conjugate )
 {
 #ifndef RELEASE
     CallStackEntry cse("FrontLowerMultiplyTranspose");
@@ -177,8 +180,6 @@ inline void FrontLowerMultiplyTranspose
     }
     if( L.ColAlign() != X.ColAlign() )
         LogicError("L and X are assumed to be aligned");
-    if( orientation == NORMAL )
-        LogicError("Orientation must be (conjugate-)transposed");
     if( diagOff > 0 )
         LogicError("Diagonal offsets cannot be positive");
 #endif
@@ -198,6 +199,8 @@ inline void FrontLowerMultiplyTranspose
     DistMatrix<T,STAR,STAR> X1_STAR_STAR(g);
     DistMatrix<T,STAR,STAR> L11_STAR_STAR(g);
     DistMatrix<T,STAR,STAR> Z1_STAR_STAR(g);
+
+    const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
 
     LockedPartitionDownDiagonal
     ( L, LTL, LTR,

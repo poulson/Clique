@@ -20,9 +20,9 @@ void DistLowerMultiplyNormal
 
 template<typename T> 
 void DistLowerMultiplyTranspose
-( Orientation orientation, int diagOff,
-  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, 
-  DistNodalMultiVec<T>& X );
+( int diagOff, const DistSymmInfo& info, 
+  const DistSymmFrontTree<T>& L, DistNodalMultiVec<T>& X, 
+  bool conjugate=false );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -163,15 +163,16 @@ inline void DistLowerMultiplyNormal
 
 template<typename T> 
 inline void DistLowerMultiplyTranspose
-( Orientation orientation, int diagOff,
-  const DistSymmInfo& info, const DistSymmFrontTree<T>& L, 
-  DistNodalMultiVec<T>& X )
+( int diagOff, const DistSymmInfo& info, 
+  const DistSymmFrontTree<T>& L, DistNodalMultiVec<T>& X, 
+  bool conjugate )
 {
 #ifndef RELEASE
     CallStackEntry cse("DistLowerMultiplyTranspose");
 #endif
     const int numDistNodes = info.distNodes.size();
     const int width = X.Width();
+    const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
     if( L.frontType != SYMM_1D && L.frontType != LDL_1D )
         LogicError("This multiply mode is not yet implemented");
 

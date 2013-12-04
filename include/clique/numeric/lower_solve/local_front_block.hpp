@@ -18,7 +18,7 @@ void FrontBlockLowerForwardSolve( const Matrix<F>& L, Matrix<F>& X );
 
 template<typename F>
 void FrontBlockLowerBackwardSolve
-( Orientation orientation, const Matrix<F>& L, Matrix<F>& X );
+( const Matrix<F>& L, Matrix<F>& X, bool conjugate=false );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -60,7 +60,7 @@ inline void FrontBlockLowerForwardSolve( const Matrix<F>& L, Matrix<F>& X )
 
 template<typename F>
 inline void FrontBlockLowerBackwardSolve
-( Orientation orientation, const Matrix<F>& L, Matrix<F>& X )
+( const Matrix<F>& L, Matrix<F>& X, bool conjugate )
 {
 #ifndef RELEASE
     CallStackEntry cse("FrontBlockLowerBackwardSolve");
@@ -72,8 +72,6 @@ inline void FrontBlockLowerBackwardSolve
             << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
         LogicError( msg.str() );
     }
-    if( orientation == NORMAL )
-        LogicError("This solve must be (conjugate-)transposed");
 #endif
     Matrix<F> LT,
               LB;
@@ -89,6 +87,7 @@ inline void FrontBlockLowerBackwardSolve
 
     // YT := LB^[T/H] XB
     Matrix<F> YT;
+    const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
     elem::Gemm( orientation, NORMAL, F(1), LB, XB, YT );
 
     // XT := XT - inv(ATL) YT

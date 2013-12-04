@@ -49,8 +49,9 @@ inline void LowerMultiply
     }
     else
     {
-        DistLowerMultiplyTranspose( orientation, diagOffset, info, L, X );
-        LocalLowerMultiplyTranspose( orientation, diagOffset, info, L, X );
+        const bool conjugate = ( orientation==ADJOINT );
+        DistLowerMultiplyTranspose( diagOffset, info, L, X, conjugate );
+        LocalLowerMultiplyTranspose( diagOffset, info, L, X, conjugate );
     }
 }
 

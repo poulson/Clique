@@ -24,12 +24,14 @@ void DistLowerForwardSolve
 
 template<typename F>
 void DistLowerBackwardSolve
-( Orientation orientation, const DistSymmInfo& info, 
-  const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X );
+( const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X, 
+  bool conjugate=false );
 template<typename F>
 void DistLowerBackwardSolve
-( Orientation orientation, const DistSymmInfo& info, 
-  const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X );
+( const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X,
+  bool conjugate=false );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -339,8 +341,8 @@ inline void DistLowerForwardSolve
 
 template<typename F>
 inline void DistLowerBackwardSolve
-( Orientation orientation, const DistSymmInfo& info, 
-  const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
+( const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X, bool conjugate )
 {
 #ifndef RELEASE
     CallStackEntry cse("DistLowerBackwardSolve");
@@ -363,10 +365,10 @@ inline void DistLowerBackwardSolve
         View( localRootFront.work, X.localNodes.back() );
         if( !blockLDL )
             FrontLowerBackwardSolve
-            ( orientation, localRootFront.frontL, localRootFront.work );
+            ( localRootFront.frontL, localRootFront.work, conjugate );
         else
             FrontBlockLowerBackwardSolve
-            ( orientation, localRootFront.frontL, localRootFront.work );
+            ( localRootFront.frontL, localRootFront.work, conjugate );
     }
     else
     {
@@ -374,16 +376,16 @@ inline void DistLowerBackwardSolve
         View( rootFront.work1d, X.distNodes.back() );
         if( frontType == LDL_1D )
             FrontLowerBackwardSolve
-            ( orientation, rootFront.front1dL, rootFront.work1d );
+            ( rootFront.front1dL, rootFront.work1d, conjugate );
         else if( frontType == LDL_SELINV_1D )
             FrontFastLowerBackwardSolve
-            ( orientation, rootFront.front1dL, rootFront.work1d );
+            ( rootFront.front1dL, rootFront.work1d, conjugate );
         else if( frontType == LDL_SELINV_2D )
             FrontFastLowerBackwardSolve
-            ( orientation, rootFront.front2dL, rootFront.work1d );
+            ( rootFront.front2dL, rootFront.work1d, conjugate );
         else
             FrontBlockLowerBackwardSolve
-            ( orientation, rootFront.front2dL, rootFront.work1d );
+            ( rootFront.front2dL, rootFront.work1d, conjugate );
     }
 
     for( int s=numDistNodes-2; s>=0; --s )
@@ -493,27 +495,24 @@ inline void DistLowerBackwardSolve
         if( s > 0 )
         {
             if( frontType == LDL_1D )
-                FrontLowerBackwardSolve
-                ( orientation, front.front1dL, W );
+                FrontLowerBackwardSolve( front.front1dL, W, conjugate );
             else if( frontType == LDL_SELINV_1D )
-                FrontFastLowerBackwardSolve
-                ( orientation, front.front1dL, W );
+                FrontFastLowerBackwardSolve( front.front1dL, W, conjugate );
             else if( frontType == LDL_SELINV_2D )
-                FrontFastLowerBackwardSolve
-                ( orientation, front.front2dL, W );
+                FrontFastLowerBackwardSolve( front.front2dL, W, conjugate );
             else // frontType == BLOCK_LDL_2D
                 FrontBlockLowerBackwardSolve
-                ( orientation, front.front2dL, front.work1d );
+                ( front.front2dL, front.work1d, conjugate );
         }
         else
         {
             View( localRootFront.work, W.Matrix() );
             if( !blockLDL )
                 FrontLowerBackwardSolve
-                ( orientation, localRootFront.frontL, localRootFront.work );
+                ( localRootFront.frontL, localRootFront.work, conjugate );
             else
                 FrontBlockLowerBackwardSolve
-                ( orientation, localRootFront.frontL, localRootFront.work );
+                ( localRootFront.frontL, localRootFront.work, conjugate );
         }
 
         // Store this node's portion of the result
@@ -523,8 +522,8 @@ inline void DistLowerBackwardSolve
 
 template<typename F>
 inline void DistLowerBackwardSolve
-( Orientation orientation, const DistSymmInfo& info, 
-  const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X )
+( const DistSymmInfo& info, 
+  const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X, bool conjugate )
 {
 #ifndef RELEASE
     CallStackEntry cse("DistLowerBackwardSolve");
@@ -543,10 +542,10 @@ inline void DistLowerBackwardSolve
         View( localRootFront.work, X.localNodes.back() );
         if( !blockLDL )
             FrontLowerBackwardSolve
-            ( orientation, localRootFront.frontL, localRootFront.work );
+            ( localRootFront.frontL, localRootFront.work, conjugate );
         else
             FrontBlockLowerBackwardSolve
-            ( orientation, localRootFront.frontL, localRootFront.work );
+            ( localRootFront.frontL, localRootFront.work, conjugate );
     }
     else
     {
@@ -554,13 +553,13 @@ inline void DistLowerBackwardSolve
         View( rootFront.work2d, X.distNodes.back() );
         if( frontType == LDL_SELINV_2D )
             FrontFastLowerBackwardSolve
-            ( orientation, rootFront.front2dL, rootFront.work2d );
+            ( rootFront.front2dL, rootFront.work2d, conjugate );
         else if( frontType == LDL_2D )
             FrontLowerBackwardSolve
-            ( orientation, rootFront.front2dL, rootFront.work2d );
+            ( rootFront.front2dL, rootFront.work2d, conjugate );
         else
             FrontBlockLowerBackwardSolve
-            ( orientation, rootFront.front2dL, rootFront.work2d );
+            ( rootFront.front2dL, rootFront.work2d, conjugate );
     }
 
     for( int s=numDistNodes-2; s>=0; --s )
@@ -673,26 +672,24 @@ inline void DistLowerBackwardSolve
         // Call the custom node backward solve
         if( s > 0 )
         {
-            // TODO: Handle non-inverted case
             if( frontType == LDL_SELINV_2D )
-                FrontFastLowerBackwardSolve
-                ( orientation, front.front2dL, W );
+                FrontFastLowerBackwardSolve( front.front2dL, W, conjugate );
             else if( frontType == LDL_2D )
                 FrontLowerBackwardSolve
-                ( orientation, front.front2dL, front.work2d );
+                ( front.front2dL, front.work2d, conjugate );
             else
                 FrontBlockLowerBackwardSolve
-                ( orientation, front.front2dL, front.work2d );
+                ( front.front2dL, front.work2d, conjugate );
         }
         else
         {
             View( localRootFront.work, W.Matrix() );
             if( !blockLDL )
                 FrontLowerBackwardSolve
-                ( orientation, localRootFront.frontL, localRootFront.work );
+                ( localRootFront.frontL, localRootFront.work, conjugate );
             else
                 FrontBlockLowerBackwardSolve
-                ( orientation, localRootFront.frontL, localRootFront.work );
+                ( localRootFront.frontL, localRootFront.work, conjugate );
         }
 
         // Store this node's portion of the result
