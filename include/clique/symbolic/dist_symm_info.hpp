@@ -42,11 +42,11 @@ struct FactorCommMeta
     mutable std::vector<std::vector<int> > childRecvInds;
 
     void EmptyChildRecvIndices() const
-    { std::vector<std::vector<int> >().swap(childRecvInds); }
+    { SwapClear(childRecvInds); }
 
     void Empty()
     {
-        std::vector<int>().swap(numChildSendInds);
+        SwapClear( numChildSendInds );
         EmptyChildRecvIndices();
     }
 };
@@ -59,8 +59,8 @@ struct MultiVecCommMeta
 
     void Empty()
     {
-        std::vector<int>().swap( numChildSendInds );
-        std::vector<std::vector<int> >().swap( childRecvInds );
+        SwapClear( numChildSendInds );
+        SwapClear( childRecvInds );
     }
 };
 
@@ -71,8 +71,8 @@ struct MatrixCommMeta
 
     void Empty()
     {
-        std::vector<int>().swap( numChildSendInds );
-        std::vector<std::vector<int> >().swap( childRecvInds );
+        SwapClear( numChildSendInds );
+        SwapClear( childRecvInds );
     }
 };
 

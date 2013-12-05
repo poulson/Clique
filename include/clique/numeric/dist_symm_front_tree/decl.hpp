@@ -21,7 +21,8 @@ enum SymmFrontType
   LDL_2D,
   LDL_SELINV_1D,
   LDL_SELINV_2D,
-  BLOCK_LDL_2D
+  BLOCK_LDL_2D,
+  BLOCK_LDL_INTRAPIV_2D
 };
 
 inline bool
@@ -66,24 +67,24 @@ struct DistSymmFrontTree
 {
     bool isHermitian;
     SymmFrontType frontType;
-    std::vector<SymmFront<F> > localFronts;
-    std::vector<DistSymmFront<F> > distFronts;
+    std::vector<SymmFront<F>> localFronts;
+    std::vector<DistSymmFront<F>> distFronts;
 
     DistSymmFrontTree();
 
     DistSymmFrontTree
-    ( Orientation orientation,
-      const DistSparseMatrix<F>& A, 
+    ( const DistSparseMatrix<F>& A, 
       const DistMap& reordering,
       const DistSeparatorTree& sepTree,
-      const DistSymmInfo& info );
+      const DistSymmInfo& info,
+      bool conjugate=false );
 
     void Initialize
-    ( Orientation orientation,
-      const DistSparseMatrix<F>& A,
+    ( const DistSparseMatrix<F>& A,
       const DistMap& reordering,
       const DistSeparatorTree& sepTree,
-      const DistSymmInfo& info );
+      const DistSymmInfo& info,
+      bool conjugate=false );
 
     void TopLeftMemoryInfo
     ( double& numLocalEntries, double& minLocalEntries, double& maxLocalEntries,

@@ -181,9 +181,9 @@ DistNodalMultiVec<F>::Pull
     mpi::AllToAll
     ( &sendVals[0], &sendSizes[0], &sendOffs[0],
       &recvVals[0], &recvSizes[0], &recvOffs[0], comm );
-    std::vector<F>().swap( sendVals );
-    std::vector<int>().swap( sendSizes );
-    std::vector<int>().swap( sendOffs );
+    SwapClear( sendVals );
+    SwapClear( sendSizes );
+    SwapClear( sendOffs );
 
     // Unpack the values
     off = 0;
@@ -346,9 +346,9 @@ DistNodalMultiVec<F>::Push
     mpi::AllToAll
     ( &sendVals[0], &sendSizes[0], &sendOffs[0],
       &recvVals[0], &recvSizes[0], &recvOffs[0], comm );
-    std::vector<F>().swap( sendVals );
-    std::vector<int>().swap( sendSizes );
-    std::vector<int>().swap( sendOffs );
+    SwapClear( sendVals );
+    SwapClear( sendSizes );
+    SwapClear( sendOffs );
 
     // Unpack the values
     for( int s=0; s<numRecvInds; ++s )

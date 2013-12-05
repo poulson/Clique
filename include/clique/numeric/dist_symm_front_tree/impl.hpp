@@ -21,21 +21,19 @@ DistSymmFrontTree<F>::DistSymmFrontTree()
 template<typename F>
 inline void
 DistSymmFrontTree<F>::Initialize
-( Orientation orientation,
-  const DistSparseMatrix<F>& A, 
+( const DistSparseMatrix<F>& A, 
   const DistMap& reordering,
   const DistSeparatorTree& sepTree, 
-  const DistSymmInfo& info )
+  const DistSymmInfo& info,
+  bool conjugate )
 {
 #ifndef RELEASE
     CallStackEntry cse("DistSymmFrontTree::Initialize");
-    if( orientation == NORMAL )
-        LogicError("Matrix must be symmetric or Hermitian");
     if( A.LocalHeight() != reordering.NumLocalSources() )
         LogicError("Local mapping was not the right size");
 #endif
-    isHermitian = ( orientation != TRANSPOSE );
     frontType = SYMM_2D;
+    isHermitian = conjugate;
     
     mpi::Comm comm = A.Comm();
     const DistGraph& graph = A.LockedDistGraph();
@@ -203,7 +201,7 @@ DistSymmFrontTree<F>::Initialize
                 if( index >= numSendEntries )
                     LogicError("send entry index got too big");
 #endif
-                sendEntries[index] = (isHermitian ? elem::Conj(value) : value);
+                sendEntries[index] = (conjugate ? elem::Conj(value) : value);
                 sendTargets[index] = mappedTarget;
                 ++index;
             }
@@ -392,16 +390,16 @@ DistSymmFrontTree<F>::Initialize
 template<typename F>
 inline
 DistSymmFrontTree<F>::DistSymmFrontTree
-( Orientation orientation,
-  const DistSparseMatrix<F>& A, 
+( const DistSparseMatrix<F>& A, 
   const DistMap& reordering,
   const DistSeparatorTree& sepTree, 
-  const DistSymmInfo& info )
+  const DistSymmInfo& info,
+  bool conjugate )
 {
 #ifndef RELEASE
     CallStackEntry cse("DistSymmFrontTree::DistSymmFrontTree");
 #endif
-    Initialize( orientation, A, reordering, sepTree, info );
+    Initialize( A, reordering, sepTree, info, conjugate );
 }
 
 template<typename F>

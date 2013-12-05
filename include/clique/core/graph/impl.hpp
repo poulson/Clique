@@ -319,11 +319,11 @@ Graph::Empty()
 {
     numSources_ = 0;
     numTargets_ = 0;
-    std::vector<int>().swap( sources_ );
-    std::vector<int>().swap( targets_ );
+    SwapClear( sources_ );
+    SwapClear( targets_ );
     sorted_ = true;
     assembling_ = false;
-    std::vector<int>().swap( edgeOffsets_ );
+    SwapClear( edgeOffsets_ );
 }
 
 inline void
@@ -335,11 +335,11 @@ Graph::ResizeTo( int numSources, int numTargets )
 {
     numSources_ = numSources;
     numTargets_ = numTargets;
-    std::vector<int>().swap( sources_ );
-    std::vector<int>().swap( targets_ );
+    SwapClear( sources_ );
+    SwapClear( targets_ );
     sorted_ = true;
     assembling_ = false;
-    std::vector<int>().swap( edgeOffsets_ );
+    SwapClear( edgeOffsets_ );
 }
 
 inline void

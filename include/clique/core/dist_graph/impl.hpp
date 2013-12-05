@@ -75,11 +75,11 @@ DistGraph::SetComm( mpi::Comm comm )
     if( comm_ != mpi::COMM_WORLD )
         mpi::CommFree( comm_ );
 
-    std::vector<int>().swap( sources_ );
-    std::vector<int>().swap( targets_ );
+    SwapClear( sources_ );
+    SwapClear( targets_ );
     sorted_ = true;
     assembling_ = false;
-    std::vector<int>().swap( localEdgeOffsets_ );
+    SwapClear( localEdgeOffsets_ );
 
     if( comm == mpi::COMM_WORLD )
         comm_ = comm;
@@ -368,14 +368,14 @@ DistGraph::Empty()
 {
     numSources_ = 0;
     numTargets_ = 0;
-    std::vector<int>().swap( sources_ );
-    std::vector<int>().swap( targets_ );
+    SwapClear( sources_ );
+    SwapClear( targets_ );
     blocksize_ = 0;
     firstLocalSource_ = 0;
     numLocalSources_ = 0;
     sorted_ = true;
     assembling_ = false;
-    std::vector<int>().swap( localEdgeOffsets_ );
+    SwapClear( localEdgeOffsets_ );
 }
 
 inline void
@@ -395,11 +395,11 @@ DistGraph::ResizeTo( int numSources, int numTargets )
         numLocalSources_ = blocksize_;
     else
         numLocalSources_ = numSources - (commSize-1)*blocksize_;
-    std::vector<int>().swap( sources_ );
-    std::vector<int>().swap( targets_ );
+    SwapClear( sources_ );
+    SwapClear( targets_ );
     sorted_ = true;
     assembling_ = false;
-    std::vector<int>().swap( localEdgeOffsets_ );
+    SwapClear( localEdgeOffsets_ );
 }
 
 inline void

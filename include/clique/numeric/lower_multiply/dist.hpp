@@ -106,7 +106,7 @@ inline void DistLowerMultiplyNormal
                 sendBuffer[packOffs[destRank]++] = 
                     childUpdate.GetLocal(iChildLoc,jChild);
         }
-        std::vector<int>().swap( packOffs );
+        SwapClear( packOffs );
         childW.Empty();
         if( s == 1 )
             L.localFronts.back().work.Empty();
@@ -130,9 +130,9 @@ inline void DistLowerMultiplyNormal
         SparseAllToAll
         ( sendBuffer, sendCounts, sendDispls,
           recvBuffer, recvCounts, recvDispls, comm );
-        std::vector<T>().swap( sendBuffer );
-        std::vector<int>().swap( sendCounts );
-        std::vector<int>().swap( sendDispls );
+        SwapClear( sendBuffer );
+        SwapClear( sendCounts );
+        SwapClear( sendDispls );
 
         // Unpack the child updates (with an Axpy)
         for( int proc=0; proc<commSize; ++proc )
@@ -150,9 +150,9 @@ inline void DistLowerMultiplyNormal
                     WRow[jFront*WLDim] += recvRow[jFront];
             }
         }
-        std::vector<T>().swap( recvBuffer );
-        std::vector<int>().swap( recvCounts );
-        std::vector<int>().swap( recvDispls );
+        SwapClear( recvBuffer );
+        SwapClear( recvCounts );
+        SwapClear( recvDispls );
 
         // Store this node's portion of the result
         X.distNodes[s-1] = WT;
@@ -272,9 +272,9 @@ inline void DistLowerMultiplyTranspose
         SparseAllToAll
         ( sendBuffer, sendCounts, sendDispls,
           recvBuffer, recvCounts, recvDispls, parentComm );
-        std::vector<T>().swap( sendBuffer );
-        std::vector<int>().swap( sendCounts );
-        std::vector<int>().swap( sendDispls );
+        SwapClear( sendBuffer );
+        SwapClear( sendCounts );
+        SwapClear( sendDispls );
 
         // Unpack the updates using the send approach from the forward solve
         const std::vector<int>& myRelInds = 
@@ -290,9 +290,9 @@ inline void DistLowerMultiplyTranspose
                 WB.SetLocal(iUpdateLoc,jUpdate,recvBuf[jUpdate]);
             recvDispls[startRank] += width;
         }
-        std::vector<T>().swap( recvBuffer );
-        std::vector<int>().swap( recvCounts );
-        std::vector<int>().swap( recvDispls );
+        SwapClear( recvBuffer );
+        SwapClear( recvCounts );
+        SwapClear( recvDispls );
 
         // Make a copy of the unmodified RHS
         DistMatrix<T,VC,STAR> XNode( W );

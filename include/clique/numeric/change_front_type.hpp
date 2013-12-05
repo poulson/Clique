@@ -59,9 +59,10 @@ inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
              (frontType == LDL_SELINV_2D && oldFrontType == LDL_SELINV_1D) ||
              (frontType == SYMM_2D       && oldFrontType == SYMM_1D)       || 
              // The following reset the fronts for manual modification
-             (frontType == SYMM_2D       && oldFrontType == LDL_1D)        || 
-             (frontType == SYMM_2D       && oldFrontType == LDL_SELINV_1D) ||
-             (frontType == SYMM_2D       && oldFrontType == BLOCK_LDL_2D) )
+             (frontType == SYMM_2D && oldFrontType == LDL_1D)        || 
+             (frontType == SYMM_2D && oldFrontType == LDL_SELINV_1D) ||
+             (frontType == SYMM_2D && (oldFrontType==BLOCK_LDL_2D||
+                                       oldFrontType==BLOCK_LDL_INTRAPIV_2D)) )
     {
         // 1d -> 2d
         leafFront.front2dL.LockedAttach

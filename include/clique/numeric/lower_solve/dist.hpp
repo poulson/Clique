@@ -52,7 +52,8 @@ inline void DistLowerForwardSolve
     if( frontType != LDL_1D && 
         frontType != LDL_SELINV_1D && 
         frontType != LDL_SELINV_2D && 
-        frontType != BLOCK_LDL_2D )
+        frontType != BLOCK_LDL_2D && 
+        frontType != BLOCK_LDL_INTRAPIV_2D )
         LogicError("This solve mode is not yet implemented");
 
     // Copy the information from the local portion into the distributed leaf
@@ -124,7 +125,7 @@ inline void DistLowerForwardSolve
                 sendBuffer[packOffs[destRank]++] = 
                     childUpdate.GetLocal(iChildLoc,jChild);
         }
-        std::vector<int>().swap( packOffs );
+        SwapClear( packOffs );
         childW.Empty();
         if( s == 1 )
             L.localFronts.back().work.Empty();
@@ -148,9 +149,9 @@ inline void DistLowerForwardSolve
         SparseAllToAll
         ( sendBuffer, sendCounts, sendDispls,
           recvBuffer, recvCounts, recvDispls, comm );
-        std::vector<F>().swap( sendBuffer );
-        std::vector<int>().swap( sendCounts );
-        std::vector<int>().swap( sendDispls );
+        SwapClear( sendBuffer );
+        SwapClear( sendCounts );
+        SwapClear( sendDispls );
 
         // Unpack the child updates (with an Axpy)
         for( int proc=0; proc<commSize; ++proc )
@@ -167,9 +168,9 @@ inline void DistLowerForwardSolve
                     WRow[j*WLDim] += recvRow[j];
             }
         }
-        std::vector<F>().swap( recvBuffer );
-        std::vector<int>().swap( recvCounts );
-        std::vector<int>().swap( recvDispls );
+        SwapClear( recvBuffer );
+        SwapClear( recvCounts );
+        SwapClear( recvDispls );
 
         // Now that the RHS is set up, perform this node's solve
         if( frontType == LDL_1D )
@@ -178,7 +179,7 @@ inline void DistLowerForwardSolve
             FrontFastLowerForwardSolve( front.front1dL, W );
         else if( frontType == LDL_SELINV_2D )
             FrontFastLowerForwardSolve( front.front2dL, W );
-        else // frontType == BLOCK_LDL_2D
+        else // frontType = BLOCK_LDL_2D or BLOCK_LDL_INTRAPIV_2D
             FrontBlockLowerForwardSolve( front.front2dL, W );
 
         // Store this node's portion of the result
@@ -280,7 +281,7 @@ inline void DistLowerForwardSolve
                     childUpdate.GetLocal(iChildLoc,jChildLoc);
             }
         }
-        std::vector<int>().swap( packOffs );
+        SwapClear( packOffs );
         childW.Empty();
         if( s == 1 )
             L.localFronts.back().work.Empty();
@@ -304,9 +305,9 @@ inline void DistLowerForwardSolve
         SparseAllToAll
         ( sendBuffer, sendCounts, sendDispls,
           recvBuffer, recvCounts, recvDispls, comm );
-        std::vector<F>().swap( sendBuffer );
-        std::vector<int>().swap( sendCounts );
-        std::vector<int>().swap( sendDispls );
+        SwapClear( sendBuffer );
+        SwapClear( sendCounts );
+        SwapClear( sendDispls );
 
         // Unpack the child updates (with an Axpy)
         for( int proc=0; proc<commSize; ++proc )
@@ -320,16 +321,16 @@ inline void DistLowerForwardSolve
                 W.UpdateLocal( iFrontLoc, jLoc, recvVals[k] );
             }
         }
-        std::vector<F>().swap( recvBuffer );
-        std::vector<int>().swap( recvCounts );
-        std::vector<int>().swap( recvDispls );
+        SwapClear( recvBuffer );
+        SwapClear( recvCounts );
+        SwapClear( recvDispls );
 
         // Now that the RHS is set up, perform this node's solve
         if( frontType == LDL_SELINV_2D )
             FrontFastLowerForwardSolve( front.front2dL, W );
         else if( frontType == LDL_2D )
             FrontLowerForwardSolve( front.front2dL, W );
-        else // BLOCK_LDL_2D
+        else // frontType = BLOCK_LDL_2D or BLOCK_LDL_INTRAPIV_2D
             FrontBlockLowerForwardSolve( front.front2dL, W );
 
         // Store this node's portion of the result
@@ -351,11 +352,12 @@ inline void DistLowerBackwardSolve
     const int width = X.Width();
     const SymmFrontType frontType = L.frontType;
     const bool frontsAre1d = FrontsAre1d( frontType );
-    const bool blockLDL = ( frontType == BLOCK_LDL_2D );
+    const bool blockLDL = ( frontType == BLOCK_LDL_2D || 
+                            frontType == BLOCK_LDL_INTRAPIV_2D );
     if( frontType != LDL_1D && 
         frontType != LDL_SELINV_1D && 
         frontType != LDL_SELINV_2D && 
-        frontType != BLOCK_LDL_2D )
+        !blockLDL )
         LogicError("This solve mode is not yet implemented");
 
     // Directly operate on the root separator's portion of the right-hand sides
@@ -363,11 +365,11 @@ inline void DistLowerBackwardSolve
     if( numDistNodes == 1 )
     {
         View( localRootFront.work, X.localNodes.back() );
-        if( !blockLDL )
-            FrontLowerBackwardSolve
+        if( blockLDL )
+            FrontBlockLowerBackwardSolve
             ( localRootFront.frontL, localRootFront.work, conjugate );
         else
-            FrontBlockLowerBackwardSolve
+            FrontLowerBackwardSolve
             ( localRootFront.frontL, localRootFront.work, conjugate );
     }
     else
@@ -468,9 +470,9 @@ inline void DistLowerBackwardSolve
         SparseAllToAll
         ( sendBuffer, sendCounts, sendDispls,
           recvBuffer, recvCounts, recvDispls, parentComm );
-        std::vector<F>().swap( sendBuffer );
-        std::vector<int>().swap( sendCounts );
-        std::vector<int>().swap( sendDispls );
+        SwapClear( sendBuffer );
+        SwapClear( sendCounts );
+        SwapClear( sendDispls );
 
         // Unpack the updates using the send approach from the forward solve
         const bool onLeft = node.onLeft;
@@ -487,9 +489,9 @@ inline void DistLowerBackwardSolve
                 WB.SetLocal(iUpdateLoc,j,recvBuf[j]);
             recvDispls[startRank] += width;
         }
-        std::vector<F>().swap( recvBuffer );
-        std::vector<int>().swap( recvCounts );
-        std::vector<int>().swap( recvDispls );
+        SwapClear( recvBuffer );
+        SwapClear( recvCounts );
+        SwapClear( recvDispls );
 
         // Call the custom node backward solve
         if( s > 0 )
@@ -500,18 +502,18 @@ inline void DistLowerBackwardSolve
                 FrontFastLowerBackwardSolve( front.front1dL, W, conjugate );
             else if( frontType == LDL_SELINV_2D )
                 FrontFastLowerBackwardSolve( front.front2dL, W, conjugate );
-            else // frontType == BLOCK_LDL_2D
+            else // frontType = BLOCK_LDL_2D or BLOCK_LDL_INTRAPIV_2D
                 FrontBlockLowerBackwardSolve
                 ( front.front2dL, front.work1d, conjugate );
         }
         else
         {
             View( localRootFront.work, W.Matrix() );
-            if( !blockLDL )
-                FrontLowerBackwardSolve
+            if( blockLDL )
+                FrontBlockLowerBackwardSolve
                 ( localRootFront.frontL, localRootFront.work, conjugate );
             else
-                FrontBlockLowerBackwardSolve
+                FrontLowerBackwardSolve
                 ( localRootFront.frontL, localRootFront.work, conjugate );
         }
 
@@ -531,7 +533,8 @@ inline void DistLowerBackwardSolve
     const int numDistNodes = info.distNodes.size();
     const int width = X.Width();
     const SymmFrontType frontType = L.frontType;
-    const bool blockLDL = ( frontType == BLOCK_LDL_2D );
+    const bool blockLDL = ( frontType == BLOCK_LDL_2D || 
+                            frontType == BLOCK_LDL_INTRAPIV_2D );
     if( FrontsAre1d(frontType) )
         LogicError("1d solve mode is not yet implemented");
 
@@ -540,11 +543,11 @@ inline void DistLowerBackwardSolve
     if( numDistNodes == 1 )
     {
         View( localRootFront.work, X.localNodes.back() );
-        if( !blockLDL )
-            FrontLowerBackwardSolve
+        if( blockLDL )
+            FrontBlockLowerBackwardSolve
             ( localRootFront.frontL, localRootFront.work, conjugate );
         else
-            FrontBlockLowerBackwardSolve
+            FrontLowerBackwardSolve
             ( localRootFront.frontL, localRootFront.work, conjugate );
     }
     else
@@ -640,9 +643,9 @@ inline void DistLowerBackwardSolve
         SparseAllToAll
         ( sendBuffer, sendCounts, sendDispls,
           recvBuffer, recvCounts, recvDispls, parentComm );
-        std::vector<F>().swap( sendBuffer );
-        std::vector<int>().swap( sendCounts );
-        std::vector<int>().swap( sendDispls );
+        SwapClear( sendBuffer );
+        SwapClear( sendCounts );
+        SwapClear( sendDispls );
 
         // Unpack the updates using the send approach from the forward solve
         const bool onLeft = node.onLeft;
@@ -665,9 +668,9 @@ inline void DistLowerBackwardSolve
                 ( iUpdateLoc, jLoc, recvBuffer[recvDispls[startRank]++] );
             }
         }
-        std::vector<F>().swap( recvBuffer );
-        std::vector<int>().swap( recvCounts );
-        std::vector<int>().swap( recvDispls );
+        SwapClear( recvBuffer );
+        SwapClear( recvCounts );
+        SwapClear( recvDispls );
 
         // Call the custom node backward solve
         if( s > 0 )

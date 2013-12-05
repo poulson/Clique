@@ -72,13 +72,13 @@ This data structure represents a distributed symmetric :math:`LDL^T` or
 
       The vector of distributed frontal matrices.
 
-   .. cpp:function:: DistSymmFrontTree( Orientation orientation, const DistSparseMatrix<T>& A, const DistMap& map, const DistSeparatorTree& sepTree, const DistSymmInfo& info )
+   .. cpp:function:: DistSymmFrontTree( const DistSparseMatrix<T>& A, const DistMap& map, const DistSeparatorTree& sepTree, const DistSymmInfo& info, bool conjugate=false )
 
       A constructor which converts a distributed sparse matrix into a symmetric
       frontal tree which is ready for factorization (e.g., with 
       :cpp:func:`LDL` or :cpp:func:`BlockLDL`).
 
-   .. cpp:function:: void Initialize( Orientation orientation, const DistSparseMatrix<T>& A, const DistMap& map, const DistSeparatorTree& sepTree, const DistSymmInfo& info )
+   .. cpp:function:: void Initialize( const DistSparseMatrix<T>& A, const DistMap& map, const DistSeparatorTree& sepTree, const DistSymmInfo& info, bool conjugate=false )
 
       The same as the :cpp:func:`DistSymmFrontTree\<T>::DistSymmFrontTree`
       constructor, but callable after construction.

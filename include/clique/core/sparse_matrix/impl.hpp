@@ -278,7 +278,7 @@ inline void
 SparseMatrix<T>::Empty()
 {
     graph_.Empty();
-    std::vector<T>().swap( vals_ );
+    SwapClear( vals_ );
 }
 
 template<typename T>
@@ -286,7 +286,7 @@ inline void
 SparseMatrix<T>::ResizeTo( int height, int width )
 {
     graph_.ResizeTo( height, width );
-    std::vector<T>().swap( vals_ );
+    SwapClear( vals_ );
 }
 
 template<typename T>

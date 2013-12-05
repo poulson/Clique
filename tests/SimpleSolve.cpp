@@ -113,7 +113,8 @@ main( int argc, char* argv[] )
             std::cout.flush();
         }
         const double solveStart = mpi::Time();
-        SymmetricSolve( A, Y, sequential, numDistSeps, numSeqSeps, cutoff );
+        SymmetricSolve
+        ( A, Y, false, sequential, numDistSeps, numSeqSeps, cutoff );
         const double solveStop = mpi::Time();
         if( commRank == 0 )
             std::cout << "done, " << solveStop-solveStart << " seconds"

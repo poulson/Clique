@@ -380,7 +380,7 @@ DistMap::Empty()
     numSources_ = 0;
     blocksize_ = 0;
     firstLocalSource_ = 0;
-    std::vector<int>().swap( map_ );
+    SwapClear( map_ );
 }
 
 inline void

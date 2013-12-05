@@ -98,14 +98,14 @@ LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
         }
 
         // Call the custom partial LDL
-        if( !blockLDL )
+        if( blockLDL )
+            FrontBlockLDL( frontL, frontBR, L.isHermitian );
+        else
         {
             FrontLDL( frontL, frontBR, L.isHermitian );
             frontL.GetDiagonal( L.localFronts[s].diag );
             elem::SetDiagonal( frontL, F(1) );
         }
-        else
-            FrontBlockLDL( frontL, frontBR, L.isHermitian );
     }
 }
 

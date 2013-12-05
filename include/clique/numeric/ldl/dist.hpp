@@ -134,7 +134,7 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
                 LogicError("Error in packing stage");
         }
 #endif
-        std::vector<int>().swap( packOffs );
+        SwapClear( packOffs );
         childFront.work2d.Empty();
         if( s == 1 )
             topLocalFront.work.Empty();
@@ -161,9 +161,9 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
         SparseAllToAll
         ( sendBuffer, sendCounts, sendDispls,
           recvBuffer, recvCounts, recvDispls, comm );
-        std::vector<F>().swap( sendBuffer );
-        std::vector<int>().swap( sendCounts );
-        std::vector<int>().swap( sendDispls );
+        SwapClear( sendBuffer );
+        SwapClear( sendCounts );
+        SwapClear( sendDispls );
 
         // Unpack the child udpates (with an Axpy)
         front.work2d.SetGrid( front.front2dL.Grid() );
@@ -195,14 +195,16 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
                       value );
             }
         }
-        std::vector<F>().swap( recvBuffer );
-        std::vector<int>().swap( recvCounts );
-        std::vector<int>().swap( recvDispls );
+        SwapClear( recvBuffer );
+        SwapClear( recvCounts );
+        SwapClear( recvDispls );
         if( computeFactRecvInds )
             commMeta.EmptyChildRecvIndices();
 
         // Now that the frontal matrix is set up, perform the factorization
-        if( !blockLDL )
+        if( blockLDL )
+            FrontBlockLDL( front.front2dL, front.work2d, L.isHermitian );
+        else
         {
             FrontLDL( front.front2dL, front.work2d, L.isHermitian );
 
@@ -213,8 +215,6 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
             front.diag1d = diag;
             elem::SetDiagonal( front.front2dL, F(1) );
         }
-        else
-            FrontBlockLDL( front.front2dL, front.work2d, L.isHermitian );
     }
     L.localFronts.back().work.Empty();
     L.distFronts.back().work2d.Empty();

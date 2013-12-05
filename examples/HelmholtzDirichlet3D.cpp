@@ -162,7 +162,7 @@ main( int argc, char* argv[] )
         }
         mpi::Barrier( comm );
         const double buildStart = mpi::Time();
-        DistSymmFrontTree<C> frontTree( TRANSPOSE, A, map, sepTree, info );
+        DistSymmFrontTree<C> frontTree( A, map, sepTree, info, false );
         mpi::Barrier( comm );
         const double buildStop = mpi::Time();
         if( commRank == 0 )

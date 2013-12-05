@@ -37,8 +37,8 @@
 // The core of the library
 //
 
-#include "clique/core/environment_decl.hpp"
-#include "clique/core/environment_impl.hpp"
+#include "clique/core/environment/decl.hpp"
+#include "clique/core/environment/impl.hpp"
 
 // Data-structure declarations (are these needed?!?)
 namespace cliq { 
@@ -49,24 +49,24 @@ namespace cliq {
     template<typename T> class DistNodalMultiVec;
     template<typename T> class DistNodalMatrix;
 } 
-#include "clique/core/graph_decl.hpp"
-#include "clique/core/dist_graph_decl.hpp"
-//TODO: include "clique/core/map_decl.hpp"
-#include "clique/core/dist_map_decl.hpp"
-#include "clique/core/sparse_matrix_decl.hpp"
-#include "clique/core/dist_sparse_matrix_decl.hpp"
-#include "clique/core/multi_vec_decl.hpp"
-#include "clique/core/dist_multi_vec_decl.hpp"
+#include "clique/core/graph/decl.hpp"
+#include "clique/core/dist_graph/decl.hpp"
+//TODO: include "clique/core/map/decl.hpp"
+#include "clique/core/dist_map/decl.hpp"
+#include "clique/core/sparse_matrix/decl.hpp"
+#include "clique/core/dist_sparse_matrix/decl.hpp"
+#include "clique/core/multi_vec/decl.hpp"
+#include "clique/core/dist_multi_vec/decl.hpp"
 
 // Data-structure implementations
-#include "clique/core/graph_impl.hpp"
-#include "clique/core/dist_graph_impl.hpp"
-//TODO: include "clique/core/map_impl.hpp"
-#include "clique/core/dist_map_impl.hpp"
-#include "clique/core/sparse_matrix_impl.hpp"
-#include "clique/core/dist_sparse_matrix_impl.hpp"
-#include "clique/core/multi_vec_impl.hpp"
-#include "clique/core/dist_multi_vec_impl.hpp"
+#include "clique/core/graph/impl.hpp"
+#include "clique/core/dist_graph/impl.hpp"
+//TODO: include "clique/core/map/impl.hpp"
+#include "clique/core/dist_map/impl.hpp"
+#include "clique/core/sparse_matrix/impl.hpp"
+#include "clique/core/dist_sparse_matrix/impl.hpp"
+#include "clique/core/multi_vec/impl.hpp"
+#include "clique/core/dist_multi_vec/impl.hpp"
 
 //
 // Symbolic computation
@@ -85,15 +85,15 @@ namespace cliq {
 
 #include "clique/numeric/multiply.hpp"
 
-#include "clique/numeric/dist_nodal_multi_vec_decl.hpp"
-#include "clique/numeric/dist_nodal_matrix_decl.hpp"
-#include "clique/numeric/dist_nodal_multi_vec_impl.hpp"
-#include "clique/numeric/dist_nodal_matrix_impl.hpp"
+#include "clique/numeric/dist_nodal_multi_vec/decl.hpp"
+#include "clique/numeric/dist_nodal_matrix/decl.hpp"
+#include "clique/numeric/dist_nodal_multi_vec/impl.hpp"
+#include "clique/numeric/dist_nodal_matrix/impl.hpp"
 
-#include "clique/numeric/dist_front_tree_decl.hpp"
-#include "clique/numeric/dist_front_tree_impl.hpp"
-#include "clique/numeric/dist_symm_front_tree_decl.hpp"
-#include "clique/numeric/dist_symm_front_tree_impl.hpp"
+#include "clique/numeric/dist_front_tree/decl.hpp"
+#include "clique/numeric/dist_front_tree/impl.hpp"
+#include "clique/numeric/dist_symm_front_tree/decl.hpp"
+#include "clique/numeric/dist_symm_front_tree/impl.hpp"
 #include "clique/numeric/change_front_type.hpp"
 
 #include "clique/numeric/ldl.hpp"

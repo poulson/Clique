@@ -88,7 +88,7 @@ NaturalNestedDissectionRecursion
         node.size = numSources;
         node.off = off;
         node.parent = parent;
-        std::vector<int>().swap( node.children );
+        SwapClear( node.children );
         std::set<int> connectedAncestors;
         for( int s=0; s<node.size; ++s )
         {
@@ -336,7 +336,7 @@ NaturalNestedDissectionRecursion
         distNode.size = localNode.size = numSources;
         distNode.off = localNode.off = off;
         localNode.parent = -1;
-        std::vector<int>().swap( localNode.children );
+        SwapClear( localNode.children );
         std::set<int> connectedAncestors;
         for( int s=0; s<numSources; ++s )
         {
@@ -466,8 +466,8 @@ NaturalNestedDissection
     //       are reused. Their destructors should call a member function which
     //       we can simply call here to clear the data
     DistSymmElimTree eTree;
-    std::vector<SymmNode*>().swap( eTree.localNodes );
-    std::vector<SepOrLeaf*>().swap( sepTree.localSepsAndLeaves );
+    SwapClear( eTree.localNodes );
+    SwapClear( sepTree.localSepsAndLeaves );
 
     mpi::Comm comm = graph.Comm();
     const int distDepth = DistributedDepth( comm );

@@ -50,6 +50,8 @@ using elem::Length;
 using elem::LogicError;
 using elem::RuntimeError;
 
+using elem::SwapClear;
+
 void PrintVersion( std::ostream& os=std::cout );
 void PrintConfig( std::ostream& os=std::cout );
 void PrintCCompilerInfo( std::ostream& os=std::cout );

@@ -45,7 +45,8 @@ inline void LocalLowerForwardSolve
 #ifndef RELEASE
     CallStackEntry cse("LocalLowerForwardSolve");
 #endif
-    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
+    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D || 
+                            L.frontType == BLOCK_LDL_INTRAPIV_2D );
     const int numLocalNodes = info.localNodes.size();
     const int width = X.Width();
     for( int s=0; s<numLocalNodes; ++s )
@@ -100,10 +101,10 @@ inline void LocalLowerForwardSolve
         // else numChildren == 0
 
         // Solve against this front
-        if( !blockLDL )
-            FrontLowerForwardSolve( frontL, W );
-        else
+        if( blockLDL )
             FrontBlockLowerForwardSolve( frontL, W );
+        else
+            FrontLowerForwardSolve( frontL, W );
 
         // Store this node's portion of the result
         X.localNodes[s] = WT;
@@ -119,7 +120,8 @@ inline void LocalLowerForwardSolve
 #ifndef RELEASE
     CallStackEntry cse("LocalLowerForwardSolve");
 #endif
-    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
+    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D ||
+                            L.frontType == BLOCK_LDL_INTRAPIV_2D );
     const int numLocalNodes = info.localNodes.size();
     const int width = X.Width();
     for( int s=0; s<numLocalNodes; ++s )
@@ -174,10 +176,10 @@ inline void LocalLowerForwardSolve
         // else numChildren == 0
 
         // Solve against this front
-        if( !blockLDL )
-            FrontLowerForwardSolve( frontL, W );
-        else
+        if( blockLDL )
             FrontBlockLowerForwardSolve( frontL, W );
+        else
+            FrontLowerForwardSolve( frontL, W );
 
         // Store this node's portion of the result
         X.localNodes[s] = WT;
@@ -193,7 +195,8 @@ inline void LocalLowerBackwardSolve
 #ifndef RELEASE
     CallStackEntry cse("LocalLowerBackwardSolve");
 #endif
-    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
+    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D ||
+                            L.frontType == BLOCK_LDL_INTRAPIV_2D );
     const int numLocalNodes = info.localNodes.size();
     const int width = X.Width();
     for( int s=numLocalNodes-2; s>=0; --s )
@@ -247,10 +250,10 @@ inline void LocalLowerBackwardSolve
         }
 
         // Solve against this front
-        if( !blockLDL )
-            FrontLowerBackwardSolve( frontL, W, conjugate );
-        else
+        if( blockLDL )
             FrontBlockLowerBackwardSolve( frontL, W, conjugate );
+        else
+            FrontLowerBackwardSolve( frontL, W, conjugate );
 
         // Store this node's portion of the result
         X.localNodes[s] = WT;
@@ -271,7 +274,8 @@ inline void LocalLowerBackwardSolve
 #ifndef RELEASE
     CallStackEntry cse("LocalLowerBackwardSolve");
 #endif
-    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
+    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D ||
+                            L.frontType == BLOCK_LDL_INTRAPIV_2D );
     const int numLocalNodes = info.localNodes.size();
     const int width = X.Width();
     for( int s=numLocalNodes-2; s>=0; --s )
@@ -325,10 +329,10 @@ inline void LocalLowerBackwardSolve
         }
 
         // Solve against this front
-        if( !blockLDL )
-            FrontLowerBackwardSolve( frontL, W, conjugate );
-        else
+        if( blockLDL )
             FrontBlockLowerBackwardSolve( frontL, W, conjugate );
+        else
+            FrontLowerBackwardSolve( frontL, W, conjugate );
 
         // Store this node's portion of the result
         X.localNodes[s] = WT;

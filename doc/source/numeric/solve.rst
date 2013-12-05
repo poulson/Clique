@@ -4,10 +4,11 @@ Solves
 Black-box solvers
 -----------------
 
-.. cpp:function:: void SymmetricSolve( const DistSparseMatrix<F>& A, DistMultiVec<F>& X, bool sequential=true, int numDistSeps=1, int numSeqSeps=1, int cutoff=128 )
+.. cpp:function:: void SymmetricSolve( const DistSparseMatrix<F>& A, DistMultiVec<F>& X, bool conjugate=false, bool sequential=true, int numDistSeps=1, int numSeqSeps=1, int cutoff=128 )
 
    Overwrites :math:`x` with :math:`A^{-1} x`, where :math:`A` is assumed to be 
-   symmetric. The main optional argument is 
+   symmetric (or Hermitian if `conjugate` is `true`). 
+   The main optional argument is 
    whether or not graph partitioning should be performed sequentially or in 
    parallel. For modest-to-large numbers of processes, one should only use 
    parallel graph partitioning if the entire graph for the sparse matrix cannot
@@ -20,8 +21,8 @@ Black-box solvers
 .. cpp:function:: void HermitianSolve( const DistSparseMatrix<F>& A, DistMultiVec<F>& X, bool sequential=true, int numDistSeps=1, int numSeqSeps=1, int cutoff=128 )
 
    Overwrites :math:`x` with :math:`A^{-1} x`, where :math:`A` is assumed to be
-   Hermitian. The optional arguments are identical to those of 
-   :cpp:func:`SymmetricSolve`.
+   Hermitian. This is simply a wrapper to `SymmetricSolve` with `conjugate`
+   set to `true`.
 
 Solving after factorization
 ---------------------------

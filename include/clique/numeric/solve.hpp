@@ -25,6 +25,7 @@ void Solve
 template<typename F>
 void SymmetricSolve
 ( const DistSparseMatrix<F>& A, DistMultiVec<F>& X,
+  bool conjugate=false,
   bool sequential=true, int numDistSeps=1, int numSeqSeps=1, int cutoff=128 );
 template<typename F>
 void HermitianSolve
@@ -43,22 +44,22 @@ inline void Solve
 #ifndef RELEASE
     CallStackEntry cse("Solve");
 #endif
-    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
     const Orientation orientation = ( L.isHermitian ? ADJOINT : TRANSPOSE );
-    if( !blockLDL )
+    if( L.frontType == BLOCK_LDL_2D || 
+        L.frontType == BLOCK_LDL_INTRAPIV_2D )
+    {
+        // Solve against block diagonal factor, L D
+        LowerSolve( NORMAL, info, L, X );
+        // Solve against the (conjugate-)transpose of the block unit diagonal L
+        LowerSolve( orientation, info, L, X );
+    }
+    else
     {
         // Solve against unit diagonal L
         LowerSolve( NORMAL, info, L, X );
         // Solve against diagonal
         DiagonalSolve( info, L, X );
         // Solve against the (conjugate-)transpose of the unit diagonal L
-        LowerSolve( orientation, info, L, X );
-    }
-    else
-    {
-        // Solve against block diagonal factor, L D
-        LowerSolve( NORMAL, info, L, X );
-        // Solve against the (conjugate-)transpose of the block unit diagonal L
         LowerSolve( orientation, info, L, X );
     }
 }
@@ -73,7 +74,15 @@ inline void Solve
 #endif
     const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
     const Orientation orientation = ( L.isHermitian ? ADJOINT : TRANSPOSE );
-    if( !blockLDL )
+    if( L.frontType == BLOCK_LDL_2D || 
+        L.frontType == BLOCK_LDL_INTRAPIV_2D )
+    {
+        // Solve against block diagonal factor, L D
+        LowerSolve( NORMAL, info, L, X );
+        // Solve against the (conjugate-)transpose of the block unit diagonal L
+        LowerSolve( orientation, info, L, X );
+    }
+    else
     {
         // Solve against unit diagonal L
         LowerSolve( NORMAL, info, L, X );
@@ -82,18 +91,12 @@ inline void Solve
         // Solve against the (conjugate-)transpose of the unit diagonal L
         LowerSolve( orientation, info, L, X );
     }
-    else
-    {
-        // Solve against block diagonal factor, L D
-        LowerSolve( NORMAL, info, L, X );
-        // Solve against the (conjugate-)transpose of the block unit diagonal L
-        LowerSolve( orientation, info, L, X );
-    }
 }
 
 template<typename F>
 inline void SymmetricSolve
 ( const DistSparseMatrix<F>& A, DistMultiVec<F>& X, 
+  bool conjugate,
   bool sequential, int numDistSeps, int numSeqSeps, int cutoff )
 {
 #ifndef RELEASE
@@ -107,7 +110,7 @@ inline void SymmetricSolve
       sequential, numDistSeps, numSeqSeps, cutoff );
     map.FormInverse( inverseMap );
 
-    DistSymmFrontTree<F> frontTree( TRANSPOSE, A, map, sepTree, info );
+    DistSymmFrontTree<F> frontTree( A, map, sepTree, info, conjugate );
     LDL( info, frontTree, LDL_1D );
 
     DistNodalMultiVec<F> XNodal;
@@ -124,21 +127,7 @@ inline void HermitianSolve
 #ifndef RELEASE
     CallStackEntry cse("HermitianSolve");
 #endif
-    DistSymmInfo info;
-    DistSeparatorTree sepTree;
-    DistMap map, inverseMap;
-    NestedDissection
-    ( A.LockedDistGraph(), map, sepTree, info, 
-      sequential, numDistSeps, numSeqSeps, cutoff );
-    map.FormInverse( inverseMap );
-
-    DistSymmFrontTree<F> frontTree( ADJOINT, A, map, sepTree, info );
-    LDL( info, frontTree, LDL_1D );
-
-    DistNodalMultiVec<F> XNodal;
-    XNodal.Pull( inverseMap, info, X );
-    Solve( info, frontTree, XNodal );
-    XNodal.Push( inverseMap, info, X );
+    SymmetricSolve( A, X, true, sequential, numDistSeps, numSeqSeps, cutoff );
 }
 
 } // namespace cliq
