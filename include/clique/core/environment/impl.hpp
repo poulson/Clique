@@ -11,7 +11,7 @@
 #ifndef CLIQ_CORE_ENVIRONMENT_IMPL_HPP
 #define CLIQ_CORE_ENVIRONMENT_IMPL_HPP
 
-#include "clique/core/environment_decl.hpp"
+#include "clique/core/environment/decl.hpp"
 
 namespace cliq {
 
