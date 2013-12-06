@@ -14,14 +14,16 @@
 namespace cliq {
 
 template<typename F> 
-void FrontBlockLDL( Matrix<F>& AL, Matrix<F>& ABR, bool conjugate=false );
+void FrontBlockLDL
+( Matrix<F>& AL, Matrix<F>& ABR, bool conjugate=false, bool intraPiv=false );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
 
 template<typename F> 
-inline void FrontBlockLDL( Matrix<F>& AL, Matrix<F>& ABR, bool conjugate=false )
+inline void FrontBlockLDL
+( Matrix<F>& AL, Matrix<F>& ABR, bool conjugate, bool intraPiv )
 {
 #ifndef RELEASE
     CallStackEntry cse("FrontBlockLDL");
@@ -35,20 +37,39 @@ inline void FrontBlockLDL( Matrix<F>& AL, Matrix<F>& ABR, bool conjugate=false )
     // Make a copy of the original contents of ABL
     Matrix<F> BBL( ABL );
 
-    // Call the standard routine
-    FrontLDL( AL, ABR, conjugate );
+    if( intraPiv )
+    {
+        Matrix<Int> p;
+        Matrix<F> dSub;
+        // TODO: Expose the pivot type as an option?
+        elem::ldl::Pivoted( ATL, dSub, p, conjugate, elem::BUNCH_KAUFMAN_A );
 
-    // Copy the original contents of ABL back
-    ABL = BBL;
+        // Solve against ABL and update ABR
+        elem::ldl::SolveAfter( ATL, dSub, p, ABL, conjugate );
+        const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
+        elem::Gemm( NORMAL, orientation, F(-1), ABL, BBL, F(1), ABR );
 
-    // Overwrite ATL with inv(L D L^[T/H]) = L^[-T/H] D^{-1} L^{-1}
-    elem::TriangularInverse( LOWER, UNIT, ATL );
-    elem::Trdtrmm( LOWER, ATL, conjugate );
-    elem::MakeTrapezoidal( LOWER, ATL );
-    Matrix<F> ATLTrans;
-    elem::Transpose( ATL, ATLTrans, conjugate );
-    elem::MakeTrapezoidal( UPPER, ATLTrans, 1 );
-    elem::Axpy( F(1), ATLTrans, ATL );
+        // Copy the original contents of ABL back
+        ABL = BBL;
+
+        // Finish inverting ATL
+        elem::TriangularInverse( LOWER, UNIT, ATL );
+        elem::Trdtrmm( LOWER, ATL, dSub, conjugate );
+        elem::ApplySymmetricPivots( LOWER, ATL, p, conjugate );
+    }
+    else
+    {
+        // Call the standard routine
+        FrontLDL( AL, ABR, conjugate );
+
+        // Copy the original contents of ABL back
+        ABL = BBL;
+
+        // Finish inverting ATL
+        elem::TriangularInverse( LOWER, UNIT, ATL );
+        elem::Trdtrmm( LOWER, ATL, conjugate );
+    }
+    elem::MakeSymmetric( LOWER, ATL, conjugate );
 }
 
 } // namespace cliq

@@ -21,7 +21,7 @@ void FrontLDL( Matrix<F>& AL, Matrix<F>& ABR, bool conjugate=false );
 //----------------------------------------------------------------------------//
 
 template<typename F> 
-inline void FrontLDL( Matrix<F>& AL, Matrix<F>& ABR, bool conjugate=false )
+inline void FrontLDL( Matrix<F>& AL, Matrix<F>& ABR, bool conjugate )
 {
 #ifndef RELEASE
     CallStackEntry cse("FrontLDL");

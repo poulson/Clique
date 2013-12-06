@@ -15,7 +15,7 @@ namespace cliq {
 
 template<typename F> 
 void 
-DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL=false );
+DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -23,11 +23,15 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL=false );
 
 template<typename F> 
 inline void 
-DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
+DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
 {
 #ifndef RELEASE
     CallStackEntry cse("DistLDL");
 #endif
+    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D ||
+                            L.frontType == BLOCK_LDL_INTRAPIV_2D );
+    const bool intraPiv = ( L.frontType == BLOCK_LDL_INTRAPIV_2D );
+
     // The bottom front is already computed, so just view it
     SymmFront<F>& topLocalFront = L.localFronts.back();
     DistSymmFront<F>& bottomDistFront = L.distFronts[0];
@@ -203,7 +207,8 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
 
         // Now that the frontal matrix is set up, perform the factorization
         if( blockLDL )
-            FrontBlockLDL( front.front2dL, front.work2d, L.isHermitian );
+            FrontBlockLDL
+            ( front.front2dL, front.work2d, L.isHermitian, intraPiv );
         else
         {
             FrontLDL( front.front2dL, front.work2d, L.isHermitian );

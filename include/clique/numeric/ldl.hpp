@@ -76,21 +76,17 @@ LDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, SymmFrontType newFrontType )
         blockLDL = false;
         L.frontType = LDL_2D;
     }
-    else if( newFrontType == BLOCK_LDL_2D )
+    else if( newFrontType == BLOCK_LDL_2D || 
+             newFrontType == BLOCK_LDL_INTRAPIV_2D )
     {
         blockLDL = true;
-        L.frontType = BLOCK_LDL_2D;
-    }
-    else if( newFrontType == BLOCK_LDL_INTRAPIV_2D )
-    {
-        blockLDL = true;
-        L.frontType = BLOCK_LDL_INTRAPIV_2D;
+        L.frontType = newFrontType;
     }
     else
         LogicError("Invalid new front type");
 
-    LocalLDL( info, L, blockLDL );
-    DistLDL( info, L, blockLDL );
+    LocalLDL( info, L );
+    DistLDL( info, L );
 
     ChangeFrontType( L, newFrontType );
 }

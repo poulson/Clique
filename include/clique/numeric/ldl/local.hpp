@@ -15,7 +15,7 @@ namespace cliq {
 
 template<typename F> 
 void 
-LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL=false );
+LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -23,11 +23,15 @@ LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL=false );
 
 template<typename F> 
 inline void 
-LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
+LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
 {
 #ifndef RELEASE
     CallStackEntry cse("LocalLDL");
 #endif
+    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D ||
+                            L.frontType == BLOCK_LDL_INTRAPIV_2D );
+    const bool intraPiv = ( L.frontType == BLOCK_LDL_INTRAPIV_2D );
+
     const int numLocalNodes = info.localNodes.size();
     for( int s=0; s<numLocalNodes; ++s )
     {
@@ -99,7 +103,7 @@ LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, bool blockLDL )
 
         // Call the custom partial LDL
         if( blockLDL )
-            FrontBlockLDL( frontL, frontBR, L.isHermitian );
+            FrontBlockLDL( frontL, frontBR, L.isHermitian, intraPiv );
         else
         {
             FrontLDL( frontL, frontBR, L.isHermitian );
