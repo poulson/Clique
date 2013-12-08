@@ -41,21 +41,21 @@ template<typename F>
 inline void FrontFastLowerForwardSolve
 ( const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("FrontFastLowerForwardSolve");
-    if( L.Grid() != X.Grid() )
-        LogicError("L and X must be distributed over the same grid");
-    if( L.Height() < L.Width() || L.Height() != X.Height() )
-    {
-        std::ostringstream msg;
-        msg << "Nonconformal solve:\n"
-            << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-            << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        LogicError( msg.str() );
-    }
-    if( L.ColAlign() != X.ColAlign() )
-        LogicError("L and X are assumed to be aligned");
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("FrontFastLowerForwardSolve");
+        if( L.Grid() != X.Grid() )
+            LogicError("L and X must be distributed over the same grid");
+        if( L.Height() < L.Width() || L.Height() != X.Height() )
+        {
+            std::ostringstream msg;
+            msg << "Nonconformal solve:\n"
+                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
+                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
+            LogicError( msg.str() );
+        }
+        if( L.ColAlign() != X.ColAlign() )
+            LogicError("L and X are assumed to be aligned");
+    )
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
     {
@@ -92,19 +92,19 @@ template<typename F>
 inline void FrontFastLowerForwardSolve
 ( const DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("FrontFastLowerForwardSolve");
-    if( L.Grid() != X.Grid() )
-        LogicError("L and X must be distributed over the same grid");
-    if( L.Height() < L.Width() || L.Height() != X.Height() )
-    {
-        std::ostringstream msg;
-        msg << "Nonconformal solve:\n"
-            << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-            << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        LogicError( msg.str() );
-    }
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("FrontFastLowerForwardSolve");
+        if( L.Grid() != X.Grid() )
+            LogicError("L and X must be distributed over the same grid");
+        if( L.Height() < L.Width() || L.Height() != X.Height() )
+        {
+            std::ostringstream msg;
+            msg << "Nonconformal solve:\n"
+                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
+                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
+            LogicError( msg.str() );
+        }
+    )
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
     {
@@ -159,19 +159,19 @@ template<typename F>
 inline void FrontFastLowerForwardSolve
 ( const DistMatrix<F>& L, DistMatrix<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("FrontFastLowerForwardSolve");
-    if( L.Grid() != X.Grid() )
-        LogicError("L and X must be distributed over the same grid");
-    if( L.Height() < L.Width() || L.Height() != X.Height() )
-    {
-        std::ostringstream msg;
-        msg << "Nonconformal solve:\n"
-            << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-            << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        LogicError( msg.str() );
-    }
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("FrontFastLowerForwardSolve");
+        if( L.Grid() != X.Grid() )
+            LogicError("L and X must be distributed over the same grid");
+        if( L.Height() < L.Width() || L.Height() != X.Height() )
+        {
+            std::ostringstream msg;
+            msg << "Nonconformal solve:\n"
+                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
+                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
+            LogicError( msg.str() );
+        }
+    )
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
     {
@@ -205,21 +205,21 @@ inline void FrontFastLowerBackwardSolve
 ( const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X,
   bool conjugate )
 {
-#ifndef RELEASE
-    CallStackEntry cse("FrontFastLowerBackwardSolve");
-    if( L.Grid() != X.Grid() )
-        LogicError("L and X must be distributed over the same grid");
-    if( L.Height() < L.Width() || L.Height() != X.Height() )
-    {
-        std::ostringstream msg;
-        msg << "Nonconformal solve:\n"
-            << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-            << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        LogicError( msg.str() );
-    }
-    if( L.ColAlign() != X.ColAlign() )
-        LogicError("L and X are assumed to be aligned");
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("FrontFastLowerBackwardSolve");
+        if( L.Grid() != X.Grid() )
+            LogicError("L and X must be distributed over the same grid");
+        if( L.Height() < L.Width() || L.Height() != X.Height() )
+        {
+            std::ostringstream msg;
+            msg << "Nonconformal solve:\n"
+                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
+                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
+            LogicError( msg.str() );
+        }
+        if( L.ColAlign() != X.ColAlign() )
+            LogicError("L and X are assumed to be aligned");
+    )
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
     {
@@ -257,19 +257,19 @@ template<typename F>
 inline void FrontFastLowerBackwardSolve
 ( const DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X, bool conjugate )
 {
-#ifndef RELEASE
-    CallStackEntry cse("FrontFastLowerBackwardSolve");
-    if( L.Grid() != X.Grid() )
-        LogicError("L and X must be distributed over the same grid");
-    if( L.Height() < L.Width() || L.Height() != X.Height() )
-    {
-        std::ostringstream msg;
-        msg << "Nonconformal solve:\n"
-            << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-            << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        LogicError( msg.str() );
-    }
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("FrontFastLowerBackwardSolve");
+        if( L.Grid() != X.Grid() )
+            LogicError("L and X must be distributed over the same grid");
+        if( L.Height() < L.Width() || L.Height() != X.Height() )
+        {
+            std::ostringstream msg;
+            msg << "Nonconformal solve:\n"
+                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
+                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
+            LogicError( msg.str() );
+        }
+    )
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
     {
@@ -334,19 +334,19 @@ template<typename F>
 inline void FrontFastLowerBackwardSolve
 ( const DistMatrix<F>& L, DistMatrix<F>& X, bool conjugate )
 {
-#ifndef RELEASE
-    CallStackEntry cse("FrontFastLowerBackwardSolve");
-    if( L.Grid() != X.Grid() )
-        LogicError("L and X must be distributed over the same grid");
-    if( L.Height() < L.Width() || L.Height() != X.Height() )
-    {
-        std::ostringstream msg;
-        msg << "Nonconformal solve:\n"
-            << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-            << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        LogicError( msg.str() );
-    }
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("FrontFastLowerBackwardSolve");
+        if( L.Grid() != X.Grid() )
+            LogicError("L and X must be distributed over the same grid");
+        if( L.Height() < L.Width() || L.Height() != X.Height() )
+        {
+            std::ostringstream msg;
+            msg << "Nonconformal solve:\n"
+                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
+                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
+            LogicError( msg.str() );
+        }
+    )
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
     {

@@ -17,9 +17,7 @@ template<typename T>
 inline void 
 MakeZeros( MultiVec<T>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("MakeZeros");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("MakeZeros"))
     const int height = X.Height();
     const int width = X.Width();
     for( int j=0; j<width; ++j )
@@ -31,9 +29,7 @@ template<typename T>
 inline void 
 MakeUniform( MultiVec<T>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("MakeUniform");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("MakeUniform"))
     const int height = X.Height();
     const int width = X.Width();
     for( int j=0; j<width; ++j )
@@ -45,9 +41,7 @@ template<typename F>
 inline void
 Norms( const MultiVec<F>& X, std::vector<BASE(F)>& norms )
 {
-#ifndef RELEASE
-    CallStackEntry cse("Norms");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Norms"))
     typedef BASE(F) R;
     const int height = X.Height();
     const int width = X.Width();
@@ -83,9 +77,7 @@ template<typename F>
 inline BASE(F)
 Norm( const MultiVec<F>& x )
 {
-#ifndef RELEASE
-    CallStackEntry cse("Norm");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Norm"))
     if( x.Width() != 1 )
         LogicError("Norms only applies with one column");
     typedef BASE(F) R;
@@ -98,13 +90,13 @@ template<typename T>
 inline void
 Axpy( T alpha, const MultiVec<T>& X, MultiVec<T>& Y )
 {
-#ifndef RELEASE
-    CallStackEntry cse("Axpy");
-    if( X.Height() != Y.Height() )
-        LogicError("X and Y must be the same height");
-    if( X.Width() != Y.Width() )
-        LogicError("X and Y must be the same width");
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("Axpy");
+        if( X.Height() != Y.Height() )
+            LogicError("X and Y must be the same height");
+        if( X.Width() != Y.Width() )
+            LogicError("X and Y must be the same width");
+    )
     const int height = X.Height(); 
     const int width = X.Width();
     for( int j=0; j<width; ++j )
@@ -142,9 +134,7 @@ template<typename T>
 inline T
 MultiVec<T>::Get( int row, int col ) const
 { 
-#ifndef RELEASE 
-    CallStackEntry cse("MultiVec::Get");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("MultiVec::Get"))
     return multiVec_.Get(row,col);
 }
 
@@ -152,9 +142,7 @@ template<typename T>
 inline void
 MultiVec<T>::Set( int row, int col, T value )
 {
-#ifndef RELEASE
-    CallStackEntry cse("MultiVec::Set");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("MultiVec::Set"))
     multiVec_.Set(row,col,value);
 }
 
@@ -162,9 +150,7 @@ template<typename T>
 inline void
 MultiVec<T>::Update( int row, int col, T value )
 {
-#ifndef RELEASE
-    CallStackEntry cse("MultiVec::Update");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("MultiVec::Update"))
     multiVec_.Update(row,col,value);
 }
 
@@ -182,9 +168,7 @@ template<typename T>
 const MultiVec<T>& 
 MultiVec<T>::operator=( const MultiVec<T>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("MultiVec::operator=");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("MultiVec::operator="))
     multiVec_ = X.multiVec_;
     return *this;
 }

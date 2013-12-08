@@ -123,29 +123,29 @@ inline void ComputeStructAndRelInds
         DistSymmNodeInfo& nodeInfo, const DistSymmNodeInfo& childNodeInfo )
 {
     const std::vector<Int>& myLowerStruct = childNodeInfo.lowerStruct;
-#ifndef RELEASE
-    if( !IsStrictlySorted(myLowerStruct) )
-    {
-        if( IsSorted(myLowerStruct) )
-            LogicError("Repeat in my lower struct");
-        else
-            LogicError("My lower struct not sorted");
-    }
-    if( !IsStrictlySorted(theirLowerStruct) )
-    {
-        if( IsSorted(theirLowerStruct) )
-            LogicError("Repeat in their lower struct");
-        else
-            LogicError("Their lower struct not sorted");
-    }
-    if( !IsStrictlySorted(node.lowerStruct) )
-    {
-        if( IsSorted(node.lowerStruct) )
-            LogicError("Repeat in original struct");
-        else
-            LogicError("Original struct not sorted");
-    }
-#endif
+    DEBUG_ONLY(
+        if( !IsStrictlySorted(myLowerStruct) )
+        {
+            if( IsSorted(myLowerStruct) )
+                LogicError("Repeat in my lower struct");
+            else
+                LogicError("My lower struct not sorted");
+        }
+        if( !IsStrictlySorted(theirLowerStruct) )
+        {
+            if( IsSorted(theirLowerStruct) )
+                LogicError("Repeat in their lower struct");
+            else
+                LogicError("Their lower struct not sorted");
+        }
+        if( !IsStrictlySorted(node.lowerStruct) )
+        {
+            if( IsSorted(node.lowerStruct) )
+                LogicError("Repeat in original struct");
+            else
+                LogicError("Original struct not sorted");
+        }
+    )
 
     // Combine the children's structure
     auto childrenStruct = Union( myLowerStruct, theirLowerStruct );
@@ -183,22 +183,20 @@ inline void ComputeStructAndRelInds
     nodeInfo.lowerStruct.resize( lowerStructSize );
     for( int i=0; i<lowerStructSize; ++i )
         nodeInfo.lowerStruct[i] = fullStruct[node.size+i];
-#ifndef RELEASE
-    // Ensure that the root process computed a lowerStruct of the same size
-    int rootLowerStructSize;
-    if( mpi::CommRank(node.comm) == 0 )
-        rootLowerStructSize = lowerStructSize;
-    mpi::Broadcast( &rootLowerStructSize, 1, 0, node.comm );
-    if( rootLowerStructSize != lowerStructSize )
-        RuntimeError("Root has different lower struct size");
-#endif
+    DEBUG_ONLY(
+        // Ensure that the root process computed a lowerStruct of the same size
+        int rootLowerStructSize;
+        if( mpi::CommRank(node.comm) == 0 )
+            rootLowerStructSize = lowerStructSize;
+        mpi::Broadcast( &rootLowerStructSize, 1, 0, node.comm );
+        if( rootLowerStructSize != lowerStructSize )
+            RuntimeError("Root has different lower struct size");
+    )
 }
 
 inline void ComputeMultiVecCommMeta( DistSymmInfo& info )
 {
-#ifndef RELEASE
-    CallStackEntry cse("ComputeMultiVecCommMeta");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("ComputeMultiVecCommMeta"))
     // Handle the interface node
     info.distNodes[0].multiVecMeta.Empty();
     info.distNodes[0].multiVecMeta.localSize = info.localNodes.back().size;
@@ -289,9 +287,7 @@ inline void ComputeMultiVecCommMeta( DistSymmInfo& info )
 inline void ComputeFactorCommMeta
 ( DistSymmInfo& info, bool computeFactRecvInds )
 {
-#ifndef RELEASE
-    CallStackEntry cse("ComputeFactorCommMeta");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("ComputeFactorCommMeta"))
     info.distNodes[0].factorMeta.Empty();
     const Int numDist = info.distNodes.size();
     for( Int s=1; s<numDist; ++s )
@@ -367,9 +363,7 @@ inline void ComputeFactorCommMeta
 void DistSymmetricAnalysis
 ( const DistSymmElimTree& eTree, DistSymmInfo& info, bool computeFactRecvInds )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistSymmetricAnalysis");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistSymmetricAnalysis"))
     const Unsigned numDist = eTree.distNodes.size();
     info.distNodes.resize( numDist );
 
@@ -434,9 +428,7 @@ void DistSymmetricAnalysis
 void ComputeFactRecvInds
 ( const DistSymmNodeInfo& node, const DistSymmNodeInfo& childNode )
 {
-#ifndef RELEASE
-    CallStackEntry cse("ComputeFactRecvInds");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("ComputeFactRecvInds"))
     // Communicate to get the grid sizes
     int childGridDims[4];
     GetChildGridDims( node, childNode, childGridDims );
@@ -452,12 +444,12 @@ void ComputeFactRecvInds
     const int leftTeamSize =
         ( onLeft ? childTeamSize : teamSize-childTeamSize );
     const int rightTeamSize = teamSize - leftTeamSize;
-#ifndef RELEASE
-    if( leftTeamSize != leftGridHeight*leftGridWidth )
-        RuntimeError("Computed left grid incorrectly");
-    if( rightTeamSize != rightGridHeight*rightGridWidth )
-        RuntimeError("Computed right grid incorrectly");
-#endif
+    DEBUG_ONLY(
+        if( leftTeamSize != leftGridHeight*leftGridWidth )
+            RuntimeError("Computed left grid incorrectly");
+        if( rightTeamSize != rightGridHeight*rightGridWidth )
+            RuntimeError("Computed right grid incorrectly");
+    )
 
     const FactorCommMeta& commMeta = node.factorMeta;
     const int gridHeight = node.grid->Height();
@@ -495,10 +487,10 @@ void ComputeFactRecvInds
     {
         const Int jChild = leftRowInds[jPre];
         const Int jFront = node.leftRelInds[jChild];
-#ifndef RELEASE
-        if( (jFront-gridCol) % gridWidth != 0 )
-            LogicError("Invalid left jFront");
-#endif
+        DEBUG_ONLY(
+            if( (jFront-gridCol) % gridWidth != 0 )
+                LogicError("Invalid left jFront");
+        )
         const Int jFrontLoc = (jFront-gridCol) / gridWidth;
         const int childCol = (jChild+node.leftSize) % leftGridWidth;
 
@@ -509,12 +501,12 @@ void ComputeFactRecvInds
         {
             const Int iChild = leftColInds[iPre];
             const Int iFront = node.leftRelInds[iChild];
-#ifndef RELEASE
-            if( iChild < jChild )
-                LogicError("Invalid left iChild");
-            if( (iFront-gridRow) % gridHeight != 0 )
-                LogicError("Invalid left iFront");
-#endif
+            DEBUG_ONLY(
+                if( iChild < jChild )
+                    LogicError("Invalid left iChild");
+                if( (iFront-gridRow) % gridHeight != 0 )
+                    LogicError("Invalid left iFront");
+            )
             const Int iFrontLoc = (iFront-gridRow) / gridHeight;
 
             const int childRow = (iChild+node.leftSize) % leftGridHeight;
@@ -532,10 +524,10 @@ void ComputeFactRecvInds
     {
         const Int jChild = rightRowInds[jPre];
         const Int jFront = node.rightRelInds[jChild];
-#ifndef RELEASE
-        if( (jFront-gridCol) % gridWidth != 0 )
-            LogicError("Invalid right jFront");
-#endif
+        DEBUG_ONLY(
+            if( (jFront-gridCol) % gridWidth != 0 )
+                LogicError("Invalid right jFront");
+        )
         const Int jFrontLoc = (jFront-gridCol) / gridWidth;
         const int childCol = (jChild+node.rightSize) % rightGridWidth;
 
@@ -547,12 +539,12 @@ void ComputeFactRecvInds
         {
             const Int iChild = rightColInds[iPre];
             const Int iFront = node.rightRelInds[iChild];
-#ifndef RELEASE
-            if( iChild < jChild )
-                LogicError("Invalid right iChild");
-            if( (iFront-gridRow) % gridHeight != 0 )
-                LogicError("Invalid right iFront");
-#endif
+            DEBUG_ONLY(
+                if( iChild < jChild )
+                    LogicError("Invalid right iChild");
+                if( (iFront-gridRow) % gridHeight != 0 )
+                    LogicError("Invalid right iFront");
+            )
             const Int iFrontLoc = (iFront-gridRow) / gridHeight;
 
             const int childRow = (iChild+node.rightSize) % rightGridHeight;

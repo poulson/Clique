@@ -26,15 +26,10 @@ template<typename F>
 inline void FrontBlockLDL
 ( DistMatrix<F>& AL, DistMatrix<F>& ABR, bool conjugate, bool intraPiv )
 {
-#ifndef RELEASE
-    CallStackEntry cse("internal::FrontBlockLDL");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("internal::FrontBlockLDL"))
     const Grid& g = AL.Grid();
-    DistMatrix<F> ATL(g),
-                  ABL(g);
-    PartitionDown
-    ( AL, ATL,
-          ABL, AL.Width() );
+    DistMatrix<F> ATL(g), ABL(g);
+    PartitionDown( AL, ATL, ABL, AL.Width() );
 
     // Make a copy of the original contents of ABL
     DistMatrix<F> BBL( ABL );

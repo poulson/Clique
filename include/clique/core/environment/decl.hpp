@@ -85,26 +85,26 @@ T Input( std::string name, std::string desc, T defaultVal );
 void ProcessInput();
 void PrintInputReport();
 
-#ifndef RELEASE
-void PushCallStack( std::string s );
-void PopCallStack();
-void DumpCallStack();
+DEBUG_ONLY(
+    void PushCallStack( std::string s );
+    void PopCallStack();
+    void DumpCallStack();
 
-class CallStackEntry
-{
-public:
-    CallStackEntry( std::string s ) 
-    { 
-        if( !std::uncaught_exception() )
-            PushCallStack(s);
-    }
-    ~CallStackEntry() 
-    { 
-        if( !std::uncaught_exception() )
-            PopCallStack(); 
-    }
-};
-#endif
+    class CallStackEntry
+    {
+    public:
+        CallStackEntry( std::string s ) 
+        { 
+            if( !std::uncaught_exception() )
+                PushCallStack(s);
+        }
+        ~CallStackEntry() 
+        {     
+            if( !std::uncaught_exception() )
+                PopCallStack(); 
+        }
+    };
+)
 
 void ReportException( std::exception& e );
 

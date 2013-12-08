@@ -25,9 +25,7 @@ DistNodalMultiVec<F>::DistNodalMultiVec
 ( const DistMap& inverseMap, const DistSymmInfo& info,
   const DistMultiVec<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistNodalMultiVec::DistNodalMultiVec");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistNodalMultiVec::DistNodalMultiVec"))
     Pull( inverseMap, info, X );
 }
 
@@ -35,9 +33,7 @@ template<typename F>
 inline
 DistNodalMultiVec<F>::DistNodalMultiVec( const DistNodalMatrix<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistNodalMultiVec::DistNodalMultiVec");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistNodalMultiVec::DistNodalMultiVec"))
     *this = X;
 }
 
@@ -45,9 +41,7 @@ template<typename F>
 inline const DistNodalMultiVec<F>&
 DistNodalMultiVec<F>::operator=( const DistNodalMatrix<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistNodalMultiVec::operator=");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistNodalMultiVec::operator="))
     height_ = X.Height();
     width_ = X.Width();
 
@@ -75,9 +69,7 @@ DistNodalMultiVec<F>::Pull
 ( const DistMap& inverseMap, const DistSymmInfo& info,
   const DistMultiVec<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistNodalMultiVec::Pull");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistNodalMultiVec::Pull"))
     height_ = X.Height();
     width_ = X.Width();
 
@@ -110,10 +102,10 @@ DistNodalMultiVec<F>::Pull
         for( int t=shift; t<nodeInfo.size; t+=gridSize )
             mappedInds[off++] = nodeInfo.off+t;
     }
-#ifndef RELEASE
-    if( off != numRecvInds )
-        LogicError("mappedInds was filled incorrectly");
-#endif
+    DEBUG_ONLY(
+        if( off != numRecvInds )
+            LogicError("mappedInds was filled incorrectly");
+    )
 
     // Convert the indices to the original ordering
     inverseMap.Translate( mappedInds );
@@ -217,10 +209,10 @@ DistNodalMultiVec<F>::Pull
                 XNode.SetLocal( tLoc, j, recvVals[offs[q]++] );
         }
     }
-#ifndef RELEASE
-    if( off != numRecvInds )
-        LogicError("Unpacked wrong number of indices");
-#endif
+    DEBUG_ONLY(
+        if( off != numRecvInds )
+            LogicError("Unpacked wrong number of indices");
+    )
 }
 
 template<typename F>
@@ -229,9 +221,7 @@ DistNodalMultiVec<F>::Push
 ( const DistMap& inverseMap, const DistSymmInfo& info,
         DistMultiVec<F>& X ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistNodalMultiVec::Push");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistNodalMultiVec::Push"))
     const DistSymmNodeInfo& rootNode = info.distNodes.back();
     mpi::Comm comm = rootNode.comm;
     const int height = rootNode.size + rootNode.off;
@@ -323,10 +313,10 @@ DistNodalMultiVec<F>::Push
         recvOffs[q] = numRecvInds;
         numRecvInds += recvSizes[q];
     }
-#ifndef RELEASE
-    if( numRecvInds != X.LocalHeight() )
-        LogicError("numRecvInds was not equal to local height");
-#endif
+    DEBUG_ONLY(
+        if( numRecvInds != X.LocalHeight() )
+            LogicError("numRecvInds was not equal to local height");
+    )
 
     // Send the indices
     std::vector<int> recvInds( numRecvInds );
@@ -355,10 +345,10 @@ DistNodalMultiVec<F>::Push
     {
         const int i = recvInds[s];
         const int iLocal = i - firstLocalRow;
-#ifndef RELEASE
-        if( iLocal < 0 || iLocal >= X.LocalHeight() )
-            LogicError("iLocal was out of bounds");
-#endif
+        DEBUG_ONLY(
+            if( iLocal < 0 || iLocal >= X.LocalHeight() )
+                LogicError("iLocal was out of bounds");
+        )
         for( int j=0; j<width; ++j )
             X.SetLocal( iLocal, j, recvVals[s*width+j] );
     }

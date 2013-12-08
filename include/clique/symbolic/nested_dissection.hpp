@@ -122,9 +122,7 @@ NestedDissectionRecursion
         int numSeps=5,
         int cutoff=128 )
 {
-#ifndef RELEASE
-    CallStackEntry cse("NestedDissectionRecursion");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("NestedDissectionRecursion"))
     if( graph.NumSources() <= cutoff )
     {
         // Fill in this node of the local separator tree
@@ -252,9 +250,7 @@ NestedDissectionRecursion
         int numSeqSeps=1,
         int cutoff=128 )
 {
-#ifndef RELEASE
-    CallStackEntry cse("NestedDissectionRecursion");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("NestedDissectionRecursion"))
     const int distDepth = sepTree.distSeps.size();
     mpi::Comm comm = graph.Comm();
     if( distDepth - depth > 0 )
@@ -503,9 +499,7 @@ NestedDissection
         int cutoff,
         bool storeFactRecvInds )
 {
-#ifndef RELEASE
-    CallStackEntry cse("NestedDissection");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("NestedDissection"))
     // NOTE: There is a potential memory leak here if these data structures 
     //       are reused. Their destructors should call a member function which
     //       we can simply call here to clear the data
@@ -531,9 +525,7 @@ NestedDissection
 
     // Construct the distributed reordering    
     BuildMap( graph, sepTree, map );
-#ifndef RELEASE
-    EnsurePermutation( map );
-#endif
+    DEBUG_ONLY(EnsurePermutation( map ))
 
     // Run the symbolic analysis
     SymmetricAnalysis( eTree, info, storeFactRecvInds );
@@ -544,9 +536,7 @@ Bisect
 ( const Graph& graph ,Graph& leftChild, Graph& rightChild,
   std::vector<int>& perm, int numSeps )
 {
-#ifndef RELEASE
-    CallStackEntry cse("Bisect");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Bisect"))
     // METIS assumes that there are no self-connections or connections 
     // outside the sources, so we must manually remove them from our graph
     const int numSources = graph.NumSources();
@@ -566,10 +556,10 @@ Bisect
     {
         const int source = graph.Source( edge );
         const int target = graph.Target( edge );
-#ifndef RELEASE
-        if( source < prevSource )
-            RuntimeError("sources were not properly sorted");
-#endif
+        DEBUG_ONLY(
+            if( source < prevSource )
+                RuntimeError("sources were not properly sorted");
+        )
         while( source != prevSource )
         {
             xAdj[sourceOff++] = validCounter;
@@ -581,10 +571,10 @@ Bisect
             ++validCounter;
         }
     }
-#ifndef RELEASE
-    if( sourceOff != numSources )
-        LogicError("Mistake in xAdj computation");
-#endif
+    DEBUG_ONLY(
+        if( sourceOff != numSources )
+            LogicError("Mistake in xAdj computation");
+    )
     xAdj[numSources] = numValidEdges;
 
     // Create space for the result
@@ -598,9 +588,7 @@ Bisect
     CliqBisect
     ( &nvtxs, &xAdj[0], &adjacency[0], &nseps, &imbalance, &perm[0], 
       &sizes[0] );
-#ifndef RELEASE
-    EnsurePermutation( perm );
-#endif
+    DEBUG_ONLY(EnsurePermutation( perm ))
     BuildChildrenFromPerm
     ( graph, perm, sizes[0], leftChild, sizes[1], rightChild );
     return sizes[2];
@@ -616,9 +604,7 @@ Bisect
         int numDistSeps, 
         int numSeqSeps )
 {
-#ifndef RELEASE
-    CallStackEntry cse("Bisect");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Bisect"))
     mpi::Comm comm = graph.Comm();
     const int commSize = mpi::CommSize( comm );
     const int commRank = mpi::CommRank( comm );
@@ -649,10 +635,10 @@ Bisect
     {
         const int source = graph.Source( localEdge );
         const int target = graph.Target( localEdge );
-#ifndef RELEASE
-        if( source < prevSource )
-            RuntimeError("sources were not properly sorted");
-#endif
+        DEBUG_ONLY(
+            if( source < prevSource )
+                RuntimeError("sources were not properly sorted");
+        )
         while( source != prevSource )
         {
             xAdj[sourceOff++] = validCounter;
@@ -664,10 +650,10 @@ Bisect
             ++validCounter;
         }
     }
-#ifndef RELEASE
-    if( sourceOff != numLocalSources )
-        LogicError("Mistake in xAdj computation");
-#endif
+    DEBUG_ONLY(
+        if( sourceOff != numLocalSources )
+            LogicError("Mistake in xAdj computation");
+    )
     xAdj[numLocalSources] = numLocalValidEdges;
 
     idx_t nparseps = numDistSeps;
@@ -786,9 +772,7 @@ Bisect
         ( &vtxDist[0], &xAdj[0], &adjacency[0], &nparseps, &nseqseps, 
           &imbalance, NULL, perm.Buffer(), &sizes[0], &comm );
     }
-#ifndef RELEASE
-    EnsurePermutation( perm );
-#endif
+    DEBUG_ONLY(EnsurePermutation( perm ))
     BuildChildFromPerm( graph, perm, sizes[0], sizes[1], onLeft, child );
     return sizes[2];
 }
@@ -797,9 +781,7 @@ Bisect
 inline void
 EnsurePermutation( const std::vector<int>& map )
 {
-#ifndef RELEASE
-    CallStackEntry cse("EnsurePermutation");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("EnsurePermutation"))
     const int numSources = map.size();
     std::vector<int> timesMapped( numSources, 0 );
     for( int i=0; i<numSources; ++i )
@@ -819,9 +801,7 @@ EnsurePermutation( const std::vector<int>& map )
 inline void
 EnsurePermutation( const DistMap& map )
 {
-#ifndef RELEASE
-    CallStackEntry cse("EnsurePermutation");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("EnsurePermutation"))
     mpi::Comm comm = map.Comm();
     const int commRank = mpi::CommRank( comm );
     const int numSources = map.NumSources();
@@ -922,10 +902,10 @@ BuildChildrenFromPerm
   int leftChildSize, Graph& leftChild,
   int rightChildSize, Graph& rightChild )
 {
-#ifndef RELEASE
-    CallStackEntry cse("BuildChildrenFromPerm");
-    const int sepSize = graph.NumSources() - leftChildSize - rightChildSize;
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("BuildChildrenFromPerm");
+        const int sepSize = graph.NumSources() - leftChildSize - rightChildSize;
+    )
     const int numSources = graph.NumSources();
 
     // Build the inverse permutation
@@ -957,10 +937,10 @@ BuildChildrenFromPerm
             const int target = ( inverseTarget < numSources ? 
                                  perm[inverseTarget] :
                                  inverseTarget );
-#ifndef RELEASE
-            if( target >= leftChildSize && target < (numSources-sepSize) )
-                LogicError("Invalid bisection, left set touches right set");
-#endif
+            DEBUG_ONLY(
+                if( target >= leftChildSize && target < (numSources-sepSize) )
+                    LogicError("Invalid bisection, left set touches right set");
+            )
             leftChild.Insert( source, target );
         }
     }
@@ -982,10 +962,10 @@ BuildChildrenFromPerm
             const int target = ( inverseTarget < numSources ?
                                  perm[inverseTarget] :
                                  inverseTarget );
-#ifndef RELEASE
-            if( target < leftChildSize )
-                LogicError("Invalid bisection, right set touches left set");
-#endif
+            DEBUG_ONLY(
+                if( target < leftChildSize )
+                    LogicError("Invalid bisection, right set touches left set");
+            )
             // The targets that are in parent separators do not need to be
             rightChild.Insert( source-leftChildSize, target-leftChildSize );
         }
@@ -999,11 +979,11 @@ BuildChildFromPerm
   int leftChildSize, int rightChildSize,
   bool& onLeft, DistGraph& child )
 {
-#ifndef RELEASE
-    CallStackEntry cse("BuildChildFromPerm");
-    const int numSources = graph.NumSources();
-    const int sepSize = numSources - leftChildSize - rightChildSize;
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("BuildChildFromPerm");
+        const int numSources = graph.NumSources();
+        const int sepSize = numSources - leftChildSize - rightChildSize;
+    )
     const int numLocalSources = graph.NumLocalSources();
 
     mpi::Comm comm = graph.Comm();
@@ -1196,38 +1176,40 @@ BuildChildFromPerm
     {
         const int source = rowRecvInds[s];
         const int numConnections = rowRecvLengths[s];
-#ifndef RELEASE
-        const int childFirstLocalSource = child.FirstLocalSource();
-        const int numChildLocalSources = child.NumLocalSources();
-        const int adjustedSource = ( onLeft ? source : source-leftChildSize );
-        if( adjustedSource < childFirstLocalSource || 
-            adjustedSource >= childFirstLocalSource+numChildLocalSources )
-            LogicError("source was out of bounds");
-#endif
+        DEBUG_ONLY(
+            const int childFirstLocalSource = child.FirstLocalSource();
+            const int numChildLocalSources = child.NumLocalSources();
+            const int adjustedSource = 
+                ( onLeft ? source : source-leftChildSize );
+            if( adjustedSource < childFirstLocalSource || 
+                adjustedSource >= childFirstLocalSource+numChildLocalSources )
+                LogicError("source was out of bounds");
+        )
         for( int t=0; t<numConnections; ++t )
         {
             const int target = recvInds[off++];
             if( onLeft )
             {
-#ifndef RELEASE
-                if( target >= leftChildSize && target < (numSources-sepSize) )
-                {
-                    std::ostringstream msg;
-                    msg << "Invalid dist bisection, left set touches right:\n"
-                        << "  " << source << " touches " << target << " and "
-                        << "leftChildSize=" << leftChildSize;
-                    LogicError( msg.str() );
-                }
-#endif
+                DEBUG_ONLY(
+                    if( target >= leftChildSize && 
+                        target < (numSources-sepSize) )
+                    {
+                        std::ostringstream msg;
+                        msg << "Invalid bisection, left set touches right:\n"
+                            << "  " << source << " touches " << target << " and"
+                            << " leftChildSize=" << leftChildSize;
+                        LogicError( msg.str() );
+                    }
+                )
                 child.Insert( source, target );
             }
             else
             {
-#ifndef RELEASE
-                if( target < leftChildSize )
-                    LogicError
-                    ("Invalid dist bisection, right set touches left set");
-#endif
+                DEBUG_ONLY(
+                    if( target < leftChildSize )
+                        LogicError
+                        ("Invalid bisection, right set touches left set");
+                )
                 child.Insert( source-leftChildSize, target-leftChildSize );
             }
         }
@@ -1241,9 +1223,7 @@ BuildMap
   const DistSeparatorTree& sepTree, 
         DistMap& map )
 {
-#ifndef RELEASE
-    CallStackEntry cse("BuildMap");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("BuildMap"))
     mpi::Comm comm = graph.Comm();
     const int commSize = mpi::CommSize( comm );
     const int numSources = graph.NumSources();
@@ -1268,15 +1248,15 @@ BuildMap
         for( int t=0; t<numInds; ++t )
         {
             const int i = sepOrLeaf.inds[t];
-#ifndef RELEASE
-            if( i < 0 || i >= graph.NumSources() )
-            {
-                std::ostringstream msg;
-                msg << "local separator index, " << i << ", was not in [0,"
-                    << graph.NumSources() << ")";
-                LogicError( msg.str() );
-            }
-#endif
+            DEBUG_ONLY(
+                if( i < 0 || i >= graph.NumSources() )
+                {
+                    std::ostringstream msg;
+                    msg << "local separator index, " << i << ", was not in [0,"
+                        << graph.NumSources() << ")";
+                    LogicError( msg.str() );
+                }
+            )
             const int q = RowToProcess( i, blocksize, commSize );
             ++sendSizes[q];
         }
@@ -1292,15 +1272,15 @@ BuildMap
         {
             const int t = teamRank + tLocal*teamSize;
             const int i = sep.inds[t];
-#ifndef RELEASE
-            if( i < 0 || i >= graph.NumSources() )
-            {
-                std::ostringstream msg;
-                msg << "dist separator index, " << i << ", was not in [0,"
-                    << graph.NumSources() << ")";
-                LogicError( msg.str() );
-            }
-#endif
+            DEBUG_ONLY(
+                if( i < 0 || i >= graph.NumSources() )
+                {
+                    std::ostringstream msg;
+                    msg << "dist separator index, " << i << ", was not in [0,"
+                        << graph.NumSources() << ")";
+                    LogicError( msg.str() );
+                }
+            )
             const int q = RowToProcess( i, blocksize, commSize );
             ++sendSizes[q];
         }
@@ -1363,11 +1343,11 @@ BuildMap
         recvOffs[q] = numRecvs;
         numRecvs += recvSizes[q];
     }
-#ifndef RELEASE
-    const int numLocalSources = map.NumLocalSources();
-    if( numRecvs != numLocalSources )
-        LogicError("incorrect number of recv indices");
-#endif
+    DEBUG_ONLY(
+        const int numLocalSources = map.NumLocalSources();
+        if( numRecvs != numLocalSources )
+            LogicError("incorrect number of recv indices");
+    )
     std::vector<int> recvInds( numRecvs );
     mpi::AllToAll
     ( &sendInds[0], &sendSizes[0], &sendOffs[0],
@@ -1385,25 +1365,25 @@ BuildMap
     {
         const int i = recvOrigInds[s];
         const int iLocal = i - firstLocalSource;
-#ifndef RELEASE
-        if( iLocal < 0 || iLocal >= numLocalSources )
-        {
-            std::ostringstream msg;
-            msg << "Local index was out of bounds: " << iLocal 
-                << " is not in [0," << numLocalSources << ")" << std::endl;
-            LogicError( msg.str() );
-        }
-#endif
+        DEBUG_ONLY(
+            if( iLocal < 0 || iLocal >= numLocalSources )
+            {
+                std::ostringstream msg;
+                msg << "Local index was out of bounds: " << iLocal 
+                    << " is not in [0," << numLocalSources << ")" << std::endl;
+                LogicError( msg.str() );
+            }
+        )
         const int iMapped = recvInds[s];
-#ifndef RELEASE
-        if( iMapped < 0 || iMapped >= graph.NumSources() )
-        {
-            std::ostringstream msg;
-            msg << "mapped index, " << iMapped << ", was not in [0,"
-                << graph.NumSources() << ")";
-            LogicError( msg.str() );
-        }
-#endif
+        DEBUG_ONLY(
+            if( iMapped < 0 || iMapped >= graph.NumSources() )
+            {
+                std::ostringstream msg;
+                msg << "mapped index, " << iMapped << ", was not in [0,"
+                    << graph.NumSources() << ")";
+                LogicError( msg.str() );
+            }
+        )
         map.SetLocal( iLocal, iMapped );
     }
 }

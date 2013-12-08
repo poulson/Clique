@@ -25,26 +25,26 @@ template<typename F>
 inline void 
 LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
 {
-#ifndef RELEASE
-    CallStackEntry cse("LocalLDL");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("LocalLDL"))
     const bool blockLDL = ( L.frontType == BLOCK_LDL_2D ||
                             L.frontType == BLOCK_LDL_INTRAPIV_2D );
-    const bool intraPiv = ( L.frontType == BLOCK_LDL_INTRAPIV_2D );
+    const bool intraPiv = ( L.frontType == LDL_INTRAPIV_2D || 
+                            L.frontType == BLOCK_LDL_INTRAPIV_2D );
 
     const int numLocalNodes = info.localNodes.size();
     for( int s=0; s<numLocalNodes; ++s )
     {
         SymmNodeInfo& node = info.localNodes[s];
         const int updateSize = node.lowerStruct.size();
-        Matrix<F>& frontL = L.localFronts[s].frontL;
-        Matrix<F>& frontBR = L.localFronts[s].work;
+        SymmFront<F>& front = L.localFronts[s];
+        Matrix<F>& frontL = front.frontL;
+        Matrix<F>& frontBR = front.work;
         frontBR.Empty();
-#ifndef RELEASE
-        if( frontL.Height() != node.size+updateSize ||
-            frontL.Width() != node.size )
-            LogicError("Front was not the proper size");
-#endif
+        DEBUG_ONLY(
+            if( frontL.Height() != node.size+updateSize ||
+                frontL.Width() != node.size )
+                LogicError("Front was not the proper size");
+        )
 
         // Add updates from children (if they exist)
         Zeros( frontBR, updateSize, updateSize );
@@ -65,10 +65,10 @@ LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
                 {
                     const int iFront = node.leftRelInds[iChild];
                     const F value = leftUpdate.Get(iChild,jChild);
-#ifndef RELEASE
-                    if( iFront < jFront )
-                        LogicError("Tried to update upper triangle");
-#endif
+                    DEBUG_ONLY(
+                        if( iFront < jFront )
+                            LogicError("Tried to update upper triangle");
+                    )
                     if( jFront < node.size )
                         frontL.Update( iFront, jFront, value );
                     else if( iFront >= node.size )
@@ -87,10 +87,10 @@ LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
                 {
                     const int iFront = node.rightRelInds[iChild];
                     const F value = rightUpdate.Get(iChild,jChild);
-#ifndef RELEASE
-                    if( iFront < jFront )
-                        LogicError("Tried to update upper triangle");
-#endif
+                    DEBUG_ONLY(
+                        if( iFront < jFront )
+                            LogicError("Tried to update upper triangle");
+                    )
                     if( jFront < node.size )
                         frontL.Update( iFront, jFront, value );
                     else if( iFront >= node.size )
@@ -104,10 +104,17 @@ LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
         // Call the custom partial LDL
         if( blockLDL )
             FrontBlockLDL( frontL, frontBR, L.isHermitian, intraPiv );
+        else if( intraPiv )
+        {
+            FrontLDLIntraPiv
+            ( frontL, front.subdiag, front.piv, frontBR, L.isHermitian );
+            frontL.GetDiagonal( front.diag );
+            elem::SetDiagonal( frontL, F(1) );
+        }
         else
         {
             FrontLDL( frontL, frontBR, L.isHermitian );
-            frontL.GetDiagonal( L.localFronts[s].diag );
+            frontL.GetDiagonal( front.diag );
             elem::SetDiagonal( frontL, F(1) );
         }
     }

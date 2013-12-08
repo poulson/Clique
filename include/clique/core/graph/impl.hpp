@@ -33,9 +33,7 @@ Graph::Graph( int numSources, int numTargets )
 inline
 Graph::Graph( const Graph& graph )
 {
-#ifndef RELEASE
-    CallStackEntry cse("Graph::Graph");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Graph::Graph"))
     if( &graph != this )
         *this = graph;
     else
@@ -45,9 +43,7 @@ Graph::Graph( const Graph& graph )
 inline
 Graph::Graph( const DistGraph& graph )
 {
-#ifndef RELEASE
-    CallStackEntry cse("Graph::Graph");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Graph::Graph"))
     *this = graph;
 }
 
@@ -66,32 +62,32 @@ Graph::NumTargets() const
 inline int
 Graph::NumEdges() const
 {
-#ifndef RELEASE
-    CallStackEntry cse("Graph::NumEdges");
-    EnsureConsistentSizes();
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("Graph::NumEdges");
+        EnsureConsistentSizes();
+    )
     return sources_.size();
 }
 
 inline int
 Graph::Capacity() const
 {
-#ifndef RELEASE
-    CallStackEntry cse("Graph::Capacity");
-    EnsureConsistentSizes();
-    EnsureConsistentCapacities();
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("Graph::Capacity");
+        EnsureConsistentSizes();
+        EnsureConsistentCapacities();
+    )
     return sources_.capacity();
 }
 
 inline int
 Graph::Source( int edge ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("Graph::Source");
-    if( edge < 0 || edge >= (int)sources_.size() )
-        LogicError("Edge number out of bounds");
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("Graph::Source");
+        if( edge < 0 || edge >= (int)sources_.size() )
+            LogicError("Edge number out of bounds");
+    )
     EnsureNotAssembling();
     return sources_[edge];
 }
@@ -99,11 +95,11 @@ Graph::Source( int edge ) const
 inline int
 Graph::Target( int edge ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("Graph::Target");
-    if( edge < 0 || edge >= (int)targets_.size() )
-        LogicError("Edge number out of bounds");
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("Graph::Target");
+        if( edge < 0 || edge >= (int)targets_.size() )
+            LogicError("Edge number out of bounds");
+    )
     EnsureNotAssembling();
     return targets_[edge];
 }
@@ -111,18 +107,18 @@ Graph::Target( int edge ) const
 inline int
 Graph::EdgeOffset( int source ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("Graph::EdgeOffset");
-    if( source < 0 )
-        LogicError("Negative source index");
-    if( source > numSources_ )
-    {
-        std::ostringstream msg;
-        msg << "Source index was too large: " << source << " is not in "
-            << "[0," << numSources_ << "]";
-        LogicError( msg.str() );
-    }
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("Graph::EdgeOffset");
+        if( source < 0 )
+            LogicError("Negative source index");
+        if( source > numSources_ )
+        {
+            std::ostringstream msg;
+            msg << "Source index was too large: " << source << " is not in "
+                << "[0," << numSources_ << "]";
+            LogicError( msg.str() );
+        }
+    )
     EnsureNotAssembling();
     return edgeOffsets_[source];
 }
@@ -130,9 +126,7 @@ Graph::EdgeOffset( int source ) const
 inline int
 Graph::NumConnections( int source ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("Graph::NumConnections");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Graph::NumConnections"))
     return EdgeOffset(source+1) - EdgeOffset(source);
 }
 
@@ -155,9 +149,7 @@ Graph::LockedTargetBuffer() const
 inline const Graph&
 Graph::operator=( const Graph& graph )
 {
-#ifndef RELEASE
-    CallStackEntry cse("Graph::operator=");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Graph::operator="))
     numSources_ = graph.numSources_;
     numTargets_ = graph.numTargets_;
     sources_ = graph.sources_; 
@@ -172,9 +164,7 @@ Graph::operator=( const Graph& graph )
 inline const Graph&
 Graph::operator=( const DistGraph& graph )
 {
-#ifndef RELEASE
-    CallStackEntry cse("Graph::operator=");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Graph::operator="))
     mpi::Comm comm = graph.Comm();
     const int commSize = mpi::CommSize( comm );
     if( commSize != 1 )
@@ -200,9 +190,7 @@ Graph::ComparePairs
 inline void
 Graph::StartAssembly()
 {
-#ifndef RELEASE
-    CallStackEntry cse("Graph::StartAssembly");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Graph::StartAssembly"))
     EnsureNotAssembling();
     assembling_ = true;
 }
@@ -210,9 +198,7 @@ Graph::StartAssembly()
 inline void
 Graph::StopAssembly()
 {
-#ifndef RELEASE
-    CallStackEntry cse("Graph::StopAssembly");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Graph::StopAssembly"))
     if( !assembling_ )
         LogicError("Cannot stop assembly without starting");
     assembling_ = false;
@@ -251,9 +237,7 @@ Graph::StopAssembly()
 inline void
 Graph::ComputeEdgeOffsets()
 {
-#ifndef RELEASE
-    CallStackEntry cse("Graph::ComputeEdgeOffsets");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Graph::ComputeEdgeOffsets"))
     // Compute the edge offsets
     int sourceOffset = 0;
     int prevSource = -1;
@@ -262,10 +246,10 @@ Graph::ComputeEdgeOffsets()
     for( int edge=0; edge<numEdges; ++edge )
     {
         const int source = Source( edge );
-#ifndef RELEASE
-        if( source < prevSource )
-            RuntimeError("sources were not properly sorted");
-#endif
+        DEBUG_ONLY(
+            if( source < prevSource )
+                RuntimeError("sources were not properly sorted");
+        )
         while( source != prevSource )
         {
             edgeOffsets_[sourceOffset++] = edge;
@@ -285,22 +269,22 @@ Graph::Reserve( int numEdges )
 inline void
 Graph::Insert( int source, int target )
 {
-#ifndef RELEASE
-    CallStackEntry cse("Graph::Insert");
-    EnsureConsistentSizes();
-    const int capacity = Capacity();
-    const int numEdges = NumEdges();
-    if( source < 0 || source >= numSources_ )
-    {
-        std::ostringstream msg;
-        msg << "Source was out of bounds: " << source << " is not in [0,"
-            << numSources_ << ")";
-        LogicError( msg.str() );
-    }
-    if( numEdges == capacity )
-        std::cerr << "WARNING: Pushing back without first reserving space" 
-                  << std::endl;
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("Graph::Insert");
+        EnsureConsistentSizes();
+        const int capacity = Capacity();
+        const int numEdges = NumEdges();
+        if( source < 0 || source >= numSources_ )
+        {
+            std::ostringstream msg;
+            msg << "Source was out of bounds: " << source << " is not in [0,"
+                << numSources_ << ")";
+            LogicError( msg.str() );
+        }
+        if( numEdges == capacity )
+            std::cerr << "WARNING: Pushing back without first reserving space" 
+                      << std::endl;
+    )
     if( !assembling_ )
         LogicError("Must start assembly before pushing back");
     if( sorted_ && sources_.size() != 0 )

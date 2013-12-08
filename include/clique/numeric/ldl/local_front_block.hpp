@@ -25,14 +25,9 @@ template<typename F>
 inline void FrontBlockLDL
 ( Matrix<F>& AL, Matrix<F>& ABR, bool conjugate, bool intraPiv )
 {
-#ifndef RELEASE
-    CallStackEntry cse("FrontBlockLDL");
-#endif
-    Matrix<F> ATL,
-              ABL;
-    PartitionDown
-    ( AL, ATL,
-          ABL, AL.Width() );
+    DEBUG_ONLY(CallStackEntry cse("FrontBlockLDL"))
+    Matrix<F> ATL, ABL;
+    PartitionDown( AL, ATL, ABL, AL.Width() );
     
     // Make a copy of the original contents of ABL
     Matrix<F> BBL( ABL );

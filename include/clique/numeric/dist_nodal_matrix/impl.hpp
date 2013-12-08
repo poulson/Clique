@@ -25,9 +25,7 @@ DistNodalMatrix<F>::DistNodalMatrix
 ( const DistMap& inverseMap, const DistSymmInfo& info,
   const DistMultiVec<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistNodalMatrix::DistNodalMatrix");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistNodalMatrix::DistNodalMatrix"))
     Pull( inverseMap, info, X );
 }
 
@@ -35,9 +33,7 @@ template<typename F>
 inline
 DistNodalMatrix<F>::DistNodalMatrix( const DistNodalMultiVec<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistNodalMatrix::DistNodalMatrix");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistNodalMatrix::DistNodalMatrix"))
     *this = X;
     commMetas.clear();
 }
@@ -46,9 +42,7 @@ template<typename F>
 inline const DistNodalMatrix<F>&
 DistNodalMatrix<F>::operator=( const DistNodalMultiVec<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistNodalMatrix::operator=");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistNodalMatrix::operator="))
     commMetas.clear();
     height_ = X.Height();
     width_ = X.Width();
@@ -77,9 +71,7 @@ DistNodalMatrix<F>::Pull
 ( const DistMap& inverseMap, const DistSymmInfo& info,
   const DistMultiVec<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistNodalMatrix::Pull");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistNodalMatrix::Pull"))
     DistNodalMultiVec<F> XMultiVec( inverseMap, info, X );
     *this = XMultiVec;
     ComputeCommMetas( info );
@@ -91,9 +83,7 @@ DistNodalMatrix<F>::Push
 ( const DistMap& inverseMap, const DistSymmInfo& info,
         DistMultiVec<F>& X ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistNodalMatrix::Push");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistNodalMatrix::Push"))
     DistNodalMultiVec<F> XMultiVec( *this );
     XMultiVec.Push( inverseMap, info, X );
 }
@@ -112,9 +102,7 @@ template<typename F>
 inline void
 DistNodalMatrix<F>::ComputeCommMetas( const DistSymmInfo& info ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistNodalMatrix::ComputeCommMetas");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistNodalMatrix::ComputeCommMetas"))
     const int numDist = info.distNodes.size();
     commMetas.resize( numDist-1 );
 

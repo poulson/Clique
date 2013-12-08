@@ -25,12 +25,11 @@ template<typename F>
 inline void 
 DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistLDL");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistLDL"))
     const bool blockLDL = ( L.frontType == BLOCK_LDL_2D ||
                             L.frontType == BLOCK_LDL_INTRAPIV_2D );
-    const bool intraPiv = ( L.frontType == BLOCK_LDL_INTRAPIV_2D );
+    const bool intraPiv = ( L.frontType == LDL_INTRAPIV_2D ||
+                            L.frontType == BLOCK_LDL_INTRAPIV_2D );
 
     // The bottom front is already computed, so just view it
     SymmFront<F>& topLocalFront = L.localFronts.back();
@@ -66,11 +65,11 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
         DistSymmFront<F>& childFront = L.distFronts[s-1];
         DistSymmFront<F>& front = L.distFronts[s];
         front.work2d.Empty();
-#ifndef RELEASE
-        if( front.front2dL.Height() != node.size+updateSize ||
-            front.front2dL.Width() != node.size )
-            LogicError("Front was not the proper size");
-#endif
+        DEBUG_ONLY(
+            if( front.front2dL.Height() != node.size+updateSize ||
+                front.front2dL.Width() != node.size )
+                LogicError("Front was not the proper size");
+        )
 
         // Grab this front's grid information
         const Grid& grid = front.front2dL.Grid();
@@ -130,14 +129,14 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
                 }
             }
         }
-#ifndef RELEASE
-        for( unsigned proc=0; proc<commSize; ++proc )
-        {
-            if( packOffs[proc]-sendDispls[proc] != 
-                commMeta.numChildSendInds[proc] )
-                LogicError("Error in packing stage");
-        }
-#endif
+        DEBUG_ONLY(
+            for( unsigned proc=0; proc<commSize; ++proc )
+            {
+                if( packOffs[proc]-sendDispls[proc] != 
+                    commMeta.numChildSendInds[proc] )
+                    LogicError("Error in packing stage");
+            }
+        )
         SwapClear( packOffs );
         childFront.work2d.Empty();
         if( s == 1 )
@@ -157,9 +156,7 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
             recvBufferSize += recvSize;
         }
         std::vector<F> recvBuffer( recvBufferSize );
-#ifndef RELEASE
-        VerifySendsAndRecvs( sendCounts, recvCounts, comm );
-#endif
+        DEBUG_ONLY(VerifySendsAndRecvs( sendCounts, recvCounts, comm ))
 
         // AllToAll to send and receive the child updates
         SparseAllToAll
@@ -185,12 +182,12 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
                 const Int iFrontLoc = recvInds[2*k+0];
                 const Int jFrontLoc = recvInds[2*k+1];
                 const F value = recvVals[k];
-#ifndef RELEASE
-                const Int iFront = grid.Row() + iFrontLoc*gridHeight;
-                const Int jFront = grid.Col() + jFrontLoc*gridWidth;
-                if( iFront < jFront )
-                    LogicError("Tried to update upper triangle");
-#endif
+                DEBUG_ONLY(
+                    const Int iFront = grid.Row() + iFrontLoc*gridHeight;
+                    const Int jFront = grid.Col() + jFrontLoc*gridWidth;
+                    if( iFront < jFront )
+                        LogicError("Tried to update upper triangle");
+                )
                 if( jFrontLoc < leftLocalWidth )
                     front.front2dL.UpdateLocal( iFrontLoc, jFrontLoc, value );
                 else
@@ -209,13 +206,27 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
         if( blockLDL )
             FrontBlockLDL
             ( front.front2dL, front.work2d, L.isHermitian, intraPiv );
+        else if( intraPiv )
+        {
+            DistMatrix<F,MD,STAR> subdiag( grid );
+            front.piv.SetGrid( grid );
+            FrontLDLIntraPiv
+            ( front.front2dL, subdiag, front.piv, front.work2d, L.isHermitian );
+
+            // Store the main and subdiagonals in [VC,* ] distributions
+            auto diag = front.front2dL.GetDiagonal();
+            front.diag1d.SetGrid( grid );
+            front.subdiag1d.SetGrid( grid );
+            front.diag1d = diag;
+            front.subdiag1d = subdiag;
+            elem::SetDiagonal( front.front2dL, F(1) );
+        }
         else
         {
             FrontLDL( front.front2dL, front.work2d, L.isHermitian );
 
             // Store the diagonal in a [VC,* ] distribution
-            DistMatrix<F,MD,STAR> diag( grid );
-            front.front2dL.GetDiagonal( diag );
+            auto diag = front.front2dL.GetDiagonal();
             front.diag1d.SetGrid( grid );
             front.diag1d = diag;
             elem::SetDiagonal( front.front2dL, F(1) );

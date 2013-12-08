@@ -44,9 +44,7 @@ template<typename F>
 inline void InitializeDistLeaf
 ( const DistSymmInfo& info, DistSymmFrontTree<F>& L )
 {
-#ifndef RELEASE
-    CallStackEntry cse("InitializeDistLeaf");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("InitializeDistLeaf"))
     const DistSymmNodeInfo& node = info.distNodes[0];
     Matrix<F>& topLocalFrontL = L.localFronts.back().frontL;
     DistMatrix<F>& front2dL = L.distFronts[0].front2dL;
@@ -61,25 +59,24 @@ template<typename F>
 inline void 
 LDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, SymmFrontType newFrontType )
 {
-#ifndef RELEASE
-    CallStackEntry cse("LDL");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("LDL"))
     if( L.frontType != SYMM_2D )
         LogicError
         ("Should only perform LDL factorization of 2D symmetric/Hermitian "
          "matrices");
 
-    bool blockLDL;
-    if( newFrontType == LDL_2D || newFrontType == LDL_1D || 
+    if( newFrontType == LDL_2D        || newFrontType == LDL_1D || 
         newFrontType == LDL_SELINV_2D || newFrontType == LDL_SELINV_1D )
     {
-        blockLDL = false;
         L.frontType = LDL_2D;
+    }
+    else if( newFrontType == LDL_INTRAPIV_2D )
+    {
+        L.frontType = LDL_INTRAPIV_2D;    
     }
     else if( newFrontType == BLOCK_LDL_2D || 
              newFrontType == BLOCK_LDL_INTRAPIV_2D )
     {
-        blockLDL = true;
         L.frontType = newFrontType;
     }
     else

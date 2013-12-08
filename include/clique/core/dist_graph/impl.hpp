@@ -36,18 +36,14 @@ DistGraph::DistGraph( int numSources, int numTargets, mpi::Comm comm )
 inline
 DistGraph::DistGraph( const Graph& graph )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistGraph::DistGraph");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistGraph::DistGraph"))
     *this = graph;
 }
 
 inline
 DistGraph::DistGraph( const DistGraph& graph )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistGraph::DistGraph");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistGraph::DistGraph"))
     if( &graph != this )
         *this = graph;
     else
@@ -115,32 +111,32 @@ DistGraph::NumLocalSources() const
 inline int
 DistGraph::NumLocalEdges() const
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistGraph::NumLocalEdges");
-    EnsureConsistentSizes();
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("DistGraph::NumLocalEdges");
+        EnsureConsistentSizes();
+    )
     return sources_.size();
 }
 
 inline int
 DistGraph::Capacity() const
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistGraph::Capacity");
-    EnsureConsistentSizes();
-    EnsureConsistentCapacities();
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("DistGraph::Capacity");
+        EnsureConsistentSizes();
+        EnsureConsistentCapacities();
+    )
     return sources_.capacity();
 }
 
 inline int
 DistGraph::Source( int localEdge ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistGraph::Source");
-    if( localEdge < 0 || localEdge >= (int)sources_.size() )
-        LogicError("Edge number out of bounds");
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("DistGraph::Source");
+        if( localEdge < 0 || localEdge >= (int)sources_.size() )
+            LogicError("Edge number out of bounds");
+    )
     EnsureNotAssembling();
     return sources_[localEdge];
 }
@@ -148,11 +144,11 @@ DistGraph::Source( int localEdge ) const
 inline int
 DistGraph::Target( int localEdge ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistGraph::Target");
-    if( localEdge < 0 || localEdge >= (int)targets_.size() )
-        LogicError("Edge number out of bounds");
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("DistGraph::Target");
+        if( localEdge < 0 || localEdge >= (int)targets_.size() )
+            LogicError("Edge number out of bounds");
+    )
     EnsureNotAssembling();
     return targets_[localEdge];
 }
@@ -160,16 +156,16 @@ DistGraph::Target( int localEdge ) const
 inline int
 DistGraph::LocalEdgeOffset( int localSource ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistGraph::LocalEdgeOffset");
-    if( localSource < 0 || localSource > numLocalSources_ )
-    {
-        std::ostringstream msg;
-        msg << "Out of bounds localSource: " << localSource << " is not in ["
-            << "0," << numLocalSources_ << ")";
-        LogicError( msg.str() );
-    }
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("DistGraph::LocalEdgeOffset");
+        if( localSource < 0 || localSource > numLocalSources_ )
+        {
+            std::ostringstream msg;
+            msg << "Out of bounds localSource: " << localSource 
+                << " is not in [" << "0," << numLocalSources_ << ")";
+            LogicError( msg.str() );
+        }
+    )
     EnsureNotAssembling();
     return localEdgeOffsets_[localSource];
 }
@@ -177,9 +173,7 @@ DistGraph::LocalEdgeOffset( int localSource ) const
 inline int
 DistGraph::NumConnections( int localSource ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistGraph::NumConnections");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistGraph::NumConnections"))
     return LocalEdgeOffset(localSource+1) - LocalEdgeOffset(localSource);
 }
 
@@ -202,9 +196,7 @@ DistGraph::LockedTargetBuffer() const
 inline const DistGraph&
 DistGraph::operator=( const Graph& graph )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistGraph::operator=");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistGraph::operator="))
     numSources_ = graph.numSources_; 
     numTargets_ = graph.numTargets_;
 
@@ -222,9 +214,7 @@ DistGraph::operator=( const Graph& graph )
 inline const DistGraph& 
 DistGraph::operator=( const DistGraph& graph )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistGraph::operator=");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistGraph::operator="))
     numSources_ = graph.numSources_;
     numTargets_ = graph.numTargets_;
 
@@ -247,9 +237,7 @@ DistGraph::ComparePairs
 inline void
 DistGraph::StartAssembly()
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistGraph::StartAssembly");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistGraph::StartAssembly"))
     EnsureNotAssembling();
     assembling_ = true;
 }
@@ -257,9 +245,7 @@ DistGraph::StartAssembly()
 inline void
 DistGraph::StopAssembly()
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistGraph::StopAssembly");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistGraph::StopAssembly"))
     if( !assembling_ )
         LogicError("Cannot stop assembly without starting");
     assembling_ = false;
@@ -298,9 +284,7 @@ DistGraph::StopAssembly()
 inline void
 DistGraph::ComputeLocalEdgeOffsets()
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistGraph::ComputeLocalEdgeOffsets");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistGraph::ComputeLocalEdgeOffsets"))
     // Compute the local edge offsets
     int sourceOffset = 0;
     int prevSource = firstLocalSource_-1;
@@ -309,10 +293,10 @@ DistGraph::ComputeLocalEdgeOffsets()
     for( int localEdge=0; localEdge<numLocalEdges; ++localEdge )
     {
         const int source = Source( localEdge );
-#ifndef RELEASE
-        if( source < prevSource )
-            RuntimeError("sources were not properly sorted");
-#endif
+        DEBUG_ONLY(
+            if( source < prevSource )
+                RuntimeError("sources were not properly sorted");
+        )
         while( source != prevSource )
         {
             localEdgeOffsets_[sourceOffset++] = localEdge;
@@ -332,24 +316,24 @@ DistGraph::Reserve( int numLocalEdges )
 inline void
 DistGraph::Insert( int source, int target )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistGraph::Insert");
-    EnsureConsistentSizes();
-    const int capacity = Capacity();
-    const int numLocalEdges = NumLocalEdges();
-    if( source < firstLocalSource_ || 
-        source >= firstLocalSource_+numLocalSources_ )
-    {
-        std::ostringstream msg;
-        msg << "Source was out of bounds: " << source << " is not in ["
-            << firstLocalSource_ << "," << firstLocalSource_+numLocalSources_
-            << ")";
-        LogicError( msg.str() );
-    }
-    if( numLocalEdges == capacity )
-        std::cerr << "WARNING: Pushing back without first reserving space" 
-                  << std::endl;
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("DistGraph::Insert");
+        EnsureConsistentSizes();
+        const int capacity = Capacity();
+        const int numLocalEdges = NumLocalEdges();
+        if( source < firstLocalSource_ || 
+            source >= firstLocalSource_+numLocalSources_ )
+        {
+            std::ostringstream msg;
+            msg << "Source was out of bounds: " << source << " is not in ["
+                << firstLocalSource_ << "," 
+                << firstLocalSource_+numLocalSources_ << ")";
+            LogicError( msg.str() );
+        }
+        if( numLocalEdges == capacity )
+            std::cerr << "WARNING: Pushing back without first reserving space" 
+                      << std::endl;
+    )
     if( !assembling_ )
         LogicError("Must start assembly before pushing back");
     if( sorted_ && sources_.size() != 0 )

@@ -42,9 +42,7 @@ void DisplayLocal
 inline void
 Display( const Graph& graph, std::string title )
 {
-#ifndef RELEASE
-    CallStackEntry cse("Display [Graph]");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Display [Graph]"))
 #ifdef HAVE_QT5
     Matrix<int>* graphMat = new Matrix<int>;
     const int m = graph.NumTargets();
@@ -72,9 +70,7 @@ Display( const Graph& graph, std::string title )
 inline void
 Display( const DistGraph& graph, std::string title ) 
 {
-#ifndef RELEASE
-    CallStackEntry cse("Display [DistGraph]");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Display [DistGraph]"))
 #ifdef HAVE_QT5
     const mpi::Comm comm = graph.Comm();
     const int commSize = mpi::CommSize( comm );
@@ -129,9 +125,7 @@ template<typename T>
 inline void
 Display( const SparseMatrix<T>& A, std::string title )
 {
-#ifndef RELEASE
-    CallStackEntry cse("Print [SparseMatrix]");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Print [SparseMatrix]"))
 #ifdef HAVE_QT5
     Matrix<double>* AFull = new Matrix<double>;
     const int m = A.Height();
@@ -161,9 +155,7 @@ template<typename T>
 inline void
 Display( const SparseMatrix<Complex<T> >& A, std::string title )
 {
-#ifndef RELEASE
-    CallStackEntry cse("Print [SparseMatrix]");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Print [SparseMatrix]"))
 #ifdef HAVE_QT5
     Matrix<Complex<double> >* AFull = new Matrix<Complex<double> >;
     const int m = A.Height();
@@ -197,9 +189,7 @@ template<typename T>
 inline void
 Display( const DistSparseMatrix<T>& A, std::string title )
 {
-#ifndef RELEASE
-    CallStackEntry cse("Display [DistSparseMatrix]");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Display [DistSparseMatrix]"))
 #ifdef HAVE_QT5
     const mpi::Comm comm = A.Comm();
     const int commSize = mpi::CommSize( comm );
@@ -260,9 +250,7 @@ template<typename T>
 inline void
 Display( const DistSparseMatrix<Complex<T> >& A, std::string title )
 {
-#ifndef RELEASE
-    CallStackEntry cse("Display [DistSparseMatrix]");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Display [DistSparseMatrix]"))
 #ifdef HAVE_QT5
     const mpi::Comm comm = A.Comm();
     const int commSize = mpi::CommSize( comm );
@@ -327,9 +315,7 @@ Display( const DistSparseMatrix<Complex<T> >& A, std::string title )
 inline void 
 DisplayLocal( const DistSymmInfo& info, bool beforeFact, std::string title )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DisplayLocal [DistSymmInfo]");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DisplayLocal [DistSymmInfo]"))
 #ifdef HAVE_QT5
     const int n = info.distNodes.back().size + info.distNodes.back().off;
     Matrix<int>* graphMat = new Matrix<int>;

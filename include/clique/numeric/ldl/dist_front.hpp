@@ -16,6 +16,11 @@ namespace cliq {
 template<typename F> 
 void FrontLDL( DistMatrix<F>& AL, DistMatrix<F>& ABR, bool conjugate=false );
 
+template<typename F>
+void FrontLDLIntraPiv
+( DistMatrix<F>& AL, DistMatrix<F,MD,STAR>& subdiag, 
+  DistMatrix<Int,VC,STAR>& piv, DistMatrix<F>& ABR, bool conjugate=false );
+
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
 //----------------------------------------------------------------------------//
@@ -26,31 +31,26 @@ template<typename F>
 inline void FrontLDLGeneral
 ( DistMatrix<F>& AL, DistMatrix<F>& ABR, bool conjugate=false )
 {
-#ifndef RELEASE
-    CallStackEntry cse("internal::FrontLDLGeneral");
-    if( ABR.Height() != ABR.Width() )
-        LogicError("ABR must be square");
-    if( AL.Height() != AL.Width()+ABR.Height() )
-        LogicError("AL and ABR must have compatible dimensions");
-    if( AL.Grid() != ABR.Grid() )
-        LogicError("AL and ABR must use the same grid");
-    if( ABR.ColAlign() !=
-        (AL.ColAlign()+AL.Width()) % AL.Grid().Height() )
-        LogicError("AL and ABR must have compatible col alignments");
-    if( ABR.RowAlign() != 
-        (AL.RowAlign()+AL.Width()) % AL.Grid().Width() )
-        LogicError("AL and ABR must have compatible row alignments");
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("internal::FrontLDLGeneral");
+        if( ABR.Height() != ABR.Width() )
+            LogicError("ABR must be square");
+        if( AL.Height() != AL.Width()+ABR.Height() )
+            LogicError("AL and ABR must have compatible dimensions");
+        if( AL.Grid() != ABR.Grid() )
+            LogicError("AL and ABR must use the same grid");
+        if( ABR.ColAlign() !=
+            (AL.ColAlign()+AL.Width()) % AL.Grid().Height() )
+            LogicError("AL and ABR must have compatible col alignments");
+        if( ABR.RowAlign() != 
+            (AL.RowAlign()+AL.Width()) % AL.Grid().Width() )
+            LogicError("AL and ABR must have compatible row alignments");
+    )
     const Grid& g = AL.Grid();
+    const Int m = AL.Height();
+    const Int n = AL.Width();
     const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
 
-    // Matrix views
-    DistMatrix<F>
-        ALTL(g), ALTR(g),  AL00(g), AL01(g), AL02(g),
-        ALBL(g), ALBR(g),  AL10(g), AL11(g), AL12(g),
-                           AL20(g), AL21(g), AL22(g);
-
-    // Temporary matrices
     DistMatrix<F,STAR,STAR> AL11_STAR_STAR(g);
     DistMatrix<F,STAR,STAR> d1_STAR_STAR(g);
     DistMatrix<F,VC,  STAR> AL21_VC_STAR(g);
@@ -60,63 +60,46 @@ inline void FrontLDLGeneral
 
     DistMatrix<F,STAR,MC> leftL(g), leftR(g);
     DistMatrix<F,STAR,MR> rightL(g), rightR(g);
-    DistMatrix<F> AL22T(g), 
-                  AL22B(g);
+    DistMatrix<F> AL22T(g), AL22B(g);
 
-    // Start the algorithm
-    PartitionDownDiagonal
-    ( AL, ALTL, ALTR,
-          ALBL, ALBR, 0 );
-    while( ALTL.Width() < AL.Width() )
+    const Int bsize = elem::Blocksize();
+    for( Int k=0; k<n; k+=bsize )
     {
-        elem::RepartitionDownDiagonal
-        ( ALTL, /**/ ALTR,  AL00, /**/ AL01, AL02,
-         /***************/ /*********************/
-               /**/         AL10, /**/ AL11, AL12,
-          ALBL, /**/ ALBR,  AL20, /**/ AL21, AL22 );
+        const Int nb = elem::Min(bsize,n-k);
+        auto AL11 = ViewRange( AL, k,    k,    k+nb, k+nb );
+        auto AL21 = ViewRange( AL, k+nb, k,    m,    k+nb );
+        auto AL22 = ViewRange( AL, k+nb, k+nb, m,    n    ); 
 
-        AL21_VC_STAR.AlignWith( AL22 );
-        AL21_VR_STAR.AlignWith( AL22 );
-        S21Trans_STAR_MC.AlignWith( AL22 );
-        AL21Trans_STAR_MR.AlignWith( AL22 );
-        //--------------------------------------------------------------------//
         AL11_STAR_STAR = AL11; 
         elem::LocalLDL( AL11_STAR_STAR, conjugate );
         AL11_STAR_STAR.GetDiagonal( d1_STAR_STAR );
         AL11 = AL11_STAR_STAR;
 
+        AL21_VC_STAR.AlignWith( AL22 );
         AL21_VC_STAR = AL21;
         elem::LocalTrsm
-        ( RIGHT, LOWER, orientation, UNIT, 
-          F(1), AL11_STAR_STAR, AL21_VC_STAR );
+        ( RIGHT, LOWER, orientation, UNIT, F(1), AL11_STAR_STAR, AL21_VC_STAR );
 
+        S21Trans_STAR_MC.AlignWith( AL22 );
         S21Trans_STAR_MC.TransposeFrom( AL21_VC_STAR );
         elem::DiagonalSolve( RIGHT, NORMAL, d1_STAR_STAR, AL21_VC_STAR );
+        AL21_VR_STAR.AlignWith( AL22 );
         AL21_VR_STAR = AL21_VC_STAR;
+        AL21Trans_STAR_MR.AlignWith( AL22 );
         AL21Trans_STAR_MR.TransposeFrom( AL21_VR_STAR, conjugate );
 
         // Partition the update of the bottom-right corner into three pieces
         PartitionRight( S21Trans_STAR_MC, leftL, leftR, AL22.Width() );
         PartitionRight( AL21Trans_STAR_MR, rightL, rightR, AL22.Width() );
-        PartitionDown
-        ( AL22, AL22T,
-                AL22B, AL22.Width() );
+        PartitionDown( AL22, AL22T, AL22B, AL22.Width() );
         elem::LocalTrrk
         ( LOWER, orientation, F(-1), leftL, rightL, F(1), AL22T );
         elem::LocalGemm
         ( orientation, NORMAL, F(-1), leftR, rightL, F(1), AL22B );
         elem::LocalTrrk( LOWER, orientation, F(-1), leftR, rightR, F(1), ABR );
 
-        elem::DiagonalSolve
-        ( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
+        elem::DiagonalSolve( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
         AL21.TransposeFrom( S21Trans_STAR_MC );
-        //--------------------------------------------------------------------//
-
-        elem::SlidePartitionDownDiagonal
-        ( ALTL, /**/ ALTR,  AL00, AL01, /**/ AL02,
-               /**/         AL10, AL11, /**/ AL12,
-         /***************/ /*********************/
-          ALBL, /**/ ALBR,  AL20, AL21, /**/ AL22 );
     }
 }
 
@@ -124,27 +107,29 @@ template<typename F>
 inline void FrontLDLSquare
 ( DistMatrix<F>& AL, DistMatrix<F>& ABR, bool conjugate=false )
 {
-#ifndef RELEASE
-    CallStackEntry cse("internal::FrontLDLSquare");
-    if( ABR.Height() != ABR.Width() )
-        LogicError("ABR must be square");
-    if( AL.Height() != AL.Width()+ABR.Height() )
-        LogicError("AL & ABR must have compatible dimensions");
-    if( AL.Grid() != ABR.Grid() )
-        LogicError("AL & ABR must use the same grid");
-    if( ABR.ColAlign() !=
-        (AL.ColAlign()+AL.Width()) % AL.Grid().Height() )
-        LogicError("AL & ABR must have compatible col alignments");
-    if( ABR.RowAlign() != 
-        (AL.RowAlign()+AL.Width()) % AL.Grid().Width() )
-        LogicError("AL & ABR must have compatible row alignments");
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("internal::FrontLDLSquare");
+        if( ABR.Height() != ABR.Width() )
+            LogicError("ABR must be square");
+        if( AL.Height() != AL.Width()+ABR.Height() )
+            LogicError("AL & ABR must have compatible dimensions");
+        if( AL.Grid() != ABR.Grid() )
+            LogicError("AL & ABR must use the same grid");
+        if( ABR.ColAlign() !=
+            (AL.ColAlign()+AL.Width()) % AL.Grid().Height() )
+            LogicError("AL & ABR must have compatible col alignments");
+        if( ABR.RowAlign() != 
+            (AL.RowAlign()+AL.Width()) % AL.Grid().Width() )
+            LogicError("AL & ABR must have compatible row alignments");
+    )
     const Grid& g = AL.Grid();
+    const Int m = AL.Height();
+    const Int n = AL.Width();
     const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
-#ifndef RELEASE
-    if( g.Height() != g.Width() )
-        LogicError("This routine assumes a square process grid");
-#endif
+    DEBUG_ONLY(
+        if( g.Height() != g.Width() )
+            LogicError("This routine assumes a square process grid");
+    )
 
     // Find the process holding our transposed data
     const int r = g.Height();
@@ -161,13 +146,6 @@ inline void FrontLDLSquare
     }
     const bool onDiagonal = ( transposeRank == g.VCRank() );
 
-    // Matrix views
-    DistMatrix<F>
-        ALTL(g), ALTR(g),  AL00(g), AL01(g), AL02(g),
-        ALBL(g), ALBR(g),  AL10(g), AL11(g), AL12(g),
-                           AL20(g), AL21(g), AL22(g);
-
-    // Temporary matrices
     DistMatrix<F,STAR,STAR> AL11_STAR_STAR(g);
     DistMatrix<F,STAR,STAR> d1_STAR_STAR(g);
     DistMatrix<F,VC,  STAR> AL21_VC_STAR(g);
@@ -176,40 +154,31 @@ inline void FrontLDLSquare
 
     DistMatrix<F,STAR,MC> leftL(g), leftR(g);
     DistMatrix<F,STAR,MR> rightL(g), rightR(g);
-    DistMatrix<F> AL22T(g), 
-                  AL22B(g);
-    DistMatrix<F> AR2T(g), 
-                  AR2B(g);
+    DistMatrix<F> AL22T(g), AL22B(g);
 
-    // Start the algorithm
-    PartitionDownDiagonal
-    ( AL, ALTL, ALTR,
-          ALBL, ALBR, 0 );
-    while( ALTL.Width() < AL.Width() )
+    const Int bsize = elem::Blocksize();
+    for( Int k=0; k<n; k+=bsize )
     {
-        elem::RepartitionDownDiagonal
-        ( ALTL, /**/ ALTR,  AL00, /**/ AL01, AL02,
-         /***************/ /*********************/
-               /**/         AL10, /**/ AL11, AL12,
-          ALBL, /**/ ALBR,  AL20, /**/ AL21, AL22 );
+        const Int nb = elem::Min(bsize,n-k);
+        auto AL11 = ViewRange( AL, k,    k,    k+nb, k+nb );
+        auto AL21 = ViewRange( AL, k+nb, k,    m,    k+nb );
+        auto AL22 = ViewRange( AL, k+nb, k+nb, m,    n    ); 
 
-        AL21_VC_STAR.AlignWith( AL22 );
-        S21Trans_STAR_MC.AlignWith( AL22 );
-        AL21Trans_STAR_MR.AlignWith( AL22 );
-        //--------------------------------------------------------------------//
         AL11_STAR_STAR = AL11; 
         elem::LocalLDL( AL11_STAR_STAR, conjugate );
         AL11_STAR_STAR.GetDiagonal( d1_STAR_STAR );
         AL11 = AL11_STAR_STAR;
 
+        AL21_VC_STAR.AlignWith( AL22 );
         AL21_VC_STAR = AL21;
         elem::LocalTrsm
-        ( RIGHT, LOWER, orientation, UNIT, 
-          F(1), AL11_STAR_STAR, AL21_VC_STAR );
+        ( RIGHT, LOWER, orientation, UNIT, F(1), AL11_STAR_STAR, AL21_VC_STAR );
 
+        S21Trans_STAR_MC.AlignWith( AL22 );
         S21Trans_STAR_MC.TransposeFrom( AL21_VC_STAR );
         // SendRecv to form AL21^T[* ,MR] from S21^T[* ,MC], then conjugate
         // if necessary.
+        AL21Trans_STAR_MR.AlignWith( AL22 );
         AL21Trans_STAR_MR.ResizeTo( AL21.Width(), AL21.Height() );
         {
             if( onDiagonal )
@@ -240,25 +209,15 @@ inline void FrontLDLSquare
         // Partition the update of the bottom-right corner into three pieces
         PartitionRight( S21Trans_STAR_MC, leftL, leftR, AL22.Width() );
         PartitionRight( AL21Trans_STAR_MR, rightL, rightR, AL22.Width() );
-        PartitionDown
-        ( AL22, AL22T,
-                AL22B, AL22.Width() );
+        PartitionDown( AL22, AL22T, AL22B, AL22.Width() );
         elem::LocalTrrk
         ( LOWER, orientation, F(-1), leftL, rightL, F(1), AL22T );
         elem::LocalGemm
         ( orientation, NORMAL, F(-1), leftR, rightL, F(1), AL22B );
         elem::LocalTrrk( LOWER, orientation, F(-1), leftR, rightR, F(1), ABR );
 
-        elem::DiagonalSolve
-        ( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
+        elem::DiagonalSolve( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
         AL21.TransposeFrom( S21Trans_STAR_MC );
-        //--------------------------------------------------------------------//
-
-        elem::SlidePartitionDownDiagonal
-        ( ALTL, /**/ ALTR,  AL00, AL01, /**/ AL02,
-               /**/         AL10, AL11, /**/ AL12,
-         /***************/ /*********************/
-          ALBL, /**/ ALBR,  AL20, AL21, /**/ AL22 );
     }
 }
 
@@ -267,14 +226,46 @@ inline void FrontLDLSquare
 template<typename F> 
 inline void FrontLDL( DistMatrix<F>& AL, DistMatrix<F>& ABR, bool conjugate )
 {
-#ifndef RELEASE
-    CallStackEntry cse("FrontLDL");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("FrontLDL"))
     const Grid& grid = AL.Grid();
     if( grid.Height() == grid.Width() )
         internal::FrontLDLSquare( AL, ABR, conjugate );
     else
         internal::FrontLDLGeneral( AL, ABR, conjugate );
+}
+
+template<typename F>
+void FrontLDLIntraPiv
+( DistMatrix<F>& AL, DistMatrix<F,MD,STAR>& subdiag, 
+  DistMatrix<Int,VC,STAR>& piv, DistMatrix<F>& ABR, bool conjugate )
+{
+    DEBUG_ONLY(CallStackEntry cse("FrontLDLIntraPiv"))
+    const Grid& g = AL.Grid();
+    const Int m = AL.Height();
+    const Int n = AL.Width();
+    const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
+    
+    DistMatrix<F> ATL(g), ABL(g);
+    PartitionDown( AL, ATL, ABL, n );
+
+    elem::ldl::Pivoted( ATL, subdiag, piv, conjugate, elem::BUNCH_KAUFMAN_A );
+    auto diag = ATL.GetDiagonal();
+
+    elem::ApplyInverseColumnPivots( ABL, piv );
+    elem::Trsm( LEFT, LOWER, orientation, UNIT, F(1), ATL, ABL );
+    DistMatrix<F,MC,STAR> SBL_MC_STAR(g);
+    SBL_MC_STAR.AlignWith( ABR );
+    SBL_MC_STAR = ABL;
+
+    elem::QuasiDiagonalSolve
+    ( RIGHT, LOWER, NORMAL, diag, subdiag, ABL, conjugate );
+    DistMatrix<F,VR,STAR> ABL_VR_STAR(g);
+    DistMatrix<F,STAR,MR> ABLTrans_STAR_MR(g);
+    ABL_VR_STAR.AlignWith( ABR );
+    ABLTrans_STAR_MR.AlignWith( ABR );
+    ABL_VR_STAR = ABL;
+    ABLTrans_STAR_MR.TransposeFrom( ABL_VR_STAR, conjugate );
+    elem::LocalTrrk( LOWER, F(-1), SBL_MC_STAR, ABLTrans_STAR_MR, F(1), ABR );
 }
 
 } // namespace cliq

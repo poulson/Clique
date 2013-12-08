@@ -121,10 +121,10 @@ inline void RelativeIndices
     {
         const Int index = sub[i];
         it = std::lower_bound( it, full.end(), index );
-#ifndef RELEASE
-        if( it == full.end() )
-            LogicError("Index was not found");
-#endif
+        DEBUG_ONLY(
+            if( it == full.end() )
+                LogicError("Index was not found");
+        )
         relInds[i] = Int(it-full.begin());
     }
 }
@@ -150,15 +150,13 @@ inline Int
 Find
 ( const std::vector<Int>& sortedInds, Int index, std::string msg )
 {
-#ifndef RELEASE
-    CallStackEntry cse("Find");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Find"))
     std::vector<Int>::const_iterator vecIt;
     vecIt = std::lower_bound( sortedInds.begin(), sortedInds.end(), index );
-#ifndef RELEASE
-    if( vecIt == sortedInds.end() )
-        LogicError( msg );
-#endif
+    DEBUG_ONLY(
+        if( vecIt == sortedInds.end() )
+            LogicError( msg );
+    )
     return vecIt - sortedInds.begin();
 }
 

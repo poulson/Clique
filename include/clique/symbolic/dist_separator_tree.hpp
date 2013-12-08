@@ -45,9 +45,7 @@ struct DistSeparatorTree
         if( std::uncaught_exception() )
         {
             std::cerr << "Uncaught exception in ~DistSepTree" << std::endl;
-#ifndef RELEASE            
-            DumpCallStack();
-#endif
+            DEBUG_ONLY(DumpCallStack())
             return;
         }
 

@@ -13,9 +13,7 @@ namespace {
 bool cliqueInitializedElemental; 
 int numCliqueInits = 0;
 cliq::Args* args = 0;
-#ifndef RELEASE
-std::stack<std::string> callStack;
-#endif
+DEBUG_ONLY(std::stack<std::string> callStack)
 }
 
 namespace cliq {
@@ -110,32 +108,31 @@ void Finalize()
     }
 }
 
-#ifndef RELEASE
-void PushCallStack( std::string s )
-{ ::callStack.push( s ); }
+DEBUG_ONLY(
+    void PushCallStack( std::string s )
+    { ::callStack.push( s ); }
 
-void PopCallStack()
-{ ::callStack.pop(); }
+    void PopCallStack()
+    { ::callStack.pop(); }
 
-void DumpCallStack()
-{
-    std::ostringstream msg;
-    while( !::callStack.empty() )
+    void DumpCallStack()
     {
-        msg << "[" << ::callStack.size() << "]: " << ::callStack.top() << "\n";
-        ::callStack.pop();
+        std::ostringstream msg;
+        while( !::callStack.empty() )
+        {
+            msg << "[" << ::callStack.size() << "]: " << ::callStack.top() 
+                << "\n";
+            ::callStack.pop();
+        }
+        std::cerr << msg.str();;
+        std::cerr.flush();
     }
-    std::cerr << msg.str();;
-    std::cerr.flush();
-}
-#endif // ifndef RELEASE
+)
 
 void ReportException( std::exception& e )
 {
     elem::ReportException( e );
-#ifndef RELEASE
-    DumpCallStack();
-#endif
+    DEBUG_ONLY(DumpCallStack())
 }
 
 Args& GetArgs()

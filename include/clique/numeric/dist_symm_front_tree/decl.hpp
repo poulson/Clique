@@ -19,6 +19,7 @@ enum SymmFrontType
   SYMM_2D,
   LDL_1D,
   LDL_2D,
+  LDL_INTRAPIV_2D,
   LDL_SELINV_1D,
   LDL_SELINV_2D,
   BLOCK_LDL_2D,
@@ -41,7 +42,11 @@ template<typename F>
 struct SymmFront
 {
     Matrix<F> frontL;
+
     Matrix<F> diag;
+    Matrix<F> subdiag;
+    Matrix<Int> piv;
+
     mutable Matrix<F> work;
 };
 
@@ -55,10 +60,13 @@ struct DistSymmFront
     // is not needed after the factorization (and can be freed).
 
     DistMatrix<F,VC,STAR> front1dL;
-    DistMatrix<F,VC,STAR> diag1d;
-    mutable DistMatrix<F,VC,STAR> work1d;
-
     DistMatrix<F> front2dL;
+
+    DistMatrix<F,VC,STAR> diag1d;
+    DistMatrix<F,VC,STAR> subdiag1d;
+    DistMatrix<Int,VC,STAR> piv;
+
+    mutable DistMatrix<F,VC,STAR> work1d;
     mutable DistMatrix<F> work2d;
 };
 

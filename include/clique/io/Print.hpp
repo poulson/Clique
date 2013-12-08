@@ -37,9 +37,7 @@ void PrintLocal( const DistSymmInfo& info, std::ostream& os=std::cout );
 inline void
 Print( const Graph& graph, std::string msg, std::ostream& os )
 {
-#ifndef RELEASE
-    CallStackEntry cse("Print [Graph]");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Print [Graph]"))
     if( msg != "" )
         os << msg << std::endl;
     const int numEdges = graph.NumEdges();
@@ -53,9 +51,7 @@ Print( const Graph& graph, std::string msg, std::ostream& os )
 inline void
 Print( const DistGraph& graph, std::string msg, std::ostream& os ) 
 {
-#ifndef RELEASE
-    CallStackEntry cse("Print [DistGraph]");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Print [DistGraph]"))
     const mpi::Comm comm = graph.Comm();
     const int commSize = mpi::CommSize( comm );
     const int commRank = mpi::CommRank( comm );
@@ -97,9 +93,7 @@ template<typename T>
 inline void
 Print( const SparseMatrix<T>& A, std::string msg, std::ostream& os )
 {
-#ifndef RELEASE
-    CallStackEntry cse("Print [SparseMatrix]");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Print [SparseMatrix]"))
     if( msg != "" )
         os << msg << std::endl;
     const int numEntries = A.NumEntries();
@@ -115,9 +109,7 @@ template<typename T>
 inline void
 Print( const DistSparseMatrix<T>& A, std::string msg, std::ostream& os )
 {
-#ifndef RELEASE
-    CallStackEntry cse("Print [DistSparseMatrix]");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Print [DistSparseMatrix]"))
     const mpi::Comm comm = A.Comm();
     const int commSize = mpi::CommSize( comm );
     const int commRank = mpi::CommRank( comm );
@@ -163,9 +155,7 @@ Print( const DistSparseMatrix<T>& A, std::string msg, std::ostream& os )
 inline void 
 PrintLocal( const DistSymmInfo& info, std::ostream& os )
 {
-#ifndef RELEASE
-    CallStackEntry cse("PrintLocal [DistSymmInfo]");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("PrintLocal [DistSymmInfo]"))
     os << "Local nodes:" << std::endl;
     const int numLocal = info.localNodes.size();
     for( int s=0; s<numLocal; ++s )

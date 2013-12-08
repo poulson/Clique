@@ -37,9 +37,7 @@ using namespace elem;
 template<typename T>
 void ModifyForTrmm( DistMatrix<T,STAR,STAR>& D, int diagOff )
 {
-#ifndef RELEASE
-    cliq::CallStackEntry cse("ModifyForTrmm");
-#endif
+    DEBUG_ONLY(cliq::CallStackEntry cse("ModifyForTrmm"))
     const int height = D.Height();
     for( int j=0; j<height; ++j )
     {
@@ -55,9 +53,7 @@ inline void FrontLowerMultiply
 ( Orientation orientation, int diagOff,
   const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("FrontLowerMultiply");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("FrontLowerMultiply"))
     if( orientation == NORMAL )
         FrontLowerMultiplyNormal( diagOff, L, X );
     else
@@ -71,23 +67,23 @@ template<typename T>
 inline void FrontLowerMultiplyNormal
 ( int diagOff, const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("FrontLowerMultiplyNormal");
-    if( L.Grid() != X.Grid() )
-        LogicError("L and X must be distributed over the same grid");
-    if( L.Height() < L.Width() || L.Height() != X.Height() )
-    {
-        std::ostringstream msg;
-        msg << "Nonconformal multiply:\n"
-            << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-            << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        LogicError( msg.str() );
-    }
-    if( L.ColAlign() != X.ColAlign() )
-        LogicError("L and X are assumed to be aligned");
-    if( diagOff > 0 )
-        LogicError("Diagonal offsets cannot be positive");
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("FrontLowerMultiplyNormal");
+        if( L.Grid() != X.Grid() )
+            LogicError("L and X must be distributed over the same grid");
+        if( L.Height() < L.Width() || L.Height() != X.Height() )
+        {
+            std::ostringstream msg;
+            msg << "Nonconformal multiply:\n"
+                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
+                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
+            LogicError( msg.str() );
+        }
+        if( L.ColAlign() != X.ColAlign() )
+            LogicError("L and X are assumed to be aligned");
+        if( diagOff > 0 )
+            LogicError("Diagonal offsets cannot be positive");
+    )
     const Grid& g = L.Grid();
 
     // Matrix views
@@ -166,23 +162,23 @@ inline void FrontLowerMultiplyTranspose
 ( int diagOff, const DistMatrix<T,VC,STAR>& L, DistMatrix<T,VC,STAR>& X,
   bool conjugate )
 {
-#ifndef RELEASE
-    CallStackEntry cse("FrontLowerMultiplyTranspose");
-    if( L.Grid() != X.Grid() )
-        LogicError("L and X must be distributed over the same grid");
-    if( L.Height() < L.Width() || L.Height() != X.Height() )
-    {
-        std::ostringstream msg;
-        msg << "Nonconformal multiply:\n"
-            << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-            << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        LogicError( msg.str() );
-    }
-    if( L.ColAlign() != X.ColAlign() )
-        LogicError("L and X are assumed to be aligned");
-    if( diagOff > 0 )
-        LogicError("Diagonal offsets cannot be positive");
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("FrontLowerMultiplyTranspose");
+        if( L.Grid() != X.Grid() )
+            LogicError("L and X must be distributed over the same grid");
+        if( L.Height() < L.Width() || L.Height() != X.Height() )
+        {
+            std::ostringstream msg;
+            msg << "Nonconformal multiply:\n"
+                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
+                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
+            LogicError( msg.str() );
+        }
+        if( L.ColAlign() != X.ColAlign() )
+            LogicError("L and X are assumed to be aligned");
+        if( diagOff > 0 )
+            LogicError("Diagonal offsets cannot be positive");
+    )
     const Grid& g = L.Grid();
 
     // Matrix views

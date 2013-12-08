@@ -27,28 +27,22 @@ void FrontBlockLowerBackwardSolve
 template<typename F>
 inline void FrontBlockLowerForwardSolve( const Matrix<F>& L, Matrix<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("FrontBlockLowerForwardSolve");
-    if( L.Height() < L.Width() || L.Height() != X.Height() )
-    {
-        std::ostringstream msg;
-        msg << "Nonconformal solve:\n"
-            << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-            << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        LogicError( msg.str() );
-    }
-#endif
-    Matrix<F> LT,
-              LB;
-    LockedPartitionDown
-    ( L, LT,
-         LB, L.Width() );
+    DEBUG_ONLY(
+        CallStackEntry cse("FrontBlockLowerForwardSolve");
+        if( L.Height() < L.Width() || L.Height() != X.Height() )
+        {
+            std::ostringstream msg;
+            msg << "Nonconformal solve:\n"
+                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
+                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
+            LogicError( msg.str() );
+        }
+    )
+    Matrix<F> LT, LB;
+    LockedPartitionDown( L, LT, LB, L.Width() );
 
-    Matrix<F> XT, 
-              XB;
-    PartitionDown
-    ( X, XT,
-         XB, L.Width() );
+    Matrix<F> XT, XB;
+    PartitionDown( X, XT, XB, L.Width() );
 
     // XT := inv(ATL) XT
     Matrix<F> YT( XT );
@@ -62,28 +56,22 @@ template<typename F>
 inline void FrontBlockLowerBackwardSolve
 ( const Matrix<F>& L, Matrix<F>& X, bool conjugate )
 {
-#ifndef RELEASE
-    CallStackEntry cse("FrontBlockLowerBackwardSolve");
-    if( L.Height() < L.Width() || L.Height() != X.Height() )
-    {
-        std::ostringstream msg;
-        msg << "Nonconformal solve:\n"
-            << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-            << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        LogicError( msg.str() );
-    }
-#endif
-    Matrix<F> LT,
-              LB;
-    LockedPartitionDown
-    ( L, LT,
-         LB, L.Width() );
+    DEBUG_ONLY(
+        CallStackEntry cse("FrontBlockLowerBackwardSolve");
+        if( L.Height() < L.Width() || L.Height() != X.Height() )
+        {
+            std::ostringstream msg;
+            msg << "Nonconformal solve:\n"
+                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
+                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
+            LogicError( msg.str() );
+        }
+    )
+    Matrix<F> LT, LB;
+    LockedPartitionDown( L, LT, LB, L.Width() );
 
-    Matrix<F> XT,
-              XB;
-    PartitionDown
-    ( X, XT,
-         XB, L.Width() );
+    Matrix<F> XT, XB;
+    PartitionDown( X, XT, XB, L.Width() );
 
     // YT := LB^[T/H] XB
     Matrix<F> YT;

@@ -33,9 +33,7 @@ inline void DistLowerMultiplyNormal
 ( int diagOff, const DistSymmInfo& info, 
   const DistSymmFrontTree<T>& L, DistNodalMultiVec<T>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistLowerMultiplyNormal");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistLowerMultiplyNormal"))
     const int numDistNodes = info.distNodes.size();
     const int width = X.Width();
     if( L.frontType != SYMM_1D && L.frontType != LDL_1D )
@@ -122,9 +120,7 @@ inline void DistLowerMultiplyNormal
             recvBufferSize += recvSize;
         }
         std::vector<T> recvBuffer( recvBufferSize );
-#ifndef RELEASE
-        VerifySendsAndRecvs( sendCounts, recvCounts, comm );
-#endif
+        DEBUG_ONLY(VerifySendsAndRecvs( sendCounts, recvCounts, comm ))
 
         // AllToAll to send and receive the child updates
         SparseAllToAll
@@ -167,9 +163,7 @@ inline void DistLowerMultiplyTranspose
   const DistSymmFrontTree<T>& L, DistNodalMultiVec<T>& X, 
   bool conjugate )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistLowerMultiplyTranspose");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistLowerMultiplyTranspose"))
     const int numDistNodes = info.distNodes.size();
     const int width = X.Width();
     const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
@@ -264,9 +258,7 @@ inline void DistLowerMultiplyTranspose
             recvBufferSize += recvSize;
         }
         std::vector<T> recvBuffer( recvBufferSize );
-#ifndef RELEASE
-        VerifySendsAndRecvs( sendCounts, recvCounts, parentComm );
-#endif
+        DEBUG_ONLY(VerifySendsAndRecvs( sendCounts, recvCounts, parentComm ))
 
         // AllToAll to send and recv parent updates
         SparseAllToAll

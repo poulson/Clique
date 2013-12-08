@@ -1,5 +1,6 @@
 Functionality
 =============
+- Add (fast) triangular solves for pivoted LDL factorizations
 - Implement constructor for non-trivial DistSparseMatrix from SparseMatrix
   (and the equivalent for DistMultiVec from MultiVec)
 

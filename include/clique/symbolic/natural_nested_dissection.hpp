@@ -69,9 +69,7 @@ NaturalNestedDissectionRecursion
         int off, 
         int cutoff=128 )
 {
-#ifndef RELEASE
-    CallStackEntry cse("NaturalNestedDissectionRecursion");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("NaturalNestedDissectionRecursion"))
     if( graph.NumSources() <= cutoff )
     {
         // Fill in this node of the local separator tree
@@ -203,9 +201,7 @@ NaturalNestedDissectionRecursion
         bool onLeft,
         int cutoff=128 )
 {
-#ifndef RELEASE
-    CallStackEntry cse("NaturalNestedDissectionRecursion");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("NaturalNestedDissectionRecursion"))
     const int distDepth = sepTree.distSeps.size();
     mpi::Comm comm = graph.Comm();
     if( distDepth - depth > 0 )
@@ -459,9 +455,7 @@ NaturalNestedDissection
         int cutoff, 
         bool storeFactRecvInds )
 {
-#ifndef RELEASE
-    CallStackEntry cse("NaturalNestedDissection");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("NaturalNestedDissection"))
     // NOTE: There is a potential memory leak here if these data structures 
     //       are reused. Their destructors should call a member function which
     //       we can simply call here to clear the data
@@ -486,9 +480,7 @@ NaturalNestedDissection
 
     // Construct the distributed reordering    
     BuildMap( graph, sepTree, map );
-#ifndef RELEASE
-    EnsurePermutation( map );
-#endif
+    DEBUG_ONLY(EnsurePermutation( map ))
 
     // Run the symbolic analysis
     SymmetricAnalysis( eTree, info, storeFactRecvInds );
@@ -510,9 +502,7 @@ NaturalBisect
         Graph& rightChild,
         std::vector<int>& perm )
 {
-#ifndef RELEASE
-    CallStackEntry cse("NaturalBisect");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("NaturalBisect"))
     const int numSources = graph.NumSources();
     if( numSources == 0 )
         LogicError("There is no reason to bisect an empty sequential graph");
@@ -621,9 +611,7 @@ NaturalBisect
             for( int x=0; x<nx; ++x )
                 perm[x+y*nx+nzLeft*nx*ny] = off++;
     }
-#ifndef RELEASE
-    EnsurePermutation( perm );
-#endif
+    DEBUG_ONLY(EnsurePermutation( perm ))
     BuildChildrenFromPerm
     ( graph, perm, leftChildSize, leftChild, rightChildSize, rightChild );
     return sepSize;
@@ -642,9 +630,7 @@ NaturalBisect
         DistMap& perm,
         bool& onLeft )
 {
-#ifndef RELEASE
-    CallStackEntry cse("NaturalBisect");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("NaturalBisect"))
     const int numSources = graph.NumSources();
     const int firstLocalSource = graph.FirstLocalSource();
     const int numLocalSources = graph.NumLocalSources();
@@ -795,9 +781,7 @@ NaturalBisect
         nyRight = ny;
         nzRight = nz;
     }
-#ifndef RELEASE
-    EnsurePermutation( perm );
-#endif
+    DEBUG_ONLY(EnsurePermutation( perm ))
 
     BuildChildFromPerm
     ( graph, perm, leftChildSize, rightChildSize, onLeft, child );

@@ -33,9 +33,7 @@ inline void LocalLowerMultiplyNormal
 ( int diagOff, const DistSymmInfo& info, 
   const DistSymmFrontTree<T>& L, DistNodalMultiVec<T>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("LocalLowerMultiplyNormal");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("LocalLowerMultiplyNormal"))
     const int numLocalNodes = info.localNodes.size();
     const int width = X.Width();
     for( int s=0; s<numLocalNodes; ++s )
@@ -104,9 +102,7 @@ inline void LocalLowerMultiplyTranspose
   const DistSymmFrontTree<T>& L, DistNodalMultiVec<T>& X,
   bool conjugate )
 {
-#ifndef RELEASE
-    CallStackEntry cse("LocalLowerMultiplyTranspose");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("LocalLowerMultiplyTranspose"))
     const int numLocalNodes = info.localNodes.size();
     const int width = X.Width();
     const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );

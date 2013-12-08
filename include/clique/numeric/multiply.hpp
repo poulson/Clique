@@ -28,15 +28,15 @@ void Multiply
 ( T alpha, const DistSparseMatrix<T>& A, const DistMultiVec<T>& X,
   T beta,                                      DistMultiVec<T>& Y )
 {
-#ifndef RELEASE
-    CallStackEntry cse("Multiply");
-    if( A.Height() != Y.Height() || A.Width() != X.Height() || 
-        X.Width() != Y.Width() )
-        LogicError("A, X, and Y did not conform");
-    if( !mpi::CongruentComms( A.Comm(), X.Comm() ) || 
-        !mpi::CongruentComms( X.Comm(), Y.Comm() ) )
-        LogicError("Communicators did not match");
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("Multiply");
+        if( A.Height() != Y.Height() || A.Width() != X.Height() || 
+            X.Width() != Y.Width() )
+            LogicError("A, X, and Y did not conform");
+        if( !mpi::CongruentComms( A.Comm(), X.Comm() ) || 
+            !mpi::CongruentComms( X.Comm(), Y.Comm() ) )
+            LogicError("Communicators did not match");
+    )
     mpi::Comm comm = A.Comm();
     const int commSize = mpi::CommSize( comm );
     const int YLocalHeight = Y.LocalHeight();
@@ -131,10 +131,10 @@ void Multiply
     {
         const int i = meta.sendInds[s];
         const int iLocal = i - firstLocalRow;
-#ifndef RELEASE
-        if( iLocal < 0 || iLocal >= X.LocalHeight() )
-            LogicError("iLocal was out of bounds");
-#endif
+        DEBUG_ONLY(
+            if( iLocal < 0 || iLocal >= X.LocalHeight() )
+                LogicError("iLocal was out of bounds");
+        )
         for( int j=0; j<width; ++j )
             sendVals[s*width+j] = X.GetLocal( iLocal, j );
     }

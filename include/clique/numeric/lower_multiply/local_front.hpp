@@ -35,9 +35,7 @@ template<typename T>
 void ModifyForTrmm
 ( Matrix<T>& D, int diagOff, std::vector<Matrix<T> >& diagonals )
 {
-#ifndef RELEASE
-    CallStackEntry cse("ModifyForTrmm");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("ModifyForTrmm"))
     diagonals.resize( -diagOff );
     for( int i=0; i<-diagOff; ++i )
         diagonals[i].ResizeTo( D.DiagonalLength(-i), 1 );
@@ -59,9 +57,7 @@ void ReplaceAfterTrmm
 ( Matrix<T>& D, int diagOff, 
   const std::vector<Matrix<T> >& diagonals )
 {
-#ifndef RELEASE
-    CallStackEntry cse("ReplaceAfterTrmm");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("ReplaceAfterTrmm"))
     const int height = D.Height();
     for( int j=0; j<height; ++j )
     {
@@ -77,9 +73,7 @@ template<typename T>
 inline void FrontLowerMultiply
 ( Orientation orientation, int diagOff, const Matrix<T>& L, Matrix<T>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("FrontLowerMultiply");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("FrontLowerMultiply"))
     if( orientation == NORMAL )
         FrontLowerMultiplyNormal( diagOff, L, X );
     else
@@ -93,19 +87,19 @@ template<typename T>
 inline void FrontLowerMultiplyNormal
 ( int diagOff, const Matrix<T>& L, Matrix<T>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("FrontLowerMultiplyNormal");
-    if( L.Height() < L.Width() || L.Height() != X.Height() )
-    {
-        std::ostringstream msg;
-        msg << "Nonconformal multiply:\n"
-            << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-            << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        LogicError( msg.str() );
-    }
-    if( diagOff > 0 )
-        LogicError("Diagonal offsets cannot be positive");
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("FrontLowerMultiplyNormal");
+        if( L.Height() < L.Width() || L.Height() != X.Height() )
+        {
+            std::ostringstream msg;
+            msg << "Nonconformal multiply:\n"
+                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
+                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
+            LogicError( msg.str() );
+        }
+        if( diagOff > 0 )
+            LogicError("Diagonal offsets cannot be positive");
+    )
     // Danger, Will Robinson!
     Matrix<T>* LMod = const_cast<Matrix<T>*>(&L);
     Matrix<T> LT, LB;
@@ -132,19 +126,19 @@ template<typename T>
 inline void FrontLowerMultiplyTranspose
 ( int diagOff, const Matrix<T>& L, Matrix<T>& X, bool conjugate )
 {
-#ifndef RELEASE
-    CallStackEntry cse("FrontLowerMultiplyTranspose");
-    if( L.Height() < L.Width() || L.Height() != X.Height() )
-    {
-        std::ostringstream msg;
-        msg << "Nonconformal solve:\n"
-            << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-            << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-        LogicError( msg.str() );
-    }
-    if( diagOff > 0 )
-        LogicError("Diagonal offsets cannot be positive");
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("FrontLowerMultiplyTranspose");
+        if( L.Height() < L.Width() || L.Height() != X.Height() )
+        {
+            std::ostringstream msg;
+            msg << "Nonconformal solve:\n"
+                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
+                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
+            LogicError( msg.str() );
+        }
+        if( diagOff > 0 )
+            LogicError("Diagonal offsets cannot be positive");
+    )
     const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
     // Danger, Will Robinson!
     Matrix<T>* LMod = const_cast<Matrix<T>*>(&L);

@@ -25,9 +25,7 @@ void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType );
 template<typename F>
 inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
 {
-#ifndef RELEASE
-    CallStackEntry cse("ChangeFrontType");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("ChangeFrontType"))
     // Check if this call can be a no-op
     if( frontType == L.frontType ) 
         return;

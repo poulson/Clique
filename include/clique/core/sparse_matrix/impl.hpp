@@ -34,9 +34,7 @@ template<typename T>
 inline
 SparseMatrix<T>::SparseMatrix( const SparseMatrix<T>& A )
 { 
-#ifndef RELEASE
-    CallStackEntry cse("SparseMatrix::SparseMatrix");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("SparseMatrix::SparseMatrix"))
     if( &A != this )
         *this = A;
     else
@@ -47,9 +45,7 @@ template<typename T>
 inline
 SparseMatrix<T>::SparseMatrix( const DistSparseMatrix<T>& A )
 { 
-#ifndef RELEASE
-    CallStackEntry cse("SparseMatrix::SparseMatrix");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("SparseMatrix::SparseMatrix"))
     *this = A;
 }
 
@@ -82,10 +78,10 @@ template<typename T>
 inline int
 SparseMatrix<T>::NumEntries() const
 {
-#ifndef RELEASE
-    CallStackEntry cse("SparseMatrix::NumEntries");
-    EnsureConsistentSizes();
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("SparseMatrix::NumEntries");
+        EnsureConsistentSizes();
+    )
     return graph_.NumEdges();
 }
 
@@ -93,11 +89,11 @@ template<typename T>
 inline int
 SparseMatrix<T>::Capacity() const
 {
-#ifndef RELEASE
-    CallStackEntry cse("SparseMatrix::Capacity");
-    EnsureConsistentSizes();
-    EnsureConsistentCapacities();
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("SparseMatrix::Capacity");
+        EnsureConsistentSizes();
+        EnsureConsistentCapacities();
+    )
     return graph_.Capacity();
 }
 
@@ -105,9 +101,7 @@ template<typename T>
 inline int
 SparseMatrix<T>::Row( int index ) const
 { 
-#ifndef RELEASE 
-    CallStackEntry cse("SparseMatrix::Row");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("SparseMatrix::Row"))
     return graph_.Source( index );
 }
 
@@ -115,9 +109,7 @@ template<typename T>
 inline int
 SparseMatrix<T>::Col( int index ) const
 { 
-#ifndef RELEASE 
-    CallStackEntry cse("SparseMatrix::Col");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("SparseMatrix::Col"))
     return graph_.Target( index );
 }
 
@@ -125,9 +117,7 @@ template<typename T>
 inline int
 SparseMatrix<T>::EntryOffset( int row ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("SparseMatrix::EntryOffset");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("SparseMatrix::EntryOffset"))
     return graph_.EdgeOffset( row );
 }
 
@@ -135,9 +125,7 @@ template<typename T>
 inline int
 SparseMatrix<T>::NumConnections( int row ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("SparseMatrix::NumConnections");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("SparseMatrix::NumConnections"))
     return graph_.NumConnections( row );
 }
 
@@ -145,11 +133,11 @@ template<typename T>
 inline T
 SparseMatrix<T>::Value( int index ) const
 { 
-#ifndef RELEASE 
-    CallStackEntry cse("SparseMatrix::Value");
-    if( index < 0 || index >= vals_.size() )
-        LogicError("Entry number out of bounds");
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("SparseMatrix::Value");
+        if( index < 0 || index >= vals_.size() )
+            LogicError("Entry number out of bounds");
+    )
     return vals_[index];
 }
 
@@ -192,9 +180,7 @@ template<typename T>
 inline void
 SparseMatrix<T>::StartAssembly()
 {
-#ifndef RELEASE
-    CallStackEntry cse("SparseMatrix::StartAssembly");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("SparseMatrix::StartAssembly"))
     graph_.EnsureNotAssembling();
     graph_.assembling_ = true;
 }
@@ -203,9 +189,7 @@ template<typename T>
 inline void
 SparseMatrix<T>::StopAssembly()
 {
-#ifndef RELEASE
-    CallStackEntry cse("SparseMatrix::StopAssembly");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("SparseMatrix::StopAssembly"))
     if( !graph_.assembling_ )
         LogicError("Cannot stop assembly without starting");
     graph_.assembling_ = false;
@@ -265,10 +249,10 @@ template<typename T>
 inline void
 SparseMatrix<T>::Update( int row, int col, T value )
 {
-#ifndef RELEASE
-    CallStackEntry cse("SparseMatrix::Update");
-    EnsureConsistentSizes();
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("SparseMatrix::Update");
+        EnsureConsistentSizes();
+    )
     graph_.Insert( row, col );
     vals_.push_back( value );
 }
@@ -293,9 +277,7 @@ template<typename T>
 inline const SparseMatrix<T>&
 SparseMatrix<T>::operator=( const SparseMatrix<T>& A )
 {
-#ifndef RELEASE
-    CallStackEntry cse("SparseMatrix::operator=");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("SparseMatrix::operator="))
     graph_ = A.graph_;
     vals_ = A.vals_;
     return *this;
@@ -305,9 +287,7 @@ template<typename T>
 inline const SparseMatrix<T>&
 SparseMatrix<T>::operator=( const DistSparseMatrix<T>& A )
 {
-#ifndef RELEASE
-    CallStackEntry cse("SparseMatrix::operator=");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("SparseMatrix::operator="))
     mpi::Comm comm = A.Comm();
     const int commSize = mpi::CommSize( comm );
     if( commSize != 1 )

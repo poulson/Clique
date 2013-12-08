@@ -42,9 +42,7 @@ inline void LocalLowerForwardSolve
 ( const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("LocalLowerForwardSolve");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("LocalLowerForwardSolve"))
     const bool blockLDL = ( L.frontType == BLOCK_LDL_2D || 
                             L.frontType == BLOCK_LDL_INTRAPIV_2D );
     const int numLocalNodes = info.localNodes.size();
@@ -117,9 +115,7 @@ inline void LocalLowerForwardSolve
 ( const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("LocalLowerForwardSolve");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("LocalLowerForwardSolve"))
     const bool blockLDL = ( L.frontType == BLOCK_LDL_2D ||
                             L.frontType == BLOCK_LDL_INTRAPIV_2D );
     const int numLocalNodes = info.localNodes.size();
@@ -192,9 +188,7 @@ inline void LocalLowerBackwardSolve
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X,
   bool conjugate )
 {
-#ifndef RELEASE
-    CallStackEntry cse("LocalLowerBackwardSolve");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("LocalLowerBackwardSolve"))
     const bool blockLDL = ( L.frontType == BLOCK_LDL_2D ||
                             L.frontType == BLOCK_LDL_INTRAPIV_2D );
     const int numLocalNodes = info.localNodes.size();
@@ -213,21 +207,21 @@ inline void LocalLowerBackwardSolve
 
         // Update using the parent
         const int parent = node.parent;
-#ifndef RELEASE
-        if( parent < 0 )
-        {
-            std::ostringstream msg;
-            msg << "Parent index was negative: " << parent;
-            LogicError( msg.str() );
-        }
-        if( parent >= numLocalNodes )  
-        {
-            std::ostringstream msg;
-            msg << "Parent index was too large: " << parent << " >= "
-                << numLocalNodes;
-            LogicError( msg.str() );
-        }
-#endif
+        DEBUG_ONLY(
+            if( parent < 0 )
+            {
+                std::ostringstream msg;
+                msg << "Parent index was negative: " << parent;
+                LogicError( msg.str() );
+            }
+            if( parent >= numLocalNodes )  
+            {
+                std::ostringstream msg;
+                msg << "Parent index was too large: " << parent << " >= "
+                    << numLocalNodes;
+                LogicError( msg.str() );
+            }
+        )
         Matrix<F>& parentWork = L.localFronts[parent].work;
         const SymmNodeInfo& parentNode = info.localNodes[parent];
         const int currentUpdateSize = WB.Height();
@@ -271,9 +265,7 @@ inline void LocalLowerBackwardSolve
   const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X,
   bool conjugate )
 {
-#ifndef RELEASE
-    CallStackEntry cse("LocalLowerBackwardSolve");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("LocalLowerBackwardSolve"))
     const bool blockLDL = ( L.frontType == BLOCK_LDL_2D ||
                             L.frontType == BLOCK_LDL_INTRAPIV_2D );
     const int numLocalNodes = info.localNodes.size();
@@ -292,21 +284,21 @@ inline void LocalLowerBackwardSolve
 
         // Update using the parent
         const int parent = node.parent;
-#ifndef RELEASE
-        if( parent < 0 )
-        {
-            std::ostringstream msg;
-            msg << "Parent index was negative: " << parent;
-            LogicError( msg.str() );
-        }
-        if( parent >= numLocalNodes )  
-        {
-            std::ostringstream msg;
-            msg << "Parent index was too large: " << parent << " >= "
-                << numLocalNodes;
-            LogicError( msg.str() );
-        }
-#endif
+        DEBUG_ONLY(
+            if( parent < 0 )
+            {
+                std::ostringstream msg;
+                msg << "Parent index was negative: " << parent;
+                LogicError( msg.str() );
+            }
+            if( parent >= numLocalNodes )  
+            {
+                std::ostringstream msg;
+                msg << "Parent index was too large: " << parent << " >= "
+                    << numLocalNodes;
+                LogicError( msg.str() );
+            }
+        )
         Matrix<F>& parentWork = L.localFronts[parent].work;
         const SymmNodeInfo& parentNode = info.localNodes[parent];
         const int currentUpdateSize = WB.Height();

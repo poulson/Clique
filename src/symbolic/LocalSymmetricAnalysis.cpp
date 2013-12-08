@@ -13,9 +13,7 @@ namespace cliq {
 
 void LocalSymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info )
 {
-#ifndef RELEASE
-    CallStackEntry cse("LocalSymmetricAnalysis");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("LocalSymmetricAnalysis"))
     const Int numNodes = eTree.localNodes.size();
     info.localNodes.resize( numNodes );
 
@@ -33,10 +31,10 @@ void LocalSymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info )
         nodeInfo.origLowerStruct = node.lowerStruct;
 
         const Int numChildren = node.children.size();
-#ifndef RELEASE
-        if( numChildren != 0 && numChildren != 2 )
-            LogicError("Tree must be built from bisections");
-#endif
+        DEBUG_ONLY(
+            if( numChildren != 0 && numChildren != 2 )
+                LogicError("Tree must be built from bisections");
+        )
         if( numChildren == 2 )
         {
             const Int left = node.children[0];
@@ -45,29 +43,29 @@ void LocalSymmetricAnalysis( const DistSymmElimTree& eTree, DistSymmInfo& info )
             SymmNodeInfo& rightChild = info.localNodes[right];
             leftChild.onLeft = true;
             rightChild.onLeft = false;
-#ifndef RELEASE
-            if( !IsStrictlySorted(leftChild.lowerStruct) )
-            {
-                if( IsSorted(leftChild.lowerStruct) )
-                    LogicError("Repeat in left lower struct");
-                else
-                    LogicError("Left lower struct not sorted");
-            }
-            if( !IsStrictlySorted(rightChild.lowerStruct) )
-            {
-                if( IsSorted(rightChild.lowerStruct) )
-                    LogicError("Repeat in right lower struct");
-                else
-                    LogicError("Right lower struct not sorted");
-            }
-            if( !IsStrictlySorted(node.lowerStruct) )
-            {
-                if( IsSorted(node.lowerStruct) )
-                    LogicError("Repeat in original lower struct");
-                else
-                    LogicError("Original lower struct not sorted");
-            }
-#endif
+            DEBUG_ONLY(
+                if( !IsStrictlySorted(leftChild.lowerStruct) )
+                {
+                    if( IsSorted(leftChild.lowerStruct) )
+                        LogicError("Repeat in left lower struct");
+                    else
+                        LogicError("Left lower struct not sorted");
+                }
+                if( !IsStrictlySorted(rightChild.lowerStruct) )
+                {
+                    if( IsSorted(rightChild.lowerStruct) )
+                        LogicError("Repeat in right lower struct");
+                    else
+                        LogicError("Right lower struct not sorted");
+                }
+                if( !IsStrictlySorted(node.lowerStruct) )
+                {
+                    if( IsSorted(node.lowerStruct) )
+                        LogicError("Repeat in original lower struct");
+                    else
+                        LogicError("Original lower struct not sorted");
+                }
+            )
 
             // Combine the structures of the children
             auto childrenStruct = 

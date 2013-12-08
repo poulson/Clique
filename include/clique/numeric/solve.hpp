@@ -41,9 +41,7 @@ inline void Solve
 ( const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("Solve");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Solve"))
     const Orientation orientation = ( L.isHermitian ? ADJOINT : TRANSPOSE );
     if( L.frontType == BLOCK_LDL_2D || 
         L.frontType == BLOCK_LDL_INTRAPIV_2D )
@@ -69,9 +67,7 @@ inline void Solve
 ( const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("Solve");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("Solve"))
     const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
     const Orientation orientation = ( L.isHermitian ? ADJOINT : TRANSPOSE );
     if( L.frontType == BLOCK_LDL_2D || 
@@ -99,9 +95,7 @@ inline void SymmetricSolve
   bool conjugate,
   bool sequential, int numDistSeps, int numSeqSeps, int cutoff )
 {
-#ifndef RELEASE
-    CallStackEntry cse("SymmetricSolve");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("SymmetricSolve"))
     DistSymmInfo info;
     DistSeparatorTree sepTree;
     DistMap map, inverseMap;
@@ -124,9 +118,7 @@ inline void HermitianSolve
 ( const DistSparseMatrix<F>& A, DistMultiVec<F>& X, 
   bool sequential, int numDistSeps, int numSeqSeps, int cutoff )
 {
-#ifndef RELEASE
-    CallStackEntry cse("HermitianSolve");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("HermitianSolve"))
     SymmetricSolve( A, X, true, sequential, numDistSeps, numSeqSeps, cutoff );
 }
 

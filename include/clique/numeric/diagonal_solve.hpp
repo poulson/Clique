@@ -49,9 +49,7 @@ inline void LocalDiagonalSolve
 ( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, 
   DistNodalMultiVec<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("LocalDiagonalSolve");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("LocalDiagonalSolve"))
     const int numLocalNodes = info.localNodes.size();
     for( int s=0; s<numLocalNodes; ++s )
         elem::DiagonalSolve
@@ -63,9 +61,7 @@ inline void LocalDiagonalSolve
 ( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, 
   DistNodalMatrix<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("LocalDiagonalSolve");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("LocalDiagonalSolve"))
     const int numLocalNodes = info.localNodes.size();
     for( int s=0; s<numLocalNodes; ++s )
         elem::DiagonalSolve
@@ -77,9 +73,7 @@ void DistDiagonalSolve
 ( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, 
   DistNodalMultiVec<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistDiagonalSolve");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistDiagonalSolve"))
     const int numDistNodes = info.distNodes.size();
     for( int s=1; s<numDistNodes; ++s )
     {
@@ -94,9 +88,7 @@ void DistDiagonalSolve
 ( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, 
   DistNodalMatrix<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistDiagonalSolve");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistDiagonalSolve"))
     const int numDistNodes = info.distNodes.size();
     for( int s=1; s<numDistNodes; ++s )
     {
@@ -111,9 +103,7 @@ inline void DiagonalSolve
 ( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, 
   DistNodalMultiVec<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DiagonalSolve");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DiagonalSolve"))
     LocalDiagonalSolve( info, L, X );
     DistDiagonalSolve( info, L, X );
 }
@@ -123,9 +113,7 @@ inline void DiagonalSolve
 ( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, 
   DistNodalMatrix<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DiagonalSolve");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DiagonalSolve"))
     LocalDiagonalSolve( info, L, X );
     DistDiagonalSolve( info, L, X );
 }

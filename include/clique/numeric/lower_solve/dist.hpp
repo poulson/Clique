@@ -42,9 +42,7 @@ inline void DistLowerForwardSolve
 ( const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistLowerForwardSolve");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistLowerForwardSolve"))
     const int numDistNodes = info.distNodes.size();
     const int width = X.Width();
     const SymmFrontType frontType = L.frontType;
@@ -141,9 +139,7 @@ inline void DistLowerForwardSolve
             recvBufferSize += recvSize;
         }
         std::vector<F> recvBuffer( recvBufferSize );
-#ifndef RELEASE
-        VerifySendsAndRecvs( sendCounts, recvCounts, comm );
-#endif
+        DEBUG_ONLY(VerifySendsAndRecvs( sendCounts, recvCounts, comm ))
 
         // AllToAll to send and receive the child updates
         SparseAllToAll
@@ -194,9 +190,7 @@ inline void DistLowerForwardSolve
 ( const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistLowerForwardSolve");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistLowerForwardSolve"))
     const int numDistNodes = info.distNodes.size();
     const int width = X.Width();
     const SymmFrontType frontType = L.frontType;
@@ -297,9 +291,7 @@ inline void DistLowerForwardSolve
             recvBufferSize += recvSize;
         }
         std::vector<F> recvBuffer( recvBufferSize );
-#ifndef RELEASE
-        VerifySendsAndRecvs( sendCounts, recvCounts, comm );
-#endif
+        DEBUG_ONLY(VerifySendsAndRecvs( sendCounts, recvCounts, comm ))
 
         // AllToAll to send and receive the child updates
         SparseAllToAll
@@ -345,9 +337,7 @@ inline void DistLowerBackwardSolve
 ( const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X, bool conjugate )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistLowerBackwardSolve");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistLowerBackwardSolve"))
     const int numDistNodes = info.distNodes.size();
     const int width = X.Width();
     const SymmFrontType frontType = L.frontType;
@@ -462,9 +452,7 @@ inline void DistLowerBackwardSolve
             recvBufferSize += recvSize;
         }
         std::vector<F> recvBuffer( recvBufferSize );
-#ifndef RELEASE
-        VerifySendsAndRecvs( sendCounts, recvCounts, parentComm );
-#endif
+        DEBUG_ONLY(VerifySendsAndRecvs( sendCounts, recvCounts, parentComm ))
 
         // AllToAll to send and recv parent updates
         SparseAllToAll
@@ -527,9 +515,7 @@ inline void DistLowerBackwardSolve
 ( const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X, bool conjugate )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistLowerBackwardSolve");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistLowerBackwardSolve"))
     const int numDistNodes = info.distNodes.size();
     const int width = X.Width();
     const SymmFrontType frontType = L.frontType;
@@ -635,9 +621,7 @@ inline void DistLowerBackwardSolve
             recvBufferSize += recvSize;
         }
         std::vector<F> recvBuffer( recvBufferSize );
-#ifndef RELEASE
-        VerifySendsAndRecvs( sendCounts, recvCounts, parentComm );
-#endif
+        DEBUG_ONLY(VerifySendsAndRecvs( sendCounts, recvCounts, parentComm ))
 
         // AllToAll to send and recv parent updates
         SparseAllToAll

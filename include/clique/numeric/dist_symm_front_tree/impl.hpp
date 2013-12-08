@@ -27,11 +27,11 @@ DistSymmFrontTree<F>::Initialize
   const DistSymmInfo& info,
   bool conjugate )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistSymmFrontTree::Initialize");
-    if( A.LocalHeight() != reordering.NumLocalSources() )
-        LogicError("Local mapping was not the right size");
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("DistSymmFrontTree::Initialize");
+        if( A.LocalHeight() != reordering.NumLocalSources() )
+            LogicError("Local mapping was not the right size");
+    )
     frontType = SYMM_2D;
     isHermitian = conjugate;
     
@@ -41,9 +41,7 @@ DistSymmFrontTree<F>::Initialize
     const int commSize = mpi::CommSize( comm );
     const int numLocal = sepTree.localSepsAndLeaves.size();
     const int numDist = sepTree.distSeps.size();
-#ifndef RELEASE
-    const int numSources = graph.NumSources();
-#endif
+    DEBUG_ONLY(const int numSources = graph.NumSources())
 
     // Get the reordered indices of the targets of our portion of the 
     // distributed sparse matrix
@@ -62,10 +60,10 @@ DistSymmFrontTree<F>::Initialize
         for( int t=0; t<numInds; ++t )
         {
             const int i = sepOrLeaf.inds[t];
-#ifndef RELEASE
-            if( i < 0 || i >= numSources )
-                LogicError("separator index was out of bounds");
-#endif
+            DEBUG_ONLY(
+                if( i < 0 || i >= numSources )
+                    LogicError("separator index was out of bounds");
+            )
             const int q = RowToProcess( i, blocksize, commSize );
             ++recvRowSizes[q];
         }
@@ -81,10 +79,10 @@ DistSymmFrontTree<F>::Initialize
         for( int t=rowShift; t<numInds; t+=rowStride )
         {
             const int i = sep.inds[t];
-#ifndef RELEASE
-            if( i < 0 || i >= numSources )
-                LogicError("separator index was out of bounds");
-#endif
+            DEBUG_ONLY(
+                if( i < 0 || i >= numSources )
+                    LogicError("separator index was out of bounds");
+            )
             const int q = RowToProcess( i, blocksize, commSize );
             ++recvRowSizes[q];
         }
@@ -105,15 +103,15 @@ DistSymmFrontTree<F>::Initialize
         for( int t=0; t<numInds; ++t )
         {
             const int i = sepOrLeaf.inds[t];
-#ifndef RELEASE
-            if( i < 0 || i >= numSources )
-                LogicError("separator index was out of bounds");
-#endif
+            DEBUG_ONLY(
+                if( i < 0 || i >= numSources )
+                    LogicError("separator index was out of bounds");
+            )
             const int q = RowToProcess( i, blocksize, commSize );
-#ifndef RELEASE            
-            if( offs[q] >= numRecvRows )
-                LogicError("offset got too large");
-#endif
+            DEBUG_ONLY(
+                if( offs[q] >= numRecvRows )
+                    LogicError("offset got too large");
+            )
             recvRows[offs[q]++] = i;
         }
     }
@@ -128,15 +126,15 @@ DistSymmFrontTree<F>::Initialize
         for( int t=rowShift; t<numInds; t+=rowStride )
         {
             const int i = sep.inds[t];
-#ifndef RELEASE
-            if( i < 0 || i >= numSources )
-                LogicError("separator index was out of bounds");
-#endif
+            DEBUG_ONLY(
+                if( i < 0 || i >= numSources )
+                    LogicError("separator index was out of bounds");
+            )
             const int q = RowToProcess( i, blocksize, commSize );
-#ifndef RELEASE            
-            if( offs[q] >= numRecvRows )
-                LogicError("offset got too large");
-#endif
+            DEBUG_ONLY(
+                if( offs[q] >= numRecvRows )
+                    LogicError("offset got too large");
+            )
             recvRows[offs[q]++] = i;
         }
     }
@@ -197,19 +195,19 @@ DistSymmFrontTree<F>::Initialize
                 const int col = A.Col( localEntryOff+t );
                 const int targetOff = Find( targets, col );
                 const int mappedTarget = mappedTargets[targetOff];
-#ifndef RELEASE
-                if( index >= numSendEntries )
-                    LogicError("send entry index got too big");
-#endif
+                DEBUG_ONLY(
+                    if( index >= numSendEntries )
+                        LogicError("send entry index got too big");
+                )
                 sendEntries[index] = (conjugate ? elem::Conj(value) : value);
                 sendTargets[index] = mappedTarget;
                 ++index;
             }
         }
-#ifndef RELEASE
-        if( index != sendEntriesOffs[q]+sendEntriesSizes[q] )
-            LogicError("index was not the correct value");
-#endif
+        DEBUG_ONLY(
+            if( index != sendEntriesOffs[q]+sendEntriesSizes[q] )
+                LogicError("index was not the correct value");
+        )
     }
 
     // Send back the number of nonzeros per row and the nonzeros themselves
@@ -254,11 +252,10 @@ DistSymmFrontTree<F>::Initialize
         const int off = node.off;
         const int lowerSize = node.lowerStruct.size();
         Zeros( front.frontL, size+lowerSize, size );
-
-#ifndef RELEASE
-        if( size != (int)sepOrLeaf.inds.size() )
-            LogicError("Mismatch between separator and node size");
-#endif
+        DEBUG_ONLY(
+            if( size != (int)sepOrLeaf.inds.size() )
+                LogicError("Mismatch between separator and node size");
+        )
 
         for( int t=0; t<size; ++t )
         {
@@ -283,15 +280,15 @@ DistSymmFrontTree<F>::Initialize
                 else
                 {
                     const int origOff = Find( origLowerStruct, target );
-#ifndef RELEASE
-                    if( origOff >= (int)node.origLowerRelInds.size() )
-                        LogicError("origLowerRelInds too small");
-#endif
+                    DEBUG_ONLY(
+                        if( origOff >= (int)node.origLowerRelInds.size() )
+                            LogicError("origLowerRelInds too small");
+                    )
                     const int row = node.origLowerRelInds[origOff];
-#ifndef RELEASE
-                    if( row < t )
-                        LogicError("Tried to touch upper triangle");
-#endif
+                    DEBUG_ONLY(
+                        if( row < t )
+                            LogicError("Tried to touch upper triangle");
+                    )
                     front.frontL.Set( row, t, value );
                 }
             }
@@ -317,11 +314,10 @@ DistSymmFrontTree<F>::Initialize
         const int lowerSize = node.lowerStruct.size();
         front.front2dL.SetGrid( grid );
         Zeros( front.front2dL, size+lowerSize, size );
-
-#ifndef RELEASE
-        if( size != (int)sep.inds.size() )
-            LogicError("Mismatch in separator and node sizes");
-#endif
+        DEBUG_ONLY(
+            if( size != (int)sep.inds.size() )
+                LogicError("Mismatch in separator and node sizes");
+        )
 
         for( int t=rowShift; t<size; t+=rowStride )
         {
@@ -352,15 +348,15 @@ DistSymmFrontTree<F>::Initialize
                 else 
                 {
                     const int origOff = Find( origLowerStruct, target );
-#ifndef RELEASE
-                    if( origOff >= (int)node.origLowerRelInds.size() )
-                        LogicError("origLowerRelInds too small");
-#endif
+                    DEBUG_ONLY(
+                        if( origOff >= (int)node.origLowerRelInds.size() )
+                            LogicError("origLowerRelInds too small");
+                    )
                     const int row = node.origLowerRelInds[origOff];
-#ifndef RELEASE
-                    if( row < t )
-                        LogicError("Tried to touch upper triangle");
-#endif
+                    DEBUG_ONLY(
+                        if( row < t )
+                            LogicError("Tried to touch upper triangle");
+                    )
                     if( row % colStride == colShift )
                     {
                         const int localRow = (row-colShift) / colStride;
@@ -370,11 +366,11 @@ DistSymmFrontTree<F>::Initialize
             }
         }
     }
-#ifndef RELEASE
-    for( int q=0; q<commSize; ++q )
-        if( entryOffs[q] != recvEntriesOffs[q]+recvEntriesSizes[q] )
-            LogicError("entryOffs were incorrect");
-#endif
+    DEBUG_ONLY(
+        for( int q=0; q<commSize; ++q )
+            if( entryOffs[q] != recvEntriesOffs[q]+recvEntriesSizes[q] )
+                LogicError("entryOffs were incorrect");
+    )
     
     // Copy information from the local root to the dist leaf
     {
@@ -396,9 +392,7 @@ DistSymmFrontTree<F>::DistSymmFrontTree
   const DistSymmInfo& info,
   bool conjugate )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistSymmFrontTree::DistSymmFrontTree");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistSymmFrontTree::DistSymmFrontTree"))
     Initialize( A, reordering, sepTree, info, conjugate );
 }
 
@@ -408,9 +402,7 @@ DistSymmFrontTree<F>::MemoryInfo
 ( double& numLocalEntries, double& minLocalEntries, double& maxLocalEntries, 
   double& numGlobalEntries ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistSymmFrontTree::MemoryInfo");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistSymmFrontTree::MemoryInfo"))
     numLocalEntries = numGlobalEntries = 0;
     const int numLocalFronts = localFronts.size();
     const int numDistFronts = distFronts.size();
@@ -447,9 +439,7 @@ DistSymmFrontTree<F>::TopLeftMemoryInfo
 ( double& numLocalEntries, double& minLocalEntries, double& maxLocalEntries, 
   double& numGlobalEntries ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistSymmFrontTree::TopLeftMemInfo");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistSymmFrontTree::TopLeftMemInfo"))
     numLocalEntries = numGlobalEntries = 0;
     const int numLocalFronts = localFronts.size();
     const int numDistFronts = distFronts.size();
@@ -503,9 +493,7 @@ DistSymmFrontTree<F>::BottomLeftMemoryInfo
 ( double& numLocalEntries, double& minLocalEntries, double& maxLocalEntries, 
   double& numGlobalEntries ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistSymmFrontTree::BottomLeftMemInfo");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistSymmFrontTree::BottomLeftMemInfo"))
     numLocalEntries = numGlobalEntries = 0;
     const int numLocalFronts = localFronts.size();
     const int numDistFronts = distFronts.size();
@@ -559,9 +547,7 @@ DistSymmFrontTree<F>::FactorizationWork
 ( double& numLocalFlops, double& minLocalFlops, double& maxLocalFlops, 
   double& numGlobalFlops, bool selInv ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistSymmFrontTree::FactorizationWork");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistSymmFrontTree::FactorizationWork"))
     numLocalFlops = numGlobalFlops = 0;
     const int numLocalFronts = localFronts.size();
     const int numDistFronts = distFronts.size();
@@ -613,9 +599,7 @@ DistSymmFrontTree<F>::SolveWork
 ( double& numLocalFlops, double& minLocalFlops, double& maxLocalFlops, 
   double& numGlobalFlops, int numRhs ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistSymmFrontTree::SolveWork");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistSymmFrontTree::SolveWork"))
     numLocalFlops = numGlobalFlops = 0;
     const int numLocalFronts = localFronts.size();
     const int numDistFronts = distFronts.size();

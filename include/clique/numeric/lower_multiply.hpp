@@ -39,9 +39,7 @@ inline void LowerMultiply
   const DistSymmInfo& info, const DistSymmFrontTree<T>& L, 
   DistNodalMultiVec<T>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("LowerMultiply");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("LowerMultiply"))
     if( orientation == NORMAL )
     {
         LocalLowerMultiplyNormal( diagOffset, info, L, X );

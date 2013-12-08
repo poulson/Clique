@@ -44,9 +44,7 @@ struct DistSymmElimTree
         if( std::uncaught_exception() )
         {
             std::cerr << "Uncaught exception in ~DistSymmElimTree" << std::endl;
-#ifndef RELEASE            
-            DumpCallStack();
-#endif
+            DEBUG_ONLY(DumpCallStack())
             return;
         }
 

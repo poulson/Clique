@@ -93,10 +93,10 @@ template<typename T>
 inline int
 DistSparseMatrix<T>::NumLocalEntries() const
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistSparseMatrix::NumLocalEntries");
-    EnsureConsistentSizes();
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("DistSparseMatrix::NumLocalEntries");
+        EnsureConsistentSizes();
+    )
     return distGraph_.NumLocalEdges();
 }
 
@@ -104,11 +104,11 @@ template<typename T>
 inline int
 DistSparseMatrix<T>::Capacity() const
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistSparseMatrix::Capacity");
-    EnsureConsistentSizes();
-    EnsureConsistentCapacities();
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("DistSparseMatrix::Capacity");
+        EnsureConsistentSizes();
+        EnsureConsistentCapacities();
+    )
     return distGraph_.Capacity();
 }
 
@@ -116,9 +116,7 @@ template<typename T>
 inline int
 DistSparseMatrix<T>::Row( int localInd ) const
 { 
-#ifndef RELEASE 
-    CallStackEntry cse("DistSparseMatrix::Row");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistSparseMatrix::Row"))
     return distGraph_.Source( localInd );
 }
 
@@ -126,9 +124,7 @@ template<typename T>
 inline int
 DistSparseMatrix<T>::Col( int localInd ) const
 { 
-#ifndef RELEASE 
-    CallStackEntry cse("DistSparseMatrix::Col");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistSparseMatrix::Col"))
     return distGraph_.Target( localInd );
 }
 
@@ -136,9 +132,7 @@ template<typename T>
 inline int
 DistSparseMatrix<T>::LocalEntryOffset( int localRow ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistSparseMatrix::LocalEntryOffset");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistSparseMatrix::LocalEntryOffset"))
     return distGraph_.LocalEdgeOffset( localRow );
 }
 
@@ -146,9 +140,7 @@ template<typename T>
 inline int
 DistSparseMatrix<T>::NumConnections( int localRow ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistSparseMatrix::NumConnections");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistSparseMatrix::NumConnections"))
     return distGraph_.NumConnections( localRow );
 }
 
@@ -156,11 +148,11 @@ template<typename T>
 inline T
 DistSparseMatrix<T>::Value( int localInd ) const
 { 
-#ifndef RELEASE 
-    CallStackEntry cse("DistSparseMatrix::Value");
-    if( localInd < 0 || localInd >= (int)vals_.size() )
-        LogicError("Entry number out of bounds");
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("DistSparseMatrix::Value");
+        if( localInd < 0 || localInd >= (int)vals_.size() )
+            LogicError("Entry number out of bounds");
+    )
     return vals_[localInd];
 }
 
@@ -205,9 +197,7 @@ template<typename T>
 inline void
 DistSparseMatrix<T>::StartAssembly()
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistSparseMatrix::StartAssembly");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistSparseMatrix::StartAssembly"))
     multMeta.ready = false;
     distGraph_.EnsureNotAssembling();
     distGraph_.assembling_ = true;
@@ -217,9 +207,7 @@ template<typename T>
 inline void
 DistSparseMatrix<T>::StopAssembly()
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistSparseMatrix::StopAssembly");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistSparseMatrix::StopAssembly"))
     if( !distGraph_.assembling_ )
         LogicError("Cannot stop assembly without starting");
     distGraph_.assembling_ = false;
@@ -279,10 +267,10 @@ template<typename T>
 inline void
 DistSparseMatrix<T>::Update( int row, int col, T value )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistSparseMatrix::Update");
-    EnsureConsistentSizes();
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("DistSparseMatrix::Update");
+        EnsureConsistentSizes();
+    )
     distGraph_.Insert( row, col );
     vals_.push_back( value );
 }

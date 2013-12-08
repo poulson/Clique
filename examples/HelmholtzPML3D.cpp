@@ -14,10 +14,10 @@ using namespace cliq;
 
 Complex<double> PML( double x, double w, double p, double sigma, double k )
 {
-#ifndef RELEASE
-    if( x < 0 || x > w+1e-10 )
-        throw std::logic_error("Evaluation point not in PML interval");
-#endif
+    DEBUG_ONLY(
+        if( x < 0 || x > w+1e-10 )
+            LogicError("Evaluation point not in PML interval");
+    )
     const double realPart = 1.0;
     const double arg = x/w;
     const double imagPart = (sigma/w)*std::pow(arg,p)/k;

@@ -44,9 +44,7 @@ inline void LowerSolve
 ( Orientation orientation, const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("LowerSolve");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("LowerSolve"))
     if( orientation == NORMAL )
     {
         LocalLowerForwardSolve( info, L, X );
@@ -65,9 +63,7 @@ inline void LowerSolve
 ( Orientation orientation, const DistSymmInfo& info, 
   const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X )
 {
-#ifndef RELEASE
-    CallStackEntry cse("LowerSolve");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("LowerSolve"))
     if( orientation == NORMAL )
     {
         LocalLowerForwardSolve( info, L, X );

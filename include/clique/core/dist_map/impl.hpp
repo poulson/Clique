@@ -39,9 +39,7 @@ inline void
 DistMap::StoreOwners
 ( int numSources, std::vector<int>& localInds, mpi::Comm comm )
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistMap::StoreOwners");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistMap::StoreOwners"))
     SetComm( comm );
     ResizeTo( numSources );
     const int commSize = mpi::CommSize( comm );
@@ -68,10 +66,10 @@ DistMap::StoreOwners
         numSends += sendSizes[q];
         numRecvs += recvSizes[q];
     }
-#ifndef RELEASE
-    if( numRecvs != NumLocalSources() )
-        LogicError("Incorrect number of recv indices");
-#endif
+    DEBUG_ONLY(
+        if( numRecvs != NumLocalSources() )
+            LogicError("Incorrect number of recv indices");
+    )
     std::vector<int> offs = sendOffs;
     std::vector<int> sendInds( numSends );
     for( int s=0; s<numLocalInds; ++s )
@@ -102,9 +100,7 @@ DistMap::StoreOwners
 inline void
 DistMap::Translate( std::vector<int>& localInds ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistMap::Translate");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistMap::Translate"))
     const int commSize = mpi::CommSize( comm_ );
     const int numLocalInds = localInds.size();
 
@@ -113,10 +109,10 @@ DistMap::Translate( std::vector<int>& localInds ) const
     for( int s=0; s<numLocalInds; ++s )
     {
         const int i = localInds[s];
-#ifndef RELEASE
-        if( i < 0 )
-            LogicError("Index was negative");
-#endif
+        DEBUG_ONLY(
+            if( i < 0 )
+                LogicError("Index was negative");
+        )
         if( i < numSources_ )
         {
             const int q = RowToProcess( i, blocksize_, commSize );
@@ -168,16 +164,17 @@ DistMap::Translate( std::vector<int>& localInds ) const
     {
         const int i = fulfills[s];
         const int iLocal = i - firstLocalSource_;
-#ifndef RELEASE
-        if( iLocal < 0 || iLocal >= (int)map_.size() )
-        {
-            const int commRank = mpi::CommRank( comm_ );
-            std::ostringstream msg;
-            msg << "invalid request: i=" << i << ", iLocal=" << iLocal
-                << ", commRank=" << commRank << ", blocksize=" << blocksize_;
-            LogicError( msg.str() );
-        }
-#endif
+        DEBUG_ONLY(
+            if( iLocal < 0 || iLocal >= (int)map_.size() )
+            {
+                const int commRank = mpi::CommRank( comm_ );
+                std::ostringstream msg;
+                msg << "invalid request: i=" << i << ", iLocal=" << iLocal
+                    << ", commRank=" << commRank << ", blocksize=" 
+                    << blocksize_;
+                LogicError( msg.str() );
+            }
+        )
         fulfills[s] = map_[iLocal];
     }
 
@@ -202,9 +199,7 @@ DistMap::Translate( std::vector<int>& localInds ) const
 inline void
 DistMap::FormInverse( DistMap& inverseMap ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistMap::FormInverse");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistMap::FormInverse"))
     const int commSize = mpi::CommSize( comm_ );
     const int numLocalSources = map_.size();
 
@@ -229,10 +224,10 @@ DistMap::FormInverse( DistMap& inverseMap ) const
         sendOffs[q] = numSends;
         numSends += sendSizes[q];
     }
-#ifndef RELEASE
-    if( numSends != 2*numLocalSources )
-        LogicError("Miscalculated numSends");
-#endif
+    DEBUG_ONLY(
+        if( numSends != 2*numLocalSources )
+            LogicError("Miscalculated numSends");
+    )
     int numReceives=0;
     std::vector<int> recvOffs( commSize );
     for( int q=0; q<commSize; ++q )
@@ -240,10 +235,10 @@ DistMap::FormInverse( DistMap& inverseMap ) const
         recvOffs[q] = numReceives;
         numReceives += recvSizes[q];
     }
-#ifndef RELEASE
-    if( numReceives != 2*numLocalSources )
-        LogicError("Mistake in number of receives");
-#endif
+    DEBUG_ONLY(
+        if( numReceives != 2*numLocalSources )
+            LogicError("Mistake in number of receives");
+    )
 
     // Pack our map information
     std::vector<int> sends( numSends );
@@ -276,20 +271,18 @@ DistMap::FormInverse( DistMap& inverseMap ) const
 inline void
 DistMap::Extend( DistMap& firstMap ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistMap::Extend");
-    // TODO: Ensure that the communicators are congruent and that the maps
-    //       are compatible sizes.
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("DistMap::Extend");
+        // TODO: Ensure that the communicators are congruent and that the maps
+        //       are compatible sizes.
+    )
     Translate( firstMap.map_ ); 
 }
 
 inline void
 DistMap::Extend( const DistMap& firstMap, DistMap& compositeMap ) const
 {
-#ifndef RELEASE
-    CallStackEntry cse("DistMap::Extend");
-#endif
+    DEBUG_ONLY(CallStackEntry cse("DistMap::Extend"))
     compositeMap = firstMap;
     Extend( compositeMap );
 }
@@ -339,22 +332,22 @@ DistMap::NumLocalSources() const
 inline int
 DistMap::GetLocal( int localSource ) const
 { 
-#ifndef RELEASE
-    CallStackEntry cse("DistMap::GetLocal");
-    if( localSource < 0 || localSource >= (int)map_.size() )
-        LogicError("local source is out of bounds");
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("DistMap::GetLocal");
+        if( localSource < 0 || localSource >= (int)map_.size() )
+            LogicError("local source is out of bounds");
+    )
     return map_[localSource];
 }
 
 inline void
 DistMap::SetLocal( int localSource, int target )
 { 
-#ifndef RELEASE
-    CallStackEntry cse("DistMap::SetLocal");
-    if( localSource < 0 || localSource >= (int)map_.size() )
-        LogicError("local source is out of bounds");
-#endif
+    DEBUG_ONLY(
+        CallStackEntry cse("DistMap::SetLocal");
+        if( localSource < 0 || localSource >= (int)map_.size() )
+            LogicError("local source is out of bounds");
+    )
     map_[localSource] = target; 
 }
 
