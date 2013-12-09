@@ -26,33 +26,25 @@ inline void
 DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
 {
     DEBUG_ONLY(CallStackEntry cse("DistLDL"))
-    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D ||
-                            L.frontType == BLOCK_LDL_INTRAPIV_2D );
-    const bool intraPiv = ( L.frontType == LDL_INTRAPIV_2D ||
-                            L.frontType == BLOCK_LDL_INTRAPIV_2D );
+    const SymmFrontType type = L.frontType;
+    const bool blocked = BlockFactorization(type);
+    const bool pivoted = PivotedFactorization(type);
 
     // The bottom front is already computed, so just view it
-    SymmFront<F>& topLocalFront = L.localFronts.back();
-    DistSymmFront<F>& bottomDistFront = L.distFronts[0];
-    const Grid& bottomGrid = *info.distNodes[0].grid;
-    bottomDistFront.front2dL.Empty();
-    bottomDistFront.front2dL.LockedAttach
-    ( topLocalFront.frontL.Height(), topLocalFront.frontL.Width(), 0, 0, 
-      topLocalFront.frontL.LockedBuffer(), topLocalFront.frontL.LDim(), 
-      bottomGrid );
-    bottomDistFront.work2d.Empty();
-    bottomDistFront.work2d.LockedAttach
-    ( topLocalFront.work.Height(), topLocalFront.work.Width(), 0, 0,
-      topLocalFront.work.LockedBuffer(), topLocalFront.work.LDim(),
-      bottomGrid );
-    if( !blockLDL )
+    SymmFront<F>& topLocFront = L.localFronts.back();
+    DistSymmFront<F>& botDistFront = L.distFronts[0];
+    const Grid& botGrid = *info.distNodes[0].grid;
+    botDistFront.front2dL.LockedAttach( topLocFront.frontL, 0, 0, botGrid );
+    botDistFront.work2d.LockedAttach( topLocFront.work, 0, 0, botGrid );
+    if( !blocked )
     {
-        // Store the diagonal in a [VC,* ] distribution
-        DistMatrix<F,MD,STAR> diag( bottomGrid );
-        bottomDistFront.front2dL.GetDiagonal( diag );
-        bottomDistFront.diag1d.SetGrid( bottomGrid );
-        bottomDistFront.diag1d = diag;
-        elem::SetDiagonal( bottomDistFront.front2dL, F(1) );
+        botDistFront.diag1d.LockedAttach( topLocFront.diag, 0, botGrid );
+        if( pivoted )
+        {
+            botDistFront.piv.LockedAttach( topLocFront.piv, 0, botGrid );
+            botDistFront.subdiag1d.LockedAttach
+            ( topLocFront.subdiag, 0, botGrid );
+        }
     }
 
     // Perform the distributed portion of the factorization
@@ -102,10 +94,10 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
             ( onLeft ? node.leftRelInds : node.rightRelInds );
         const Int updateColShift = childUpdate.ColShift();
         const Int updateRowShift = childUpdate.RowShift();
-        const Int updateLocalHeight = childUpdate.LocalHeight();
-        const Int updateLocalWidth = childUpdate.LocalWidth();
+        const Int updateLocHeight = childUpdate.LocalHeight();
+        const Int updateLocWidth = childUpdate.LocalWidth();
         std::vector<int> packOffs = sendDispls;
-        for( Int jChildLoc=0; jChildLoc<updateLocalWidth; ++jChildLoc )
+        for( Int jChildLoc=0; jChildLoc<updateLocWidth; ++jChildLoc )
         {
             const Int jChild = updateRowShift + jChildLoc*childGridWidth;
             const int destGridCol = myChildRelInds[jChild] % gridWidth;
@@ -117,7 +109,7 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
             else
                 localColShift = (jChild-updateColShift)/childGridHeight + 1;
             for( Int iChildLoc=localColShift; 
-                     iChildLoc<updateLocalHeight; ++iChildLoc )
+                     iChildLoc<updateLocHeight; ++iChildLoc )
             {
                 const Int iChild = updateColShift + iChildLoc*childGridHeight;
                 if( iChild >= jChild )
@@ -140,7 +132,7 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
         SwapClear( packOffs );
         childFront.work2d.Empty();
         if( s == 1 )
-            topLocalFront.work.Empty();
+            topLocFront.work.Empty();
 
         // Set up the recv buffer for the AllToAll
         const bool computeFactRecvInds = ( commMeta.childRecvInds.size() == 0 );
@@ -170,8 +162,8 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
         front.work2d.SetGrid( front.front2dL.Grid() );
         front.work2d.Align( node.size % gridHeight, node.size % gridWidth );
         Zeros( front.work2d, updateSize, updateSize );
-        const Int leftLocalWidth = front.front2dL.LocalWidth();
-        const Int topLocalHeight = Length( node.size, grid.Row(), gridHeight );
+        const Int leftLocWidth = front.front2dL.LocalWidth();
+        const Int topLocHeight = Length( node.size, grid.Row(), gridHeight );
         for( unsigned proc=0; proc<commSize; ++proc )
         {
             const F* recvVals = &recvBuffer[recvDispls[proc]];
@@ -188,12 +180,11 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
                     if( iFront < jFront )
                         LogicError("Tried to update upper triangle");
                 )
-                if( jFrontLoc < leftLocalWidth )
+                if( jFrontLoc < leftLocWidth )
                     front.front2dL.UpdateLocal( iFrontLoc, jFrontLoc, value );
                 else
                     front.work2d.UpdateLocal
-                    ( iFrontLoc-topLocalHeight, jFrontLoc-leftLocalWidth, 
-                      value );
+                    ( iFrontLoc-topLocHeight, jFrontLoc-leftLocWidth, value );
             }
         }
         SwapClear( recvBuffer );
@@ -203,10 +194,10 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
             commMeta.EmptyChildRecvIndices();
 
         // Now that the frontal matrix is set up, perform the factorization
-        if( blockLDL )
+        if( blocked )
             FrontBlockLDL
-            ( front.front2dL, front.work2d, L.isHermitian, intraPiv );
-        else if( intraPiv )
+            ( front.front2dL, front.work2d, L.isHermitian, pivoted );
+        else if( pivoted )
         {
             DistMatrix<F,MD,STAR> subdiag( grid );
             front.piv.SetGrid( grid );

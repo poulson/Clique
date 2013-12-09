@@ -60,31 +60,18 @@ inline void
 LDL( DistSymmInfo& info, DistSymmFrontTree<F>& L, SymmFrontType newFrontType )
 {
     DEBUG_ONLY(CallStackEntry cse("LDL"))
-    if( L.frontType != SYMM_2D )
-        LogicError
-        ("Should only perform LDL factorization of 2D symmetric/Hermitian "
-         "matrices");
+    if( !Unfactored(L.frontType) )
+        LogicError("Matrix is already factored");
 
-    if( newFrontType == LDL_2D        || newFrontType == LDL_1D || 
-        newFrontType == LDL_SELINV_2D || newFrontType == LDL_SELINV_1D )
-    {
-        L.frontType = LDL_2D;
-    }
-    else if( newFrontType == LDL_INTRAPIV_2D )
-    {
-        L.frontType = LDL_INTRAPIV_2D;    
-    }
-    else if( newFrontType == BLOCK_LDL_2D || 
-             newFrontType == BLOCK_LDL_INTRAPIV_2D )
-    {
-        L.frontType = newFrontType;
-    }
-    else
-        LogicError("Invalid new front type");
+    // Convert from 1D to 2D if necessary
+    ChangeFrontType( L, SYMM_2D );
 
+    // Perform the initial factorization
+    L.frontType = InitialFactorType(newFrontType);
     LocalLDL( info, L );
     DistLDL( info, L );
 
+    // Convert the fronts from the initial factorization to the requested form
     ChangeFrontType( L, newFrontType );
 }
 

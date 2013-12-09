@@ -50,6 +50,8 @@ inline void DistLowerForwardSolve
     if( frontType != LDL_1D && 
         frontType != LDL_SELINV_1D && 
         frontType != LDL_SELINV_2D && 
+        frontType != LDL_INTRAPIV_1D &&
+        frontType != LDL_INTRAPIV_SELINV_2D &&
         frontType != BLOCK_LDL_2D && 
         frontType != BLOCK_LDL_INTRAPIV_2D )
         LogicError("This solve mode is not yet implemented");
@@ -59,10 +61,7 @@ inline void DistLowerForwardSolve
     const DistSymmFront<F>& distLeafFront = L.distFronts[0];
     const Grid& leafGrid = ( frontsAre1d ? distLeafFront.front1dL.Grid() 
                                          : distLeafFront.front2dL.Grid() );
-    distLeafFront.work1d.LockedAttach
-    ( localRootFront.work.Height(), localRootFront.work.Width(), 0,
-      localRootFront.work.LockedBuffer(), localRootFront.work.LDim(), 
-      leafGrid );
+    distLeafFront.work1d.LockedAttach( localRootFront.work, 0, leafGrid );
     
     // Perform the distributed portion of the forward solve
     for( int s=1; s<numDistNodes; ++s )
@@ -175,8 +174,17 @@ inline void DistLowerForwardSolve
             FrontFastLowerForwardSolve( front.front1dL, W );
         else if( frontType == LDL_SELINV_2D )
             FrontFastLowerForwardSolve( front.front2dL, W );
-        else // frontType = BLOCK_LDL_2D or BLOCK_LDL_INTRAPIV_2D
+        /*
+        else if( frontType == LDL_INTRAPIV_1D )
+            FrontIntraPivLowerForwardSolve( front.front1dL, front.piv, W );
+        else if( frontType == LDL_INTRAPIV_SELINV_2D )
+            FrontFastIntraPivLowerForwardSolve( front.front2dL, front.piv, W );
+        */
+        else if( frontType == BLOCK_LDL_2D || 
+                 frontType == BLOCK_LDL_INTRAPIV_2D )
             FrontBlockLowerForwardSolve( front.front2dL, W );
+        else
+            LogicError("Unsupported front type");
 
         // Store this node's portion of the result
         X.distNodes[s-1] = WT;
@@ -204,10 +212,7 @@ inline void DistLowerForwardSolve
     const SymmFront<F>& localRootFront = L.localFronts.back();
     const DistSymmFront<F>& distLeafFront = L.distFronts[0];
     const Grid& leafGrid = distLeafFront.front2dL.Grid();
-    distLeafFront.work2d.LockedAttach
-    ( localRootFront.work.Height(), localRootFront.work.Width(), 0, 0,
-      localRootFront.work.LockedBuffer(), localRootFront.work.LDim(), 
-      leafGrid );
+    distLeafFront.work2d.LockedAttach( localRootFront.work, 0, 0, leafGrid );
     
     // Perform the distributed portion of the forward solve
     for( int s=1; s<numDistNodes; ++s )
@@ -318,12 +323,21 @@ inline void DistLowerForwardSolve
         SwapClear( recvDispls );
 
         // Now that the RHS is set up, perform this node's solve
-        if( frontType == LDL_SELINV_2D )
-            FrontFastLowerForwardSolve( front.front2dL, W );
-        else if( frontType == LDL_2D )
+        if( frontType == LDL_2D )
             FrontLowerForwardSolve( front.front2dL, W );
-        else // frontType = BLOCK_LDL_2D or BLOCK_LDL_INTRAPIV_2D
+        else if( frontType == LDL_SELINV_2D )
+            FrontFastLowerForwardSolve( front.front2dL, W );
+        /*
+        else if( frontType == LDL_INTRAPIV_2D )
+            FrontIntraPivLowerForwardSolve( front.front2dL, front.piv, W );
+        else if( frontType == LDL_INTRAPIV_SELINV_2D )
+            FrontFastIntraPivLowerForwardSolve( front.front2dL, front.piv, W );
+        */
+        else if( frontType == BLOCK_LDL_2D || 
+                 frontType == BLOCK_LDL_INTRAPIV_2D )
             FrontBlockLowerForwardSolve( front.front2dL, W );
+        else
+            LogicError("Unsupported front type");
 
         // Store this node's portion of the result
         X.distNodes[s-1] = WT;
@@ -347,8 +361,11 @@ inline void DistLowerBackwardSolve
     if( frontType != LDL_1D && 
         frontType != LDL_SELINV_1D && 
         frontType != LDL_SELINV_2D && 
+        frontType != LDL_INTRAPIV_1D &&
+        frontType != LDL_INTRAPIV_SELINV_2D &&
         !blockLDL )
         LogicError("This solve mode is not yet implemented");
+    // HERE
 
     // Directly operate on the root separator's portion of the right-hand sides
     const SymmFront<F>& localRootFront = L.localFronts.back();

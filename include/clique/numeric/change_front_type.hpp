@@ -30,56 +30,53 @@ inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
     if( frontType == L.frontType ) 
         return;
     const int numDistNodes = L.distFronts.size();    
-    DistSymmFront<F>& leafFront = L.distFronts[0];
     const SymmFrontType oldFrontType = L.frontType;
+    DistSymmFront<F>& leafFront = L.distFronts[0];
 
-    if( (frontType == LDL_1D        && oldFrontType == LDL_2D)        ||
-        (frontType == LDL_SELINV_1D && oldFrontType == LDL_SELINV_2D) ||
-        (frontType == SYMM_1D       && oldFrontType == SYMM_2D) )
-    {
-        // 2d -> 1d
-        leafFront.front1dL.LockedAttach
-        ( leafFront.front2dL.Height(), 
-          leafFront.front2dL.Width(), 0,
-          leafFront.front2dL.LockedBuffer(), 
-          leafFront.front2dL.LDim(),
-          leafFront.front2dL.Grid() );
-        for( int s=1; s<numDistNodes; ++s )
-        {
-            DistSymmFront<F>& front = L.distFronts[s];
-            front.front1dL.Empty();
-            front.front1dL.SetGrid( front.front2dL.Grid() );
-            front.front1dL = front.front2dL;
-            front.front2dL.Empty();
-        }
-    }
-    else if( (frontType == LDL_2D        && oldFrontType == LDL_1D)        || 
-             (frontType == LDL_SELINV_2D && oldFrontType == LDL_SELINV_1D) ||
-             (frontType == SYMM_2D       && oldFrontType == SYMM_1D)       || 
-             // The following reset the fronts for manual modification
-             (frontType == SYMM_2D && oldFrontType == LDL_1D)        || 
-             (frontType == SYMM_2D && oldFrontType == LDL_SELINV_1D) ||
-             (frontType == SYMM_2D && (oldFrontType==BLOCK_LDL_2D||
-                                       oldFrontType==BLOCK_LDL_INTRAPIV_2D)) )
+    if( frontType == ConvertTo2d(oldFrontType) )
     {
         // 1d -> 2d
-        leafFront.front2dL.LockedAttach
-        ( leafFront.front1dL.Height(), 
-          leafFront.front1dL.Width(), 0, 0,
-          leafFront.front1dL.LockedBuffer(), 
-          leafFront.front1dL.LDim(),
-          leafFront.front1dL.Grid() );
+        if( leafFront.front1dL.Locked() )
+            leafFront.front2dL.LockedAttach
+            ( leafFront.front1dL.LockedMatrix(), 0, 0, 
+              leafFront.front1dL.Grid() );
+        else
+            leafFront.front2dL.Attach
+            ( leafFront.front1dL.Matrix(), 0, 0, 
+              leafFront.front1dL.Grid() );
         for( int s=1; s<numDistNodes; ++s )
         {
             DistSymmFront<F>& front = L.distFronts[s];
-            front.front2dL.Empty();
             front.front2dL.SetGrid( front.front1dL.Grid() );
             front.front2dL = front.front1dL;
             front.front1dL.Empty();
         }
     }
-    else if( frontType == LDL_SELINV_2D && oldFrontType == LDL_2D )
+    else if( frontType == ConvertTo1d(oldFrontType) )
     {
+        // 2d -> 1d
+        if( leafFront.front2dL.Locked() )
+            leafFront.front1dL.LockedAttach
+            ( leafFront.front2dL.LockedMatrix(), 0, 
+              leafFront.front2dL.Grid() );
+        else
+            leafFront.front1dL.Attach
+            ( leafFront.front2dL.Matrix(), 0,
+              leafFront.front2dL.Grid() );
+        for( int s=1; s<numDistNodes; ++s )
+        {
+            DistSymmFront<F>& front = L.distFronts[s];
+            front.front1dL.SetGrid( front.front2dL.Grid() );
+            front.front1dL = front.front2dL;
+            front.front2dL.Empty();
+        }
+    }
+    else if( SelInvFactorization(frontType) && 
+             ConvertTo2d(frontType) == ConvertTo2d(AppendSelInv(oldFrontType)) )
+    {
+        // We must perform selective inversion with a 2D distribution
+        if( FrontsAre1d(oldFrontType) )
+            ChangeFrontType( L, ConvertTo2d(oldFrontType) );
         // Perform selective inversion
         for( int s=1; s<numDistNodes; ++s )
         {
@@ -90,31 +87,11 @@ inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
             View( LT, front.front2dL, 0, 0, snSize, snSize );
             elem::TriangularInverse( LOWER, UNIT, LT );
         }
-    }
-    else if( frontType == LDL_SELINV_1D && oldFrontType == LDL_2D )
-    {
-        // Perform selective inversion and then redistribute to 1d
-        leafFront.front1dL.LockedAttach
-        ( leafFront.front2dL.Height(), 
-          leafFront.front2dL.Width(), 0,
-          leafFront.front2dL.LockedBuffer(), 
-          leafFront.front2dL.LDim(),
-          leafFront.front2dL.Grid() );
-        for( int s=1; s<numDistNodes; ++s )
+        // Convert to 1D if necessary
+        if( FrontsAre1d(frontType) )
         {
-            // Invert the lower triangle
-            DistSymmFront<F>& front = L.distFronts[s];
-            const Grid& grid = front.front2dL.Grid();
-            const int snSize = front.front2dL.Width();
-            DistMatrix<F> LT( grid );
-            View( LT, front.front2dL, 0, 0, snSize, snSize );
-            elem::TriangularInverse( LOWER, UNIT, LT );
-
-            // Copy the data over
-            front.front1dL.Empty();
-            front.front1dL.SetGrid( grid );
-            front.front1dL = front.front2dL;
-            front.front2dL.Empty();
+            L.frontType = ConvertTo2d(frontType);
+            ChangeFrontType( L, frontType );
         }
     }
     else
