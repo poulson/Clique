@@ -43,15 +43,21 @@ inline void LocalLowerForwardSolve
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 {
     DEBUG_ONLY(CallStackEntry cse("LocalLowerForwardSolve"))
-    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D || 
-                            L.frontType == BLOCK_LDL_INTRAPIV_2D );
     const int numLocalNodes = info.localNodes.size();
     const int width = X.Width();
+
+    const SymmFrontType frontType = L.frontType;
+    if( Unfactored(frontType) )
+        LogicError("Nonsensical front type for solve");
+    const bool blocked = BlockFactorization( frontType );
+    const bool pivoted = PivotedFactorization( frontType );
+
     for( int s=0; s<numLocalNodes; ++s )
     {
         const SymmNodeInfo& node = info.localNodes[s];
-        const Matrix<F>& frontL = L.localFronts[s].frontL;
-        Matrix<F>& W = L.localFronts[s].work;
+        const SymmFront<F>& front = L.localFronts[s];
+        const Matrix<F>& frontL = front.frontL;
+        Matrix<F>& W = front.work;
 
         // Set up a workspace
         W.ResizeTo( frontL.Height(), width );
@@ -99,8 +105,10 @@ inline void LocalLowerForwardSolve
         // else numChildren == 0
 
         // Solve against this front
-        if( blockLDL )
+        if( blocked )
             FrontBlockLowerForwardSolve( frontL, W );
+        else if( pivoted )
+            FrontIntraPivLowerForwardSolve( frontL, front.piv, W );
         else
             FrontLowerForwardSolve( frontL, W );
 
@@ -116,15 +124,21 @@ inline void LocalLowerForwardSolve
   const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X )
 {
     DEBUG_ONLY(CallStackEntry cse("LocalLowerForwardSolve"))
-    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D ||
-                            L.frontType == BLOCK_LDL_INTRAPIV_2D );
     const int numLocalNodes = info.localNodes.size();
     const int width = X.Width();
+
+    const SymmFrontType frontType = L.frontType;
+    if( Unfactored(frontType) )
+        LogicError("Nonsensical front type for solve");
+    const bool blocked = BlockFactorization( frontType );
+    const bool pivoted = PivotedFactorization( frontType );
+
     for( int s=0; s<numLocalNodes; ++s )
     {
         const SymmNodeInfo& node = info.localNodes[s];
-        const Matrix<F>& frontL = L.localFronts[s].frontL;
-        Matrix<F>& W = L.localFronts[s].work;
+        const SymmFront<F>& front = L.localFronts[s];
+        const Matrix<F>& frontL = front.frontL;
+        Matrix<F>& W = front.work;
 
         // Set up a workspace
         W.ResizeTo( frontL.Height(), width );
@@ -172,8 +186,10 @@ inline void LocalLowerForwardSolve
         // else numChildren == 0
 
         // Solve against this front
-        if( blockLDL )
+        if( blocked )
             FrontBlockLowerForwardSolve( frontL, W );
+        else if( pivoted )
+            FrontIntraPivLowerForwardSolve( frontL, front.piv, W );
         else
             FrontLowerForwardSolve( frontL, W );
 
@@ -189,15 +205,21 @@ inline void LocalLowerBackwardSolve
   bool conjugate )
 {
     DEBUG_ONLY(CallStackEntry cse("LocalLowerBackwardSolve"))
-    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D ||
-                            L.frontType == BLOCK_LDL_INTRAPIV_2D );
     const int numLocalNodes = info.localNodes.size();
     const int width = X.Width();
+
+    const SymmFrontType frontType = L.frontType;
+    if( Unfactored(frontType) )
+        LogicError("Nonsensical front type for solve");
+    const bool blocked = BlockFactorization( frontType );
+    const bool pivoted = PivotedFactorization( frontType );
+
     for( int s=numLocalNodes-2; s>=0; --s )
     {
         const SymmNodeInfo& node = info.localNodes[s];
-        const Matrix<F>& frontL = L.localFronts[s].frontL;
-        Matrix<F>& W = L.localFronts[s].work;
+        const SymmFront<F>& front = L.localFronts[s];
+        const Matrix<F>& frontL = front.frontL;
+        Matrix<F>& W = front.work;
 
         // Set up a workspace
         W.ResizeTo( frontL.Height(), width );
@@ -244,8 +266,10 @@ inline void LocalLowerBackwardSolve
         }
 
         // Solve against this front
-        if( blockLDL )
+        if( blocked )
             FrontBlockLowerBackwardSolve( frontL, W, conjugate );
+        else if( pivoted )
+            FrontIntraPivLowerBackwardSolve( frontL, front.piv, W, conjugate );
         else
             FrontLowerBackwardSolve( frontL, W, conjugate );
 
@@ -266,15 +290,21 @@ inline void LocalLowerBackwardSolve
   bool conjugate )
 {
     DEBUG_ONLY(CallStackEntry cse("LocalLowerBackwardSolve"))
-    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D ||
-                            L.frontType == BLOCK_LDL_INTRAPIV_2D );
     const int numLocalNodes = info.localNodes.size();
     const int width = X.Width();
+
+    const SymmFrontType frontType = L.frontType;
+    if( Unfactored(frontType) )
+        LogicError("Nonsensical front type for solve");
+    const bool blocked = BlockFactorization( frontType );
+    const bool pivoted = PivotedFactorization( frontType );
+
     for( int s=numLocalNodes-2; s>=0; --s )
     {
         const SymmNodeInfo& node = info.localNodes[s];
-        const Matrix<F>& frontL = L.localFronts[s].frontL;
-        Matrix<F>& W = L.localFronts[s].work;
+        const SymmFront<F>& front = L.localFronts[s];
+        const Matrix<F>& frontL = front.frontL;
+        Matrix<F>& W = front.work;
 
         // Set up a workspace
         W.ResizeTo( frontL.Height(), width );
@@ -321,8 +351,10 @@ inline void LocalLowerBackwardSolve
         }
 
         // Solve against this front
-        if( blockLDL )
+        if( blocked )
             FrontBlockLowerBackwardSolve( frontL, W, conjugate );
+        else if( pivoted )
+            FrontIntraPivLowerBackwardSolve( frontL, front.piv, W, conjugate );
         else
             FrontLowerBackwardSolve( frontL, W, conjugate );
 

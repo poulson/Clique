@@ -15,10 +15,17 @@ namespace cliq {
 
 template<typename F>
 void FrontLowerForwardSolve( const Matrix<F>& L, Matrix<F>& X );
+template<typename F>
+void FrontIntraPivLowerForwardSolve
+( const Matrix<F>& L, const Matrix<Int>& p, Matrix<F>& X );
 
 template<typename F>
 void FrontLowerBackwardSolve
 ( const Matrix<F>& L, Matrix<F>& X, bool conjugate=false );
+template<typename F>
+void FrontIntraPivLowerBackwardSolve
+( const Matrix<F>& L, const Matrix<Int>& p, Matrix<F>& X, 
+  bool conjugate=false );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -38,14 +45,23 @@ inline void FrontLowerForwardSolve( const Matrix<F>& L, Matrix<F>& X )
             LogicError( msg.str() );
         }
     )
-    Matrix<F> LT, LB;
+    Matrix<F> LT, LB, XT, XB;
     LockedPartitionDown( L, LT, LB, L.Width() );
-
-    Matrix<F> XT, XB;
     PartitionDown( X, XT, XB, L.Width() );
 
     elem::Trsm( LEFT, LOWER, NORMAL, NON_UNIT, F(1), LT, XT, true );
     elem::Gemm( NORMAL, NORMAL, F(-1), LB, XT, F(1), XB );
+}
+
+template<typename F>
+inline void FrontIntraPivLowerForwardSolve
+( const Matrix<F>& L, const Matrix<Int>& p, Matrix<F>& X )
+{
+    DEBUG_ONLY(CallStackEntry cse("FrontIntraPivLowerForwardSolve"))
+    Matrix<F> XT, XB;
+    PartitionDown( X, XT, XB, L.Width() );
+    elem::ApplyRowPivots( XT, p );
+    FrontLowerForwardSolve( L, X );
 }
 
 template<typename F>
@@ -63,15 +79,24 @@ inline void FrontLowerBackwardSolve
             LogicError( msg.str() );
         }
     )
-    Matrix<F> LT, LB;
+    Matrix<F> LT, LB, XT, XB;
     LockedPartitionDown( L, LT, LB, L.Width() );
-
-    Matrix<F> XT, XB;
     PartitionDown( X, XT, XB, L.Width() );
 
     const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
     elem::Gemm( orientation, NORMAL, F(-1), LB, XB, F(1), XT );
     elem::Trsm( LEFT, LOWER, orientation, NON_UNIT, F(1), LT, XT, true );
+}
+
+template<typename F>
+inline void FrontIntraPivLowerBackwardSolve
+( const Matrix<F>& L, const Matrix<Int>& p, Matrix<F>& X, bool conjugate )
+{
+    DEBUG_ONLY(CallStackEntry cse("FrontIntraPivLowerBackwardSolve"))
+    FrontLowerBackwardSolve( L, X, conjugate );
+    Matrix<F> XT, XB;
+    PartitionDown( X, XT, XB, L.Width() );
+    elem::ApplyInverseRowPivots( XT, p );
 }
 
 } // namespace cliq

@@ -38,10 +38,8 @@ inline void FrontBlockLowerForwardSolve( const Matrix<F>& L, Matrix<F>& X )
             LogicError( msg.str() );
         }
     )
-    Matrix<F> LT, LB;
+    Matrix<F> LT, LB, XT, XB;
     LockedPartitionDown( L, LT, LB, L.Width() );
-
-    Matrix<F> XT, XB;
     PartitionDown( X, XT, XB, L.Width() );
 
     // XT := inv(ATL) XT
@@ -67,10 +65,8 @@ inline void FrontBlockLowerBackwardSolve
             LogicError( msg.str() );
         }
     )
-    Matrix<F> LT, LB;
+    Matrix<F> LT, LB, XT, XB;
     LockedPartitionDown( L, LT, LB, L.Width() );
-
-    Matrix<F> XT, XB;
     PartitionDown( X, XT, XB, L.Width() );
 
     // YT := LB^[T/H] XB

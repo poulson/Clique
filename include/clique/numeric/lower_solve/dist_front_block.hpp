@@ -65,16 +65,9 @@ inline void FrontBlockLowerForwardSolve
 
     // Separate the top and bottom portions of X and L
     const int snSize = L.Width();
-    DistMatrix<F,VC,STAR> LT(g),
-                          LB(g);
-    LockedPartitionDown
-    ( L, LT, 
-         LB, snSize );
-    DistMatrix<F,VC,STAR> XT(g),
-                          XB(g);
-    PartitionDown
-    ( X, XT,
-         XB, snSize );
+    DistMatrix<F,VC,STAR> LT(g), LB(g), XT(g), XB(g);
+    LockedPartitionDown( L, LT, LB, snSize );
+    PartitionDown( X, XT, XB, snSize );
 
     // XT := inv(ATL) XT
     DistMatrix<F,STAR,STAR> XT_STAR_STAR( XT );
@@ -114,16 +107,10 @@ inline void FrontBlockLowerForwardSolve
 
     // Separate the top and bottom portions of X and L
     const int snSize = L.Width();
-    DistMatrix<F> LT(g),
-                  LB(g);
-    LockedPartitionDown
-    ( L, LT, 
-         LB, snSize );
-    DistMatrix<F,VC,STAR> XT(g),
-                          XB(g);
-    PartitionDown
-    ( X, XT,
-         XB, snSize );
+    DistMatrix<F> LT(g), LB(g);
+    LockedPartitionDown( L, LT, LB, snSize );
+    DistMatrix<F,VC,STAR> XT(g), XB(g);
+    PartitionDown( X, XT, XB, snSize );
 
     // Get ready for the local multiply
     DistMatrix<F,MR,STAR> XT_MR_STAR(g);
@@ -179,16 +166,9 @@ inline void FrontBlockLowerForwardSolve
 
     // Separate the top and bottom portions of X and L
     const int snSize = L.Width();
-    DistMatrix<F> LT(g),
-                  LB(g);
-    LockedPartitionDown
-    ( L, LT, 
-         LB, snSize );
-    DistMatrix<F> XT(g),
-                  XB(g);
-    PartitionDown
-    ( X, XT,
-         XB, snSize );
+    DistMatrix<F> LT(g), LB(g), XT(g), XB(g);
+    LockedPartitionDown( L, LT, LB, snSize );
+    PartitionDown( X, XT, XB, snSize );
 
     // XT := inv(ATL) XT
     DistMatrix<F> Z( XT );
@@ -225,16 +205,9 @@ inline void FrontBlockLowerBackwardSolve
     }
 
     const int snSize = L.Width();
-    DistMatrix<F,VC,STAR> LT(g),
-                          LB(g);
-    LockedPartitionDown
-    ( L, LT,
-         LB, snSize );
-    DistMatrix<F,VC,STAR> XT(g),
-                          XB(g);
-    PartitionDown
-    ( X, XT,
-         XB, snSize );
+    DistMatrix<F,VC,STAR> LT(g), LB(g), XT(g), XB(g);
+    LockedPartitionDown( L, LT, LB, snSize );
+    PartitionDown( X, XT, XB, snSize );
 
     if( XB.Height() == 0 )
         return;
@@ -277,16 +250,10 @@ inline void FrontBlockLowerBackwardSolve
     }
 
     const int snSize = L.Width();
-    DistMatrix<F> LT(g),
-                  LB(g);
-    LockedPartitionDown
-    ( L, LT,
-         LB, snSize );
-    DistMatrix<F,VC,STAR> XT(g),
-                          XB(g);
-    PartitionDown
-    ( X, XT,
-         XB, snSize );
+    DistMatrix<F> LT(g), LB(g);
+    LockedPartitionDown( L, LT, LB, snSize );
+    DistMatrix<F,VC,STAR> XT(g), XB(g);
+    PartitionDown( X, XT, XB, snSize );
 
     if( XB.Height() == 0 )
         return;
@@ -359,16 +326,9 @@ inline void FrontBlockLowerBackwardSolve
     }
 
     const int snSize = L.Width();
-    DistMatrix<F> LT(g),
-                  LB(g);
-    LockedPartitionDown
-    ( L, LT,
-         LB, snSize );
-    DistMatrix<F> XT(g),
-                  XB(g);
-    PartitionDown
-    ( X, XT,
-         XB, snSize );
+    DistMatrix<F> LT(g), LB(g), XT(g), XB(g);
+    LockedPartitionDown( L, LT, LB, snSize );
+    PartitionDown( X, XT, XB, snSize );
     if( XB.Height() == 0 )
         return;
 

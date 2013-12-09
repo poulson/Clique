@@ -17,21 +17,48 @@ template<typename F>
 void FrontFastLowerForwardSolve
 ( const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X );
 template<typename F>
+void FrontFastIntraPivLowerForwardSolve
+( const DistMatrix<F,VC,STAR>& L, const DistMatrix<Int,VC,STAR>& p, 
+  DistMatrix<F,VC,STAR>& X );
+
+template<typename F>
 void FrontFastLowerForwardSolve
 ( const DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X );
 template<typename F>
+void FrontFastIntraPivLowerForwardSolve
+( const DistMatrix<F>& L, const DistMatrix<Int,VC,STAR>& p, 
+  DistMatrix<F,VC,STAR>& X );
+
+template<typename F>
 void FrontFastLowerForwardSolve( const DistMatrix<F>& L, DistMatrix<F>& X );
+template<typename F>
+void FrontFastIntraPivLowerForwardSolve
+( const DistMatrix<F>& L, const DistMatrix<Int,VC,STAR>& p, DistMatrix<F>& X );
 
 template<typename F>
 void FrontFastLowerBackwardSolve
 ( const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X, 
   bool conjugate=false );
 template<typename F>
+void FrontFastIntraPivLowerBackwardSolve
+( const DistMatrix<F,VC,STAR>& L, const DistMatrix<Int,VC,STAR>& p, 
+  DistMatrix<F,VC,STAR>& X, bool conjugate=false );
+
+template<typename F>
 void FrontFastLowerBackwardSolve
 ( const DistMatrix<F>& L, DistMatrix<F,VC,STAR>& X, bool conjugate=false );
 template<typename F>
+void FrontFastIntraPivLowerBackwardSolve
+( const DistMatrix<F>& L, const DistMatrix<Int,VC,STAR>& p, 
+  DistMatrix<F,VC,STAR>& X, bool conjugate=false );
+
+template<typename F>
 void FrontFastLowerBackwardSolve
 ( const DistMatrix<F>& L, DistMatrix<F>& X, bool conjugate=false );
+template<typename F>
+void FrontFastIntraPivLowerBackwardSolve
+( const DistMatrix<F>& L, const DistMatrix<Int,VC,STAR>& p, 
+  DistMatrix<F>& X, bool conjugate=false );
 
 //----------------------------------------------------------------------------//
 // Implementation begins here                                                 //
@@ -65,16 +92,9 @@ inline void FrontFastLowerForwardSolve
 
     // Separate the top and bottom portions of X and L
     const int snSize = L.Width();
-    DistMatrix<F,VC,STAR> LT(g),
-                          LB(g);
-    LockedPartitionDown
-    ( L, LT, 
-         LB, snSize );
-    DistMatrix<F,VC,STAR> XT(g),
-                          XB(g);
-    PartitionDown
-    ( X, XT,
-         XB, snSize );
+    DistMatrix<F,VC,STAR> LT(g), LB(g), XT(g), XB(g);
+    LockedPartitionDown( L, LT, LB, snSize );
+    PartitionDown( X, XT, XB, snSize );
 
     // XT := LT XT
     DistMatrix<F,STAR,STAR> XT_STAR_STAR( XT );
@@ -86,6 +106,22 @@ inline void FrontFastLowerForwardSolve
         XT_STAR_STAR = XT;
         elem::LocalGemm( NORMAL, NORMAL, F(-1), LB, XT_STAR_STAR, F(1), XB );
     }
+}
+
+template<typename F>
+inline void FrontFastIntraPivLowerForwardSolve
+( const DistMatrix<F,VC,STAR>& L, const DistMatrix<Int,VC,STAR>& p, 
+  DistMatrix<F,VC,STAR>& X )
+{
+    DEBUG_ONLY(CallStackEntry cse("FrontFastIntraPivLowerForwardSolve"))
+
+    // TODO: Cache the send and recv data for the pivots to avoid p[*,*]
+    const Grid& g = L.Grid();
+    DistMatrix<F,VC,STAR> XT(g), XB(g);
+    PartitionDown( X, XT, XB, X.Width() );
+    elem::ApplyRowPivots( XT, p );
+
+    FrontFastLowerForwardSolve( L, X );
 }
 
 template<typename F>
@@ -114,16 +150,10 @@ inline void FrontFastLowerForwardSolve
 
     // Separate the top and bottom portions of X and L
     const int snSize = L.Width();
-    DistMatrix<F> LT(g),
-                  LB(g);
-    LockedPartitionDown
-    ( L, LT, 
-         LB, snSize );
-    DistMatrix<F,VC,STAR> XT(g),
-                          XB(g);
-    PartitionDown
-    ( X, XT,
-         XB, snSize );
+    DistMatrix<F> LT(g), LB(g); 
+    LockedPartitionDown( L, LT, LB, snSize );
+    DistMatrix<F,VC,STAR> XT(g), XB(g);
+    PartitionDown( X, XT, XB, snSize );
 
     // Get ready for the local multiply
     DistMatrix<F,MR,STAR> XT_MR_STAR(g);
@@ -156,6 +186,22 @@ inline void FrontFastLowerForwardSolve
 }
 
 template<typename F>
+inline void FrontFastIntraPivLowerForwardSolve
+( const DistMatrix<F>& L, const DistMatrix<Int,VC,STAR>& p,
+  DistMatrix<F,VC,STAR>& X )
+{
+    DEBUG_ONLY(CallStackEntry cse("FrontFastIntraPivLowerForwardSolve"))
+
+    // TODO: Cache the send and recv data for the pivots to avoid p[*,*]
+    const Grid& g = L.Grid();
+    DistMatrix<F,VC,STAR> XT(g), XB(g);
+    PartitionDown( X, XT, XB, X.Width() );
+    elem::ApplyRowPivots( XT, p );
+
+    FrontFastLowerForwardSolve( L, X );
+}
+
+template<typename F>
 inline void FrontFastLowerForwardSolve
 ( const DistMatrix<F>& L, DistMatrix<F>& X )
 {
@@ -181,16 +227,9 @@ inline void FrontFastLowerForwardSolve
 
     // Separate the top and bottom portions of X and L
     const int snSize = L.Width();
-    DistMatrix<F> LT(g),
-                  LB(g);
-    LockedPartitionDown
-    ( L, LT, 
-         LB, snSize );
-    DistMatrix<F> XT(g),
-                  XB(g);
-    PartitionDown
-    ( X, XT,
-         XB, snSize );
+    DistMatrix<F> LT(g), LB(g), XT(g), XB(g);
+    LockedPartitionDown( L, LT, LB, snSize );
+    PartitionDown( X, XT, XB, snSize );
 
     // XT := LT XT
     DistMatrix<F> YT( XT );
@@ -198,6 +237,21 @@ inline void FrontFastLowerForwardSolve
 
     // XB := XB - LB XT
     elem::Gemm( NORMAL, NORMAL, F(-1), LB, XT, F(1), XB );
+}
+
+template<typename F>
+inline void FrontFastIntraPivLowerForwardSolve
+( const DistMatrix<F>& L, const DistMatrix<Int,VC,STAR>& p, DistMatrix<F>& X )
+{
+    DEBUG_ONLY(CallStackEntry cse("FrontFastIntraPivLowerForwardSolve"))
+
+    // TODO: Cache the send and recv data for the pivots to avoid p[*,*]
+    const Grid& g = L.Grid();
+    DistMatrix<F> XT(g), XB(g);
+    PartitionDown( X, XT, XB, X.Width() );
+    elem::ApplyRowPivots( XT, p );
+
+    FrontFastLowerForwardSolve( L, X );
 }
 
 template<typename F>
@@ -228,16 +282,9 @@ inline void FrontFastLowerBackwardSolve
     }
 
     const int snSize = L.Width();
-    DistMatrix<F,VC,STAR> LT(g),
-                          LB(g);
-    LockedPartitionDown
-    ( L, LT,
-         LB, snSize );
-    DistMatrix<F,VC,STAR> XT(g),
-                          XB(g);
-    PartitionDown
-    ( X, XT,
-         XB, snSize );
+    DistMatrix<F,VC,STAR> LT(g), LB(g), XT(g), XB(g);
+    LockedPartitionDown( L, LT, LB, snSize );
+    PartitionDown( X, XT, XB, snSize );
 
     // XT := XT - LB^{T/H} XB
     DistMatrix<F,STAR,STAR> Z(g);
@@ -251,6 +298,22 @@ inline void FrontFastLowerBackwardSolve
     // XT := LT^{T/H} XT
     elem::LocalGemm( orientation, NORMAL, F(1), LT, XT, Z );
     XT.SumScatterFrom( Z );
+}
+
+template<typename F>
+inline void FrontFastIntraPivLowerBackwardSolve
+( const DistMatrix<F,VC,STAR>& L, const DistMatrix<Int,VC,STAR>& p,
+  DistMatrix<F,VC,STAR>& X, bool conjugate )
+{
+    DEBUG_ONLY(CallStackEntry cse("FrontFastIntraPivLowerBackwardSolve"))
+
+    FrontFastLowerBackwardSolve( L, X, conjugate );
+
+    // TODO: Cache the send and recv data for the pivots to avoid p[*,*]
+    const Grid& g = L.Grid();
+    DistMatrix<F,VC,STAR> XT(g), XB(g);
+    PartitionDown( X, XT, XB, X.Width() );
+    elem::ApplyInverseRowPivots( XT, p );
 }
 
 template<typename F>
@@ -278,16 +341,10 @@ inline void FrontFastLowerBackwardSolve
     }
 
     const int snSize = L.Width();
-    DistMatrix<F> LT(g),
-                  LB(g);
-    LockedPartitionDown
-    ( L, LT,
-         LB, snSize );
-    DistMatrix<F,VC,STAR> XT(g),
-                          XB(g);
-    PartitionDown
-    ( X, XT,
-         XB, snSize );
+    DistMatrix<F> LT(g), LB(g); 
+    LockedPartitionDown( L, LT, LB, snSize );
+    DistMatrix<F,VC,STAR> XT(g), XB(g);
+    PartitionDown( X, XT, XB, snSize );
 
     DistMatrix<F,MR,STAR> ZT_MR_STAR( g );
     DistMatrix<F,VR,STAR> ZT_VR_STAR( g );
@@ -331,6 +388,22 @@ inline void FrontFastLowerBackwardSolve
 }
 
 template<typename F>
+inline void FrontFastIntraPivLowerBackwardSolve
+( const DistMatrix<F>& L, const DistMatrix<Int,VC,STAR>& p,
+  DistMatrix<F,VC,STAR>& X, bool conjugate )
+{
+    DEBUG_ONLY(CallStackEntry cse("FrontFastIntraPivLowerBackwardSolve"))
+
+    FrontFastLowerBackwardSolve( L, X, conjugate );
+
+    // TODO: Cache the send and recv data for the pivots to avoid p[*,*]
+    const Grid& g = L.Grid();
+    DistMatrix<F,VC,STAR> XT(g), XB(g);
+    PartitionDown( X, XT, XB, X.Width() );
+    elem::ApplyInverseRowPivots( XT, p );
+}
+
+template<typename F>
 inline void FrontFastLowerBackwardSolve
 ( const DistMatrix<F>& L, DistMatrix<F>& X, bool conjugate )
 {
@@ -355,16 +428,9 @@ inline void FrontFastLowerBackwardSolve
     }
 
     const int snSize = L.Width();
-    DistMatrix<F> LT(g),
-                  LB(g);
-    LockedPartitionDown
-    ( L, LT,
-         LB, snSize );
-    DistMatrix<F> XT(g),
-                  XB(g);
-    PartitionDown
-    ( X, XT,
-         XB, snSize );
+    DistMatrix<F> LT(g), LB(g), XT(g), XB(g);
+    LockedPartitionDown( L, LT, LB, snSize );
+    PartitionDown( X, XT, XB, snSize );
 
     // XT := XT - LB^{T/H} XB
     const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
@@ -374,6 +440,22 @@ inline void FrontFastLowerBackwardSolve
     DistMatrix<F> Z(XT.Grid());
     elem::Gemm( orientation, NORMAL, F(1), LT, XT, Z );
     XT = Z;
+}
+
+template<typename F>
+inline void FrontFastIntraPivLowerBackwardSolve
+( const DistMatrix<F>& L, const DistMatrix<Int,VC,STAR>& p,
+  DistMatrix<F>& X, bool conjugate )
+{
+    DEBUG_ONLY(CallStackEntry cse("FrontFastIntraPivLowerBackwardSolve"))
+
+    FrontFastLowerBackwardSolve( L, X, conjugate );
+
+    // TODO: Cache the send and recv data for the pivots to avoid p[*,*]
+    const Grid& g = L.Grid();
+    DistMatrix<F> XT(g), XB(g);
+    PartitionDown( X, XT, XB, X.Width() );
+    elem::ApplyInverseRowPivots( XT, p );
 }
 
 } // namespace cliq

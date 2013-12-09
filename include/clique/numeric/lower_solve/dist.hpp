@@ -47,14 +47,13 @@ inline void DistLowerForwardSolve
     const int width = X.Width();
     const SymmFrontType frontType = L.frontType;
     const bool frontsAre1d = FrontsAre1d( frontType );
-    if( frontType != LDL_1D && 
-        frontType != LDL_SELINV_1D && 
-        frontType != LDL_SELINV_2D && 
-        frontType != LDL_INTRAPIV_1D &&
-        frontType != LDL_INTRAPIV_SELINV_2D &&
-        frontType != BLOCK_LDL_2D && 
-        frontType != BLOCK_LDL_INTRAPIV_2D )
-        LogicError("This solve mode is not yet implemented");
+    if( Unfactored(frontType) )
+        LogicError("Nonsensical front type for solve");
+    if( frontType == LDL_2D || frontType == LDL_INTRAPIV_2D )
+        LogicError("2D non-inverted solves supported by this routine");
+    if( frontType == BLOCK_LDL_1D || frontType == BLOCK_LDL_INTRAPIV_1D )
+        LogicError("1D block solves not yet supported by this routine");
+    const bool blocked = BlockFactorization( frontType );
 
     // Copy the information from the local portion into the distributed leaf
     const SymmFront<F>& localRootFront = L.localFronts.back();
@@ -174,14 +173,13 @@ inline void DistLowerForwardSolve
             FrontFastLowerForwardSolve( front.front1dL, W );
         else if( frontType == LDL_SELINV_2D )
             FrontFastLowerForwardSolve( front.front2dL, W );
-        /*
         else if( frontType == LDL_INTRAPIV_1D )
             FrontIntraPivLowerForwardSolve( front.front1dL, front.piv, W );
+        else if( frontType == LDL_INTRAPIV_SELINV_1D )
+            FrontFastIntraPivLowerForwardSolve( front.front1dL, front.piv, W );
         else if( frontType == LDL_INTRAPIV_SELINV_2D )
             FrontFastIntraPivLowerForwardSolve( front.front2dL, front.piv, W );
-        */
-        else if( frontType == BLOCK_LDL_2D || 
-                 frontType == BLOCK_LDL_INTRAPIV_2D )
+        else if( blocked )
             FrontBlockLowerForwardSolve( front.front2dL, W );
         else
             LogicError("Unsupported front type");
@@ -202,8 +200,12 @@ inline void DistLowerForwardSolve
     const int numDistNodes = info.distNodes.size();
     const int width = X.Width();
     const SymmFrontType frontType = L.frontType;
+    if( Unfactored(frontType) )
+        LogicError("Nonsensical front type for solve");
     if( FrontsAre1d(frontType) )
         LogicError("1d solves not yet implemented");
+    const bool blocked = BlockFactorization( frontType );
+
     const bool computeCommMetas = ( X.commMetas.size() == 0 );
     if( computeCommMetas )
         X.ComputeCommMetas( info );
@@ -327,14 +329,11 @@ inline void DistLowerForwardSolve
             FrontLowerForwardSolve( front.front2dL, W );
         else if( frontType == LDL_SELINV_2D )
             FrontFastLowerForwardSolve( front.front2dL, W );
-        /*
         else if( frontType == LDL_INTRAPIV_2D )
             FrontIntraPivLowerForwardSolve( front.front2dL, front.piv, W );
         else if( frontType == LDL_INTRAPIV_SELINV_2D )
             FrontFastIntraPivLowerForwardSolve( front.front2dL, front.piv, W );
-        */
-        else if( frontType == BLOCK_LDL_2D || 
-                 frontType == BLOCK_LDL_INTRAPIV_2D )
+        else if( blocked )
             FrontBlockLowerForwardSolve( front.front2dL, W );
         else
             LogicError("Unsupported front type");
@@ -355,26 +354,28 @@ inline void DistLowerBackwardSolve
     const int numDistNodes = info.distNodes.size();
     const int width = X.Width();
     const SymmFrontType frontType = L.frontType;
+    if( Unfactored(frontType) )
+        LogicError("Nonsensical front type for solve");
+    if( frontType == LDL_2D || frontType == LDL_INTRAPIV_2D )
+        LogicError("2D non-inverted solves supported by this routine");
+    if( frontType == BLOCK_LDL_1D || frontType == BLOCK_LDL_INTRAPIV_1D )
+        LogicError("1D block solves not yet supported by this routine");
     const bool frontsAre1d = FrontsAre1d( frontType );
-    const bool blockLDL = ( frontType == BLOCK_LDL_2D || 
-                            frontType == BLOCK_LDL_INTRAPIV_2D );
-    if( frontType != LDL_1D && 
-        frontType != LDL_SELINV_1D && 
-        frontType != LDL_SELINV_2D && 
-        frontType != LDL_INTRAPIV_1D &&
-        frontType != LDL_INTRAPIV_SELINV_2D &&
-        !blockLDL )
-        LogicError("This solve mode is not yet implemented");
-    // HERE
+    const bool blocked = BlockFactorization( frontType );
+    const bool pivoted = PivotedFactorization( frontType );
 
     // Directly operate on the root separator's portion of the right-hand sides
     const SymmFront<F>& localRootFront = L.localFronts.back();
     if( numDistNodes == 1 )
     {
         View( localRootFront.work, X.localNodes.back() );
-        if( blockLDL )
+        if( blocked )
             FrontBlockLowerBackwardSolve
             ( localRootFront.frontL, localRootFront.work, conjugate );
+        else if( pivoted )
+            FrontIntraPivLowerBackwardSolve
+            ( localRootFront.frontL, localRootFront.piv, localRootFront.work, 
+              conjugate );
         else
             FrontLowerBackwardSolve
             ( localRootFront.frontL, localRootFront.work, conjugate );
@@ -383,18 +384,26 @@ inline void DistLowerBackwardSolve
     {
         const DistSymmFront<F>& rootFront = L.distFronts.back();
         View( rootFront.work1d, X.distNodes.back() );
+        auto& W = rootFront.work1d;
         if( frontType == LDL_1D )
-            FrontLowerBackwardSolve
-            ( rootFront.front1dL, rootFront.work1d, conjugate );
+            FrontLowerBackwardSolve( rootFront.front1dL, W, conjugate );
         else if( frontType == LDL_SELINV_1D )
-            FrontFastLowerBackwardSolve
-            ( rootFront.front1dL, rootFront.work1d, conjugate );
+            FrontFastLowerBackwardSolve( rootFront.front1dL, W, conjugate );
         else if( frontType == LDL_SELINV_2D )
-            FrontFastLowerBackwardSolve
-            ( rootFront.front2dL, rootFront.work1d, conjugate );
+            FrontFastLowerBackwardSolve( rootFront.front2dL, W, conjugate );
+        else if( frontType == LDL_INTRAPIV_1D )
+            FrontIntraPivLowerBackwardSolve
+            ( rootFront.front1dL, rootFront.piv, W, conjugate );
+        else if( frontType == LDL_INTRAPIV_SELINV_1D )
+            FrontFastIntraPivLowerBackwardSolve
+            ( rootFront.front1dL, rootFront.piv, W, conjugate );
+        else if( frontType == LDL_INTRAPIV_SELINV_2D )
+            FrontFastIntraPivLowerBackwardSolve
+            ( rootFront.front2dL, rootFront.piv, W, conjugate );
+        else if( blocked )
+            FrontBlockLowerBackwardSolve( rootFront.front2dL, W, conjugate );
         else
-            FrontBlockLowerBackwardSolve
-            ( rootFront.front2dL, rootFront.work1d, conjugate );
+            LogicError("Unsupported front type");
     }
 
     for( int s=numDistNodes-2; s>=0; --s )
@@ -507,16 +516,30 @@ inline void DistLowerBackwardSolve
                 FrontFastLowerBackwardSolve( front.front1dL, W, conjugate );
             else if( frontType == LDL_SELINV_2D )
                 FrontFastLowerBackwardSolve( front.front2dL, W, conjugate );
-            else // frontType = BLOCK_LDL_2D or BLOCK_LDL_INTRAPIV_2D
-                FrontBlockLowerBackwardSolve
-                ( front.front2dL, front.work1d, conjugate );
+            else if( frontType == LDL_INTRAPIV_1D )
+                FrontIntraPivLowerBackwardSolve
+                ( front.front1dL, front.piv, W, conjugate );
+            else if( frontType == LDL_INTRAPIV_SELINV_1D )
+                FrontFastIntraPivLowerBackwardSolve
+                ( front.front1dL, front.piv, W, conjugate );
+            else if( frontType == LDL_INTRAPIV_SELINV_2D )
+                FrontFastIntraPivLowerBackwardSolve
+                ( front.front2dL, front.piv, W, conjugate );
+            else if( blocked )
+                FrontBlockLowerBackwardSolve( front.front2dL, W, conjugate );
+            else
+                LogicError("Unsupported front type");
         }
         else
         {
             View( localRootFront.work, W.Matrix() );
-            if( blockLDL )
+            if( blocked )
                 FrontBlockLowerBackwardSolve
                 ( localRootFront.frontL, localRootFront.work, conjugate );
+            else if( pivoted )
+                FrontIntraPivLowerBackwardSolve
+                ( localRootFront.frontL, localRootFront.piv, 
+                  localRootFront.work, conjugate );
             else
                 FrontLowerBackwardSolve
                 ( localRootFront.frontL, localRootFront.work, conjugate );
@@ -536,19 +559,25 @@ inline void DistLowerBackwardSolve
     const int numDistNodes = info.distNodes.size();
     const int width = X.Width();
     const SymmFrontType frontType = L.frontType;
-    const bool blockLDL = ( frontType == BLOCK_LDL_2D || 
-                            frontType == BLOCK_LDL_INTRAPIV_2D );
+    if( Unfactored(frontType) )
+        LogicError("Nonsensical front type for solve");
     if( FrontsAre1d(frontType) )
-        LogicError("1d solve mode is not yet implemented");
+        LogicError("1d solves not yet implemented");
+    const bool blocked = BlockFactorization( frontType );
+    const bool pivoted = PivotedFactorization( frontType );
 
     // Directly operate on the root separator's portion of the right-hand sides
     const SymmFront<F>& localRootFront = L.localFronts.back();
     if( numDistNodes == 1 )
     {
         View( localRootFront.work, X.localNodes.back() );
-        if( blockLDL )
+        if( blocked )
             FrontBlockLowerBackwardSolve
             ( localRootFront.frontL, localRootFront.work, conjugate );
+        else if( pivoted )
+            FrontIntraPivLowerBackwardSolve
+            ( localRootFront.frontL, localRootFront.piv, localRootFront.work,
+              conjugate );
         else
             FrontLowerBackwardSolve
             ( localRootFront.frontL, localRootFront.work, conjugate );
@@ -557,15 +586,22 @@ inline void DistLowerBackwardSolve
     {
         const DistSymmFront<F>& rootFront = L.distFronts.back();
         View( rootFront.work2d, X.distNodes.back() );
-        if( frontType == LDL_SELINV_2D )
-            FrontFastLowerBackwardSolve
-            ( rootFront.front2dL, rootFront.work2d, conjugate );
-        else if( frontType == LDL_2D )
-            FrontLowerBackwardSolve
-            ( rootFront.front2dL, rootFront.work2d, conjugate );
+
+        auto& frontL = rootFront.front2dL;
+        auto& piv = rootFront.piv;
+        auto& W = rootFront.work2d;
+        if( frontType == LDL_2D )
+            FrontLowerBackwardSolve( frontL, W, conjugate );
+        else if( frontType == LDL_SELINV_2D )
+            FrontFastLowerBackwardSolve( frontL, W, conjugate );
+        else if( frontType == LDL_INTRAPIV_2D )
+            FrontIntraPivLowerBackwardSolve( frontL, piv, W, conjugate );
+        else if( frontType == LDL_INTRAPIV_SELINV_2D )
+            FrontFastIntraPivLowerBackwardSolve( frontL, piv, W, conjugate );
+        else if( blocked )
+            FrontBlockLowerBackwardSolve( frontL, W, conjugate );
         else
-            FrontBlockLowerBackwardSolve
-            ( rootFront.front2dL, rootFront.work2d, conjugate );
+            LogicError("Unsupported front type");
     }
 
     for( int s=numDistNodes-2; s>=0; --s )
@@ -676,23 +712,34 @@ inline void DistLowerBackwardSolve
         // Call the custom node backward solve
         if( s > 0 )
         {
-            if( frontType == LDL_SELINV_2D )
-                FrontFastLowerBackwardSolve( front.front2dL, W, conjugate );
-            else if( frontType == LDL_2D )
-                FrontLowerBackwardSolve
-                ( front.front2dL, front.work2d, conjugate );
+            auto& frontL = front.front2dL;
+            auto& piv = front.piv;
+            if( frontType == LDL_2D )
+                FrontLowerBackwardSolve( frontL, W, conjugate );
+            else if( frontType == LDL_SELINV_2D )
+                FrontFastLowerBackwardSolve( frontL, W, conjugate );
+            else if( frontType == LDL_INTRAPIV_2D )
+                FrontIntraPivLowerBackwardSolve( frontL, piv, W, conjugate );
+            else if( frontType == LDL_INTRAPIV_SELINV_2D )
+                FrontFastIntraPivLowerBackwardSolve
+                ( frontL, piv, W, conjugate );
+            else if( blocked )
+                FrontBlockLowerBackwardSolve( frontL, W, conjugate );
             else
-                FrontBlockLowerBackwardSolve
-                ( front.front2dL, front.work2d, conjugate );
+                LogicError("Unsupported front type");
         }
         else
         {
             View( localRootFront.work, W.Matrix() );
-            if( !blockLDL )
-                FrontLowerBackwardSolve
-                ( localRootFront.frontL, localRootFront.work, conjugate );
-            else
+            if( blocked )
                 FrontBlockLowerBackwardSolve
+                ( localRootFront.frontL, localRootFront.work, conjugate );
+            else if( pivoted )
+                FrontIntraPivLowerBackwardSolve
+                ( localRootFront.frontL, localRootFront.piv, 
+                  localRootFront.work, conjugate );
+            else
+                FrontLowerBackwardSolve
                 ( localRootFront.frontL, localRootFront.work, conjugate );
         }
 
