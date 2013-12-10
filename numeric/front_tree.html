@@ -70,7 +70,24 @@ and the lower structure is of size <span class="math">\(m-n\)</span>.</p>
 <dl class="member">
 <dt id="SymmFront:T:::diag__Matrix:T:">
 <a class="reference internal" href="../core/environment.html#Matrix:T:__class" title="Matrix&lt;T&gt;">Matrix&lt;T&gt;</a> <tt class="descname">diag</tt><a class="headerlink" href="#SymmFront:T:::diag__Matrix:T:" title="Permalink to this definition">¶</a></dt>
-<dd><p>Stores the diagonal of the frontal matrix after factorization.</p>
+<dd><p>If a standard (non-block) LDL factorization was performed, then <cite>diag</cite>
+will contain the diagonal portion of the frontal factorization.</p>
+</dd></dl>
+
+<dl class="member">
+<dt id="SymmFront:T:::subdiag__Matrix:T:">
+<a class="reference internal" href="../core/environment.html#Matrix:T:__class" title="Matrix&lt;T&gt;">Matrix&lt;T&gt;</a> <tt class="descname">subdiag</tt><a class="headerlink" href="#SymmFront:T:::subdiag__Matrix:T:" title="Permalink to this definition">¶</a></dt>
+<dd><p>If intrafrontal standard Bunch-Kaufman was used, then <cite>subdiag</cite> stores
+the subdiagonal of the quasi-diagonal matrix.
+If Bunch-Kaufman was used, then it will contain the main diagonal of the
+quasi-diagonal matrix.</p>
+</dd></dl>
+
+<dl class="member">
+<dt id="SymmFront:T:::piv__Matrix:i:">
+Matrix&lt;int&gt; <tt class="descname">piv</tt><a class="headerlink" href="#SymmFront:T:::piv__Matrix:i:" title="Permalink to this definition">¶</a></dt>
+<dd><p>If intrafrontal standard Bunch-Kaufman was used, then <cite>piv</cite> will store
+the pivot history.</p>
 </dd></dl>
 
 </dd></dl>
@@ -94,7 +111,24 @@ has <span class="math">\(n\)</span> vertices and the lower structure is of size 
 <dl class="member">
 <dt id="DistSymmFront:T:::diag1d__DistMatrix:T.VC.STAR:">
 <a class="reference internal" href="../core/environment.html#DistMatrix:T.VC.STAR:__class" title="DistMatrix&lt;T, VC, STAR&gt;">DistMatrix&lt;T, VC, STAR&gt;</a> <tt class="descname">diag1d</tt><a class="headerlink" href="#DistSymmFront:T:::diag1d__DistMatrix:T.VC.STAR:" title="Permalink to this definition">¶</a></dt>
-<dd><p>Stores the diagonal of the frontal matrix after factorization.</p>
+<dd><p>If a standard (non-block) LDL factorization was performed, then <cite>diag1d</cite>
+will store the diagonal portion of the frontal factorization. If
+Bunch-Kaufman was used, then it will contain the main diagonal of the
+quasi-diagonal matrix.</p>
+</dd></dl>
+
+<dl class="member">
+<dt id="DistSymmFront:T:::subdiag1d__DistMatrix:T.VC.STAR:">
+<a class="reference internal" href="../core/environment.html#DistMatrix:T.VC.STAR:__class" title="DistMatrix&lt;T, VC, STAR&gt;">DistMatrix&lt;T, VC, STAR&gt;</a> <tt class="descname">subdiag1d</tt><a class="headerlink" href="#DistSymmFront:T:::subdiag1d__DistMatrix:T.VC.STAR:" title="Permalink to this definition">¶</a></dt>
+<dd><p>If intrafrontal standard Bunch-Kaufman was used, then <cite>subdiag1d</cite> will
+store the subdiagonal of the quasi-diagonal matrix.</p>
+</dd></dl>
+
+<dl class="member">
+<dt id="DistSymmFront:T:::piv__DistMatrix:i.VC.STAR:">
+DistMatrix&lt;int, VC, STAR&gt; <tt class="descname">piv</tt><a class="headerlink" href="#DistSymmFront:T:::piv__DistMatrix:i.VC.STAR:" title="Permalink to this definition">¶</a></dt>
+<dd><p>If intrafrontal standard Bunch-Kaufman was used, then <cite>piv</cite> will contain
+the pivot history.</p>
 </dd></dl>
 
 </dd></dl>
@@ -104,16 +138,24 @@ has <span class="math">\(n\)</span> vertices and the lower structure is of size 
 <em class="property">type </em>enum <tt class="descname">SymmFrontType</tt><a class="headerlink" href="#SymmFrontType__enum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Can be set to either</p>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">SYMM_1D</span></tt>: Symmetric/Hermitian fronts distributed in a 1D manner</li>
-<li><tt class="docutils literal"><span class="pre">SYMM_2D</span></tt>: Symmetric/Hermitian fronts distributed in a 2D manner</li>
-<li><tt class="docutils literal"><span class="pre">LDL_1D</span></tt>: LDL factorization distributed in a 1D manner</li>
-<li><tt class="docutils literal"><span class="pre">LDL_2D</span></tt>: LDL factorization distributed in a 2D manner</li>
-<li><tt class="docutils literal"><span class="pre">LDL_SELINV_1D</span></tt>: LDL factorization with inverted diagonal blocks
-distributed in a 1D manner</li>
-<li><tt class="docutils literal"><span class="pre">LDL_SELINV_2D</span></tt>: LDL factorization with inverted diagonal blocks
-distributed in a 2D manner</li>
-<li><tt class="docutils literal"><span class="pre">BLOCK_LDL_2D</span></tt>: Block LDL factorization with fronts distributed in a
-2D manner</li>
+<li><tt class="docutils literal"><span class="pre">SYMM_1D/SYMM_2D</span></tt>:
+Symmetric/Hermitian fronts distributed in a 1D (2D) manner</li>
+<li><tt class="docutils literal"><span class="pre">LDL_1D/LDL_2D</span></tt>: LDL factorization distributed in a 1D (2D) manner</li>
+<li><tt class="docutils literal"><span class="pre">LDL_SELINV_1D/LDL_SELINV_2D</span></tt>:
+LDL factorization with inverted diagonal blocks distributed in a 1D (2D)
+manner</li>
+<li><tt class="docutils literal"><span class="pre">LDL_INTRAPIV_1D/LDL_INTRAPIV_2D</span></tt>:
+LDL factorization with intrafrontal Bunch-Kaufman pivoting distributed in
+a 1D (2D) manner</li>
+<li><tt class="docutils literal"><span class="pre">LDL_INTRAPIV_SELINV_1D/LDL_INTRAPIV_SELINV_2D</span></tt>:
+LDL factorization with intrafrontal Bunch-Kaufman pivoting
+(and selectively interted triangular diagonal blocks) distributed in
+a 1D (2D) manner</li>
+<li><tt class="docutils literal"><span class="pre">BLOCK_LDL_1D/BLOCK_LDL_2D</span></tt>:
+Block LDL factorization with fronts distributed in a 1D (2D) manner</li>
+<li><tt class="docutils literal"><span class="pre">BLOCK_LDL_INTRAPIV_1D/BLOCK_LDL_INTRAPIV_2D</span></tt>:
+Block LDL factorization with intrafrontal Bunch-Kaufman pivoting and
+fronts distributed in a 1D (2D) manner</li>
 </ul>
 </dd></dl>
 
@@ -146,17 +188,17 @@ std::vector&lt;DistSymmFront&lt;T&gt;&gt; <tt class="descname">distFronts</tt><a
 </dd></dl>
 
 <dl class="function">
-<dt id="DistSymmFrontTree:T:::DistSymmFrontTree__Orientation.DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR">
- <tt class="descname">DistSymmFrontTree</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../core/sparse_matrix.html#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;">const DistSparseMatrix&lt;T&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>map</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSeparatorTree__struct" title="DistSeparatorTree">const DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em><big>)</big><a class="headerlink" href="#DistSymmFrontTree:T:::DistSymmFrontTree__Orientation.DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR" title="Permalink to this definition">¶</a></dt>
+<dt id="DistSymmFrontTree:T:::DistSymmFrontTree__DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR.b">
+ <tt class="descname">DistSymmFrontTree</tt><big>(</big><a class="reference internal" href="../core/sparse_matrix.html#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;">const DistSparseMatrix&lt;T&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>map</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSeparatorTree__struct" title="DistSeparatorTree">const DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, bool <em>conjugate</em><em>=false </em><big>)</big><a class="headerlink" href="#DistSymmFrontTree:T:::DistSymmFrontTree__DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR.b" title="Permalink to this definition">¶</a></dt>
 <dd><p>A constructor which converts a distributed sparse matrix into a symmetric
 frontal tree which is ready for factorization (e.g., with
 <a class="reference internal" href="factorization.html#LDL__DistSymmInfoR.DistSymmFrontTree:F:R.SymmFrontType" title="LDL"><tt class="xref cpp cpp-func docutils literal"><span class="pre">LDL()</span></tt></a> or <tt class="xref cpp cpp-func docutils literal"><span class="pre">BlockLDL()</span></tt>).</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="DistSymmFrontTree:T:::Initialize__Orientation.DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR">
-void <tt class="descname">Initialize</tt><big>(</big><a class="reference internal" href="../core/environment.html#Orientation__enum" title="Orientation">Orientation</a> <em>orientation</em>, <a class="reference internal" href="../core/sparse_matrix.html#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;">const DistSparseMatrix&lt;T&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>map</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSeparatorTree__struct" title="DistSeparatorTree">const DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em><big>)</big><a class="headerlink" href="#DistSymmFrontTree:T:::Initialize__Orientation.DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR" title="Permalink to this definition">¶</a></dt>
-<dd><p>The same as the <a class="reference internal" href="#DistSymmFrontTree:T:::DistSymmFrontTree__Orientation.DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR" title="DistSymmFrontTree&lt;T&gt;::DistSymmFrontTree"><tt class="xref cpp cpp-func docutils literal"><span class="pre">DistSymmFrontTree&lt;T&gt;::DistSymmFrontTree()</span></tt></a>
+<dt id="DistSymmFrontTree:T:::Initialize__DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR.b">
+void <tt class="descname">Initialize</tt><big>(</big><a class="reference internal" href="../core/sparse_matrix.html#DistSparseMatrix:T:__class" title="DistSparseMatrix&lt;T&gt;">const DistSparseMatrix&lt;T&gt;&amp;</a> <em>A</em>, <a class="reference internal" href="../core/map.html#DistMap__class" title="DistMap">const DistMap&amp;</a> <em>map</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSeparatorTree__struct" title="DistSeparatorTree">const DistSeparatorTree&amp;</a> <em>sepTree</em>, <a class="reference internal" href="../symbolic/nested_dissection.html#DistSymmInfo__struct" title="DistSymmInfo">const DistSymmInfo&amp;</a> <em>info</em>, bool <em>conjugate</em><em>=false </em><big>)</big><a class="headerlink" href="#DistSymmFrontTree:T:::Initialize__DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR.b" title="Permalink to this definition">¶</a></dt>
+<dd><p>The same as the <a class="reference internal" href="#DistSymmFrontTree:T:::DistSymmFrontTree__DistSparseMatrix:T:CR.DistMapCR.DistSeparatorTreeCR.DistSymmInfoCR.b" title="DistSymmFrontTree&lt;T&gt;::DistSymmFrontTree"><tt class="xref cpp cpp-func docutils literal"><span class="pre">DistSymmFrontTree&lt;T&gt;::DistSymmFrontTree()</span></tt></a>
 constructor, but callable after construction.</p>
 </dd></dl>
 

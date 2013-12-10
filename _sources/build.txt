@@ -1,9 +1,9 @@
 Build system
 ************
 Clique's build system sits on top of 
-`Elemental's <http://poulson.github.com/Elemental/build.html>`_, and so it is 
-a good idea to familiarize yourself with Elemental's build system and 
-dependencies first.
+`Elemental's <http://libelemental.org/documentation/dev/build.html>`_, 
+and so it is a good idea to familiarize yourself with Elemental's build system 
+and dependencies first.
 
 Getting Clique's source
 =======================
@@ -31,8 +31,8 @@ and, with even older versions of git ::
 Building Clique
 ===============
 Clique's build works essentially the same as Elemental's, which is described 
-`here <http://poulson.github.com/Elemental/build.html#building-elemental>`_.
-Assuming all `dependencies <http://poulson.github.com/Elemental/build.html#dependencies>`_ 
+`here <http://libelemental.org/documentation/dev/build.html#building-elemental>`_.
+Assuming all `dependencies <http://libelemental.org/documentation/dev/build.html#dependencies>`_ 
 have been installed, Clique can often be built and installed using the commands::
 
     cd clique

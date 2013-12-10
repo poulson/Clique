@@ -55,7 +55,7 @@
 <p>This section describes the routines and data structures which help set up
 Clique&#8217;s programming environment: it discusses initialization of Clique,
 call stack manipulation, and data structures and routines imported from
-<a class="reference external" href="https://code.google.com/p/elemental">Elemental</a>.</p>
+<a class="reference external" href="https://libelemental.org">Elemental</a>.</p>
 <div class="section" id="set-up-and-clean-up">
 <h2>Set up and clean up<a class="headerlink" href="#set-up-and-clean-up" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
@@ -101,16 +101,17 @@ non-release builds (i.e., PureDebug and HybridDebug) and are meant to allow
 for the call stack to be printed (via <a class="reference internal" href="#DumpCallStack" title="DumpCallStack"><tt class="xref cpp cpp-func docutils literal"><span class="pre">DumpCallStack()</span></tt></a>) when an
 exception is caught.</p>
 </div>
-<dl class="function">
-<dt id="PushCallStack__ss">
-void <tt class="descname">PushCallStack</tt><big>(</big>std::string <em>s</em><big>)</big><a class="headerlink" href="#PushCallStack__ss" title="Permalink to this definition">¶</a></dt>
-<dd><p>Push the given routine name onto the call stack.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="PopCallStack">
-void <tt class="descname">PopCallStack</tt><big>(</big><big>)</big><a class="headerlink" href="#PopCallStack" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove the routine name at the top of the call stack.</p>
+<dl class="type">
+<dt id="CallStackEntry__class">
+<em class="property">type </em>class <tt class="descname">CallStackEntry</tt><a class="headerlink" href="#CallStackEntry__class" title="Permalink to this definition">¶</a></dt>
+<dd><p>Typically used in the following form:</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="kt">void</span> <span class="nf">SomeRoutine</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">DEBUG_ONLY</span><span class="p">(</span><span class="n">CallStackEntry</span> <span class="n">cse</span><span class="p">(</span><span class="s">&quot;SomeRoutine&quot;</span><span class="p">))</span>
+    <span class="c1">// Routine implemented here</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="function">
@@ -123,30 +124,25 @@ void <tt class="descname">DumpCallStack</tt><big>(</big><big>)</big><a class="he
 <div class="section" id="functionality-from-elemental">
 <h2>Functionality from Elemental<a class="headerlink" href="#functionality-from-elemental" title="Permalink to this headline">¶</a></h2>
 <p>Clique heavily relies on many of
-<a class="reference external" href="http://code.google.com/p/elemental">Elemental&#8217;s</a> data structures,
+<a class="reference external" href="http://libelemental.org">Elemental&#8217;s</a> data structures,
 particularly the <a class="reference internal" href="#DistMatrix:T.U.V:__class" title="DistMatrix&lt;T, U, V&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistMatrix&lt;T,U,V&gt;</span></tt></a> class for managing
 distributed matrices and vectors.</p>
 <p class="rubric">Complex data</p>
 <dl class="type">
 <dt id="Complex:R:__struct">
 <em class="property">type </em>struct <tt class="descname">Complex&lt;R&gt;</tt><a class="headerlink" href="#Complex:R:__struct" title="Permalink to this definition">¶</a></dt>
-<dd><p>Import of Elemental&#8217;s <a class="reference external" href="http://poulson.github.com/Elemental/core/environment.html#Complex:R:__struct">Complex</a> class.</p>
+<dd><p>This is currently a typedef to C++11&#8217;s <tt class="docutils literal"><span class="pre">std::complex</span></tt>.</p>
 </dd></dl>
 
 <dl class="type">
-<dt id="Base:F:__struct">
-<em class="property">type </em>struct <tt class="descname">Base&lt;F&gt;</tt><a class="headerlink" href="#Base:F:__struct" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="type">
-<dt id="Base:F:::type">
-<em class="property">type </em><tt class="descname">type</tt><a class="headerlink" href="#Base:F:::type" title="Permalink to this definition">¶</a></dt>
-<dd><p>Underlying real datatype of the field <tt class="docutils literal"><span class="pre">F</span></tt>.</p>
-</dd></dl>
-
+<dt id="Base:F:__template">
+<em class="property">type </em>template <tt class="descname">Base&lt;F&gt;</tt><a class="headerlink" href="#Base:F:__template" title="Permalink to this definition">¶</a></dt>
+<dd><p>Template alias for underlying real datatype of the field <tt class="docutils literal"><span class="pre">F</span></tt>.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="Abs__FCR">
-<a class="reference internal" href="#Base:F:::type" title="Base&lt;F&gt;::type">typename Base&lt;F&gt;::type</a> <tt class="descname">Abs</tt><big>(</big>const F&amp; <em>alpha</em><big>)</big><a class="headerlink" href="#Abs__FCR" title="Permalink to this definition">¶</a></dt>
+<a class="reference internal" href="#Base:F:__template" title="Base&lt;F&gt;">Base&lt;F&gt;</a> <tt class="descname">Abs</tt><big>(</big>const F&amp; <em>alpha</em><big>)</big><a class="headerlink" href="#Abs__FCR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the absolute value of the real or complex variable <span class="math">\(\alpha\)</span>.</p>
 </dd></dl>
 
@@ -161,7 +157,8 @@ F <tt class="descname">Sqrt</tt><big>(</big>const F&amp; <em>alpha</em><big>)</b
 <dt id="Matrix:T:__class">
 <em class="property">type </em>class <tt class="descname">Matrix&lt;T&gt;</tt><a class="headerlink" href="#Matrix:T:__class" title="Permalink to this definition">¶</a></dt>
 <dd><p>Import of Elemental&#8217;s
-<a class="reference external" href="http://poulson.github.com/Elemental/core/matrix.html">Matrix</a> class.</p>
+<a class="reference external" href="http://libelemental.org/documentation/dev/core/matrix.html">Matrix</a>
+class.</p>
 </dd></dl>
 
 <dl class="type">
@@ -174,14 +171,14 @@ F <tt class="descname">Sqrt</tt><big>(</big>const F&amp; <em>alpha</em><big>)</b
 <dt id="Grid__class">
 <em class="property">type </em>class <tt class="descname">Grid</tt><a class="headerlink" href="#Grid__class" title="Permalink to this definition">¶</a></dt>
 <dd><p>Import of Elemental&#8217;s
-<a class="reference external" href="http://poulson.github.com/Elemental/core/grid.html">Grid</a> class.</p>
+<a class="reference external" href="http://libelemental.org/documentation/dev/core/grid.html">Grid</a> class.</p>
 </dd></dl>
 
 <dl class="type">
 <dt id="DistMatrix:T.U.V:__class">
 <em class="property">type </em>class <tt class="descname">DistMatrix&lt;T, U, V&gt;</tt><a class="headerlink" href="#DistMatrix:T.U.V:__class" title="Permalink to this definition">¶</a></dt>
 <dd><p>Import of Elemental&#8217;s
-<a class="reference external" href="http://poulson.github.com/Elemental/core/dist_matrix.html">DistMatrix</a>
+<a class="reference external" href="http://libelemental.org/documentation/dev/core/dist_matrix.html">DistMatrix</a>
 class.</p>
 </dd></dl>
 
@@ -200,7 +197,7 @@ class.</p>
 <dt id="DistMatrix:T.MC.MR:__class">
 <em class="property">type </em>class <tt class="descname">DistMatrix&lt;T, MC, MR&gt;</tt><a class="headerlink" href="#DistMatrix:T.MC.MR:__class" title="Permalink to this definition">¶</a></dt>
 <dd><p>A partial specialization of the <a class="reference internal" href="#DistMatrix:T.U.V:__class" title="DistMatrix&lt;T, U, V&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistMatrix&lt;T,U,V&gt;</span></tt></a> class to the
-<a class="reference external" href="http://poulson.github.com/Elemental/core/dist_matrix.html#mc-mr">standard matrix distribution</a>, <tt class="docutils literal"><span class="pre">[MC,MR]</span></tt>.</p>
+<a class="reference external" href="http://libelemental.org/documentation/dev/core/dist_matrix.html#mc-mr">standard matrix distribution</a>, <tt class="docutils literal"><span class="pre">[MC,MR]</span></tt>.</p>
 </dd></dl>
 
 <dl class="type">
@@ -218,7 +215,7 @@ class.</p>
 <dt id="DistMatrix:T.VC.STAR:__class">
 <em class="property">type </em>class <tt class="descname">DistMatrix&lt;T, VC, STAR&gt;</tt><a class="headerlink" href="#DistMatrix:T.VC.STAR:__class" title="Permalink to this definition">¶</a></dt>
 <dd><p>A partial specialization of the <a class="reference internal" href="#DistMatrix:T.U.V:__class" title="DistMatrix&lt;T, U, V&gt;"><tt class="xref cpp cpp-type docutils literal"><span class="pre">DistMatrix&lt;T,U,V&gt;</span></tt></a> class to a
-<a class="reference external" href="http://poulson.github.com/Elemental/core/dist_matrix.html#vc">column-major vector distribution</a>, <tt class="docutils literal"><span class="pre">[VC,*]</span></tt>.</p>
+<a class="reference external" href="http://libelemental.org/documentation/dev/core/dist_matrix.html#vc">column-major vector distribution</a>, <tt class="docutils literal"><span class="pre">[VC,*]</span></tt>.</p>
 </dd></dl>
 
 <dl class="type">
@@ -229,51 +226,51 @@ class.</p>
 
 <p class="rubric">Imported libraries</p>
 <p>Elemental provides
-<a class="reference external" href="http://poulson.github.com/Elemental/core/imports.html">high-level interfaces to several libraries</a>,
+<a class="reference external" href="http://libelemental.org/documentation/dev/core/imports.html">high-level interfaces to several libraries</a>,
 and several of those interfaces are used within Clique.</p>
 <ul class="simple">
-<li><a class="reference external" href="http://poulson.github.com/Elemental/core/imports/blas.html">BLAS</a>:
+<li><a class="reference external" href="http://libelemental.org/documentation/dev/core/imports/blas.html">BLAS</a>:
 exposed in the <tt class="docutils literal"><span class="pre">cliq::blas</span></tt> namespace</li>
-<li><a class="reference external" href="http://poulson.github.com/Elemental/core/imports/lapack.html">LAPACK</a>:
+<li><a class="reference external" href="http://libelemental.org/documentation/dev/core/imports/lapack.html">LAPACK</a>:
 exposed in the <tt class="docutils literal"><span class="pre">cliq::lapack</span></tt> namespace</li>
-<li><a class="reference external" href="http://poulson.github.com/Elemental/core/imports/mpi.html">MPI</a>:
+<li><a class="reference external" href="http://libelemental.org/documentation/dev/core/imports/mpi.html">MPI</a>:
 exposed in the <tt class="docutils literal"><span class="pre">cliq::mpi</span></tt> namespace</li>
 </ul>
 <p class="rubric">Enums</p>
 <dl class="type">
 <dt id="Distribution__enum">
 <em class="property">type </em>enum <tt class="descname">Distribution</tt><a class="headerlink" href="#Distribution__enum" title="Permalink to this definition">¶</a></dt>
-<dd><p>See <a class="reference external" href="http://poulson.github.com/Elemental/core/environment.html#Distribution__enum">the Elemental documentation</a>.</p>
+<dd><p>See <a class="reference external" href="http://libelemental.org/documentation/core/environment.html#Distribution__enum">the Elemental documentation</a>.</p>
 </dd></dl>
 
 <dl class="type">
 <dt id="LeftOrRight__enum">
 <em class="property">type </em>enum <tt class="descname">LeftOrRight</tt><a class="headerlink" href="#LeftOrRight__enum" title="Permalink to this definition">¶</a></dt>
-<dd><p>See <a class="reference external" href="http://poulson.github.com/Elemental/core/environment.html#LeftOrRight__enum">the Elemental documentation</a>.</p>
+<dd><p>See <a class="reference external" href="http://libelemental.org/documentation/dev/core/environment.html#LeftOrRight__enum">the Elemental documentation</a>.</p>
 </dd></dl>
 
 <dl class="type">
 <dt id="UnitOrNonUnit__enum">
 <em class="property">type </em>enum <tt class="descname">UnitOrNonUnit</tt><a class="headerlink" href="#UnitOrNonUnit__enum" title="Permalink to this definition">¶</a></dt>
-<dd><p>See <a class="reference external" href="http://poulson.github.com/Elemental/core/environment.html#UnitOrNonUnit__enum">the Elemental documentation</a>.</p>
+<dd><p>See <a class="reference external" href="http://libelemental.org/documentation/dev/core/environment.html#UnitOrNonUnit__enum">the Elemental documentation</a>.</p>
 </dd></dl>
 
 <dl class="type">
 <dt id="Orientation__enum">
 <em class="property">type </em>enum <tt class="descname">Orientation</tt><a class="headerlink" href="#Orientation__enum" title="Permalink to this definition">¶</a></dt>
-<dd><p>See <a class="reference external" href="http://poulson.github.com/Elemental/core/environment.html#Orientation__enum">the Elemental documentation</a>.</p>
+<dd><p>See <a class="reference external" href="http://libelemental.org/documentation/dev/core/environment.html#Orientation__enum">the Elemental documentation</a>.</p>
 </dd></dl>
 
 <dl class="type">
 <dt id="UpperOrLower__enum">
 <em class="property">type </em>enum <tt class="descname">UpperOrLower</tt><a class="headerlink" href="#UpperOrLower__enum" title="Permalink to this definition">¶</a></dt>
-<dd><p>See <a class="reference external" href="http://poulson.github.com/Elemental/core/environment.html#UpperOrLower__enum">the Elemental documentation</a>.</p>
+<dd><p>See <a class="reference external" href="http://libelemental.org/documentation/dev/core/environment.html#UpperOrLower__enum">the Elemental documentation</a>.</p>
 </dd></dl>
 
 <p class="rubric">Indexing routines</p>
 <dl class="function">
-<dt id="Shift__Int.Int.Int">
-Int <tt class="descname">Shift</tt><big>(</big>Int <em>rank</em>, Int <em>firstRank</em>, Int <em>numProcs</em><big>)</big><a class="headerlink" href="#Shift__Int.Int.Int" title="Permalink to this definition">¶</a></dt>
+<dt id="Shift__i.i.i">
+int <tt class="descname">Shift</tt><big>(</big>int <em>rank</em>, int <em>firstRank</em>, int <em>numProcs</em><big>)</big><a class="headerlink" href="#Shift__i.i.i" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given a element-wise cyclic distribution over <tt class="docutils literal"><span class="pre">numProcs</span></tt> processes,
 where the first entry is owned by the process with rank <tt class="docutils literal"><span class="pre">firstRank</span></tt>,
 this routine returns the first entry owned by the process with rank
@@ -281,16 +278,16 @@ this routine returns the first entry owned by the process with rank
 </dd></dl>
 
 <dl class="function">
-<dt id="Length__Int.Int.Int">
-Int <tt class="descname">Length</tt><big>(</big>Int <em>n</em>, Int <em>shift</em>, Int <em>numProcs</em><big>)</big><a class="headerlink" href="#Length__Int.Int.Int" title="Permalink to this definition">¶</a></dt>
+<dt id="Length__i.i.i">
+int <tt class="descname">Length</tt><big>(</big>int <em>n</em>, int <em>shift</em>, int <em>numProcs</em><big>)</big><a class="headerlink" href="#Length__i.i.i" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given a vector with <span class="math">\(n\)</span> entries distributed over <tt class="docutils literal"><span class="pre">numProcs</span></tt>
 processes with shift as defined above, this routine returns the number of
 entries of the vector which are owned by this process.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="Length__Int.Int.Int.Int">
-Int <tt class="descname">Length</tt><big>(</big>Int <em>n</em>, Int <em>rank</em>, Int <em>firstRank</em>, Int <em>numProcs</em><big>)</big><a class="headerlink" href="#Length__Int.Int.Int.Int" title="Permalink to this definition">¶</a></dt>
+<dt id="Length__i.i.i.i">
+int <tt class="descname">Length</tt><big>(</big>int <em>n</em>, int <em>rank</em>, int <em>firstRank</em>, int <em>numProcs</em><big>)</big><a class="headerlink" href="#Length__i.i.i.i" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given a vector with <span class="math">\(n\)</span> entries distributed over <tt class="docutils literal"><span class="pre">numProcs</span></tt>
 processes, with the first entry owned by process <tt class="docutils literal"><span class="pre">firstRank</span></tt>, this routine
 returns the number of entries locally owned by the process with rank
