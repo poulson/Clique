@@ -17,7 +17,20 @@ This data structure represents a distributed symmetric :math:`LDL^T` or
 
    .. cpp:member:: Matrix<T> diag
 
-      Stores the diagonal of the frontal matrix after factorization.
+      If a standard (non-block) LDL factorization was performed, then `diag` 
+      will contain the diagonal portion of the frontal factorization.
+
+   .. cpp:member:: Matrix<T> subdiag
+
+      If intrafrontal standard Bunch-Kaufman was used, then `subdiag` stores 
+      the subdiagonal of the quasi-diagonal matrix.
+      If Bunch-Kaufman was used, then it will contain the main diagonal of the 
+      quasi-diagonal matrix.
+
+   .. cpp:member:: Matrix<int> piv
+ 
+      If intrafrontal standard Bunch-Kaufman was used, then `piv` will store 
+      the pivot history.
 
 .. cpp:type:: struct DistSymmFront<T>
 
@@ -30,28 +43,49 @@ This data structure represents a distributed symmetric :math:`LDL^T` or
 
    .. cpp:member:: DistMatrix<T,VC,STAR> diag1d
 
-      Stores the diagonal of the frontal matrix after factorization.
+      If a standard (non-block) LDL factorization was performed, then `diag1d` 
+      will store the diagonal portion of the frontal factorization. If 
+      Bunch-Kaufman was used, then it will contain the main diagonal of the 
+      quasi-diagonal matrix.
+
+   .. cpp:member:: DistMatrix<T,VC,STAR> subdiag1d
+
+      If intrafrontal standard Bunch-Kaufman was used, then `subdiag1d` will
+      store the subdiagonal of the quasi-diagonal matrix.
+
+   .. cpp:member:: DistMatrix<int,VC,STAR> piv
+
+      If intrafrontal standard Bunch-Kaufman was used, then `piv` will contain
+      the pivot history.
 
 .. cpp:type:: enum SymmFrontType
 
    Can be set to either
    
-   * ``SYMM_1D``: Symmetric/Hermitian fronts distributed in a 1D manner
+   * ``SYMM_1D/SYMM_2D``: 
+     Symmetric/Hermitian fronts distributed in a 1D (2D) manner
 
-   * ``SYMM_2D``: Symmetric/Hermitian fronts distributed in a 2D manner 
+   * ``LDL_1D/LDL_2D``: LDL factorization distributed in a 1D (2D) manner
 
-   * ``LDL_1D``: LDL factorization distributed in a 1D manner
+   * ``LDL_SELINV_1D/LDL_SELINV_2D``: 
+     LDL factorization with inverted diagonal blocks distributed in a 1D (2D) 
+     manner
 
-   * ``LDL_2D``: LDL factorization distributed in a 2D manner 
+   * ``LDL_INTRAPIV_1D/LDL_INTRAPIV_2D``: 
+     LDL factorization with intrafrontal Bunch-Kaufman pivoting distributed in 
+     a 1D (2D) manner
 
-   * ``LDL_SELINV_1D``: LDL factorization with inverted diagonal blocks 
-     distributed in a 1D manner
+   * ``LDL_INTRAPIV_SELINV_1D/LDL_INTRAPIV_SELINV_2D``: 
+     LDL factorization with intrafrontal Bunch-Kaufman pivoting 
+     (and selectively interted triangular diagonal blocks) distributed in 
+     a 1D (2D) manner
 
-   * ``LDL_SELINV_2D``: LDL factorization with inverted diagonal blocks 
-     distributed in a 2D manner
+   * ``BLOCK_LDL_1D/BLOCK_LDL_2D``: 
+     Block LDL factorization with fronts distributed in a 1D (2D) manner
 
-   * ``BLOCK_LDL_2D``: Block LDL factorization with fronts distributed in a 
-     2D manner
+   * ``BLOCK_LDL_INTRAPIV_1D/BLOCK_LDL_INTRAPIV_2D``: 
+     Block LDL factorization with intrafrontal Bunch-Kaufman pivoting and 
+     fronts distributed in a 1D (2D) manner
 
 .. cpp:type:: struct DistSymmFrontTree<T>
 

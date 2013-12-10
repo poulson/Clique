@@ -52,7 +52,7 @@ inline void FrontBlockLDL
         // Finish inverting ATL
         elem::TriangularInverse( LOWER, UNIT, ATL );
         elem::Trdtrmm( LOWER, ATL, dSub, conjugate ); 
-        elem::ApplySymmetricPivots( LOWER, ATL, p, conjugate );
+        elem::ApplyInverseSymmetricPivots( LOWER, ATL, p, conjugate );
     }
     else
     {

@@ -29,18 +29,16 @@ Solving after factorization
 
 .. cpp:function:: void Solve( const DistSymmInfo& info, const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 
-   After having performed an :math:`LDL^T` or :math:`LDL^H` factorization 
-   (via :cpp:func:`LDL`), this routine can be used to solve a set of 
-   right-hand sides. See
+   After factorization (via :cpp:func:`LDL`), this routine can be used to 
+   solve a set of right-hand sides. See
    `tests/Solve <https://github.com/poulson/Clique/blob/master/tests/Solve.cpp>`__ for an example usage.
 
 Finer-grain access
 ^^^^^^^^^^^^^^^^^^
 
 Rather than simply exposing a black-box routine for applying the inverse of 
-an :math:`LDL^T` or :math:`LDL^H` factorization, the following routines can 
-be used to perform various solves against the lower-triangular and diagonal 
-data of a frontal tree.
+a factorization, the following routines can be used to perform various solves 
+against the lower-triangular and (quasi-)diagonal data of a frontal tree.
 
 .. cpp:function:: void LowerSolve( Orientation orientation, const DistSymmInfo& info, const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 

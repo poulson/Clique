@@ -54,6 +54,7 @@ main( int argc, char* argv[] )
         const int b = Input("--pmlWidth","number of grid points of PML",5);
         const double sigma = Input("--sigma","magnitude of PML profile",1.5);
         const double p = Input("--exponent","exponent of PML profile",3.);
+        const bool intraPiv = Input("--intraPiv","frontal pivoting?",false);
         const bool analytic = Input("--analytic","analytic partitions?",true);
         const bool sequential = Input
             ("--sequential","sequential partitions?",true);
@@ -208,7 +209,10 @@ main( int argc, char* argv[] )
         }
         mpi::Barrier( comm );
         const double ldlStart = mpi::Time();
-        LDL( info, frontTree, BLOCK_LDL_2D );
+        if( intraPiv )
+            LDL( info, frontTree, BLOCK_LDL_INTRAPIV_2D );
+        else
+            LDL( info, frontTree, BLOCK_LDL_2D );
         mpi::Barrier( comm );
         const double ldlStop = mpi::Time();
         if( commRank == 0 )

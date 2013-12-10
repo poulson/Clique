@@ -27,6 +27,7 @@ main( int argc, char* argv[] )
         const int n2 = Input("--n2","second grid dimension",200);
         const double omega = Input("--omega","angular frequency",120.);
         const double damping = Input("--damping","damping parameter",7.);
+        const bool intraPiv = Input("--intraPiv","frontal pivoting?",false);
         const bool analytic = Input("--analytic","analytic partitions?",true);
         const bool sequential = Input
             ("--sequential","sequential partitions?",true);
@@ -167,7 +168,10 @@ main( int argc, char* argv[] )
         }
         mpi::Barrier( comm );
         const double ldlStart = mpi::Time();
-        LDL( info, frontTree, BLOCK_LDL_2D );
+        if( intraPiv )
+            LDL( info, frontTree, BLOCK_LDL_INTRAPIV_2D );
+        else
+            LDL( info, frontTree, BLOCK_LDL_2D );
         mpi::Barrier( comm );
         const double ldlStop = mpi::Time();
         if( commRank == 0 )

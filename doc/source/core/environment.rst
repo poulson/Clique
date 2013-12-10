@@ -4,7 +4,7 @@ Environment
 This section describes the routines and data structures which help set up 
 Clique's programming environment: it discusses initialization of Clique,
 call stack manipulation, and data structures and routines imported from 
-`Elemental <https://code.google.com/p/elemental>`__.
+`Elemental <https://libelemental.org>`__.
 
 Set up and clean up
 -------------------
@@ -47,13 +47,17 @@ Call stack manipulation
    for the call stack to be printed (via :cpp:func:`DumpCallStack`) when an 
    exception is caught.
 
-.. cpp:function:: void PushCallStack( std::string s )
+.. cpp:type:: class CallStackEntry
 
-   Push the given routine name onto the call stack.
+   Typically used in the following form:
 
-.. cpp:function:: void PopCallStack()
+   .. code-block:: cpp
 
-   Remove the routine name at the top of the call stack.
+      void SomeRoutine()
+      {
+          DEBUG_ONLY(CallStackEntry cse("SomeRoutine"))
+          // Routine implemented here
+      }
 
 .. cpp:function:: void DumpCallStack()
 
@@ -63,7 +67,7 @@ Functionality from Elemental
 ----------------------------
 
 Clique heavily relies on many of 
-`Elemental's <http://code.google.com/p/elemental>`__ data structures, 
+`Elemental's <http://libelemental.org>`__ data structures, 
 particularly the :cpp:type:`DistMatrix\<T,U,V>` class for managing
 distributed matrices and vectors. 
 
@@ -71,15 +75,13 @@ distributed matrices and vectors.
 
 .. cpp:type:: struct Complex<R>
 
-   Import of Elemental's `Complex <http://poulson.github.com/Elemental/core/environment.html#Complex:R:__struct>`__ class.
+   This is currently a typedef to C++11's ``std::complex``.
 
-.. cpp:type:: struct Base<F>
+.. cpp:type:: template Base<F>
 
-   .. cpp:type:: type
+   Template alias for underlying real datatype of the field ``F``.
 
-      Underlying real datatype of the field ``F``.
-
-.. cpp:function:: typename Base<F>::type Abs( const F& alpha )
+.. cpp:function:: Base<F> Abs( const F& alpha )
 
    Returns the absolute value of the real or complex variable :math:`\alpha`.
 
@@ -92,7 +94,8 @@ distributed matrices and vectors.
 .. cpp:type:: class Matrix<T>
 
    Import of Elemental's 
-   `Matrix <http://poulson.github.com/Elemental/core/matrix.html>`__ class.
+   `Matrix <http://libelemental.org/documentation/dev/core/matrix.html>`__ 
+   class.
 
 .. cpp:type:: class Matrix<F>
 
@@ -101,12 +104,12 @@ distributed matrices and vectors.
 .. cpp:type:: class Grid
 
    Import of Elemental's 
-   `Grid <http://poulson.github.com/Elemental/core/grid.html>`__ class.
+   `Grid <http://libelemental.org/documentation/dev/core/grid.html>`__ class.
 
 .. cpp:type:: class DistMatrix<T,U,V>
 
    Import of Elemental's 
-   `DistMatrix <http://poulson.github.com/Elemental/core/dist_matrix.html>`__ 
+   `DistMatrix <http://libelemental.org/documentation/dev/core/dist_matrix.html>`__ 
    class.
 
 .. cpp:type:: class DistMatrix<F,U,V>
@@ -118,7 +121,7 @@ distributed matrices and vectors.
 .. cpp:type:: class DistMatrix<T,MC,MR>
 
    A partial specialization of the :cpp:type:`DistMatrix\<T,U,V>` class to the 
-   `standard matrix distribution <http://poulson.github.com/Elemental/core/dist_matrix.html#mc-mr>`__, ``[MC,MR]``.
+   `standard matrix distribution <http://libelemental.org/documentation/dev/core/dist_matrix.html#mc-mr>`__, ``[MC,MR]``.
 
 .. cpp:type:: class DistMatrix<F>
 
@@ -129,7 +132,7 @@ distributed matrices and vectors.
 .. cpp:type:: class DistMatrix<T,VC,STAR>
 
    A partial specialization of the :cpp:type:`DistMatrix\<T,U,V>` class to a 
-   `column-major vector distribution <http://poulson.github.com/Elemental/core/dist_matrix.html#vc>`__, ``[VC,*]``.
+   `column-major vector distribution <http://libelemental.org/documentation/dev/core/dist_matrix.html#vc>`__, ``[VC,*]``.
 
 .. cpp:type:: class DistMatrix<F,VC,STAR>
 
@@ -138,56 +141,56 @@ distributed matrices and vectors.
 .. rubric:: Imported libraries
 
 Elemental provides 
-`high-level interfaces to several libraries <http://poulson.github.com/Elemental/core/imports.html>`__, 
+`high-level interfaces to several libraries <http://libelemental.org/documentation/dev/core/imports.html>`__, 
 and several of those interfaces are used within Clique. 
 
-* `BLAS <http://poulson.github.com/Elemental/core/imports/blas.html>`__: 
+* `BLAS <http://libelemental.org/documentation/dev/core/imports/blas.html>`__: 
   exposed in the ``cliq::blas`` namespace
 
-* `LAPACK <http://poulson.github.com/Elemental/core/imports/lapack.html>`__:
+* `LAPACK <http://libelemental.org/documentation/dev/core/imports/lapack.html>`__:
   exposed in the ``cliq::lapack`` namespace
 
-* `MPI <http://poulson.github.com/Elemental/core/imports/mpi.html>`__:
+* `MPI <http://libelemental.org/documentation/dev/core/imports/mpi.html>`__:
   exposed in the ``cliq::mpi`` namespace
 
 .. rubric:: Enums
 
 .. cpp:type:: enum Distribution
 
-   See `the Elemental documentation <http://poulson.github.com/Elemental/core/environment.html#Distribution__enum>`__.
+   See `the Elemental documentation <http://libelemental.org/documentation/core/environment.html#Distribution__enum>`__.
 
 .. cpp:type:: enum LeftOrRight
 
-   See `the Elemental documentation <http://poulson.github.com/Elemental/core/environment.html#LeftOrRight__enum>`__.
+   See `the Elemental documentation <http://libelemental.org/documentation/dev/core/environment.html#LeftOrRight__enum>`__.
 
 .. cpp:type:: enum UnitOrNonUnit
 
-   See `the Elemental documentation <http://poulson.github.com/Elemental/core/environment.html#UnitOrNonUnit__enum>`__.
+   See `the Elemental documentation <http://libelemental.org/documentation/dev/core/environment.html#UnitOrNonUnit__enum>`__.
 
 .. cpp:type:: enum Orientation
 
-   See `the Elemental documentation <http://poulson.github.com/Elemental/core/environment.html#Orientation__enum>`__.
+   See `the Elemental documentation <http://libelemental.org/documentation/dev/core/environment.html#Orientation__enum>`__.
 
 .. cpp:type:: enum UpperOrLower
 
-   See `the Elemental documentation <http://poulson.github.com/Elemental/core/environment.html#UpperOrLower__enum>`__.
+   See `the Elemental documentation <http://libelemental.org/documentation/dev/core/environment.html#UpperOrLower__enum>`__.
 
 .. rubric:: Indexing routines
 
-.. cpp:function:: Int Shift( Int rank, Int firstRank, Int numProcs )
+.. cpp:function:: int Shift( int rank, int firstRank, int numProcs )
 
    Given a element-wise cyclic distribution over ``numProcs`` processes,
    where the first entry is owned by the process with rank ``firstRank``,
    this routine returns the first entry owned by the process with rank
    ``rank``.
 
-.. cpp:function:: Int Length( Int n, Int shift, Int numProcs )
+.. cpp:function:: int Length( int n, int shift, int numProcs )
 
    Given a vector with :math:`n` entries distributed over ``numProcs``
    processes with shift as defined above, this routine returns the number of
    entries of the vector which are owned by this process.
 
-.. cpp:function:: Int Length( Int n, Int rank, Int firstRank, Int numProcs )
+.. cpp:function:: int Length( int n, int rank, int firstRank, int numProcs )
 
    Given a vector with :math:`n` entries distributed over ``numProcs``
    processes, with the first entry owned by process ``firstRank``, this routine

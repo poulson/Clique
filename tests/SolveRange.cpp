@@ -25,6 +25,7 @@ main( int argc, char* argv[] )
         const int numRhsBeg = Input("--numRhsBeg","min number of rhs's",100);
         const int numRhsInc = Input("--numRhsInc","stepsize for rhs's",100);
         const int numRhsEnd = Input("--numRhsEnd","max number of rhs's",1000);
+        const bool intraPiv = Input("--intraPiv","frontal pivoting?",false);
         const bool solve2d = Input("--solve2d","use 2d solve?",false);
         const bool selInv = Input("--selInv","selectively invert?",false);
         const bool natural = Input("--natural","analytical nested-diss?",true);
@@ -199,17 +200,37 @@ main( int argc, char* argv[] )
         const double ldlStart = mpi::Time();
         if( solve2d )
         {
-            if( selInv )
-                LDL( info, frontTree, LDL_SELINV_2D );
+            if( intraPiv )
+            {
+                if( selInv )    
+                    LDL( info, frontTree, LDL_INTRAPIV_SELINV_2D );
+                else
+                    LDL( info, frontTree, LDL_INTRAPIV_2D );
+            }
             else
-                LDL( info, frontTree, LDL_2D );
+            {
+                if( selInv )
+                    LDL( info, frontTree, LDL_SELINV_2D );
+                else
+                    LDL( info, frontTree, LDL_2D );
+            }
         }
         else
         {
-            if( selInv )
-                LDL( info, frontTree, LDL_SELINV_2D );
+            if( intraPiv )
+            {
+                if( selInv )
+                    LDL( info, frontTree, LDL_INTRAPIV_SELINV_2D );
+                else
+                    LDL( info, frontTree, LDL_INTRAPIV_1D );
+            }
             else
-                LDL( info, frontTree, LDL_1D );
+            {
+                if( selInv )
+                    LDL( info, frontTree, LDL_SELINV_2D );
+                else
+                    LDL( info, frontTree, LDL_1D );
+            }
         }
         mpi::Barrier( comm );
         const double ldlStop = mpi::Time();

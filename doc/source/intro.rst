@@ -6,14 +6,13 @@ Overview
 Clique is an implementation of the multifrontal algorithm for symmetric and 
 Hermitian systems which is designed to be scalable (both in terms of wall time
 and memory usage) and as easy to use as possible. As of now, Clique supports 
-both :math:`LDL^T` and :math:`LDL^H` factorizations (without pivoting), so,
-in addition to symmetric/Hermitian positive-definite systems, Clique can also
-handle indefinite systems which do not require pivoting. Support for 
-threshold-pivoted LU factorizations will be added in a future release.
+both :math:`LDL^T` and :math:`LDL^H` factorizations, with or without 
+intrafrontal Bunch-Kaufman pivoting, with or without selective inversion, and 
+in block or non-block form.
 
 Dependencies
 ============
-Clique is built on top of `Elemental <http://code.google.com/p/elemental>`_
+Clique is built on top of `Elemental <http://libelemental.org>`_
 and `ParMETIS <http://glaros.dtc.umn.edu/gkhome/metis/parmetis/overview/>`_, 
 and both are distributed with Clique. Clique keeps all of Elemental's 
 dependencies.

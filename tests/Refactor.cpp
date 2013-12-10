@@ -25,6 +25,7 @@ main( int argc, char* argv[] )
         const int n3 = Input("--n3","third grid dimension",30);
         const int numRepeats = Input
             ("--numRepeats","number of repeated factorizations",5);
+        const bool intraPiv = Input("--intraPiv","frontal pivoting?",false);
         const bool sequential = Input
             ("--sequential","sequential partitions?",true);
         const int numDistSeps = Input
@@ -166,7 +167,10 @@ main( int argc, char* argv[] )
             }
             mpi::Barrier( comm );
             const double ldlStart = mpi::Time();
-            LDL( info, frontTree, LDL_1D );
+            if( intraPiv )
+                LDL( info, frontTree, LDL_INTRAPIV_1D );
+            else
+                LDL( info, frontTree, LDL_1D );
             mpi::Barrier( comm );
             const double ldlStop = mpi::Time();
             if( commRank == 0 )
