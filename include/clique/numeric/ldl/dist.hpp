@@ -195,8 +195,10 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
 
         // Now that the frontal matrix is set up, perform the factorization
         if( blocked )
+        {
             FrontBlockLDL
             ( front.front2dL, front.work2d, L.isHermitian, pivoted );
+        }
         else if( pivoted )
         {
             DistMatrix<F,MD,STAR> subdiag( grid );

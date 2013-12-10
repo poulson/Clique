@@ -43,8 +43,7 @@ inline void Solve
 {
     DEBUG_ONLY(CallStackEntry cse("Solve"))
     const Orientation orientation = ( L.isHermitian ? ADJOINT : TRANSPOSE );
-    if( L.frontType == BLOCK_LDL_2D || 
-        L.frontType == BLOCK_LDL_INTRAPIV_2D )
+    if( BlockFactorization(L.frontType) )
     {
         // Solve against block diagonal factor, L D
         LowerSolve( NORMAL, info, L, X );
@@ -70,8 +69,7 @@ inline void Solve
     DEBUG_ONLY(CallStackEntry cse("Solve"))
     const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
     const Orientation orientation = ( L.isHermitian ? ADJOINT : TRANSPOSE );
-    if( L.frontType == BLOCK_LDL_2D || 
-        L.frontType == BLOCK_LDL_INTRAPIV_2D )
+    if( BlockFactorization(L.frontType) )
     {
         // Solve against block diagonal factor, L D
         LowerSolve( NORMAL, info, L, X );
@@ -105,7 +103,7 @@ inline void SymmetricSolve
     map.FormInverse( inverseMap );
 
     DistSymmFrontTree<F> frontTree( A, map, sepTree, info, conjugate );
-    LDL( info, frontTree, LDL_1D );
+    LDL( info, frontTree, LDL_INTRAPIV_1D );
 
     DistNodalMultiVec<F> XNodal;
     XNodal.Pull( inverseMap, info, X );

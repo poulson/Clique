@@ -414,6 +414,8 @@ DistSymmFrontTree<F>::MemoryInfo
         const SymmFront<F>& front = localFronts[s];
         numLocalEntries += front.frontL.MemorySize();
         numLocalEntries += front.diag.MemorySize();
+        numLocalEntries += front.subdiag.MemorySize();
+        numLocalEntries += front.piv.MemorySize();
         numLocalEntries += front.work.MemorySize();
     }
     for( int s=1; s<numDistFronts; ++s )
@@ -422,6 +424,8 @@ DistSymmFrontTree<F>::MemoryInfo
         numLocalEntries += front.front1dL.AllocatedMemory();
         numLocalEntries += front.front2dL.AllocatedMemory();
         numLocalEntries += front.diag1d.AllocatedMemory();
+        numLocalEntries += front.subdiag1d.AllocatedMemory();
+        numLocalEntries += front.piv.AllocatedMemory();
         numLocalEntries += front.work1d.AllocatedMemory();
         numLocalEntries += front.work2d.AllocatedMemory();
     }
@@ -449,35 +453,34 @@ DistSymmFrontTree<F>::TopLeftMemoryInfo
     for( int s=0; s<numLocalFronts; ++s )
     {
         const SymmFront<F>& front = localFronts[s];
-        Matrix<F> FTL,
-                  FBL;
+        Matrix<F> FTL, FBL;
         elem::LockedPartitionDown
-        ( front.frontL, FTL,
-                        FBL, front.frontL.Width() );
+        ( front.frontL, FTL, FBL, front.frontL.Width() );
         numLocalEntries += FTL.Height()*FTL.Width();
+        numLocalEntries += front.diag.AllocatedMemory();
+        numLocalEntries += front.subdiag.AllocatedMemory();
+        numLocalEntries += front.piv.AllocatedMemory();
     }
     for( int s=1; s<numDistFronts; ++s )
     {
         const DistSymmFront<F>& front = distFronts[s];
         if( frontsAre1d )
         {
-            DistMatrix<F,VC,STAR> FTL(grid),
-                                  FBL(grid);
+            DistMatrix<F,VC,STAR> FTL(grid), FBL(grid);
             elem::LockedPartitionDown
-            ( front.front1dL, FTL,
-                              FBL, front.front1dL.Width() );
+            ( front.front1dL, FTL, FBL, front.front1dL.Width() );
             numLocalEntries += FTL.LocalHeight()*FTL.LocalWidth();
         }
         else
         {
-            DistMatrix<F> FTL(grid),
-                          FBL(grid);
+            DistMatrix<F> FTL(grid), FBL(grid);
             elem::LockedPartitionDown
-            ( front.front2dL, FTL,
-                              FBL, front.front2dL.Width() );
+            ( front.front2dL, FTL, FBL, front.front2dL.Width() );
             numLocalEntries += FTL.LocalHeight()*FTL.LocalWidth();
         }
-        numLocalEntries += front.diag.AllocatedMemory();
+        numLocalEntries += front.diag1d.AllocatedMemory();
+        numLocalEntries += front.subdiag1d.AllocatedMemory();
+        numLocalEntries += front.piv.AllocatedMemory();
     }
 
     minLocalEntries = mpi::AllReduce( numLocalEntries, mpi::MIN, comm );
@@ -503,11 +506,9 @@ DistSymmFrontTree<F>::BottomLeftMemoryInfo
     for( int s=0; s<numLocalFronts; ++s )
     {
         const SymmFront<F>& front = localFronts[s];
-        Matrix<F> FTL,
-                  FBL;
+        Matrix<F> FTL, FBL;
         elem::LockedPartitionDown
-        ( front.frontL, FTL,
-                        FBL, front.frontL.Width() );
+        ( front.frontL, FTL, FBL, front.frontL.Width() );
         numLocalEntries += FBL.Height()*FBL.Width();
     }
     for( int s=1; s<numDistFronts; ++s )
@@ -515,23 +516,18 @@ DistSymmFrontTree<F>::BottomLeftMemoryInfo
         const DistSymmFront<F>& front = distFronts[s];
         if( frontsAre1d )
         {
-            DistMatrix<F,VC,STAR> FTL(grid),
-                                  FBL(grid);
+            DistMatrix<F,VC,STAR> FTL(grid), FBL(grid);
             elem::LockedPartitionDown
-            ( front.front1dL, FTL,
-                              FBL, front.front1dL.Width() );
+            ( front.front1dL, FTL, FBL, front.front1dL.Width() );
             numLocalEntries += FBL.LocalHeight()*FBL.LocalWidth();
         }
         else
         {
-            DistMatrix<F> FTL(grid),
-                          FBL(grid);
+            DistMatrix<F> FTL(grid), FBL(grid);
             elem::LockedPartitionDown
-            ( front.front2dL, FTL,
-                              FBL, front.front2dL.Width() );
+            ( front.front2dL, FTL, FBL, front.front2dL.Width() );
             numLocalEntries += FBL.LocalHeight()*FBL.LocalWidth();
         }
-        numLocalEntries += front.diag.AllocatedMemory();
     }
 
     minLocalEntries = mpi::AllReduce( numLocalEntries, mpi::MIN, comm );

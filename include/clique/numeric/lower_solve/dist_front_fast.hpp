@@ -118,7 +118,7 @@ inline void FrontFastIntraPivLowerForwardSolve
     // TODO: Cache the send and recv data for the pivots to avoid p[*,*]
     const Grid& g = L.Grid();
     DistMatrix<F,VC,STAR> XT(g), XB(g);
-    PartitionDown( X, XT, XB, X.Width() );
+    PartitionDown( X, XT, XB, L.Width() );
     elem::ApplyRowPivots( XT, p );
 
     FrontFastLowerForwardSolve( L, X );
@@ -195,7 +195,7 @@ inline void FrontFastIntraPivLowerForwardSolve
     // TODO: Cache the send and recv data for the pivots to avoid p[*,*]
     const Grid& g = L.Grid();
     DistMatrix<F,VC,STAR> XT(g), XB(g);
-    PartitionDown( X, XT, XB, X.Width() );
+    PartitionDown( X, XT, XB, L.Width() );
     elem::ApplyRowPivots( XT, p );
 
     FrontFastLowerForwardSolve( L, X );
@@ -248,7 +248,7 @@ inline void FrontFastIntraPivLowerForwardSolve
     // TODO: Cache the send and recv data for the pivots to avoid p[*,*]
     const Grid& g = L.Grid();
     DistMatrix<F> XT(g), XB(g);
-    PartitionDown( X, XT, XB, X.Width() );
+    PartitionDown( X, XT, XB, L.Width() );
     elem::ApplyRowPivots( XT, p );
 
     FrontFastLowerForwardSolve( L, X );
@@ -312,7 +312,7 @@ inline void FrontFastIntraPivLowerBackwardSolve
     // TODO: Cache the send and recv data for the pivots to avoid p[*,*]
     const Grid& g = L.Grid();
     DistMatrix<F,VC,STAR> XT(g), XB(g);
-    PartitionDown( X, XT, XB, X.Width() );
+    PartitionDown( X, XT, XB, L.Width() );
     elem::ApplyInverseRowPivots( XT, p );
 }
 
@@ -399,7 +399,7 @@ inline void FrontFastIntraPivLowerBackwardSolve
     // TODO: Cache the send and recv data for the pivots to avoid p[*,*]
     const Grid& g = L.Grid();
     DistMatrix<F,VC,STAR> XT(g), XB(g);
-    PartitionDown( X, XT, XB, X.Width() );
+    PartitionDown( X, XT, XB, L.Width() );
     elem::ApplyInverseRowPivots( XT, p );
 }
 
@@ -454,7 +454,7 @@ inline void FrontFastIntraPivLowerBackwardSolve
     // TODO: Cache the send and recv data for the pivots to avoid p[*,*]
     const Grid& g = L.Grid();
     DistMatrix<F> XT(g), XB(g);
-    PartitionDown( X, XT, XB, X.Width() );
+    PartitionDown( X, XT, XB, L.Width() );
     elem::ApplyInverseRowPivots( XT, p );
 }
 

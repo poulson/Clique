@@ -430,7 +430,7 @@ inline void FrontIntraPivLowerForwardSolve
     // TODO: Cache the send and recv data for the pivots to avoid p[*,*]
     const Grid& g = L.Grid();
     DistMatrix<F,VC,STAR> XT(g), XB(g);
-    PartitionDown( X, XT, XB, X.Width() );
+    PartitionDown( X, XT, XB, L.Width() );
     elem::ApplyRowPivots( XT, p );
 
     FrontLowerForwardSolve( L, X, singleL11AllGather );
@@ -482,7 +482,7 @@ inline void FrontIntraPivLowerForwardSolve
     // TODO: Cache the send and recv data for the pivots to avoid p[*,*]
     const Grid& g = L.Grid();
     DistMatrix<F> XT(g), XB(g);
-    PartitionDown( X, XT, XB, X.Width() );
+    PartitionDown( X, XT, XB, L.Width() );
     elem::ApplyRowPivots( XT, p );
 
     FrontLowerForwardSolve( L, X );
@@ -546,7 +546,7 @@ inline void FrontIntraPivLowerBackwardSolve
     // TODO: Cache the send and recv data for the pivots to avoid p[*,*]
     const Grid& g = L.Grid();
     DistMatrix<F,VC,STAR> XT(g), XB(g);
-    PartitionDown( X, XT, XB, X.Width() );
+    PartitionDown( X, XT, XB, L.Width() );
     elem::ApplyInverseRowPivots( XT, p );
 }
 
@@ -595,7 +595,7 @@ inline void FrontIntraPivLowerBackwardSolve
     // TODO: Cache the send and recv data for the pivots to avoid p[*,*]
     const Grid& g = L.Grid();
     DistMatrix<F> XT(g), XB(g);
-    PartitionDown( X, XT, XB, X.Width() );
+    PartitionDown( X, XT, XB, L.Width() );
     elem::ApplyInverseRowPivots( XT, p );
 }
 

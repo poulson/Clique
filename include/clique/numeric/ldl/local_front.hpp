@@ -87,7 +87,7 @@ void FrontLDLIntraPiv
     auto diag = ATL.GetDiagonal();
 
     elem::ApplyInverseColumnPivots( ABL, piv );
-    elem::Trsm( LEFT, LOWER, orientation, UNIT, F(1), ATL, ABL );
+    elem::Trsm( RIGHT, LOWER, orientation, UNIT, F(1), ATL, ABL );
     Matrix<F> SBL( ABL );
 
     elem::QuasiDiagonalSolve

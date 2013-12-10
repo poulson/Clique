@@ -50,10 +50,21 @@ inline void LocalDiagonalSolve
   DistNodalMultiVec<F>& X )
 {
     DEBUG_ONLY(CallStackEntry cse("LocalDiagonalSolve"))
-    const int numLocalNodes = info.localNodes.size();
-    for( int s=0; s<numLocalNodes; ++s )
-        elem::DiagonalSolve
-        ( LEFT, NORMAL, L.localFronts[s].diag, X.localNodes[s], true );
+    const Int numLocalNodes = info.localNodes.size();
+    if( PivotedFactorization(L.frontType) )
+    {
+        for( Int s=0; s<numLocalNodes; ++s )
+            elem::QuasiDiagonalSolve
+            ( LEFT, LOWER, NORMAL, 
+              L.localFronts[s].diag, L.localFronts[s].subdiag, X.localNodes[s],
+              L.isHermitian );
+    }
+    else
+    {
+        for( Int s=0; s<numLocalNodes; ++s )
+            elem::DiagonalSolve
+            ( LEFT, NORMAL, L.localFronts[s].diag, X.localNodes[s], true );
+    }
 }
 
 template<typename F>
@@ -62,10 +73,21 @@ inline void LocalDiagonalSolve
   DistNodalMatrix<F>& X )
 {
     DEBUG_ONLY(CallStackEntry cse("LocalDiagonalSolve"))
-    const int numLocalNodes = info.localNodes.size();
-    for( int s=0; s<numLocalNodes; ++s )
-        elem::DiagonalSolve
-        ( LEFT, NORMAL, L.localFronts[s].diag, X.localNodes[s], true );
+    const Int numLocalNodes = info.localNodes.size();
+    if( PivotedFactorization(L.frontType) )
+    {
+        for( Int s=0; s<numLocalNodes; ++s ) 
+            elem::QuasiDiagonalSolve
+            ( LEFT, LOWER, NORMAL, 
+              L.localFronts[s].diag, L.localFronts[s].subdiag, X.localNodes[s],
+              L.isHermitian );
+    }
+    else
+    {
+        for( Int s=0; s<numLocalNodes; ++s )
+            elem::DiagonalSolve
+            ( LEFT, NORMAL, L.localFronts[s].diag, X.localNodes[s], true );
+    }
 }
 
 template<typename F> 
@@ -74,12 +96,26 @@ void DistDiagonalSolve
   DistNodalMultiVec<F>& X )
 {
     DEBUG_ONLY(CallStackEntry cse("DistDiagonalSolve"))
-    const int numDistNodes = info.distNodes.size();
-    for( int s=1; s<numDistNodes; ++s )
+    const Int numDistNodes = info.distNodes.size();
+
+    if( PivotedFactorization(L.frontType) )
     {
-        const DistSymmFront<F>& front = L.distFronts[s];
-        elem::DiagonalSolve
-        ( LEFT, NORMAL, front.diag1d, X.distNodes[s-1], true );
+        for( Int s=1; s<numDistNodes; ++s )
+        {
+            const DistSymmFront<F>& front = L.distFronts[s];
+            elem::QuasiDiagonalSolve
+            ( LEFT, LOWER, NORMAL, front.diag1d, front.subdiag1d, 
+              X.distNodes[s-1], L.isHermitian );
+        }
+    }
+    else
+    {
+        for( Int s=1; s<numDistNodes; ++s )
+        {
+            const DistSymmFront<F>& front = L.distFronts[s];
+            elem::DiagonalSolve
+            ( LEFT, NORMAL, front.diag1d, X.distNodes[s-1], true );
+        }
     }
 }
 
@@ -89,12 +125,26 @@ void DistDiagonalSolve
   DistNodalMatrix<F>& X )
 {
     DEBUG_ONLY(CallStackEntry cse("DistDiagonalSolve"))
-    const int numDistNodes = info.distNodes.size();
-    for( int s=1; s<numDistNodes; ++s )
+    const Int numDistNodes = info.distNodes.size();
+
+    if( PivotedFactorization(L.frontType) )
     {
-        const DistSymmFront<F>& front = L.distFronts[s];
-        elem::DiagonalSolve
-        ( LEFT, NORMAL, front.diag1d, X.distNodes[s-1], true );
+        for( Int s=1; s<numDistNodes; ++s )
+        {
+            const DistSymmFront<F>& front = L.distFronts[s];
+            elem::QuasiDiagonalSolve
+            ( LEFT, LOWER, NORMAL, front.diag1d, front.subdiag1d, 
+              X.distNodes[s-1], L.isHermitian );
+        }
+    }
+    else
+    {
+        for( Int s=1; s<numDistNodes; ++s )
+        {
+            const DistSymmFront<F>& front = L.distFronts[s];
+            elem::DiagonalSolve
+            ( LEFT, NORMAL, front.diag1d, X.distNodes[s-1], true );
+        }
     }
 }
 

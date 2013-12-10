@@ -252,7 +252,7 @@ void FrontLDLIntraPiv
     auto diag = ATL.GetDiagonal();
 
     elem::ApplyInverseColumnPivots( ABL, piv );
-    elem::Trsm( LEFT, LOWER, orientation, UNIT, F(1), ATL, ABL );
+    elem::Trsm( RIGHT, LOWER, orientation, UNIT, F(1), ATL, ABL );
     DistMatrix<F,MC,STAR> SBL_MC_STAR(g);
     SBL_MC_STAR.AlignWith( ABR );
     SBL_MC_STAR = ABL;
