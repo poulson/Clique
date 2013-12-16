@@ -171,16 +171,10 @@ VerifySendsAndRecvs
     ( &sendCounts[0],       1,
       &actualRecvCounts[0], 1, comm );
     for( int proc=0; proc<commSize; ++proc )
-    {
         if( actualRecvCounts[proc] != recvCounts[proc] )
-        {
-            std::ostringstream msg;
-            msg << "Expected recv count of " << recvCounts[proc]
-                << " but recv'd " << actualRecvCounts[proc]
-                << " from process " << proc << "\n";
-            LogicError( msg.str() );
-        }
-    }
+            LogicError
+            ("Expected recv count of ",recvCounts[proc],
+             " but recv'd ",actualRecvCounts[proc]," from process ",proc);
 }
 
 template<typename T>

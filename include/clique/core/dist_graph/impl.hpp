@@ -159,12 +159,9 @@ DistGraph::LocalEdgeOffset( int localSource ) const
     DEBUG_ONLY(
         CallStackEntry cse("DistGraph::LocalEdgeOffset");
         if( localSource < 0 || localSource > numLocalSources_ )
-        {
-            std::ostringstream msg;
-            msg << "Out of bounds localSource: " << localSource 
-                << " is not in [" << "0," << numLocalSources_ << ")";
-            LogicError( msg.str() );
-        }
+            LogicError
+            ("Out of bounds localSource: ",localSource,
+             " is not in [0,",numLocalSources_,")");
     )
     EnsureNotAssembling();
     return localEdgeOffsets_[localSource];
@@ -323,13 +320,9 @@ DistGraph::Insert( int source, int target )
         const int numLocalEdges = NumLocalEdges();
         if( source < firstLocalSource_ || 
             source >= firstLocalSource_+numLocalSources_ )
-        {
-            std::ostringstream msg;
-            msg << "Source was out of bounds: " << source << " is not in ["
-                << firstLocalSource_ << "," 
-                << firstLocalSource_+numLocalSources_ << ")";
-            LogicError( msg.str() );
-        }
+            LogicError
+            ("Source was out of bounds: ",source," is not in [",
+             firstLocalSource_,",",firstLocalSource_+numLocalSources_,")");
         if( numLocalEdges == capacity )
             std::cerr << "WARNING: Pushing back without first reserving space" 
                       << std::endl;

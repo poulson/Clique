@@ -112,12 +112,9 @@ Graph::EdgeOffset( int source ) const
         if( source < 0 )
             LogicError("Negative source index");
         if( source > numSources_ )
-        {
-            std::ostringstream msg;
-            msg << "Source index was too large: " << source << " is not in "
-                << "[0," << numSources_ << "]";
-            LogicError( msg.str() );
-        }
+            LogicError
+            ("Source index was too large: ",source," is not in [0,",
+             numSources_,"]");
     )
     EnsureNotAssembling();
     return edgeOffsets_[source];
@@ -275,12 +272,9 @@ Graph::Insert( int source, int target )
         const int capacity = Capacity();
         const int numEdges = NumEdges();
         if( source < 0 || source >= numSources_ )
-        {
-            std::ostringstream msg;
-            msg << "Source was out of bounds: " << source << " is not in [0,"
-                << numSources_ << ")";
-            LogicError( msg.str() );
-        }
+            LogicError
+            ("Source was out of bounds: ",source," is not in [0,",
+             numSources_,")");
         if( numEdges == capacity )
             std::cerr << "WARNING: Pushing back without first reserving space" 
                       << std::endl;

@@ -168,11 +168,9 @@ DistMap::Translate( std::vector<int>& localInds ) const
             if( iLocal < 0 || iLocal >= (int)map_.size() )
             {
                 const int commRank = mpi::CommRank( comm_ );
-                std::ostringstream msg;
-                msg << "invalid request: i=" << i << ", iLocal=" << iLocal
-                    << ", commRank=" << commRank << ", blocksize=" 
-                    << blocksize_;
-                LogicError( msg.str() );
+                LogicError
+                ("invalid request: i=",i,", iLocal=",iLocal,
+                 ", commRank=",commRank,", blocksize=",blocksize_);
             }
         )
         fulfills[s] = map_[iLocal];

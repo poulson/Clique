@@ -37,13 +37,9 @@ inline void FrontLowerForwardSolve( const Matrix<F>& L, Matrix<F>& X )
     DEBUG_ONLY(
         CallStackEntry cse("FrontLowerForwardSolve");
         if( L.Height() < L.Width() || L.Height() != X.Height() )
-        {
-            std::ostringstream msg;
-            msg << "Nonconformal solve:\n"
-                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-            LogicError( msg.str() );
-        }
+            LogicError
+            ("Nonconformal solve:\n",
+             DimsString(L,"L"),"\n",DimsString(X,"X"));
     )
     Matrix<F> LT, LB, XT, XB;
     LockedPartitionDown( L, LT, LB, L.Width() );
@@ -71,13 +67,9 @@ inline void FrontLowerBackwardSolve
     DEBUG_ONLY(
         CallStackEntry cse("FrontLowerBackwardSolve");
         if( L.Height() < L.Width() || L.Height() != X.Height() )
-        {
-            std::ostringstream msg;
-            msg << "Nonconformal solve:\n"
-                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-            LogicError( msg.str() );
-        }
+            LogicError
+            ("Nonconformal solve:\n",
+             DimsString(L,"L"),"\n",DimsString(X,"X"));
     )
     Matrix<F> LT, LB, XT, XB;
     LockedPartitionDown( L, LT, LB, L.Width() );

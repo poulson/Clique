@@ -90,13 +90,9 @@ inline void FrontLowerMultiplyNormal
     DEBUG_ONLY(
         CallStackEntry cse("FrontLowerMultiplyNormal");
         if( L.Height() < L.Width() || L.Height() != X.Height() )
-        {
-            std::ostringstream msg;
-            msg << "Nonconformal multiply:\n"
-                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-            LogicError( msg.str() );
-        }
+            LogicError
+            ("Nonconformal multiply:\n",
+             DimsString(L,"L"),"\n",DimsString(X,"X"));
         if( diagOff > 0 )
             LogicError("Diagonal offsets cannot be positive");
     )
@@ -129,13 +125,9 @@ inline void FrontLowerMultiplyTranspose
     DEBUG_ONLY(
         CallStackEntry cse("FrontLowerMultiplyTranspose");
         if( L.Height() < L.Width() || L.Height() != X.Height() )
-        {
-            std::ostringstream msg;
-            msg << "Nonconformal solve:\n"
-                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-            LogicError( msg.str() );
-        }
+            LogicError
+            ("Nonconformal solve:\n",
+             DimsString(L,"L"),"\n",DimsString(X,"X"));
         if( diagOff > 0 )
             LogicError("Diagonal offsets cannot be positive");
     )

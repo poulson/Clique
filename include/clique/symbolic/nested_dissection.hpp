@@ -787,15 +787,10 @@ EnsurePermutation( const std::vector<int>& map )
     for( int i=0; i<numSources; ++i )
         ++timesMapped[map[i]];
     for( int i=0; i<numSources; ++i )
-    {
         if( timesMapped[i] != 1 )
-        {
-            std::ostringstream msg;
-            msg << timesMapped[i] << " vertices were relabeled as "
-                << i << " in sequential map";
-            LogicError( msg.str() );
-        }
-    }
+            LogicError
+            (timesMapped[i]," vertices were relabeled as ",i,
+             " in sequential map");
 }
 
 inline void
@@ -811,18 +806,11 @@ EnsurePermutation( const DistMap& map )
         ++timesMapped[map.GetLocal(iLocal)];
     mpi::Reduce( &timesMapped[0], numSources, MPI_SUM, 0, comm );
     if( commRank == 0 )
-    {
         for( int i=0; i<numSources; ++i )
-        {
             if( timesMapped[i] != 1 )
-            {
-                std::ostringstream msg;
-                msg << timesMapped[i] << " vertices were relabeled as "
-                    << i << " in parallel map";
-                LogicError( msg.str() );
-            }
-        }
-    }
+                LogicError
+                (timesMapped[i]," vertices were relabeled as ",i,
+                 " in parallel map");
 }
 
 inline void
@@ -1193,13 +1181,10 @@ BuildChildFromPerm
                 DEBUG_ONLY(
                     if( target >= leftChildSize && 
                         target < (numSources-sepSize) )
-                    {
-                        std::ostringstream msg;
-                        msg << "Invalid bisection, left set touches right:\n"
-                            << "  " << source << " touches " << target << " and"
-                            << " leftChildSize=" << leftChildSize;
-                        LogicError( msg.str() );
-                    }
+                        LogicError
+                        ("Invalid bisection, left set touches right:\n",
+                         "  ",source," touches ",target," and leftChildSize=",
+                         leftChildSize);
                 )
                 child.Insert( source, target );
             }
@@ -1250,12 +1235,9 @@ BuildMap
             const int i = sepOrLeaf.inds[t];
             DEBUG_ONLY(
                 if( i < 0 || i >= graph.NumSources() )
-                {
-                    std::ostringstream msg;
-                    msg << "local separator index, " << i << ", was not in [0,"
-                        << graph.NumSources() << ")";
-                    LogicError( msg.str() );
-                }
+                    LogicError
+                    ("local separator index, ",i,", was not in [0,",
+                     graph.NumSources(),")");
             )
             const int q = RowToProcess( i, blocksize, commSize );
             ++sendSizes[q];
@@ -1274,12 +1256,9 @@ BuildMap
             const int i = sep.inds[t];
             DEBUG_ONLY(
                 if( i < 0 || i >= graph.NumSources() )
-                {
-                    std::ostringstream msg;
-                    msg << "dist separator index, " << i << ", was not in [0,"
-                        << graph.NumSources() << ")";
-                    LogicError( msg.str() );
-                }
+                    LogicError
+                    ("dist separator index, ",i,", was not in [0,",
+                     graph.NumSources(),")");
             )
             const int q = RowToProcess( i, blocksize, commSize );
             ++sendSizes[q];
@@ -1367,22 +1346,16 @@ BuildMap
         const int iLocal = i - firstLocalSource;
         DEBUG_ONLY(
             if( iLocal < 0 || iLocal >= numLocalSources )
-            {
-                std::ostringstream msg;
-                msg << "Local index was out of bounds: " << iLocal 
-                    << " is not in [0," << numLocalSources << ")" << std::endl;
-                LogicError( msg.str() );
-            }
+                LogicError
+                ("Local index was out of bounds: ",iLocal,
+                 " is not in [0,",numLocalSources,")");
         )
         const int iMapped = recvInds[s];
         DEBUG_ONLY(
             if( iMapped < 0 || iMapped >= graph.NumSources() )
-            {
-                std::ostringstream msg;
-                msg << "mapped index, " << iMapped << ", was not in [0,"
-                    << graph.NumSources() << ")";
-                LogicError( msg.str() );
-            }
+                LogicError
+                ("mapped index, ",iMapped,", was not in [0,",
+                 graph.NumSources(),")");
         )
         map.SetLocal( iLocal, iMapped );
     }

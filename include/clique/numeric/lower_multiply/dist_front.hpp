@@ -72,13 +72,9 @@ inline void FrontLowerMultiplyNormal
         if( L.Grid() != X.Grid() )
             LogicError("L and X must be distributed over the same grid");
         if( L.Height() < L.Width() || L.Height() != X.Height() )
-        {
-            std::ostringstream msg;
-            msg << "Nonconformal multiply:\n"
-                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-            LogicError( msg.str() );
-        }
+            LogicError
+            ("Nonconformal multiply:\n",
+             DimsString(L,"L"),"\n",DimsString(X,"X"));
         if( L.ColAlign() != X.ColAlign() )
             LogicError("L and X are assumed to be aligned");
         if( diagOff > 0 )
@@ -167,13 +163,9 @@ inline void FrontLowerMultiplyTranspose
         if( L.Grid() != X.Grid() )
             LogicError("L and X must be distributed over the same grid");
         if( L.Height() < L.Width() || L.Height() != X.Height() )
-        {
-            std::ostringstream msg;
-            msg << "Nonconformal multiply:\n"
-                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-            LogicError( msg.str() );
-        }
+            LogicError
+            ("Nonconformal multiply:\n",
+             DimsString(L,"L"),"\n",DimsString(X,"X"));
         if( L.ColAlign() != X.ColAlign() )
             LogicError("L and X are assumed to be aligned");
         if( diagOff > 0 )

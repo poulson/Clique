@@ -46,13 +46,9 @@ inline void FrontBlockLowerForwardSolve
         if( L.Grid() != X.Grid() )
             LogicError("L and X must be distributed over the same grid");
         if( L.Height() < L.Width() || L.Height() != X.Height() )
-        {
-            std::ostringstream msg;
-            msg << "Nonconformal solve:\n"
-                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-            LogicError( msg.str() );
-        }
+            LogicError
+            ("Nonconformal solve:\n",
+             DimsString(L,"L"),"\n",DimsString(X,"X"));
         if( L.ColAlign() != X.ColAlign() )
             LogicError("L and X are assumed to be aligned");
     )
@@ -90,13 +86,9 @@ inline void FrontBlockLowerForwardSolve
         if( L.Grid() != X.Grid() )
             LogicError("L and X must be distributed over the same grid");
         if( L.Height() < L.Width() || L.Height() != X.Height() )
-        {
-            std::ostringstream msg;
-            msg << "Nonconformal solve:\n"
-                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-            LogicError( msg.str() );
-        }
+            LogicError
+            ("Nonconformal solve:\n",
+             DimsString(L,"L"),"\n",DimsString(X,"X"));
     )
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
@@ -149,13 +141,9 @@ inline void FrontBlockLowerForwardSolve
         if( L.Grid() != X.Grid() )
             LogicError("L and X must be distributed over the same grid");
         if( L.Height() < L.Width() || L.Height() != X.Height() )
-        {
-            std::ostringstream msg;
-            msg << "Nonconformal solve:\n"
-                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-            LogicError( msg.str() );
-        }
+            LogicError
+            ("Nonconformal solve:\n",
+             DimsString(L,"L"),"\n",DimsString(X,"X"));
     )
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
@@ -187,13 +175,9 @@ inline void FrontBlockLowerBackwardSolve
         if( L.Grid() != X.Grid() )
             LogicError("L and X must be distributed over the same grid");
         if( L.Height() < L.Width() || L.Height() != X.Height() )
-        {
-            std::ostringstream msg;
-            msg << "Nonconformal solve:\n"
-                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-            LogicError( msg.str() );
-        }
+            LogicError
+            ("Nonconformal solve:\n",
+             DimsString(L,"L"),"\n",DimsString(X,"X"));
         if( L.ColAlign() != X.ColAlign() )
             LogicError("L and X are assumed to be aligned");
     )
@@ -234,13 +218,9 @@ inline void FrontBlockLowerBackwardSolve
         if( L.Grid() != X.Grid() )
             LogicError("L and X must be distributed over the same grid");
         if( L.Height() < L.Width() || L.Height() != X.Height() )
-        {
-            std::ostringstream msg;
-            msg << "Nonconformal solve:\n"
-                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-            LogicError( msg.str() );
-        }
+            LogicError
+            ("Nonconformal solve:\n",
+             DimsString(L,"L"),"\n",DimsString(X,"X"));
     )
     const Grid& g = L.Grid();
     if( g.Size() == 1 )
@@ -310,13 +290,9 @@ inline void FrontBlockLowerBackwardSolve
         if( L.Grid() != X.Grid() )
             LogicError("L and X must be distributed over the same grid");
         if( L.Height() < L.Width() || L.Height() != X.Height() )
-        {
-            std::ostringstream msg;
-            msg << "Nonconformal solve:\n"
-                << "  L ~ " << L.Height() << " x " << L.Width() << "\n"
-                << "  X ~ " << X.Height() << " x " << X.Width() << "\n";
-            LogicError( msg.str() );
-        }
+            LogicError
+            ("Nonconformal solve:\n",
+             DimsString(L,"L"),"\n",DimsString(X,"X"));
     )
     const Grid& g = L.Grid();
     if( g.Size() == 1 )

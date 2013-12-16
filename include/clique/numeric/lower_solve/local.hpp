@@ -231,18 +231,10 @@ inline void LocalLowerBackwardSolve
         const int parent = node.parent;
         DEBUG_ONLY(
             if( parent < 0 )
-            {
-                std::ostringstream msg;
-                msg << "Parent index was negative: " << parent;
-                LogicError( msg.str() );
-            }
+                LogicError("Parent index was negative: ",parent);
             if( parent >= numLocalNodes )  
-            {
-                std::ostringstream msg;
-                msg << "Parent index was too large: " << parent << " >= "
-                    << numLocalNodes;
-                LogicError( msg.str() );
-            }
+                LogicError
+                ("Parent index was too large: ",parent," >= ",numLocalNodes);
         )
         Matrix<F>& parentWork = L.localFronts[parent].work;
         const SymmNodeInfo& parentNode = info.localNodes[parent];
@@ -316,18 +308,10 @@ inline void LocalLowerBackwardSolve
         const int parent = node.parent;
         DEBUG_ONLY(
             if( parent < 0 )
-            {
-                std::ostringstream msg;
-                msg << "Parent index was negative: " << parent;
-                LogicError( msg.str() );
-            }
+                LogicError("Parent index was negative: ",parent);
             if( parent >= numLocalNodes )  
-            {
-                std::ostringstream msg;
-                msg << "Parent index was too large: " << parent << " >= "
-                    << numLocalNodes;
-                LogicError( msg.str() );
-            }
+                LogicError
+                ("Parent index was too large: ",parent," >= ",numLocalNodes);
         )
         Matrix<F>& parentWork = L.localFronts[parent].work;
         const SymmNodeInfo& parentNode = info.localNodes[parent];
