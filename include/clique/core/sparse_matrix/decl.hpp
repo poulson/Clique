@@ -55,7 +55,7 @@ public:
 
     // For modifying the size of the matrix
     void Empty();
-    void ResizeTo( int height, int width );
+    void Resize( int height, int width );
 
     // For copying one matrix to another
     const SparseMatrix<T>& operator=( const SparseMatrix<T>& A );

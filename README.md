@@ -1,5 +1,6 @@
 # Clique
 
+
 A C++ sparse-direct solver for distributed-memory architectures with an 
 emphasis on scalable triangular solves and memory usage.
 The library was initially released as part of 

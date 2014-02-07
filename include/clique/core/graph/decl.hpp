@@ -49,8 +49,8 @@ public:
 
     // For resizing the graph
     void Empty();
-    void ResizeTo( int numVertices );
-    void ResizeTo( int numSources, int numTargets );
+    void Resize( int numVertices );
+    void Resize( int numSources, int numTargets );
 
     // For copying one graph into another
     const Graph& operator=( const Graph& graph );

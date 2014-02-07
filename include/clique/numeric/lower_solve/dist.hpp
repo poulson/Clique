@@ -84,7 +84,7 @@ inline void DistLowerForwardSolve
                                               : front.front2dL.Height() );
         DistMatrix<F,VC,STAR>& W = front.work1d;
         W.SetGrid( grid );
-        W.ResizeTo( frontHeight, width );
+        W.Resize( frontHeight, width );
         DistMatrix<F,VC,STAR> WT(grid), WB(grid);
         PartitionDown( W, WT, WB, node.size );
         WT = X.distNodes[s-1];
@@ -237,7 +237,7 @@ inline void DistLowerForwardSolve
         const int frontHeight = front.front2dL.Height();
         DistMatrix<F>& W = front.work2d;
         W.SetGrid( grid );
-        W.ResizeTo( frontHeight, width );
+        W.Resize( frontHeight, width );
         DistMatrix<F> WT(grid), WB(grid);
         PartitionDown( W, WT, WB, node.size );
         WT = X.distNodes[s-1];
@@ -426,7 +426,7 @@ inline void DistLowerBackwardSolve
         // Set up a workspace
         DistMatrix<F,VC,STAR>& W = front.work1d;
         W.SetGrid( grid );
-        W.ResizeTo( frontHeight, width );
+        W.Resize( frontHeight, width );
         DistMatrix<F,VC,STAR> WT(grid), WB(grid);
         PartitionDown( W, WT, WB, node.size );
         Matrix<F>& XT = 
@@ -623,7 +623,7 @@ inline void DistLowerBackwardSolve
         // Set up a workspace
         DistMatrix<F>& W = front.work2d;
         W.SetGrid( grid );
-        W.ResizeTo( frontHeight, width );
+        W.Resize( frontHeight, width );
         DistMatrix<F> WT(grid), WB(grid);
         PartitionDown( W, WT, WB, node.size );
         Matrix<F>& XT = 

@@ -179,7 +179,7 @@ inline void FrontLDLSquare
         // SendRecv to form AL21^T[* ,MR] from S21^T[* ,MC], then conjugate
         // if necessary.
         AL21Trans_STAR_MR.AlignWith( AL22 );
-        AL21Trans_STAR_MR.ResizeTo( AL21.Width(), AL21.Height() );
+        AL21Trans_STAR_MR.Resize( AL21.Width(), AL21.Height() );
         {
             if( onDiagonal )
             {

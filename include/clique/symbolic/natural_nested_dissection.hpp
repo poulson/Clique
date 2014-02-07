@@ -644,7 +644,7 @@ NaturalBisect
     int leftChildSize, rightChildSize, sepSize;
     int nxLeft, nyLeft, nzLeft, nxRight, nyRight, nzRight;
     perm.SetComm( comm );
-    perm.ResizeTo( numSources );
+    perm.Resize( numSources );
     if( nx != 0 && ny != 0 && nz != 0 )
     {
         if( nx >= ny && nx >= nz )

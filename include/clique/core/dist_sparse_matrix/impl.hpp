@@ -285,9 +285,9 @@ DistSparseMatrix<T>::Empty()
 
 template<typename T>
 inline void
-DistSparseMatrix<T>::ResizeTo( int height, int width )
+DistSparseMatrix<T>::Resize( int height, int width )
 {
-    distGraph_.ResizeTo( height, width );
+    distGraph_.Resize( height, width );
     SwapClear( vals_ );
 }
 

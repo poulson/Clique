@@ -60,7 +60,7 @@ inline void LocalLowerForwardSolve
         Matrix<F>& W = front.work;
 
         // Set up a workspace
-        W.ResizeTo( frontL.Height(), width );
+        W.Resize( frontL.Height(), width );
         Matrix<F> WT, WB;
         PartitionDown( W, WT, WB, node.size );
         WT = X.localNodes[s];
@@ -141,7 +141,7 @@ inline void LocalLowerForwardSolve
         Matrix<F>& W = front.work;
 
         // Set up a workspace
-        W.ResizeTo( frontL.Height(), width );
+        W.Resize( frontL.Height(), width );
         Matrix<F> WT, WB;
         PartitionDown( W, WT, WB, node.size );
         WT = X.localNodes[s];
@@ -222,7 +222,7 @@ inline void LocalLowerBackwardSolve
         Matrix<F>& W = front.work;
 
         // Set up a workspace
-        W.ResizeTo( frontL.Height(), width );
+        W.Resize( frontL.Height(), width );
         Matrix<F> WT, WB;
         PartitionDown( W, WT, WB, node.size );
         WT = X.localNodes[s];
@@ -299,7 +299,7 @@ inline void LocalLowerBackwardSolve
         Matrix<F>& W = front.work;
 
         // Set up a workspace
-        W.ResizeTo( frontL.Height(), width );
+        W.Resize( frontL.Height(), width );
         Matrix<F> WT, WB;
         PartitionDown( W, WT, WB, node.size );
         WT = X.localNodes[s];

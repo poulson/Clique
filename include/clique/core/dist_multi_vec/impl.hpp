@@ -196,7 +196,7 @@ DistMultiVec<T>::SetComm( mpi::Comm comm )
         ( commRank<commSize-1 ?
           blocksize_ :
           height_ - (commSize-1)*blocksize_ );
-    multiVec_.ResizeTo( localHeight, width_ );
+    multiVec_.Resize( localHeight, width_ );
 }
 
 template<typename T>
@@ -256,7 +256,7 @@ DistMultiVec<T>::Empty()
 
 template<typename T>
 inline void
-DistMultiVec<T>::ResizeTo( int height, int width )
+DistMultiVec<T>::Resize( int height, int width )
 {
     const int commRank = mpi::CommRank( comm_ );
     const int commSize = mpi::CommSize( comm_ );
@@ -268,7 +268,7 @@ DistMultiVec<T>::ResizeTo( int height, int width )
         ( commRank<commSize-1 ?
           blocksize_ :
           height_ - (commSize-1)*blocksize_ );
-    multiVec_.ResizeTo( localHeight, width );
+    multiVec_.Resize( localHeight, width );
 }
 
 template<typename T>

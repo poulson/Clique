@@ -267,9 +267,9 @@ SparseMatrix<T>::Empty()
 
 template<typename T>
 inline void
-SparseMatrix<T>::ResizeTo( int height, int width )
+SparseMatrix<T>::Resize( int height, int width )
 {
-    graph_.ResizeTo( height, width );
+    graph_.Resize( height, width );
     SwapClear( vals_ );
 }
 

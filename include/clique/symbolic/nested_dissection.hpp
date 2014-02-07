@@ -738,7 +738,7 @@ Bisect
 
         // Set up space for the distributed permutation
         perm.SetComm( comm );
-        perm.ResizeTo( numSources );
+        perm.Resize( numSources );
 
         // Distribute the first commSize*blocksize values of the permutation
         mpi::Scatter
@@ -765,7 +765,7 @@ Bisect
 
         // Create space for the result
         perm.SetComm( comm );
-        perm.ResizeTo( numSources );
+        perm.Resize( numSources );
 
         // Use the custom ParMETIS interface
         CliqParallelBisect
@@ -910,7 +910,7 @@ BuildChildrenFromPerm
             graph.NumConnections( inversePerm[s+leftChildSize] );
 
     // Build the left child's graph
-    leftChild.ResizeTo( leftChildSize );
+    leftChild.Resize( leftChildSize );
     leftChild.StartAssembly();
     leftChild.Reserve( leftChildUpperBound );
     for( int s=0; s<leftChildSize; ++s )
@@ -935,7 +935,7 @@ BuildChildrenFromPerm
     leftChild.StopAssembly();
 
     // Build the right child's graph
-    rightChild.ResizeTo( rightChildSize );
+    rightChild.Resize( rightChildSize );
     rightChild.StartAssembly();
     rightChild.Reserve( rightChildUpperBound );
     for( int s=0; s<rightChildSize; ++s )
@@ -1153,9 +1153,9 @@ BuildChildFromPerm
     mpi::CommSplit( comm, onLeft, childTeamRank, childComm );
     child.SetComm( childComm );
     if( onLeft )
-        child.ResizeTo( leftChildSize );
+        child.Resize( leftChildSize );
     else
-        child.ResizeTo( rightChildSize );
+        child.Resize( rightChildSize );
 
     child.StartAssembly();
     child.Reserve( recvInds.size() );
@@ -1214,7 +1214,7 @@ BuildMap
     const int numSources = graph.NumSources();
 
     map.SetComm( comm );
-    map.ResizeTo( numSources );
+    map.Resize( numSources );
     const int blocksize = map.Blocksize();
 
     const int numLocal = sepTree.localSepsAndLeaves.size();

@@ -31,8 +31,10 @@
 #include "elemental/blas-like/level3/Trdtrmm.hpp"
 #include "elemental/blas-like/level3/Trmm.hpp"
 #include "elemental/blas-like/level3/Trsm.hpp"
-#include "elemental/lapack-like/LDL.hpp"
-#include "elemental/lapack-like/TriangularInverse.hpp"
+/** Tx: Updates for new elemental **/
+#include "elemental/lapack-like/factor/LDL.hpp"
+/** #include "elemental/lapack-like/TriangularInverse.hpp" **/
+#include "elemental/lapack-like/funcs/Inverse/Triangular.hpp"
 #include "elemental/matrices/Zeros.hpp"
 #include "elemental/io.hpp"
 

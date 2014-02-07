@@ -64,7 +64,7 @@ public:
 
     // For modifying the size of the map
     void Empty();
-    void ResizeTo( int numSources );
+    void Resize( int numSources );
 
     // Assignment
     const DistMap& operator=( const DistMap& map );

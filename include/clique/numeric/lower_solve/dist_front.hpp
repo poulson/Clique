@@ -179,7 +179,7 @@ void FormDiagonalBlocks
     ( &sendBuffer[0], portionSize, &recvBuffer[0], portionSize, g.VCComm() );
     SwapClear( sendBuffer );
     
-    D.ResizeTo( blocksize, height );
+    D.Resize( blocksize, height );
     F* DBuffer = D.Buffer();
     const Int DLDim = D.LDim();
     for( Int proc=0; proc<commSize; ++proc )

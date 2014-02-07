@@ -79,7 +79,7 @@ public:
 
     // For modifying the size of the matrix
     void Empty();
-    void ResizeTo( int height, int width );
+    void Resize( int height, int width );
 
     // TODO: operator=
 

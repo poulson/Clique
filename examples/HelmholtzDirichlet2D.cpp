@@ -8,8 +8,8 @@
    http://opensource.org/licenses/BSD-2-Clause
 */
 #include "clique.hpp"
-#include "elemental/lapack-like/Norm/Max.hpp"
-#include "elemental/lapack-like/SVD.hpp"
+#include "elemental/lapack-like/props/Norm/Max.hpp"
+#include "elemental/lapack-like/decomp/SVD.hpp"
 using namespace cliq;
 
 int
@@ -123,9 +123,14 @@ main( int argc, char* argv[] )
             NaturalNestedDissection
             ( n1, n2, 1, graph, map, sepTree, info, cutoff );
         else
+#ifdef HAVE_PARMETIS
             NestedDissection
             ( graph, map, sepTree, info, 
               sequential, numDistSeps, numSeqSeps, cutoff );
+#else 
+            std::cout << "NestedDissection requested but not built with parmetis" << std::endl;
+            return 1;
+#endif 
         map.FormInverse( inverseMap );
         mpi::Barrier( comm );
         const double nestedStop = mpi::Time();
