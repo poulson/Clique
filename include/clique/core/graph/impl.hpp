@@ -305,11 +305,11 @@ Graph::Empty()
 }
 
 inline void
-Graph::ResizeTo( int numVertices )
-{ ResizeTo( numVertices, numVertices ); }
+Graph::Resize( int numVertices )
+{ Resize( numVertices, numVertices ); }
 
 inline void
-Graph::ResizeTo( int numSources, int numTargets )
+Graph::Resize( int numSources, int numTargets )
 {
     numSources_ = numSources;
     numTargets_ = numTargets;

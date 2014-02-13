@@ -65,7 +65,7 @@ inline void DistLowerMultiplyNormal
         // Set up a workspace
         DistMatrix<T,VC,STAR>& W = front.work1d;
         W.SetGrid( grid );
-        W.ResizeTo( front.front1dL.Height(), width );
+        W.Resize( front.front1dL.Height(), width );
         DistMatrix<T,VC,STAR> WT(grid), WB(grid);
         PartitionDown( W, WT, WB, node.size );
         WT = X.distNodes[s-1];
@@ -204,7 +204,7 @@ inline void DistLowerMultiplyTranspose
         // Set up a copy of the RHS in our workspace.
         DistMatrix<T,VC,STAR>& W = front.work1d;
         W.SetGrid( grid );
-        W.ResizeTo( front.front1dL.Height(), width );
+        W.Resize( front.front1dL.Height(), width );
         DistMatrix<T,VC,STAR> WT(grid), WB(grid);
         PartitionDown( W, WT, WB, node.size );
         Matrix<T>& localXT = 

@@ -161,8 +161,8 @@ MultiVec<T>::Empty()
 
 template<typename T>
 inline void
-MultiVec<T>::ResizeTo( int height, int width )
-{ multiVec_.ResizeTo( height, width ); }
+MultiVec<T>::Resize( int height, int width )
+{ multiVec_.Resize( height, width ); }
 
 template<typename T>
 const MultiVec<T>& 

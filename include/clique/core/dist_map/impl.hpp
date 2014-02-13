@@ -41,7 +41,7 @@ DistMap::StoreOwners
 {
     DEBUG_ONLY(CallStackEntry cse("DistMap::StoreOwners"))
     SetComm( comm );
-    ResizeTo( numSources );
+    Resize( numSources );
     const int commSize = mpi::CommSize( comm );
     const int blocksize = Blocksize();
     const int firstLocalSource = FirstLocalSource();
@@ -375,7 +375,7 @@ DistMap::Empty()
 }
 
 inline void
-DistMap::ResizeTo( int numSources )
+DistMap::Resize( int numSources )
 {
     const int commRank = mpi::CommRank( comm_ );
     const int commSize = mpi::CommSize( comm_ );

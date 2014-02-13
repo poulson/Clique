@@ -356,11 +356,11 @@ DistGraph::Empty()
 }
 
 inline void
-DistGraph::ResizeTo( int numVertices )
-{ ResizeTo( numVertices, numVertices ); }
+DistGraph::Resize( int numVertices )
+{ Resize( numVertices, numVertices ); }
 
 inline void
-DistGraph::ResizeTo( int numSources, int numTargets )
+DistGraph::Resize( int numSources, int numTargets )
 {
     const int commRank = mpi::CommRank( comm_ );
     const int commSize = mpi::CommSize( comm_ );

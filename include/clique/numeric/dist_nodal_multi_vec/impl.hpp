@@ -184,7 +184,7 @@ DistNodalMultiVec<F>::Pull
     for( int s=0; s<numLocal; ++s )
     {
         const SymmNodeInfo& nodeInfo = info.localNodes[s];
-        localNodes[s].ResizeTo( nodeInfo.size, width_ );
+        localNodes[s].Resize( nodeInfo.size, width_ );
         for( int t=0; t<nodeInfo.size; ++t )
         {
             const int i = mappedInds[off++];
@@ -199,7 +199,7 @@ DistNodalMultiVec<F>::Pull
         const DistSymmNodeInfo& nodeInfo = info.distNodes[s];
         DistMatrix<F,VC,STAR>& XNode = distNodes[s-1];
         XNode.SetGrid( *nodeInfo.grid );
-        XNode.ResizeTo( nodeInfo.size, width_ );
+        XNode.Resize( nodeInfo.size, width_ );
         const int localHeight = XNode.LocalHeight();
         for( int tLoc=0; tLoc<localHeight; ++tLoc )
         {
@@ -227,7 +227,7 @@ DistNodalMultiVec<F>::Push
     const int height = rootNode.size + rootNode.off;
     const int width = Width();
     X.SetComm( comm );
-    X.ResizeTo( height, width );
+    X.Resize( height, width );
 
     const int commSize = mpi::CommSize( comm );
     const int blocksize = X.Blocksize();

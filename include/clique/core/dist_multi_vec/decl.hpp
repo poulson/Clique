@@ -46,7 +46,7 @@ public:
 
     // For modifying the size of the multi-vector
     void Empty();
-    void ResizeTo( int height, int width );
+    void Resize( int height, int width );
 
     // Assignment
     const DistMultiVec<T>& operator=( const DistMultiVec<T>& X );

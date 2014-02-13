@@ -43,7 +43,7 @@ inline void LocalLowerMultiplyNormal
         Matrix<T>& W = L.localFronts[s].work;
 
         // Set up a workspace
-        W.ResizeTo( frontL.Height(), width );
+        W.Resize( frontL.Height(), width );
         Matrix<T> WT, WB;
         PartitionDown( W, WT, WB, node.size );
         WT = X.localNodes[s];
@@ -114,7 +114,7 @@ inline void LocalLowerMultiplyTranspose
         Matrix<T>& W = L.localFronts[s].work;
 
         // Set up a workspace
-        W.ResizeTo( frontL.Height(), width );
+        W.Resize( frontL.Height(), width );
         Matrix<T> WT, WB;
         PartitionDown( W, WT, WB, node.size );
         WT = X.localNodes[s];
