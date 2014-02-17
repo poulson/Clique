@@ -60,7 +60,7 @@ inline void DistLowerForwardSolve
     const DistSymmFront<F>& distLeafFront = L.distFronts[0];
     const Grid& leafGrid = ( frontsAre1d ? distLeafFront.front1dL.Grid() 
                                          : distLeafFront.front2dL.Grid() );
-    distLeafFront.work1d.LockedAttach( localRootFront.work, 0, leafGrid );
+    distLeafFront.work1d.LockedAttach( localRootFront.work, 0, 0, leafGrid );
     
     // Perform the distributed portion of the forward solve
     for( int s=1; s<numDistNodes; ++s )

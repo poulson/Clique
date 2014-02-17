@@ -368,7 +368,7 @@ void BackwardSingle
         // X1 -= L21' X2
         elem::LocalGemm( orientation, NORMAL, F(-1), L21, X2, Z1_STAR_STAR );
         elem::internal::AddInLocalData( X1, Z1_STAR_STAR );
-        Z1_STAR_STAR.SumOverGrid();
+        Z1_STAR_STAR.SumOver( X1.DistComm() );
 
         // X1 := L11^-1 X1
         elem::LocalTrsm

@@ -81,12 +81,13 @@ inline void FrontLDLGeneral
         ( RIGHT, LOWER, orientation, UNIT, F(1), AL11_STAR_STAR, AL21_VC_STAR );
 
         S21Trans_STAR_MC.AlignWith( AL22 );
-        S21Trans_STAR_MC.TransposeFrom( AL21_VC_STAR );
+        AL21_VC_STAR.TransposePartialColAllGather( S21Trans_STAR_MC );
         elem::DiagonalSolve( RIGHT, NORMAL, d1_STAR_STAR, AL21_VC_STAR );
         AL21_VR_STAR.AlignWith( AL22 );
         AL21_VR_STAR = AL21_VC_STAR;
         AL21Trans_STAR_MR.AlignWith( AL22 );
-        AL21Trans_STAR_MR.TransposeFrom( AL21_VR_STAR, conjugate );
+        AL21_VR_STAR.TransposePartialColAllGather
+        ( AL21Trans_STAR_MR, conjugate );
 
         // Partition the update of the bottom-right corner into three pieces
         PartitionRight( S21Trans_STAR_MC, leftL, leftR, AL22.Width() );
@@ -99,7 +100,7 @@ inline void FrontLDLGeneral
         elem::LocalTrrk( LOWER, orientation, F(-1), leftR, rightR, F(1), ABR );
 
         elem::DiagonalSolve( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
-        AL21.TransposeFrom( S21Trans_STAR_MC );
+        AL21.TransposePartialRowFilterFrom( S21Trans_STAR_MC );
     }
 }
 
@@ -175,7 +176,7 @@ inline void FrontLDLSquare
         ( RIGHT, LOWER, orientation, UNIT, F(1), AL11_STAR_STAR, AL21_VC_STAR );
 
         S21Trans_STAR_MC.AlignWith( AL22 );
-        S21Trans_STAR_MC.TransposeFrom( AL21_VC_STAR );
+        AL21_VC_STAR.TransposePartialColAllGather( S21Trans_STAR_MC );
         // SendRecv to form AL21^T[* ,MR] from S21^T[* ,MC], then conjugate
         // if necessary.
         AL21Trans_STAR_MR.AlignWith( AL22 );
@@ -217,7 +218,7 @@ inline void FrontLDLSquare
         elem::LocalTrrk( LOWER, orientation, F(-1), leftR, rightR, F(1), ABR );
 
         elem::DiagonalSolve( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
-        AL21.TransposeFrom( S21Trans_STAR_MC );
+        AL21.TransposePartialRowFilterFrom( S21Trans_STAR_MC );
     }
 }
 
@@ -264,7 +265,7 @@ void FrontLDLIntraPiv
     ABL_VR_STAR.AlignWith( ABR );
     ABLTrans_STAR_MR.AlignWith( ABR );
     ABL_VR_STAR = ABL;
-    ABLTrans_STAR_MR.TransposeFrom( ABL_VR_STAR, conjugate );
+    ABL_VR_STAR.TransposePartialColAllGather( ABLTrans_STAR_MR, conjugate );
     elem::LocalTrrk( LOWER, F(-1), SBL_MC_STAR, ABLTrans_STAR_MR, F(1), ABR );
 }
 

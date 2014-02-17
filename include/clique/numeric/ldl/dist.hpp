@@ -38,12 +38,12 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
     botDistFront.work2d.LockedAttach( topLocFront.work, 0, 0, botGrid );
     if( !blocked )
     {
-        botDistFront.diag1d.LockedAttach( topLocFront.diag, 0, botGrid );
+        botDistFront.diag1d.LockedAttach( topLocFront.diag, 0, 0, botGrid );
         if( pivoted )
         {
-            botDistFront.piv.LockedAttach( topLocFront.piv, 0, botGrid );
+            botDistFront.piv.LockedAttach( topLocFront.piv, 0, 0, botGrid );
             botDistFront.subdiag1d.LockedAttach
-            ( topLocFront.subdiag, 0, botGrid );
+            ( topLocFront.subdiag, 0, 0, botGrid );
         }
     }
 

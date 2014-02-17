@@ -57,11 +57,11 @@ inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
         // 2d -> 1d
         if( leafFront.front2dL.Locked() )
             leafFront.front1dL.LockedAttach
-            ( leafFront.front2dL.LockedMatrix(), 0, 
+            ( leafFront.front2dL.LockedMatrix(), 0, 0,
               leafFront.front2dL.Grid() );
         else
             leafFront.front1dL.Attach
-            ( leafFront.front2dL.Matrix(), 0,
+            ( leafFront.front2dL.Matrix(), 0, 0,
               leafFront.front2dL.Grid() );
         for( int s=1; s<numDistNodes; ++s )
         {
