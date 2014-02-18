@@ -34,16 +34,25 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
     SymmFront<F>& topLocFront = L.localFronts.back();
     DistSymmFront<F>& botDistFront = L.distFronts[0];
     const Grid& botGrid = *info.distNodes[0].grid;
-    botDistFront.front2dL.LockedAttach( topLocFront.frontL, 0, 0, botGrid );
-    botDistFront.work2d.LockedAttach( topLocFront.work, 0, 0, botGrid );
+    botDistFront.front2dL.LockedAttach
+    ( topLocFront.frontL.Height(), topLocFront.frontL.Width(), 0, 0, 
+      topLocFront.frontL, botGrid );
+    botDistFront.work2d.LockedAttach
+    ( topLocFront.work.Height(), topLocFront.work.Width(), 0, 0, 
+      topLocFront.work, botGrid );
     if( !blocked )
     {
-        botDistFront.diag1d.LockedAttach( topLocFront.diag, 0, 0, botGrid );
+        botDistFront.diag1d.LockedAttach
+        ( topLocFront.diag.Height(), topLocFront.diag.Width(), 0, 0, 
+          topLocFront.diag, botGrid );
         if( pivoted )
         {
-            botDistFront.piv.LockedAttach( topLocFront.piv, 0, 0, botGrid );
+            botDistFront.piv.LockedAttach
+            ( topLocFront.piv.Height(), topLocFront.piv.Width(), 0, 0, 
+              topLocFront.piv, botGrid );
             botDistFront.subdiag1d.LockedAttach
-            ( topLocFront.subdiag, 0, 0, botGrid );
+            ( topLocFront.subdiag.Height(), topLocFront.subdiag.Width(), 0, 0, 
+              topLocFront.subdiag, botGrid );
         }
     }
 

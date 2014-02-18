@@ -38,11 +38,15 @@ inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
         // 1d -> 2d
         if( leafFront.front1dL.Locked() )
             leafFront.front2dL.LockedAttach
-            ( leafFront.front1dL.LockedMatrix(), 0, 0, 
+            ( leafFront.front1dL.LocalHeight(), 
+              leafFront.front1dL.LocalWidth(), 0, 0,
+              leafFront.front1dL.LockedMatrix(), 
               leafFront.front1dL.Grid() );
         else
             leafFront.front2dL.Attach
-            ( leafFront.front1dL.Matrix(), 0, 0, 
+            ( leafFront.front1dL.Height(), 
+              leafFront.front1dL.Width(), 0, 0, 
+              leafFront.front1dL.Matrix(), 
               leafFront.front1dL.Grid() );
         for( int s=1; s<numDistNodes; ++s )
         {
@@ -57,11 +61,15 @@ inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
         // 2d -> 1d
         if( leafFront.front2dL.Locked() )
             leafFront.front1dL.LockedAttach
-            ( leafFront.front2dL.LockedMatrix(), 0, 0,
+            ( leafFront.front2dL.Height(),
+              leafFront.front2dL.Width(), 0, 0, 
+              leafFront.front2dL.LockedMatrix(),
               leafFront.front2dL.Grid() );
         else
             leafFront.front1dL.Attach
-            ( leafFront.front2dL.Matrix(), 0, 0,
+            ( leafFront.front2dL.Height(), 
+              leafFront.front2dL.Width(), 0, 0, 
+              leafFront.front2dL.Matrix(),
               leafFront.front2dL.Grid() );
         for( int s=1; s<numDistNodes; ++s )
         {

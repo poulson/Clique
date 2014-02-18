@@ -377,7 +377,8 @@ DistSymmFrontTree<F>::Initialize
         const DistSymmNodeInfo& node = info.distNodes[0];
         Matrix<F>& topLocal = localFronts.back().frontL;
         DistMatrix<F>& bottomDist = distFronts[0].front2dL;
-        bottomDist.LockedAttach( topLocal, 0, 0, *node.grid );
+        bottomDist.LockedAttach
+        ( topLocal.Height(), topLocal.Width(), 0, 0, topLocal, *node.grid );
     }
 }
 
