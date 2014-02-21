@@ -23,8 +23,6 @@ if(MANUAL_ELEMENTAL)
   include_directories(${ELEM_INCLUDE_DIR})
   include_directories(${MPI_CXX_INCLUDE_PATH})
   # ELEM_CMAKE_DIR?
-  # Must demand Elemental_SHA1 equals REQ_ELEM_SHA1
-  set(REQ_ELEM_SHA1 9512986bb76f77bd81680a148608e5f182a0bf35)
 else()
   add_subdirectory(${PROJECT_SOURCE_DIR}/external/elemental)
   include_directories(${PROJECT_BINARY_DIR}/external/elemental/include)
@@ -133,7 +131,10 @@ if(CLIQ_TESTS)
   # Build the tests
   set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/tests")
   foreach(TEST ${TESTS})
-    add_executable(tests-${TEST} ${TEST_DIR}/${TEST}.cpp)
+    set(DRIVER ${TEST_DIR}/${TEST}.cpp)
+    add_executable(tests-${TEST} ${DRIVER})
+    set_source_files_properties(${DRIVER} PROPERTIES
+      OBJECT_DEPENDS "${PREPARED_HEADERS}")
     target_link_libraries(tests-${TEST} clique)
     set_target_properties(tests-${TEST} PROPERTIES
       OUTPUT_NAME ${TEST} RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
@@ -154,7 +155,10 @@ if(CLIQ_EXAMPLES)
   # Build the examples
   set(OUTPUT_DIR "${PROJECT_BINARY_DIR}/bin/examples")
   foreach(EXAMPLE ${EXAMPLES})
-    add_executable(examples-${EXAMPLE} ${EXAMPLE_DIR}/${EXAMPLE}.cpp)
+    set(DRIVER ${EXAMPLE_DIR}/${EXAMPLE}.cpp)
+    add_executable(examples-${EXAMPLE} ${DRIVER})
+    set_source_files_properties(${DRIVER} PROPERTIES
+      OBJECT_DEPENDS "${PREPARED_HEADERS}")
     target_link_libraries(examples-${EXAMPLE} clique)
     set_target_properties(examples-${EXAMPLE} PROPERTIES
       OUTPUT_NAME ${EXAMPLE} RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
