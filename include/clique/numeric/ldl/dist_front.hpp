@@ -101,7 +101,7 @@ inline void FrontLDLGeneral
         elem::LocalTrrk( LOWER, orientation, F(-1), leftR, rightR, F(1), ABR );
 
         elem::DiagonalSolve( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
-        AL21.TransposePartialRowFilterFrom( S21Trans_STAR_MC );
+        AL21.TransposeRowFilterFrom( S21Trans_STAR_MC );
     }
 }
 
@@ -219,7 +219,7 @@ inline void FrontLDLSquare
         elem::LocalTrrk( LOWER, orientation, F(-1), leftR, rightR, F(1), ABR );
 
         elem::DiagonalSolve( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
-        AL21.TransposePartialRowFilterFrom( S21Trans_STAR_MC );
+        AL21.TransposeRowFilterFrom( S21Trans_STAR_MC );
     }
 }
 

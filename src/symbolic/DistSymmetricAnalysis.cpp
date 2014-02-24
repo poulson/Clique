@@ -199,10 +199,14 @@ inline void ComputeMultiVecCommMeta( DistSymmInfo& info )
 {
     DEBUG_ONLY(CallStackEntry cse("ComputeMultiVecCommMeta"))
     // Handle the interface node
+    Int localOff = info.localNodes.back().myOff;
     info.distNodes[0].multiVecMeta.Empty();
+    info.distNodes[0].multiVecMeta.localOff = localOff;
     info.distNodes[0].multiVecMeta.localSize = info.localNodes.back().size;
+    localOff += info.distNodes[0].multiVecMeta.localSize;
 
     // Handle the truly distributed nodes
+
     const int numDist = info.distNodes.size();
     for( int s=1; s<numDist; ++s )
     {
@@ -281,7 +285,9 @@ inline void ComputeMultiVecCommMeta( DistSymmInfo& info )
             commMeta.childRecvInds[frontRank].push_back(iFrontLoc);
         }
 
+        commMeta.localOff = localOff;
         commMeta.localSize = Length(node.size,teamRank,teamSize);
+        localOff += commMeta.localSize;
     }
 }
 

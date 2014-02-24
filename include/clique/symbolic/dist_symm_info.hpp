@@ -54,7 +54,7 @@ struct FactorCommMeta
 
 struct MultiVecCommMeta
 {
-    int localSize;
+    int localOff, localSize;
     std::vector<int> numChildSendInds;
     std::vector<std::vector<int> > childRecvInds;
 
