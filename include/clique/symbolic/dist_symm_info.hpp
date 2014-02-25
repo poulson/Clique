@@ -40,7 +40,7 @@ struct FactorCommMeta
     std::vector<int> numChildSendInds;
     // This information does not necessarily have to be kept and can be
     // computed from the above information (albeit somewhat expensively).
-    mutable std::vector<std::vector<int> > childRecvInds;
+    mutable std::vector<std::vector<int>> childRecvInds;
 
     void EmptyChildRecvIndices() const
     { SwapClear(childRecvInds); }
@@ -56,7 +56,7 @@ struct MultiVecCommMeta
 {
     int localOff, localSize;
     std::vector<int> numChildSendInds;
-    std::vector<std::vector<int> > childRecvInds;
+    std::vector<std::vector<int>> childRecvInds;
 
     void Empty()
     {
@@ -68,7 +68,7 @@ struct MultiVecCommMeta
 struct MatrixCommMeta
 {
     std::vector<int> numChildSendInds;
-    std::vector<std::vector<int> > childRecvInds;
+    std::vector<std::vector<int>> childRecvInds;
 
     void Empty()
     {

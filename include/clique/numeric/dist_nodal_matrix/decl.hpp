@@ -20,8 +20,8 @@ template<typename F>
 class DistNodalMatrix
 {
 public:
-    std::vector<Matrix<F> > localNodes;
-    std::vector<DistMatrix<F> > distNodes;
+    std::vector<Matrix<F>> localNodes;
+    std::vector<DistMatrix<F>> distNodes;
 
     DistNodalMatrix();
     DistNodalMatrix

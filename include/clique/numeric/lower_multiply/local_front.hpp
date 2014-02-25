@@ -34,7 +34,7 @@ using namespace elem;
 
 template<typename T> 
 void ModifyForTrmm
-( Matrix<T>& D, int diagOff, std::vector<Matrix<T> >& diagonals )
+( Matrix<T>& D, int diagOff, std::vector<Matrix<T>>& diagonals )
 {
     DEBUG_ONLY(CallStackEntry cse("ModifyForTrmm"))
     diagonals.resize( -diagOff );
@@ -56,7 +56,7 @@ void ModifyForTrmm
 template<typename T> 
 void ReplaceAfterTrmm
 ( Matrix<T>& D, int diagOff, 
-  const std::vector<Matrix<T> >& diagonals )
+  const std::vector<Matrix<T>>& diagonals )
 {
     DEBUG_ONLY(CallStackEntry cse("ReplaceAfterTrmm"))
     const int height = D.Height();
@@ -112,7 +112,7 @@ inline void FrontLowerMultiplyNormal
     }
     else
     {
-        std::vector<Matrix<T> > diagonals;
+        std::vector<Matrix<T>> diagonals;
         internal::ModifyForTrmm( LT, diagOff, diagonals );
         elem::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, T(1), LT, XT );
         internal::ReplaceAfterTrmm( LT, diagOff, diagonals );
@@ -145,7 +145,7 @@ inline void FrontLowerMultiplyTranspose
     }
     else
     {
-        std::vector<Matrix<T> > diagonals;
+        std::vector<Matrix<T>> diagonals;
         internal::ModifyForTrmm( LT, diagOff, diagonals );
         elem::Trmm( LEFT, LOWER, orientation, NON_UNIT, T(1), LT, XT );
         internal::ReplaceAfterTrmm( LT, diagOff, diagonals );

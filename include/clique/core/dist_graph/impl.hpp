@@ -252,7 +252,7 @@ DistGraph::StopAssembly()
     if( !sorted_ )
     {
         const int numLocalEdges = sources_.size();
-        std::vector<std::pair<int,int> > pairs( numLocalEdges );
+        std::vector<std::pair<int,int>> pairs( numLocalEdges );
         for( int e=0; e<numLocalEdges; ++e )
         {
             pairs[e].first = sources_[e];

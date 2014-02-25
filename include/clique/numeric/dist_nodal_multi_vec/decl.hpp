@@ -20,8 +20,8 @@ template<typename F>
 class DistNodalMultiVec
 {
 public:
-    std::vector<Matrix<F> > localNodes;
-    std::vector<DistMatrix<F,VC,STAR> > distNodes;
+    std::vector<Matrix<F>> localNodes;
+    std::vector<DistMatrix<F,VC,STAR>> distNodes;
 
     DistNodalMultiVec();
     DistNodalMultiVec

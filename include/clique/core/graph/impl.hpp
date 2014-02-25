@@ -205,7 +205,7 @@ Graph::StopAssembly()
     if( !sorted_ )
     {
         const int numEdges = sources_.size();
-        std::vector<std::pair<int,int> > pairs( numEdges );
+        std::vector<std::pair<int,int>> pairs( numEdges );
         for( int e=0; e<numEdges; ++e )
         {
             pairs[e].first = sources_[e];

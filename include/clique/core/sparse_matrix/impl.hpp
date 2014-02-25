@@ -199,7 +199,7 @@ SparseMatrix<T>::StopAssembly()
     if( !graph_.sorted_ )
     {
         const int numEntries = vals_.size();
-        std::vector<Entry<T> > entries( numEntries );
+        std::vector<Entry<T>> entries( numEntries );
         for( int s=0; s<numEntries; ++s )
         {
             entries[s].i = graph_.sources_[s];

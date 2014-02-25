@@ -21,7 +21,7 @@ template<typename T>
 void Display( const SparseMatrix<T>& A, std::string title="SparseMatrix" );
 template<typename T>
 void Display
-( const SparseMatrix<Complex<T> >& A, std::string title="SparseMatrix" );
+( const SparseMatrix<Complex<T>>& A, std::string title="SparseMatrix" );
 
 template<typename T>
 void Display
@@ -29,7 +29,7 @@ void Display
   std::string title="DistSparseMatrix" );
 template<typename T>
 void Display
-( const DistSparseMatrix<Complex<T> >& A, 
+( const DistSparseMatrix<Complex<T>>& A, 
   std::string title="DistSparseMatrix" );
 
 void DisplayLocal
@@ -45,7 +45,7 @@ Display( const Graph& graph, std::string title )
 {
     DEBUG_ONLY(CallStackEntry cse("Display [Graph]"))
 #ifdef HAVE_QT5
-    Matrix<int>* graphMat = new Matrix<int>;
+    auto graphMat = new Matrix<int>;
     const int m = graph.NumTargets();
     const int n = graph.NumSources();
     elem::Zeros( *graphMat, m, n );
@@ -57,7 +57,7 @@ Display( const Graph& graph, std::string title )
         graphMat->Set( tgtBuf[e], srcBuf[e], 1 );
 
     QString qTitle = QString::fromStdString( title );
-    elem::SpyWindow* spyWindow = new elem::SpyWindow;
+    auto spyWindow = new elem::SpyWindow;
     spyWindow->Spy( graphMat, qTitle );
     spyWindow->show();
 
@@ -102,7 +102,7 @@ Display( const DistGraph& graph, std::string title )
 
     if( commRank == 0 )
     {
-        Matrix<int>* graphMat = new Matrix<int>;
+        auto graphMat = new Matrix<int>;
         const int m = graph.NumTargets();
         const int n = graph.NumSources();
         elem::Zeros( *graphMat, m, n );
@@ -110,7 +110,7 @@ Display( const DistGraph& graph, std::string title )
             graphMat->Set( targets[e], sources[e], 1 );
 
         QString qTitle = QString::fromStdString( title );
-        elem::SpyWindow* spyWindow = new elem::SpyWindow;
+        auto spyWindow = new elem::SpyWindow;
         spyWindow->Spy( graphMat, qTitle );
         spyWindow->show();
 
@@ -128,7 +128,7 @@ Display( const SparseMatrix<T>& A, std::string title )
 {
     DEBUG_ONLY(CallStackEntry cse("Print [SparseMatrix]"))
 #ifdef HAVE_QT5
-    Matrix<double>* AFull = new Matrix<double>;
+    auto AFull = new Matrix<double>;
     const int m = A.Height();
     const int n = A.Width();
     elem::Zeros( *AFull, m, n );
@@ -141,7 +141,7 @@ Display( const SparseMatrix<T>& A, std::string title )
         AFull->Set( tgtBuf[s], srcBuf[s], double(valBuf[s]) );
 
     QString qTitle = QString::fromStdString( title );
-    elem::DisplayWindow* displayWindow = new elem::DisplayWindow;
+    auto displayWindow = new elem::DisplayWindow;
     displayWindow->Display( AFull, qTitle );
     displayWindow->show();
 
@@ -154,11 +154,11 @@ Display( const SparseMatrix<T>& A, std::string title )
 
 template<typename T>
 inline void
-Display( const SparseMatrix<Complex<T> >& A, std::string title )
+Display( const SparseMatrix<Complex<T>>& A, std::string title )
 {
     DEBUG_ONLY(CallStackEntry cse("Print [SparseMatrix]"))
 #ifdef HAVE_QT5
-    Matrix<Complex<double> >* AFull = new Matrix<Complex<double> >;
+    auto AFull = new Matrix<Complex<double>>;
     const int m = A.Height();
     const int n = A.Width();
     elem::Zeros( *AFull, m, n );
@@ -175,7 +175,7 @@ Display( const SparseMatrix<Complex<T> >& A, std::string title )
     }
 
     QString qTitle = QString::fromStdString( title );
-    elem::ComplexDisplayWindow* displayWindow = new elem::ComplexDisplayWindow;
+    auto displayWindow = new elem::ComplexDisplayWindow;
     displayWindow->Display( AFull, qTitle );
     displayWindow->show();
 
@@ -226,7 +226,7 @@ Display( const DistSparseMatrix<T>& A, std::string title )
 
     if( commRank == 0 )
     {
-        Matrix<double>* AFull = new Matrix<double>;
+        auto AFull = new Matrix<double>;
         const int m = A.Height();
         const int n = A.Width();
         elem::Zeros( *AFull, m, n );
@@ -235,7 +235,7 @@ Display( const DistSparseMatrix<T>& A, std::string title )
             AFull->Set( targets[s], sources[s], double(values[s]) );
 
         QString qTitle = QString::fromStdString( title );
-        elem::DisplayWindow* displayWindow = new elem::DisplayWindow;
+        auto displayWindow = new elem::DisplayWindow;
         displayWindow->Display( AFull, qTitle );
         displayWindow->show();
 
@@ -249,7 +249,7 @@ Display( const DistSparseMatrix<T>& A, std::string title )
 
 template<typename T>
 inline void
-Display( const DistSparseMatrix<Complex<T> >& A, std::string title )
+Display( const DistSparseMatrix<Complex<T>>& A, std::string title )
 {
     DEBUG_ONLY(CallStackEntry cse("Display [DistSparseMatrix]"))
 #ifdef HAVE_QT5
@@ -268,7 +268,7 @@ Display( const DistSparseMatrix<Complex<T> >& A, std::string title )
     }
 
     std::vector<int> sources, targets;
-    std::vector<Complex<T> > values;
+    std::vector<Complex<T>> values;
     if( commRank == 0 )
     {
         sources.resize( numNonzeros );
@@ -287,7 +287,7 @@ Display( const DistSparseMatrix<Complex<T> >& A, std::string title )
 
     if( commRank == 0 )
     {
-        Matrix<Complex<double> >* AFull = new Matrix<Complex<double> >;
+        auto AFull = new Matrix<Complex<double>>;
         const int m = A.Height();
         const int n = A.Width();
         elem::Zeros( *AFull, m, n );
@@ -300,8 +300,7 @@ Display( const DistSparseMatrix<Complex<T> >& A, std::string title )
         }
 
         QString qTitle = QString::fromStdString( title );
-        elem::ComplexDisplayWindow* displayWindow = 
-            new elem::ComplexDisplayWindow;
+        auto displayWindow = new elem::ComplexDisplayWindow;
         displayWindow->Display( AFull, qTitle );
         displayWindow->show();
 
@@ -319,7 +318,7 @@ DisplayLocal( const DistSymmInfo& info, bool beforeFact, std::string title )
     DEBUG_ONLY(CallStackEntry cse("DisplayLocal [DistSymmInfo]"))
 #ifdef HAVE_QT5
     const int n = info.distNodes.back().size + info.distNodes.back().off;
-    Matrix<int>* graphMat = new Matrix<int>;
+    auto graphMat = new Matrix<int>;
     elem::Zeros( *graphMat, n, n );
 
     const int numLocal = info.localNodes.size();
@@ -369,7 +368,7 @@ DisplayLocal( const DistSymmInfo& info, bool beforeFact, std::string title )
     }
 
     QString qTitle = QString::fromStdString( title );
-    elem::SpyWindow* spyWindow = new elem::SpyWindow;
+    auto spyWindow = new elem::SpyWindow;
     spyWindow->Spy( graphMat, qTitle );
     spyWindow->show();
 

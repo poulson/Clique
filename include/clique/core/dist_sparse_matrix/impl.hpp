@@ -217,7 +217,7 @@ DistSparseMatrix<T>::StopAssembly()
     if( !distGraph_.sorted_ )
     {
         const int numLocalEntries = vals_.size();
-        std::vector<Entry<T> > entries( numLocalEntries );
+        std::vector<Entry<T>> entries( numLocalEntries );
         for( int s=0; s<numLocalEntries; ++s )
         {
             entries[s].i = distGraph_.sources_[s];
