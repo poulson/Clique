@@ -42,6 +42,10 @@ public:
     int Width() const;
 
     int LocalHeight() const;
+
+    void UpdateHeight();
+    void UpdateWidth();
+
 private:
     int height_, width_;
 };

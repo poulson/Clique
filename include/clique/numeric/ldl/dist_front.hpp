@@ -243,7 +243,6 @@ void FrontLDLIntraPiv
 {
     DEBUG_ONLY(CallStackEntry cse("FrontLDLIntraPiv"))
     const Grid& g = AL.Grid();
-    const Int m = AL.Height();
     const Int n = AL.Width();
     const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
     
@@ -259,8 +258,7 @@ void FrontLDLIntraPiv
     SBL_MC_STAR.AlignWith( ABR );
     SBL_MC_STAR = ABL;
 
-    elem::QuasiDiagonalSolve
-    ( RIGHT, LOWER, NORMAL, diag, subdiag, ABL, conjugate );
+    elem::QuasiDiagonalSolve( RIGHT, LOWER, diag, subdiag, ABL, conjugate );
     DistMatrix<F,VR,STAR> ABL_VR_STAR(g);
     DistMatrix<F,STAR,MR> ABLTrans_STAR_MR(g);
     ABL_VR_STAR.AlignWith( ABR );

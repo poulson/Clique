@@ -77,7 +77,6 @@ void FrontLDLIntraPiv
   bool conjugate )
 {
     DEBUG_ONLY(CallStackEntry cse("FrontLDLIntraPiv"))
-    const Int m = AL.Height();
     const Int n = AL.Width();
     const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
 
@@ -91,8 +90,7 @@ void FrontLDLIntraPiv
     elem::Trsm( RIGHT, LOWER, orientation, UNIT, F(1), ATL, ABL );
     Matrix<F> SBL( ABL );
 
-    elem::QuasiDiagonalSolve
-    ( RIGHT, LOWER, NORMAL, diag, subdiag, ABL, conjugate );
+    elem::QuasiDiagonalSolve( RIGHT, LOWER, diag, subdiag, ABL, conjugate );
     elem::internal::TrrkNT( LOWER, orientation, F(-1), SBL, ABL, F(1), ABR );
 }
 

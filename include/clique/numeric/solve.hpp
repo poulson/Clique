@@ -68,7 +68,6 @@ inline void Solve
   const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X )
 {
     DEBUG_ONLY(CallStackEntry cse("Solve"))
-    const bool blockLDL = ( L.frontType == BLOCK_LDL_2D );
     const Orientation orientation = ( L.isHermitian ? ADJOINT : TRANSPOSE );
     if( BlockFactorization(L.frontType) )
     {

@@ -56,9 +56,8 @@ inline void LocalDiagonalSolve
     {
         for( Int s=0; s<numLocalNodes; ++s )
             elem::QuasiDiagonalSolve
-            ( LEFT, LOWER, NORMAL, 
-              L.localFronts[s].diag, L.localFronts[s].subdiag, X.localNodes[s],
-              L.isHermitian );
+            ( LEFT, LOWER, L.localFronts[s].diag, L.localFronts[s].subdiag, 
+              X.localNodes[s], L.isHermitian );
     }
     else
     {
@@ -79,9 +78,8 @@ inline void LocalDiagonalSolve
     {
         for( Int s=0; s<numLocalNodes; ++s ) 
             elem::QuasiDiagonalSolve
-            ( LEFT, LOWER, NORMAL, 
-              L.localFronts[s].diag, L.localFronts[s].subdiag, X.localNodes[s],
-              L.isHermitian );
+            ( LEFT, LOWER, L.localFronts[s].diag, L.localFronts[s].subdiag, 
+              X.localNodes[s], L.isHermitian );
     }
     else
     {
@@ -105,8 +103,8 @@ void DistDiagonalSolve
         {
             const DistSymmFront<F>& front = L.distFronts[s];
             elem::QuasiDiagonalSolve
-            ( LEFT, LOWER, NORMAL, front.diag1d, front.subdiag1d, 
-              X.distNodes[s-1], L.isHermitian );
+            ( LEFT, LOWER, front.diag1d, front.subdiag1d, X.distNodes[s-1],
+              L.isHermitian );
         }
     }
     else
@@ -134,8 +132,8 @@ void DistDiagonalSolve
         {
             const DistSymmFront<F>& front = L.distFronts[s];
             elem::QuasiDiagonalSolve
-            ( LEFT, LOWER, NORMAL, front.diag1d, front.subdiag1d, 
-              X.distNodes[s-1], L.isHermitian );
+            ( LEFT, LOWER, front.diag1d, front.subdiag1d, X.distNodes[s-1],
+              L.isHermitian );
         }
     }
     else

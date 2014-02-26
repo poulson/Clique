@@ -379,6 +379,25 @@ DistNodalMultiVec<F>::LocalHeight() const
     return localHeight;
 }
 
+template<typename F>
+inline void
+DistNodalMultiVec<F>::UpdateHeight()
+{
+    height_ = 0;
+    for( const auto& localNode : localNodes )
+        height_ += localNode.Height();
+    for( const auto& distNode : distNodes )
+        height_ += distNode.Height();
+}
+
+template<typename F>
+inline void
+DistNodalMultiVec<F>::UpdateWidth()
+{
+    // This should be consistent across all of the nodes
+    width_ = localNodes[0].Width();
+}
+
 } // namespace cliq
 
 #endif // ifndef CLIQ_NUMERIC_DISTNODALMULTIVEC_IMPL_HPP
