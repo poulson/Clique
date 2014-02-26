@@ -222,40 +222,26 @@ main( int argc, char* argv[] )
         elem::SetBlocksize( nbFact );
         mpi::Barrier( comm );
         const double ldlStart = mpi::Time();
+        SymmFrontType frontType;
         if( solve2d )
         {
             if( intraPiv )
-            {
-                if( selInv )
-                    LDL( info, frontTree, LDL_INTRAPIV_SELINV_2D );
-                else
-                    LDL( info, frontTree, LDL_INTRAPIV_2D );
-            }
+                frontType = ( selInv ? LDL_INTRAPIV_SELINV_2D 
+                                     : LDL_INTRAPIV_2D );
             else
-            {
-                if( selInv )
-                    LDL( info, frontTree, LDL_SELINV_2D );
-                else
-                    LDL( info, frontTree, LDL_2D );
-            }
+                frontType = ( selInv ? LDL_SELINV_2D
+                                     : LDL_2D );
         }
         else
         {
             if( intraPiv )
-            {
-                if( selInv )
-                    LDL( info, frontTree, LDL_INTRAPIV_SELINV_2D );
-                else
-                    LDL( info, frontTree, LDL_INTRAPIV_1D );
-            }
+                frontType = ( selInv ? LDL_INTRAPIV_SELINV_1D
+                                     : LDL_INTRAPIV_1D );
             else
-            {
-                if( selInv )
-                    LDL( info, frontTree, LDL_SELINV_2D );
-                else
-                    LDL( info, frontTree, LDL_1D );
-            }
+                frontType = ( selInv ? LDL_SELINV_1D
+                                     : LDL_1D );
         }
+        LDL( info, frontTree, frontType );
         mpi::Barrier( comm );
         const double ldlStop = mpi::Time();
         const double factTime = ldlStop - ldlStart;

@@ -43,6 +43,8 @@ inline void Solve
   const DistSymmFrontTree<F>& L, DistNodalMultiVec<F>& X )
 {
     DEBUG_ONLY(CallStackEntry cse("Solve"))
+    if( !FrontsAre1d(L.frontType) )
+        LogicError("Invalid front type for 1D solve");
     const Orientation orientation = ( L.isHermitian ? ADJOINT : TRANSPOSE );
     if( BlockFactorization(L.frontType) )
     {
@@ -68,6 +70,8 @@ inline void Solve
   const DistSymmFrontTree<F>& L, DistNodalMatrix<F>& X )
 {
     DEBUG_ONLY(CallStackEntry cse("Solve"))
+    if( FrontsAre1d(L.frontType) )
+        LogicError("Invalid front type for 2D solve");
     const Orientation orientation = ( L.isHermitian ? ADJOINT : TRANSPOSE );
     if( BlockFactorization(L.frontType) )
     {
