@@ -121,7 +121,7 @@ Axpy( T alpha, const DistMultiVec<T>& X, DistMultiVec<T>& Y )
 {
     DEBUG_ONLY(
         CallStackEntry cse("Axpy");
-        if( !mpi::CongruentComms( X.Comm(), Y.Comm() ) )
+        if( !mpi::Congruent( X.Comm(), Y.Comm() ) )
             LogicError("X and Y must have congruent communicators");
         if( X.Height() != Y.Height() )
             LogicError("X and Y must be the same height");
@@ -164,7 +164,7 @@ inline
 DistMultiVec<T>::~DistMultiVec()
 { 
     if( comm_ != mpi::COMM_WORLD )
-        mpi::CommFree( comm_ );
+        mpi::Free( comm_ );
 }
 
 template<typename T>
@@ -182,15 +182,15 @@ inline void
 DistMultiVec<T>::SetComm( mpi::Comm comm )
 { 
     if( comm_ != mpi::COMM_WORLD )
-        mpi::CommFree( comm_ );
+        mpi::Free( comm_ );
 
     if( comm != mpi::COMM_WORLD )
-        mpi::CommDup( comm, comm_ );
+        mpi::Dup( comm, comm_ );
     else
         comm_ = comm;
 
-    const int commRank = mpi::CommRank( comm );
-    const int commSize = mpi::CommSize( comm );
+    const int commRank = mpi::Rank( comm );
+    const int commSize = mpi::Size( comm );
     blocksize_ = height_/commSize;
     firstLocalRow_ = blocksize_*commRank;
     const int localHeight =
@@ -259,8 +259,8 @@ template<typename T>
 inline void
 DistMultiVec<T>::Resize( int height, int width )
 {
-    const int commRank = mpi::CommRank( comm_ );
-    const int commSize = mpi::CommSize( comm_ );
+    const int commRank = mpi::Rank( comm_ );
+    const int commSize = mpi::Size( comm_ );
     height_ = height;
     width_ = width;
     blocksize_ = height/commSize;

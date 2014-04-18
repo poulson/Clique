@@ -111,15 +111,15 @@ DistNodalMatrix<F>::ComputeCommMetas( const DistSymmInfo& info ) const
     for( int s=1; s<numDist; ++s )
     {
         const DistSymmNodeInfo& node = info.distNodes[s];
-        const int teamSize = mpi::CommSize( node.comm );
-        const int teamRank = mpi::CommRank( node.comm );
+        const int teamSize = mpi::Size( node.comm );
+        const int teamRank = mpi::Rank( node.comm );
         const Grid& grid = *node.grid;
         const int gridHeight = grid.Height();
         const int gridWidth = grid.Width();
 
         const DistSymmNodeInfo& childNode = info.distNodes[s-1];
-        const int childTeamSize = mpi::CommSize( childNode.comm );
-        const int childTeamRank = mpi::CommRank( childNode.comm );
+        const int childTeamSize = mpi::Size( childNode.comm );
+        const int childTeamRank = mpi::Rank( childNode.comm );
         const bool inFirstTeam = ( childTeamRank == teamRank );
         const bool leftIsFirst = ( childNode.onLeft==inFirstTeam );
         const int leftTeamSize =

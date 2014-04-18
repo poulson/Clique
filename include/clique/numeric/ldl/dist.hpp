@@ -36,24 +36,24 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
     DistSymmFront<F>& botDistFront = L.distFronts[0];
     const Grid& botGrid = *info.distNodes[0].grid;
     botDistFront.front2dL.LockedAttach
-    ( topLocFront.frontL.Height(), topLocFront.frontL.Width(), 0, 0, 
-      topLocFront.frontL, botGrid );
+    ( topLocFront.frontL.Height(), topLocFront.frontL.Width(), botGrid, 0, 0, 
+      topLocFront.frontL );
     botDistFront.work2d.LockedAttach
-    ( topLocFront.work.Height(), topLocFront.work.Width(), 0, 0, 
-      topLocFront.work, botGrid );
+    ( topLocFront.work.Height(), topLocFront.work.Width(), botGrid, 0, 0, 
+      topLocFront.work );
     if( !blocked )
     {
         botDistFront.diag1d.LockedAttach
-        ( topLocFront.diag.Height(), topLocFront.diag.Width(), 0, 0, 
-          topLocFront.diag, botGrid );
+        ( topLocFront.diag.Height(), topLocFront.diag.Width(), botGrid, 0, 0, 
+          topLocFront.diag );
         if( pivoted )
         {
             botDistFront.piv.LockedAttach
-            ( topLocFront.piv.Height(), topLocFront.piv.Width(), 0, 0, 
-              topLocFront.piv, botGrid );
+            ( topLocFront.piv.Height(), topLocFront.piv.Width(), botGrid, 0, 0, 
+              topLocFront.piv );
             botDistFront.subdiag1d.LockedAttach
-            ( topLocFront.subdiag.Height(), topLocFront.subdiag.Width(), 0, 0, 
-              topLocFront.subdiag, botGrid );
+            ( topLocFront.subdiag.Height(), topLocFront.subdiag.Width(), 
+              botGrid, 0, 0, topLocFront.subdiag );
         }
     }
 
@@ -76,7 +76,7 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
         // Grab this front's grid information
         const Grid& grid = front.front2dL.Grid();
         mpi::Comm comm = grid.VCComm();
-        const unsigned commSize = mpi::CommSize( comm );
+        const unsigned commSize = mpi::Size( comm );
         const unsigned gridHeight = grid.Height();
         const unsigned gridWidth = grid.Width();
 

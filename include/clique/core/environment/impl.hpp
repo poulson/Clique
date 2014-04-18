@@ -166,7 +166,7 @@ VerifySendsAndRecvs
 ( const std::vector<int>& sendCounts,
   const std::vector<int>& recvCounts, mpi::Comm comm )
 {
-    const int commSize = mpi::CommSize( comm );
+    const int commSize = mpi::Size( comm );
     std::vector<int> actualRecvCounts(commSize);
     mpi::AllToAll
     ( &sendCounts[0],       1,
@@ -188,7 +188,7 @@ SparseAllToAll
         mpi::Comm comm )
 {
 #ifdef USE_CUSTOM_ALLTOALLV
-    const int commSize = mpi::CommSize( comm );
+    const int commSize = mpi::Size( comm );
     int numSends=0,numRecvs=0;
     for( int proc=0; proc<commSize; ++proc )
     {

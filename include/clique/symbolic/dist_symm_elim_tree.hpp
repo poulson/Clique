@@ -55,7 +55,7 @@ struct DistSymmElimTree
 
         const int numDist = distNodes.size();
         for( int i=0; i<numDist; ++i )
-            mpi::CommFree( distNodes[i].comm );
+            mpi::Free( distNodes[i].comm );
     }
 };
 

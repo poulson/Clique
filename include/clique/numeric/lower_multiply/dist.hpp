@@ -60,8 +60,8 @@ inline void DistLowerMultiplyNormal
         const Grid& grid = front.front1dL.Grid();
         mpi::Comm comm = grid.VCComm();
         mpi::Comm childComm = childGrid.VCComm();
-        const int commSize = mpi::CommSize( comm );
-        const int childCommSize = mpi::CommSize( childComm );
+        const int commSize = mpi::Size( comm );
+        const int childCommSize = mpi::Size( childComm );
 
         // Set up a workspace
         DistMatrix<T,VC,STAR>& W = front.work1d;
@@ -199,8 +199,8 @@ inline void DistLowerMultiplyTranspose
         const Grid& parentGrid = parentFront.front1dL.Grid();
         mpi::Comm comm = grid.VCComm(); 
         mpi::Comm parentComm = parentGrid.VCComm();
-        const int commSize = mpi::CommSize( comm );
-        const int parentCommSize = mpi::CommSize( parentComm );
+        const int commSize = mpi::Size( comm );
+        const int parentCommSize = mpi::Size( parentComm );
 
         // Set up a copy of the RHS in our workspace.
         DistMatrix<T,VC,STAR>& W = front.work1d;

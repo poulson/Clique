@@ -164,7 +164,7 @@ Graph::operator=( const DistGraph& graph )
 {
     DEBUG_ONLY(CallStackEntry cse("Graph::operator="))
     mpi::Comm comm = graph.Comm();
-    const int commSize = mpi::CommSize( comm );
+    const int commSize = mpi::Size( comm );
     if( commSize != 1 )
         LogicError
         ("Cannot yet construct sequential graph from distributed graph");

@@ -130,7 +130,7 @@ DistSymmInfo::~DistSymmInfo()
     for( int s=0; s<numDist; ++s )
     {
         delete distNodes[s].grid;
-        mpi::CommFree( distNodes[s].comm );
+        mpi::Free( distNodes[s].comm );
     }
 }
 

@@ -34,12 +34,12 @@ void Multiply
         if( A.Height() != Y.Height() || A.Width() != X.Height() || 
             X.Width() != Y.Width() )
             LogicError("A, X, and Y did not conform");
-        if( !mpi::CongruentComms( A.Comm(), X.Comm() ) || 
-            !mpi::CongruentComms( X.Comm(), Y.Comm() ) )
+        if( !mpi::Congruent( A.Comm(), X.Comm() ) || 
+            !mpi::Congruent( X.Comm(), Y.Comm() ) )
             LogicError("Communicators did not match");
     )
     mpi::Comm comm = A.Comm();
-    const int commSize = mpi::CommSize( comm );
+    const int commSize = mpi::Size( comm );
     const int YLocalHeight = Y.LocalHeight();
     const int width = X.Width();
     const int numLocalEntries = A.NumLocalEntries();

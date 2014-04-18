@@ -17,10 +17,10 @@ inline void PairwiseExchangeLowerStruct
   const DistSymmNode& node, const DistSymmNodeInfo& childNodeInfo )
 {
     // Determine our partner's rank for this exchange in node's communicator
-    const int teamRank = mpi::CommRank( node.comm );
-    const int teamSize = mpi::CommSize( node.comm );
-    const int childTeamRank = mpi::CommRank( childNodeInfo.comm );
-    const int myTeamSize = mpi::CommSize( childNodeInfo.comm );
+    const int teamRank = mpi::Rank( node.comm );
+    const int teamSize = mpi::Size( node.comm );
+    const int childTeamRank = mpi::Rank( childNodeInfo.comm );
+    const int myTeamSize = mpi::Size( childNodeInfo.comm );
     const int otherTeamSize = teamSize - myTeamSize;
     const bool inFirstTeam = ( teamRank == childTeamRank );
     const int partner =
@@ -49,10 +49,10 @@ inline void BroadcastLowerStruct
   const DistSymmNode& node, const DistSymmNodeInfo& childNodeInfo )
 {
     // Determine our partner's rank for this exchange in node's communicator
-    const int teamRank = mpi::CommRank( node.comm );
-    const int teamSize = mpi::CommSize( node.comm );
-    const int childTeamRank = mpi::CommRank( childNodeInfo.comm );
-    const int myTeamSize = mpi::CommSize( childNodeInfo.comm );
+    const int teamRank = mpi::Rank( node.comm );
+    const int teamSize = mpi::Size( node.comm );
+    const int childTeamRank = mpi::Rank( childNodeInfo.comm );
+    const int myTeamSize = mpi::Size( childNodeInfo.comm );
     const int otherTeamSize = teamSize - myTeamSize;
     const bool inFirstTeam = ( teamRank == childTeamRank );
 
@@ -105,8 +105,8 @@ inline void GetLowerStruct
   const DistSymmNode& node, const DistSymmNode& childNode, 
   const DistSymmNodeInfo& childNodeInfo )
 {
-    const int teamSize = mpi::CommSize( node.comm );
-    const int childTeamSize = mpi::CommSize( childNode.comm );
+    const int teamSize = mpi::Size( node.comm );
+    const int childTeamSize = mpi::Size( childNode.comm );
     const int leftTeamSize =
         ( childNode.onLeft ? childTeamSize : teamSize-childTeamSize );
     const int rightTeamSize = teamSize - leftTeamSize;
@@ -187,7 +187,7 @@ inline void ComputeStructAndRelInds
     DEBUG_ONLY(
         // Ensure that the root process computed a lowerStruct of the same size
         int rootLowerStructSize;
-        if( mpi::CommRank(node.comm) == 0 )
+        if( mpi::Rank(node.comm) == 0 )
             rootLowerStructSize = lowerStructSize;
         mpi::Broadcast( &rootLowerStructSize, 1, 0, node.comm );
         if( rootLowerStructSize != lowerStructSize )
@@ -211,12 +211,12 @@ inline void ComputeMultiVecCommMeta( DistSymmInfo& info )
     for( int s=1; s<numDist; ++s )
     {
         DistSymmNodeInfo& node = info.distNodes[s];
-        const int teamSize = mpi::CommSize( node.comm );
-        const int teamRank = mpi::CommRank( node.comm );
+        const int teamSize = mpi::Size( node.comm );
+        const int teamRank = mpi::Rank( node.comm );
 
         const DistSymmNodeInfo& childNode = info.distNodes[s-1];
-        const int childTeamSize = mpi::CommSize( childNode.comm );
-        const int childTeamRank = mpi::CommRank( childNode.comm );
+        const int childTeamSize = mpi::Size( childNode.comm );
+        const int childTeamRank = mpi::Rank( childNode.comm );
         const bool inFirstTeam = ( childTeamRank == teamRank );
         const bool leftIsFirst = ( childNode.onLeft==inFirstTeam );
         const int leftTeamSize =
@@ -300,7 +300,7 @@ inline void ComputeFactorCommMeta
     for( Int s=1; s<numDist; ++s )
     {
         DistSymmNodeInfo& node = info.distNodes[s];
-        const int teamSize = mpi::CommSize( node.comm );
+        const int teamSize = mpi::Size( node.comm );
         const DistSymmNodeInfo& childNode = info.distNodes[s-1];
 
         // Fill factorMeta.numChildSendInds 
@@ -378,7 +378,7 @@ void DistSymmetricAnalysis
     const SymmNodeInfo& topLocal = info.localNodes.back();
     DistSymmNodeInfo& bottomDist = info.distNodes[0];
     bottomDist.onLeft = eTree.distNodes[0].onLeft;
-    mpi::CommDup( eTree.distNodes[0].comm, bottomDist.comm );
+    mpi::Dup( eTree.distNodes[0].comm, bottomDist.comm );
     bottomDist.grid = new Grid( bottomDist.comm );
     bottomDist.size = topLocal.size;
     bottomDist.off = topLocal.off;
@@ -406,7 +406,7 @@ void DistSymmetricAnalysis
         nodeInfo.origLowerStruct = node.lowerStruct;
 
         // Duplicate the communicator from the distributed eTree 
-        mpi::CommDup( node.comm, nodeInfo.comm );
+        mpi::Dup( node.comm, nodeInfo.comm );
         nodeInfo.grid = new Grid( nodeInfo.comm );
 
         // Get the lower struct for the child we do not share
@@ -444,10 +444,10 @@ void ComputeFactRecvInds
     const int rightGridHeight = childGridDims[2];
     const int rightGridWidth = childGridDims[3];
 
-    const int teamSize = mpi::CommSize( node.comm );
-    const int teamRank = mpi::CommRank( node.comm );
+    const int teamSize = mpi::Size( node.comm );
+    const int teamRank = mpi::Rank( node.comm );
     const bool onLeft = childNode.onLeft;
-    const int childTeamSize = mpi::CommSize( childNode.comm );
+    const int childTeamSize = mpi::Size( childNode.comm );
     const int leftTeamSize =
         ( onLeft ? childTeamSize : teamSize-childTeamSize );
     const int rightTeamSize = teamSize - leftTeamSize;
@@ -480,7 +480,7 @@ void ComputeFactRecvInds
             rightRowInds.push_back( i );
 
     // Compute the recv indices of the left child from each process 
-    const int childTeamRank = mpi::CommRank( childNode.comm );
+    const int childTeamRank = mpi::Rank( childNode.comm );
     const bool inFirstTeam = ( childTeamRank == teamRank );
     const bool leftIsFirst = ( onLeft==inFirstTeam );
     const int leftTeamOff = ( leftIsFirst ? 0 : rightTeamSize );
@@ -569,7 +569,7 @@ void GetChildGridDims
   int* childGridDims )
 {
     const bool onLeft = childNode.onLeft;
-    const int childTeamRank = mpi::CommRank( childNode.comm );
+    const int childTeamRank = mpi::Rank( childNode.comm );
     elem::MemZero( childGridDims, 4 );
     if( onLeft && childTeamRank == 0 )
     {

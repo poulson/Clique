@@ -56,7 +56,7 @@ struct DistSeparatorTree
 
         const int numDist = distSeps.size();
         for( int i=0; i<numDist; ++i )
-            mpi::CommFree( distSeps[i].comm );
+            mpi::Free( distSeps[i].comm );
     }
 };
 

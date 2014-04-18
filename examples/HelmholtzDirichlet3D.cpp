@@ -18,7 +18,7 @@ main( int argc, char* argv[] )
 {
     Initialize( argc, argv );
     mpi::Comm comm = mpi::COMM_WORLD;
-    const int commRank = mpi::CommRank( comm );
+    const int commRank = mpi::Rank( comm );
     typedef double R;
     typedef Complex<R> C;
 
@@ -29,8 +29,9 @@ main( int argc, char* argv[] )
         const int n3 = Input("--n3","third grid dimension",30);
         const double omega = Input("--omega","angular frequency",18.);
         const double damping = Input("--damping","damping parameter",7.);
+        const bool selInv = Input("--selInv","selectively invert?",false);
         const bool intraPiv = Input("--intraPiv","frontal pivoting?",false);
-        const bool analytic = Input("--analytic","analytic partitions?",true);
+        const bool natural = Input("--natural","analytic partitions?",true);
         const bool sequential = Input
             ("--sequential","sequential partitions?",true);
         const int numDistSeps = Input
@@ -129,7 +130,7 @@ main( int argc, char* argv[] )
         DistSymmInfo info;
         DistSeparatorTree sepTree;
         DistMap map, inverseMap;
-        if( analytic )
+        if( natural )
             NaturalNestedDissection
             ( n1, n2, n3, graph, map, sepTree, info, cutoff );
         else
@@ -183,10 +184,14 @@ main( int argc, char* argv[] )
         }
         mpi::Barrier( comm );
         const double ldlStart = mpi::Time();
+        SymmFrontType frontType;
         if( intraPiv )
-            LDL( info, frontTree, BLOCK_LDL_INTRAPIV_2D );
+            frontType = ( selInv ? LDL_INTRAPIV_SELINV_2D
+                                 : LDL_INTRAPIV_2D );
         else
-            LDL( info, frontTree, BLOCK_LDL_2D );
+            frontType = ( selInv ? LDL_SELINV_2D
+                                 : LDL_2D );
+        LDL( info, frontTree, frontType );
         mpi::Barrier( comm );
         const double ldlStop = mpi::Time();
         if( commRank == 0 )
@@ -208,15 +213,14 @@ main( int argc, char* argv[] )
             const Grid& grid = frontL.Grid();
             const int height = frontL.Height();
             const int width = frontL.Width();
-            const int minDim = std::min(height,width);
-            DistMatrix<C> B( grid );
-            LockedView( B, frontL, width, 0, height-width, width );
-            DistMatrix<C> BCopy( B );
+            auto B = LockedView( frontL, width, 0, height-width, width );
+            auto BCopy( B );
             DistMatrix<R,VR,STAR> singVals_VR_STAR( grid );
             elem::SVD( BCopy, singVals_VR_STAR );
             DistMatrix<R,CIRC,CIRC> singVals( singVals_VR_STAR );
             mpi::Barrier( grid.Comm() );
             const R twoNorm = elem::MaxNorm( singVals_VR_STAR );
+            const Int minDim = singVals_VR_STAR.Height();
             if( grid.Rank() == singVals.Root() )
             {
                 std::cout << "done, " << mpi::Time()-svdStart << " seconds\n"
@@ -253,10 +257,9 @@ main( int argc, char* argv[] )
             if( commRank == 0 )
                 std::cout << "lowerHalf=" << lowerHalf
                           << ", upperHalf=" << upperHalf << std::endl;
-            DistMatrix<C> offDiagBlock( grid );
-            LockedView
-            ( offDiagBlock, front, lowerHalf, 0, upperHalf, lowerHalf );
-            DistMatrix<C> offDiagBlockCopy( offDiagBlock );
+            auto offDiagBlock = 
+                LockedView( front, lowerHalf, 0, upperHalf, lowerHalf );
+            auto offDiagBlockCopy( offDiagBlock );
             DistMatrix<R,VR,STAR> singVals_VR_STAR( grid );
             elem::SVD( offDiagBlockCopy, singVals_VR_STAR );
             DistMatrix<R,CIRC,CIRC> singVals( singVals_VR_STAR );
@@ -288,7 +291,7 @@ main( int argc, char* argv[] )
             std::cout.flush();
         }
         const double solveStart = mpi::Time();
-        DistNodalMultiVec<C> yNodal;
+        DistNodalMatrix<C> yNodal;
         yNodal.Pull( inverseMap, info, y );
         Solve( info, frontTree, yNodal );
         yNodal.Push( inverseMap, info, y );

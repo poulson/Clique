@@ -113,7 +113,7 @@ DistNodalMultiVec<F>::Pull
 
     // Figure out how many entries each process owns that we need
     mpi::Comm comm = X.Comm();
-    const int commSize = mpi::CommSize( comm );
+    const int commSize = mpi::Size( comm );
     std::vector<int> recvSizes( commSize, 0 );
     const int blocksize = X.Blocksize();
     for( int s=0; s<numRecvInds; ++s )
@@ -230,7 +230,7 @@ DistNodalMultiVec<F>::Push
     X.SetComm( comm );
     X.Resize( height, width );
 
-    const int commSize = mpi::CommSize( comm );
+    const int commSize = mpi::Size( comm );
     const int blocksize = X.Blocksize();
     const int firstLocalRow = X.FirstLocalRow();
     const int numDist = info.distNodes.size();

@@ -39,7 +39,7 @@ DistSymmFrontTree<F>::Initialize
     mpi::Comm comm = A.Comm();
     const DistGraph& graph = A.LockedDistGraph();
     const int blocksize = A.Blocksize();
-    const int commSize = mpi::CommSize( comm );
+    const int commSize = mpi::Size( comm );
     const int numLocal = sepTree.localSepsAndLeaves.size();
     const int numDist = sepTree.distSeps.size();
     DEBUG_ONLY(const int numSources = graph.NumSources())
@@ -379,7 +379,7 @@ DistSymmFrontTree<F>::Initialize
         Matrix<F>& topLocal = localFronts.back().frontL;
         DistMatrix<F>& bottomDist = distFronts[0].front2dL;
         bottomDist.LockedAttach
-        ( topLocal.Height(), topLocal.Width(), 0, 0, topLocal, *node.grid );
+        ( topLocal.Height(), topLocal.Width(), *node.grid, 0, 0, topLocal );
     }
 }
 

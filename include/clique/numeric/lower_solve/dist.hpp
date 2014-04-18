@@ -12,6 +12,8 @@
 #ifndef CLIQ_NUMERIC_LOWERSOLVE_DIST_HPP
 #define CLIQ_NUMERIC_LOWERSOLVE_DIST_HPP
 
+#include ELEM_ONES_INC
+
 namespace cliq {
 
 template<typename F> 
@@ -62,8 +64,8 @@ inline void DistLowerForwardSolve
     const Grid& leafGrid = ( frontsAre1d ? distLeafFront.front1dL.Grid() 
                                          : distLeafFront.front2dL.Grid() );
     distLeafFront.work1d.LockedAttach
-    ( localRootFront.work.Height(), localRootFront.work.Width(), 0, 0, 
-      localRootFront.work, leafGrid );
+    ( localRootFront.work.Height(), localRootFront.work.Width(), leafGrid, 0, 0,
+      localRootFront.work );
     
     // Perform the distributed portion of the forward solve
     for( int s=1; s<numDistNodes; ++s )
@@ -73,14 +75,14 @@ inline void DistLowerForwardSolve
         const Grid& grid = ( frontsAre1d ? front.front1dL.Grid()
                                          : front.front2dL.Grid() );
         mpi::Comm comm = grid.VCComm();
-        const int commSize = mpi::CommSize( comm );
+        const int commSize = mpi::Size( comm );
 
         const DistSymmNodeInfo& childNode = info.distNodes[s-1];
         const DistSymmFront<F>& childFront = L.distFronts[s-1];
         const Grid& childGrid = ( frontsAre1d ? childFront.front1dL.Grid()
                                               : childFront.front2dL.Grid() );
         mpi::Comm childComm = childGrid.VCComm();
-        const int childCommSize = mpi::CommSize( childComm );
+        const int childCommSize = mpi::Size( childComm );
 
         // Set up a workspace
         const int frontHeight = ( frontsAre1d ? front.front1dL.Height()
@@ -218,8 +220,8 @@ inline void DistLowerForwardSolve
     const DistSymmFront<F>& distLeafFront = L.distFronts[0];
     const Grid& leafGrid = distLeafFront.front2dL.Grid();
     distLeafFront.work2d.LockedAttach
-    ( localRootFront.work.Height(), localRootFront.work.Width(), 0, 0, 
-      localRootFront.work, leafGrid );
+    ( localRootFront.work.Height(), localRootFront.work.Width(), leafGrid, 0, 0,
+      localRootFront.work );
     
     // Perform the distributed portion of the forward solve
     for( int s=1; s<numDistNodes; ++s )
@@ -230,7 +232,7 @@ inline void DistLowerForwardSolve
         const int gridHeight = grid.Height();
         const int gridWidth = grid.Width();
         mpi::Comm comm = grid.VCComm();
-        const int commSize = mpi::CommSize( comm );
+        const int commSize = mpi::Size( comm );
 
         const DistSymmNodeInfo& childNode = info.distNodes[s-1];
         const DistSymmFront<F>& childFront = L.distFronts[s-1];
@@ -423,8 +425,8 @@ inline void DistLowerBackwardSolve
                                                : parentFront.front2dL.Grid() );
         mpi::Comm comm = grid.VCComm(); 
         mpi::Comm parentComm = parentGrid.VCComm();
-        const int commSize = mpi::CommSize( comm );
-        const int parentCommSize = mpi::CommSize( parentComm );
+        const int commSize = mpi::Size( comm );
+        const int parentCommSize = mpi::Size( parentComm );
         const int frontHeight = ( frontsAre1d ? front.front1dL.Height()
                                               : front.front2dL.Height() );
 
@@ -622,7 +624,7 @@ inline void DistLowerBackwardSolve
         const int parentGridHeight = parentGrid.Height();
         const int parentGridWidth = parentGrid.Width();
         mpi::Comm parentComm = parentGrid.VCComm();
-        const int parentCommSize = mpi::CommSize( parentComm );
+        const int parentCommSize = mpi::Size( parentComm );
         const int frontHeight = front.front2dL.Height();
 
         // Set up a workspace

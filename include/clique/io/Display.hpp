@@ -74,8 +74,8 @@ Display( const DistGraph& graph, std::string title )
     DEBUG_ONLY(CallStackEntry cse("Display [DistGraph]"))
 #ifdef HAVE_QT5
     const mpi::Comm comm = graph.Comm();
-    const int commSize = mpi::CommSize( comm );
-    const int commRank = mpi::CommRank( comm );
+    const int commSize = mpi::Size( comm );
+    const int commRank = mpi::Rank( comm );
 
     const int numLocalEdges = graph.NumLocalEdges();
     std::vector<int> edgeSizes(commSize), edgeOffsets(commSize);
@@ -193,8 +193,8 @@ Display( const DistSparseMatrix<T>& A, std::string title )
     DEBUG_ONLY(CallStackEntry cse("Display [DistSparseMatrix]"))
 #ifdef HAVE_QT5
     const mpi::Comm comm = A.Comm();
-    const int commSize = mpi::CommSize( comm );
-    const int commRank = mpi::CommRank( comm );
+    const int commSize = mpi::Size( comm );
+    const int commRank = mpi::Rank( comm );
 
     const int numLocalEntries = A.NumLocalEntries();
     std::vector<int> nonzeroSizes(commSize), nonzeroOffsets(commSize);
@@ -254,8 +254,8 @@ Display( const DistSparseMatrix<Complex<T>>& A, std::string title )
     DEBUG_ONLY(CallStackEntry cse("Display [DistSparseMatrix]"))
 #ifdef HAVE_QT5
     const mpi::Comm comm = A.Comm();
-    const int commSize = mpi::CommSize( comm );
-    const int commRank = mpi::CommRank( comm );
+    const int commSize = mpi::Size( comm );
+    const int commRank = mpi::Rank( comm );
 
     const int numLocalEntries = A.NumLocalEntries();
     std::vector<int> nonzeroSizes(commSize), nonzeroOffsets(commSize);

@@ -33,7 +33,7 @@ inline
 DistMap::~DistMap()
 { 
     if( comm_ != mpi::COMM_WORLD )
-        mpi::CommFree( comm_ ); 
+        mpi::Free( comm_ ); 
 }
 
 inline void
@@ -43,7 +43,7 @@ DistMap::StoreOwners
     DEBUG_ONLY(CallStackEntry cse("DistMap::StoreOwners"))
     SetComm( comm );
     Resize( numSources );
-    const int commSize = mpi::CommSize( comm );
+    const int commSize = mpi::Size( comm );
     const int blocksize = Blocksize();
     const int firstLocalSource = FirstLocalSource();
 
@@ -102,7 +102,7 @@ inline void
 DistMap::Translate( std::vector<int>& localInds ) const
 {
     DEBUG_ONLY(CallStackEntry cse("DistMap::Translate"))
-    const int commSize = mpi::CommSize( comm_ );
+    const int commSize = mpi::Size( comm_ );
     const int numLocalInds = localInds.size();
 
     // Count how many indices we need each process to map
@@ -168,7 +168,7 @@ DistMap::Translate( std::vector<int>& localInds ) const
         DEBUG_ONLY(
             if( iLocal < 0 || iLocal >= (int)map_.size() )
             {
-                const int commRank = mpi::CommRank( comm_ );
+                const int commRank = mpi::Rank( comm_ );
                 LogicError
                 ("invalid request: i=",i,", iLocal=",iLocal,
                  ", commRank=",commRank,", blocksize=",blocksize_);
@@ -199,7 +199,7 @@ inline void
 DistMap::FormInverse( DistMap& inverseMap ) const
 {
     DEBUG_ONLY(CallStackEntry cse("DistMap::FormInverse"))
-    const int commSize = mpi::CommSize( comm_ );
+    const int commSize = mpi::Size( comm_ );
     const int numLocalSources = map_.size();
 
     // How many pairs of original and mapped indices to send to each process
@@ -294,15 +294,15 @@ inline void
 DistMap::SetComm( mpi::Comm comm )
 {
     if( comm_ != mpi::COMM_WORLD )
-        mpi::CommFree( comm_ );
+        mpi::Free( comm_ );
 
     if( comm != mpi::COMM_WORLD )
-        mpi::CommDup( comm, comm_ );
+        mpi::Dup( comm, comm_ );
     else
         comm_ = comm;
 
-    const int commRank = mpi::CommRank( comm );
-    const int commSize = mpi::CommSize( comm );
+    const int commRank = mpi::Rank( comm );
+    const int commSize = mpi::Size( comm );
     blocksize_ = numSources_/commSize;
     firstLocalSource_ = blocksize_*commRank;
     const int numLocalSources =
@@ -378,8 +378,8 @@ DistMap::Empty()
 inline void
 DistMap::Resize( int numSources )
 {
-    const int commRank = mpi::CommRank( comm_ );
-    const int commSize = mpi::CommSize( comm_ );
+    const int commRank = mpi::Rank( comm_ );
+    const int commSize = mpi::Size( comm_ );
     numSources_ = numSources;
     blocksize_ = numSources/commSize;
     firstLocalSource_ = commRank*blocksize_;

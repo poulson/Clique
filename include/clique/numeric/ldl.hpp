@@ -50,9 +50,8 @@ inline void InitializeDistLeaf
     DistMatrix<F>& front2dL = L.distFronts[0].front2dL;
 
     front2dL.LockedAttach
-    ( topLocalFrontL.Height(), topLocalFrontL.Width(), 0, 0,
-      topLocalFrontL.LockedBuffer(), topLocalFrontL.LDim(), 
-      *node.grid );
+    ( topLocalFrontL.Height(), topLocalFrontL.Width(), *node.grid, 0, 0,
+      topLocalFrontL.LockedBuffer(), topLocalFrontL.LDim() );
 }
 
 template<typename F>

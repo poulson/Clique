@@ -290,7 +290,7 @@ SparseMatrix<T>::operator=( const DistSparseMatrix<T>& A )
 {
     DEBUG_ONLY(CallStackEntry cse("SparseMatrix::operator="))
     mpi::Comm comm = A.Comm();
-    const int commSize = mpi::CommSize( comm );
+    const int commSize = mpi::Size( comm );
     if( commSize != 1 )
         LogicError("Can not yet construct from distributed sparse matrix");
 

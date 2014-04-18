@@ -305,7 +305,7 @@ void BackwardMany
 {
     // TODO: Replace this with modified inline code?
     const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
-    elem::internal::TrsmLLTSmall( orientation, NON_UNIT, F(1), L, X, true );
+    elem::trsm::LLTSmall( orientation, NON_UNIT, L, X, true );
 }
 
 // TODO: Compress implementation
@@ -368,7 +368,7 @@ void BackwardSingle
         //--------------------------------------------------------------------//
         // X1 -= L21' X2
         elem::LocalGemm( orientation, NORMAL, F(-1), L21, X2, Z1_STAR_STAR );
-        elem::internal::AddInLocalData( X1, Z1_STAR_STAR );
+        elem::trsm::AddInLocalData( X1, Z1_STAR_STAR );
         Z1_STAR_STAR.SumOver( X1.DistComm() );
 
         // X1 := L11^-1 X1

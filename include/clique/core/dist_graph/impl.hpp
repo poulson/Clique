@@ -55,7 +55,7 @@ inline
 DistGraph::~DistGraph()
 { 
     if( comm_ != mpi::COMM_WORLD )
-        mpi::CommFree( comm_ );
+        mpi::Free( comm_ );
 } 
 
 inline int 
@@ -70,7 +70,7 @@ inline void
 DistGraph::SetComm( mpi::Comm comm )
 {
     if( comm_ != mpi::COMM_WORLD )
-        mpi::CommFree( comm_ );
+        mpi::Free( comm_ );
 
     SwapClear( sources_ );
     SwapClear( targets_ );
@@ -81,10 +81,10 @@ DistGraph::SetComm( mpi::Comm comm )
     if( comm == mpi::COMM_WORLD )
         comm_ = comm;
     else
-        mpi::CommDup( comm, comm_ );
+        mpi::Dup( comm, comm_ );
 
-    const int commRank = mpi::CommRank( comm );
-    const int commSize = mpi::CommSize( comm );
+    const int commRank = mpi::Rank( comm );
+    const int commSize = mpi::Size( comm );
     blocksize_ = numSources_/commSize;
     firstLocalSource_ = commRank*blocksize_;
     if( commRank < commSize-1 )
@@ -363,8 +363,8 @@ DistGraph::Resize( int numVertices )
 inline void
 DistGraph::Resize( int numSources, int numTargets )
 {
-    const int commRank = mpi::CommRank( comm_ );
-    const int commSize = mpi::CommSize( comm_ );
+    const int commRank = mpi::Rank( comm_ );
+    const int commSize = mpi::Size( comm_ );
     numSources_ = numSources;
     numTargets_ = numTargets;
     blocksize_ = numSources/commSize;

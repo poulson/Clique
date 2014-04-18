@@ -227,7 +227,7 @@ NaturalNestedDissectionRecursion
         // Mostly fill this node of the DistSeparatorTree
         // (we will finish computing the separator indices at the end)
         DistSeparator& sep = sepTree.distSeps[distDepth-1-depth];
-        mpi::CommDup( comm, sep.comm );
+        mpi::Dup( comm, sep.comm );
         sep.off = off + (numSources-sepSize);
         sep.inds.resize( sepSize );
         for( int s=0; s<sepSize; ++s )
@@ -239,7 +239,7 @@ NaturalNestedDissectionRecursion
         node.size = sepSize;
         node.off = sep.off;
         node.onLeft = onLeft;
-        mpi::CommDup( comm, node.comm );
+        mpi::Dup( comm, node.comm );
         const int numLocalSources = graph.NumLocalSources();
         const int firstLocalSource = graph.FirstLocalSource();
         std::set<int> localConnectedAncestors;
@@ -261,7 +261,7 @@ NaturalNestedDissectionRecursion
             }
         }
         const int numLocalConnected = localConnectedAncestors.size();
-        const int commSize = mpi::CommSize( comm );
+        const int commSize = mpi::Size( comm );
         std::vector<int> localConnectedSizes( commSize );
         mpi::AllGather
         ( &numLocalConnected, 1, &localConnectedSizes[0], 1, comm );
@@ -328,7 +328,7 @@ NaturalNestedDissectionRecursion
         eTree.localNodes.push_back( new SymmNode );
         SymmNode& localNode = *eTree.localNodes.back();
         DistSymmNode& distNode = eTree.distNodes[0];
-        mpi::CommDup( comm, distNode.comm );
+        mpi::Dup( comm, distNode.comm );
         distNode.onLeft = onLeft;
         distNode.size = localNode.size = numSources;
         distNode.off = localNode.off = off;
@@ -389,7 +389,7 @@ NaturalNestedDissectionRecursion
         eTree.localNodes.push_back( new SymmNode );
         SymmNode& localNode = *eTree.localNodes.back();
         DistSymmNode& distNode = eTree.distNodes[0];
-        mpi::CommDup( comm, distNode.comm );
+        mpi::Dup( comm, distNode.comm );
         distNode.onLeft = onLeft;
         distNode.size = localNode.size = sepSize;
         distNode.off = localNode.off = sep.off;
@@ -636,7 +636,7 @@ NaturalBisect
     const int firstLocalSource = graph.FirstLocalSource();
     const int numLocalSources = graph.NumLocalSources();
     mpi::Comm comm = graph.Comm();
-    const int commSize = mpi::CommSize( comm );
+    const int commSize = mpi::Size( comm );
     if( commSize == 1 )
         LogicError
         ("This routine assumes at least two processes are used, "

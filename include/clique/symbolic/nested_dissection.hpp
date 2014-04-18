@@ -104,8 +104,8 @@ DistributedDepthRecursion
 inline int
 DistributedDepth( mpi::Comm comm )
 {
-    unsigned commRank = mpi::CommRank( comm );
-    unsigned commSize = mpi::CommSize( comm );
+    unsigned commRank = mpi::Rank( comm );
+    unsigned commSize = mpi::Size( comm );
     unsigned distDepth = 0;
     DistributedDepthRecursion( commRank, commSize, distDepth );
     return distDepth;
@@ -275,7 +275,7 @@ NestedDissectionRecursion
         // Mostly fill this node of the DistSeparatorTree
         // (we will finish computing the separator indices at the end)
         DistSeparator& sep = sepTree.distSeps[distDepth-1-depth];
-        mpi::CommDup( comm, sep.comm );
+        mpi::Dup( comm, sep.comm );
         sep.off = off + (numSources-sepSize);
         sep.inds.resize( sepSize );
         for( int s=0; s<sepSize; ++s )
@@ -287,7 +287,7 @@ NestedDissectionRecursion
         node.size = sepSize;
         node.off = sep.off;
         node.onLeft = onLeft;
-        mpi::CommDup( comm, node.comm );
+        mpi::Dup( comm, node.comm );
         const int numLocalSources = graph.NumLocalSources();
         const int firstLocalSource = graph.FirstLocalSource();
         std::set<int> localConnectedAncestors;
@@ -309,7 +309,7 @@ NestedDissectionRecursion
             }
         }
         const int numLocalConnected = localConnectedAncestors.size();
-        const int commSize = mpi::CommSize( comm );
+        const int commSize = mpi::Size( comm );
         std::vector<int> localConnectedSizes( commSize );
         mpi::AllGather
         ( &numLocalConnected, 1, &localConnectedSizes[0], 1, comm );
@@ -376,7 +376,7 @@ NestedDissectionRecursion
         eTree.localNodes.push_back( new SymmNode );
         SymmNode& localNode = *eTree.localNodes.back();
         DistSymmNode& distNode = eTree.distNodes[0];
-        mpi::CommDup( comm, distNode.comm );
+        mpi::Dup( comm, distNode.comm );
         distNode.onLeft = onLeft;
         distNode.size = localNode.size = numSources;
         distNode.off = localNode.off = off;
@@ -433,7 +433,7 @@ NestedDissectionRecursion
         eTree.localNodes.push_back( new SymmNode );
         SymmNode& localNode = *eTree.localNodes.back();
         DistSymmNode& distNode = eTree.distNodes[0];
-        mpi::CommDup( comm, distNode.comm );
+        mpi::Dup( comm, distNode.comm );
         distNode.onLeft = onLeft;
         distNode.size = localNode.size = sepSize;
         distNode.off = localNode.off = sep.off;
@@ -607,8 +607,8 @@ Bisect
 {
     DEBUG_ONLY(CallStackEntry cse("Bisect"))
     mpi::Comm comm = graph.Comm();
-    const int commSize = mpi::CommSize( comm );
-    const int commRank = mpi::CommRank( comm );
+    const int commSize = mpi::Size( comm );
+    const int commRank = mpi::Rank( comm );
     if( commSize == 1 )
         LogicError
         ("This routine assumes at least two processes are used, "
@@ -771,7 +771,7 @@ Bisect
         // Use the custom ParMETIS interface
         CliqParallelBisect
         ( &vtxDist[0], &xAdj[0], &adjacency[0], &nparseps, &nseqseps, 
-          &imbalance, NULL, perm.Buffer(), &sizes[0], &comm );
+          &imbalance, NULL, perm.Buffer(), &sizes[0], &comm.comm );
     }
     DEBUG_ONLY(EnsurePermutation( perm ))
     BuildChildFromPerm( graph, perm, sizes[0], sizes[1], onLeft, child );
@@ -799,7 +799,7 @@ EnsurePermutation( const DistMap& map )
 {
     DEBUG_ONLY(CallStackEntry cse("EnsurePermutation"))
     mpi::Comm comm = map.Comm();
-    const int commRank = mpi::CommRank( comm );
+    const int commRank = mpi::Rank( comm );
     const int numSources = map.NumSources();
     const int numLocalSources = map.NumLocalSources();
     std::vector<int> timesMapped( numSources, 0 );
@@ -976,8 +976,8 @@ BuildChildFromPerm
     const int numLocalSources = graph.NumLocalSources();
 
     mpi::Comm comm = graph.Comm();
-    const int commSize = mpi::CommSize( comm );
-    const int commRank = mpi::CommRank( comm );
+    const int commSize = mpi::Size( comm );
+    const int commRank = mpi::Rank( comm );
 
     // Build the child graph from the partitioned parent
     const int smallTeamSize = commSize/2;
@@ -1150,8 +1150,8 @@ BuildChildFromPerm
     // Put the connections into our new graph
     const int childTeamRank = 
         ( onLeft ? commRank-leftTeamOff : commRank-rightTeamOff );
-    MPI_Comm childComm;
-    mpi::CommSplit( comm, onLeft, childTeamRank, childComm );
+    mpi::Comm childComm;
+    mpi::Split( comm, onLeft, childTeamRank, childComm );
     child.SetComm( childComm );
     if( onLeft )
         child.Resize( leftChildSize );
@@ -1211,7 +1211,7 @@ BuildMap
 {
     DEBUG_ONLY(CallStackEntry cse("BuildMap"))
     mpi::Comm comm = graph.Comm();
-    const int commSize = mpi::CommSize( comm );
+    const int commSize = mpi::Size( comm );
     const int numSources = graph.NumSources();
 
     map.SetComm( comm );
@@ -1248,8 +1248,8 @@ BuildMap
     {
         const DistSeparator& sep = sepTree.distSeps[s];
         const int numInds = sep.inds.size();
-        const int teamSize = mpi::CommSize( sep.comm );
-        const int teamRank = mpi::CommRank( sep.comm );
+        const int teamSize = mpi::Size( sep.comm );
+        const int teamRank = mpi::Rank( sep.comm );
         const int numLocalInds = Length( numInds, teamRank, teamSize );
         for( int tLocal=0; tLocal<numLocalInds; ++tLocal )
         {
@@ -1300,8 +1300,8 @@ BuildMap
     {
         const DistSeparator& sep = sepTree.distSeps[s];
         const int numInds = sep.inds.size();
-        const int teamSize = mpi::CommSize( sep.comm );
-        const int teamRank = mpi::CommRank( sep.comm );
+        const int teamSize = mpi::Size( sep.comm );
+        const int teamRank = mpi::Rank( sep.comm );
         const int numLocalInds = Length( numInds, teamRank, teamSize );
         for( int tLocal=0; tLocal<numLocalInds; ++tLocal )
         {
