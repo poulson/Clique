@@ -43,6 +43,7 @@ DistGraph::DistGraph( const Graph& graph )
 
 inline
 DistGraph::DistGraph( const DistGraph& graph )
+: comm_(mpi::COMM_WORLD)
 {
     DEBUG_ONLY(CallStackEntry cse("DistGraph::DistGraph"))
     if( &graph != this )
