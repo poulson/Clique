@@ -48,7 +48,7 @@ inline void LocalLowerMultiplyNormal
         Matrix<T> WT, WB;
         PartitionDown( W, WT, WB, node.size );
         WT = X.localNodes[s];
-        elem::MakeZeros( WB );
+        El::Zero( WB );
 
         // Multiply this block column of L against this node's portion of the
         // right-hand side and set W equal to the result

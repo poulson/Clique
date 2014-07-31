@@ -98,7 +98,7 @@ main( int argc, char* argv[] )
         const double multiplyStart = mpi::Time();
         DistMultiVec<double> X( N, numRhs, comm ), Y( N, numRhs, comm );
         MakeUniform( X );
-        MakeZeros( Y );
+        Zero( Y );
         Multiply( 1., A, X, 0., Y );
         std::vector<double> YOrigNorms;
         Norms( Y, YOrigNorms );

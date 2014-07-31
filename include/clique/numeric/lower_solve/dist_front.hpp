@@ -52,7 +52,7 @@ void FrontIntraPivLowerBackwardSolve
 //----------------------------------------------------------------------------//
 
 namespace internal {
-using namespace elem;
+using namespace El;
 
 // TODO: Compress implementation
 template<typename F>
@@ -105,13 +105,13 @@ inline void ForwardMany
         X1_STAR_STAR = X1;   // X1[* ,* ] <- X1[VC,* ]
 
         // X1[* ,* ] := (L11[* ,* ])^-1 X1[* ,* ]
-        elem::LocalTrsm
+        LocalTrsm
         ( LEFT, LOWER, NORMAL, NON_UNIT, 
           F(1), L11_STAR_STAR, X1_STAR_STAR, true );
         X1 = X1_STAR_STAR;
 
         // X2[VC,* ] -= L21[VC,* ] X1[* ,* ]
-        elem::LocalGemm( NORMAL, NORMAL, F(-1), L21, X1_STAR_STAR, F(1), X2 );
+        LocalGemm( NORMAL, NORMAL, F(-1), L21, X1_STAR_STAR, F(1), X2 );
         //--------------------------------------------------------------------//
 
         SlideLockedPartitionDownDiagonal
@@ -202,7 +202,7 @@ void AccumulateRHS( const DistMatrix<F,VC,STAR>& X, DistMatrix<F,STAR,STAR>& Z )
     const Int height = X.Height();
     const Int width = X.Width();
     Z.Empty();
-    elem::Zeros( Z, height, width );
+    Zeros( Z, height, width );
 
     const Int localHeight = X.LocalHeight();
     const Int colShift = X.ColShift();
@@ -275,13 +275,13 @@ void ForwardSingle( const DistMatrix<F,VC,STAR>& L, DistMatrix<F,VC,STAR>& X )
         AccumulateRHS( X1, X1_STAR_STAR ); // X1[* ,* ] <- X1[VC,* ]
 
         // X1[* ,* ] := (L11[* ,* ])^-1 X1[* ,* ]
-        elem::LocalTrsm
+        LocalTrsm
         ( LEFT, UPPER, TRANSPOSE, NON_UNIT, 
           F(1), L11Trans_STAR_STAR, X1_STAR_STAR, true );
         X1 = X1_STAR_STAR;
 
         // X2[VC,* ] -= L21[VC,* ] X1[* ,* ]
-        elem::LocalGemm( NORMAL, NORMAL, F(-1), L21, X1_STAR_STAR, F(1), X2 );
+        LocalGemm( NORMAL, NORMAL, F(-1), L21, X1_STAR_STAR, F(1), X2 );
         //--------------------------------------------------------------------//
 
         SlideLockedPartitionDownDiagonal
@@ -305,7 +305,7 @@ void BackwardMany
 {
     // TODO: Replace this with modified inline code?
     const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
-    elem::trsm::LLTSmall( orientation, NON_UNIT, L, X, true );
+    trsm::LLTSmall( orientation, NON_UNIT,  L, X, true );
 }
 
 // TODO: Compress implementation
@@ -367,12 +367,12 @@ void BackwardSingle
 
         //--------------------------------------------------------------------//
         // X1 -= L21' X2
-        elem::LocalGemm( orientation, NORMAL, F(-1), L21, X2, Z1_STAR_STAR );
-        elem::trsm::AddInLocalData( X1, Z1_STAR_STAR );
+        LocalGemm( orientation, NORMAL, F(-1), L21, X2, Z1_STAR_STAR );
+        AddInLocalData( X1, Z1_STAR_STAR );
         Z1_STAR_STAR.SumOver( X1.DistComm() );
 
         // X1 := L11^-1 X1
-        elem::LocalTrsm
+        LocalTrsm
         ( LEFT, UPPER, NORMAL, UNIT, F(1), L11Trans_STAR_STAR, Z1_STAR_STAR );
         X1 = Z1_STAR_STAR;
         //--------------------------------------------------------------------//
@@ -428,7 +428,7 @@ inline void FrontIntraPivLowerForwardSolve
     const Grid& g = L.Grid();
     DistMatrix<F,VC,STAR> XT(g), XB(g);
     PartitionDown( X, XT, XB, L.Width() );
-    elem::ApplyRowPivots( XT, p );
+    El::PermuteRows( XT, p );
 
     FrontLowerForwardSolve( L, X, singleL11AllGather );
 }
@@ -460,10 +460,10 @@ inline void FrontLowerForwardSolve( const DistMatrix<F>& L, DistMatrix<F>& X )
 
     // XT := LT XT
     // TODO: Replace with TrsmLLNMedium?
-    elem::Trsm( LEFT, LOWER, NORMAL, NON_UNIT, F(1), LT, XT );
+    El::Trsm( LEFT, LOWER, NORMAL, NON_UNIT, F(1), LT, XT );
 
     // XB := XB - LB XT
-    elem::Gemm( NORMAL, NORMAL, F(-1), LB, XT, F(1), XB );
+    El::Gemm( NORMAL, NORMAL, F(-1), LB, XT, F(1), XB );
 }
 
 template<typename F>
@@ -476,7 +476,7 @@ inline void FrontIntraPivLowerForwardSolve
     const Grid& g = L.Grid();
     DistMatrix<F> XT(g), XB(g);
     PartitionDown( X, XT, XB, L.Width() );
-    elem::ApplyRowPivots( XT, p );
+    El::PermuteRows( XT, p );
 
     FrontLowerForwardSolve( L, X );
 }
@@ -513,7 +513,7 @@ inline void FrontLowerBackwardSolve
         // Subtract off the parent updates
         DistMatrix<F,STAR,STAR> Z(g);
         const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
-        elem::LocalGemm( orientation, NORMAL, F(-1), LB, XB, Z );
+        El::LocalGemm( orientation, NORMAL, F(-1), LB, XB, Z );
         XT.SumScatterUpdate( F(1), Z );
     }
 
@@ -536,7 +536,7 @@ inline void FrontIntraPivLowerBackwardSolve
     const Grid& g = L.Grid();
     DistMatrix<F,VC,STAR> XT(g), XB(g);
     PartitionDown( X, XT, XB, L.Width() );
-    elem::ApplyInverseRowPivots( XT, p );
+    El::InversePermuteRows( XT, p );
 }
 
 template<typename F>
@@ -564,8 +564,8 @@ inline void FrontLowerBackwardSolve
     PartitionDown( X, XT, XB, L.Width() );
 
     const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
-    elem::Gemm( orientation, NORMAL, F(-1), LB, XB, F(1), XT );
-    elem::Trsm( LEFT, LOWER, orientation, NON_UNIT, F(1), LT, XT );
+    El::Gemm( orientation, NORMAL, F(-1), LB, XB, F(1), XT );
+    El::Trsm( LEFT, LOWER, orientation, NON_UNIT, F(1), LT, XT );
 }
 
 template<typename F>
@@ -581,7 +581,7 @@ inline void FrontIntraPivLowerBackwardSolve
     const Grid& g = L.Grid();
     DistMatrix<F> XT(g), XB(g);
     PartitionDown( X, XT, XB, L.Width() );
-    elem::ApplyInverseRowPivots( XT, p );
+    El::InversePermuteRows( XT, p );
 }
 
 } // namespace cliq

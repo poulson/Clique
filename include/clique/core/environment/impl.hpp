@@ -26,7 +26,7 @@ inline void Args::HandleVersion( std::ostream& os ) const
     {
         if( mpi::WorldRank() == 0 )
             PrintVersion();
-        throw elem::ArgException();
+        throw El::ArgException();
     }
 }
 
@@ -44,7 +44,7 @@ inline void Args::HandleBuild( std::ostream& os ) const
             PrintCCompilerInfo();
             PrintCxxCompilerInfo();
         }
-        throw elem::ArgException();
+        throw El::ArgException();
     }
 }
 

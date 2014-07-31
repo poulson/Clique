@@ -95,13 +95,13 @@ inline void FrontFastLowerForwardSolve
 
     // XT := LT XT
     DistMatrix<F,STAR,STAR> XT_STAR_STAR( XT );
-    elem::LocalGemm( NORMAL, NORMAL, F(1), LT, XT_STAR_STAR, F(0), XT );
+    El::LocalGemm( NORMAL, NORMAL, F(1), LT, XT_STAR_STAR, F(0), XT );
 
     // XB := XB - LB XT
     if( LB.Height() != 0 )
     {
         XT_STAR_STAR = XT;
-        elem::LocalGemm( NORMAL, NORMAL, F(-1), LB, XT_STAR_STAR, F(1), XB );
+        El::LocalGemm( NORMAL, NORMAL, F(-1), LB, XT_STAR_STAR, F(1), XB );
     }
 }
 
@@ -116,7 +116,7 @@ inline void FrontFastIntraPivLowerForwardSolve
     const Grid& g = L.Grid();
     DistMatrix<F,VC,STAR> XT(g), XB(g);
     PartitionDown( X, XT, XB, L.Width() );
-    elem::ApplyRowPivots( XT, p );
+    El::PermuteRows( XT, p );
 
     FrontFastLowerForwardSolve( L, X );
 }
@@ -157,7 +157,7 @@ inline void FrontFastLowerForwardSolve
         DistMatrix<F,MC,STAR> ZT_MC_STAR(g);
         ZT_MC_STAR.AlignWith( LT );
         XT_MR_STAR = XT;
-        elem::LocalGemm( NORMAL, NORMAL, F(1), LT, XT_MR_STAR, ZT_MC_STAR );
+        El::LocalGemm( NORMAL, NORMAL, F(1), LT, XT_MR_STAR, ZT_MC_STAR );
 
         // XT[VC,* ].SumScatterFrom( ZT[MC,* ] )
         XT.SumScatterFrom( ZT_MC_STAR );
@@ -171,7 +171,7 @@ inline void FrontFastLowerForwardSolve
         // ZB[MC,* ] := LB[MC,MR] XT[MR,* ]
         DistMatrix<F,MC,STAR> ZB_MC_STAR(g);
         ZB_MC_STAR.AlignWith( LB );
-        elem::LocalGemm( NORMAL, NORMAL, F(-1), LB, XT_MR_STAR, ZB_MC_STAR );
+        El::LocalGemm( NORMAL, NORMAL, F(-1), LB, XT_MR_STAR, ZB_MC_STAR );
 
         // XB[VC,* ] += ZB[MC,* ]
         XB.SumScatterUpdate( F(1), ZB_MC_STAR );
@@ -189,7 +189,7 @@ inline void FrontFastIntraPivLowerForwardSolve
     const Grid& g = L.Grid();
     DistMatrix<F,VC,STAR> XT(g), XB(g);
     PartitionDown( X, XT, XB, L.Width() );
-    elem::ApplyRowPivots( XT, p );
+    El::PermuteRows( XT, p );
 
     FrontFastLowerForwardSolve( L, X );
 }
@@ -222,10 +222,10 @@ inline void FrontFastLowerForwardSolve
 
     // XT := LT XT
     DistMatrix<F> YT( XT );
-    elem::Gemm( NORMAL, NORMAL, F(1), LT, YT, F(0), XT );
+    El::Gemm( NORMAL, NORMAL, F(1), LT, YT, F(0), XT );
 
     // XB := XB - LB XT
-    elem::Gemm( NORMAL, NORMAL, F(-1), LB, XT, F(1), XB );
+    El::Gemm( NORMAL, NORMAL, F(-1), LB, XT, F(1), XB );
 }
 
 template<typename F>
@@ -238,7 +238,7 @@ inline void FrontFastIntraPivLowerForwardSolve
     const Grid& g = L.Grid();
     DistMatrix<F> XT(g), XB(g);
     PartitionDown( X, XT, XB, L.Width() );
-    elem::ApplyRowPivots( XT, p );
+    El::PermuteRows( XT, p );
 
     FrontFastLowerForwardSolve( L, X );
 }
@@ -276,12 +276,12 @@ inline void FrontFastLowerBackwardSolve
     const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
     if( XB.Height() != 0 )
     {
-        elem::LocalGemm( orientation, NORMAL, F(-1), LB, XB, Z );
+        El::LocalGemm( orientation, NORMAL, F(-1), LB, XB, Z );
         XT.SumScatterUpdate( F(1), Z );
     }
 
     // XT := LT^{T/H} XT
-    elem::LocalGemm( orientation, NORMAL, F(1), LT, XT, Z );
+    El::LocalGemm( orientation, NORMAL, F(1), LT, XT, Z );
     XT.SumScatterFrom( Z );
 }
 
@@ -298,7 +298,7 @@ inline void FrontFastIntraPivLowerBackwardSolve
     const Grid& g = L.Grid();
     DistMatrix<F,VC,STAR> XT(g), XB(g);
     PartitionDown( X, XT, XB, L.Width() );
-    elem::ApplyInverseRowPivots( XT, p );
+    El::InversePermuteRows( XT, p );
 }
 
 template<typename F>
@@ -337,7 +337,7 @@ inline void FrontFastLowerBackwardSolve
         DistMatrix<F,MC,STAR> XB_MC_STAR( g );
         XB_MC_STAR.AlignWith( LB );
         XB_MC_STAR = XB;
-        elem::LocalGemm
+        El::LocalGemm
         ( orientation, NORMAL, F(-1), LB, XB_MC_STAR, ZT_MR_STAR );
 
         // ZT[VR,* ].SumScatterFrom( ZT[MR,* ] )
@@ -349,7 +349,7 @@ inline void FrontFastLowerBackwardSolve
         ZT_VC_STAR = ZT_VR_STAR;
 
         // XT[VC,* ] += ZT[VC,* ]
-        elem::Axpy( F(1), ZT_VC_STAR, XT );
+        El::Axpy( F(1), ZT_VC_STAR, XT );
     }
 
     {
@@ -357,7 +357,7 @@ inline void FrontFastLowerBackwardSolve
         DistMatrix<F,MC,STAR> XT_MC_STAR( g );
         XT_MC_STAR.AlignWith( LT );
         XT_MC_STAR = XT;
-        elem::LocalGemm
+        El::LocalGemm
         ( orientation, NORMAL, F(1), LT, XT_MC_STAR, ZT_MR_STAR );
 
         // ZT[VR,* ].SumScatterFrom( ZT[MR,* ] )
@@ -381,7 +381,7 @@ inline void FrontFastIntraPivLowerBackwardSolve
     const Grid& g = L.Grid();
     DistMatrix<F,VC,STAR> XT(g), XB(g);
     PartitionDown( X, XT, XB, L.Width() );
-    elem::ApplyInverseRowPivots( XT, p );
+    El::InversePermuteRows( XT, p );
 }
 
 template<typename F>
@@ -411,11 +411,11 @@ inline void FrontFastLowerBackwardSolve
 
     // XT := XT - LB^{T/H} XB
     const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
-    elem::Gemm( orientation, NORMAL, F(-1), LB, XB, F(1), XT );
+    El::Gemm( orientation, NORMAL, F(-1), LB, XB, F(1), XT );
 
     // XT := LT^{T/H} XT
     DistMatrix<F> Z(XT.Grid());
-    elem::Gemm( orientation, NORMAL, F(1), LT, XT, Z );
+    El::Gemm( orientation, NORMAL, F(1), LT, XT, Z );
     XT = Z;
 }
 
@@ -432,7 +432,7 @@ inline void FrontFastIntraPivLowerBackwardSolve
     const Grid& g = L.Grid();
     DistMatrix<F> XT(g), XB(g);
     PartitionDown( X, XT, XB, L.Width() );
-    elem::ApplyInverseRowPivots( XT, p );
+    El::InversePermuteRows( XT, p );
 }
 
 } // namespace cliq

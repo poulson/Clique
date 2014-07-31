@@ -22,10 +22,10 @@ namespace cliq {
 void PrintVersion( std::ostream& os )
 {
     os << "Clique version information:\n"
-       << "  Git revision: " << ELEM_GIT_SHA1 << "\n"
+       << "  Git revision: " << EL_GIT_SHA1 << "\n"
        << "  Version:      " << Clique_VERSION_MAJOR << "."
                              << Clique_VERSION_MINOR << "\n"
-       << "  Build type:   " << ELEM_CMAKE_BUILD_TYPE << "\n"
+       << "  Build type:   " << EL_CMAKE_BUILD_TYPE << "\n"
        << std::endl;
 }
 
@@ -41,31 +41,31 @@ void PrintConfig( std::ostream& os )
 #ifdef HAVE_PARMETIS
     os << "  HAVE_PARMETIS\n";
 #endif
-    elem::PrintConfig( os );
+    El::PrintConfig( os );
 }
 
 void PrintCCompilerInfo( std::ostream& os )
 {
     os << "Clique's C compiler info:\n"
-       << "  CMAKE_C_COMPILER:    " << ELEM_CMAKE_C_COMPILER << "\n"
-       << "  MPI_C_COMPILER:      " << ELEM_MPI_C_COMPILER << "\n"
-       << "  MPI_C_INCLUDE_PATH:  " << ELEM_MPI_C_INCLUDE_PATH << "\n"
-       << "  MPI_C_COMPILE_FLAGS: " << ELEM_MPI_C_COMPILE_FLAGS << "\n"
-       << "  MPI_C_LINK_FLAGS:    " << ELEM_MPI_C_LINK_FLAGS << "\n"
-       << "  MPI_C_LIBRARIES:     " << ELEM_MPI_C_LIBRARIES << "\n"
+       << "  CMAKE_C_COMPILER:    " << EL_CMAKE_C_COMPILER << "\n"
+       << "  MPI_C_COMPILER:      " << EL_MPI_C_COMPILER << "\n"
+       << "  MPI_C_INCLUDE_PATH:  " << EL_MPI_C_INCLUDE_PATH << "\n"
+       << "  MPI_C_COMPILE_FLAGS: " << EL_MPI_C_COMPILE_FLAGS << "\n"
+       << "  MPI_C_LINK_FLAGS:    " << EL_MPI_C_LINK_FLAGS << "\n"
+       << "  MPI_C_LIBRARIES:     " << EL_MPI_C_LIBRARIES << "\n"
        << std::endl;
 }
 
 void PrintCxxCompilerInfo( std::ostream& os )
 {
     os << "Clique's C++ compiler info:\n"
-       << "  CMAKE_CXX_COMPILER:    " << ELEM_CMAKE_CXX_COMPILER << "\n"
-       << "  CXX_FLAGS:             " << ELEM_CXX_FLAGS << "\n"
-       << "  MPI_CXX_COMPILER:      " << ELEM_MPI_CXX_COMPILER << "\n"
-       << "  MPI_CXX_INCLUDE_PATH:  " << ELEM_MPI_CXX_INCLUDE_PATH << "\n"
-       << "  MPI_CXX_COMPILE_FLAGS: " << ELEM_MPI_CXX_COMPILE_FLAGS << "\n"
-       << "  MPI_CXX_LINK_FLAGS:    " << ELEM_MPI_CXX_LINK_FLAGS << "\n"
-       << "  MPI_CXX_LIBRARIES:     " << ELEM_MPI_CXX_LIBRARIES << "\n"
+       << "  CMAKE_CXX_COMPILER:    " << EL_CMAKE_CXX_COMPILER << "\n"
+       << "  CXX_FLAGS:             " << EL_CXX_FLAGS << "\n"
+       << "  MPI_CXX_COMPILER:      " << EL_MPI_CXX_COMPILER << "\n"
+       << "  MPI_CXX_INCLUDE_PATH:  " << EL_MPI_CXX_INCLUDE_PATH << "\n"
+       << "  MPI_CXX_COMPILE_FLAGS: " << EL_MPI_CXX_COMPILE_FLAGS << "\n"
+       << "  MPI_CXX_LINK_FLAGS:    " << EL_MPI_CXX_LINK_FLAGS << "\n"
+       << "  MPI_CXX_LIBRARIES:     " << EL_MPI_CXX_LIBRARIES << "\n"
        << std::endl;
 }
 
@@ -83,9 +83,9 @@ void Initialize( int& argc, char**& argv )
 
     ::args = new Args( argc, argv );
     ::numCliqueInits = 1;
-    if( !elem::Initialized() )
+    if( !El::Initialized() )
     {
-        elem::Initialize( argc, argv );
+        El::Initialize( argc, argv );
         ::cliqueInitializedElemental = true;
     }
     else
@@ -100,7 +100,7 @@ void Finalize()
         throw std::logic_error("Finalized Clique more than initialized");
     --::numCliqueInits;
     if( ::cliqueInitializedElemental )
-        elem::Finalize();
+        El::Finalize();
 
     if( ::numCliqueInits == 0 )
     {
@@ -132,7 +132,7 @@ DEBUG_ONLY(
 
 void ReportException( std::exception& e )
 {
-    elem::ReportException( e );
+    El::ReportException( e );
     DEBUG_ONLY(DumpCallStack())
 }
 

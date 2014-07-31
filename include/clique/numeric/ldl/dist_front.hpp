@@ -63,27 +63,27 @@ inline void FrontLDLGeneral
     DistMatrix<F,STAR,MR> rightL(g), rightR(g);
     DistMatrix<F> AL22T(g), AL22B(g);
 
-    const Int bsize = elem::Blocksize();
+    const Int bsize = El::Blocksize();
     for( Int k=0; k<n; k+=bsize )
     {
-        const Int nb = elem::Min(bsize,n-k);
+        const Int nb = El::Min(bsize,n-k);
         auto AL11 = ViewRange( AL, k,    k,    k+nb, k+nb );
         auto AL21 = ViewRange( AL, k+nb, k,    m,    k+nb );
         auto AL22 = ViewRange( AL, k+nb, k+nb, m,    n    ); 
 
         AL11_STAR_STAR = AL11; 
-        elem::LocalLDL( AL11_STAR_STAR, conjugate );
+        El::LocalLDL( AL11_STAR_STAR, conjugate );
         AL11_STAR_STAR.GetDiagonal( d1_STAR_STAR );
         AL11 = AL11_STAR_STAR;
 
         AL21_VC_STAR.AlignWith( AL22 );
         AL21_VC_STAR = AL21;
-        elem::LocalTrsm
+        El::LocalTrsm
         ( RIGHT, LOWER, orientation, UNIT, F(1), AL11_STAR_STAR, AL21_VC_STAR );
 
         S21Trans_STAR_MC.AlignWith( AL22 );
         AL21_VC_STAR.TransposePartialColAllGather( S21Trans_STAR_MC );
-        elem::DiagonalSolve( RIGHT, NORMAL, d1_STAR_STAR, AL21_VC_STAR );
+        El::DiagonalSolve( RIGHT, NORMAL, d1_STAR_STAR, AL21_VC_STAR );
         AL21_VR_STAR.AlignWith( AL22 );
         AL21_VR_STAR = AL21_VC_STAR;
         AL21Trans_STAR_MR.AlignWith( AL22 );
@@ -94,13 +94,13 @@ inline void FrontLDLGeneral
         PartitionRight( S21Trans_STAR_MC, leftL, leftR, AL22.Width() );
         PartitionRight( AL21Trans_STAR_MR, rightL, rightR, AL22.Width() );
         PartitionDown( AL22, AL22T, AL22B, AL22.Width() );
-        elem::LocalTrrk
+        El::LocalTrrk
         ( LOWER, orientation, F(-1), leftL, rightL, F(1), AL22T );
-        elem::LocalGemm
+        El::LocalGemm
         ( orientation, NORMAL, F(-1), leftR, rightL, F(1), AL22B );
-        elem::LocalTrrk( LOWER, orientation, F(-1), leftR, rightR, F(1), ABR );
+        El::LocalTrrk( LOWER, orientation, F(-1), leftR, rightR, F(1), ABR );
 
-        elem::DiagonalSolve( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
+        El::DiagonalSolve( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
         AL21.TransposeRowFilterFrom( S21Trans_STAR_MC );
     }
 }
@@ -158,22 +158,22 @@ inline void FrontLDLSquare
     DistMatrix<F,STAR,MR> rightL(g), rightR(g);
     DistMatrix<F> AL22T(g), AL22B(g);
 
-    const Int bsize = elem::Blocksize();
+    const Int bsize = El::Blocksize();
     for( Int k=0; k<n; k+=bsize )
     {
-        const Int nb = elem::Min(bsize,n-k);
+        const Int nb = El::Min(bsize,n-k);
         auto AL11 = ViewRange( AL, k,    k,    k+nb, k+nb );
         auto AL21 = ViewRange( AL, k+nb, k,    m,    k+nb );
         auto AL22 = ViewRange( AL, k+nb, k+nb, m,    n    ); 
 
         AL11_STAR_STAR = AL11; 
-        elem::LocalLDL( AL11_STAR_STAR, conjugate );
+        El::LocalLDL( AL11_STAR_STAR, conjugate );
         AL11_STAR_STAR.GetDiagonal( d1_STAR_STAR );
         AL11 = AL11_STAR_STAR;
 
         AL21_VC_STAR.AlignWith( AL22 );
         AL21_VC_STAR = AL21;
-        elem::LocalTrsm
+        El::LocalTrsm
         ( RIGHT, LOWER, orientation, UNIT, F(1), AL11_STAR_STAR, AL21_VC_STAR );
 
         S21Trans_STAR_MC.AlignWith( AL22 );
@@ -186,7 +186,7 @@ inline void FrontLDLSquare
             if( onDiagonal )
             {
                 const int size = AL21.LocalHeight()*AL11.Width();    
-                elem::MemCopy
+                El::MemCopy
                 ( AL21Trans_STAR_MR.Buffer(), 
                   S21Trans_STAR_MC.Buffer(), size );
             }
@@ -202,23 +202,23 @@ inline void FrontLDLSquare
                   AL21Trans_STAR_MR.Buffer(), 
                   recvSize, transposeRank, g.VCComm() );
             }
-            elem::DiagonalSolve
+            El::DiagonalSolve
             ( LEFT, NORMAL, d1_STAR_STAR, AL21Trans_STAR_MR );
             if( conjugate )
-                elem::Conjugate( AL21Trans_STAR_MR );
+                El::Conjugate( AL21Trans_STAR_MR );
         }
 
         // Partition the update of the bottom-right corner into three pieces
         PartitionRight( S21Trans_STAR_MC, leftL, leftR, AL22.Width() );
         PartitionRight( AL21Trans_STAR_MR, rightL, rightR, AL22.Width() );
         PartitionDown( AL22, AL22T, AL22B, AL22.Width() );
-        elem::LocalTrrk
+        El::LocalTrrk
         ( LOWER, orientation, F(-1), leftL, rightL, F(1), AL22T );
-        elem::LocalGemm
+        El::LocalGemm
         ( orientation, NORMAL, F(-1), leftR, rightL, F(1), AL22B );
-        elem::LocalTrrk( LOWER, orientation, F(-1), leftR, rightR, F(1), ABR );
+        El::LocalTrrk( LOWER, orientation, F(-1), leftR, rightR, F(1), ABR );
 
-        elem::DiagonalSolve( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
+        El::DiagonalSolve( LEFT, NORMAL, d1_STAR_STAR, S21Trans_STAR_MC );
         AL21.TransposeRowFilterFrom( S21Trans_STAR_MC );
     }
 }
@@ -239,7 +239,7 @@ inline void FrontLDL( DistMatrix<F>& AL, DistMatrix<F>& ABR, bool conjugate )
 template<typename F>
 void FrontLDLIntraPiv
 ( DistMatrix<F>& AL, DistMatrix<F,MD,STAR>& subdiag, 
-  DistMatrix<Int,VC,STAR>& piv, DistMatrix<F>& ABR, bool conjugate )
+  DistMatrix<Int,VC,STAR>& perm, DistMatrix<F>& ABR, bool conjugate )
 {
     DEBUG_ONLY(CallStackEntry cse("FrontLDLIntraPiv"))
     const Grid& g = AL.Grid();
@@ -249,23 +249,23 @@ void FrontLDLIntraPiv
     DistMatrix<F> ATL(g), ABL(g);
     PartitionDown( AL, ATL, ABL, n );
 
-    elem::ldl::Pivoted( ATL, subdiag, piv, conjugate, elem::BUNCH_KAUFMAN_A );
+    El::LDL( ATL, subdiag, perm, conjugate, El::BUNCH_KAUFMAN_A );
     auto diag = ATL.GetDiagonal();
 
-    elem::ApplyInverseColumnPivots( ABL, piv );
-    elem::Trsm( RIGHT, LOWER, orientation, UNIT, F(1), ATL, ABL );
+    El::PermuteCols( ABL, perm );
+    El::Trsm( RIGHT, LOWER, orientation, UNIT, F(1), ATL, ABL );
     DistMatrix<F,MC,STAR> SBL_MC_STAR(g);
     SBL_MC_STAR.AlignWith( ABR );
     SBL_MC_STAR = ABL;
 
-    elem::QuasiDiagonalSolve( RIGHT, LOWER, diag, subdiag, ABL, conjugate );
+    El::QuasiDiagonalSolve( RIGHT, LOWER, diag, subdiag, ABL, conjugate );
     DistMatrix<F,VR,STAR> ABL_VR_STAR(g);
     DistMatrix<F,STAR,MR> ABLTrans_STAR_MR(g);
     ABL_VR_STAR.AlignWith( ABR );
     ABLTrans_STAR_MR.AlignWith( ABR );
     ABL_VR_STAR = ABL;
     ABL_VR_STAR.TransposePartialColAllGather( ABLTrans_STAR_MR, conjugate );
-    elem::LocalTrrk( LOWER, F(-1), SBL_MC_STAR, ABLTrans_STAR_MR, F(1), ABR );
+    El::LocalTrrk( LOWER, F(-1), SBL_MC_STAR, ABLTrans_STAR_MR, F(1), ABR );
 }
 
 } // namespace cliq

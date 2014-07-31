@@ -200,7 +200,7 @@ DistSymmFrontTree<F>::Initialize
                     if( index >= numSendEntries )
                         LogicError("send entry index got too big");
                 )
-                sendEntries[index] = (conjugate ? elem::Conj(value) : value);
+                sendEntries[index] = (conjugate ? El::Conj(value) : value);
                 sendTargets[index] = mappedTarget;
                 ++index;
             }
@@ -456,7 +456,7 @@ DistSymmFrontTree<F>::TopLeftMemoryInfo
     {
         const SymmFront<F>& front = localFronts[s];
         Matrix<F> FTL, FBL;
-        elem::LockedPartitionDown
+        El::LockedPartitionDown
         ( front.frontL, FTL, FBL, front.frontL.Width() );
         numLocalEntries += FTL.Height()*FTL.Width();
         numLocalEntries += front.diag.AllocatedMemory();
@@ -469,14 +469,14 @@ DistSymmFrontTree<F>::TopLeftMemoryInfo
         if( frontsAre1d )
         {
             DistMatrix<F,VC,STAR> FTL(grid), FBL(grid);
-            elem::LockedPartitionDown
+            El::LockedPartitionDown
             ( front.front1dL, FTL, FBL, front.front1dL.Width() );
             numLocalEntries += FTL.LocalHeight()*FTL.LocalWidth();
         }
         else
         {
             DistMatrix<F> FTL(grid), FBL(grid);
-            elem::LockedPartitionDown
+            El::LockedPartitionDown
             ( front.front2dL, FTL, FBL, front.front2dL.Width() );
             numLocalEntries += FTL.LocalHeight()*FTL.LocalWidth();
         }
@@ -509,7 +509,7 @@ DistSymmFrontTree<F>::BottomLeftMemoryInfo
     {
         const SymmFront<F>& front = localFronts[s];
         Matrix<F> FTL, FBL;
-        elem::LockedPartitionDown
+        El::LockedPartitionDown
         ( front.frontL, FTL, FBL, front.frontL.Width() );
         numLocalEntries += FBL.Height()*FBL.Width();
     }
@@ -519,14 +519,14 @@ DistSymmFrontTree<F>::BottomLeftMemoryInfo
         if( frontsAre1d )
         {
             DistMatrix<F,VC,STAR> FTL(grid), FBL(grid);
-            elem::LockedPartitionDown
+            El::LockedPartitionDown
             ( front.front1dL, FTL, FBL, front.front1dL.Width() );
             numLocalEntries += FBL.LocalHeight()*FBL.LocalWidth();
         }
         else
         {
             DistMatrix<F> FTL(grid), FBL(grid);
-            elem::LockedPartitionDown
+            El::LockedPartitionDown
             ( front.front2dL, FTL, FBL, front.front2dL.Width() );
             numLocalEntries += FBL.LocalHeight()*FBL.LocalWidth();
         }
@@ -581,7 +581,7 @@ DistSymmFrontTree<F>::FactorizationWork
     // Since there are equal numbers of multiplies and adds, and the former
     // takes 6 times as much work in standard complex arithmetic, while the 
     // later only takes twice, the average is 4x more work
-    if( elem::IsComplex<F>::val )
+    if( El::IsComplex<F>::val )
         numLocalFlops *= 4;
 
     minLocalFlops = mpi::AllReduce( numLocalFlops, mpi::MIN, comm );
@@ -629,7 +629,7 @@ DistSymmFrontTree<F>::SolveWork
     // Since there are equal numbers of multiplies and adds, and the former
     // takes 6 times as much work in standard complex arithmetic, while the 
     // later only takes twice, the average is 4x more work
-    if( elem::IsComplex<F>::val )
+    if( El::IsComplex<F>::val )
         numLocalFlops *= 4;
 
     numLocalFlops *= numRhs;

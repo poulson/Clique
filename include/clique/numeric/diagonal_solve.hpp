@@ -55,14 +55,14 @@ inline void LocalDiagonalSolve
     if( PivotedFactorization(L.frontType) )
     {
         for( Int s=0; s<numLocalNodes; ++s )
-            elem::QuasiDiagonalSolve
+            El::QuasiDiagonalSolve
             ( LEFT, LOWER, L.localFronts[s].diag, L.localFronts[s].subdiag, 
               X.localNodes[s], L.isHermitian );
     }
     else
     {
         for( Int s=0; s<numLocalNodes; ++s )
-            elem::DiagonalSolve
+            El::DiagonalSolve
             ( LEFT, NORMAL, L.localFronts[s].diag, X.localNodes[s], true );
     }
 }
@@ -77,14 +77,14 @@ inline void LocalDiagonalSolve
     if( PivotedFactorization(L.frontType) )
     {
         for( Int s=0; s<numLocalNodes; ++s ) 
-            elem::QuasiDiagonalSolve
+            El::QuasiDiagonalSolve
             ( LEFT, LOWER, L.localFronts[s].diag, L.localFronts[s].subdiag, 
               X.localNodes[s], L.isHermitian );
     }
     else
     {
         for( Int s=0; s<numLocalNodes; ++s )
-            elem::DiagonalSolve
+            El::DiagonalSolve
             ( LEFT, NORMAL, L.localFronts[s].diag, X.localNodes[s], true );
     }
 }
@@ -102,7 +102,7 @@ void DistDiagonalSolve
         for( Int s=1; s<numDistNodes; ++s )
         {
             const DistSymmFront<F>& front = L.distFronts[s];
-            elem::QuasiDiagonalSolve
+            El::QuasiDiagonalSolve
             ( LEFT, LOWER, front.diag1d, front.subdiag1d, X.distNodes[s-1],
               L.isHermitian );
         }
@@ -112,7 +112,7 @@ void DistDiagonalSolve
         for( Int s=1; s<numDistNodes; ++s )
         {
             const DistSymmFront<F>& front = L.distFronts[s];
-            elem::DiagonalSolve
+            El::DiagonalSolve
             ( LEFT, NORMAL, front.diag1d, X.distNodes[s-1], true );
         }
     }
@@ -131,7 +131,7 @@ void DistDiagonalSolve
         for( Int s=1; s<numDistNodes; ++s )
         {
             const DistSymmFront<F>& front = L.distFronts[s];
-            elem::QuasiDiagonalSolve
+            El::QuasiDiagonalSolve
             ( LEFT, LOWER, front.diag1d, front.subdiag1d, X.distNodes[s-1],
               L.isHermitian );
         }
@@ -141,7 +141,7 @@ void DistDiagonalSolve
         for( Int s=1; s<numDistNodes; ++s )
         {
             const DistSymmFront<F>& front = L.distFronts[s];
-            elem::DiagonalSolve
+            El::DiagonalSolve
             ( LEFT, NORMAL, front.diag1d, X.distNodes[s-1], true );
         }
     }

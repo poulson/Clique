@@ -16,9 +16,9 @@ namespace cliq {
 
 template<typename T>
 inline void 
-MakeZeros( DistMultiVec<T>& X )
+Zero( DistMultiVec<T>& X )
 {
-    DEBUG_ONLY(CallStackEntry cse("MakeZeros"))
+    DEBUG_ONLY(CallStackEntry cse("Zero"))
     const int localHeight = X.LocalHeight();
     const int width = X.Width();
     for( int j=0; j<width; ++j )
@@ -35,38 +35,38 @@ MakeUniform( DistMultiVec<T>& X )
     const int width = X.Width();
     for( int j=0; j<width; ++j )
         for( int iLocal=0; iLocal<localHeight; ++iLocal )
-            X.SetLocal( iLocal, j, elem::SampleBall<T>() );
+            X.SetLocal( iLocal, j, El::SampleBall<T>() );
 }
 
 template<typename F>
-void Norms( const DistMultiVec<F>& X, std::vector<BASE(F)>& norms )
+void Norms( const DistMultiVec<F>& X, std::vector<Base<F>>& norms )
 {
     DEBUG_ONLY(CallStackEntry cse("Norms"))
-    typedef BASE(F) R;
+    typedef Base<F> Real;
     const int localHeight = X.LocalHeight();
     const int width = X.Width();
     mpi::Comm comm = X.Comm();
 
     norms.resize( width );
-    std::vector<R> localScales( width ),
-                   localScaledSquares( width );
+    std::vector<Real> localScales( width ),
+                      localScaledSquares( width );
     for( int j=0; j<width; ++j )
     {
-        R localScale = 0;
-        R localScaledSquare = 1;
+        Real localScale = 0;
+        Real localScaledSquare = 1;
         for( int iLocal=0; iLocal<localHeight; ++iLocal )
         {
-            const R alphaAbs = Abs(X.GetLocal(iLocal,j));
+            const Real alphaAbs = Abs(X.GetLocal(iLocal,j));
             if( alphaAbs != 0 )
             {
                 if( alphaAbs <= localScale )
                 {
-                    const R relScale = alphaAbs/localScale;
+                    const Real relScale = alphaAbs/localScale;
                     localScaledSquare += relScale*relScale;
                 }
                 else
                 {
-                    const R relScale = localScale/alphaAbs;
+                    const Real relScale = localScale/alphaAbs;
                     localScaledSquare = localScaledSquare*relScale*relScale + 1;
                     localScale = alphaAbs;
                 }
@@ -78,17 +78,17 @@ void Norms( const DistMultiVec<F>& X, std::vector<BASE(F)>& norms )
     }
 
     // Find the maximum relative scales
-    std::vector<R> scales( width );
+    std::vector<Real> scales( width );
     mpi::AllReduce( &localScales[0], &scales[0], width, mpi::MAX, comm );
 
     // Equilibrate the local scaled sums
     for( int j=0; j<width; ++j )
     {
-        const R scale = scales[j];
+        const Real scale = scales[j];
         if( scale != 0 )
         {
             // Equilibrate our local scaled sum to the maximum scale
-            R relScale = localScales[j]/scale;
+            Real relScale = localScales[j]/scale;
             localScaledSquares[j] *= relScale*relScale;
         }
         else
@@ -96,7 +96,7 @@ void Norms( const DistMultiVec<F>& X, std::vector<BASE(F)>& norms )
     }
 
     // Combine the local contributions
-    std::vector<R> scaledSquares( width );
+    std::vector<Real> scaledSquares( width );
     mpi::AllReduce
     ( &localScaledSquares[0], &scaledSquares[0], width, mpi::SUM, comm );
     for( int j=0; j<width; ++j )
@@ -104,13 +104,12 @@ void Norms( const DistMultiVec<F>& X, std::vector<BASE(F)>& norms )
 }
 
 template<typename F>
-BASE(F) Norm( const DistMultiVec<F>& x )
+Base<F> Norm( const DistMultiVec<F>& x )
 {
     DEBUG_ONLY(CallStackEntry cse("Norm"))
     if( x.Width() != 1 )
         LogicError("Norm only applies when there is one column");
-    typedef BASE(F) R;
-    std::vector<R> norms;
+    std::vector<Base<F>> norms;
     Norms( x, norms );
     return norms[0];
 }

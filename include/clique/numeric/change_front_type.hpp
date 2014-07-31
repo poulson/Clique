@@ -94,7 +94,7 @@ inline void ChangeFrontType( DistSymmFrontTree<F>& L, SymmFrontType frontType )
             const int snSize = front.front2dL.Width();
             DistMatrix<F> LT( front.front2dL.Grid() );
             View( LT, front.front2dL, 0, 0, snSize, snSize );
-            elem::TriangularInverse( LOWER, UNIT, LT );
+            El::TriangularInverse( LOWER, UNIT, LT );
         }
         // Convert to 1D if necessary
         if( FrontsAre1d(frontType) )

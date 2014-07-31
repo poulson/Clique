@@ -9,7 +9,6 @@
    http://opensource.org/licenses/BSD-2-Clause
 */
 #include "clique.hpp"
-#include "elemental/matrices/Uniform.hpp"
 using namespace cliq;
 
 int
@@ -156,9 +155,9 @@ main( int argc, char* argv[] )
                 const int numDistFronts = frontTree.distFronts.size();
                 const int numLocalFronts = frontTree.localFronts.size();
                 for( int s=0; s<numLocalFronts; ++s )
-                    elem::MakeUniform( frontTree.localFronts[s].frontL );
+                    El::MakeUniform( frontTree.localFronts[s].frontL );
                 for( int s=1; s<numDistFronts; ++s )
-                    elem::MakeUniform( frontTree.distFronts[s].front2dL );
+                    El::MakeUniform( frontTree.distFronts[s].front2dL );
             }
 
             if( commRank == 0 )

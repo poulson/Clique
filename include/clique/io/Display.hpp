@@ -48,7 +48,7 @@ Display( const Graph& graph, std::string title )
     auto graphMat = new Matrix<int>;
     const int m = graph.NumTargets();
     const int n = graph.NumSources();
-    elem::Zeros( *graphMat, m, n );
+    El::Zeros( *graphMat, m, n );
 
     const int numEdges = graph.NumEdges();
     const int* srcBuf = graph.LockedSourceBuffer();
@@ -57,12 +57,12 @@ Display( const Graph& graph, std::string title )
         graphMat->Set( tgtBuf[e], srcBuf[e], 1 );
 
     QString qTitle = QString::fromStdString( title );
-    auto spyWindow = new elem::SpyWindow;
+    auto spyWindow = new El::SpyWindow;
     spyWindow->Spy( graphMat, qTitle );
     spyWindow->show();
 
     // Spend at most 200 milliseconds rendering
-    elem::ProcessEvents( 200 );
+    El::ProcessEvents( 200 );
 #else
     Print( graph, title );
 #endif
@@ -105,17 +105,17 @@ Display( const DistGraph& graph, std::string title )
         auto graphMat = new Matrix<int>;
         const int m = graph.NumTargets();
         const int n = graph.NumSources();
-        elem::Zeros( *graphMat, m, n );
+        El::Zeros( *graphMat, m, n );
         for( int e=0; e<numEdges; ++e )
             graphMat->Set( targets[e], sources[e], 1 );
 
         QString qTitle = QString::fromStdString( title );
-        auto spyWindow = new elem::SpyWindow;
+        auto spyWindow = new El::SpyWindow;
         spyWindow->Spy( graphMat, qTitle );
         spyWindow->show();
 
         // Spend at most 200 milliseconds rendering
-        elem::ProcessEvents( 200 );
+        El::ProcessEvents( 200 );
     }
 #else
     Print( graph, title );
@@ -131,7 +131,7 @@ Display( const SparseMatrix<T>& A, std::string title )
     auto AFull = new Matrix<double>;
     const int m = A.Height();
     const int n = A.Width();
-    elem::Zeros( *AFull, m, n );
+    El::Zeros( *AFull, m, n );
 
     const int numEntries = A.NumEntries();
     const int* srcBuf = A.LockedSourceBuffer();
@@ -141,12 +141,12 @@ Display( const SparseMatrix<T>& A, std::string title )
         AFull->Set( tgtBuf[s], srcBuf[s], double(valBuf[s]) );
 
     QString qTitle = QString::fromStdString( title );
-    auto displayWindow = new elem::DisplayWindow;
+    auto displayWindow = new El::DisplayWindow;
     displayWindow->Display( AFull, qTitle );
     displayWindow->show();
 
     // Spend at most 200 milliseconds rendering
-    elem::ProcessEvents( 200 );
+    El::ProcessEvents( 200 );
 #else
     Print( A, title );
 #endif
@@ -161,7 +161,7 @@ Display( const SparseMatrix<Complex<T>>& A, std::string title )
     auto AFull = new Matrix<Complex<double>>;
     const int m = A.Height();
     const int n = A.Width();
-    elem::Zeros( *AFull, m, n );
+    El::Zeros( *AFull, m, n );
 
     const int numEntries = A.NumEntries();
     const int* srcBuf = A.LockedSourceBuffer();
@@ -175,12 +175,12 @@ Display( const SparseMatrix<Complex<T>>& A, std::string title )
     }
 
     QString qTitle = QString::fromStdString( title );
-    auto displayWindow = new elem::ComplexDisplayWindow;
+    auto displayWindow = new El::ComplexDisplayWindow;
     displayWindow->Display( AFull, qTitle );
     displayWindow->show();
 
     // Spend at most 200 milliseconds rendering
-    elem::ProcessEvents( 200 );
+    El::ProcessEvents( 200 );
 #else
     Print( A, title );
 #endif
@@ -229,18 +229,18 @@ Display( const DistSparseMatrix<T>& A, std::string title )
         auto AFull = new Matrix<double>;
         const int m = A.Height();
         const int n = A.Width();
-        elem::Zeros( *AFull, m, n );
+        El::Zeros( *AFull, m, n );
 
         for( int s=0; s<numNonzeros; ++s )
             AFull->Set( targets[s], sources[s], double(values[s]) );
 
         QString qTitle = QString::fromStdString( title );
-        auto displayWindow = new elem::DisplayWindow;
+        auto displayWindow = new El::DisplayWindow;
         displayWindow->Display( AFull, qTitle );
         displayWindow->show();
 
         // Spend at most 200 milliseconds rendering
-        elem::ProcessEvents( 200 );
+        El::ProcessEvents( 200 );
     }
 #else
     Print( A, title );
@@ -290,7 +290,7 @@ Display( const DistSparseMatrix<Complex<T>>& A, std::string title )
         auto AFull = new Matrix<Complex<double>>;
         const int m = A.Height();
         const int n = A.Width();
-        elem::Zeros( *AFull, m, n );
+        El::Zeros( *AFull, m, n );
 
         for( int s=0; s<numNonzeros; ++s )
         {
@@ -300,12 +300,12 @@ Display( const DistSparseMatrix<Complex<T>>& A, std::string title )
         }
 
         QString qTitle = QString::fromStdString( title );
-        auto displayWindow = new elem::ComplexDisplayWindow;
+        auto displayWindow = new El::ComplexDisplayWindow;
         displayWindow->Display( AFull, qTitle );
         displayWindow->show();
 
         // Spend at most 200 milliseconds rendering
-        elem::ProcessEvents( 200 );
+        El::ProcessEvents( 200 );
     }
 #else
     Print( A, title );
@@ -319,7 +319,7 @@ DisplayLocal( const DistSymmInfo& info, bool beforeFact, std::string title )
 #ifdef HAVE_QT5
     const int n = info.distNodes.back().size + info.distNodes.back().off;
     auto graphMat = new Matrix<int>;
-    elem::Zeros( *graphMat, n, n );
+    El::Zeros( *graphMat, n, n );
 
     const int numLocal = info.localNodes.size();
     for( int s=0; s<numLocal; ++s )
@@ -368,12 +368,12 @@ DisplayLocal( const DistSymmInfo& info, bool beforeFact, std::string title )
     }
 
     QString qTitle = QString::fromStdString( title );
-    auto spyWindow = new elem::SpyWindow;
+    auto spyWindow = new El::SpyWindow;
     spyWindow->Spy( graphMat, qTitle );
     spyWindow->show();
 
     // Spend at most 200 milliseconds rendering
-    elem::ProcessEvents( 200 );
+    El::ProcessEvents( 200 );
 #else
     PrintLocal( info );
 #endif

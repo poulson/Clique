@@ -70,7 +70,7 @@ inline void DistLowerMultiplyNormal
         DistMatrix<T,VC,STAR> WT(grid), WB(grid);
         PartitionDown( W, WT, WB, node.size );
         WT = X.distNodes[s-1];
-        elem::MakeZeros( WB );
+        El::Zero( WB );
 
         // Now that the right-hand side is set up, perform the multiply
         FrontLowerMultiply( NORMAL, diagOff, front.front1dL, W );

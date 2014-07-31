@@ -33,7 +33,7 @@ void FrontLowerMultiplyTranspose
 //----------------------------------------------------------------------------//
 
 namespace internal {
-using namespace elem;
+using namespace El;
 
 template<typename T>
 void ModifyForTrmm( DistMatrix<T,STAR,STAR>& D, int diagOff )
@@ -106,13 +106,13 @@ inline void FrontLowerMultiplyNormal
          XB, L.Width() );
     while( XT.Height() > 0 )
     {
-        elem::LockedRepartitionUpDiagonal
+        El::LockedRepartitionUpDiagonal
         ( LTL, /**/ LTR,  L00, L01, /**/ L02,
                /**/       L10, L11, /**/ L12,
          /*************/ /******************/
           LBL, /**/ LBR,  L20, L21, /**/ L22 );
 
-        elem::RepartitionUp
+        El::RepartitionUp
         ( XT,  X0,
                X1,
          /**/ /**/
@@ -120,12 +120,12 @@ inline void FrontLowerMultiplyNormal
 
         //--------------------------------------------------------------------//
         X1_STAR_STAR = X1;
-        elem::LocalGemm( NORMAL, NORMAL, T(1), L21, X1_STAR_STAR, T(1), X2 );
+        El::LocalGemm( NORMAL, NORMAL, T(1), L21, X1_STAR_STAR, T(1), X2 );
 
         if( diagOff == 0 )
         {
             L11_STAR_STAR = L11;
-            elem::LocalTrmm
+            El::LocalTrmm
             ( LEFT, LOWER, NORMAL, NON_UNIT, 
               T(1), L11_STAR_STAR, X1_STAR_STAR );
         }
@@ -133,20 +133,20 @@ inline void FrontLowerMultiplyNormal
         {
             L11_STAR_STAR = L11;
             internal::ModifyForTrmm( L11_STAR_STAR, diagOff );
-            elem::LocalTrmm
+            El::LocalTrmm
             ( LEFT, LOWER, NORMAL, NON_UNIT, 
               T(1), L11_STAR_STAR, X1_STAR_STAR );
         }
         X1 = X1_STAR_STAR;
         //--------------------------------------------------------------------//
 
-        elem::SlideLockedPartitionUpDiagonal
+        El::SlideLockedPartitionUpDiagonal
         ( LTL, /**/ LTR,  L00, /**/ L01, L02,
          /*************/ /******************/
                /**/       L10, /**/ L11, L12,
           LBL, /**/ LBR,  L20, /**/ L21, L22 );
 
-        elem::SlidePartitionUp
+        El::SlidePartitionUp
         ( XT,  X0,
          /**/ /**/
                X1,
@@ -216,21 +216,21 @@ inline void FrontLowerMultiplyTranspose
         L11_STAR_STAR = L11;
         if( diagOff == 0 )
         {
-            elem::LocalTrmm
+            El::LocalTrmm
             ( LEFT, LOWER, orientation, NON_UNIT, 
               T(1), L11_STAR_STAR, X1_STAR_STAR );
         }
         else
         {
             internal::ModifyForTrmm( L11_STAR_STAR, diagOff );
-            elem::LocalTrmm
+            El::LocalTrmm
             ( LEFT, LOWER, orientation, NON_UNIT, 
               T(1), L11_STAR_STAR, X1_STAR_STAR );
         }
         X1 = X1_STAR_STAR;
 
         Z1_STAR_STAR.ResizeTo( X1.Height(), X1.Width() );
-        elem::LocalGemm
+        El::LocalGemm
         ( orientation, NORMAL, T(1), L21, X2, T(0), Z1_STAR_STAR );
         X1.SumScatterUpdate( T(1), Z1_STAR_STAR );
         //--------------------------------------------------------------------//

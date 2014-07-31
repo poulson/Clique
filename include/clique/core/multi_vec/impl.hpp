@@ -16,9 +16,9 @@ namespace cliq {
 
 template<typename T>
 inline void 
-MakeZeros( MultiVec<T>& X )
+Zero( MultiVec<T>& X )
 {
-    DEBUG_ONLY(CallStackEntry cse("MakeZeros"))
+    DEBUG_ONLY(CallStackEntry cse("Zero"))
     const int height = X.Height();
     const int width = X.Width();
     for( int j=0; j<width; ++j )
@@ -35,36 +35,36 @@ MakeUniform( MultiVec<T>& X )
     const int width = X.Width();
     for( int j=0; j<width; ++j )
         for( int i=0; i<height; ++i )
-            X.Set( i, j, elem::SampleBall<T>() );
+            X.Set( i, j, El::SampleBall<T>() );
 }
 
 template<typename F>
 inline void
-Norms( const MultiVec<F>& X, std::vector<BASE(F)>& norms )
+Norms( const MultiVec<F>& X, std::vector<Base<F>>& norms )
 {
     DEBUG_ONLY(CallStackEntry cse("Norms"))
-    typedef BASE(F) R;
+    typedef Base<F> Real;
     const int height = X.Height();
     const int width = X.Width();
 
     norms.resize( width );
     for( int j=0; j<width; ++j )
     {
-        R scale = 0;
-        R scaledSquare = 1;
+        Real scale = 0;
+        Real scaledSquare = 1;
         for( int i=0; i<height; ++i )
         {
-            const R alphaAbs = Abs(X.Get(i,j));
+            const Real alphaAbs = Abs(X.Get(i,j));
             if( alphaAbs != 0 )
             {
                 if( alphaAbs <= scale )
                 {
-                    const R relScale = alphaAbs/scale;
+                    const Real relScale = alphaAbs/scale;
                     scaledSquare += relScale*relScale;
                 }
                 else
                 {
-                    const R relScale = scale/alphaAbs;
+                    const Real relScale = scale/alphaAbs;
                     scaledSquare = scaledSquare*relScale*relScale + 1;
                     scale = alphaAbs;
                 }
@@ -75,14 +75,12 @@ Norms( const MultiVec<F>& X, std::vector<BASE(F)>& norms )
 }
 
 template<typename F>
-inline BASE(F)
-Norm( const MultiVec<F>& x )
+inline Base<F> Norm( const MultiVec<F>& x )
 {
     DEBUG_ONLY(CallStackEntry cse("Norm"))
     if( x.Width() != 1 )
         LogicError("Norms only applies with one column");
-    typedef BASE(F) R;
-    std::vector<R> norms;
+    std::vector<Base<F>> norms;
     Norms( x, norms );
     return norms[0];
 }

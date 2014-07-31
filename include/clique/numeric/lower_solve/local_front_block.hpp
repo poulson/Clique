@@ -41,10 +41,10 @@ inline void FrontBlockLowerForwardSolve( const Matrix<F>& L, Matrix<F>& X )
 
     // XT := inv(ATL) XT
     Matrix<F> YT( XT );
-    elem::Gemm( NORMAL, NORMAL, F(1), LT, YT, F(0), XT );
+    El::Gemm( NORMAL, NORMAL, F(1), LT, YT, F(0), XT );
 
     // XB := XB - LB XT
-    elem::Gemm( NORMAL, NORMAL, F(-1), LB, XT, F(1), XB );
+    El::Gemm( NORMAL, NORMAL, F(-1), LB, XT, F(1), XB );
 }
 
 template<typename F>
@@ -65,10 +65,10 @@ inline void FrontBlockLowerBackwardSolve
     // YT := LB^[T/H] XB
     Matrix<F> YT;
     const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
-    elem::Gemm( orientation, NORMAL, F(1), LB, XB, YT );
+    El::Gemm( orientation, NORMAL, F(1), LB, XB, YT );
 
     // XT := XT - inv(ATL) YT
-    elem::Gemm( NORMAL, NORMAL, F(-1), LT, YT, F(1), XT );
+    El::Gemm( NORMAL, NORMAL, F(-1), LT, YT, F(1), XT );
 }
 
 } // namespace cliq

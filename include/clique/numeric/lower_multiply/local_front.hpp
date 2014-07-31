@@ -30,7 +30,7 @@ void FrontLowerMultiplyTranspose
 //----------------------------------------------------------------------------//
 
 namespace internal {
-using namespace elem;
+using namespace El;
 
 template<typename T> 
 void ModifyForTrmm
@@ -104,17 +104,17 @@ inline void FrontLowerMultiplyNormal
     Matrix<T> XT, XB;
     PartitionDown( X, XT, XB, L.Width() );
 
-    elem::Gemm( NORMAL, NORMAL, T(1), LB, XT, T(1), XB );
+    El::Gemm( NORMAL, NORMAL, T(1), LB, XT, T(1), XB );
 
     if( diagOff == 0 )
     {
-        elem::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, T(1), LT, XT );
+        El::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, T(1), LT, XT );
     }
     else
     {
         std::vector<Matrix<T>> diagonals;
         internal::ModifyForTrmm( LT, diagOff, diagonals );
-        elem::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, T(1), LT, XT );
+        El::Trmm( LEFT, LOWER, NORMAL, NON_UNIT, T(1), LT, XT );
         internal::ReplaceAfterTrmm( LT, diagOff, diagonals );
     }
 }
@@ -141,17 +141,17 @@ inline void FrontLowerMultiplyTranspose
     PartitionDown( X, XT, XB, L.Width() );
     if( diagOff == 0 )
     {
-        elem::Trmm( LEFT, LOWER, orientation, NON_UNIT, T(1), LT, XT );
+        El::Trmm( LEFT, LOWER, orientation, NON_UNIT, T(1), LT, XT );
     }
     else
     {
         std::vector<Matrix<T>> diagonals;
         internal::ModifyForTrmm( LT, diagOff, diagonals );
-        elem::Trmm( LEFT, LOWER, orientation, NON_UNIT, T(1), LT, XT );
+        El::Trmm( LEFT, LOWER, orientation, NON_UNIT, T(1), LT, XT );
         internal::ReplaceAfterTrmm( LT, diagOff, diagonals );
     }
 
-    elem::Gemm( orientation, NORMAL, T(1), LB, XB, T(1), XT );
+    El::Gemm( orientation, NORMAL, T(1), LB, XB, T(1), XT );
 }
 
 } // namespace cliq

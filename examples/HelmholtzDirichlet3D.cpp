@@ -9,8 +9,6 @@
    http://opensource.org/licenses/BSD-2-Clause
 */
 #include "clique.hpp"
-#include "elemental/lapack-like/props/Norm/Max.hpp"
-#include "elemental/lapack-like/decomp/SVD.hpp"
 using namespace cliq;
 
 int
@@ -19,8 +17,8 @@ main( int argc, char* argv[] )
     Initialize( argc, argv );
     mpi::Comm comm = mpi::COMM_WORLD;
     const int commRank = mpi::Rank( comm );
-    typedef double R;
-    typedef Complex<R> C;
+    typedef double Real;
+    typedef Complex<Real> C;
 
     try
     {
@@ -111,7 +109,7 @@ main( int argc, char* argv[] )
         const double multiplyStart = mpi::Time();
         DistMultiVec<C> x( N, 1, comm ), y( N, 1, comm );
         MakeUniform( x );
-        MakeZeros( y );
+        Zero( y );
         Multiply( C(1), A, x, C(0), y );
         const double yOrigNorm = Norm( y );
         mpi::Barrier( comm );
@@ -215,11 +213,11 @@ main( int argc, char* argv[] )
             const int width = frontL.Width();
             auto B = LockedView( frontL, width, 0, height-width, width );
             auto BCopy( B );
-            DistMatrix<R,VR,STAR> singVals_VR_STAR( grid );
-            elem::SVD( BCopy, singVals_VR_STAR );
-            DistMatrix<R,CIRC,CIRC> singVals( singVals_VR_STAR );
+            DistMatrix<Real,VR,STAR> singVals_VR_STAR( grid );
+            El::SVD( BCopy, singVals_VR_STAR );
+            DistMatrix<Real,CIRC,CIRC> singVals( singVals_VR_STAR );
             mpi::Barrier( grid.Comm() );
-            const R twoNorm = elem::MaxNorm( singVals_VR_STAR );
+            const Real twoNorm = El::MaxNorm( singVals_VR_STAR );
             const Int minDim = singVals_VR_STAR.Height();
             if( grid.Rank() == singVals.Root() )
             {
@@ -260,11 +258,11 @@ main( int argc, char* argv[] )
             auto offDiagBlock = 
                 LockedView( front, lowerHalf, 0, upperHalf, lowerHalf );
             auto offDiagBlockCopy( offDiagBlock );
-            DistMatrix<R,VR,STAR> singVals_VR_STAR( grid );
-            elem::SVD( offDiagBlockCopy, singVals_VR_STAR );
-            DistMatrix<R,CIRC,CIRC> singVals( singVals_VR_STAR );
+            DistMatrix<Real,VR,STAR> singVals_VR_STAR( grid );
+            El::SVD( offDiagBlockCopy, singVals_VR_STAR );
+            DistMatrix<Real,CIRC,CIRC> singVals( singVals_VR_STAR );
             mpi::Barrier( grid.Comm() );
-            const R twoNorm = elem::MaxNorm( singVals_VR_STAR );
+            const Real twoNorm = El::MaxNorm( singVals_VR_STAR );
             if( grid.Rank() == singVals.Root() )
             {
                 std::cout << "done, " << mpi::Time()-svdStart << " seconds\n";

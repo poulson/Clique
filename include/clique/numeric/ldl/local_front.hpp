@@ -46,28 +46,27 @@ inline void FrontLDL( Matrix<F>& AL, Matrix<F>& ABR, bool conjugate )
     Matrix<F> S21T, S21B;
     Matrix<F> AL21T, AL21B;
 
-    const Int bsize = elem::Blocksize();
+    const Int bsize = El::Blocksize();
     for( Int k=0; k<n; k+=bsize )
     {
-        const Int nb = elem::Min(bsize,n-k);
+        const Int nb = El::Min(bsize,n-k);
         auto AL11 = ViewRange( AL, k,    k,    k+nb, k+nb );
         auto AL21 = ViewRange( AL, k+nb, k,    m,    k+nb );
         auto AL22 = ViewRange( AL, k+nb, k+nb, m,    n    );
 
-        elem::ldl::Var3Unb( AL11, conjugate );
+        El::LDL( AL11, conjugate );
         AL11.GetDiagonal( d1 );
 
-        elem::Trsm( RIGHT, LOWER, orientation, UNIT, F(1), AL11, AL21 );
+        El::Trsm( RIGHT, LOWER, orientation, UNIT, F(1), AL11, AL21 );
 
         S21 = AL21;
-        elem::DiagonalSolve( RIGHT, NORMAL, d1, AL21 );
+        El::DiagonalSolve( RIGHT, NORMAL, d1, AL21 );
 
         PartitionDown( S21, S21T, S21B, AL22.Width() );
         PartitionDown( AL21, AL21T, AL21B, AL22.Width() );
-        elem::Gemm( NORMAL, orientation, F(-1), S21, AL21T, F(1), AL22 );
-        elem::MakeTriangular( LOWER, AL22 );
-        elem::internal::TrrkNT
-        ( LOWER, orientation, F(-1), S21B, AL21B, F(1), ABR );
+        El::Gemm( NORMAL, orientation, F(-1), S21, AL21T, F(1), AL22 );
+        El::MakeTriangular( LOWER, AL22 );
+        El::Trrk( LOWER, NORMAL, orientation, F(-1), S21B, AL21B, F(1), ABR );
     }
 }
 
@@ -83,15 +82,15 @@ void FrontLDLIntraPiv
     Matrix<F> ATL, ABL;
     PartitionDown( AL, ATL, ABL, n );
 
-    elem::ldl::Pivoted( ATL, subdiag, piv, conjugate, elem::BUNCH_KAUFMAN_A );
+    El::LDL( ATL, subdiag, piv, conjugate, El::BUNCH_KAUFMAN_A );
     auto diag = ATL.GetDiagonal();
 
-    elem::ApplyInverseColumnPivots( ABL, piv );
-    elem::Trsm( RIGHT, LOWER, orientation, UNIT, F(1), ATL, ABL );
+    El::PermuteCols( ABL, piv );
+    El::Trsm( RIGHT, LOWER, orientation, UNIT, F(1), ATL, ABL );
     Matrix<F> SBL( ABL );
 
-    elem::QuasiDiagonalSolve( RIGHT, LOWER, diag, subdiag, ABL, conjugate );
-    elem::internal::TrrkNT( LOWER, orientation, F(-1), SBL, ABL, F(1), ABR );
+    El::QuasiDiagonalSolve( RIGHT, LOWER, diag, subdiag, ABL, conjugate );
+    El::Trrk( LOWER, NORMAL, orientation, F(-1), SBL, ABL, F(1), ABR );
 }
 
 } // namespace cliq

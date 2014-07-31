@@ -232,7 +232,7 @@ inline void ComputeMultiVecCommMeta( DistSymmInfo& info )
         MultiVecCommMeta& commMeta = node.multiVecMeta;
         commMeta.Empty();
         commMeta.numChildSendInds.resize( teamSize );
-        elem::MemZero( &commMeta.numChildSendInds[0], teamSize );
+        El::MemZero( &commMeta.numChildSendInds[0], teamSize );
         const Int updateSize = childNode.lowerStruct.size();
         {
             const Int align = childNode.size % childTeamSize;
@@ -315,7 +315,7 @@ inline void ComputeFactorCommMeta
         const Int mySize = childNode.size;
         const Int updateSize = childNode.lowerStruct.size();
         commMeta.numChildSendInds.resize( teamSize );
-        elem::MemZero( &commMeta.numChildSendInds[0], teamSize );
+        El::MemZero( &commMeta.numChildSendInds[0], teamSize );
         const std::vector<Int>& myRelInds = 
             ( childNode.onLeft ? node.leftRelInds : node.rightRelInds );
         {
@@ -570,7 +570,7 @@ void GetChildGridDims
 {
     const bool onLeft = childNode.onLeft;
     const int childTeamRank = mpi::Rank( childNode.comm );
-    elem::MemZero( childGridDims, 4 );
+    El::MemZero( childGridDims, 4 );
     if( onLeft && childTeamRank == 0 )
     {
         childGridDims[0] = childNode.grid->Height();

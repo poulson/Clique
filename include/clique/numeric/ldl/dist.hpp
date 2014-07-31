@@ -222,7 +222,7 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
             front.subdiag1d.SetGrid( grid );
             front.diag1d = diag;
             front.subdiag1d = subdiag;
-            elem::SetDiagonal( front.front2dL, F(1) );
+            El::SetDiagonal( front.front2dL, F(1) );
         }
         else
         {
@@ -232,7 +232,7 @@ DistLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
             auto diag = front.front2dL.GetDiagonal();
             front.diag1d.SetGrid( grid );
             front.diag1d = diag;
-            elem::SetDiagonal( front.front2dL, F(1) );
+            El::SetDiagonal( front.front2dL, F(1) );
         }
     }
     L.localFronts.back().work.Empty();

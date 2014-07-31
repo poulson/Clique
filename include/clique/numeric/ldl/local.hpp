@@ -110,13 +110,13 @@ LocalLDL( DistSymmInfo& info, DistSymmFrontTree<F>& L )
             FrontLDLIntraPiv
             ( frontL, front.subdiag, front.piv, frontBR, L.isHermitian );
             frontL.GetDiagonal( front.diag );
-            elem::SetDiagonal( frontL, F(1) );
+            El::SetDiagonal( frontL, F(1) );
         }
         else
         {
             FrontLDL( frontL, frontBR, L.isHermitian );
             frontL.GetDiagonal( front.diag );
-            elem::SetDiagonal( frontL, F(1) );
+            El::SetDiagonal( frontL, F(1) );
         }
     }
 }

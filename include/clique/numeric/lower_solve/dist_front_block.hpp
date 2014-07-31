@@ -68,13 +68,13 @@ inline void FrontBlockLowerForwardSolve
 
     // XT := inv(ATL) XT
     DistMatrix<F,STAR,STAR> XT_STAR_STAR( XT );
-    elem::LocalGemm( NORMAL, NORMAL, F(1), LT, XT_STAR_STAR, F(0), XT );
+    El::LocalGemm( NORMAL, NORMAL, F(1), LT, XT_STAR_STAR, F(0), XT );
 
     // XB := XB - LB XT
     if( LB.Height() != 0 )
     {
         XT_STAR_STAR = XT;
-        elem::LocalGemm( NORMAL, NORMAL, F(-1), LB, XT_STAR_STAR, F(1), XB );
+        El::LocalGemm( NORMAL, NORMAL, F(-1), LB, XT_STAR_STAR, F(1), XB );
     }
 }
 
@@ -114,7 +114,7 @@ inline void FrontBlockLowerForwardSolve
         XT_MR_STAR = XT;
         DistMatrix<F,MC,STAR> ZT_MC_STAR(g);
         ZT_MC_STAR.AlignWith( LT );
-        elem::LocalGemm( NORMAL, NORMAL, F(1), LT, XT_MR_STAR, ZT_MC_STAR );
+        El::LocalGemm( NORMAL, NORMAL, F(1), LT, XT_MR_STAR, ZT_MC_STAR );
 
         // XT[VC,* ] := SumScatterFrom( ZT[MC,* ] )
         XT.SumScatterFrom( ZT_MC_STAR );
@@ -126,7 +126,7 @@ inline void FrontBlockLowerForwardSolve
         XT_MR_STAR = XT;
         DistMatrix<F,MC,STAR> ZB_MC_STAR(g);
         ZB_MC_STAR.AlignWith( LB );
-        elem::LocalGemm( NORMAL, NORMAL, F(1), LB, XT_MR_STAR, ZB_MC_STAR );
+        El::LocalGemm( NORMAL, NORMAL, F(1), LB, XT_MR_STAR, ZB_MC_STAR );
 
         // XB[VC,* ] -= ZB[MC,* ] = LB[MC,MR] XT[MR,* ]
         XB.SumScatterUpdate( F(-1), ZB_MC_STAR );
@@ -161,10 +161,10 @@ inline void FrontBlockLowerForwardSolve
 
     // XT := inv(ATL) XT
     DistMatrix<F> Z( XT );
-    elem::Gemm( NORMAL, NORMAL, F(1), LT, Z, XT );
+    El::Gemm( NORMAL, NORMAL, F(1), LT, Z, XT );
 
     // XB := XB - LB XT
-    elem::Gemm( NORMAL, NORMAL, F(-1), LB, XT, F(1), XB );
+    El::Gemm( NORMAL, NORMAL, F(-1), LB, XT, F(1), XB );
 }
 
 template<typename F>
@@ -200,13 +200,13 @@ inline void FrontBlockLowerBackwardSolve
     // YT := LB^{T/H} XB
     DistMatrix<F,STAR,STAR> Z( g );
     const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
-    elem::LocalGemm( orientation, NORMAL, F(1), LB, XB, Z );
+    El::LocalGemm( orientation, NORMAL, F(1), LB, XB, Z );
     DistMatrix<F,VC,STAR> YT(g);
     YT.AlignWith( XT );
     YT.SumScatterFrom( Z );
 
     // XT := XT - inv(ATL) YT
-    elem::LocalGemm( NORMAL, NORMAL, F(1), LT, YT, Z );
+    El::LocalGemm( NORMAL, NORMAL, F(1), LT, YT, Z );
     XT.SumScatterUpdate( F(-1), Z );
 }
 
@@ -251,7 +251,7 @@ inline void FrontBlockLowerBackwardSolve
         DistMatrix<F,MC,STAR> XB_MC_STAR( g );
         XB_MC_STAR.AlignWith( LB );
         XB_MC_STAR = XB;
-        elem::LocalGemm
+        El::LocalGemm
         ( orientation, NORMAL, F(1), LB, XB_MC_STAR, ZT_MR_STAR );
 
         // ZT[VR,* ].SumScatterFrom( ZT[MR,* ] )
@@ -266,7 +266,7 @@ inline void FrontBlockLowerBackwardSolve
         DistMatrix<F,MC,STAR> YT_MC_STAR( g );
         YT_MC_STAR.AlignWith( LT );
         YT_MC_STAR = YT;
-        elem::LocalGemm
+        El::LocalGemm
         ( orientation, NORMAL, F(1), LT, YT_MC_STAR, ZT_MR_STAR );
 
         // ZT[VR,* ].SumScatterFrom( ZT[MR,* ] )
@@ -278,7 +278,7 @@ inline void FrontBlockLowerBackwardSolve
         ZT_VC_STAR = ZT_VR_STAR;
 
         // XT[VC,* ] -= ZT[VC,* ]
-        elem::Axpy( F(-1), ZT_VC_STAR, XT );
+        El::Axpy( F(-1), ZT_VC_STAR, XT );
     }
 }
 
@@ -312,10 +312,10 @@ inline void FrontBlockLowerBackwardSolve
     // YT := LB^{T/H} XB
     const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
     DistMatrix<F> YT( XT.Grid() );
-    elem::Gemm( orientation, NORMAL, F(1), LB, XB, YT );
+    El::Gemm( orientation, NORMAL, F(1), LB, XB, YT );
 
     // XT := XT - inv(ATL) YT
-    elem::Gemm( NORMAL, NORMAL, F(-1), LT, YT, F(1), XT );
+    El::Gemm( NORMAL, NORMAL, F(-1), LT, YT, F(1), XT );
 }
 
 } // namespace cliq

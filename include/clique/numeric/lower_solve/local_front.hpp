@@ -46,8 +46,8 @@ inline void FrontLowerForwardSolve( const Matrix<F>& L, Matrix<F>& X )
     LockedPartitionDown( L, LT, LB, L.Width() );
     PartitionDown( X, XT, XB, L.Width() );
 
-    elem::Trsm( LEFT, LOWER, NORMAL, NON_UNIT, F(1), LT, XT, true );
-    elem::Gemm( NORMAL, NORMAL, F(-1), LB, XT, F(1), XB );
+    El::Trsm( LEFT, LOWER, NORMAL, NON_UNIT, F(1), LT, XT, true );
+    El::Gemm( NORMAL, NORMAL, F(-1), LB, XT, F(1), XB );
 }
 
 template<typename F>
@@ -57,7 +57,7 @@ inline void FrontIntraPivLowerForwardSolve
     DEBUG_ONLY(CallStackEntry cse("FrontIntraPivLowerForwardSolve"))
     Matrix<F> XT, XB;
     PartitionDown( X, XT, XB, L.Width() );
-    elem::ApplyRowPivots( XT, p );
+    El::PermuteRows( XT, p );
     FrontLowerForwardSolve( L, X );
 }
 
@@ -77,8 +77,8 @@ inline void FrontLowerBackwardSolve
     PartitionDown( X, XT, XB, L.Width() );
 
     const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
-    elem::Gemm( orientation, NORMAL, F(-1), LB, XB, F(1), XT );
-    elem::Trsm( LEFT, LOWER, orientation, NON_UNIT, F(1), LT, XT, true );
+    El::Gemm( orientation, NORMAL, F(-1), LB, XB, F(1), XT );
+    El::Trsm( LEFT, LOWER, orientation, NON_UNIT, F(1), LT, XT, true );
 }
 
 template<typename F>
@@ -89,7 +89,7 @@ inline void FrontIntraPivLowerBackwardSolve
     FrontLowerBackwardSolve( L, X, conjugate );
     Matrix<F> XT, XB;
     PartitionDown( X, XT, XB, L.Width() );
-    elem::ApplyInverseRowPivots( XT, p );
+    El::InversePermuteRows( XT, p );
 }
 
 } // namespace cliq

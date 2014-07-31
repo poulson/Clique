@@ -196,7 +196,7 @@ main( int argc, char* argv[] )
             std::cout << "Running LDL^T and redistribution...";
             std::cout.flush();
         }
-        elem::SetBlocksize( nbFact );
+        El::SetBlocksize( nbFact );
         mpi::Barrier( comm );
         const double ldlStart = mpi::Time();
         if( solve2d )
@@ -279,7 +279,7 @@ main( int argc, char* argv[] )
                  nbSolve+=nbSolveInc )
             {
                 MakeUniform( Y );
-                elem::SetBlocksize( nbSolve );
+                El::SetBlocksize( nbSolve );
                 if( commRank == 0 )
                 {
                     std::cout << "  nbSolve=" << nbSolve << "...";

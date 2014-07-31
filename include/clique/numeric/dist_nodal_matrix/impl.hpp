@@ -135,7 +135,7 @@ DistNodalMatrix<F>::ComputeCommMetas( const DistSymmInfo& info ) const
         MatrixCommMeta& commMeta = commMetas[s-1];
         commMeta.Empty();
         commMeta.numChildSendInds.resize( teamSize );
-        elem::MemZero( &commMeta.numChildSendInds[0], teamSize );
+        El::MemZero( &commMeta.numChildSendInds[0], teamSize );
         const int updateSize = childNode.lowerStruct.size();
         const std::vector<int>& myRelInds =
             ( childNode.onLeft ? node.leftRelInds : node.rightRelInds );

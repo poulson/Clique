@@ -38,20 +38,24 @@ inline void FrontBlockLDL
         Matrix<Int> p;
         Matrix<F> dSub;
         // TODO: Expose the pivot type as an option?
-        elem::ldl::Pivoted( ATL, dSub, p, conjugate, elem::BUNCH_KAUFMAN_A );
+        El::LDL( ATL, dSub, p, conjugate, El::BUNCH_KAUFMAN_A );
 
         // Solve against ABL and update ABR
-        elem::ldl::SolveAfter( ATL, dSub, p, ABL, conjugate );
+        // NOTE: This does not exploit symmetry
+        El::ldl::SolveAfter( ATL, dSub, p, ABL, conjugate );
         const Orientation orientation = ( conjugate ? ADJOINT : TRANSPOSE );
-        elem::Gemm( NORMAL, orientation, F(-1), ABL, BBL, F(1), ABR );
+        El::Gemm( NORMAL, orientation, F(-1), ABL, BBL, F(1), ABR );
 
         // Copy the original contents of ABL back
         ABL = BBL;
 
         // Finish inverting ATL
-        elem::TriangularInverse( LOWER, UNIT, ATL );
-        elem::Trdtrmm( LOWER, ATL, dSub, conjugate );
-        elem::ApplyInverseSymmetricPivots( LOWER, ATL, p, conjugate );
+        El::TriangularInverse( LOWER, UNIT, ATL );
+        El::Trdtrmm( LOWER, ATL, dSub, conjugate );
+        // TODO: SymmetricPermutation
+        El::MakeSymmetric( LOWER, ATL, conjugate );
+        El::PermuteRows( ATL, p );
+        El::PermuteCols( ATL, p );
     }
     else
     {
@@ -62,10 +66,10 @@ inline void FrontBlockLDL
         ABL = BBL;
 
         // Finish inverting ATL
-        elem::TriangularInverse( LOWER, UNIT, ATL );
-        elem::Trdtrmm( LOWER, ATL, conjugate );
+        El::TriangularInverse( LOWER, UNIT, ATL );
+        El::Trdtrmm( LOWER, ATL, conjugate );
+        El::MakeSymmetric( LOWER, ATL, conjugate );
     }
-    elem::MakeSymmetric( LOWER, ATL, conjugate );
 }
 
 } // namespace cliq

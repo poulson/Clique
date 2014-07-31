@@ -104,7 +104,7 @@ main( int argc, char* argv[] )
         const double multiplyStart = mpi::Time();
         DistMultiVec<double> X( N, numRhs, comm ), Y( N, numRhs, comm );
         MakeUniform( X );
-        MakeZeros( Y );
+        Zero( Y );
         Multiply( 1., A, X, 0., Y );
         std::vector<double> YOrigNorms;
         Norms( Y, YOrigNorms );
@@ -219,7 +219,7 @@ main( int argc, char* argv[] )
             std::cout << "Running LDL^T and redistribution...";
             std::cout.flush();
         }
-        elem::SetBlocksize( nbFact );
+        El::SetBlocksize( nbFact );
         mpi::Barrier( comm );
         const double ldlStart = mpi::Time();
         SymmFrontType frontType;
@@ -271,7 +271,7 @@ main( int argc, char* argv[] )
             std::cout << "Solving against Y...";
             std::cout.flush();
         }
-        elem::SetBlocksize( nbSolve );
+        El::SetBlocksize( nbSolve );
         double solveStart, solveStop;
         if( solve2d )
         {

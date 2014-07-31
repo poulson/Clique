@@ -65,7 +65,7 @@ inline void LocalLowerForwardSolve
         Matrix<F> WT, WB;
         PartitionDown( W, WT, WB, node.size );
         WT = X.localNodes[s];
-        elem::MakeZeros( WB );
+        El::Zero( WB );
 
         // Update using the children (if they exist)
         const int numChildren = node.children.size();
@@ -146,7 +146,7 @@ inline void LocalLowerForwardSolve
         Matrix<F> WT, WB;
         PartitionDown( W, WT, WB, node.size );
         WT = X.localNodes[s];
-        elem::MakeZeros( WB );
+        El::Zero( WB );
 
         // Update using the children (if they exist)
         const int numChildren = node.children.size();

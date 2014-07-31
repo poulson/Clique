@@ -12,8 +12,6 @@
 #ifndef CLIQ_NUMERIC_LOWERSOLVE_DIST_HPP
 #define CLIQ_NUMERIC_LOWERSOLVE_DIST_HPP
 
-#include ELEM_ONES_INC
-
 namespace cliq {
 
 template<typename F> 
@@ -93,7 +91,7 @@ inline void DistLowerForwardSolve
         DistMatrix<F,VC,STAR> WT(grid), WB(grid);
         PartitionDown( W, WT, WB, node.size );
         WT = X.distNodes[s-1];
-        elem::MakeZeros( WB );
+        El::Zero( WB );
 
         // Pack our child's update
         const MultiVecCommMeta& commMeta = node.multiVecMeta;
@@ -248,7 +246,7 @@ inline void DistLowerForwardSolve
         DistMatrix<F> WT(grid), WB(grid);
         PartitionDown( W, WT, WB, node.size );
         WT = X.distNodes[s-1];
-        elem::MakeZeros( WB );
+        El::Zero( WB );
 
         // Pack our child's update
         const MatrixCommMeta& commMeta = X.commMetas[s-1];

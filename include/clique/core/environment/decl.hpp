@@ -14,44 +14,44 @@
 
 namespace cliq {
 
-using elem::byte;
-using elem::Int;
-using elem::Unsigned;
+using El::byte;
+using El::Int;
+using El::Unsigned;
 
 // Pull in some of Elemental's imported libraries
-namespace blas = elem::blas;
-namespace lapack = elem::lapack;
-namespace mpi = elem::mpi;
+namespace blas = El::blas;
+namespace lapack = El::lapack;
+namespace mpi = El::mpi;
 
 // Pull in a number of useful enums from Elemental
-using namespace elem::distribution_wrapper;
-using namespace elem::left_or_right_wrapper;
-using namespace elem::orientation_wrapper;
-using namespace elem::unit_or_non_unit_wrapper;
-using namespace elem::upper_or_lower_wrapper;
+using namespace El::DistNS;
+using namespace El::LeftOrRightNS;
+using namespace El::OrientationNS;
+using namespace El::UnitOrNonUnitNS;
+using namespace El::UpperOrLowerNS;
 
 // For scalar operations
-using elem::Base;
-using elem::Complex;
-using elem::Abs;
-using elem::Sqrt;
+using El::Base;
+using El::Complex;
+using El::Abs;
+using El::Sqrt;
 
 // Pull in a few classes from Elemental
-using elem::Matrix;
-using elem::Grid;
-using elem::DistMatrix;
-using elem::View;
-using elem::LockedView;
+using El::Matrix;
+using El::Grid;
+using El::DistMatrix;
+using El::View;
+using El::LockedView;
 
 // Pull in a few indexing routines
-using elem::Shift;
-using elem::Length;
+using El::Shift;
+using El::Length;
 
 // For easily throwing errors
-using elem::LogicError;
-using elem::RuntimeError;
+using El::LogicError;
+using El::RuntimeError;
 
-using elem::SwapClear;
+using El::SwapClear;
 
 void PrintVersion( std::ostream& os=std::cout );
 void PrintConfig( std::ostream& os=std::cout );
@@ -63,13 +63,13 @@ void Initialize( int& argc, char**& argv );
 void Finalize();
 
 // For getting the MPI argument instance (for internal usage)
-class Args : public elem::choice::MpiArgs
+class Args : public El::choice::MpiArgs
 {
 public:
     Args
     ( int argc, char** argv,
       mpi::Comm comm=mpi::COMM_WORLD, std::ostream& error=std::cerr )
-    : elem::choice::MpiArgs(argc,argv,comm,error)
+    : El::choice::MpiArgs(argc,argv,comm,error)
     { }
     virtual ~Args() { }
 protected:

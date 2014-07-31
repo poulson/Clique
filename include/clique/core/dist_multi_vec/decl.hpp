@@ -65,7 +65,7 @@ private:
 
 // Set all of the entries of X to zero
 template<typename T>
-void MakeZeros( DistMultiVec<T>& X );
+void Zero( DistMultiVec<T>& X );
 
 // Draw the entries of X uniformly from the unitball in T
 template<typename T>
@@ -73,11 +73,11 @@ void MakeUniform( DistMultiVec<T>& X );
 
 // Just column-wise l2 norms for now
 template<typename F>
-void Norms( const DistMultiVec<F>& X, std::vector<BASE(F)>& norms );
+void Norms( const DistMultiVec<F>& X, std::vector<Base<F>>& norms );
 
 // Simplification for case where there is only one column
 template<typename F>
-BASE(F) Norm( const DistMultiVec<F>& x );
+Base<F> Norm( const DistMultiVec<F>& x );
 
 // Y := alpha X + Y
 template<typename T>
