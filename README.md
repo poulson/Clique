@@ -1,3 +1,5 @@
+# NOTICE: Clique was merged into [Elemental](http://github.com/elemental/Elemental) and was extended to support a large variety of additional operations, such as sparse Interior Point Methods for LPs and QPs
+
 # Clique
 
 
